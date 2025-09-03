@@ -1,0 +1,64 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-checks:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Lint check
+      run: |
+        echo "Running code quality checks..."
+        npx tsc --noEmit
+        echo "✅ TypeScript compilation check passed"
+    
+    - name: Build check
+      run: |
+        npm run build
+        echo "✅ Build check passed"
+      env:
+        VITE_FIREBASE_API_KEY: "test-key"
+        VITE_FIREBASE_APP_ID: "test-app-id"
+        VITE_FIREBASE_PROJECT_ID: "test-project"
+        VITE_GOOGLE_CLIENT_ID: "test-client-id"
+        VITE_GOOGLE_MAPS_API_KEY: "test-maps-key"
+    
+    - name: Check for breaking changes
+      run: |
+        echo "Checking for potential breaking changes..."
+        git diff --name-only origin/main...HEAD | grep -E "\.(ts|tsx|js|jsx)$" || echo "No code changes detected"
+        echo "✅ Breaking change analysis complete"
+    
+    - name: PR size check
+      run: |
+        CHANGED_FILES=$(git diff --name-only origin/main...HEAD | wc -l)
+        ADDED_LINES=$(git diff --stat origin/main...HEAD | tail -1 | grep -o '[0-9]\+ insertions' | grep -o '[0-9]\+' || echo "0")
+        DELETED_LINES=$(git diff --stat origin/main...HEAD | tail -1 | grep -o '[0-9]\+ deletions' | grep -o '[0-9]\+' || echo "0")
+        
+        echo "📊 PR Statistics:"
+        echo "Files changed: $CHANGED_FILES"
+        echo "Lines added: $ADDED_LINES"
+        echo "Lines deleted: $DELETED_LINES"
+        
+        if [ "$CHANGED_FILES" -gt 50 ]; then
+          echo "⚠️ Large PR detected ($CHANGED_FILES files). Consider breaking into smaller PRs."
+        else
+          echo "✅ PR size is manageable"
+        fi

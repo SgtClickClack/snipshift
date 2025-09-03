@@ -1,0 +1,42 @@
+{
+  "testUsers": {
+    "hub": {
+      "email": "test-hub@snipshift.com",
+      "password": "TestPass123!",
+      "displayName": "Test Barbershop",
+      "role": "hub"
+    },
+    "professional": {
+      "email": "test-pro@snipshift.com", 
+      "password": "TestPass123!",
+      "displayName": "Test Professional",
+      "role": "professional"
+    },
+    "trainer": {
+      "email": "test-trainer@snipshift.com",
+      "password": "TestPass123!",
+      "displayName": "Test Trainer",
+      "role": "trainer"
+    },
+    "brand": {
+      "email": "test-brand@snipshift.com",
+      "password": "TestPass123!",
+      "displayName": "Test Brand",
+      "role": "brand"
+    }
+  },
+  "testJob": {
+    "title": "Senior Barber Position",
+    "description": "Experienced barber needed for busy downtown location",
+    "hourlyRate": 35,
+    "location": "Sydney CBD",
+    "skills": ["Hair Cutting", "Beard Styling"],
+    "schedule": "Full-time"
+  },
+  "testPost": {
+    "title": "New Product Launch: Premium Styling Cream",
+    "content": "Introducing our latest professional styling cream with 24-hour hold and natural finish. Perfect for all hair types.",
+    "discount": "LAUNCH25",
+    "discountAmount": 25
+  }
+}

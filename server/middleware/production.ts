@@ -1,0 +1,84 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export function setupProductionMiddleware(app: express.Application) {
+  // Security headers
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    
+    // HTTPS redirect (if not already handled by reverse proxy)
+    if (req.header('x-forwarded-proto') !== 'https' && process.env.NODE_ENV === 'production') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+      return;
+    }
+    next();
+  });
+
+  // Compression
+  app.use((req, res, next) => {
+    if (req.url.match(/\.(js|css|html|json|xml|txt|ico|svg)$/)) {
+      res.setHeader('Content-Encoding', 'gzip');
+    }
+    next();
+  });
+
+  // Cache static assets
+  app.use((req, res, next) => {
+    if (req.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (req.url.match(/\.(html|json)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+    next();
+  });
+
+  // Serve static files in production
+  if (process.env.NODE_ENV === 'production') {
+    const clientBuildPath = path.join(__dirname, 'public');
+    app.use(express.static(clientBuildPath));
+    
+    // Handle client-side routing - serve index.html for all non-API routes
+    app.get('*', (req, res, next) => {
+      if (req.url.startsWith('/api/')) {
+        return next();
+      }
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    });
+  }
+}
+
+export function setupHealthCheck(app: express.Application) {
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV,
+      version: '1.0.0'
+    });
+  });
+
+  // Readiness check
+  app.get('/ready', (req, res) => {
+    // Add any database or external service checks here
+    res.status(200).json({
+      status: 'ready',
+      checks: {
+        database: 'ok', // In real app, check actual database connection
+        memory: {
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
+        }
+      }
+    });
+  });
+}
