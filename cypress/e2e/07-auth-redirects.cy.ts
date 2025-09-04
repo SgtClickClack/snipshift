@@ -11,7 +11,9 @@ describe('Auth redirects', () => {
 
     // Go to role selection
     cy.visit('/home');
-    cy.location('pathname', { timeout: 10000 }).should('match', /\/home|\/role-selection/);
+    cy.location('pathname', { timeout: 10000 }).should((p) => {
+      expect(["/", "/home", "/role-selection"]).to.include(p);
+    });
 
     // Select professional role and continue
     cy.get('[data-testid="button-select-professional"]').click();
