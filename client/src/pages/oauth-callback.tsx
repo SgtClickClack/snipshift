@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiRequest } from '@/lib/queryClient';
 
 export function OAuthCallback() {
   const navigate = useNavigate();
@@ -29,23 +30,40 @@ export function OAuthCallback() {
         console.log('✅ Authorization code received:', code.substring(0, 20) + '...');
         console.log('✅ State received:', state);
         
-        // Create authenticated user from Google OAuth (multi-role shape)
-        const googleUser = {
-          id: `google_${Date.now()}`,
-          email: 'user@gmail.com', // In production, this would come from token exchange
+        // MVP: register (idempotent) and then login to establish a server session
+        const googleId = `google_${Date.now()}`;
+        const email = 'user@gmail.com'; // In production, exchange the code for user info
+        try {
+          await apiRequest('POST', '/api/register', {
+            email,
+            password: '',
+            provider: 'google',
+            googleId,
+          });
+        } catch (e: any) {
+          // Ignore 400 (already exists)
+          if (!(`${e.message}` || '').startsWith('400')) {
+            throw e;
+          }
+        }
+
+        // Login to create session cookie
+        const res = await apiRequest('POST', '/api/login', { email, googleId });
+        const userData = await res.json();
+        console.log('🔧 Logging in user:', userData);
+        login({
+          id: userData.id,
+          email: userData.email,
           password: '',
-          roles: [] as Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'>,
-          currentRole: null as 'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | null,
-          provider: 'google' as const,
-          googleId: `google_${Date.now()}`,
+          roles: userData.roles || [],
+          currentRole: userData.currentRole || null,
+          provider: 'google',
+          googleId,
           createdAt: new Date(),
           updatedAt: new Date(),
-          displayName: 'Google User',
-          profileImage: '',
-        };
-
-        console.log('🔧 Logging in user:', googleUser);
-        login(googleUser);
+          displayName: userData.displayName || 'Google User',
+          profileImage: userData.profileImage || '',
+        });
         
         toast({
           title: "Welcome!",
