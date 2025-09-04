@@ -10,11 +10,15 @@ export default defineConfig({
     outDir: '../dist/public',
     emptyOutDir: true,
     sourcemap: false,
+    minify: 'esbuild',
+    target: 'es2019',
+    esbuild: {
+      pure: ['console.log']
+    },
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-button', '@radix-ui/react-input'],
           maps: ['@googlemaps/js-api-loader'],
           query: ['@tanstack/react-query']
         }
@@ -30,6 +34,8 @@ export default defineConfig({
     }
   },
   define: {
-    'process.env.NODE_ENV': '"production"'
+    'process.env.NODE_ENV': '"production"',
+    'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(process.env.VITE_GOOGLE_CLIENT_ID || ''),
+    'import.meta.env.VITE_GOOGLE_REDIRECT_URI': JSON.stringify(process.env.VITE_GOOGLE_REDIRECT_URI || ''),
   }
 });

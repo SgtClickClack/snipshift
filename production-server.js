@@ -37,8 +37,9 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Snipshift server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
+  const log = process.env.NODE_ENV === 'production' ? console.info : console.log;
+  log(`Snipshift server running on port ${PORT}`);
+  log(`Environment: ${process.env.NODE_ENV}`);
 });
 
 export default app;

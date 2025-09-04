@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Share2, TrendingUp, Users, Eye, MessageCircle, Heart, Edit, Trash, Tag, Calendar, Globe } from "lucide-react";
 import { format } from "date-fns";
@@ -41,7 +41,7 @@ interface PostFormData {
 }
 
 export default function BrandDashboard() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<'overview' | 'posts' | 'profile'>('overview');
@@ -133,7 +133,7 @@ export default function BrandDashboard() {
     totalEngagement: posts.reduce((sum, post) => sum + post.likes + post.comments.length, 0)
   };
 
-  if (!user || user.role !== "brand") {
+  if (!user || user.currentRole !== "brand") {
     return <div>Access denied</div>;
   }
 

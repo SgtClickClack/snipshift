@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Notification } from "@/components/notifications/notification-types";
 
 // Mock notification data for demonstration
@@ -87,7 +87,7 @@ const generateMockNotifications = (userId: string): Notification[] => [
 ];
 
 export function useNotifications() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [simulatedNotifications, setSimulatedNotifications] = useState<Notification[]>([]);
 

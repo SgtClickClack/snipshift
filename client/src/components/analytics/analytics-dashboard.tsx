@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, TrendingDown, Eye, Users, Heart, MessageSquare } from "lucide-react";
-import { authService } from "@/lib/auth";
+// Removed legacy auth import; component takes userRole via props
 
 // Mock analytics data - in production, this would come from your analytics API
 const mockAnalyticsData = {

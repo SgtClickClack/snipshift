@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { messagingService } from '@/lib/messaging';
-import { authService } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Chat } from '@shared/firebase-schema';
 import { MessageCircle, Search, User } from 'lucide-react';
 import { format } from 'date-fns';
@@ -19,7 +19,7 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
   const [chats, setChats] = useState<Chat[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!user) return;

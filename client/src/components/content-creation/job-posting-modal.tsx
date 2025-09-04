@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { X, Plus, MapPin, DollarSign, Calendar, Clock } from "lucide-react";
 
 interface JobPostingModalProps {
@@ -18,7 +18,7 @@ interface JobPostingModalProps {
 }
 
 export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProps) {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   

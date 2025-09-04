@@ -4,7 +4,8 @@ export interface User {
   id: string;
   email: string;
   password: string;
-  role: 'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin';
+  roles: Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'>;
+  currentRole: 'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | null;
   provider?: 'google' | 'email';
   googleId?: string;
   createdAt: Date;
@@ -19,7 +20,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (user: User) => void;
   logout: () => void;
-  updateUserRole: (role: User['role']) => void;
+  setCurrentRole: (role: NonNullable<User['currentRole']>) => void;
+  hasRole: (role: NonNullable<User['currentRole']>) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,17 +58,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('currentUser');
+  const logout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', headers: { 'X-Snipshift-CSRF': '1' }, credentials: 'include' });
+    } catch (e) {
+      // ignore network errors on logout
+    } finally {
+      setUser(null);
+      localStorage.removeItem('currentUser');
+    }
   };
 
-  const updateUserRole = (role: User['role']) => {
+  const setCurrentRole = (role: NonNullable<User['currentRole']>) => {
     if (user) {
-      const updatedUser = { ...user, role, updatedAt: new Date() };
+      const roles = Array.isArray(user.roles) ? user.roles : [];
+      const nextRoles = roles.includes(role) ? roles : [...roles, role];
+      const updatedUser = { ...user, roles: nextRoles, currentRole: role, updatedAt: new Date() };
       setUser(updatedUser);
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
     }
+  };
+
+  const hasRole = (role: NonNullable<User['currentRole']>) => {
+    return !!user && Array.isArray(user.roles) && user.roles.includes(role);
   };
 
   const value = {
@@ -75,7 +89,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: !!user,
     login,
     logout,
-    updateUserRole,
+    setCurrentRole,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

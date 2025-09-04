@@ -16,7 +16,12 @@ export function log(message: string, source = "express") {
     hour12: true,
   });
 
-  console.log(`${formattedTime} [${source}] ${message}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`${formattedTime} [${source}] ${message}`);
+  } else {
+    // Reduce noise in production; use info for essential logs only
+    console.info(`${formattedTime} [${source}] ${message}`);
+  }
 }
 
 export async function setupVite(app: Express, server: Server) {

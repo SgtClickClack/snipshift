@@ -1,0 +1,37 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  cypress-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run Cypress E2E
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          start: npm run dev
+          wait-on: 'http://localhost:5000'
+          spec: cypress/e2e/07-auth-redirects.cy.ts
+        env:
+          E2E_TEST: '1'
+          E2E_TEST_KEY: 'test'
+          VITE_E2E: '1'
+
+

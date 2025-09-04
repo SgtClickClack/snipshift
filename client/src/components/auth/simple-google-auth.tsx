@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { authService } from '@/lib/auth';
-import { useLocation } from 'wouter';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardRoute } from '@/lib/roles';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 interface SimpleGoogleAuthProps {
@@ -26,8 +27,9 @@ declare global {
 
 export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
   const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const { login } = useAuth();
 
   useEffect(() => {
     // Load Google Identity Services script
@@ -36,7 +38,7 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      console.log('Google Identity Services script loaded');
+      if (import.meta.env.MODE !== 'production') console.log('Google Identity Services script loaded');
       initializeGoogleAuth();
     };
     script.onerror = () => {
@@ -65,7 +67,7 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
         });
         
         setIsGoogleLoaded(true);
-        console.log('Google Auth initialized successfully');
+        if (import.meta.env.MODE !== 'production') console.log('Google Auth initialized successfully');
       } catch (error) {
         console.error('Google Auth initialization error:', error);
         toast({
@@ -79,7 +81,7 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
 
   const handleCredentialResponse = (response: any) => {
     try {
-      console.log('Google credential response received');
+      if (import.meta.env.MODE !== 'production') console.log('Google credential response received');
       
       if (!response.credential) {
         throw new Error('No credential received from Google');
@@ -89,7 +91,7 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
       const parts = response.credential.split('.');
       const payload = JSON.parse(atob(parts[1]));
       
-      console.log('JWT payload decoded:', { email: payload.email, name: payload.name });
+      if (import.meta.env.MODE !== 'production') console.log('JWT payload decoded:', { email: payload.email, name: payload.name });
       
       // Get role from URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -110,7 +112,7 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
         profileImage: payload.picture || '',
       };
 
-      authService.login(googleUser);
+      login(googleUser as any);
       
       toast({
         title: mode === 'signin' ? "Welcome back!" : "Account created!",
@@ -118,16 +120,8 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
       });
 
       // Navigate to appropriate dashboard
-      const dashboardMap = {
-        hub: '/hub-dashboard',
-        professional: '/home',
-        brand: '/brand-dashboard',
-        trainer: '/trainer-dashboard'
-      };
-      
-      const targetDashboard = dashboardMap[validRole as keyof typeof dashboardMap];
-      console.log('Navigating to dashboard:', targetDashboard);
-      
+      const targetDashboard = getDashboardRoute(validRole as any);
+      if (import.meta.env.MODE !== 'production') console.log('Navigating to dashboard:', targetDashboard);
       navigate(targetDashboard);
       onSuccess?.();
       
@@ -152,7 +146,7 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
     }
 
     try {
-      console.log('Starting Google sign-in process');
+      if (import.meta.env.MODE !== 'production') console.log('Starting Google sign-in process');
       window.google.accounts.id.prompt();
     } catch (error) {
       console.error('Error starting Google sign-in:', error);

@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Shift } from "@shared/schema";
 import { Plus, Calendar, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ShopDashboard() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -62,7 +62,7 @@ export default function ShopDashboard() {
     createShiftMutation.mutate(formData);
   };
 
-  if (!user || user.role !== "hub") {
+  if (!user || user.currentRole !== "hub") {
     return <div>Access denied</div>;
   }
 

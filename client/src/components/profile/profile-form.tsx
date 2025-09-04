@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { authService } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@shared/firebase-schema';
 import { Save, Plus, X, MapPin, Phone, Globe, Award, Star } from 'lucide-react';
 
@@ -16,7 +16,7 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ onSave }: ProfileFormProps) {
   const { toast } = useToast();
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -429,10 +429,10 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {renderBasicFields()}
           
-          {user.role === 'hub' && renderHubFields()}
-          {user.role === 'professional' && renderProfessionalFields()}
-          {user.role === 'brand' && renderBrandFields()}
-          {user.role === 'trainer' && renderTrainerFields()}
+          {user.currentRole === 'hub' && renderHubFields()}
+          {user.currentRole === 'professional' && renderProfessionalFields()}
+          {user.currentRole === 'brand' && renderBrandFields()}
+          {user.currentRole === 'trainer' && renderTrainerFields()}
         </form>
       </CardContent>
     </Card>

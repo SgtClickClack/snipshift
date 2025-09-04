@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Play, DollarSign, Clock, BookOpen, Star, Users, ShoppingCart, CreditCard } from "lucide-react";
 
@@ -136,7 +136,7 @@ function PaymentModal({ content, isOpen, onClose, onSuccess }: PaymentModalProps
 }
 
 export default function TrainingHub() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedContent, setSelectedContent] = useState<TrainingContent | null>(null);

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Trash, Eye } from "lucide-react";
 
@@ -40,7 +40,7 @@ interface ContentFormData {
 }
 
 export default function TrainerDashboard() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<'overview' | 'content' | 'profile'>('overview');
@@ -132,7 +132,7 @@ export default function TrainerDashboard() {
     avgRating: 4.8
   };
 
-  if (!user || user.role !== "trainer") {
+  if (!user || user.currentRole !== "trainer") {
     return <div>Access denied</div>;
   }
 

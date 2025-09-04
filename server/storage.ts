@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Shift, type InsertShift } from "@shared/firebase-schema";
+import { type User, type InsertUser, type Shift, type InsertShift, type UserRole } from "@shared/firebase-schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -44,14 +44,17 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const now = new Date();
+    const roles: UserRole[] = Array.isArray((insertUser as any).roles) ? (insertUser as any).roles as UserRole[] : [];
+    const currentRole: UserRole | null = (insertUser as any).currentRole ?? (roles.length ? roles[0] : null);
     const user: User = { 
-      ...insertUser, 
+      ...(insertUser as any), 
       id,
-      provider: insertUser.provider || "email",
-      role: insertUser.role || "client",
+      provider: (insertUser as any).provider || "email",
+      roles,
+      currentRole,
       createdAt: now,
       updatedAt: now
-    };
+    } as User;
     this.users.set(id, user);
     return user;
   }

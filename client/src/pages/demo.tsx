@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { authService } from "@/lib/auth";
-import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDashboardRoute } from "@/lib/roles";
+import { useNavigate } from "react-router-dom";
 import { Scissors, Store, UserCheck, Award, Globe, Users, Video, Share2, Shield, Play, DollarSign, Star } from "lucide-react";
 
 export default function DemoPage() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const quickLogin = (role: "hub" | "professional" | "trainer" | "brand") => {
     const demoUsers = {
@@ -88,17 +90,8 @@ export default function DemoPage() {
     };
 
     const user = demoUsers[role];
-    authService.login(user);
-    
-    // Navigate to appropriate dashboard
-    const dashboardRoutes = {
-      hub: "/hub-dashboard",
-      professional: "/home", 
-      trainer: "/trainer-dashboard",
-      brand: "/brand-dashboard"
-    };
-    
-    setLocation(dashboardRoutes[role]);
+    login(user as any);
+    navigate(getDashboardRoute(role));
   };
 
   const features = [
@@ -133,7 +126,7 @@ export default function DemoPage() {
       description: "Community feed with brand promotions and trainer events",
       icon: Share2,
       color: "bg-green-100 text-green-800",
-      demo: () => setLocation("/social-feed"),
+      demo: () => navigate("/social-feed"),
       highlights: [
         "Approved brand posts",
         "Training events",
@@ -146,7 +139,7 @@ export default function DemoPage() {
       description: "Video marketplace with paid and free educational content",
       icon: Video,
       color: "bg-orange-100 text-orange-800",
-      demo: () => setLocation("/training-hub"),
+      demo: () => navigate("/training-hub"),
       highlights: [
         "Video course library",
         "Mock payment system",
@@ -159,7 +152,7 @@ export default function DemoPage() {
       description: "Admin panel for reviewing and approving content",
       icon: Shield,
       color: "bg-red-100 text-red-800",
-      demo: () => setLocation("/content-moderation"),
+      demo: () => navigate("/content-moderation"),
       highlights: [
         "Post approval workflow",
         "Training content review",
@@ -217,7 +210,7 @@ export default function DemoPage() {
               <Button 
                 variant="accent"
                 size="lg"
-                onClick={() => setLocation('/design-showcase')}
+                onClick={() => navigate('/design-showcase')}
               >
                 View Design System
               </Button>
@@ -334,15 +327,15 @@ export default function DemoPage() {
         <div className="mt-16 text-center">
           <h2 className="text-2xl font-bold text-neutral-900 mb-6">Explore Public Features</h2>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="outline" onClick={() => setLocation("/social-feed")}>
+            <Button variant="outline" onClick={() => navigate("/social-feed")}>
               <Share2 className="mr-2 h-4 w-4" />
               View Social Feed
             </Button>
-            <Button variant="outline" onClick={() => setLocation("/training-hub")}>
+            <Button variant="outline" onClick={() => navigate("/training-hub")}>
               <Video className="mr-2 h-4 w-4" />
               Browse Training Hub
             </Button>
-            <Button variant="outline" onClick={() => setLocation("/signup")}>
+            <Button variant="outline" onClick={() => navigate("/signup")}>
               <Users className="mr-2 h-4 w-4" />
               Create Account
             </Button>

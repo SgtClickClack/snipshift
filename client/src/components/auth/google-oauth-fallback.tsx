@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { authService } from '@/lib/auth';
-import { useLocation } from 'wouter';
+// Removed legacy auth import; this component just redirects to Google
+import { useNavigate } from 'react-router-dom';
 
 interface GoogleOAuthFallbackProps {
   mode: 'signin' | 'signup';
@@ -10,19 +10,19 @@ interface GoogleOAuthFallbackProps {
 
 export function GoogleOAuthFallback({ mode, onSuccess }: GoogleOAuthFallbackProps) {
   const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
 
   const handleGoogleAuth = () => {
-    console.log('🚀 Starting Google OAuth redirect flow');
+    if (import.meta.env.MODE !== 'production') console.log('🚀 Starting Google OAuth redirect flow');
     
     // Get role from URL if available
     const urlParams = new URLSearchParams(window.location.search);
     const roleFromUrl = urlParams.get('role') || 'professional';
-    
-    // Build Google OAuth URL manually - using existing redirect URIs
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     const currentUrl = window.location.href;
-    const redirectUri = currentUrl; // Use current page as redirect (already authorized)
+    
+    // Build Google OAuth URL manually - using canonical redirect URI
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/oauth/callback`;
     const scope = "openid email profile";
     const responseType = "code";
     const state = JSON.stringify({ role: roleFromUrl, mode, returnUrl: currentUrl });
@@ -34,9 +34,11 @@ export function GoogleOAuthFallback({ mode, onSuccess }: GoogleOAuthFallbackProp
       `scope=${encodeURIComponent(scope)}&` +
       `state=${encodeURIComponent(state)}`;
     
-    console.log('🚀 Starting Google OAuth redirect flow');
-    console.log('🔗 Auth URL:', authUrl.substring(0, 100) + '...');
-    console.log('📍 Redirect URI:', redirectUri);
+    if (import.meta.env.MODE !== 'production') console.log('🚀 Starting Google OAuth redirect flow');
+    if (import.meta.env.MODE !== 'production') {
+      console.log('🔗 Auth URL:', authUrl.substring(0, 100) + '...');
+      console.log('📍 Redirect URI:', redirectUri);
+    }
     
     window.location.href = authUrl;
   };

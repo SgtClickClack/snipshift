@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDashboardRoute } from "@/lib/roles";
 import { FcGoogle } from "react-icons/fc";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 
 interface GoogleAuthUnifiedProps {
   mode: "signin" | "signup";
@@ -12,7 +13,8 @@ interface GoogleAuthUnifiedProps {
 export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
@@ -36,18 +38,18 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
       if (mode === "signup") {
         const response = await fetch("/api/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", 'X-Snipshift-CSRF': '1' },
           body: JSON.stringify(mockGoogleUser),
         });
 
         if (response.ok) {
           const user = await response.json();
-          authService.login(user);
+          login(user);
           toast({
             title: "Account created successfully!",
             description: "Welcome to Snipshift",
           });
-          navigate('/home');
+          navigate('/role-selection');
         } else {
           throw new Error("Registration failed");
         }
@@ -55,7 +57,7 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
         // Login mode
         const response = await fetch("/api/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", 'X-Snipshift-CSRF': '1' },
           body: JSON.stringify({
             email: mockGoogleUser.email,
             provider: "google"
@@ -64,29 +66,13 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
 
         if (response.ok) {
           const user = await response.json();
-          authService.login(user);
+          login(user);
           toast({
             title: "Welcome back!",
             description: "Successfully signed in with Google",
           });
           
-          // Navigate based on role
-          switch (user.role) {
-            case 'hub':
-              navigate('/hub-dashboard');
-              break;
-            case 'professional':
-              navigate('/home');
-              break;
-            case 'brand':
-              navigate('/brand-dashboard');
-              break;
-            case 'trainer':
-              navigate('/trainer-dashboard');
-              break;
-            default:
-              navigate('/home');
-          }
+          navigate(getDashboardRoute((user as any).role));
         } else {
           throw new Error("Login failed");
         }

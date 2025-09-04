@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 import { X, Calendar, DollarSign, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -19,7 +19,7 @@ interface JobApplicationModalProps {
 }
 
 export default function JobApplicationModal({ isOpen, onClose, job }: JobApplicationModalProps) {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   

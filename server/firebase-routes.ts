@@ -25,8 +25,9 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
       res.json({ 
         id: user.id, 
         email: user.email, 
-        role: user.role,
-        displayName: user.displayName 
+        roles: (user as any).roles || [],
+        currentRole: (user as any).currentRole || null,
+        displayName: (user as any).displayName 
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -43,17 +44,65 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
+      // establish session
+      (req as any).session.user = { id: user.id, roles: (user as any).roles, currentRole: (user as any).currentRole, email: user.email };
+
       res.json({ 
         id: user.id, 
         email: user.email, 
-        role: user.role,
-        displayName: user.displayName 
+        roles: (user as any).roles || [],
+        currentRole: (user as any).currentRole || null,
+        displayName: (user as any).displayName 
       });
     } catch (error) {
       console.error('Login error:', error);
       res.status(400).json({ message: "Invalid login data" });
     }
   });
+
+  // Test-only helpers (seed/login) - enabled only in CI/test runs
+  if (process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1') {
+    app.post('/api/test/login', async (req, res) => {
+      try {
+        const testKeyHeader = req.headers['x-test-key'];
+        const expectedKey = process.env.E2E_TEST_KEY || 'test';
+        if (testKeyHeader !== expectedKey) {
+          return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        const { email, password = 'password123', role = 'professional', displayName = 'E2E User' } = req.body || {};
+        if (!email) return res.status(400).json({ message: 'email is required' });
+
+        let user = await firebaseStorage.getUserByEmail(email);
+        if (!user) {
+          user = await firebaseStorage.createUser({
+            email,
+            password,
+            roles: [role],
+            currentRole: role,
+            displayName,
+          } as any);
+        } else if (!(user as any).roles?.includes(role)) {
+          const nextRoles = ([...(user as any).roles || [], role]).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
+          const nextCurrent = (user as any).currentRole || role;
+          user = await firebaseStorage.updateUser(user.id, { roles: nextRoles, currentRole: nextCurrent } as any);
+        }
+
+        (req as any).session.user = { id: user.id, roles: (user as any).roles, currentRole: (user as any).currentRole, email: user.email };
+        res.json({ id: user.id, email: user.email, roles: (user as any).roles, currentRole: (user as any).currentRole, displayName: (user as any).displayName });
+      } catch (err) {
+        console.error('test login error', err);
+        res.status(500).json({ message: 'test login failed' });
+      }
+    });
+  }
+  // Session helpers
+  app.post('/api/logout', (req, res) => {
+    (req as any).session.destroy(() => {
+      res.json({ ok: true });
+    });
+  });
+
 
   // Job management routes
   app.post("/api/jobs", async (req, res) => {

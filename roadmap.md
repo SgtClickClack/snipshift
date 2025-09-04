@@ -17,6 +17,7 @@ This roadmap outlines the strategic development and expansion plan for Snipshift
 - **Analytics Foundation**: Implement comprehensive user behavior tracking
 
 #### **User Experience Refinements**
+- ✅ **Multi-Role User System**: Allow users to hold multiple roles with quick switching
 - **Tutorial System Enhancement**: Refine onboarding based on expo feedback
 - **Mobile App Development**: Native iOS/Android apps for key user journeys
 - **Performance Optimization**: Sub-2 second loading times across all features

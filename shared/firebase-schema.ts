@@ -3,12 +3,13 @@ import { z } from "zod";
 // Snipshift User Roles - expanded to support the new multi-role model
 export type UserRole = "hub" | "professional" | "brand" | "trainer" | "client";
 
-// Base User Schema
+// Base User Schema (multi-role)
 export const userSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   password: z.string().nullable(),
-  role: z.enum(["hub", "professional", "brand", "trainer", "client"]),
+  roles: z.array(z.enum(["hub", "professional", "brand", "trainer", "client"])).default([]),
+  currentRole: z.enum(["hub", "professional", "brand", "trainer", "client"]).nullable().default(null),
   displayName: z.string().optional(),
   profileImage: z.string().optional(),
   googleId: z.string().optional(),
@@ -201,10 +202,23 @@ export const applicationSchema = z.object({
 });
 
 // Insert schemas (for creating new records)
-export const insertUserSchema = userSchema.omit({ id: true, createdAt: true, updatedAt: true }).extend({
-  name: z.string().optional(),
-  role: z.enum(["hub", "professional", "brand", "trainer", "client"]).default("client"),
-});
+// Backward compatible: accepts legacy `role` and maps it into `roles` and `currentRole`
+export const insertUserSchema = userSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    name: z.string().optional(),
+    role: z.enum(["hub", "professional", "brand", "trainer", "client"]).optional(),
+    roles: z.array(z.enum(["hub", "professional", "brand", "trainer", "client"]).optional()).optional(),
+    currentRole: z.enum(["hub", "professional", "brand", "trainer", "client"]).nullable().optional(),
+  })
+  .transform((data) => {
+    const legacyRole = (data as any).role as UserRole | undefined;
+    const inputRoles = (data as any).roles as UserRole[] | undefined;
+    const roles: UserRole[] = inputRoles ?? (legacyRole ? [legacyRole] : []);
+    const currentRole: UserRole | null = (data as any).currentRole ?? (legacyRole ?? null);
+    const { role: _legacyRole, ...rest } = data as any;
+    return { ...rest, roles, currentRole };
+  });
 
 export const loginSchema = z.object({
   email: z.string().email(),

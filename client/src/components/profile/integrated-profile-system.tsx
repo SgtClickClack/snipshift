@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Eye, Edit } from "lucide-react";
 import PublicProfile from "./public-profile";
 import ProfileEditForm from "./profile-edit-form";
@@ -50,7 +50,7 @@ interface IntegratedProfileSystemProps {
 }
 
 export default function IntegratedProfileSystem({ userId }: IntegratedProfileSystemProps) {
-  const currentUser = authService.getCurrentUser();
+  const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<'view' | 'edit'>('view');

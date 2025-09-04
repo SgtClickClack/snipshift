@@ -5,10 +5,16 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.js",
+    "build": "vite build --config vite.config.production.ts && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "start": "cross-env NODE_ENV=production node dist/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "lint": "npm run check",
+    "format": "prettier --write .",
+    "db:push": "drizzle-kit push",
+    "test:e2e": "cross-env E2E_TEST=1 E2E_TEST_KEY=test VITE_E2E=1 concurrently \"npm:dev\" \"wait-on http://localhost:5000 && cypress run --browser chrome --e2e --headless --spec cypress/e2e/07-auth-redirects.cy.ts\"",
+    "test:e2e:routing": "cross-env E2E_TEST=1 E2E_TEST_KEY=test VITE_E2E=1 concurrently \"npm:dev\" \"wait-on http://localhost:5000 && cypress run --browser chrome --e2e --headless --spec cypress/e2e/08-routing-authentication-system.cy.ts\"",
+    "test:e2e:routing-simple": "cross-env E2E_TEST=1 E2E_TEST_KEY=test VITE_E2E=1 concurrently \"npm:dev\" \"wait-on http://localhost:5000 && cypress run --browser chrome --e2e --headless --spec cypress/e2e/09-routing-authentication-simplified.cy.ts\"",
+    "test:e2e:routing-working": "cross-env E2E_TEST=1 E2E_TEST_KEY=test VITE_E2E=1 concurrently \"npm:dev\" \"wait-on http://localhost:5000 && cypress run --browser chrome --e2e --headless --spec cypress/e2e/10-routing-authentication-working.cy.ts\""
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.10",
@@ -54,7 +60,9 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "compression": "^1.8.1",
+    "concurrently": "^9.2.1",
     "connect-pg-simple": "^10.0.0",
+    "cross-env": "^10.0.0",
     "cypress": "^15.0.0",
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.39.1",
@@ -116,6 +124,7 @@
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
+    "prettier": "^3.3.3",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
     "vite": "^5.4.19"

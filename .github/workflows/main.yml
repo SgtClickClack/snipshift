@@ -38,6 +38,8 @@ jobs:
         VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
         VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
     
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
@@ -52,6 +54,8 @@ jobs:
         VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
         VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
     
     - name: Run Playwright E2E tests
       run: npx playwright test
@@ -143,6 +147,8 @@ jobs:
         VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
         VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
     
     - name: Deploy to staging (mock)
       run: |
@@ -177,6 +183,8 @@ jobs:
         VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
         VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
     
     - name: Run production build validation
       run: |

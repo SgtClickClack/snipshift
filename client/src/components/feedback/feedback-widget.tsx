@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, X, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FeedbackData {
   type: string;
@@ -38,7 +38,7 @@ export function FeedbackWidget() {
 
     setIsSubmitting(true);
 
-    const user = authService.getCurrentUser();
+    const { user } = useAuth();
     const feedbackData: FeedbackData = {
       type: feedbackType,
       message: message.trim(),

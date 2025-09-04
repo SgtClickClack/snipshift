@@ -29,6 +29,19 @@ export const apiLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development' && req.ip === '::1',
 });
 
+// Minimal CSRF protection via custom header on state-changing requests
+export function requireCsrfHeader(req: Request, res: Response, next: NextFunction) {
+  const method = req.method.toUpperCase();
+  const isSafe = method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+  if (isSafe) return next();
+
+  const header = req.headers['x-snipshift-csrf'];
+  if (!header) {
+    return res.status(403).json({ error: 'Missing CSRF header' });
+  }
+  next();
+}
+
 // Role-based access control middleware
 export function requireRole(allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Heart, MessageCircle, Share, Tag, ExternalLink, Calendar, MapPin, Filter } from "lucide-react";
 import { format } from "date-fns";
 
@@ -31,7 +31,7 @@ interface SocialPost {
 }
 
 export default function SocialFeed() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "offers" | "events" | "products">("all");

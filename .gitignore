@@ -4,3 +4,9 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+\ncypress/screenshots/
+cypress/videos/
+cypress/downloads/
+*.log
+.env
+.env.*

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, ArrowRight, ArrowLeft } from "lucide-react";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TutorialStep {
   id: string;
@@ -100,22 +100,22 @@ export function TutorialOverlay() {
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [userRole, setUserRole] = useState<string>("");
+  const { user } = useAuth();
 
   useEffect(() => {
-    const user = authService.getCurrentUser();
-    if (user?.role) {
-      setUserRole(user.role);
+    if (user?.currentRole) {
+      setUserRole(user.currentRole);
       
       // Only show tutorial on dashboard pages, not login/signup
       const isDashboardPage = window.location.pathname.includes('-dashboard');
-      const hasSeenTutorial = localStorage.getItem(`tutorial-seen-${user.role}`);
+      const hasSeenTutorial = localStorage.getItem(`tutorial-seen-${user.currentRole}`);
       
-      if (!hasSeenTutorial && isDashboardPage && tutorialSteps[user.role]) {
+      if (!hasSeenTutorial && isDashboardPage && tutorialSteps[user.currentRole]) {
         // Delay to ensure dashboard has fully loaded
         setTimeout(() => setIsVisible(true), 1500);
       }
     }
-  }, []);
+  }, [user]);
 
   const steps = tutorialSteps[userRole] || [];
   const currentStepData = steps[currentStep];
@@ -143,6 +143,8 @@ export function TutorialOverlay() {
     handleClose();
   };
 
+  // Disable overlay during e2e to avoid interference
+  if (import.meta.env.VITE_E2E === '1') return null;
   if (!isVisible || !currentStepData) return null;
 
   return (
@@ -218,11 +220,11 @@ export function TutorialOverlay() {
 // Manual tutorial trigger component
 export function TutorialTrigger() {
   const [isVisible, setIsVisible] = useState(false);
+  const { user } = useAuth();
 
   const restartTutorial = () => {
-    const user = authService.getCurrentUser();
-    if (user?.role) {
-      localStorage.removeItem(`tutorial-seen-${user.role}`);
+    if (user?.currentRole) {
+      localStorage.removeItem(`tutorial-seen-${user.currentRole}`);
       window.location.reload(); // Reload to show tutorial
     }
   };

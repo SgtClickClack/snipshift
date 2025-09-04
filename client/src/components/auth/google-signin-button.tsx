@@ -1,8 +1,9 @@
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useToast } from '@/hooks/use-toast';
-import { authService } from '@/lib/auth';
-import { useLocation } from 'wouter';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardRoute } from '@/lib/roles';
+import { useNavigate } from 'react-router-dom';
 
 interface GoogleUserData {
   sub: string;
@@ -18,7 +19,8 @@ interface GoogleSignInButtonProps {
 
 export function GoogleSignInButton({ onSuccess, buttonText = "Sign in with Google" }: GoogleSignInButtonProps) {
   const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
@@ -50,7 +52,7 @@ export function GoogleSignInButton({ onSuccess, buttonText = "Sign in with Googl
       const userData = await response.json();
       
       // Update auth state
-      authService.login(userData);
+      login(userData as any);
       
       toast({
         title: "Welcome back!",
@@ -58,7 +60,7 @@ export function GoogleSignInButton({ onSuccess, buttonText = "Sign in with Googl
       });
 
       // Navigate based on user role
-      const dashboardPath = getDashboardPath(userData.role);
+      const dashboardPath = getDashboardRoute((userData as any).role);
       navigate(dashboardPath);
       
       onSuccess?.();
@@ -80,20 +82,7 @@ export function GoogleSignInButton({ onSuccess, buttonText = "Sign in with Googl
     });
   };
 
-  const getDashboardPath = (role: string) => {
-    switch (role) {
-      case 'hub':
-        return '/hub-dashboard';
-      case 'professional':
-        return '/home';
-      case 'brand':
-        return '/brand-dashboard';
-      case 'trainer':
-        return '/trainer-dashboard';
-      default:
-        return '/';
-    }
-  };
+  
 
   return (
     <div className="w-full">

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import ChatList from './chat-list';
 import Conversation from './conversation';
 import { messagingService } from '@/lib/messaging';
-import { authService } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { X } from 'lucide-react';
 
 interface MessagingModalProps {
@@ -23,7 +23,7 @@ export default function MessagingModal({
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>(initialChatId);
   const [selectedOtherUser, setSelectedOtherUser] = useState<{ id: string, name: string, role: string } | undefined>(initialOtherUser);
   const [showMobileConversation, setShowMobileConversation] = useState(false);
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
 
   const handleSelectChat = (chatId: string, otherUser: { id: string, name: string, role: string }) => {
     setSelectedChatId(chatId);
@@ -46,7 +46,7 @@ export default function MessagingModal({
         otherUserId,
         user.displayName || user.email,
         otherUserName,
-        user.role,
+        user.currentRole || 'client',
         otherUserRole
       );
       

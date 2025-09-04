@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { messagingService } from '@/lib/messaging';
-import { authService } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import MessagingModal from './messaging-modal';
 import { MessageCircle } from 'lucide-react';
 
@@ -26,7 +26,7 @@ export default function StartChatButton({
 }: StartChatButtonProps) {
   const [showMessaging, setShowMessaging] = useState(false);
   const [chatId, setChatId] = useState<string | undefined>();
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
 
   const handleStartChat = async () => {
     if (!user) return;
@@ -37,7 +37,7 @@ export default function StartChatButton({
         otherUserId,
         user.displayName || user.email,
         otherUserName,
-        user.role,
+        user.currentRole || 'client',
         otherUserRole
       );
       

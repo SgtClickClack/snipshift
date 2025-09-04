@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Search, Filter, TrendingUp, Users, Sparkles, RefreshCw } from "lucide-react";
 import PostCard, { Post } from "./post-card";
 import PostCreationForm from "./post-creation-form";
@@ -16,7 +16,7 @@ interface CommunityFeedProps {
 }
 
 export default function CommunityFeed({ showCreatePost = true }: CommunityFeedProps) {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -129,7 +129,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         id: `post-${Date.now()}`,
         authorId: user?.id || "",
         authorName: user?.displayName || "Anonymous",
-        authorRole: (user?.role as any) || "professional",
+        authorRole: (user?.currentRole as any) || "professional",
         authorAvatar: user?.profileImageURL,
         content: postData.content,
         images: postData.images,
@@ -305,7 +305,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
       {/* Post Creation Form */}
       {showCreatePost && user && (
         <PostCreationForm
-          userRole={user.role as any}
+          userRole={user.currentRole as any}
           userName={user.displayName || user.email}
           userAvatar={user.profileImageURL}
           onSubmit={handleCreatePost}

@@ -56,7 +56,9 @@ export default function NotificationDropdown({
     // Simulate navigation if actionUrl exists
     if (notification.actionUrl) {
       // In real app, would use router to navigate
-      console.log(`Navigate to: ${notification.actionUrl}`);
+      if (import.meta.env.MODE !== 'production') {
+        console.log(`Navigate to: ${notification.actionUrl}`);
+      }
     }
   };
 

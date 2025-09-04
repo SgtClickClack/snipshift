@@ -29,12 +29,13 @@ export function OAuthCallback() {
         console.log('✅ Authorization code received:', code.substring(0, 20) + '...');
         console.log('✅ State received:', state);
         
-        // Create authenticated user from Google OAuth
+        // Create authenticated user from Google OAuth (multi-role shape)
         const googleUser = {
           id: `google_${Date.now()}`,
           email: 'user@gmail.com', // In production, this would come from token exchange
           password: '',
-          role: 'client' as const, // Default role for new users
+          roles: [] as Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'>,
+          currentRole: null as 'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | null,
           provider: 'google' as const,
           googleId: `google_${Date.now()}`,
           createdAt: new Date(),

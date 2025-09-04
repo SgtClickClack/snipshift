@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
-import { authService } from "@/lib/auth";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Scissors, MessageCircle, LogOut, User } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
@@ -8,10 +8,11 @@ import MessagingModal from "@/components/messaging/messaging-modal";
 import NotificationBell from "./notifications/notification-bell";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Chat } from "@shared/firebase-schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Navbar() {
-  const [location] = useLocation();
-  const user = authService.getCurrentUser();
+  const { user, logout, setCurrentRole } = useAuth();
   const [showMessaging, setShowMessaging] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userChats, setUserChats] = useState<Chat[]>([]);
@@ -40,15 +41,25 @@ export default function Navbar() {
   }, [user]);
 
   const handleLogout = async () => {
-    await authService.logout();
+    await logout();
     window.location.href = "/";
+  };
+
+  const handleSwitchRole = async (role: string) => {
+    if (!user) return;
+    try {
+      await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role });
+      setCurrentRole(role as any);
+    } catch (e) {
+      // ignore for now
+    }
   };
 
   return (
     <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href={user ? "/home" : "/"} className="flex items-center">
+          <Link to={user ? "/home" : "/"} className="flex items-center">
             <Scissors className="text-red-accent text-2xl mr-3" />
             <span className="text-xl font-bold text-white">Snipshift</span>
           </Link>
@@ -56,6 +67,22 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                {/* Role Switcher */}
+                <div className="hidden md:block">
+                  <Select value={user.currentRole || undefined} onValueChange={handleSwitchRole}>
+                    <SelectTrigger className="w-[200px] bg-steel-800 text-white border-steel-600">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(user.roles || []).map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r.charAt(0).toUpperCase() + r.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Notifications */}
                 <NotificationBell
                   notifications={notifications}
@@ -88,10 +115,10 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/login">
+                <Link to="/login">
                   <Button variant="ghost" className="text-white hover:bg-steel-700">Login</Button>
                 </Link>
-                <Link href="/signup">
+                <Link to="/signup">
                   <Button className="bg-red-accent hover:bg-red-accent-hover">Sign Up</Button>
                 </Link>
               </>

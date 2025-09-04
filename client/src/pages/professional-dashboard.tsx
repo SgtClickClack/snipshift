@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
 import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List } from "lucide-react";
@@ -22,7 +22,7 @@ import GoogleMapView from "@/components/job-feed/google-map-view";
 import LocationSearch from "@/components/job-feed/location-search";
 
 export default function ProfessionalDashboard() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<'overview' | 'jobs' | 'applications' | 'profile'>('overview');
   const [showFilters, setShowFilters] = useState(false);
@@ -187,7 +187,7 @@ export default function ProfessionalDashboard() {
     averageRating: 4.8
   };
 
-  if (!user || user.role !== "professional") {
+  if (!user || user.currentRole !== "professional") {
     return <div>Access denied</div>;
   }
 

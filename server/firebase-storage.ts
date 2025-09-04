@@ -6,7 +6,8 @@ import {
   InsertUser, 
   InsertJob, 
   InsertSocialPost, 
-  InsertApplication 
+  InsertApplication, 
+  UserRole 
 } from "@shared/firebase-schema";
 import { randomUUID } from "crypto";
 
@@ -73,13 +74,16 @@ export class MemFirebaseStorage implements IFirebaseStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
+    const roles: UserRole[] = Array.isArray((insertUser as any).roles) ? (insertUser as any).roles as UserRole[] : [];
+    const currentRole: UserRole | null = (insertUser as any).currentRole ?? (roles.length ? roles[0] : null);
     const user: User = {
-      ...insertUser,
+      ...(insertUser as any),
       id,
-      role: insertUser.role as "hub" | "professional" | "brand" | "trainer",
+      roles,
+      currentRole,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    } as User;
     this.users.set(id, user);
     return user;
   }

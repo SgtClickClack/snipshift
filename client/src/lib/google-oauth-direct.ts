@@ -4,15 +4,19 @@ export class GoogleOAuthDirect {
   private redirectUri: string;
   
   constructor() {
-    this.clientId = '399353553154-e3kro6qoef592mirjdivl6cpbfjg8rq7.apps.googleusercontent.com';
-    // Use the redirect URI that matches your Google Console configuration
-    this.redirectUri = `${window.location.origin}/__/auth/handler`;
-    console.log('🔧 OAuth setup:', { clientId: this.clientId, redirectUri: this.redirectUri });
+    // Prefer env-driven configuration; fallback to known local client id for zero-config dev
+    this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '399353553154-e3kro6qoef592mirjdivl6cpbfjg8rq7.apps.googleusercontent.com';
+    // Default to /oauth/callback which is registered in routing
+    const defaultRedirect = `${window.location.origin}/oauth/callback`;
+    this.redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || defaultRedirect;
+    if (import.meta.env.MODE !== 'production') {
+      console.log('OAuth setup', { clientId: this.clientId, redirectUri: this.redirectUri });
+    }
   }
 
   public signIn(): void {
     const authUrl = this.buildAuthUrl();
-    console.log('🔧 Redirecting to Google OAuth:', authUrl);
+    if (import.meta.env.MODE !== 'production') console.log('🔧 Redirecting to Google OAuth:', authUrl);
     window.location.href = authUrl;
   }
 

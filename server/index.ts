@@ -2,9 +2,10 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerFirebaseRoutes } from "./firebase-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupProductionMiddleware, setupHealthCheck } from "./middleware/production";
-import { apiLimiter, securityHeaders, sanitizeInput } from "./middleware/security";
+import { apiLimiter, securityHeaders, sanitizeInput, requireCsrfHeader } from "./middleware/security";
 import helmet from "helmet";
 import compression from "compression";
+import session from "express-session";
 
 const app = express();
 
@@ -19,6 +20,20 @@ app.use(sanitizeInput);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Session middleware (basic, in-memory for MVP)
+app.use(session({
+  name: 'sid',
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 24 * 7
+  }
+}));
 
 // Setup production middleware
 if (process.env.NODE_ENV === 'production') {
@@ -61,6 +76,7 @@ app.use((req, res, next) => {
 (async () => {
   // Apply rate limiting to API routes
   app.use('/api', apiLimiter);
+  app.use('/api', requireCsrfHeader);
   
   const server = await registerFirebaseRoutes(app);
 

@@ -16,11 +16,18 @@ export default defineConfig({
         ]
       : []),
   ],
+  define: {
+    'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(process.env.VITE_GOOGLE_CLIENT_ID || ''),
+    'import.meta.env.VITE_GOOGLE_REDIRECT_URI': JSON.stringify(process.env.VITE_GOOGLE_REDIRECT_URI || ''),
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      // Ensure a single React instance is used
+      react: path.resolve(import.meta.dirname, 'node_modules/react'),
+      'react-dom': path.resolve(import.meta.dirname, 'node_modules/react-dom'),
     },
   },
   root: path.resolve(import.meta.dirname, "client"),

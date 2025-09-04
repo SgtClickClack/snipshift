@@ -23,13 +23,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.createUser(userData);
-      console.log('✅ User created in backend:', { id: user.id, email: user.email, role: user.role }); // Debug log
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ User created in backend:', { id: user.id, email: user.email, roles: (user as any).roles, currentRole: (user as any).currentRole });
+      }
       res.json({ 
         id: user.id, 
         email: user.email, 
-        role: user.role,
-        displayName: user.displayName,
-        profileImage: user.profileImage
+        roles: (user as any).roles || [],
+        currentRole: (user as any).currentRole || null,
+        displayName: (user as any).displayName,
+        profileImage: (user as any).profileImage
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -59,12 +62,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // establish session
+      (req as any).session.user = { id: user.id, roles: (user as any).roles, currentRole: (user as any).currentRole, email: user.email };
+
       res.json({ 
         id: user.id, 
         email: user.email, 
-        role: user.role,
-        displayName: user.displayName,
-        profileImage: user.profileImage
+        roles: (user as any).roles || [],
+        currentRole: (user as any).currentRole || null,
+        displayName: (user as any).displayName,
+        profileImage: (user as any).profileImage
       });
     } catch (error) {
       res.status(400).json({ error: "Invalid login data" });
@@ -340,13 +347,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user role
-  app.patch("/api/users/:id/role", async (req, res) => {
+  // Update user currentRole (requires logged-in user and self-update)
+  app.patch("/api/users/:id/current-role", async (req, res) => {
     try {
       const { id } = req.params;
       const { role } = req.body;
+      const sessionUser = (req as any).session?.user;
+      if (!sessionUser) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      if (sessionUser.id !== id) {
+        return res.status(403).json({ error: "Cannot modify another user's role" });
+      }
       
-      if (!role || !["hub", "professional", "brand", "trainer"].includes(role)) {
+      if (!role || !["hub", "professional", "brand", "trainer", "client"].includes(role)) {
         return res.status(400).json({ error: "Invalid role" });
       }
       
@@ -354,17 +368,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      
-      const updatedUser = await storage.updateUser(id, { role });
+
+      // Ensure role exists in user's roles list before setting currentRole
+      const roles = (user as any).roles || [];
+      if (!roles.includes(role)) {
+        roles.push(role);
+      }
+      const updatedUser = await storage.updateUser(id, { roles, currentRole: role } as any);
       res.json({ 
         id: updatedUser.id, 
         email: updatedUser.email, 
-        role: updatedUser.role,
-        displayName: updatedUser.displayName,
-        profileImage: updatedUser.profileImage
+        roles: (updatedUser as any).roles,
+        currentRole: (updatedUser as any).currentRole,
+        displayName: (updatedUser as any).displayName,
+        profileImage: (updatedUser as any).profileImage
       });
     } catch (error) {
-      res.status(400).json({ error: "Failed to update user role" });
+      res.status(400).json({ error: "Failed to update currentRole" });
+    }
+  });
+
+  // Add or remove roles from user profile
+  app.patch("/api/users/:id/roles", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action, role } = req.body as { action: "add" | "remove"; role: string };
+      const sessionUser = (req as any).session?.user;
+      if (!sessionUser) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      if (sessionUser.id !== id) {
+        return res.status(403).json({ error: "Cannot modify another user's roles" });
+      }
+      if (!role || !["hub", "professional", "brand", "trainer", "client"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let roles: string[] = (user as any).roles || [];
+      let currentRole: string | null = (user as any).currentRole ?? null;
+
+      if (action === "add") {
+        if (!roles.includes(role)) roles = [...roles, role];
+        if (!currentRole) currentRole = role;
+      } else if (action === "remove") {
+        roles = roles.filter(r => r !== role);
+        if (currentRole === role) currentRole = roles[0] ?? null;
+      } else {
+        return res.status(400).json({ error: "Invalid action" });
+      }
+
+      const updatedUser = await storage.updateUser(id, { roles, currentRole } as any);
+      res.json({ 
+        id: updatedUser.id, 
+        email: updatedUser.email, 
+        roles: (updatedUser as any).roles,
+        currentRole: (updatedUser as any).currentRole,
+        displayName: (updatedUser as any).displayName,
+        profileImage: (updatedUser as any).profileImage
+      });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update roles" });
     }
   });
 

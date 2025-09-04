@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { X, Image, Link as LinkIcon } from "lucide-react";
 
 interface SocialPostingModalProps {
@@ -17,7 +17,7 @@ interface SocialPostingModalProps {
 }
 
 export default function SocialPostingModal({ isOpen, onClose }: SocialPostingModalProps) {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   

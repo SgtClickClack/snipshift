@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, MessageCircle, Calendar, DollarSign, Users } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import { format } from "date-fns";
@@ -15,7 +15,7 @@ import { format } from "date-fns";
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile';
 
 export default function HubDashboard() {
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<ActiveView>('overview');
@@ -117,7 +117,7 @@ export default function HubDashboard() {
     monthlyHires: 8
   };
 
-  if (!user || user.role !== "hub") {
+  if (!user || user.currentRole !== "hub") {
     return <div>Access denied</div>;
   }
 

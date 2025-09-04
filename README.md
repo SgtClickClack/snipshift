@@ -43,7 +43,7 @@ Snipshift is a production-ready B2B2C marketplace that connects four user types:
 - Google Maps API key
 
 ### Environment Variables
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory (do not commit it):
 
 ```bash
 # Firebase Configuration
@@ -53,11 +53,14 @@ VITE_FIREBASE_PROJECT_ID=your_project_id
 
 # Google Services
 VITE_GOOGLE_CLIENT_ID=your_google_client_id
+VITE_GOOGLE_REDIRECT_URI=https://www.snipshift.com.au/oauth/callback
 VITE_GOOGLE_MAPS_API_KEY=your_maps_api_key
 
 # Production Settings
 NODE_ENV=production
 PORT=3000
+SESSION_SECRET=replace_with_strong_secret
+DATABASE_URL=postgres://user:pass@host:5432/dbname
 ```
 
 ### Development Setup
@@ -85,7 +88,7 @@ npm run build
 
 2. **Preview Production Build**
 ```bash
-npm run preview
+npm run start
 ```
 
 3. **Deploy Production Package**
@@ -167,6 +170,31 @@ npm run start        # Start production server
 - **Feedback System**: Real-time user feedback collection
 - **Mobile Responsive**: Optimized for all device sizes
 - **Professional Design**: Black & Chrome design system
+
+## 🧩 Multi-Role User Model
+
+Snipshift supports multiple roles per user, enabling seamless switching between role-specific dashboards and features.
+
+- Stored as: `roles: ("hub" | "professional" | "brand" | "trainer" | "client")[]`
+- Active context: `currentRole: "hub" | "professional" | "brand" | "trainer" | "client" | null`
+
+### Role Management Endpoints
+
+- `PATCH /api/users/:id/roles` — Add/remove roles
+  - Body: `{ action: "add" | "remove", role: "hub" | "professional" | "brand" | "trainer" | "client" }`
+- `PATCH /api/users/:id/current-role` — Set the active role
+  - Body: `{ role: "hub" | "professional" | "brand" | "trainer" | "client" }`
+
+### Client APIs
+
+- Auth Context exposes:
+  - `setCurrentRole(role)` — updates local state and can be paired with the API call
+  - `hasRole(role)` — convenience checker
+
+### UI
+
+- Role Selection: multi-select onboarding at `role-selection`
+- Role Switcher: navbar dropdown to switch `currentRole` at any time
 
 ## 🌐 Deployment
 

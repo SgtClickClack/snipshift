@@ -12,15 +12,17 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Debug Firebase config
-console.log('🔧 Firebase Config:', {
-  apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
-  authDomain: firebaseConfig.authDomain || 'Missing',
-  projectId: firebaseConfig.projectId || 'Missing',
-  storageBucket: firebaseConfig.storageBucket || 'Missing',
-  messagingSenderId: firebaseConfig.messagingSenderId || 'Missing',
-  appId: firebaseConfig.appId ? 'Set' : 'Missing',
-});
+// Debug Firebase config (dev only)
+if (import.meta.env.MODE !== 'production') {
+  console.log('🔧 Firebase Config:', {
+    apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+    authDomain: firebaseConfig.authDomain || 'Missing',
+    projectId: firebaseConfig.projectId || 'Missing',
+    storageBucket: firebaseConfig.storageBucket || 'Missing',
+    messagingSenderId: firebaseConfig.messagingSenderId || 'Missing',
+    appId: firebaseConfig.appId ? 'Set' : 'Missing',
+  });
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

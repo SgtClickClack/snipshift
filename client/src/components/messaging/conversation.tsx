@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { messagingService } from '@/lib/messaging';
-import { authService } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Message } from '@shared/firebase-schema';
 import { Send, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
@@ -22,7 +22,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!chatId) return;
