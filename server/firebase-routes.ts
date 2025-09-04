@@ -38,10 +38,26 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
   app.post("/api/login", async (req, res) => {
     try {
       const loginData = loginSchema.parse(req.body);
-      
       const user = await firebaseStorage.getUserByEmail(loginData.email);
-      if (!user || user.password !== loginData.password) {
+      if (!user) {
         return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Support Google OAuth login: accept googleId instead of password
+      if (loginData.googleId) {
+        const storedGoogleId = (user as any).googleId;
+        if (storedGoogleId && storedGoogleId !== loginData.googleId) {
+          return res.status(401).json({ message: "Invalid Google authentication" });
+        }
+        // Optionally attach googleId if missing (first Google login)
+        if (!storedGoogleId) {
+          await firebaseStorage.updateUser(user.id, { googleId: loginData.googleId, provider: 'google' } as any);
+        }
+      } else {
+        // Password-based auth path
+        if (!user.password || user.password !== loginData.password) {
+          return res.status(401).json({ message: "Invalid email or password" });
+        }
       }
 
       // establish session
@@ -57,6 +73,79 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Login error:', error);
       res.status(400).json({ message: "Invalid login data" });
+    }
+  });
+
+  // User role management (requires active session)
+  app.patch("/api/users/:id/current-role", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.body as { role?: string };
+      const sessionUser = (req as any).session?.user;
+      if (!sessionUser) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      if (sessionUser.id !== id) {
+        return res.status(403).json({ error: "Cannot modify another user's role" });
+      }
+      if (!role || !["hub", "professional", "brand", "trainer", "client"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+
+      const user = await firebaseStorage.getUser(id);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      const roles = ([...(user as any).roles || []] as string[]);
+      if (!roles.includes(role)) roles.push(role);
+      const updatedUser = await firebaseStorage.updateUser(id, { roles, currentRole: role } as any);
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        roles: (updatedUser as any).roles,
+        currentRole: (updatedUser as any).currentRole,
+        displayName: (updatedUser as any).displayName
+      });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update currentRole" });
+    }
+  });
+
+  app.patch("/api/users/:id/roles", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action, role } = req.body as { action: "add" | "remove"; role: string };
+      const sessionUser = (req as any).session?.user;
+      if (!sessionUser) return res.status(401).json({ error: "Authentication required" });
+      if (sessionUser.id !== id) return res.status(403).json({ error: "Cannot modify another user's roles" });
+      if (!role || !["hub", "professional", "brand", "trainer", "client"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+
+      const user = await firebaseStorage.getUser(id);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      let roles: string[] = (user as any).roles || [];
+      let currentRole: string | null = (user as any).currentRole ?? null;
+      if (action === "add") {
+        if (!roles.includes(role)) roles = [...roles, role];
+        if (!currentRole) currentRole = role;
+      } else if (action === "remove") {
+        roles = roles.filter(r => r !== role);
+        if (currentRole === role) currentRole = roles[0] ?? null;
+      } else {
+        return res.status(400).json({ error: "Invalid action" });
+      }
+
+      const updatedUser = await firebaseStorage.updateUser(id, { roles, currentRole } as any);
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        roles: (updatedUser as any).roles,
+        currentRole: (updatedUser as any).currentRole,
+        displayName: (updatedUser as any).displayName
+      });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update roles" });
     }
   });
 
