@@ -8,7 +8,24 @@ describe('Auth redirects', () => {
       // Force role-selection by logging in with a neutral/client role first
       body: { email: 'e2e@snipshift.test', role: 'client' },
       failOnStatusCode: false,
-    }).its('status').should('eq', 200);
+    }).then((res) => {
+      expect(res.status).to.eq(200)
+      const user = res.body || {}
+      // Seed client-side auth so AuthGuard recognizes authenticated state
+      cy.window().then((win) => {
+        win.localStorage.setItem('currentUser', JSON.stringify({
+          id: user.id || 'e2e-user',
+          email: user.email || 'e2e@snipshift.test',
+          password: 'password123',
+          roles: Array.isArray(user.roles) ? user.roles : ['client'],
+          currentRole: user.currentRole ?? 'client',
+          provider: 'email',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          displayName: user.displayName || 'E2E User'
+        }))
+      })
+    });
 
     // Go to role selection
     cy.visit('/home');
