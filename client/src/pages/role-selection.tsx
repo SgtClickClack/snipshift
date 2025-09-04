@@ -13,7 +13,7 @@ export default function RoleSelectionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand" | "trainer">>([]);
   const { toast } = useToast();
-  const { user, setCurrentRole } = useAuth();
+  const { user, setCurrentRole, updateRoles } = useAuth();
   
   const toggleRole = (role: "hub" | "professional" | "brand" | "trainer") => {
     setSelectedRoles((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
@@ -27,6 +27,8 @@ export default function RoleSelectionPage() {
       for (const role of selectedRoles) {
         await apiRequest("PATCH", `/api/users/${user.id}/roles`, { action: "add", role });
       }
+      // update client-side roles so the navbar switcher sees them immediately
+      updateRoles(Array.from(new Set([...(user.roles || []), ...selectedRoles])) as any);
       // Set currentRole to the first selected role
       const primaryRole = selectedRoles[0];
       await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: primaryRole });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Scissors, MessageCircle, LogOut, User } from "lucide-react";
@@ -10,9 +10,11 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { Chat } from "@shared/firebase-schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { getDashboardRoute } from "@/lib/roles";
 
 export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
+  const navigate = useNavigate();
   const [showMessaging, setShowMessaging] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userChats, setUserChats] = useState<Chat[]>([]);
@@ -59,10 +61,21 @@ export default function Navbar() {
     <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to={user ? "/home" : "/"} className="flex items-center">
+          <button
+            type="button"
+            className="flex items-center"
+            onClick={() => {
+              if (!user) {
+                navigate("/");
+                return;
+              }
+              const target = user.currentRole ? getDashboardRoute(user.currentRole) : "/role-selection";
+              navigate(target);
+            }}
+          >
             <Scissors className="text-red-accent text-2xl mr-3" />
             <span className="text-xl font-bold text-white">Snipshift</span>
-          </Link>
+          </button>
           
           <div className="flex items-center space-x-4">
             {user ? (

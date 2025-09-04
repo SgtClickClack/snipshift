@@ -22,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   setCurrentRole: (role: NonNullable<User['currentRole']>) => void;
   hasRole: (role: NonNullable<User['currentRole']>) => boolean;
+  updateRoles: (roles: User['roles']) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -79,6 +80,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const updateRoles = (roles: User['roles']) => {
+    if (user) {
+      const uniqueRoles = Array.from(new Set(roles));
+      const updatedUser = { ...user, roles: uniqueRoles, updatedAt: new Date() };
+      setUser(updatedUser);
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    }
+  };
+
   const hasRole = (role: NonNullable<User['currentRole']>) => {
     return !!user && Array.isArray(user.roles) && user.roles.includes(role);
   };
@@ -91,6 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     setCurrentRole,
     hasRole,
+    updateRoles,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
