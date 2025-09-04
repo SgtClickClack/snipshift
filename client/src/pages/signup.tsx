@@ -38,7 +38,8 @@ export default function SignupPage() {
           id: `google_${Date.now()}`,
           email: 'demo@snipshift.com.au',
           password: '',
-          role: 'client' as const, // Universal default role
+          roles: ['client' as const],
+          currentRole: 'client' as const,
           provider: 'google' as const,
           googleId: `google_${Date.now()}`,
           createdAt: new Date(),
@@ -104,7 +105,8 @@ export default function SignupPage() {
         id: userData.id,
         email: userData.email,
         password: '', // Don't store password in frontend
-        role: userData.role, // Should be 'client' from backend
+        roles: Array.isArray(userData.roles) ? userData.roles : ['client'],
+        currentRole: userData.currentRole ?? 'client',
         provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),

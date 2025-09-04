@@ -177,7 +177,6 @@ export class MemFirebaseStorage implements IFirebaseStorage {
       ...insertPost,
       id,
       likes: 0,
-      views: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     };

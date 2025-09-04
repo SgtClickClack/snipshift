@@ -87,7 +87,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
   };
 
   const portfolioCategories = profile.portfolio 
-    ? [...new Set(profile.portfolio.map(item => item.category).filter(Boolean))]
+    ? Array.from(new Set(profile.portfolio.map(item => item.category).filter((c): c is string => !!c)))
     : [];
 
   const filteredPortfolio = selectedPortfolioCategory

@@ -63,7 +63,7 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
     id: profileUserId!,
     displayName: currentUser?.displayName || "John Doe",
     email: currentUser?.email || "john@example.com",
-    role: (currentUser?.role as any) || "professional",
+    role: (currentUser?.currentRole as any) || "professional",
     bio: "Passionate barber with 8+ years of experience specializing in modern cuts and classic styles. Always learning new techniques and staying up-to-date with the latest trends.",
     profileImageURL: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
     bannerImageURL: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&h=300&fit=crop",

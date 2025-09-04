@@ -24,6 +24,7 @@ export function FeedbackWidget() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +39,6 @@ export function FeedbackWidget() {
 
     setIsSubmitting(true);
 
-    const { user } = useAuth();
     const feedbackData: FeedbackData = {
       type: feedbackType,
       message: message.trim(),
@@ -46,7 +46,7 @@ export function FeedbackWidget() {
       userAgent: navigator.userAgent,
       timestamp: new Date().toISOString(),
       userId: user?.id,
-      userRole: user?.role
+      userRole: user?.currentRole || undefined
     };
 
     try {
