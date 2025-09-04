@@ -184,7 +184,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Avg Engagement</p>
-                <p className="text-2xl font-bold">{data.summary.avgEngagement}%</p>
+                <p className="text-2xl font-bold">{'avgEngagement' in data.summary ? data.summary.avgEngagement : 0}%</p>
               </div>
               <Heart className="h-8 w-8 text-red-500" />
             </div>
@@ -196,7 +196,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Conversion Rate</p>
-                <p className="text-2xl font-bold">{data.summary.conversionRate}%</p>
+                <p className="text-2xl font-bold">{'conversionRate' in data.summary ? data.summary.conversionRate : 0}%</p>
               </div>
               <TrendingUp className="h-8 w-8 text-purple-500" />
             </div>
@@ -210,7 +210,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data.postEngagement}>
+            <LineChart data={'postEngagement' in data ? data.postEngagement : []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -233,7 +233,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Students</p>
-                <p className="text-2xl font-bold">{data.summary.totalStudents}</p>
+                <p className="text-2xl font-bold">{'totalStudents' in data.summary ? data.summary.totalStudents : 0}</p>
               </div>
               <Users className="h-8 w-8 text-blue-500" />
             </div>
@@ -245,7 +245,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">${data.summary.totalRevenue}</p>
+                <p className="text-2xl font-bold">${'totalRevenue' in data.summary ? data.summary.totalRevenue : 0}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
@@ -257,7 +257,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Avg Rating</p>
-                <p className="text-2xl font-bold">{data.summary.avgRating}/5</p>
+                <p className="text-2xl font-bold">{'avgRating' in data.summary ? data.summary.avgRating : 0}/5</p>
               </div>
               <Heart className="h-8 w-8 text-yellow-500" />
             </div>
@@ -269,7 +269,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Completion Rate</p>
-                <p className="text-2xl font-bold">{data.summary.completionRate}%</p>
+                <p className="text-2xl font-bold">{'completionRate' in data.summary ? data.summary.completionRate : 0}%</p>
               </div>
               <TrendingUp className="h-8 w-8 text-purple-500" />
             </div>
@@ -283,7 +283,7 @@ export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data.contentViews}>
+            <BarChart data={'contentViews' in data ? data.contentViews : []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />

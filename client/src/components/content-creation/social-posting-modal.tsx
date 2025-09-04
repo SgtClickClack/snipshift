@@ -95,7 +95,7 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
       content: formData.content,
       postType: formData.postType,
       authorId: user?.id,
-      authorRole: user?.role,
+      authorRole: user?.currentRole,
       imageUrl: formData.imageUrl || undefined,
       linkUrl: formData.linkUrl || undefined,
       eventDate: formData.eventDate && formData.eventTime 
