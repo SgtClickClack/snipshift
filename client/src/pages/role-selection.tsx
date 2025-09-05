@@ -27,12 +27,12 @@ export default function RoleSelectionPage() {
       for (const role of selectedRoles) {
         await apiRequest("PATCH", `/api/users/${user.id}/roles`, { action: "add", role });
       }
-      // update client-side roles so the navbar switcher sees them immediately
-      updateRoles(Array.from(new Set([...(user.roles || []), ...selectedRoles])) as any);
-      // Set currentRole to the first selected role
+      // Set currentRole to the first selected role and sync from server response
       const primaryRole = selectedRoles[0];
-      await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: primaryRole });
-      setCurrentRole(primaryRole);
+      const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role", { role: primaryRole });
+      const updated = await res.json();
+      updateRoles(updated.roles || []);
+      setCurrentRole(updated.currentRole);
 
       toast({
         title: "Roles updated",
