@@ -6,6 +6,7 @@ import { apiLimiter, securityHeaders, sanitizeInput, requireCsrfHeader } from ".
 import helmet from "helmet";
 import compression from "compression";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 
 const app = express();
 
@@ -22,8 +23,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Session middleware (basic, in-memory for MVP)
+const PgSession = connectPg(session);
 app.use(session({
   name: 'sid',
+  store: new PgSession({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
+  }),
   secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
   saveUninitialized: false,

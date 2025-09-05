@@ -30,25 +30,11 @@ export function OAuthCallback() {
         console.log('✅ Authorization code received:', code.substring(0, 20) + '...');
         console.log('✅ State received:', state);
         
-        // MVP: register (idempotent) and then login to establish a server session
-        const googleId = `google_${Date.now()}`;
-        const email = 'user@gmail.com'; // In production, exchange the code for user info
-        try {
-          await apiRequest('POST', '/api/register', {
-            email,
-            password: '',
-            provider: 'google',
-            googleId,
-          });
-        } catch (e: any) {
-          // Ignore 400 (already exists)
-          if (!(`${e.message}` || '').startsWith('400')) {
-            throw e;
-          }
-        }
-
-        // Login to create session cookie
-        const res = await apiRequest('POST', '/api/login', { email, googleId });
+        // Exchange code with server, which sets session and returns user
+        const res = await apiRequest('POST', '/api/oauth/google/exchange', {
+          code,
+          redirectUri: window.location.origin + '/oauth/callback',
+        });
         const userData = await res.json();
         console.log('🔧 Logging in user:', userData);
         login({
@@ -58,7 +44,7 @@ export function OAuthCallback() {
           roles: userData.roles || [],
           currentRole: userData.currentRole || null,
           provider: 'google',
-          googleId,
+          googleId: userData.googleId || undefined,
           createdAt: new Date(),
           updatedAt: new Date(),
           displayName: userData.displayName || 'Google User',

@@ -7,6 +7,7 @@ import {
   insertJobSchema, 
   insertSocialPostSchema 
 } from "@shared/firebase-schema";
+import fetch from 'node-fetch';
 import nodemailer from "nodemailer";
 
 export async function registerFirebaseRoutes(app: Express): Promise<Server> {
@@ -73,6 +74,72 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Login error:', error);
       res.status(400).json({ message: "Invalid login data" });
+    }
+  });
+
+  // OAuth code exchange (Google)
+  app.post('/api/oauth/google/exchange', async (req, res) => {
+    try {
+      const { code, redirectUri } = req.body || {};
+      const clientId = process.env.VITE_GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      if (!code || !redirectUri || !clientId || !clientSecret) {
+        return res.status(400).json({ message: 'Missing OAuth parameters' });
+      }
+
+      // Exchange code for tokens
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }),
+      } as any);
+      if (!tokenRes.ok) {
+        const text = await tokenRes.text();
+        return res.status(400).json({ message: 'Token exchange failed', detail: text });
+      }
+      const tokenJson = await tokenRes.json();
+      const idToken = tokenJson.id_token as string | undefined;
+      if (!idToken) return res.status(400).json({ message: 'No id_token in response' });
+
+      // Verify ID token (lightweight: decode without signature check as MVP)
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString('utf8')) as any;
+      const email = payload?.email as string | undefined;
+      const sub = payload?.sub as string | undefined;
+      if (!email || !sub) return res.status(400).json({ message: 'Invalid id_token payload' });
+
+      // Upsert user
+      let user = await firebaseStorage.getUserByEmail(email);
+      if (!user) {
+        user = await firebaseStorage.createUser({
+          email,
+          password: null,
+          provider: 'google' as any,
+          googleId: sub,
+          roles: [],
+          currentRole: null,
+        } as any);
+      } else if ((user as any).googleId !== sub) {
+        user = await firebaseStorage.updateUser(user.id, { googleId: sub, provider: 'google' } as any);
+      }
+
+      // create session
+      (req as any).session.user = { id: user.id, roles: (user as any).roles, currentRole: (user as any).currentRole, email: user.email };
+      res.json({
+        id: user.id,
+        email: user.email,
+        roles: (user as any).roles || [],
+        currentRole: (user as any).currentRole || null,
+        displayName: (user as any).displayName,
+      });
+    } catch (err) {
+      console.error('OAuth exchange error', err);
+      res.status(500).json({ message: 'OAuth exchange failed' });
     }
   });
 
