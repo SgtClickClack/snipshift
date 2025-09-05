@@ -22,13 +22,7 @@ export function setupProductionMiddleware(app: express.Application) {
     next();
   });
 
-  // Compression
-  app.use((req, res, next) => {
-    if (req.url.match(/\.(js|css|html|json|xml|txt|ico|svg)$/)) {
-      res.setHeader('Content-Encoding', 'gzip');
-    }
-    next();
-  });
+  // Compression is handled by express compression middleware in server/index.ts
 
   // Cache static assets
   app.use((req, res, next) => {
