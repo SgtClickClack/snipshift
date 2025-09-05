@@ -29,7 +29,7 @@ export default function RoleSelectionPage() {
       }
       // Set currentRole to the first selected role and sync from server response
       const primaryRole = selectedRoles[0];
-      const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role", { role: primaryRole });
+      const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: primaryRole });
       const updated = await res.json();
       updateRoles(updated.roles || []);
       setCurrentRole(updated.currentRole);
