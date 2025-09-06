@@ -196,15 +196,15 @@ export default function ProfessionalDashboard() {
       {/* Dashboard Header */}
       <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <div>
               <h1 className="text-2xl font-bold text-steel-900">Professional Dashboard</h1>
               <p className="text-steel-600">{user?.displayName || user?.email}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
               <Button 
                 onClick={() => setShowMessaging(true)}
-                className="bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                className="w-full md:w-auto bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
                 data-testid="button-open-messages"
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
@@ -212,7 +212,7 @@ export default function ProfessionalDashboard() {
               </Button>
               <Button 
                 onClick={() => setActiveView('jobs')}
-                className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full md:w-auto bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 data-testid="button-browse-jobs"
               >
                 <Search className="mr-2 h-4 w-4" />
@@ -224,6 +224,7 @@ export default function ProfessionalDashboard() {
                   setViewMode('map');
                 }}
                 variant="outline"
+                className="w-full md:w-auto"
                 data-testid="button-travel-mode"
               >
                 <Map className="mr-2 h-4 w-4" />
@@ -233,10 +234,10 @@ export default function ProfessionalDashboard() {
           </div>
           
           {/* Navigation Tabs */}
-          <div className="flex space-x-8 mt-4">
+          <div className="flex gap-4 mt-4 overflow-x-auto">
             <button
               onClick={() => setActiveView('overview')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'overview'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -247,7 +248,7 @@ export default function ProfessionalDashboard() {
             </button>
             <button
               onClick={() => setActiveView('jobs')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'jobs'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -258,7 +259,7 @@ export default function ProfessionalDashboard() {
             </button>
             <button
               onClick={() => setActiveView('applications')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'applications'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -269,7 +270,7 @@ export default function ProfessionalDashboard() {
             </button>
             <button
               onClick={() => setActiveView('profile')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'profile'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -299,14 +300,14 @@ export default function ProfessionalDashboard() {
                   <CardContent>
                     <div className="space-y-4">
                       {jobs.slice(0, 3).map((job) => (
-                        <div key={job.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                          <div>
+                        <div key={job.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-muted/50 rounded-lg">
+                          <div className="min-w-0">
                             <h4 className="font-medium">{job.title}</h4>
                             <p className="text-sm text-muted-foreground">
                               ${job.payRate}/{job.payType} • {job.location.city}, {job.location.state}
                             </p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             <StartChatButton
                               otherUserId={job.hubId}
                               otherUserName="Hub Owner"
