@@ -1,0 +1,73 @@
+
+Console logo
+Search (/) for resources, docs, products and more
+
+Google Auth Platform
+/
+/
+Client ID for Web application
+Name
+Web client 1
+The name of your OAuth 2.0 client. This name is only used to identify the client in the console and will not be shown to end users.
+The domains of the URIs you add below will be automatically added to your OAuth consent screen as authorised domains .
+
+Authorised JavaScript origins
+For use with requests from a browser
+URIs 1 
+https://www.snipshift.com.au
+URIs 2 
+https://snipshift.com.au
+URIs 3 
+https://x1ywkgc76h.picard.replit.dev
+URIs 4 
+http://localhost:5000
+URIs 5 
+http://127.0.0.1:5000
+URIs 6 
+https://b9c30b6a-0bb9-491f-8312-4ea2996a1e40-00-1z5x1ywkgc76h.picard.replit.dev
+
+Authorised redirect URIs
+For use with requests from a web server
+URIs 1 
+https://www.snipshift.com.au/oauth/callback
+URIs 2 
+https://snipshift.com.au/oauth/callback
+URIs 3 
+https://x1ywkgc76h.picard.replit.dev/oauth/callback
+URIs 4 
+http://localhost:5000/oauth/callback
+URIs 5 
+https://b9c30b6a-0bb9-491f-8312-4ea2996a1e40-00-1z5x1ywkgc76h.picard.replit.dev/oauth/callback
+URIs 6 
+https://snipshift.com.au/__/auth/handler
+Note: It may take five minutes to a few hours for settings to take effect
+
+Additional information
+Client ID
+399353553154-e3kro6qoef592mirjdivl6cpbfjg8rq7.apps.googleusercontent.com
+Creation date
+31 August 2025 at 08:58:49 GMT+10
+Last used date
+2 September 2025 (Note: this data could be delayed by a day or more.)
+Inactive OAuth clients are subject to deletion if they are not used for six months. You will be notified of deletion due to inactivity, and can restore clients up to 30 days after deletion. Learn more 
+Client secrets
+If you are in the process of changing client secrets, you can manually rotate them without downtime. Learn more 
+Having more than one secret increases security risks. Disable and delete the old secret once you have verified that your app is using the new secret instead of the old secret.
+Viewing and downloading client secrets is no longer available. If you have lost the secret below, please add a new one. Remember to store client secrets securely and treat them with extreme care. Secrets should never be checked into code repositories.
+Client secret
+****Dn3l
+Creation date
+31 August 2025 at 08:58:49 GMT+10
+Status
+Enabled
+Client secretNEW
+****5ZaS
+Creation date
+5 September 2025 at 23:25:23 GMT+10
+Status
+Enabled
+
+SimplyCodes
+
+
+OAuth client saved
