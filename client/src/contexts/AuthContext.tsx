@@ -35,6 +35,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  async function syncUserFromServer(userId: string) {
+    try {
+      const res = await fetch(`/api/users/${userId}`, { credentials: 'include' });
+      if (!res.ok) return;
+      const serverUser = await res.json();
+      setUser((prev) => {
+        if (!prev) return prev;
+        const merged: User = {
+          ...prev,
+          roles: Array.from(new Set([...(prev.roles || []), ...((serverUser.roles as string[]) || [])])) as any,
+          currentRole: (serverUser.currentRole ?? prev.currentRole) as any,
+          displayName: serverUser.displayName ?? prev.displayName,
+          updatedAt: new Date(),
+        };
+        localStorage.setItem('currentUser', JSON.stringify(merged));
+        return merged;
+      });
+    } catch {}
+  }
+
   // Initialize auth state from localStorage on mount
   useEffect(() => {
     try {
@@ -45,6 +65,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         parsedUser.createdAt = new Date(parsedUser.createdAt);
         parsedUser.updatedAt = new Date(parsedUser.updatedAt);
         setUser(parsedUser);
+        // Refresh roles/currentRole from server to avoid stale local cache
+        if (parsedUser?.id) {
+          syncUserFromServer(parsedUser.id);
+        }
       }
     } catch (error) {
       console.error('Error loading user from localStorage:', error);
@@ -57,6 +81,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem('currentUser', JSON.stringify(userData));
+    // Background sync to pull latest roles/currentRole from server after login
+    if (userData?.id) {
+      syncUserFromServer(userData.id);
+    }
   };
 
   const logout = async () => {

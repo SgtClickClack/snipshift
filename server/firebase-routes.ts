@@ -151,6 +151,22 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
   });
 
   // User role management (requires active session)
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await firebaseStorage.getUser(id);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.json({
+        id: user.id,
+        email: user.email,
+        roles: (user as any).roles || [],
+        currentRole: (user as any).currentRole || null,
+        displayName: (user as any).displayName,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
   app.patch("/api/users/:id/current-role", async (req, res) => {
     try {
       const { id } = req.params;
