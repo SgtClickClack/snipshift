@@ -10,7 +10,7 @@ export default function LandingPage() {
       <div 
         className="relative text-white py-20 overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(rgba(168, 85, 247, 0.05), rgba(30, 64, 175, 0.05)), url('/hero-background.png')`,
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('/hero-background.png')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
