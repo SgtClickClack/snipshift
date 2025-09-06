@@ -28,3 +28,25 @@ Refactored the authentication and user model to support multiple roles per user,
 - Add role-aware permissions and feature gating (e.g., hide actions by role) with tests.
 
 Expected completion time: 6 hours
+
+### 2025-09-06: E2E Stabilization (Playwright/Cypress), A11y, and Mobile Fixes
+
+Implemented fixes to stabilize Playwright and Cypress E2E suites and address accessibility assertions:
+
+**Core Components Implemented:**
+- Default `type="button"` in shared `Button` to satisfy a11y checks
+- Added `data-testid` hooks for onboarding and design system tests
+- Ensured demo quick logins set `roles` and `currentRole` for direct dashboard access
+- Added `data-testid="heading-dashboard"` on all dashboards
+- Fixed design-system showcase structure and added `data-testid="design-showcase"`
+
+**File Paths:**
+- `client/src/components/ui/button.tsx`
+- `client/src/components/demo/design-system-showcase.tsx`
+- `client/src/pages/landing.tsx`, `client/src/pages/signup.tsx`, `client/src/pages/demo.tsx`
+- `client/src/pages/hub-dashboard.tsx`, `client/src/pages/professional-dashboard.tsx`, `client/src/pages/trainer-dashboard.tsx`, `client/src/pages/brand-dashboard.tsx`
+
+**Next Priority Task:**
+- Monitor CI run; if any tests still fail, add/adjust selectors and refine guards to align expected URLs.
+
+Expected completion time: 2 hours
