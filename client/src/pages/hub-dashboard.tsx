@@ -126,16 +126,16 @@ export default function HubDashboard() {
       {/* Dashboard Header */}
       <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <div>
               <h1 className="text-2xl font-bold text-steel-900">Hub Dashboard</h1>
               <p className="text-steel-600">{user.displayName || user.email}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
               <TutorialTrigger />
               <Button 
                 onClick={() => handleQuickAction('open-messages')}
-                className="bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                className="w-full md:w-auto bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
                 data-testid="button-open-messages"
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
@@ -143,7 +143,7 @@ export default function HubDashboard() {
               </Button>
               <Button 
                 onClick={() => handleQuickAction('post-job')}
-                className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full md:w-auto bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 data-testid="button-post-job"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -153,10 +153,10 @@ export default function HubDashboard() {
           </div>
           
           {/* Navigation Tabs */}
-          <div className="flex space-x-8 mt-4">
+          <div className="flex gap-4 mt-4 overflow-x-auto">
             <button
               onClick={() => setActiveView('overview')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap pb-3 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'overview'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
@@ -167,7 +167,7 @@ export default function HubDashboard() {
             </button>
             <button
               onClick={() => setActiveView('jobs')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap pb-3 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'jobs'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
@@ -178,7 +178,7 @@ export default function HubDashboard() {
             </button>
             <button
               onClick={() => setActiveView('applications')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap pb-3 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'applications'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
@@ -189,7 +189,7 @@ export default function HubDashboard() {
             </button>
             <button
               onClick={() => setActiveView('profile')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap pb-3 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'profile'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
