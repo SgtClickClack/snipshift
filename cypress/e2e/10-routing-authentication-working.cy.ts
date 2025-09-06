@@ -5,6 +5,11 @@ describe('Snipshift: E2E Routing and Authentication System (Working)', () => {
   })
 
   describe('Sign-Up and Role Selection Flow', () => {
+    it('renders mobile without horizontal overflow', () => {
+      cy.viewport('iphone-6')
+      cy.visit('/professional-dashboard')
+      cy.assertNoHorizontalOverflow()
+    })
     it('should complete new user sign-up and role selection flow', () => {
       // Start from landing page
       cy.visit('/')

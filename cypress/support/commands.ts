@@ -84,3 +84,13 @@ Cypress.Commands.add('verifyAuthenticated', (shouldBeAuthenticated: boolean) => 
     cy.get('[data-testid="button-login"]').should('be.visible')
   }
 })
+
+// Assert page has no horizontal overflow beyond viewport width
+Cypress.Commands.add('assertNoHorizontalOverflow', () => {
+  cy.window().then((win) => {
+    const doc = win.document.documentElement
+    const scrollWidth = doc.scrollWidth
+    const viewportWidth = win.innerWidth
+    expect(scrollWidth, 'no horizontal overflow').to.be.lte(viewportWidth + 1)
+  })
+})
