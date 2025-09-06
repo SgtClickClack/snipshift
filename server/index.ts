@@ -7,6 +7,7 @@ import helmet from "helmet";
 import compression from "compression";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import createMemoryStore from "memorystore";
 
 const app = express();
 
@@ -22,14 +23,19 @@ app.use(sanitizeInput);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Session middleware (basic, in-memory for MVP)
+// Session middleware
+const useMemoryStore = !process.env.DATABASE_URL || process.env.E2E_TEST === '1' || process.env.NODE_ENV === 'test';
 const PgSession = connectPg(session);
+const MemoryStore = createMemoryStore(session);
+
 app.use(session({
   name: 'sid',
-  store: new PgSession({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-  }),
+  store: useMemoryStore
+    ? new MemoryStore({ checkPeriod: 1000 * 60 * 30 })
+    : new PgSession({
+        conString: process.env.DATABASE_URL,
+        createTableIfMissing: true,
+      }),
   secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
   saveUninitialized: false,
@@ -90,8 +96,9 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // importantly only setup vite in development and after
