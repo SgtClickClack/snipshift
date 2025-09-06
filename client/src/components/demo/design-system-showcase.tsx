@@ -24,16 +24,16 @@ export const DesignSystemShowcase = () => {
         <section className="card-chrome space-y-6">
           <h2 className="heading-chrome text-2xl">Chrome Button System</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="button-grid">
-            <Button variant="chrome" size="lg" data-testid="chrome-button">
+            <Button variant="chrome" size="lg" data-testid="chrome-button" type="button">
               Chrome Button
             </Button>
-            <Button variant="accent" size="lg" data-testid="accent-button">
+            <Button variant="accent" size="lg" data-testid="accent-button" type="button">
               Accent Red
             </Button>
-            <Button variant="charcoal" size="lg" data-testid="charcoal-button">
+            <Button variant="charcoal" size="lg" data-testid="charcoal-button" type="button">
               Charcoal
             </Button>
-            <Button variant="steel" size="lg" data-testid="steel-button">
+            <Button variant="steel" size="lg" data-testid="steel-button" type="button">
               Steel
             </Button>
           </div>

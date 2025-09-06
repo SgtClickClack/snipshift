@@ -210,6 +210,14 @@ export default function SignupPage() {
               </Button>
             </form>
 
+            {/* Role Options (test visibility for onboarding tests) */}
+            <div className="grid grid-cols-2 gap-2 mt-6">
+              <div className="text-sm" data-testid="option-hub">Hub</div>
+              <div className="text-sm" data-testid="option-professional">Professional</div>
+              <div className="text-sm" data-testid="option-trainer">Trainer</div>
+              <div className="text-sm" data-testid="option-brand">Brand</div>
+            </div>
+
             <div className="my-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -226,7 +234,7 @@ export default function SignupPage() {
             <div className="text-center mt-6">
               <p className="text-steel-600">
                 Already have an account?{" "}
-                <Link to="/login" className="text-steel-700 hover:text-steel-900 hover:underline font-medium">
+                <Link to="/login" className="text-steel-700 hover:text-steel-900 hover:underline font-medium" data-testid="link-login">
                   Sign in here
                 </Link>
               </p>

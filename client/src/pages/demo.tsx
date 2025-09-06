@@ -90,7 +90,9 @@ export default function DemoPage() {
     };
 
     const user = demoUsers[role];
-    login(user as any);
+    // Ensure roles/currentRole are set so ProtectedRoute allows access
+    const userWithRoles = { ...(user as any), roles: [role], currentRole: role };
+    login(userWithRoles as any);
     navigate(getDashboardRoute(role));
   };
 
