@@ -7,7 +7,11 @@ import {
   insertJobSchema, 
   insertSocialPostSchema 
 } from "@shared/firebase-schema";
+// @ts-expect-error types not installed for node-fetch in ESM
 import fetch from 'node-fetch';
+// Minimal type shim for node-fetch on ESM without types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FetchInit = any;
 import nodemailer from "nodemailer";
 
 export async function registerFirebaseRoutes(app: Express): Promise<Server> {
@@ -95,13 +99,13 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          code,
-          client_id: clientId,
-          client_secret: clientSecret,
-          redirect_uri: redirectUri,
+          code: String(code),
+          client_id: String(clientId),
+          client_secret: String(clientSecret),
+          redirect_uri: String(redirectUri),
           grant_type: 'authorization_code',
-        }),
-      } as any);
+        }) as unknown as any,
+      } as FetchInit);
       if (!tokenRes.ok) {
         const text = await tokenRes.text();
         return res.status(400).json({ message: 'Token exchange failed', detail: text });

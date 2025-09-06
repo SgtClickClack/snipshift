@@ -16,7 +16,7 @@ interface PortfolioItem {
   category?: string;
 }
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   displayName: string;
   email: string;
@@ -40,7 +40,7 @@ interface UserProfile {
     imageURL?: string;
   }>;
   operatingHours?: {
-    [key: string]: { open: string; close: string };
+    [key: string]: { open?: string; close?: string };
   };
 }
 

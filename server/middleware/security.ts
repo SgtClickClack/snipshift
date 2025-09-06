@@ -110,12 +110,12 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   
   // Content Security Policy - Enhanced for Google OAuth
   res.setHeader('Content-Security-Policy', 
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://accounts.google.com https://replit.com; " +
+    "default-src 'self' https://www.gstatic.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://maps.googleapis.com https://accounts.google.com https://replit.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https:; " +
-    "connect-src 'self' https://maps.googleapis.com https://accounts.google.com; " +
+    "connect-src 'self' https://www.gstatic.com https://apis.google.com https://maps.googleapis.com https://accounts.google.com; " +
     "frame-src 'self' https://accounts.google.com; " +
     "child-src 'self' https://accounts.google.com;"
   );

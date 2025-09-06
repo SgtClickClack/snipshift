@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, Edit } from "lucide-react";
 import PublicProfile from "./public-profile";
-import ProfileEditForm from "./profile-edit-form";
+import ProfileEditForm, { type UserProfile as EditableUserProfile } from "./profile-edit-form";
 
 interface UserProfile {
   id: string;
@@ -105,7 +105,7 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (profileData: UserProfile) => {
+    mutationFn: async (profileData: EditableUserProfile) => {
       const response = await apiRequest("PUT", `/api/profiles/${profileUserId}`, profileData);
       return response.json();
     },
@@ -126,7 +126,7 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
     },
   });
 
-  const handleSaveProfile = (updatedProfile: UserProfile) => {
+  const handleSaveProfile = (updatedProfile: EditableUserProfile) => {
     updateProfileMutation.mutate(updatedProfile);
   };
 

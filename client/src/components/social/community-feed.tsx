@@ -130,7 +130,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         authorId: user?.id || "",
         authorName: user?.displayName || "Anonymous",
         authorRole: (user?.currentRole as any) || "professional",
-        authorAvatar: user?.profileImageURL,
+        authorAvatar: (user as any)?.profileImage || (user as any)?.profileImageURL,
         content: postData.content,
         images: postData.images,
         postType: "social",
@@ -307,7 +307,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         <PostCreationForm
           userRole={user.currentRole as any}
           userName={user.displayName || user.email}
-          userAvatar={user.profileImageURL}
+          userAvatar={(user as any).profileImage || (user as any).profileImageURL}
           onSubmit={handleCreatePost}
           isSubmitting={createPostMutation.isPending}
         />

@@ -65,13 +65,20 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
     }
   };
 
+  const normalizeTimestamp = (timestamp: any): Date => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate();
+    }
+    return timestamp instanceof Date ? timestamp : new Date(timestamp);
+  };
+
   const formatMessageTime = (timestamp: any) => {
-    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = normalizeTimestamp(timestamp);
     return format(date, 'HH:mm');
   };
 
   const formatMessageDate = (timestamp: any) => {
-    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = normalizeTimestamp(timestamp);
     const now = new Date();
     const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     
@@ -83,8 +90,8 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
   const shouldShowDateSeparator = (currentMessage: Message, previousMessage?: Message) => {
     if (!previousMessage) return true;
     
-    const currentDate = currentMessage.timestamp?.toDate ? currentMessage.timestamp.toDate() : new Date(currentMessage.timestamp);
-    const previousDate = previousMessage.timestamp?.toDate ? previousMessage.timestamp.toDate() : new Date(previousMessage.timestamp);
+    const currentDate = normalizeTimestamp((currentMessage as any).timestamp);
+    const previousDate = normalizeTimestamp((previousMessage as any).timestamp);
     
     return currentDate.toDateString() !== previousDate.toDateString();
   };
