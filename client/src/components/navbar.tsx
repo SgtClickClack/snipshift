@@ -52,6 +52,9 @@ export default function Navbar() {
     try {
       await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role });
       setCurrentRole(role as any);
+      // Navigate to the selected role's dashboard immediately
+      const target = getDashboardRoute(role as any);
+      navigate(target);
     } catch (e) {
       // ignore for now
     }
@@ -87,7 +90,7 @@ export default function Navbar() {
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(user.roles || []).map((r) => (
+                      {(["professional","hub","brand","trainer"] as const).map((r) => (
                         <SelectItem key={r} value={r}>
                           {r.charAt(0).toUpperCase() + r.slice(1)}
                         </SelectItem>
