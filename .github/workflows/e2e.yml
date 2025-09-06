@@ -1,3 +1,57 @@
+name: E2E (Cypress)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  cypress-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm ci --no-fund --no-audit
+
+      - name: Build client
+        run: |
+          npm run build
+
+      - name: Run Cypress E2E (mobile overflow + routing)
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm start
+          wait-on: 'http://localhost:5000'
+          browser: chrome
+          spec: cypress/e2e/10-routing-authentication-working.cy.ts
+        env:
+          E2E_TEST: 1
+          E2E_TEST_KEY: test
+          VITE_E2E: 1
+
+      - name: Upload screenshots (if any)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+
+      - name: Upload videos (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
+
 name: E2E Tests
 
 on:
