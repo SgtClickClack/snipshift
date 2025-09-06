@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Search, Handshake, Store, UserCheck, Scissors } from "lucide-react";
+import heroBackgroundImg from "@/assets/hero-background.png";
 
 export default function LandingPage() {
   return (
@@ -10,7 +11,7 @@ export default function LandingPage() {
       <div 
         className="relative text-white py-20 overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('/hero-background.png')`,
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url(${heroBackgroundImg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
