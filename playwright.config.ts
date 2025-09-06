@@ -28,6 +28,12 @@ export default defineConfig({
   webServer: {
     command: 'npm start',
     url: 'http://localhost:5000',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+    env: {
+      E2E_TEST: '1',
+      E2E_TEST_KEY: 'test',
+      VITE_E2E: '1',
+    },
   },
 });
