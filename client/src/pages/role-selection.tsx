@@ -31,7 +31,9 @@ export default function RoleSelectionPage() {
       const primaryRole = selectedRoles[0];
       const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: primaryRole });
       const updated = await res.json();
-      updateRoles(updated.roles || []);
+      // Ensure local roles include everything just selected, even if server returns only currentRole
+      const mergedRoles = Array.from(new Set([...(updated.roles || []), ...selectedRoles]));
+      updateRoles(mergedRoles as any);
       setCurrentRole(updated.currentRole);
 
       toast({

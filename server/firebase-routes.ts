@@ -85,12 +85,12 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
   app.post('/api/oauth/google/exchange', async (req, res) => {
     try {
       const { code, redirectUri } = req.body || {};
-      const clientId = process.env.VITE_GOOGLE_CLIENT_ID;
+      const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
       const missing: string[] = [];
       if (!code) missing.push('code');
       if (!redirectUri) missing.push('redirectUri');
-      if (!clientId) missing.push('VITE_GOOGLE_CLIENT_ID');
+      if (!clientId) missing.push('GOOGLE_CLIENT_ID');
       if (!clientSecret) missing.push('GOOGLE_CLIENT_SECRET');
       if (missing.length) return res.status(400).json({ message: 'Missing OAuth parameters', missing });
 
