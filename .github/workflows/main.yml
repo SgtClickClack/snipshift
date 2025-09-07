@@ -45,13 +45,17 @@ jobs:
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
     
-    - name: Free port 5000 (if any)
+    - name: Free port 5000
       run: npx kill-port 5000 || true
 
     - name: Start server
       run: |
         npm start &
-        npx wait-on http://localhost:5000 --timeout 120000
+        npx wait-on http://localhost:5000 --timeout 180000
+        echo "Active listeners on port 5000:" || true
+        netstat -tulpn | grep 5000 || true
+        echo "Server HEAD response:" || true
+        curl -I http://localhost:5000 || true
         echo "Server HTTP status:" && curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5000 || true
       env:
         VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -67,7 +71,7 @@ jobs:
         VITE_E2E: '1'
     
     - name: Run Playwright E2E tests (CI config)
-      run: DEBUG=pw:webserver,pw:api npx playwright test -c playwright.ci.config.ts
+      run: DEBUG=pw:webserver,pw:api npx playwright test -c playwright.ci.config.ts --reporter=line --workers=1
       env:
         VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
         VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
@@ -75,6 +79,7 @@ jobs:
         VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        PW_NO_SERVER: '1'
         E2E_TEST: '1'
         E2E_TEST_KEY: 'test'
         VITE_E2E: '1'
