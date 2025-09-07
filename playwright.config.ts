@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const disableWebServerInCI = !!process.env.CI;
+const disableWebServerInCI = !!process.env.CI || process.env.PW_NO_SERVER === '1';
 
 export default defineConfig({
   testDir: './tests',

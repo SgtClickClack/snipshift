@@ -50,13 +50,13 @@ jobs:
 
     - name: Start server
       run: |
-        echo "Starting server with timeout..."
-        timeout 60s npm run start:ci &
+        echo "Starting server..."
+        npm run start:ci &
         SERVER_PID=$!
         echo "Server PID: $SERVER_PID"
         
-        echo "Waiting for server to be ready..."
-        npx wait-on http://localhost:5000 --timeout 30000
+        echo "Waiting for server to be ready (up to 180s)..."
+        npx wait-on http://localhost:5000 --timeout 180000 || (echo "wait-on failed" && ps aux | grep node && exit 1)
         
         echo "Checking server status..."
         echo "Active listeners on port 5000:" || true
