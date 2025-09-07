@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const useExistingOnly = process.env.PW_NO_SERVER === '1';
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -25,15 +27,17 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  webServer: {
-    command: 'npm start',
-    url: 'http://localhost:5000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-    env: {
-      E2E_TEST: '1',
-      E2E_TEST_KEY: 'test',
-      VITE_E2E: '1',
-    },
-  },
+  webServer: useExistingOnly
+    ? undefined
+    : {
+        command: 'npm start',
+        url: 'http://localhost:5000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 180000,
+        env: {
+          E2E_TEST: '1',
+          E2E_TEST_KEY: 'test',
+          VITE_E2E: '1',
+        },
+      },
 });
