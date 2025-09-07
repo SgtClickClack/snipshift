@@ -51,7 +51,8 @@ jobs:
     - name: Start server
       run: |
         npm start &
-        npx wait-on http://localhost:5000 --timeout 60000
+        npx wait-on http://localhost:5000 --timeout 120000
+        echo "Server HTTP status:" && curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5000 || true
       env:
         VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
         VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
@@ -66,7 +67,7 @@ jobs:
         VITE_E2E: '1'
     
     - name: Run Playwright E2E tests
-      run: npx playwright test
+      run: DEBUG=pw:webserver,pw:api npx playwright test --reporter=line --workers=1
       env:
         VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
         VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
