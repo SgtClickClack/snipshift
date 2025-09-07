@@ -32,7 +32,7 @@ export default defineConfig({
     : {
         command: 'npm start',
         url: 'http://localhost:5000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true,
         timeout: 180000,
         env: {
           E2E_TEST: '1',
