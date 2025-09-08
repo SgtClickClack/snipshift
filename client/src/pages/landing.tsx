@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Search, Handshake, Store, UserCheck, Scissors } from "lucide-react";
-import heroBackgroundImg from "@/assets/hero-background.png";
+import heroBackgroundImg from "@/assets/hero-background.jpg";
 
 export default function LandingPage() {
   return (
