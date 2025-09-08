@@ -30,8 +30,9 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           browser: chrome
-          start: npm start
-          wait-on: 'http://localhost:5000'
+          start: npm run start:ci
+          wait-on: 'http://localhost:5000/health'
+          wait-on-timeout: 180
           spec: cypress/e2e/10-routing-authentication-working.cy.ts
         env:
           E2E_TEST: '1'
