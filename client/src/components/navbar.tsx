@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Scissors, MessageCircle, LogOut, User } from "lucide-react";
+import { Scissors, MessageCircle, LogOut, User, Menu, X, ChevronDown } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import NotificationBell from "./notifications/notification-bell";
@@ -17,6 +17,7 @@ export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
   const navigate = useNavigate();
   const [showMessaging, setShowMessaging] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userChats, setUserChats] = useState<Chat[]>([]);
   const persistedRoles: string[] = (() => {
@@ -104,8 +105,20 @@ export default function Navbar() {
             <Scissors className="text-red-accent text-2xl mr-3" />
             <span className="text-xl font-bold text-white">Snipshift</span>
           </button>
-          
+
           <div className="flex items-center space-x-4">
+            {/* Mobile menu button */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="md:hidden text-white hover:bg-steel-700"
+                aria-label="Toggle mobile menu"
+              >
+                {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            )}
             {user ? (
               <>
                 {/* Role Switcher */}
@@ -179,7 +192,107 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-      
+
+      {/* Mobile Menu Panel */}
+      {user && showMobileMenu && (
+        <div className="md:hidden bg-steel-800 border-t border-steel-600">
+          <div className="px-4 py-4 space-y-4">
+            {/* User Info */}
+            <div className="flex items-center space-x-3 pb-3 border-b border-steel-600">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
+                <AvatarFallback className="bg-red-accent text-white">
+                  {user.displayName?.split(' ').map(n => n[0]).join('') || user.email.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-white font-medium">{user.displayName || user.email}</p>
+                <p className="text-chrome-light text-sm capitalize">{user.currentRole}</p>
+              </div>
+            </div>
+
+            {/* Role Switcher */}
+            <div className="space-y-2">
+              <p className="text-chrome-light text-sm font-medium">Switch Role</p>
+              <div className="grid grid-cols-1 gap-2">
+                {(["professional","hub","brand","trainer"] as const)
+                  .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
+                  .map((role) => (
+                    <Button
+                      key={role}
+                      variant={user.currentRole === role ? "accent" : "ghost"}
+                      size="sm"
+                      onClick={() => {
+                        handleSwitchRole(role);
+                        setShowMobileMenu(false);
+                      }}
+                      className={`w-full justify-start text-left ${
+                        user.currentRole === role
+                          ? "bg-red-accent text-white"
+                          : "text-white hover:bg-steel-700"
+                      }`}
+                    >
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </Button>
+                  ))}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="space-y-2">
+              <p className="text-chrome-light text-sm font-medium">Quick Actions</p>
+              <div className="grid grid-cols-1 gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowMessaging(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full justify-start text-left text-white hover:bg-steel-700"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Messages
+                  {unreadCount > 0 && (
+                    <span className="ml-auto bg-red-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full justify-start text-left text-white hover:bg-steel-700"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </Button>
+              </div>
+            </div>
+
+            {/* Logout */}
+            <div className="pt-3 border-t border-steel-600">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  handleLogout();
+                  setShowMobileMenu(false);
+                }}
+                className="w-full justify-start text-left text-white hover:bg-red-700 hover:text-white"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MessagingModal
         isOpen={showMessaging}
         onClose={() => setShowMessaging(false)}
