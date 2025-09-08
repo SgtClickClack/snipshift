@@ -10,7 +10,8 @@ import {
   Users,
   Briefcase,
   GraduationCap,
-  Building2
+  Building2,
+  Flag
 } from "lucide-react";
 
 export default function Footer() {
@@ -149,6 +150,16 @@ export default function Footer() {
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/anti-spam-policy" 
+                  className="text-neutral-400 hover:text-white transition-colors flex items-center"
+                  data-testid="link-anti-spam-policy"
+                >
+                  <Flag className="w-4 h-4 mr-2" />
+                  Anti-Spam Policy
                 </Link>
               </li>
               <li>

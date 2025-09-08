@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertUserSchema, loginSchema, insertShiftSchema } from "@shared/firebase-schema";
 import { stripeConnectRoutes } from "./stripe-connect";
 import { purchaseRoutes } from "./purchase-tracking";
+import { moderationRoutes } from "./content-moderation";
 import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -717,6 +718,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/purchases/user/:userId', purchaseRoutes.getUserPurchases);
   app.get('/api/purchases/trainer/:trainerId', purchaseRoutes.getTrainerEarnings);
   app.post('/api/purchases/test-data', purchaseRoutes.createTestData);
+
+  // Content moderation routes
+  app.get('/api/moderation/pending-posts', moderationRoutes.getPendingPosts);
+  app.post('/api/moderation/approve/:postId', moderationRoutes.approvePost);
+  app.post('/api/moderation/reject/:postId', moderationRoutes.rejectPost);
+  app.get('/api/moderation/stats', moderationRoutes.getModerationStats);
+  app.post('/api/moderation/submit', moderationRoutes.submitContent);
+  app.post('/api/moderation/test-data', moderationRoutes.createTestData);
 
   const httpServer = createServer(app);
   return httpServer;

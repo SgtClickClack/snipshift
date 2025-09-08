@@ -42,6 +42,7 @@ const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-
 // Legal pages - lazy load for compliance
 const TermsOfService = lazy(() => import('@/pages/terms-of-service'));
 const PrivacyPolicy = lazy(() => import('@/pages/privacy-policy'));
+const AntiSpamPolicy = lazy(() => import('@/pages/anti-spam-policy'));
 
 function AppRoutes() {
   return (
@@ -197,6 +198,12 @@ function AppRoutes() {
         <Route path="/privacy-policy" element={
           <Suspense fallback={<PageLoadingFallback />}>
             <PrivacyPolicy />
+          </Suspense>
+        } />
+
+        <Route path="/anti-spam-policy" element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AntiSpamPolicy />
           </Suspense>
         } />
 
