@@ -20,6 +20,7 @@ import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/adva
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
 import GoogleMapView from "@/components/job-feed/google-map-view";
 import LocationSearch from "@/components/job-feed/location-search";
+import InsuranceSupport from "@/components/insurance/insurance-support";
 
 // Australian city to state mapping for interstate filtering
 const CITY_TO_STATE: Record<string, string> = {
@@ -196,6 +197,22 @@ export default function ProfessionalDashboard() {
       case 'my-applications':
         setActiveView('applications');
         break;
+      case 'get-insurance':
+        setActiveView('overview');
+        // Scroll to insurance section
+        if (typeof document !== 'undefined') {
+          setTimeout(() => {
+            const insuranceSection = document.querySelector('[data-testid="insurance-support"]');
+            if (insuranceSection) {
+              insuranceSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+        }
+        toast({
+          title: "Insurance Support",
+          description: "Review your professional insurance options below",
+        });
+        break;
       case 'view-calendar':
         // Navigate to calendar view
         break;
@@ -316,6 +333,9 @@ export default function ProfessionalDashboard() {
         {activeView === 'overview' && (
           <div className="space-y-6">
             <DashboardStats role="professional" stats={stats} />
+            
+            {/* Insurance Support Section */}
+            <InsuranceSupport userRole="professional" currentState={jobFilters.currentState} />
             
             <div className="grid lg:grid-cols-3 gap-6">
               <QuickActions role="professional" onAction={handleQuickAction} />

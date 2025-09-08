@@ -8,7 +8,8 @@ import {
   TrendingUp,
   Users,
   FileText,
-  Settings
+  Settings,
+  Shield
 } from 'lucide-react';
 
 interface QuickActionsProps {
@@ -63,17 +64,18 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
             className: 'bg-primary hover:bg-primary/90'
           },
           {
+            title: 'Get Insured',
+            description: 'Professional insurance quotes',
+            icon: Shield,
+            action: 'get-insurance',
+            variant: 'default' as const,
+            className: 'bg-blue-600 hover:bg-blue-700'
+          },
+          {
             title: 'My Applications',
             description: 'Track your applications',
             icon: FileText,
             action: 'my-applications',
-            variant: 'outline' as const
-          },
-          {
-            title: 'Calendar',
-            description: 'View upcoming bookings',
-            icon: Calendar,
-            action: 'view-calendar',
             variant: 'outline' as const
           },
           {
