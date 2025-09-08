@@ -94,17 +94,6 @@ jobs:
         E2E_TEST_KEY: 'test'
         VITE_E2E: '1'
     
-    - name: Install Cypress dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libnss3-dev libxss1 libasound2-dev libxtst6 xauth xvfb
-    
-    - name: Run Cypress E2E tests
-      continue-on-error: true
-      run: npx cypress run --headless
-      env:
-        CYPRESS_baseUrl: http://localhost:5000
-    
     - name: Upload Playwright test results
       uses: actions/upload-artifact@v4
       if: failure()
@@ -113,21 +102,7 @@ jobs:
         path: playwright-report/
         retention-days: 30
     
-    - name: Upload Cypress screenshots
-      uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: cypress-screenshots-${{ matrix.node-version }}
-        path: cypress/screenshots/
-        retention-days: 30
-    
-    - name: Upload Cypress videos
-      uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: cypress-videos-${{ matrix.node-version }}
-        path: cypress/videos/
-        retention-days: 30
+
 
   security-scan:
     runs-on: ubuntu-latest
