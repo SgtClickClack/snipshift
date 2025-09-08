@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Scissors, MessageCircle, LogOut, User } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import MessagingModal from "@/components/messaging/messaging-modal";
@@ -123,7 +124,17 @@ export default function Navbar() {
                     )}
                   </Button>
                 </div>
-                <span className="text-chrome-light">{user.email}</span>
+                {/* User Profile */}
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
+                    <AvatarFallback className="bg-red-accent text-white text-sm">
+                      {user.displayName?.split(' ').map(n => n[0]).join('') || user.email.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-chrome-light text-sm hidden md:block">{user.displayName || user.email}</span>
+                </div>
+                
                 <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
