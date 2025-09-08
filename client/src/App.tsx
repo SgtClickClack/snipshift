@@ -39,6 +39,10 @@ const ContentModeration = lazy(() => import('@/components/admin/content-moderati
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
 
+// Legal pages - lazy load for compliance
+const TermsOfService = lazy(() => import('@/pages/terms-of-service'));
+const PrivacyPolicy = lazy(() => import('@/pages/privacy-policy'));
+
 function AppRoutes() {
   return (
     <div className="min-h-screen bg-background">
@@ -181,6 +185,19 @@ function AppRoutes() {
               </div>
             </Suspense>
           </ProtectedRoute>
+        } />
+
+        {/* Legal pages - public access */}
+        <Route path="/terms-of-service" element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <TermsOfService />
+          </Suspense>
+        } />
+
+        <Route path="/privacy-policy" element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PrivacyPolicy />
+          </Suspense>
         } />
 
         {/* Catch all - 404 */}
