@@ -44,6 +44,9 @@ const TermsOfService = lazy(() => import('@/pages/terms-of-service'));
 const PrivacyPolicy = lazy(() => import('@/pages/privacy-policy'));
 const AntiSpamPolicy = lazy(() => import('@/pages/anti-spam-policy'));
 
+// Expo demo page - lazy load for performance
+const ExpoDemo = lazy(() => import('@/pages/expo-demo'));
+
 function AppRoutes() {
   return (
     <div className="min-h-screen bg-background">
@@ -204,6 +207,13 @@ function AppRoutes() {
         <Route path="/anti-spam-policy" element={
           <Suspense fallback={<PageLoadingFallback />}>
             <AntiSpamPolicy />
+          </Suspense>
+        } />
+
+        {/* Expo demo - public access for demonstrations */}
+        <Route path="/expo-demo" element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ExpoDemo />
           </Suspense>
         } />
 
