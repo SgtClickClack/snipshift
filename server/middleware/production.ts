@@ -15,8 +15,16 @@ export function setupProductionMiddleware(app: express.Application) {
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     
     // HTTPS redirect (if not already handled by reverse proxy)
-    if (req.header('x-forwarded-proto') !== 'https' && process.env.NODE_ENV === 'production') {
-      res.redirect(`https://${req.header('host')}${req.url}`);
+    // Skip redirect in CI/E2E and when running on localhost to avoid HTTPS handshake errors
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isCi = process.env.CI === 'true' || process.env.CI === '1';
+    const isE2e = process.env.E2E_TEST === '1' || process.env.VITE_E2E === '1';
+    const hostHeader = req.header('host') || '';
+    const isLocalHost = hostHeader.startsWith('localhost') || hostHeader.startsWith('127.0.0.1') || hostHeader.startsWith('[::1]') || hostHeader.startsWith('::1');
+    const shouldRedirectToHttps = isProduction && !isCi && !isE2e && !isLocalHost && req.header('x-forwarded-proto') !== 'https';
+
+    if (shouldRedirectToHttps) {
+      res.redirect(`https://${hostHeader}${req.url}`);
       return;
     }
     next();
