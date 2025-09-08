@@ -243,9 +243,17 @@ export default function ProfessionalDashboard() {
       <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-steel-900" data-testid="heading-dashboard">Professional Dashboard</h1>
-              <p className="text-steel-600">{user?.displayName || user?.email}</p>
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={user?.profileImage} alt={user?.displayName || user?.email} />
+                <AvatarFallback className="bg-red-accent text-white text-lg">
+                  {user?.displayName?.split(' ').map(n => n[0]).join('') || user?.email?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-bold text-steel-900" data-testid="heading-dashboard">Professional Dashboard</h1>
+                <p className="text-steel-600">{user?.displayName || user?.email}</p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
               <Button 
