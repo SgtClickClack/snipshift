@@ -47,6 +47,9 @@ const AntiSpamPolicy = lazy(() => import('@/pages/anti-spam-policy'));
 // Expo demo page - lazy load for performance
 const ExpoDemo = lazy(() => import('@/pages/expo-demo'));
 
+// Payment tracking page - lazy load for performance  
+const PaymentTracking = lazy(() => import('@/pages/payment-tracking'));
+
 function AppRoutes() {
   return (
     <div className="min-h-screen bg-background">
@@ -177,6 +180,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <ProfilePage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/payment-tracking" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PaymentTracking />
             </Suspense>
           </ProtectedRoute>
         } />

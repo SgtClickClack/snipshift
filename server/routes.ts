@@ -5,6 +5,7 @@ import { insertUserSchema, loginSchema, insertShiftSchema } from "@shared/fireba
 import { stripeConnectRoutes } from "./stripe-connect";
 import { purchaseRoutes } from "./purchase-tracking";
 import { moderationRoutes } from "./content-moderation";
+import { offPlatformPaymentRoutes } from "./off-platform-payments";
 import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -726,6 +727,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/moderation/stats', moderationRoutes.getModerationStats);
   app.post('/api/moderation/submit', moderationRoutes.submitContent);
   app.post('/api/moderation/test-data', moderationRoutes.createTestData);
+
+  // Off-platform payment tracking routes
+  app.get('/api/payments/off-platform/:userId', offPlatformPaymentRoutes.getUserPayments);
+  app.post('/api/payments/off-platform', offPlatformPaymentRoutes.createPayment);
+  app.post('/api/payments/off-platform/:paymentId/verify', offPlatformPaymentRoutes.verifyPayment);
+  app.post('/api/payments/off-platform/:paymentId/dispute', offPlatformPaymentRoutes.disputePayment);
+  app.get('/api/payments/off-platform/stats/:userId', offPlatformPaymentRoutes.getPaymentStats);
+  app.get('/api/jobs/recent/:userId', offPlatformPaymentRoutes.getRecentJobs);
+  app.post('/api/payments/off-platform/test-data', offPlatformPaymentRoutes.createTestData);
 
   const httpServer = createServer(app);
   return httpServer;
