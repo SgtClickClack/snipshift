@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import OffPlatformTracker from "@/components/payments/off-platform-tracker";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Receipt, 
   CreditCard, 
@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 export default function PaymentTracking() {
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("tracker");
 
   if (!user) {
@@ -78,7 +78,7 @@ export default function PaymentTracking() {
           </TabsList>
 
           <TabsContent value="tracker" className="space-y-6">
-            <OffPlatformTracker userId={user.id} userRole={user.role} />
+            <OffPlatformTracker userId={user.id} userRole={user.currentRole || 'professional'} />
           </TabsContent>
 
           <TabsContent value="platform" className="space-y-6">
