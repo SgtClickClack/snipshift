@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, loginSchema, insertShiftSchema } from "@shared/firebase-schema";
 import { stripeConnectRoutes } from "./stripe-connect";
+import { purchaseRoutes } from "./purchase-tracking";
 import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -709,6 +710,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/stripe/account-status/:trainerId', stripeConnectRoutes.getAccountStatus);
   app.post('/api/stripe/create-payment-intent', stripeConnectRoutes.createPaymentIntent);
   app.post('/api/stripe/webhook', stripeConnectRoutes.handleWebhook);
+
+  // Purchase tracking and content access routes
+  app.post('/api/purchases/complete', purchaseRoutes.completePurchase);
+  app.get('/api/purchases/access/:userId/:contentId', purchaseRoutes.checkContentAccess);
+  app.get('/api/purchases/user/:userId', purchaseRoutes.getUserPurchases);
+  app.get('/api/purchases/trainer/:trainerId', purchaseRoutes.getTrainerEarnings);
+  app.post('/api/purchases/test-data', purchaseRoutes.createTestData);
 
   const httpServer = createServer(app);
   return httpServer;
