@@ -50,6 +50,9 @@ const ExpoDemo = lazy(() => import('@/pages/expo-demo'));
 // Payment tracking page - lazy load for performance  
 const PaymentTracking = lazy(() => import('@/pages/payment-tracking'));
 
+// Contractor compliance page - lazy load for performance
+const ContractorCompliance = lazy(() => import('@/pages/contractor-compliance'));
+
 function AppRoutes() {
   return (
     <div className="min-h-screen bg-background">
@@ -188,6 +191,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <PaymentTracking />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/contractor-compliance" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ContractorCompliance />
             </Suspense>
           </ProtectedRoute>
         } />
