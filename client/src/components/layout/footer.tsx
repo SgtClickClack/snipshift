@@ -118,12 +118,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="#insurance" 
+                <Link 
+                  to="/contractor-compliance" 
                   className="text-neutral-400 hover:text-white transition-colors"
                 >
                   Insurance Partners
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

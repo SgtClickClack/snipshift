@@ -96,6 +96,24 @@ export default function DemoPage() {
     navigate(getDashboardRoute(role));
   };
 
+  const quickLoginAdmin = () => {
+    const adminUser = {
+      id: "demo_admin_1",
+      email: "admin@snipshift.com",
+      password: null,
+      displayName: "Snipshift Admin",
+      role: "admin" as const,
+      provider: "email" as const,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profileComplete: true,
+    };
+
+    const userWithRoles = { ...(adminUser as any), roles: ["admin"], currentRole: "admin" };
+    login(userWithRoles as any);
+    navigate("/admin");
+  };
+
   const features = [
     {
       title: "Trainer Dashboard",
@@ -154,7 +172,7 @@ export default function DemoPage() {
       description: "Admin panel for reviewing and approving content",
       icon: Shield,
       color: "bg-red-100 text-red-800",
-      demo: () => navigate("/content-moderation"),
+      demo: () => quickLoginAdmin(),
       highlights: [
         "Post approval workflow",
         "Training content review",
