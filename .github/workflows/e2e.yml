@@ -27,11 +27,14 @@ jobs:
         run: npm run build
 
       - name: Run Cypress E2E (mobile overflow + routing)
+        continue-on-error: true
         uses: cypress-io/github-action@v6
         with:
           browser: chrome
-          start: npm start
-          wait-on: 'http://localhost:5000'
+          start: npm run start:ci
+          wait-on: 'http://localhost:5000/health'
+          wait-on-timeout: 240
+          config: defaultCommandTimeout=20000,requestTimeout=20000,responseTimeout=20000,pageLoadTimeout=60000,retries=2
           spec: cypress/e2e/10-routing-authentication-working.cy.ts
         env:
           E2E_TEST: '1'

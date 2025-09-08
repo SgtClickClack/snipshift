@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const useExistingOnly = process.env.PW_NO_SERVER === '1';
+const disableWebServerInCI = !!process.env.CI || process.env.PW_NO_SERVER === '1';
 
 export default defineConfig({
   testDir: './tests',
@@ -27,12 +27,13 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  webServer: useExistingOnly
+  // In CI we start the server in the workflow and reuse it; disable Playwright webServer there
+  webServer: disableWebServerInCI
     ? undefined
     : {
         command: 'npm start',
         url: 'http://localhost:5000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true,
         timeout: 180000,
         env: {
           E2E_TEST: '1',
