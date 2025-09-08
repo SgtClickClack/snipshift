@@ -96,7 +96,7 @@ export default function NotificationDropdown({
   };
 
   return (
-    <Card className="absolute top-12 right-0 w-96 max-w-[90vw] shadow-lg border z-50 bg-white">
+    <Card className="absolute top-12 right-0 sm:right-0 sm:left-auto left-1/2 transform -translate-x-1/2 sm:transform-none w-96 max-w-[90vw] shadow-lg border z-50 bg-white">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
