@@ -21,6 +21,22 @@ import JobApplicationModal from "@/components/job-feed/job-application-modal";
 import GoogleMapView from "@/components/job-feed/google-map-view";
 import LocationSearch from "@/components/job-feed/location-search";
 
+// Australian city to state mapping for interstate filtering
+const CITY_TO_STATE: Record<string, string> = {
+  "Sydney": "NSW", "Newcastle": "NSW", "Wollongong": "NSW", "Central Coast": "NSW",
+  "Melbourne": "VIC", "Geelong": "VIC", "Ballarat": "VIC", "Bendigo": "VIC",
+  "Brisbane": "QLD", "Gold Coast": "QLD", "Cairns": "QLD", "Townsville": "QLD", "Sunshine Coast": "QLD",
+  "Perth": "WA", "Fremantle": "WA", "Rockingham": "WA", "Mandurah": "WA",
+  "Adelaide": "SA", "Mount Gambier": "SA", "Murray Bridge": "SA", "Port Augusta": "SA",
+  "Hobart": "TAS", "Launceston": "TAS", "Devonport": "TAS",
+  "Darwin": "NT", "Alice Springs": "NT", "Katherine": "NT",
+  "Canberra": "ACT"
+};
+
+const getStateFromCity = (city: string): string => {
+  return CITY_TO_STATE[city] || "NSW"; // Default to NSW if city not found
+};
+
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -44,7 +60,9 @@ export default function ProfessionalDashboard() {
     payRateMax: 500,
     payType: "all",
     skillsRequired: [],
-    dateRange: "all"
+    dateRange: "all",
+    allowInterstate: false,
+    currentState: "NSW" // Default to NSW, will be updated based on user location
   });
 
   const { data: jobs = [], isLoading } = useQuery<Job[]>({
@@ -119,6 +137,14 @@ export default function ProfessionalDashboard() {
         }
       }
 
+      // Interstate filter - only show jobs from current state unless interstate is enabled
+      if (!jobFilters.allowInterstate) {
+        const jobState = job.location?.state || getStateFromCity(job.location?.city || "");
+        if (jobState !== jobFilters.currentState) {
+          return false;
+        }
+      }
+
       return true;
     });
   }, [jobs, jobFilters]);
@@ -136,7 +162,9 @@ export default function ProfessionalDashboard() {
       payRateMax: 500,
       payType: "all",
       skillsRequired: [],
-      dateRange: "all"
+      dateRange: "all",
+      allowInterstate: false,
+      currentState: "NSW"
     });
   };
 

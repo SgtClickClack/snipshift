@@ -16,6 +16,8 @@ export interface JobFilterOptions {
   payType: string;
   skillsRequired: string[];
   dateRange: string;
+  allowInterstate: boolean;
+  currentState: string;
 }
 
 interface AdvancedJobFiltersProps {
@@ -66,7 +68,8 @@ export default function AdvancedJobFilters({
            filters.payRateMax < 500 ||
            filters.payType !== 'all' ||
            filters.skillsRequired.length > 0 ||
-           filters.dateRange !== 'all';
+           filters.dateRange !== 'all' ||
+           filters.allowInterstate;
   };
 
   return (
@@ -136,6 +139,26 @@ export default function AdvancedJobFilters({
                 onChange={(e) => handleFilterChange('location', e.target.value)}
                 data-testid="input-location-filter"
               />
+            </div>
+
+            {/* Interstate Toggle */}
+            <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-600" />
+                <div>
+                  <Label className="text-sm font-medium text-blue-900">Interstate Jobs</Label>
+                  <p className="text-xs text-blue-700">Browse shifts in other states</p>
+                </div>
+              </div>
+              <Button
+                variant={filters.allowInterstate ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleFilterChange('allowInterstate', !filters.allowInterstate)}
+                data-testid="button-interstate-toggle"
+                className={filters.allowInterstate ? "bg-blue-600 hover:bg-blue-700" : "border-blue-300 text-blue-700 hover:bg-blue-100"}
+              >
+                {filters.allowInterstate ? "Enabled" : "Local Only"}
+              </Button>
             </div>
 
             {/* Pay Rate Filter */}

@@ -1,0 +1,56 @@
+Snipshift: Final MVP Feature & Compliance Rollout 🚀
+Objective:
+Complete the final features and compliance requirements to make the MVP fully production-ready and to make your business partner happy for the first run.
+
+1. Project Context & Vision
+App Name: Snipshift
+
+Current State: All core features (dashboards, shifts, social feed, multi-role auth) are functional. The focus is now on implementing the remaining features from the business plan to deliver a complete MVP for the Barber Expo.
+
+Goal: Finalize the platform's functionality and compliance, including payment systems, legal documentation, and final user role-specific features.
+
+2. Final Rollout Checklist
+Implement the following features to complete the MVP:
+
+Geolocation Map & Interstate Toggle:
+
+Implement a geolocation map on the shift feed that shows shifts within a specific radius.
+
+Add an "Interstate toggle" filter that allows barbers to browse shifts in other states. 
+
+
+User Role Enhancements:
+
+
+Barbers: Implement the Payments and Insurance Support features, including the Get Insured button that links to a partner quote form. 
+
+
+Brands/Trainers: Implement the Payments feature, including the Stripe Connect onboarding for trainers to sell content and a tracking system for off-platform payments. 
+
+Basic Stripe Escrow System:
+
+Implement a basic escrow system where shops pay via the Stripe Payment Element.
+
+The funds should be held in the platform's account for manual payouts to barbers post-shift. 
+
+Legal & Compliance:
+
+Create a draft for the Terms of service and Privacy policy documents.
+
+Implement a non-spam policy for the social feed and ensure compliance with Australian contractor regulations. 
+
+Beta & Expo Plan:
+
+Set up the demo mode for the Barber Expo. This will allow a barber to pick up an interstate shift, and the Stripe escrow flow will be simulated. 
+
+3. Technical & Architectural Instructions
+API Integrations: Integrate with the Stripe API for escrow and payments. This should be a mock implementation for now, but the framework should be in place. 
+
+Legal: Create placeholder pages for the Terms of service and Privacy policy.
+
+
+Testing: Ensure all the new features are covered by your existing E2E testing framework. 
+
+Final Instruction:
+
+Implement the final features and compliance requirements to complete the MVP. Your final deliverable is a fully functional, production-ready application that delivers on the promises made to your business partner.
