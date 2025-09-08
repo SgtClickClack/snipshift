@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Trash, Eye } from "lucide-react";
+import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Trash, Eye, CreditCard } from "lucide-react";
+import ConnectOnboarding from "@/components/stripe/connect-onboarding";
 
 interface TrainingContent {
   id: string;
@@ -43,7 +44,7 @@ export default function TrainerDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeView, setActiveView] = useState<'overview' | 'content' | 'profile'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'content' | 'payments' | 'profile'>('overview');
   const [showContentModal, setShowContentModal] = useState(false);
   const [editingContent, setEditingContent] = useState<TrainingContent | null>(null);
   
@@ -165,6 +166,7 @@ export default function TrainerDashboard() {
             {[
               { id: 'overview', label: 'Overview', icon: BookOpen },
               { id: 'content', label: 'Training Content', icon: Video },
+              { id: 'payments', label: 'Payments', icon: CreditCard },
               { id: 'profile', label: 'Profile', icon: Award },
             ].map((tab) => (
               <button
@@ -371,6 +373,17 @@ export default function TrainerDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Payments Tab */}
+        {activeView === 'payments' && (
+          <div className="space-y-6">
+            <ConnectOnboarding 
+              trainerId={user?.id || ''}
+              businessName={user?.displayName || 'Training Business'}
+              email={user?.email || ''}
+            />
           </div>
         )}
 

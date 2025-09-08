@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, loginSchema, insertShiftSchema } from "@shared/firebase-schema";
+import { stripeConnectRoutes } from "./stripe-connect";
 import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -702,6 +703,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to submit application" });
     }
   });
+
+  // Stripe Connect routes for trainer payments
+  app.post('/api/stripe/create-account', stripeConnectRoutes.createAccount);
+  app.get('/api/stripe/account-status/:trainerId', stripeConnectRoutes.getAccountStatus);
+  app.post('/api/stripe/create-payment-intent', stripeConnectRoutes.createPaymentIntent);
+  app.post('/api/stripe/webhook', stripeConnectRoutes.handleWebhook);
 
   const httpServer = createServer(app);
   return httpServer;
