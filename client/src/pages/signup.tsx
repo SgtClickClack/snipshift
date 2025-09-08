@@ -100,6 +100,17 @@ export default function SignupPage() {
       });
       const userData = await response.json();
       
+      // Ensure a server session is established immediately after registration
+      try {
+        await apiRequest("POST", "/api/login", {
+          email: userData.email,
+          password: formData.password,
+        });
+      } catch (e) {
+        // Non-fatal for UI purposes; local auth state will still work
+        console.warn('Login after register failed (session may be missing):', e);
+      }
+
       // Create properly formatted user object for auth service
       const newUser = {
         id: userData.id,

@@ -13,7 +13,7 @@ export default function RoleSelectionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand" | "trainer">>([]);
   const { toast } = useToast();
-  const { user, setCurrentRole, updateRoles } = useAuth();
+  const { user, setRolesAndCurrentRole } = useAuth();
   
   const toggleRole = (role: "hub" | "professional" | "brand" | "trainer") => {
     setSelectedRoles((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
@@ -31,10 +31,13 @@ export default function RoleSelectionPage() {
       const primaryRole = selectedRoles[0];
       const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: primaryRole });
       const updated = await res.json();
-      // ALWAYS preserve all selected roles in local state, regardless of server response
-      // This ensures the dropdown shows all roles the user selected
-      updateRoles(selectedRoles as any);
-      setCurrentRole(updated.currentRole);
+      // Merge previously held roles with selected roles to preserve full set in UI
+      const mergedRoles = Array.from(new Set([...(user.roles || []), ...selectedRoles]));
+      // Persist locally so navbar can immediately reflect choices even before server sync
+      try {
+        localStorage.setItem('selectedRoles', JSON.stringify(mergedRoles));
+      } catch {}
+      setRolesAndCurrentRole(mergedRoles as any, updated.currentRole);
 
       toast({
         title: "Roles updated",

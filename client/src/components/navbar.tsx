@@ -19,6 +19,14 @@ export default function Navbar() {
   const [showMessaging, setShowMessaging] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userChats, setUserChats] = useState<Chat[]>([]);
+  const persistedRoles: string[] = (() => {
+    try {
+      const raw = localStorage.getItem('selectedRoles');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  })();
   
   // Notifications
   const {
@@ -61,6 +69,10 @@ export default function Navbar() {
       console.log("Role switch response:", response);
       
       setCurrentRole(role as any);
+      try {
+        const merged = Array.from(new Set([...(user.roles || []), role]));
+        localStorage.setItem('selectedRoles', JSON.stringify(merged));
+      } catch {}
       
       // Navigate to the selected role's dashboard immediately
       const target = getDashboardRoute(role as any);
@@ -104,11 +116,7 @@ export default function Navbar() {
                     </SelectTrigger>
                     <SelectContent>
                       {(["professional","hub","brand","trainer"] as const)
-                        .filter(role => {
-                          const hasRole = user.roles?.includes(role);
-                          console.log(`🔍 Role filter check: ${role}, user.roles:`, user.roles, 'hasRole:', hasRole);
-                          return hasRole;
-                        })
+                        .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
                         .map((r) => (
                         <SelectItem key={r} value={r}>
                           {r.charAt(0).toUpperCase() + r.slice(1)}
