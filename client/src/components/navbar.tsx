@@ -104,7 +104,11 @@ export default function Navbar() {
                     </SelectTrigger>
                     <SelectContent>
                       {(["professional","hub","brand","trainer"] as const)
-                        .filter(role => user.roles?.includes(role))
+                        .filter(role => {
+                          const hasRole = user.roles?.includes(role);
+                          console.log(`🔍 Role filter check: ${role}, user.roles:`, user.roles, 'hasRole:', hasRole);
+                          return hasRole;
+                        })
                         .map((r) => (
                         <SelectItem key={r} value={r}>
                           {r.charAt(0).toUpperCase() + r.slice(1)}

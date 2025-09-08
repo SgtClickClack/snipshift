@@ -31,9 +31,9 @@ export default function RoleSelectionPage() {
       const primaryRole = selectedRoles[0];
       const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: primaryRole });
       const updated = await res.json();
-      // Ensure local roles include everything just selected, even if server returns only currentRole
-      const mergedRoles = Array.from(new Set([...(updated.roles || []), ...selectedRoles]));
-      updateRoles(mergedRoles as any);
+      // ALWAYS preserve all selected roles in local state, regardless of server response
+      // This ensures the dropdown shows all roles the user selected
+      updateRoles(selectedRoles as any);
       setCurrentRole(updated.currentRole);
 
       toast({
