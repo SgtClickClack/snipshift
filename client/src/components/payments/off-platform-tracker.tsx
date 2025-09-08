@@ -91,11 +91,11 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
     queryKey: ["/api/payments/off-platform", userId],
   });
 
-  const { data: recentJobs = [] } = useQuery({
+  const { data: recentJobs = [] } = useQuery<any[]>({
     queryKey: ["/api/jobs/recent", userId],
   });
 
-  const { data: paymentStats } = useQuery({
+  const { data: paymentStats = { totalAmount: 0, totalCount: 0, verifiedCount: 0, pendingCount: 0 } } = useQuery<{ totalAmount: number; totalCount: number; verifiedCount: number; pendingCount: number }>({
     queryKey: ["/api/payments/off-platform/stats", userId],
   });
 

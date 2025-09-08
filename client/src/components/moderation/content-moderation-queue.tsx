@@ -45,7 +45,7 @@ export default function ContentModerationQueue() {
     queryKey: ["/api/moderation/pending-posts"],
   });
 
-  const { data: moderationStats } = useQuery({
+  const { data: moderationStats = { pending: 0, approved: 0, rejected: 0, highRisk: 0 } } = useQuery<{ pending: number; approved: number; rejected: number; highRisk: number }>({
     queryKey: ["/api/moderation/stats"],
   });
 

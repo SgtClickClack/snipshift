@@ -207,7 +207,7 @@ export class OffPlatformPaymentService {
         payerName: "Urban Cuts Studio",
         payerType: "hub" as const,
         recipientName: "Master Tony Ricci",
-        recipientType: "trainer" as const,
+        recipientType: "professional" as const,
         amount: 350,
         paymentMethod: "bank_transfer" as const,
         description: "On-site advanced fade training for team",
