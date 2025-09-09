@@ -139,45 +139,49 @@ export default function Navbar() {
                   </Select>
                 </div>
 
-                {/* Notifications */}
-                <NotificationBell
-                  notifications={notifications}
-                  onNotificationClick={handleNotificationClick}
-                  onMarkAllRead={handleMarkAllRead}
-                />
-                
-                {/* Messages */}
-                <div className="relative">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowMessaging(true)}
-                    data-testid="button-open-messages"
-                    className="text-white hover:bg-steel-700"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" data-testid="unread-badge">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
-                    )}
+                {/* Desktop Navigation - Hidden on Mobile */}
+                <div className="hidden md:flex md:items-center md:space-x-4">
+                  {/* Notifications */}
+                  <NotificationBell
+                    notifications={notifications}
+                    onNotificationClick={handleNotificationClick}
+                    onMarkAllRead={handleMarkAllRead}
+                  />
+                  
+                  {/* Messages */}
+                  <div className="relative">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowMessaging(true)}
+                      data-testid="button-open-messages"
+                      className="text-white hover:bg-steel-700"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" data-testid="unread-badge">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {/* User Profile */}
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
+                      <AvatarFallback className="bg-red-accent text-white text-sm">
+                        {user.displayName?.split(' ').map(n => n[0]).join('') || user.email.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-chrome-light text-sm">{user.displayName || user.email}</span>
+                  </div>
+                  
+                  <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
                   </Button>
                 </div>
-                {/* User Profile */}
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
-                    <AvatarFallback className="bg-red-accent text-white text-sm">
-                      {user.displayName?.split(' ').map(n => n[0]).join('') || user.email.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-chrome-light text-sm hidden md:block">{user.displayName || user.email}</span>
-                </div>
-                
-                <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
               </>
             ) : (
               <>
