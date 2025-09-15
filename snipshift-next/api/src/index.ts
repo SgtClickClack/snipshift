@@ -95,6 +95,8 @@ async function startServer() {
     // Apollo Server setup
     const server = new ApolloServer({
       schema,
+      // Security: Disable introspection and playground in production
+      introspection: process.env.NODE_ENV !== 'production',
       plugins: [
         {
           async serverWillStart() {
