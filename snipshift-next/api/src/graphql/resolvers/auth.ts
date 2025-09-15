@@ -52,7 +52,7 @@ export const authResolvers = {
             password: hashedPassword,
             displayName: displayName || null,
             roles,
-            currentRole: currentRole || null,
+            currentRole: currentRole as typeof users.$inferInsert.currentRole || null,
             googleId: googleId || null,
             profileImage: profileImage || null,
             provider: googleId ? 'google' : 'email',

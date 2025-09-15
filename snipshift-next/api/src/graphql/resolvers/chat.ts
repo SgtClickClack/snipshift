@@ -1,6 +1,6 @@
 import { GraphQLContext } from '../context.js';
 import { eq, desc, sql, and, or, inArray } from 'drizzle-orm';
-import { chats, messages } from '../../database/schema.js';
+import { chats, messages, users } from '../../database/schema.js';
 import { logger } from '../../utils/logger.js';
 
 export const chatResolvers = {
@@ -102,8 +102,8 @@ export const chatResolvers = {
       // Get participant names for easier display
       const participantUsers = await context.db
         .select()
-        .from(context.db.schema.users)
-        .where(inArray(context.db.schema.users.id, participants));
+        .from(users)
+        .where(inArray(users.id, participants));
 
       const participantNames: Record<string, string> = {};
       const participantRoles: Record<string, string> = {};

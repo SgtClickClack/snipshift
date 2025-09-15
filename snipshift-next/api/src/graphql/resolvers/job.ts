@@ -176,10 +176,12 @@ export const jobResolvers = {
         // Publish job creation event for subscriptions
         try {
           const redis = getRedis();
-          await redis.publish('jobCreated', JSON.stringify({
-            jobCreated: newJob,
-            hubId: context.user.id,
-          }));
+          if (redis) {
+            await redis.publish('jobCreated', JSON.stringify({
+              jobCreated: newJob,
+              hubId: context.user.id,
+            }));
+          }
         } catch (error) {
           logger.warn('Failed to publish job creation event:', error);
         }
@@ -313,10 +315,12 @@ export const jobResolvers = {
         // Publish application event
         try {
           const redis = getRedis();
-          await redis.publish('applicationReceived', JSON.stringify({
-            applicationReceived: newApplication,
-            jobId: input.jobId,
-          }));
+          if (redis) {
+            await redis.publish('applicationReceived', JSON.stringify({
+              applicationReceived: newApplication,
+              jobId: input.jobId,
+            }));
+          }
         } catch (error) {
           logger.warn('Failed to publish application event:', error);
         }
