@@ -3,12 +3,16 @@ import Redis from 'ioredis';
 let redis: Redis | null = null;
 
 export async function initializeRedis(): Promise<void> {
+  // Skip Redis in development if URL not provided
+  if (!process.env.REDIS_URL || process.env.NODE_ENV === 'development') {
+    console.log('Redis disabled for development environment');
+    return;
+  }
+
   if (!redis) {
-    redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    redis = new Redis(process.env.REDIS_URL, {
       lazyConnect: true,
-      retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
-      retryDelayOnClusterDown: 100,
     });
 
     redis.on('connect', () => {
@@ -23,10 +27,7 @@ export async function initializeRedis(): Promise<void> {
   }
 }
 
-export function getRedis(): Redis {
-  if (!redis) {
-    throw new Error('Redis not initialized. Call initializeRedis() first.');
-  }
+export function getRedis(): Redis | null {
   return redis;
 }
 

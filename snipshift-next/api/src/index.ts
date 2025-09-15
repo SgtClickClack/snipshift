@@ -2,13 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
-import { json } from 'body-parser';
+import { expressMiddleware } from '@as-integrations/express4';
+// Body parser middleware available directly from Express
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { useServer } from 'graphql-ws/lib/use/ws';
+import { useServer } from 'graphql-ws/use/ws';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { PubSub } from 'graphql-subscriptions';
+import dotenv from 'dotenv';
+
 // Load environment variables
 dotenv.config();
 
@@ -67,7 +69,7 @@ async function startServer() {
     app.use(rateLimitMiddleware);
 
     // Body parsing
-    app.use(json({ limit: '10mb' }));
+    app.use(express.json({ limit: '10mb' }));
 
     // Health check endpoint
     app.get('/health', (req, res) => {
@@ -83,7 +85,7 @@ async function startServer() {
     useServer(
       {
         schema,
-        context: (ctx) => context({ req: ctx.extra.request }),
+        context: (ctx: any) => context({ req: ctx.extra.request }),
         onConnect: () => logger.info('WebSocket client connected'),
         onDisconnect: () => logger.info('WebSocket client disconnected'),
       },

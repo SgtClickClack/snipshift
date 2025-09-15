@@ -57,7 +57,7 @@ export const resolvers = {
       const [hub] = await context.db.select().from(context.db.schema.users).where(context.db.schema.users.id.equals(parent.hubId));
       return hub;
     },
-    applications: async (parent: any, _: any, context: GraphQLContext) => {
+    applicants: async (parent: any, _: any, context: GraphQLContext) => {
       return await context.db.select().from(context.db.schema.applications).where(context.db.schema.applications.jobId.equals(parent.id));
     },
     selectedProfessional: async (parent: any, _: any, context: GraphQLContext) => {
@@ -99,9 +99,6 @@ export const resolvers = {
     trainer: async (parent: any, _: any, context: GraphQLContext) => {
       const [trainer] = await context.db.select().from(context.db.schema.users).where(context.db.schema.users.id.equals(parent.trainerId));
       return trainer;
-    },
-    purchases: async (parent: any, _: any, context: GraphQLContext) => {
-      return await context.db.select().from(context.db.schema.purchases).where(context.db.schema.purchases.contentId.equals(parent.id));
     },
   },
   Purchase: {
