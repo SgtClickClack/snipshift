@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: snipshift-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: snipshift
+      POSTGRES_USER: snipshift
+      POSTGRES_PASSWORD: snipshift_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - snipshift
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snipshift -d snipshift"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: snipshift-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - snipshift
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # GraphQL API
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: snipshift-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://snipshift:snipshift_password@postgres:5432/snipshift
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      CORS_ORIGIN: http://localhost:3000,http://localhost:3001,http://localhost:8081
+      SESSION_SECRET: ${SESSION_SECRET:-your-session-secret-change-in-production}
+      LOG_LEVEL: info
+    ports:
+      - "4000:4000"
+    volumes:
+      # Mount source code for hot reloading during development
+      - ./api/src:/app/src
+      - ./api/package.json:/app/package.json
+      - ./api/tsconfig.json:/app/tsconfig.json
+      - /app/node_modules  # Don't mount node_modules for better performance
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - snipshift
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["npm", "run", "dev"]  # Use dev command for hot reloading
+
+  # Next.js Web Application
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: snipshift-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:4000/graphql
+      NEXT_PUBLIC_WS_URL: ws://localhost:4000/graphql
+      NEXT_PUBLIC_ENVIRONMENT: development
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reloading during development
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    networks:
+      - snipshift
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["npm", "run", "dev"]  # Use dev command for hot reloading
+
+  # Database Management Tool (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: snipshift-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@snipshift.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - snipshift
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  snipshift:
+    driver: bridge
