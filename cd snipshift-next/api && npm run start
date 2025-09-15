@@ -1,0 +1,3 @@
+#!/bin/bash
+# Executable shim for deployment run command
+cd snipshift-next/api && npm run start
