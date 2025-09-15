@@ -1,5 +1,5 @@
 import { pgTable, text, varchar, timestamp, decimal, boolean, jsonb, integer, pgEnum } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['client', 'hub', 'professional', 'brand', 'trainer']);
@@ -10,7 +10,7 @@ export const messageTypeEnum = pgEnum('message_type', ['text', 'system']);
 
 // Users table
 export const users = pgTable('users', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   email: text('email').notNull().unique(),
   password: text('password'),
   displayName: text('display_name'),
@@ -26,7 +26,7 @@ export const users = pgTable('users', {
 
 // User profiles tables
 export const hubProfiles = pgTable('hub_profiles', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   businessName: text('business_name').notNull(),
   businessType: text('business_type').notNull(),
@@ -47,7 +47,7 @@ export const hubProfiles = pgTable('hub_profiles', {
 });
 
 export const professionalProfiles = pgTable('professional_profiles', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   isVerified: boolean('is_verified').notNull().default(false),
   certifications: jsonb('certifications').$type<Array<{
@@ -73,7 +73,7 @@ export const professionalProfiles = pgTable('professional_profiles', {
 });
 
 export const brandProfiles = pgTable('brand_profiles', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   companyName: text('company_name').notNull(),
   website: text('website'),
@@ -86,7 +86,7 @@ export const brandProfiles = pgTable('brand_profiles', {
 });
 
 export const trainerProfiles = pgTable('trainer_profiles', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   qualifications: jsonb('qualifications').$type<string[]>().default([]),
   specializations: jsonb('specializations').$type<string[]>().default([]),
@@ -102,7 +102,7 @@ export const trainerProfiles = pgTable('trainer_profiles', {
 
 // Jobs table
 export const jobs = pgTable('jobs', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   hubId: varchar('hub_id').notNull().references(() => users.id),
   title: text('title').notNull(),
   description: text('description').notNull(),
@@ -126,7 +126,7 @@ export const jobs = pgTable('jobs', {
 
 // Applications table
 export const applications = pgTable('applications', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   jobId: varchar('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
   professionalId: varchar('professional_id').notNull().references(() => users.id),
   status: text('status').notNull().default('pending'),
@@ -137,7 +137,7 @@ export const applications = pgTable('applications', {
 
 // Social posts table
 export const socialPosts = pgTable('social_posts', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   authorId: varchar('author_id').notNull().references(() => users.id),
   content: text('content').notNull(),
   imageUrl: text('image_url'),
@@ -154,7 +154,7 @@ export const socialPosts = pgTable('social_posts', {
 
 // Comments table
 export const comments = pgTable('comments', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   postId: varchar('post_id').notNull().references(() => socialPosts.id, { onDelete: 'cascade' }),
   authorId: varchar('author_id').notNull().references(() => users.id),
   content: text('content').notNull(),
@@ -163,7 +163,7 @@ export const comments = pgTable('comments', {
 
 // Training content table
 export const trainingContent = pgTable('training_content', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   trainerId: varchar('trainer_id').notNull().references(() => users.id),
   title: text('title').notNull(),
   description: text('description').notNull(),
@@ -185,7 +185,7 @@ export const trainingContent = pgTable('training_content', {
 
 // Purchases table
 export const purchases = pgTable('purchases', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar('user_id').notNull().references(() => users.id),
   contentId: varchar('content_id').notNull().references(() => trainingContent.id),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
@@ -196,7 +196,7 @@ export const purchases = pgTable('purchases', {
 
 // Chat system
 export const chats = pgTable('chats', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   participants: jsonb('participants').$type<string[]>().notNull(),
   participantNames: jsonb('participant_names').$type<Record<string, string>>().notNull(),
   participantRoles: jsonb('participant_roles').$type<Record<string, string>>().notNull(),
@@ -209,7 +209,7 @@ export const chats = pgTable('chats', {
 });
 
 export const messages = pgTable('messages', {
-  id: varchar('id').primaryKey().default('gen_random_uuid()'),
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
   chatId: varchar('chat_id').notNull().references(() => chats.id, { onDelete: 'cascade' }),
   senderId: varchar('sender_id').notNull().references(() => users.id),
   receiverId: varchar('receiver_id').notNull().references(() => users.id),

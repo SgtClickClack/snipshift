@@ -1,16 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { ApolloProvider } from '@apollo/client';
-import { QueryClient, QueryClientProvider } from 'react-query';
-
-import { theme } from '../src/config/theme';
-import { apolloClient } from '../src/config/apollo';
-import { queryClient } from '../src/config/reactQuery';
-import { AuthProvider } from '../src/contexts/AuthContext';
-import { NotificationProvider } from '../src/contexts/NotificationContext';
+import ClientProviders from '../src/components/ClientProviders';
 
 import '../src/styles/globals.css';
 
@@ -60,18 +51,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ApolloProvider client={apolloClient}>
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider theme={theme}>
-              <CssBaseline />
-              <AuthProvider>
-                <NotificationProvider>
-                  {children}
-                </NotificationProvider>
-              </AuthProvider>
-            </ThemeProvider>
-          </QueryClientProvider>
-        </ApolloProvider>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );
