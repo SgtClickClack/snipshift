@@ -36,6 +36,7 @@
     "@types/pg": "^8.15.5",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/ws": "^8.18.1",
     "apollo-upload-client": "^17.0.0",
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",

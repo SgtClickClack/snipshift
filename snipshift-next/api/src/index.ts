@@ -86,8 +86,8 @@ async function startServer() {
       {
         schema,
         context: (ctx: any) => context({ req: ctx.extra.request }),
-        onConnect: () => logger.info('WebSocket client connected'),
-        onDisconnect: () => logger.info('WebSocket client disconnected'),
+        onConnect: () => { logger.info('WebSocket client connected'); },
+        onDisconnect: () => { logger.info('WebSocket client disconnected'); },
       },
       wsServer
     );
