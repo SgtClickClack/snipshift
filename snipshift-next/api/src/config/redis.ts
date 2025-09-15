@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 
 let redis: Redis | null = null;
 
@@ -10,7 +10,7 @@ export async function initializeRedis(): Promise<void> {
   }
 
   if (!redis) {
-    redis = new Redis(process.env.REDIS_URL, {
+    redis = new Redis(process.env.REDIS_URL!, {
       lazyConnect: true,
       maxRetriesPerRequest: 3,
     });
@@ -19,7 +19,7 @@ export async function initializeRedis(): Promise<void> {
       console.log('Redis connected successfully');
     });
 
-    redis.on('error', (error) => {
+    redis.on('error', (error: Error) => {
       console.error('Redis connection error:', error);
     });
 
