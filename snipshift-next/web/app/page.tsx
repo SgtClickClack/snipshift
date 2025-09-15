@@ -1,13 +1,14 @@
-import { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Box, Container, Typography, Button, Grid, Card, CardContent, Avatar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Link from 'next/link';
-import { Store, UserCheck, Award, GraduationCap, ArrowForward } from '@mui/icons-material';
+import { Store, Person, EmojiEvents, School, ArrowForward } from '@mui/icons-material';
 
-import { LoadingSpinner } from '../src/components/common/LoadingSpinner';
-import { HeroSection } from '../src/components/landing/HeroSection';
-import { FeaturesSection } from '../src/components/landing/FeaturesSection';
-import { TestimonialsSection } from '../src/components/landing/TestimonialsSection';
+// TODO: Create these components
+// import { LoadingSpinner } from '../src/components/common/LoadingSpinner';
+// import { HeroSection } from '../src/components/landing/HeroSection';
+// import { FeaturesSection } from '../src/components/landing/FeaturesSection';
+// import { TestimonialsSection } from '../src/components/landing/TestimonialsSection';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -70,8 +71,18 @@ const RoleCard = ({
 export default function HomePage() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Suspense fallback={<LoadingSpinner />}>
-        <HeroSection />
+      <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>Loading...</Box>}>
+        {/* Hero Section */}
+        <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 12 }}>
+          <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
+            <Typography variant="h2" component="h1" gutterBottom>
+              Welcome to SnipShift 2.0
+            </Typography>
+            <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
+              The next generation platform connecting the creative industry
+            </Typography>
+          </Container>
+        </Box>
 
         {/* Role Selection Section */}
         <Container maxWidth="lg" sx={{ py: 8 }}>
@@ -102,21 +113,21 @@ export default function HomePage() {
               color="#2196F3"
             />
             <RoleCard
-              icon={<UserCheck sx={{ fontSize: 32, color: 'white' }} />}
+              icon={<Person sx={{ fontSize: 32, color: 'white' }} />}
               title="Professional"
               description="Barber or stylist? Find flexible work opportunities and showcase your skills."
               href="/auth/register?role=professional"
               color="#4CAF50"
             />
             <RoleCard
-              icon={<Award sx={{ fontSize: 32, color: 'white' }} />}
+              icon={<EmojiEvents sx={{ fontSize: 32, color: 'white' }} />}
               title="Brand"
               description="Product company? Connect with professionals and promote your products."
               href="/auth/register?role=brand"
               color="#9C27B0"
             />
             <RoleCard
-              icon={<GraduationCap sx={{ fontSize: 32, color: 'white' }} />}
+              icon={<School sx={{ fontSize: 32, color: 'white' }} />}
               title="Trainer"
               description="Educator? Share your expertise and monetize your training content."
               href="/auth/register?role=trainer"
@@ -125,8 +136,7 @@ export default function HomePage() {
           </Grid>
         </Container>
 
-        <FeaturesSection />
-        <TestimonialsSection />
+        {/* Features and testimonials will be added here */}
 
         {/* CTA Section */}
         <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 8 }}>
