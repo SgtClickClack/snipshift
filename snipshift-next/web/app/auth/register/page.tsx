@@ -179,9 +179,9 @@ export default function RegisterPage() {
           input: {
             email: formData.email,
             password: formData.password,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            role: formData.role,
+            displayName: `${formData.firstName} ${formData.lastName}`,
+            roles: [formData.role],
+            currentRole: formData.role,
           }
         }
       });
