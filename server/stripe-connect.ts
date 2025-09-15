@@ -267,13 +267,19 @@ export const stripeConnectRoutes = {
     }
   },
 
-  // Handle webhook events
+  // Handle webhook events - IMPORTANT: Use express.raw() middleware for this route
   async handleWebhook(req: Request, res: Response) {
     try {
       const sig = req.headers['stripe-signature'] as string;
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       if (!webhookSecret) {
         throw new Error('STRIPE_WEBHOOK_SECRET environment variable is required');
+      }
+      
+      // Ensure req.body is raw buffer for signature verification
+      if (!Buffer.isBuffer(req.body)) {
+        console.error('Webhook body is not a Buffer - configure express.raw() middleware');
+        return res.status(400).send('Invalid webhook body format');
       }
       
       let event;
@@ -284,13 +290,17 @@ export const stripeConnectRoutes = {
         return res.status(400).send('Webhook signature verification failed');
       }
 
-      // Handle different event types
+      // Handle different event types - sanitized logging
       switch (event.type) {
         case 'account.updated':
-          console.log('Account updated:', event.data.object);
+          console.log('Account updated:', { account_id: event.data.object.id, type: event.type });
           break;
         case 'payment_intent.succeeded':
-          console.log('Payment succeeded:', event.data.object);
+          console.log('Payment succeeded:', { 
+            payment_intent_id: event.data.object.id, 
+            amount: event.data.object.amount,
+            type: event.type 
+          });
           break;
         default:
           console.log(`Unhandled event type: ${event.type}`);
