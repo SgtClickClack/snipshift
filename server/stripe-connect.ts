@@ -1,9 +1,16 @@
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
 
-// Use test credentials for development
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_51OqJxYBEZQGWNXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // Test key placeholder
-const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_51OqJxYBEZQGWNXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // Test key placeholder
+// Require environment configuration - no hardcoded fallbacks for security
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+if (!STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
+if (!STRIPE_PUBLISHABLE_KEY) {
+  throw new Error('STRIPE_PUBLISHABLE_KEY environment variable is required');
+}
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
@@ -264,7 +271,10 @@ export const stripeConnectRoutes = {
   async handleWebhook(req: Request, res: Response) {
     try {
       const sig = req.headers['stripe-signature'] as string;
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_webhook_secret';
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        throw new Error('STRIPE_WEBHOOK_SECRET environment variable is required');
+      }
       
       let event;
       try {
