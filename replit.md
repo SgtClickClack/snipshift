@@ -1,13 +1,28 @@
 # Overview
 
-Snipshift is a production-ready B2B2C marketplace platform for the barbering, hairdressing, and creative industries. Launched at snipshift.com.au, the platform successfully connects four user types: Hub Owners (barbershops), Professionals (barbers/stylists), Brands (product companies), and Trainers (educators). The platform features advanced social networking, professional training monetization, comprehensive job marketplace, real-time messaging, and sophisticated content moderation systems. Built with React/TypeScript frontend, Node.js/Express backend, and enhanced with Firebase authentication, the platform is fully tested with comprehensive E2E testing infrastructure and ready for commercial operation and strategic expansion.
+Snipshift is a production-ready B2B2C marketplace platform for the barbering, hairdressing, and creative industries. The platform connects four user types: Hub Owners (barbershops), Professionals (barbers/stylists), Brands (product companies), and Trainers (educators). The platform features advanced social networking, professional training monetization, comprehensive job marketplace, real-time messaging, and sophisticated content moderation systems.
+
+## Architecture Evolution
+
+**Dual Architecture Strategy**: The project now maintains two complete implementations:
+
+1. **Original Architecture** (`client/`, `server/`, `shared/`): 
+   - Production-ready web application launched at snipshift.com.au
+   - React/TypeScript frontend + Node.js/Express backend + Firebase authentication
+   - Fully tested with comprehensive E2E testing infrastructure
+
+2. **SnipShift 2.0** (`snipshift-next/`):
+   - Mobile-first modernized architecture with unified GraphQL API
+   - React Native mobile app + Next.js web app + Apollo Server backend
+   - PostgreSQL + Redis + Docker containerization
+   - Designed for scalability and international expansion
 
 # Project Status
 
-**Current Phase**: Production Ready & Launch Execution  
-**Version**: 1.0.0  
-**Launch Date**: September 2025  
-**Status**: ✅ Complete MVP, ✅ E2E Tested, ✅ Production Optimized, ✅ CI/CD Pipeline, ✅ Final Build Complete, 🚀 Ready for www.snipshift.com.au Deployment
+**Current Phase**: Dual Architecture - Production + Next-Gen Development  
+**Original Version**: 1.0.0 - ✅ Production Ready at www.snipshift.com.au  
+**SnipShift 2.0**: In Development - 🚧 Modern Mobile-First Architecture  
+**Launch Date**: September 2025 (Original) / Q2 2026 (2.0 Target)
 
 ## Recent Achievements (September 2025)
 - Complete E2E testing infrastructure with Cypress and Playwright
@@ -53,7 +68,9 @@ Preferred communication style: Simple, everyday language.
 
 # System Architecture
 
-## Frontend Architecture
+## Original Architecture (`client/`, `server/`, `shared/`)
+
+### Frontend Architecture
 - **Framework**: React with TypeScript, using Vite as the build tool.
 - **Styling**: Tailwind CSS with shadcn/ui components for a consistent and responsive UI.
 - **State Management**: TanStack Query for server state management and caching.
@@ -62,17 +79,71 @@ Preferred communication style: Simple, everyday language.
 - **Component Structure**: Modular, reusable UI components.
 - **UI/UX Decisions**: Professional UI design, responsive layout, interactive map-based job search, multi-step forms, and role-specific dashboards.
 
-## Backend Architecture
+### Backend Architecture
 - **Runtime**: Node.js with Express.js server.
 - **Language**: TypeScript with ES modules.
 - **Storage**: In-memory storage for development, designed with interfaces for future database integration.
 - **API Design**: RESTful endpoints with Zod schemas for validation and type safety.
 
-## Data Layer
+## SnipShift 2.0 Architecture (`snipshift-next/`)
+
+### Mobile-First Design Philosophy
+- **Primary Platform**: React Native mobile app with Expo
+- **Progressive Web App**: Next.js web application with mobile-optimized experience
+- **Unified API**: Single GraphQL endpoint serving all platforms
+- **Offline-First**: Apollo Client caching with offline mutation queuing
+- **Real-Time**: WebSocket subscriptions for live updates
+
+### GraphQL API Backend (`api/`)
+- **Runtime**: Node.js 18+ with TypeScript
+- **GraphQL Server**: Apollo Server 4 with subscriptions
+- **Database**: PostgreSQL with Drizzle ORM for type-safe operations
+- **Caching**: Redis for sessions, data caching, and real-time features
+- **Authentication**: JWT-based auth with role-based permissions
+- **File Storage**: Cloud storage integration for media files
+- **Testing**: Jest with comprehensive integration tests
+- **Security**: Rate limiting, input sanitization, CORS protection
+
+### Mobile Application (`mobile/`)
+- **Framework**: React Native with Expo for cross-platform iOS/Android
+- **Navigation**: React Navigation v6 for native navigation patterns
+- **State Management**: Apollo Client + React Context for local state
+- **UI Components**: React Native Paper with custom design system
+- **Authentication**: Secure token storage with expo-secure-store
+- **Platform Features**: Camera, location services, push notifications
+- **Offline Support**: Apollo Client cache with offline capabilities
+- **Build Tools**: Expo Application Services (EAS) for builds and app store deployments
+
+### Web Application (`web/`)
+- **Framework**: Next.js 14 with App Router for server-side rendering
+- **Styling**: Tailwind CSS with Material-UI components
+- **Data Fetching**: Apollo Client with SSR support and real-time subscriptions
+- **Authentication**: NextAuth.js integration with OAuth providers
+- **Performance**: Optimized with ISR, middleware, and code splitting
+- **Progressive Web App**: Service worker, offline capabilities, installable
+- **Build Tools**: Next.js optimized build system with TypeScript
+
+### Infrastructure & DevOps
+- **Containerization**: Docker for consistent development and deployment
+- **Orchestration**: Docker Compose for local development with all services
+- **CI/CD**: GitHub Actions for automated testing, building, and deployment
+- **Database**: PostgreSQL for primary data with Redis for caching
+- **Monitoring**: Health checks, logging infrastructure, and performance metrics
+- **Security**: Environment-based configuration with secure secret management
+
+### Data Layer (Original)
 - **Database Schema**: Drizzle ORM with PostgreSQL schema definitions prepared for production deployment.
 - **Current Implementation**: Memory-based storage for development purposes.
 - **Data Models**: Include users (with roles), shifts/jobs, messages, and social posts.
 - **Type Safety**: Shared TypeScript types between frontend and backend.
+
+### Data Layer (SnipShift 2.0)
+- **Primary Database**: PostgreSQL with Drizzle ORM for type-safe queries and migrations
+- **Caching**: Redis for session management, data caching, and real-time features
+- **Schema**: Multi-role user system, job marketplace, social features, training content
+- **Real-Time**: WebSocket subscriptions for live updates and messaging
+- **File Storage**: Cloud storage integration for media files and user content
+- **Type Safety**: Shared GraphQL schema and TypeScript types across all platforms
 
 ## Authentication & Authorization
 - **Authentication Method**: Simple email/password authentication.
