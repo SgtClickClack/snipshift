@@ -1,6 +1,6 @@
-import { gql } from 'apollo-server-express';
+// SnipShift 2.0 GraphQL Schema Definition
+export const typeDefs = `
 
-export const typeDefs = gql`
   # Enums
   enum UserRole {
     CLIENT
