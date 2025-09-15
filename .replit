@@ -1,6 +1,64 @@
-# This command will be executed by the main "Run" button.
-# It starts the entire new SnipShift platform using Docker.
-run = "cd snipshift-next && docker-compose up --build"
-# Language configuration
-language = "bash"
-entrypoint = "main.sh"
+modules = ["nodejs-20", "web", "postgresql-16"]
+run = "cd snipshift-next/api && npm run dev"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick"]
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["cd snipshift-next/api && npm run build"]
+run = ["cd snipshift-next/api && npm run start"]
+
+[[ports]]
+localPort = 4000
+externalPort = 4000
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
+localPort = 5432
+externalPort = 5432
+
+[env]
+PORT = "4000"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "SnipShift 2.0 API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "SnipShift 2.0 Web"
+
+[[workflows.workflow]]
+name = "SnipShift 2.0 API"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd snipshift-next/api && npm run dev"
+waitForPort = 4000
+
+[[workflows.workflow]]
+name = "SnipShift 2.0 Web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd snipshift-next/web && npm run dev"
+waitForPort = 3000
+
+[agent]
+integrations = ["javascript_object_storage==1.0.0", "javascript_database==1.0.0", "javascript_stripe==1.0.0", "javascript_log_in_with_replit==1.0.0"]
