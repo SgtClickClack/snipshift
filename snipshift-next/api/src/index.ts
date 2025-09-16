@@ -444,6 +444,327 @@ async function startServer() {
       `);
     });
 
+    // Registration routes  
+    app.get('/auth/register', (req, res) => {
+      const role = req.query.role as string || '';
+      const roleTitle = role ? role.charAt(0).toUpperCase() + role.slice(1) : '';
+      const roleDescriptions: Record<string, string> = {
+        hub: 'Own a barbershop or salon? Post shifts and find talented professionals.',
+        professional: 'Barber or stylist? Find flexible work opportunities and showcase your skills.',
+        brand: 'Product company? Connect with professionals and promote your products.',
+        trainer: 'Educator? Share your expertise and monetize your training content.'
+      };
+      const roleDescription = roleDescriptions[role] || 'Join the SnipShift professional marketplace';
+
+      const roleBadgeHtml = role ? `<div class="role-badge">${roleTitle} Registration</div>` : '';
+      const roleSelectHtml = !role ? `
+        <div class="form-group">
+          <label for="role">I am a:</label>
+          <select id="role" name="role" required>
+            <option value="">Select your role</option>
+            <option value="hub">Hub Owner (Barbershop/Salon)</option>
+            <option value="professional">Professional (Barber/Stylist)</option>
+            <option value="brand">Brand (Product Company)</option>
+            <option value="trainer">Trainer (Educator)</option>
+          </select>
+        </div>
+      ` : `<input type="hidden" name="role" value="${role}">`;
+      
+      const hubFieldsHtml = role === 'hub' ? `
+        <div class="form-group">
+          <label for="businessName">Business Name</label>
+          <input type="text" id="businessName" name="businessName" required>
+        </div>
+      ` : '';
+      
+      const professionalFieldsHtml = role === 'professional' ? `
+        <div class="form-group">
+          <label for="experience">Years of Experience</label>
+          <select id="experience" name="experience" required>
+            <option value="">Select experience level</option>
+            <option value="0-1">0-1 years</option>
+            <option value="2-5">2-5 years</option>
+            <option value="6-10">6-10 years</option>
+            <option value="10+">10+ years</option>
+          </select>
+        </div>
+      ` : '';
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Sign Up - SnipShift</title>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+          <style>
+            :root {
+              --background: hsl(210, 15%, 94%);
+              --foreground: hsl(210, 15%, 12%);
+              --steel-50: hsl(210, 20%, 98%);
+              --steel-300: hsl(210, 12%, 82%);
+              --steel-600: hsl(210, 10%, 38%);
+              --steel-800: hsl(210, 18%, 18%);
+              --steel-900: hsl(210, 20%, 12%);
+              --red-accent: hsl(0, 85%, 35%);
+              --red-accent-hover: hsl(0, 88%, 40%);
+            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Inter', system-ui, -apple-system, sans-serif;
+              background: var(--background);
+              color: var(--foreground);
+              line-height: 1.6;
+            }
+            .container {
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            }
+            .form-card {
+              background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
+              border: 2px solid var(--steel-300);
+              border-radius: 20px;
+              padding: 48px;
+              max-width: 500px;
+              width: 100%;
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            }
+            .logo { text-align: center; margin-bottom: 32px; }
+            .logo h1 { font-size: 2rem; font-weight: 700; color: var(--steel-900); margin-bottom: 8px; }
+            .role-badge {
+              display: inline-block;
+              background: linear-gradient(145deg, var(--red-accent), var(--red-accent-hover));
+              color: white;
+              padding: 6px 16px;
+              border-radius: 20px;
+              font-size: 0.875rem;
+              font-weight: 500;
+              margin-bottom: 16px;
+            }
+            .form-group { margin-bottom: 24px; }
+            label { display: block; font-weight: 500; color: var(--steel-800); margin-bottom: 8px; }
+            input[type="text"], input[type="email"], input[type="password"], select {
+              width: 100%;
+              padding: 12px 16px;
+              border: 2px solid var(--steel-300);
+              border-radius: 8px;
+              font-size: 1rem;
+              background: var(--steel-50);
+              color: var(--steel-900);
+              transition: all 0.2s ease;
+            }
+            input:focus, select:focus { outline: none; border-color: var(--red-accent); background: white; }
+            .btn-primary {
+              width: 100%;
+              background: linear-gradient(145deg, var(--red-accent), var(--red-accent-hover));
+              color: white;
+              border: none;
+              padding: 16px;
+              border-radius: 8px;
+              font-size: 1.125rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+            .auth-links { text-align: center; margin-top: 24px; }
+            .auth-links a { color: var(--red-accent); text-decoration: none; font-weight: 500; }
+            .auth-links a:hover { text-decoration: underline; }
+            .back-link {
+              display: inline-flex;
+              align-items: center;
+              color: var(--steel-600);
+              text-decoration: none;
+              font-weight: 500;
+              margin-bottom: 24px;
+            }
+            .back-link:hover { color: var(--red-accent); }
+            @media (max-width: 768px) { .form-card { padding: 32px 24px; } }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="form-card">
+              <a href="/" class="back-link">← Back to Home</a>
+              <div class="logo">
+                <h1>SnipShift</h1>
+                ${roleBadgeHtml}
+                <p style="color: var(--steel-600); margin-top: 8px;">${roleDescription}</p>
+              </div>
+              <form id="registerForm">
+                ${roleSelectHtml}
+                <div class="form-group">
+                  <label for="firstName">First Name</label>
+                  <input type="text" id="firstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                  <label for="lastName">Last Name</label>
+                  <input type="text" id="lastName" name="lastName" required>
+                </div>
+                <div class="form-group">
+                  <label for="email">Email Address</label>
+                  <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                  <label for="password">Password</label>
+                  <input type="password" id="password" name="password" required minlength="8">
+                </div>
+                ${hubFieldsHtml}
+                ${professionalFieldsHtml}
+                <button type="submit" class="btn-primary">Create Account</button>
+              </form>
+              <div class="auth-links">
+                <p>Already have an account? <a href="/auth/login">Sign in here</a></p>
+              </div>
+            </div>
+          </div>
+          <script>
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+              e.preventDefault();
+              alert('Registration successful! This is a demo - no actual account was created.');
+              window.location.href = '/';
+            });
+          </script>
+        </body>
+        </html>
+      `;
+
+      res.send(htmlContent);
+    });
+
+    // Login route
+    app.get('/auth/login', (req, res) => {
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Sign In - SnipShift</title>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+          <style>
+            :root {
+              --background: hsl(210, 15%, 94%);
+              --foreground: hsl(210, 15%, 12%);
+              --steel-50: hsl(210, 20%, 98%);
+              --steel-300: hsl(210, 12%, 82%);
+              --steel-600: hsl(210, 10%, 38%);
+              --steel-800: hsl(210, 18%, 18%);
+              --steel-900: hsl(210, 20%, 12%);
+              --red-accent: hsl(0, 85%, 35%);
+              --red-accent-hover: hsl(0, 88%, 40%);
+            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Inter', system-ui, -apple-system, sans-serif;
+              background: var(--background);
+              color: var(--foreground);
+              line-height: 1.6;
+            }
+            .container {
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            }
+            .form-card {
+              background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
+              border: 2px solid var(--steel-300);
+              border-radius: 20px;
+              padding: 48px;
+              max-width: 450px;
+              width: 100%;
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            }
+            .logo { text-align: center; margin-bottom: 32px; }
+            .logo h1 { font-size: 2rem; font-weight: 700; color: var(--steel-900); margin-bottom: 8px; }
+            .form-group { margin-bottom: 24px; }
+            label { display: block; font-weight: 500; color: var(--steel-800); margin-bottom: 8px; }
+            input[type="email"], input[type="password"] {
+              width: 100%;
+              padding: 12px 16px;
+              border: 2px solid var(--steel-300);
+              border-radius: 8px;
+              font-size: 1rem;
+              background: var(--steel-50);
+              color: var(--steel-900);
+              transition: all 0.2s ease;
+            }
+            input:focus { outline: none; border-color: var(--red-accent); background: white; }
+            .btn-primary {
+              width: 100%;
+              background: linear-gradient(145deg, var(--red-accent), var(--red-accent-hover));
+              color: white;
+              border: none;
+              padding: 16px;
+              border-radius: 8px;
+              font-size: 1.125rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+            .auth-links { text-align: center; margin-top: 24px; }
+            .auth-links a { color: var(--red-accent); text-decoration: none; font-weight: 500; }
+            .auth-links a:hover { text-decoration: underline; }
+            .back-link {
+              display: inline-flex;
+              align-items: center;
+              color: var(--steel-600);
+              text-decoration: none;
+              font-weight: 500;
+              margin-bottom: 24px;
+            }
+            .back-link:hover { color: var(--red-accent); }
+            @media (max-width: 768px) { .form-card { padding: 32px 24px; } }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="form-card">
+              <a href="/" class="back-link">← Back to Home</a>
+              <div class="logo">
+                <h1>SnipShift</h1>
+                <p style="color: var(--steel-600); margin-top: 8px;">Welcome back to the professional marketplace</p>
+              </div>
+              <form id="loginForm">
+                <div class="form-group">
+                  <label for="email">Email Address</label>
+                  <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                  <label for="password">Password</label>
+                  <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Sign In</button>
+              </form>
+              <div class="auth-links">
+                <p>Don't have an account? <a href="/auth/register">Sign up here</a></p>
+                <p style="margin-top: 12px;"><a href="#" style="font-size: 0.875rem;">Forgot your password?</a></p>
+              </div>
+            </div>
+          </div>
+          <script>
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+              e.preventDefault();
+              alert('Login successful! This is a demo - redirecting to homepage.');
+              window.location.href = '/';
+            });
+          </script>
+        </body>
+        </html>
+      `;
+
+      res.send(htmlContent);
+    });
+
     // Health check endpoint
     app.get('/health', (req, res) => {
       res.json({ status: 'ok', timestamp: new Date().toISOString() });
