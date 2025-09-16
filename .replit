@@ -1,30 +1,19 @@
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = "docker-compose up --build"
+run = ["npm", "--prefix", "snipshift-next/api", "run", "start:container"]
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
 packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick"]
 
-[deployments]
-[[deployments.releases]]
-  name = "production-api"
-  # The command to build the application
-  build = ["npm", "--prefix", "snipshift-next/api", "run", "build"]
-  # The command to run the application after building
-  run = ["npm", "--prefix", "snipshift-next/api", "run", "start:container"]
-
-[[ports]]
-localPort = 3000
-externalPort = 3000
+[deployment]
+deploymentTarget = "cloudrun"
+build = ["npm", "--prefix", "snipshift-next/api", "run", "build"]
+run = ["npm", "--prefix", "snipshift-next/api", "run", "start:container"]
 
 [[ports]]
 localPort = 4000
-externalPort = 4000
-
-[[ports]]
-localPort = 5432
-externalPort = 5432
+externalPort = 80
 
 [env]
 PORT = "4000"
