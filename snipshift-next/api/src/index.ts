@@ -29,6 +29,8 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
 import { connectDatabase } from './database/connection.js';
 import { initializeRedis } from './config/redis.js';
+import Stripe from 'stripe';
+import cookieParser from 'cookie-parser';
 
 // Initialize PubSub for real-time subscriptions
 export const pubsub = new PubSub();
@@ -47,6 +49,15 @@ async function startServer() {
     // Initialize Redis for caching and sessions
     await initializeRedis();
     logger.info('Redis connected successfully');
+
+    // Initialize Stripe client
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY environment variable is required');
+    }
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-06-20',
+    });
+    logger.info('Stripe client initialized');
 
     const app = express();
     const httpServer = createServer(app);
@@ -90,8 +101,7 @@ async function startServer() {
           return res.status(500).send('Stripe not configured');
         }
 
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
         
         logger.info('Webhook event received', { 
           type: event.type, 
@@ -149,6 +159,7 @@ async function startServer() {
 
     // Body parsing (AFTER webhook route)
     app.use(express.json({ limit: '10mb' }));
+    app.use(cookieParser());
 
     // Serve static files (for hero background image)
     app.use('/public', express.static(path.join(__dirname, '../public')));
@@ -866,8 +877,6 @@ async function startServer() {
           });
         }
 
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        
         const paymentIntentParams: any = {
           amount: priceInfo.amount, // Server-controlled amount
           currency: priceInfo.currency,
@@ -956,8 +965,6 @@ async function startServer() {
           });
         }
 
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        
         // Create or retrieve customer with idempotency
         let customer;
         if (customerId) {
@@ -1043,17 +1050,20 @@ async function startServer() {
       }
     });
 
-    // Google OAuth authentication endpoint
+    // Google OAuth authentication endpoint with secure sessions
     app.post('/api/auth/google', async (req, res) => {
       try {
         const { credential, mode } = req.body;
         
         if (!credential) {
-          return res.status(400).json({ error: 'No credential provided' });
+          return res.status(400).json({ 
+            error: 'No credential provided',
+            code: 'MISSING_CREDENTIAL'
+          });
         }
 
-        // Verify Google JWT token
-        const { OAuth2Client } = require('google-auth-library');
+        // Verify Google JWT token with proper ES module import
+        const { OAuth2Client } = await import('google-auth-library');
         const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
         
         const ticket = await client.verifyIdToken({
@@ -1062,33 +1072,115 @@ async function startServer() {
         });
 
         const payload = ticket.getPayload();
-        if (!payload) {
-          return res.status(400).json({ error: 'Invalid token payload' });
+        if (!payload || !payload.aud || payload.aud !== process.env.GOOGLE_CLIENT_ID) {
+          return res.status(401).json({ 
+            error: 'Invalid token',
+            code: 'INVALID_TOKEN'
+          });
         }
 
-        // Extract user data from Google
+        // Extract verified user data from Google
         const userData = {
           googleId: payload.sub,
           email: payload.email,
           name: payload.name,
           picture: payload.picture,
-          provider: 'google'
+          provider: 'google',
+          verified: true
         };
 
-        logger.info('Google auth successful:', { email: userData.email, mode });
-        
-        // In a real app, you would save/update user in database here
-        // For demo, just return the user data
-        res.json({
-          user: userData,
+        // Generate secure session ID
+        const sessionId = crypto.randomUUID();
+        const sessionData = {
+          userId: userData.googleId,
+          email: userData.email,
+          provider: 'google',
+          createdAt: new Date().toISOString(),
+          mode
+        };
+
+        // Store session server-side (in production, use Redis)
+        // For demo, we'll use a simple in-memory store
+        global.sessions = global.sessions || new Map();
+        global.sessions.set(sessionId, sessionData);
+
+        // Set secure httpOnly cookie
+        res.cookie('session', sessionId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          path: '/'
+        });
+
+        logger.info('Google auth successful', { 
+          email: userData.email, 
           mode,
-          success: true
+          sessionId: sessionId.substring(0, 8) + '...' // Log partial session ID for debugging
+        });
+
+        res.json({
+          user: {
+            email: userData.email,
+            name: userData.name,
+            picture: userData.picture,
+            provider: 'google'
+          },
+          mode,
+          success: true,
+          sessionId: sessionId.substring(0, 8) + '...' // Return partial ID for client debugging
         });
 
       } catch (error: any) {
-        logger.error('Google auth verification failed:', error.message);
-        res.status(401).json({ error: 'Google authentication failed' });
+        logger.error('Google auth verification failed', { 
+          error: error.message,
+          type: error.constructor.name,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+        
+        res.status(401).json({ 
+          error: 'Google authentication failed',
+          code: 'AUTH_FAILED'
+        });
       }
+    });
+
+    // Secure logout endpoint
+    app.post('/api/auth/logout', (req, res) => {
+      const sessionId = req.cookies?.session;
+      
+      if (sessionId && global.sessions) {
+        global.sessions.delete(sessionId);
+      }
+      
+      res.clearCookie('session');
+      res.json({ success: true, message: 'Logged out successfully' });
+    });
+
+    // Session verification middleware
+    const verifySession = (req: any, res: any, next: any) => {
+      const sessionId = req.cookies?.session;
+      
+      if (!sessionId || !global.sessions?.has(sessionId)) {
+        return res.status(401).json({ 
+          error: 'Authentication required',
+          code: 'NO_SESSION'
+        });
+      }
+      
+      req.session = global.sessions.get(sessionId);
+      next();
+    };
+
+    // Protected route example
+    app.get('/api/auth/profile', verifySession, (req: any, res) => {
+      res.json({
+        user: {
+          email: req.session.email,
+          provider: req.session.provider,
+          createdAt: req.session.createdAt
+        }
+      });
     });
 
     // Health check endpoint
