@@ -744,7 +744,7 @@ async function startServer() {
             function initializeGoogle() {
               try {
                 window.google.accounts.id.initialize({
-                  client_id: '${process.env.GOOGLE_CLIENT_ID || 'your-google-client-id'}',
+                  client_id: '${process.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id'}',
                   callback: handleGoogleSignUp,
                   auto_select: false
                 });
@@ -963,7 +963,7 @@ async function startServer() {
             function initializeGoogle() {
               try {
                 window.google.accounts.id.initialize({
-                  client_id: '${process.env.GOOGLE_CLIENT_ID || 'your-google-client-id'}',
+                  client_id: '${process.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id'}',
                   callback: handleGoogleSignIn,
                   auto_select: false
                 });
@@ -1246,15 +1246,15 @@ async function startServer() {
 
         // Verify Google JWT token with proper ES module import
         const { OAuth2Client } = await import('google-auth-library');
-        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
         
         const ticket = await client.verifyIdToken({
           idToken: credential,
-          audience: process.env.GOOGLE_CLIENT_ID,
+          audience: process.env.VITE_GOOGLE_CLIENT_ID,
         });
 
         const payload = ticket.getPayload();
-        if (!payload || !payload.aud || payload.aud !== process.env.GOOGLE_CLIENT_ID) {
+        if (!payload || !payload.aud || payload.aud !== process.env.VITE_GOOGLE_CLIENT_ID) {
           return res.status(401).json({ 
             error: 'Invalid token',
             code: 'INVALID_TOKEN'
