@@ -15,10 +15,6 @@ run = ["npm", "--prefix", "snipshift-next/api", "run", "start"]
 localPort = 4000
 externalPort = 80
 
-[[ports]]
-localPort = 35351
-externalPort = 3000
-
 [env]
 PORT = "4000"
 

@@ -124,11 +124,13 @@ async function startServer() {
     // Error handling
     app.use(errorHandler);
 
-    const PORT = process.env.PORT || 4000;
-    httpServer.listen(PORT, () => {
-      logger.info(`🚀 Server running on port ${PORT}`);
-      logger.info(`📊 GraphQL endpoint: http://localhost:${PORT}/graphql`);
-      logger.info(`🔍 GraphQL Playground: http://localhost:${PORT}/graphql`);
+    const PORT = parseInt(process.env.PORT || '4000', 10);
+    const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces for containers
+    
+    httpServer.listen(PORT, HOST, () => {
+      logger.info(`🚀 Server running on ${HOST}:${PORT}`);
+      logger.info(`📊 GraphQL endpoint: http://${HOST}:${PORT}/graphql`);
+      logger.info(`🔍 GraphQL Playground: http://${HOST}:${PORT}/graphql`);
     });
 
   } catch (error) {
