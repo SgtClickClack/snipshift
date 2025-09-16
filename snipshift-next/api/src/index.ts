@@ -527,6 +527,235 @@ async function startServer() {
       `);
     });
 
+    // Role selection page
+    app.get('/auth/role-selection', (req, res) => {
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Choose Your Role - SnipShift</title>
+          <style>
+            :root {
+              --steel-50: hsl(210, 40%, 98%);
+              --steel-100: hsl(210, 40%, 96%);
+              --steel-200: hsl(214, 32%, 91%);
+              --steel-300: hsl(213, 27%, 84%);
+              --steel-400: hsl(215, 20%, 65%);
+              --steel-500: hsl(215, 16%, 47%);
+              --steel-600: hsl(215, 19%, 35%);
+              --steel-700: hsl(215, 25%, 27%);
+              --steel-800: hsl(217, 33%, 17%);
+              --steel-900: hsl(222, 84%, 5%);
+              --red-accent: hsl(0, 84%, 60%);
+              --red-accent-hover: hsl(0, 84%, 55%);
+            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+              background: linear-gradient(135deg, var(--steel-100) 0%, var(--steel-200) 100%);
+              min-height: 100vh;
+              color: var(--steel-900);
+            }
+            .container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+            .role-card {
+              background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
+              border: 2px solid var(--steel-300);
+              border-radius: 20px;
+              padding: 48px;
+              max-width: 800px;
+              width: 100%;
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.08);
+            }
+            .logo { text-align: center; margin-bottom: 40px; }
+            .logo h1 { font-size: 2.5rem; font-weight: 700; color: var(--steel-900); margin-bottom: 8px; }
+            .logo p { color: var(--steel-600); font-size: 1.125rem; }
+            .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px; }
+            .role-option {
+              border: 2px solid var(--steel-300);
+              border-radius: 12px;
+              padding: 24px;
+              background: linear-gradient(145deg, #ffffff, #f9f9f9);
+              cursor: pointer;
+              transition: all 0.2s ease;
+              text-align: center;
+            }
+            .role-option:hover { border-color: var(--red-accent); transform: translateY(-2px); }
+            .role-option.selected { border-color: var(--red-accent); background: linear-gradient(145deg, #fff5f5, #fef2f2); }
+            .role-icon { font-size: 2.5rem; margin-bottom: 16px; }
+            .role-title { font-size: 1.25rem; font-weight: 600; color: var(--steel-900); margin-bottom: 8px; }
+            .role-desc { color: var(--steel-600); font-size: 0.875rem; line-height: 1.5; }
+            .continue-btn {
+              width: 100%;
+              background: linear-gradient(145deg, var(--red-accent), var(--red-accent-hover));
+              color: white;
+              border: none;
+              padding: 16px 32px;
+              border-radius: 12px;
+              font-size: 1.125rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              margin-top: 24px;
+            }
+            .continue-btn:hover { transform: translateY(-1px); }
+            .continue-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="role-card">
+              <div class="logo">
+                <h1>SnipShift</h1>
+                <p>Choose your role to get started</p>
+              </div>
+              
+              <div class="roles-grid">
+                <div class="role-option" data-role="professional">
+                  <div class="role-icon">✂️</div>
+                  <h3 class="role-title">Professional</h3>
+                  <p class="role-desc">Barbers and stylists looking for work opportunities</p>
+                </div>
+                
+                <div class="role-option" data-role="hub">
+                  <div class="role-icon">🏪</div>
+                  <h3 class="role-title">Hub Owner</h3>
+                  <p class="role-desc">Barbershop owners posting jobs and managing staff</p>
+                </div>
+                
+                <div class="role-option" data-role="brand">
+                  <div class="role-icon">🏷️</div>
+                  <h3 class="role-title">Brand</h3>
+                  <p class="role-desc">Product companies promoting to professionals</p>
+                </div>
+                
+                <div class="role-option" data-role="trainer">
+                  <div class="role-icon">🎓</div>
+                  <h3 class="role-title">Trainer</h3>
+                  <p class="role-desc">Educators creating and selling training content</p>
+                </div>
+              </div>
+              
+              <button class="continue-btn" id="continueBtn" disabled>Continue to Dashboard</button>
+            </div>
+          </div>
+          
+          <script>
+            let selectedRole = null;
+            
+            document.querySelectorAll('.role-option').forEach(option => {
+              option.addEventListener('click', function() {
+                // Remove selection from others
+                document.querySelectorAll('.role-option').forEach(opt => opt.classList.remove('selected'));
+                // Add selection to clicked
+                this.classList.add('selected');
+                selectedRole = this.dataset.role;
+                document.getElementById('continueBtn').disabled = false;
+              });
+            });
+            
+            document.getElementById('continueBtn').addEventListener('click', function() {
+              if (selectedRole) {
+                // Redirect to the appropriate dashboard
+                const dashboards = {
+                  professional: '/professional-dashboard',
+                  hub: '/hub-dashboard', 
+                  brand: '/brand-dashboard',
+                  trainer: '/trainer-dashboard'
+                };
+                window.location.href = dashboards[selectedRole] || '/dashboard';
+              }
+            });
+          </script>
+        </body>
+        </html>
+      `);
+    });
+
+    // General dashboard route
+    app.get('/dashboard', (req, res) => {
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Dashboard - SnipShift</title>
+          <style>
+            :root {
+              --steel-50: hsl(210, 40%, 98%);
+              --steel-100: hsl(210, 40%, 96%);
+              --steel-200: hsl(214, 32%, 91%);
+              --steel-300: hsl(213, 27%, 84%);
+              --steel-400: hsl(215, 20%, 65%);
+              --steel-500: hsl(215, 16%, 47%);
+              --steel-600: hsl(215, 19%, 35%);
+              --steel-700: hsl(215, 25%, 27%);
+              --steel-800: hsl(217, 33%, 17%);
+              --steel-900: hsl(222, 84%, 5%);
+              --red-accent: hsl(0, 84%, 60%);
+            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+              background: linear-gradient(135deg, var(--steel-100) 0%, var(--steel-200) 100%);
+              min-height: 100vh;
+              color: var(--steel-900);
+            }
+            .container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+            .dashboard-card {
+              background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
+              border: 2px solid var(--steel-300);
+              border-radius: 20px;
+              padding: 48px;
+              max-width: 600px;
+              width: 100%;
+              text-align: center;
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.08);
+            }
+            .welcome-icon { font-size: 4rem; margin-bottom: 24px; }
+            h1 { font-size: 2.5rem; font-weight: 700; color: var(--steel-900); margin-bottom: 16px; }
+            p { color: var(--steel-600); font-size: 1.125rem; line-height: 1.6; margin-bottom: 32px; }
+            .btn { 
+              background: linear-gradient(145deg, var(--red-accent), var(--red-accent-hover));
+              color: white;
+              border: none;
+              padding: 16px 32px;
+              border-radius: 12px;
+              font-size: 1.125rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              text-decoration: none;
+              display: inline-block;
+              margin: 0 8px;
+            }
+            .btn:hover { transform: translateY(-1px); }
+            .btn-secondary {
+              background: linear-gradient(145deg, var(--steel-200), var(--steel-300));
+              color: var(--steel-800);
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="dashboard-card">
+              <div class="welcome-icon">🎉</div>
+              <h1>Welcome to SnipShift!</h1>
+              <p>Your professional marketplace dashboard is ready. Connect with opportunities, manage your profile, and grow your business in the barbering and creative industries.</p>
+              
+              <div style="margin-top: 32px;">
+                <a href="/auth/role-selection" class="btn btn-secondary">Choose Different Role</a>
+                <a href="/" class="btn">Explore Platform</a>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+    });
+
     // Registration routes  
     app.get('/auth/register', (req, res) => {
       const role = req.query.role as string || '';
@@ -710,7 +939,7 @@ async function startServer() {
                 </div>
               </div>
 
-              <button id="googleSignUpBtn" class="btn-google" onclick="alert('Button clicked!')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; background: white; border: 2px solid var(--steel-300); border-radius: 8px; padding: 12px 16px; font-size: 1rem; font-weight: 500; color: var(--steel-700); cursor: pointer; transition: all 0.2s ease; margin-bottom: 24px;">
+              <button id="googleSignUpBtn" class="btn-google" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; background: white; border: 2px solid var(--steel-300); border-radius: 8px; padding: 12px 16px; font-size: 1rem; font-weight: 500; color: var(--steel-700); cursor: pointer; transition: all 0.2s ease; margin-bottom: 24px;">
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -772,7 +1001,7 @@ async function startServer() {
                 
                 if (data.success) {
                   alert('Google sign-up successful! Welcome to SnipShift.');
-                  window.location.href = '/';
+                  window.location.href = '/auth/role-selection';
                 } else {
                   alert('Google sign-up failed: ' + (data.error || 'Unknown error'));
                 }
@@ -788,9 +1017,6 @@ async function startServer() {
               if (googleBtn) {
                 googleBtn.addEventListener('click', function(e) {
                   e.preventDefault();
-                  console.log('Google button clicked!');
-                  console.log('isGoogleLoaded:', isGoogleLoaded);
-                  console.log('window.google:', window.google);
                   
                   if (!isGoogleLoaded) {
                     alert('Google Sign-In is still loading. Please wait a moment and try again.');
@@ -798,15 +1024,12 @@ async function startServer() {
                   }
                   
                   try {
-                    console.log('Attempting to show Google prompt...');
                     window.google.accounts.id.prompt();
                   } catch (error) {
                     console.error('Failed to show Google sign-in:', error);
-                    alert('Failed to open Google sign-in. Please try again. Error: ' + error.message);
+                    alert('Failed to open Google sign-in. Please try again.');
                   }
                 });
-              } else {
-                console.error('Google button not found!');
               }
             });
 
@@ -1004,7 +1227,7 @@ async function startServer() {
                 
                 if (data.success) {
                   alert('Google sign-in successful! Welcome back to SnipShift.');
-                  window.location.href = '/';
+                  window.location.href = '/dashboard';
                 } else {
                   alert('Google sign-in failed: ' + (data.error || 'Unknown error'));
                 }
