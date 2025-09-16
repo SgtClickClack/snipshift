@@ -10,14 +10,18 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+    }
     dispatch({ type: 'CLEAR_AUTH' });
     router.push('/');
   };
 
   if (!state.isAuthenticated) {
-    router.push('/auth/register');
+    if (typeof window !== 'undefined') {
+      router.push('/auth/register');
+    }
     return null;
   }
 

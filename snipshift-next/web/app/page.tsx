@@ -1,6 +1,7 @@
+'use client';
+
 import React, { Suspense } from 'react';
 import { Box, Container, Typography, Button, Grid, Card, CardContent, Avatar } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import Link from 'next/link';
 import { Store, Person, EmojiEvents, School, ArrowForward } from '@mui/icons-material';
 
@@ -10,16 +11,6 @@ import { Store, Person, EmojiEvents, School, ArrowForward } from '@mui/icons-mat
 // import { FeaturesSection } from '../src/components/landing/FeaturesSection';
 // import { TestimonialsSection } from '../src/components/landing/TestimonialsSection';
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[8],
-  },
-}));
 
 const RoleCard = ({
   icon,
@@ -35,7 +26,18 @@ const RoleCard = ({
   color: string;
 }) => (
   <Grid item xs={12} sm={6} md={3}>
-    <StyledCard>
+    <Card
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: 8,
+        },
+      }}
+    >
       <CardContent sx={{ textAlign: 'center', p: 3 }}>
         <Avatar
           sx={{
@@ -64,7 +66,7 @@ const RoleCard = ({
           Get Started
         </Button>
       </CardContent>
-    </StyledCard>
+    </Card>
   </Grid>
 );
 

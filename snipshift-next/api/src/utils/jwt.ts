@@ -4,14 +4,15 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 );
 
-export interface JWTPayload {
+export interface UserJWTPayload {
   id: string;
   email: string;
   roles: string[];
   currentRole?: string;
+  [key: string]: any; // Index signature for jose compatibility
 }
 
-export async function generateToken(payload: JWTPayload): Promise<string> {
+export async function generateToken(payload: UserJWTPayload): Promise<string> {
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -31,10 +32,10 @@ export async function generateRefreshToken(payload: { id: string }): Promise<str
   return token;
 }
 
-export async function verifyToken(token: string): Promise<JWTPayload> {
+export async function verifyToken(token: string): Promise<UserJWTPayload> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as JWTPayload;
+    return payload as UserJWTPayload;
   } catch (error) {
     throw new Error('Invalid or expired token');
   }

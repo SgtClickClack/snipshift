@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { GraphQLContext } from '../context.js';
-import { eq, or, and, like } from 'drizzle-orm';
+import { eq, or, and, like, sql } from 'drizzle-orm';
 import { users, hubProfiles, professionalProfiles, brandProfiles, trainerProfiles } from '../../database/schema.js';
 import { logger } from '../../utils/logger.js';
 
@@ -40,7 +40,7 @@ export const userResolvers = {
       if (role) {
         // This is a simplified check - in reality you'd need to check if role is in the roles array
         // For now, we'll filter by currentRole
-        conditions.push(eq(users.currentRole, role));
+        conditions.push(sql`${users.currentRole} = ${role}`);
       }
 
       if (verified !== undefined) {

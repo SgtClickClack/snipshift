@@ -1,16 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../utils/jwt.js';
+import { verifyToken, UserJWTPayload } from '../utils/jwt.js';
 
 export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    roles: string[];
-    currentRole?: string;
-  };
+  user?: UserJWTPayload;
 }
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
@@ -20,7 +15,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 
   try {
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
     (req as AuthenticatedRequest).user = payload;
   } catch (error) {
     // Invalid token - continue without user

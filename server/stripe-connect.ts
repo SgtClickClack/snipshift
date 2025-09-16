@@ -1,9 +1,16 @@
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
 
-// Use test credentials for development
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_51OqJxYBEZQGWNXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // Test key placeholder
-const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_51OqJxYBEZQGWNXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // Test key placeholder
+// Require environment configuration - no hardcoded fallbacks for security
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+if (!STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
+if (!STRIPE_PUBLISHABLE_KEY) {
+  throw new Error('STRIPE_PUBLISHABLE_KEY environment variable is required');
+}
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
@@ -260,11 +267,20 @@ export const stripeConnectRoutes = {
     }
   },
 
-  // Handle webhook events
+  // Handle webhook events - IMPORTANT: Use express.raw() middleware for this route
   async handleWebhook(req: Request, res: Response) {
     try {
       const sig = req.headers['stripe-signature'] as string;
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_webhook_secret';
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        throw new Error('STRIPE_WEBHOOK_SECRET environment variable is required');
+      }
+      
+      // Ensure req.body is raw buffer for signature verification
+      if (!Buffer.isBuffer(req.body)) {
+        console.error('Webhook body is not a Buffer - configure express.raw() middleware');
+        return res.status(400).send('Invalid webhook body format');
+      }
       
       let event;
       try {
@@ -274,13 +290,17 @@ export const stripeConnectRoutes = {
         return res.status(400).send('Webhook signature verification failed');
       }
 
-      // Handle different event types
+      // Handle different event types - sanitized logging
       switch (event.type) {
         case 'account.updated':
-          console.log('Account updated:', event.data.object);
+          console.log('Account updated:', { account_id: event.data.object.id, type: event.type });
           break;
         case 'payment_intent.succeeded':
-          console.log('Payment succeeded:', event.data.object);
+          console.log('Payment succeeded:', { 
+            payment_intent_id: event.data.object.id, 
+            amount: event.data.object.amount,
+            type: event.type 
+          });
           break;
         default:
           console.log(`Unhandled event type: ${event.type}`);

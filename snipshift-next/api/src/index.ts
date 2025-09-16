@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@as-integrations/express4';
+import { expressMiddleware } from '@as-integrations/express5';
 // Body parser middleware available directly from Express
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -86,8 +86,8 @@ async function startServer() {
       {
         schema,
         context: (ctx: any) => context({ req: ctx.extra.request }),
-        onConnect: () => logger.info('WebSocket client connected'),
-        onDisconnect: () => logger.info('WebSocket client disconnected'),
+        onConnect: () => { logger.info('WebSocket client connected'); },
+        onDisconnect: () => { logger.info('WebSocket client disconnected'); },
       },
       wsServer
     );
@@ -95,6 +95,8 @@ async function startServer() {
     // Apollo Server setup
     const server = new ApolloServer({
       schema,
+      // Security: Disable introspection and playground in production
+      introspection: process.env.NODE_ENV !== 'production',
       plugins: [
         {
           async serverWillStart() {

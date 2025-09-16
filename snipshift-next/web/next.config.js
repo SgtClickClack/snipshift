@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-    typedRoutes: true,
-  },
+  typedRoutes: true,
   images: {
     domains: ['localhost', 'snipshift.com.au', 'storage.googleapis.com'],
     remotePatterns: [
@@ -24,6 +21,7 @@ const nextConfig = {
   env: {
     API_URL: process.env.API_URL || 'http://localhost:4000',
     GRAPHQL_URL: process.env.GRAPHQL_URL || 'http://localhost:4000/graphql',
+    NEXT_PUBLIC_GRAPHQL_URL: process.env.NEXT_PUBLIC_GRAPHQL_URL || '/graphql',
     WS_URL: process.env.WS_URL || 'ws://localhost:4000/graphql',
     GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
@@ -37,6 +35,9 @@ const nextConfig = {
       '@': './src',
       '@shared': '../shared',
     };
+    
+    // Removed parent node_modules hack for production build compatibility
+    
     return config;
   },
   async headers() {

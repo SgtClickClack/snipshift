@@ -15,12 +15,12 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
   run = ["npm", "--prefix", "snipshift-next/api", "run", "start"]
 
 [[ports]]
-localPort = 4000
-externalPort = 4000
-
-[[ports]]
 localPort = 3000
 externalPort = 3000
+
+[[ports]]
+localPort = 4000
+externalPort = 4000
 
 [[ports]]
 localPort = 5432
