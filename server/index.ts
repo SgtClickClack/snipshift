@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerFirebaseRoutes } from "./firebase-routes";
+import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupProductionMiddleware, setupHealthCheck } from "./middleware/production";
 import { apiLimiter, securityHeaders, sanitizeInput, requireCsrfHeader } from "./middleware/security";
@@ -20,7 +21,14 @@ app.use(compression());
 app.use(securityHeaders);
 app.use(sanitizeInput);
 
-app.use(express.json());
+// CRITICAL: Stripe webhook needs raw body - exclude from JSON parsing
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/stripe/webhook')) {
+    next(); // Skip JSON parsing for webhook (handles query params/variations)
+  } else {
+    express.json()(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: false }));
 
 // Session middleware
@@ -95,6 +103,9 @@ app.use((req, res, next) => {
   }
   
   const server = await registerFirebaseRoutes(app);
+  
+  // CRITICAL: Register Stripe and other routes (including webhook)
+  await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

@@ -12,7 +12,7 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
   # The command to build the application
   build = ["npm", "--prefix", "snipshift-next/api", "run", "build"]
   # The command to run the application after building
-  run = ["npm", "--prefix", "snipshift-next/api", "run", "start:container"]
+  run = ["npm", "--prefix", "snipshift-next/api", "run", "start"]
 
 [[ports]]
 localPort = 3000

@@ -7,12 +7,11 @@ import {
   insertJobSchema, 
   insertSocialPostSchema 
 } from "@shared/firebase-schema";
-// @ts-expect-error types not installed for node-fetch in ESM
 import fetch from 'node-fetch';
 // Minimal type shim for node-fetch on ESM without types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FetchInit = any;
-import nodemailer from "nodemailer";
+// import nodemailer from "nodemailer"; // Unused in current implementation
 
 export async function registerFirebaseRoutes(app: Express): Promise<Server> {
   // User authentication routes
@@ -81,27 +80,26 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // OAuth code exchange (Google)
+  // OAuth code exchange (Google) - PKCE-secured for public clients
   app.post('/api/oauth/google/exchange', async (req, res) => {
     try {
-      const { code, redirectUri } = req.body || {};
+      const { code, redirectUri, codeVerifier } = req.body || {};
       const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
-      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
       const missing: string[] = [];
       if (!code) missing.push('code');
       if (!redirectUri) missing.push('redirectUri');
       if (!clientId) missing.push('GOOGLE_CLIENT_ID');
-      if (!clientSecret) missing.push('GOOGLE_CLIENT_SECRET');
+      if (!codeVerifier) missing.push('codeVerifier');
       if (missing.length) return res.status(400).json({ message: 'Missing OAuth parameters', missing });
 
-      // Exchange code for tokens
+      // Exchange code for tokens using PKCE (no client_secret needed for public clients)
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           code: String(code),
           client_id: String(clientId),
-          client_secret: String(clientSecret),
+          code_verifier: String(codeVerifier), // PKCE verification
           redirect_uri: String(redirectUri),
           grant_type: 'authorization_code',
         }) as unknown as any,
@@ -114,11 +112,32 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
       const idToken = tokenJson.id_token as string | undefined;
       if (!idToken) return res.status(400).json({ message: 'No id_token in response' });
 
-      // Verify ID token (lightweight: decode without signature check as MVP)
-      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString('utf8')) as any;
-      const email = payload?.email as string | undefined;
-      const sub = payload?.sub as string | undefined;
-      if (!email || !sub) return res.status(400).json({ message: 'Invalid id_token payload' });
+      // Verify ID token using Google's public endpoint for security
+      let email: string, sub: string; // Declare in outer scope
+      try {
+        const verifyResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+        if (!verifyResponse.ok) {
+          return res.status(400).json({ message: 'ID token verification failed' });
+        }
+        
+        const payload = await verifyResponse.json() as any;
+        email = payload?.email as string | undefined;
+        sub = payload?.sub as string | undefined;
+        const aud = payload?.aud as string | undefined;
+        const exp = payload?.exp as number | undefined;
+        const iss = payload?.iss as string | undefined;
+        
+        // Validate token claims for security
+        if (!email || !sub) return res.status(400).json({ message: 'Invalid id_token payload' });
+        if (aud !== clientId) return res.status(400).json({ message: 'Invalid token audience' });
+        if (!exp || Date.now() / 1000 > exp) return res.status(400).json({ message: 'Token expired' });
+        if (iss !== 'accounts.google.com' && iss !== 'https://accounts.google.com') {
+          return res.status(400).json({ message: 'Invalid token issuer' });
+        }
+      } catch (err) {
+        console.error('ID token verification error:', err);
+        return res.status(400).json({ message: 'Token verification failed' });
+      }
 
       // Upsert user
       let user = await firebaseStorage.getUserByEmail(email);

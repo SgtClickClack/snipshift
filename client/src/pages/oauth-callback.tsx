@@ -30,11 +30,30 @@ export function OAuthCallback() {
         console.log('✅ Authorization code received:', code.substring(0, 20) + '...');
         console.log('✅ State received:', state);
         
-        // Exchange code with server, which sets session and returns user
+        // CRITICAL: Verify state parameter to prevent CSRF attacks
+        const storedState = sessionStorage.getItem('oauth_state');
+        if (!storedState || state !== storedState) {
+          throw new Error('Invalid state parameter - possible CSRF attack');
+        }
+
+        // Retrieve PKCE verifier for secure token exchange
+        const codeVerifier = sessionStorage.getItem('oauth_code_verifier');
+        if (!codeVerifier) {
+          throw new Error('No PKCE code verifier found - session may have expired');
+        }
+
+        console.log('✅ State verified successfully');
+        
+        // Exchange code with server using PKCE, which sets session and returns user
         const res = await apiRequest('POST', '/api/oauth/google/exchange', {
           code,
           redirectUri: window.location.origin + '/oauth/callback',
+          codeVerifier, // Include PKCE verifier for secure exchange
         });
+
+        // Clear sensitive data from storage after successful exchange
+        sessionStorage.removeItem('oauth_state');
+        sessionStorage.removeItem('oauth_code_verifier');
         const userData = await res.json();
         console.log('🔧 Logging in user:', userData);
         login({
