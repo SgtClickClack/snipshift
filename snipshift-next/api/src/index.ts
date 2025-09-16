@@ -80,7 +80,10 @@ async function startServer() {
     // Body parsing
     app.use(express.json({ limit: '10mb' }));
 
-    // Serve the SnipShift web application
+    // Serve static files (for hero background image)
+    app.use('/public', express.static(path.join(__dirname, '../public')));
+
+    // Serve the SnipShift web application with proper Black & Chrome design
     app.get('/', (req, res) => {
       res.send(`
         <!DOCTYPE html>
@@ -88,91 +91,341 @@ async function startServer() {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>SnipShift 2.0 - Professional Marketplace</title>
-          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
-          <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+          <title>SnipShift - Professional Marketplace</title>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
           <style>
+            :root {
+              /* Enhanced Steel & Chrome Color Palette */
+              --background: hsl(210, 15%, 94%);
+              --foreground: hsl(210, 15%, 12%);
+              --steel-50: hsl(210, 20%, 98%);
+              --steel-100: hsl(210, 18%, 95%);
+              --steel-200: hsl(210, 15%, 90%);
+              --steel-300: hsl(210, 12%, 82%);
+              --steel-400: hsl(210, 10%, 68%);
+              --steel-500: hsl(210, 8%, 52%);
+              --steel-600: hsl(210, 10%, 38%);
+              --steel-700: hsl(210, 15%, 28%);
+              --steel-800: hsl(210, 18%, 18%);
+              --steel-900: hsl(210, 20%, 12%);
+              --red-accent: hsl(0, 85%, 35%);
+              --red-accent-light: hsl(0, 85%, 45%);
+              --red-accent-hover: hsl(0, 88%, 40%);
+              --chrome-light: hsl(210, 8%, 95%);
+              --chrome-medium: hsl(210, 8%, 68%);
+              --chrome-dark: hsl(210, 12%, 45%);
+            }
+            
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Roboto', sans-serif; line-height: 1.6; color: #333; background: #f5f5f5; }
-            .hero { background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 80px 20px; text-align: center; }
+            
+            body { 
+              font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+              line-height: 1.5; 
+              letter-spacing: -0.01em; 
+              color: var(--foreground);
+              background: var(--background);
+            }
+            
+            .hero {
+              position: relative;
+              background-image: url('/public/hero-background.jpg');
+              background-size: cover;
+              background-position: center;
+              background-repeat: no-repeat;
+              color: white;
+              padding: 120px 20px;
+              text-align: center;
+              overflow: hidden;
+            }
+            
+            .hero::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.7) 100%);
+              z-index: 1;
+            }
+            
+            .hero-content {
+              position: relative;
+              z-index: 2;
+              max-width: 1200px;
+              margin: 0 auto;
+            }
+            
+            .hero-icon {
+              display: inline-flex;
+              padding: 16px;
+              background: linear-gradient(145deg, var(--red-accent), var(--red-accent-hover));
+              border-radius: 50%;
+              box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+              margin-bottom: 32px;
+            }
+            
+            .hero h1 { 
+              font-size: 4rem; 
+              font-weight: 700; 
+              margin-bottom: 24px; 
+              tracking-tight: -0.02em;
+            }
+            
+            .hero p { 
+              font-size: 1.5rem; 
+              margin-bottom: 48px; 
+              opacity: 0.95; 
+              max-width: 800px; 
+              margin-left: auto; 
+              margin-right: auto;
+            }
+            
+            .cta-buttons {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 16px;
+              margin-bottom: 32px;
+            }
+            
+            .btn-primary {
+              background: linear-gradient(145deg, var(--red-accent), var(--red-accent-hover));
+              color: white;
+              border: none;
+              padding: 16px 48px;
+              border-radius: 12px;
+              font-size: 1.125rem;
+              font-weight: 600;
+              text-decoration: none;
+              display: inline-block;
+              transition: all 0.2s ease;
+              box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            }
+            
+            .btn-primary:hover {
+              background: linear-gradient(145deg, var(--red-accent-light), var(--red-accent));
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+              text-decoration: none;
+              color: white;
+            }
+            
+            .btn-secondary {
+              background: rgba(255,255,255,0.1);
+              color: white;
+              border: 2px solid rgba(255,255,255,0.3);
+              padding: 14px 32px;
+              border-radius: 12px;
+              font-size: 1rem;
+              font-weight: 500;
+              text-decoration: none;
+              display: inline-block;
+              transition: all 0.2s ease;
+              backdrop-filter: blur(8px);
+            }
+            
+            .btn-secondary:hover {
+              background: rgba(255,255,255,0.2);
+              border-color: rgba(255,255,255,0.5);
+              transform: translateY(-1px);
+              text-decoration: none;
+              color: white;
+            }
+            
+            .roles-section { 
+              padding: 100px 20px; 
+              background: linear-gradient(135deg, var(--steel-50) 0%, white 100%);
+            }
+            
             .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-            .hero h1 { font-size: 3.5rem; font-weight: 300; margin-bottom: 20px; }
-            .hero p { font-size: 1.5rem; margin-bottom: 40px; opacity: 0.9; }
-            .roles-section { padding: 80px 20px; background: white; }
-            .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 20px; color: #333; }
-            .section-subtitle { text-align: center; font-size: 1.25rem; color: #666; margin-bottom: 60px; }
-            .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
-            .role-card { background: white; border-radius: 12px; padding: 40px 30px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; border: 1px solid #e0e0e0; }
-            .role-card:hover { transform: translateY(-8px); box-shadow: 0 8px 40px rgba(0,0,0,0.15); }
-            .role-icon { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; }
-            .hub { background: #2196F3; }
-            .professional { background: #4CAF50; }
-            .brand { background: #9C27B0; }
-            .trainer { background: #FF9800; }
-            .role-title { font-size: 1.5rem; font-weight: 500; margin-bottom: 15px; color: #333; }
-            .role-description { color: #666; margin-bottom: 25px; line-height: 1.6; }
-            .role-button { background: #1976d2; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-size: 1rem; cursor: pointer; transition: background 0.3s ease; text-decoration: none; display: inline-block; }
-            .role-button:hover { background: #1565c0; text-decoration: none; color: white; }
-            .cta-section { background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 80px 20px; text-align: center; }
-            .cta-title { font-size: 2.5rem; margin-bottom: 20px; }
-            .cta-subtitle { font-size: 1.25rem; margin-bottom: 40px; opacity: 0.9; }
-            .cta-button { background: #ff5722; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.1rem; cursor: pointer; transition: background 0.3s ease; text-decoration: none; display: inline-block; }
-            .cta-button:hover { background: #e64a19; text-decoration: none; color: white; }
+            
+            .section-title { 
+              text-align: center; 
+              font-size: 3rem; 
+              font-weight: 700; 
+              margin-bottom: 16px; 
+              color: var(--steel-900);
+              letter-spacing: -0.02em;
+            }
+            
+            .section-subtitle { 
+              text-align: center; 
+              font-size: 1.25rem; 
+              color: var(--steel-600); 
+              margin-bottom: 80px; 
+              max-width: 600px; 
+              margin-left: auto; 
+              margin-right: auto;
+            }
+            
+            .roles-grid { 
+              display: grid; 
+              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+              gap: 32px; 
+            }
+            
+            .role-card { 
+              background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
+              border: 2px solid var(--steel-300);
+              border-radius: 16px; 
+              padding: 48px 32px; 
+              text-align: center; 
+              transition: all 0.3s ease; 
+              position: relative;
+              overflow: hidden;
+              box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            }
+            
+            .role-card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 4px;
+              background: linear-gradient(90deg, var(--steel-400), var(--chrome-medium));
+            }
+            
+            .role-card:hover { 
+              transform: translateY(-8px); 
+              border-color: var(--steel-400);
+              box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.08),
+                0 16px 32px rgba(0, 0, 0, 0.08),
+                inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            }
+            
+            .role-icon { 
+              width: 80px; 
+              height: 80px; 
+              border-radius: 50%; 
+              margin: 0 auto 24px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              font-size: 32px; 
+              color: white;
+              background: linear-gradient(145deg, var(--steel-600), var(--steel-700));
+              box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            }
+            
+            .role-icon.hub { background: linear-gradient(145deg, #2196F3, #1976d2); }
+            .role-icon.professional { background: linear-gradient(145deg, #4CAF50, #388e3c); }
+            .role-icon.brand { background: linear-gradient(145deg, #9C27B0, #7b1fa2); }
+            .role-icon.trainer { background: linear-gradient(145deg, #FF9800, #f57c00); }
+            
+            .role-title { 
+              font-size: 1.5rem; 
+              font-weight: 600; 
+              margin-bottom: 16px; 
+              color: var(--steel-900);
+            }
+            
+            .role-description { 
+              color: var(--steel-600); 
+              margin-bottom: 32px; 
+              line-height: 1.6; 
+            }
+            
+            .role-button { 
+              background: linear-gradient(145deg, var(--steel-600), var(--steel-700));
+              color: white; 
+              border: none; 
+              padding: 12px 32px; 
+              border-radius: 8px; 
+              font-size: 1rem; 
+              font-weight: 500;
+              cursor: pointer; 
+              transition: all 0.2s ease; 
+              text-decoration: none; 
+              display: inline-block;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            
+            .role-button:hover { 
+              background: linear-gradient(145deg, var(--steel-500), var(--steel-600));
+              transform: translateY(-1px);
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              text-decoration: none; 
+              color: white; 
+            }
+            
+            .scissors-icon {
+              display: inline-block;
+              width: 48px;
+              height: 48px;
+              background: white;
+              mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Cpath d='m6 9 6 6'/%3E%3Cpath d='m21 7-2-2-6 6'/%3E%3Cpath d='m21 17-2 2-6-6'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3C/svg%3E") no-repeat center;
+              mask-size: contain;
+            }
+            
             @media (max-width: 768px) {
               .hero h1 { font-size: 2.5rem; }
               .hero p { font-size: 1.2rem; }
               .section-title { font-size: 2rem; }
               .roles-grid { grid-template-columns: 1fr; }
+              .cta-buttons { flex-direction: column; }
+            }
+            
+            @media (min-width: 640px) {
+              .cta-buttons { flex-direction: row; justify-content: center; }
             }
           </style>
         </head>
         <body>
-          <!-- Hero Section -->
+          <!-- Hero Section with Barber Tools Background -->
           <section class="hero">
-            <div class="container">
-              <h1>Welcome to SnipShift 2.0</h1>
-              <p>The next generation platform connecting the creative industry</p>
+            <div class="hero-content">
+              <div class="hero-icon">
+                <div class="scissors-icon"></div>
+              </div>
+              
+              <h1>Connect. Cover. Grow.</h1>
+              <p>Snipshift bridges barbershops, salons and creative hubs with verified professionals for seamless workforce flexibility</p>
+              
+              <div class="cta-buttons">
+                <a href="/auth/register" class="btn-primary">Get Started Today</a>
+                <a href="/auth/login" class="btn-secondary">Already have an account? Login</a>
+              </div>
+              
+              <p style="font-size: 0.875rem; opacity: 0.8;">Join thousands of professionals already on Snipshift</p>
             </div>
           </section>
 
           <!-- Role Selection Section -->
           <section class="roles-section">
             <div class="container">
-              <h2 class="section-title">Choose Your Role</h2>
-              <p class="section-subtitle">Join the platform that connects the creative industry</p>
+              <h2 class="section-title">Perfect For</h2>
+              <p class="section-subtitle">Whether you own a business, work as a professional, represent a brand, or teach others</p>
               
               <div class="roles-grid">
                 <div class="role-card">
-                  <div class="role-icon hub">
-                    <span class="material-icons">store</span>
-                  </div>
+                  <div class="role-icon hub">🏪</div>
                   <h3 class="role-title">Hub Owner</h3>
                   <p class="role-description">Own a barbershop or salon? Post shifts and find talented professionals.</p>
                   <a href="/auth/register?role=hub" class="role-button">Get Started</a>
                 </div>
 
                 <div class="role-card">
-                  <div class="role-icon professional">
-                    <span class="material-icons">person</span>
-                  </div>
+                  <div class="role-icon professional">👤</div>
                   <h3 class="role-title">Professional</h3>
                   <p class="role-description">Barber or stylist? Find flexible work opportunities and showcase your skills.</p>
                   <a href="/auth/register?role=professional" class="role-button">Get Started</a>
                 </div>
 
                 <div class="role-card">
-                  <div class="role-icon brand">
-                    <span class="material-icons">emoji_events</span>
-                  </div>
+                  <div class="role-icon brand">🏆</div>
                   <h3 class="role-title">Brand</h3>
                   <p class="role-description">Product company? Connect with professionals and promote your products.</p>
                   <a href="/auth/register?role=brand" class="role-button">Get Started</a>
                 </div>
 
                 <div class="role-card">
-                  <div class="role-icon trainer">
-                    <span class="material-icons">school</span>
-                  </div>
+                  <div class="role-icon trainer">🎓</div>
                   <h3 class="role-title">Trainer</h3>
                   <p class="role-description">Educator? Share your expertise and monetize your training content.</p>
                   <a href="/auth/register?role=trainer" class="role-button">Get Started</a>
@@ -181,19 +434,10 @@ async function startServer() {
             </div>
           </section>
 
-          <!-- CTA Section -->
-          <section class="cta-section">
-            <div class="container">
-              <h2 class="cta-title">Ready to Join the Revolution?</h2>
-              <p class="cta-subtitle">Connect with the creative community and take your career to the next level.</p>
-              <a href="/auth/register" class="cta-button">Get Started Today</a>
-            </div>
-          </section>
-
           <!-- Health Status for Developers -->
           <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-            <a href="/graphql" style="background: #333; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; margin-right: 8px;">GraphQL</a>
-            <a href="/health" style="background: #4CAF50; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 12px;">Health</a>
+            <a href="/graphql" style="background: var(--steel-800); color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; margin-right: 8px;">GraphQL</a>
+            <a href="/health" style="background: var(--red-accent); color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 12px;">Health</a>
           </div>
         </body>
         </html>
