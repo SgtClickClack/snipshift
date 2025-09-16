@@ -54,6 +54,47 @@ export const userResolvers = {
 
       return userList;
     },
+
+    pendingVerifications: async (_: any, __: any, context: GraphQLContext) => {
+      if (!context.user) {
+        throw new Error('Authentication required');
+      }
+
+      // Check if user is admin
+      if (!context.user.roles.includes('admin')) {
+        throw new Error('Admin access required');
+      }
+
+      // Get users with brand or trainer roles who have pending verification
+      const pendingUsers = await context.db
+        .select({
+          id: users.id,
+          email: users.email,
+          displayName: users.displayName,
+          roles: users.roles,
+          currentRole: users.currentRole,
+          createdAt: users.createdAt,
+          brandProfile: brandProfiles,
+          trainerProfile: trainerProfiles,
+        })
+        .from(users)
+        .leftJoin(brandProfiles, eq(users.id, brandProfiles.userId))
+        .leftJoin(trainerProfiles, eq(users.id, trainerProfiles.userId))
+        .where(
+          or(
+            and(
+              sql`${users.roles} @> '["brand"]'`,
+              eq(brandProfiles.verificationStatus, 'PENDING')
+            ),
+            and(
+              sql`${users.roles} @> '["trainer"]'`,
+              eq(trainerProfiles.verificationStatus, 'PENDING')
+            )
+          )
+        );
+
+      return pendingUsers;
+    },
   },
 
   Mutation: {
@@ -241,6 +282,86 @@ export const userResolvers = {
         logger.error('Profile update error:', error);
         throw new Error('Failed to update profile');
       }
+    },
+
+    approveUser: async (_: any, { userId }: { userId: string }, context: GraphQLContext) => {
+      if (!context.user) {
+        throw new Error('Authentication required');
+      }
+
+      // Check if user is admin
+      if (!context.user.roles.includes('admin')) {
+        throw new Error('Admin access required');
+      }
+
+      // Get the user to approve
+      const [targetUser] = await context.db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!targetUser) {
+        throw new Error('User not found');
+      }
+
+      // Update verification status based on user role
+      if (targetUser.roles.includes('brand')) {
+        await context.db
+          .update(brandProfiles)
+          .set({ verificationStatus: 'APPROVED' })
+          .where(eq(brandProfiles.userId, userId));
+      }
+
+      if (targetUser.roles.includes('trainer')) {
+        await context.db
+          .update(trainerProfiles)
+          .set({ verificationStatus: 'APPROVED' })
+          .where(eq(trainerProfiles.userId, userId));
+      }
+
+      logger.info(`User approved: ${targetUser.email}`);
+      return targetUser;
+    },
+
+    rejectUser: async (_: any, { userId }: { userId: string }, context: GraphQLContext) => {
+      if (!context.user) {
+        throw new Error('Authentication required');
+      }
+
+      // Check if user is admin
+      if (!context.user.roles.includes('admin')) {
+        throw new Error('Admin access required');
+      }
+
+      // Get the user to reject
+      const [targetUser] = await context.db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!targetUser) {
+        throw new Error('User not found');
+      }
+
+      // Update verification status based on user role
+      if (targetUser.roles.includes('brand')) {
+        await context.db
+          .update(brandProfiles)
+          .set({ verificationStatus: 'REJECTED' })
+          .where(eq(brandProfiles.userId, userId));
+      }
+
+      if (targetUser.roles.includes('trainer')) {
+        await context.db
+          .update(trainerProfiles)
+          .set({ verificationStatus: 'REJECTED' })
+          .where(eq(trainerProfiles.userId, userId));
+      }
+
+      logger.info(`User rejected: ${targetUser.email}`);
+      return targetUser;
     },
   },
 };

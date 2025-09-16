@@ -4,6 +4,7 @@ import React, { Suspense } from 'react';
 import { Box, Container, Typography, Button, Grid, Card, CardContent, Avatar } from '@mui/material';
 import Link from 'next/link';
 import { Store, Person, EmojiEvents, School, ArrowForward } from '@mui/icons-material';
+import Image from 'next/image';
 
 // TODO: Create these components
 // import { LoadingSpinner } from '../src/components/common/LoadingSpinner';
@@ -77,6 +78,15 @@ export default function HomePage() {
         {/* Hero Section */}
         <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 12 }}>
           <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
+            <Box sx={{ mb: 4 }}>
+              <Image
+                src="/logo-new.svg"
+                alt="SnipShift V2 Logo"
+                width={300}
+                height={90}
+                style={{ marginBottom: '1rem' }}
+              />
+            </Box>
             <Typography variant="h2" component="h1" gutterBottom>
               Welcome to SnipShift 2.0
             </Typography>

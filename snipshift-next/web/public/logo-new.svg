@@ -1,0 +1,32 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- SnipShift Logo - Stylized S with Compass Rose -->
+  <circle cx="100" cy="100" r="95" stroke="#000000" stroke-width="8" fill="none"/>
+  
+  <!-- Compass Rose -->
+  <g transform="translate(100, 100)">
+    <!-- North Point -->
+    <path d="M 0 -60 L -8 -40 L 8 -40 Z" fill="#000000"/>
+    <!-- South Point -->
+    <path d="M 0 60 L -8 40 L 8 40 Z" fill="#000000"/>
+    <!-- East Point -->
+    <path d="M 60 0 L 40 -8 L 40 8 Z" fill="#000000"/>
+    <!-- West Point -->
+    <path d="M -60 0 L -40 -8 L -40 8 Z" fill="#000000"/>
+    
+    <!-- Diagonal Points (shorter) -->
+    <path d="M 42 -42 L 30 -30 L 30 -30 Z" fill="#000000"/>
+    <path d="M 42 42 L 30 30 L 30 30 Z" fill="#000000"/>
+    <path d="M -42 -42 L -30 -30 L -30 -30 Z" fill="#000000"/>
+    <path d="M -42 42 L -30 30 L -30 30 Z" fill="#000000"/>
+  </g>
+  
+  <!-- Stylized S -->
+  <g transform="translate(100, 100)">
+    <path d="M -25 -35 C -25 -45, -15 -50, -5 -50 C 5 -50, 15 -45, 15 -35 C 15 -25, 5 -20, -5 -20 C -15 -20, -25 -15, -25 -5 C -25 5, -15 10, -5 10 C 5 10, 15 15, 15 25 C 15 35, 5 40, -5 40 C -15 40, -25 35, -25 25" 
+          stroke="#000000" 
+          stroke-width="12" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" 
+          fill="none"/>
+  </g>
+</svg>

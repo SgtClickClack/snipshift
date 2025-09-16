@@ -31,6 +31,12 @@ export const typeDefs = `
     COURSE
   }
 
+  enum VerificationStatus {
+    PENDING
+    APPROVED
+    REJECTED
+  }
+
   # Input types
   input CreateUserInput {
     email: String!
@@ -156,6 +162,7 @@ export const typeDefs = `
     productCategories: [String!]
     logoUrl: String
     socialPostsCount: Int!
+    verificationStatus: VerificationStatus!
   }
 
   type TrainerProfile {
@@ -167,6 +174,7 @@ export const typeDefs = `
     rating: Float
     reviewCount: Int!
     totalStudents: Int!
+    verificationStatus: VerificationStatus!
     trainingOfferings: [TrainingOffering!]
   }
 
@@ -395,6 +403,9 @@ export const typeDefs = `
     chats(userId: ID!): [Chat!]!
     chat(chatId: ID!): Chat
     messages(chatId: ID!, first: Int = 50, after: String): [Message!]!
+
+    # Admin queries
+    pendingVerifications: [User!]!
   }
 
   # Mutations
@@ -437,6 +448,10 @@ export const typeDefs = `
 
     # File uploads
     uploadFile(file: Upload!, type: String!): String!
+
+    # Admin mutations
+    approveUser(userId: ID!): User!
+    rejectUser(userId: ID!): User!
   }
 
   # Subscriptions

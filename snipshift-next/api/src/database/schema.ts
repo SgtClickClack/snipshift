@@ -7,6 +7,7 @@ export const jobStatusEnum = pgEnum('job_status', ['open', 'filled', 'cancelled'
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded']);
 export const contentTypeEnum = pgEnum('content_type', ['video', 'article', 'workshop', 'course']);
 export const messageTypeEnum = pgEnum('message_type', ['text', 'system']);
+export const verificationStatusEnum = pgEnum('verification_status', ['PENDING', 'APPROVED', 'REJECTED']);
 
 // Users table
 export const users = pgTable('users', {
@@ -96,6 +97,7 @@ export const brandProfiles = pgTable('brand_profiles', {
   productCategories: jsonb('product_categories').$type<string[]>().default([]),
   logoUrl: text('logo_url'),
   socialPostsCount: integer('social_posts_count').notNull().default(0),
+  verificationStatus: verificationStatusEnum('verification_status').notNull().default('PENDING'),
   // Onboarding fields
   contactName: text('contact_name'),
   phone: text('phone'),
@@ -128,6 +130,7 @@ export const trainerProfiles = pgTable('trainer_profiles', {
   rating: decimal('rating', { precision: 3, scale: 2 }),
   reviewCount: integer('review_count').notNull().default(0),
   totalStudents: integer('total_students').notNull().default(0),
+  verificationStatus: verificationStatusEnum('verification_status').notNull().default('PENDING'),
   // Onboarding fields
   companyName: text('company_name'),
   contactName: text('contact_name'),
