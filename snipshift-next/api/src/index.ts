@@ -765,6 +765,176 @@ async function startServer() {
       res.send(htmlContent);
     });
 
+    // Stripe webhook endpoint for payment processing
+    app.post('/webhook/stripe', express.raw({ type: 'application/json' }), (req, res) => {
+      const sig = req.headers['stripe-signature'] as string;
+      let event: any;
+
+      try {
+        if (!process.env.STRIPE_WEBHOOK_SECRET) {
+          logger.warn('Stripe webhook secret not configured');
+          return res.status(400).send('Webhook secret not configured');
+        }
+
+        // Verify webhook signature for security
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      } catch (err: any) {
+        logger.error('Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      // Handle different webhook events
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          logger.info('Payment succeeded:', event.data.object.id);
+          // Handle successful payment logic here
+          break;
+        case 'payment_intent.payment_failed':
+          logger.warn('Payment failed:', event.data.object.id);
+          // Handle failed payment logic here
+          break;
+        case 'customer.subscription.created':
+          logger.info('Subscription created:', event.data.object.id);
+          // Handle new subscription logic here
+          break;
+        case 'customer.subscription.updated':
+          logger.info('Subscription updated:', event.data.object.id);
+          // Handle subscription updates here
+          break;
+        case 'customer.subscription.deleted':
+          logger.info('Subscription cancelled:', event.data.object.id);
+          // Handle subscription cancellation here
+          break;
+        default:
+          logger.info('Unhandled webhook event type:', event.type);
+      }
+
+      res.json({ received: true });
+    });
+
+    // Stripe payment intent creation for SnipShift marketplace (demo version - no auth required)
+    app.post('/api/stripe/create-payment-intent', async (req, res) => {
+      try {
+        const { amount, currency = 'aud', description, userEmail = 'demo@snipshift.com' } = req.body;
+        
+        if (!amount || amount < 50) { // $0.50 minimum
+          return res.status(400).json({ error: 'Invalid amount' });
+        }
+
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(amount * 100), // Convert to cents
+          currency,
+          description: description || 'SnipShift professional service payment',
+          metadata: {
+            userEmail,
+            service: 'snipshift_marketplace'
+          }
+        });
+
+        logger.info('Payment intent created:', { id: paymentIntent.id, amount, currency });
+        res.json({ 
+          clientSecret: paymentIntent.client_secret,
+          paymentIntentId: paymentIntent.id
+        });
+      } catch (error: any) {
+        logger.error('Payment intent creation failed:', error.message);
+        res.status(500).json({ error: 'Payment processing error' });
+      }
+    });
+
+    // Create SnipShift Pro subscription (demo version - no auth required)
+    app.post('/api/stripe/create-subscription', async (req, res) => {
+      try {
+        const { priceId, customerId, userEmail = 'demo@snipshift.com' } = req.body;
+        
+        if (!priceId) {
+          return res.status(400).json({ error: 'Price ID required' });
+        }
+
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        
+        // Create or use existing customer
+        let customer;
+        if (customerId) {
+          customer = await stripe.customers.retrieve(customerId);
+        } else {
+          customer = await stripe.customers.create({
+            email: userEmail,
+            metadata: {
+              service: 'snipshift_pro'
+            }
+          });
+        }
+
+        const subscription = await stripe.subscriptions.create({
+          customer: customer.id,
+          items: [{ price: priceId }],
+          payment_behavior: 'default_incomplete',
+          expand: ['latest_invoice.payment_intent'],
+        });
+
+        logger.info('Subscription created:', { id: subscription.id, customerId: customer.id });
+        res.json({
+          subscriptionId: subscription.id,
+          clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+          customerId: customer.id
+        });
+      } catch (error: any) {
+        logger.error('Subscription creation failed:', error.message);
+        res.status(500).json({ error: 'Subscription processing error' });
+      }
+    });
+
+    // Google OAuth authentication endpoint
+    app.post('/api/auth/google', async (req, res) => {
+      try {
+        const { credential, mode } = req.body;
+        
+        if (!credential) {
+          return res.status(400).json({ error: 'No credential provided' });
+        }
+
+        // Verify Google JWT token
+        const { OAuth2Client } = require('google-auth-library');
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        
+        const ticket = await client.verifyIdToken({
+          idToken: credential,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        if (!payload) {
+          return res.status(400).json({ error: 'Invalid token payload' });
+        }
+
+        // Extract user data from Google
+        const userData = {
+          googleId: payload.sub,
+          email: payload.email,
+          name: payload.name,
+          picture: payload.picture,
+          provider: 'google'
+        };
+
+        logger.info('Google auth successful:', { email: userData.email, mode });
+        
+        // In a real app, you would save/update user in database here
+        // For demo, just return the user data
+        res.json({
+          user: userData,
+          mode,
+          success: true
+        });
+
+      } catch (error: any) {
+        logger.error('Google auth verification failed:', error.message);
+        res.status(401).json({ error: 'Google authentication failed' });
+      }
+    });
+
     // Health check endpoint
     app.get('/health', (req, res) => {
       res.json({ status: 'ok', timestamp: new Date().toISOString() });
