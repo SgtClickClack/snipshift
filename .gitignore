@@ -1,5 +1,6 @@
 node_modules
 dist
+build/
 .DS_Store
 server/public
 vite.config.ts.*
@@ -9,8 +10,12 @@ cypress/screenshots/
 cypress/videos/
 cypress/downloads/
 *.log
-.env
-.env.*
+.env*
+
+# Build artifacts
+snipshift-next/web/.next/
+snipshift-next/api/dist/
+snipshift-next/api/logs/
 
 # Playwright artifacts
 playwright-report/

@@ -19,9 +19,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables
-.env
-.env*.local
+# Environment variables - all variants
+.env*
+
+# Application logs
+/logs
+*.log
 
 # TypeScript
 *.tsbuildinfo

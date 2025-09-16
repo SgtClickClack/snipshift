@@ -711,7 +711,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/stripe/create-account', stripeConnectRoutes.createAccount);
   app.get('/api/stripe/account-status/:trainerId', stripeConnectRoutes.getAccountStatus);
   app.post('/api/stripe/create-payment-intent', stripeConnectRoutes.createPaymentIntent);
-  app.post('/api/stripe/webhook', stripeConnectRoutes.handleWebhook);
+  // CRITICAL: Stripe webhook requires raw body for signature verification
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeConnectRoutes.handleWebhook);
 
   // Purchase tracking and content access routes
   app.post('/api/purchases/complete', purchaseRoutes.completePurchase);
