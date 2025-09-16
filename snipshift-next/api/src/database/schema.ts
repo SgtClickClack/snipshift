@@ -42,6 +42,13 @@ export const hubProfiles = pgTable('hub_profiles', {
   description: text('description'),
   website: text('website'),
   logoUrl: text('logo_url'),
+  // Onboarding fields
+  phone: text('phone'),
+  chairCapacity: text('chair_capacity'),
+  vibeTags: jsonb('vibe_tags').$type<string[]>().default([]),
+  abn: text('abn'),
+  businessInsurance: text('business_insurance'),
+  shopPhotos: jsonb('shop_photos').$type<string[]>().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -68,6 +75,14 @@ export const professionalProfiles = pgTable('professional_profiles', {
   preferredRegions: jsonb('preferred_regions').$type<string[]>().default([]),
   rating: decimal('rating', { precision: 3, scale: 2 }),
   reviewCount: integer('review_count').notNull().default(0),
+  // Onboarding fields
+  abn: text('abn'),
+  instagramLink: text('instagram_link'),
+  insuranceDocument: text('insurance_document'),
+  qualificationDocument: text('qualification_document'),
+  stripeConnected: boolean('stripe_connected').default(false),
+  phone: text('phone'),
+  fullName: text('full_name'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -81,6 +96,23 @@ export const brandProfiles = pgTable('brand_profiles', {
   productCategories: jsonb('product_categories').$type<string[]>().default([]),
   logoUrl: text('logo_url'),
   socialPostsCount: integer('social_posts_count').notNull().default(0),
+  // Onboarding fields
+  contactName: text('contact_name'),
+  phone: text('phone'),
+  location: jsonb('location').$type<{
+    city: string;
+    state: string;
+    country: string;
+    coordinates?: { lat: number; lng: number };
+  }>(),
+  businessType: text('business_type'),
+  socialMediaLinks: jsonb('social_media_links').$type<{
+    instagram?: string;
+    facebook?: string;
+    youtube?: string;
+  }>().default({}),
+  partnershipGoals: jsonb('partnership_goals').$type<string[]>().default([]),
+  targetAudience: jsonb('target_audience').$type<string[]>().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -96,6 +128,25 @@ export const trainerProfiles = pgTable('trainer_profiles', {
   rating: decimal('rating', { precision: 3, scale: 2 }),
   reviewCount: integer('review_count').notNull().default(0),
   totalStudents: integer('total_students').notNull().default(0),
+  // Onboarding fields
+  companyName: text('company_name'),
+  contactName: text('contact_name'),
+  phone: text('phone'),
+  location: jsonb('location').$type<{
+    city: string;
+    state: string;
+    country: string;
+    coordinates?: { lat: number; lng: number };
+  }>(),
+  businessType: text('business_type'),
+  socialMediaLinks: jsonb('social_media_links').$type<{
+    instagram?: string;
+    facebook?: string;
+    youtube?: string;
+  }>().default({}),
+  partnershipGoals: jsonb('partnership_goals').$type<string[]>().default([]),
+  targetAudience: jsonb('target_audience').$type<string[]>().default([]),
+  productCategories: jsonb('product_categories').$type<string[]>().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

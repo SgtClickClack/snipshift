@@ -21,6 +21,11 @@ import { OAuthCallback } from '@/pages/oauth-callback';
 import RoleSelectionPage from '@/pages/role-selection';
 import NotFound from '@/pages/not-found';
 
+// Onboarding pages - lazy load for better performance
+const BarberOnboarding = lazy(() => import('@/pages/onboarding/barber'));
+const ShopOnboarding = lazy(() => import('@/pages/onboarding/shop'));
+const BrandOnboarding = lazy(() => import('@/pages/onboarding/brand'));
+
 // Dashboard pages - lazy load to reduce initial bundle
 const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
@@ -99,6 +104,39 @@ function AppRoutes() {
         <Route path="/role-selection" element={
           <AuthGuard requireAuth={true}>
             <RoleSelectionPage />
+          </AuthGuard>
+        } />
+
+        {/* Onboarding routes */}
+        <Route path="/onboarding/professional" element={
+          <AuthGuard requireAuth={true}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <BarberOnboarding />
+            </Suspense>
+          </AuthGuard>
+        } />
+
+        <Route path="/onboarding/hub" element={
+          <AuthGuard requireAuth={true}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ShopOnboarding />
+            </Suspense>
+          </AuthGuard>
+        } />
+
+        <Route path="/onboarding/brand" element={
+          <AuthGuard requireAuth={true}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <BrandOnboarding />
+            </Suspense>
+          </AuthGuard>
+        } />
+
+        <Route path="/onboarding/trainer" element={
+          <AuthGuard requireAuth={true}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <BrandOnboarding />
+            </Suspense>
           </AuthGuard>
         } />
 

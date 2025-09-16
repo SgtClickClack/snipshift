@@ -41,10 +41,11 @@ export default function RoleSelectionPage() {
 
       toast({
         title: "Roles updated",
-        description: `You're set as ${selectedRoles.join(", ")}. Redirecting...`,
+        description: `You're set as ${selectedRoles.join(", ")}. Starting onboarding...`,
       });
 
-      navigate(getDashboardRoute(primaryRole));
+      // Redirect to onboarding flow instead of dashboard
+      navigate(`/onboarding/${primaryRole}`);
     } catch (error) {
       toast({
         title: "Error",

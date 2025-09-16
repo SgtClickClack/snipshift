@@ -6,6 +6,7 @@
     "dev": "next dev -H 0.0.0.0 -p ${PORT:-3000}",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "start:prod": "NODE_ENV=production next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
@@ -13,7 +14,11 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "clean": "rm -rf .next out",
+    "prebuild": "npm run clean",
+    "postbuild": "echo 'Build completed successfully'",
+    "analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
     "@apollo/client": "^3.8.0",

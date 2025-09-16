@@ -1,595 +1,567 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Share2, TrendingUp, Users, Eye, MessageCircle, Heart, Edit, Trash, Tag, Calendar, Globe } from "lucide-react";
-import { format } from "date-fns";
-
-interface SocialPost {
-  id: string;
-  authorId: string;
-  postType: "offer" | "event" | "announcement" | "product" | "discount";
-  content: string;
-  imageUrl?: string;
-  linkUrl?: string;
-  status: "pending" | "approved" | "rejected";
-  likes: number;
-  comments: any[];
-  discountCode?: string;
-  discountPercentage?: number;
-  validUntil?: string;
-  createdAt: string;
-}
-
-interface PostFormData {
-  postType: "offer" | "event" | "announcement" | "product" | "discount";
-  content: string;
-  imageUrl: string;
-  linkUrl: string;
-  discountCode: string;
-  discountPercentage: number;
-  validUntil: string;
-}
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  BarChart3, 
+  Plus, 
+  Users, 
+  User, 
+  Settings,
+  TrendingUp,
+  Eye,
+  Heart,
+  MessageSquare,
+  Share,
+  Edit,
+  Trash2,
+  Calendar,
+  DollarSign,
+  Target,
+  Award,
+  Building,
+  Phone,
+  Mail,
+  Instagram,
+  Facebook,
+  Youtube
+} from 'lucide-react';
 
 export default function BrandDashboard() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [activeView, setActiveView] = useState<'overview' | 'posts' | 'profile'>('overview');
-  const [showPostModal, setShowPostModal] = useState(false);
-  const [editingPost, setEditingPost] = useState<SocialPost | null>(null);
-  
-  const [formData, setFormData] = useState<PostFormData>({
-    postType: "product",
-    content: "",
-    imageUrl: "",
-    linkUrl: "",
-    discountCode: "",
-    discountPercentage: 0,
-    validUntil: ""
-  });
+  const [activeTab, setActiveTab] = useState('dashboard');
 
-  const { data: posts = [], isLoading } = useQuery<SocialPost[]>({
-    queryKey: ["/api/social-posts", user?.id],
-    enabled: !!user?.id,
-  });
-
-  const createPostMutation = useMutation({
-    mutationFn: async (postData: any) => {
-      const response = await apiRequest("POST", "/api/social-posts", postData);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Post submitted successfully!",
-        description: "Your post is pending approval and will be visible once approved.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/social-posts"] });
-      setShowPostModal(false);
-      resetForm();
-    },
-    onError: () => {
-      toast({
-        title: "Failed to create post",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const resetForm = () => {
-    setFormData({
-      postType: "product",
-      content: "",
-      imageUrl: "",
-      linkUrl: "",
-      discountCode: "",
-      discountPercentage: 0,
-      validUntil: ""
-    });
-    setEditingPost(null);
+  // Mock data - in production this would come from API
+  const mockMetrics = {
+    totalReach: 12500,
+    engagement: 4.2,
+    subscribers: 234,
+    conversionRate: 12.5,
+    totalPosts: 24,
+    avgEngagement: 4.2,
+    sales: 45,
+    revenue: 6750
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.content) {
-      toast({
-        title: "Missing required fields",
-        description: "Please add content for your post.",
-        variant: "destructive",
-      });
-      return;
+  const mockContent = [
+    {
+      id: '1',
+      title: 'New Professional Clippers Launch',
+      type: 'product',
+      content: 'Introducing our latest professional clippers with advanced technology...',
+      image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=300&fit=crop',
+      engagement: { likes: 45, comments: 12, shares: 8 },
+      reach: 2400,
+      clicks: 89,
+      timestamp: '2 hours ago',
+      status: 'published'
+    },
+    {
+      id: '2',
+      title: 'Barbering Tips: Perfect Fade Techniques',
+      type: 'education',
+      content: 'Master the art of fade cutting with these professional techniques...',
+      image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&h=300&fit=crop',
+      engagement: { likes: 78, comments: 23, shares: 15 },
+      reach: 3200,
+      clicks: 142,
+      timestamp: '1 day ago',
+      status: 'published'
     }
+  ];
 
-    const postData = {
-      ...formData,
-      authorId: user?.id,
-      authorRole: "brand",
-      status: "pending",
-      likes: 0,
-      comments: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+  const mockSubscribers = [
+    {
+      id: '1',
+      name: 'Mike Johnson',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+      role: 'Professional Barber',
+      location: 'Sydney, NSW',
+      subscribedAt: '2024-01-10',
+      engagement: 'High',
+      lastActive: '2 hours ago'
+    },
+    {
+      id: '2',
+      name: 'Sarah Williams',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
+      role: 'Barbershop Owner',
+      location: 'Melbourne, VIC',
+      subscribedAt: '2024-01-08',
+      engagement: 'Medium',
+      lastActive: '1 day ago'
+    }
+  ];
 
-    createPostMutation.mutate(postData);
+  const mockProfile = {
+    companyName: 'BarberPro Tools',
+    contactName: user?.displayName || 'John Smith',
+    email: user?.email || 'john@barberpro.com',
+    phone: '+61 400 123 456',
+    location: 'Sydney, NSW',
+    website: 'https://barberpro.com',
+    businessType: 'Product Brand',
+    description: 'Leading provider of professional barbering tools and equipment.',
+    socialMedia: {
+      instagram: '@barberprotools',
+      facebook: 'BarberPro Tools',
+      youtube: 'BarberPro Channel'
+    },
+    productCategories: ['Hair Care Products', 'Styling Tools', 'Barber Tools'],
+    partnershipGoals: ['Product Trials', 'Brand Ambassadors', 'Event Sponsorship'],
+    targetAudience: ['Professional Barbers', 'Barbershop Owners', 'Hair Stylists']
   };
-
-  // Mock stats
-  const stats = {
-    totalPosts: posts.length,
-    approvedPosts: posts.filter(p => p.status === "approved").length,
-    totalLikes: posts.reduce((sum, post) => sum + post.likes, 0),
-    totalEngagement: posts.reduce((sum, post) => sum + post.likes + post.comments.length, 0)
-  };
-
-  if (!user || user.currentRole !== "brand") {
-    return <div>Access denied</div>;
-  }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {/* Dashboard Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
-                <AvatarFallback className="bg-red-accent text-white text-lg">
-                  {user.displayName?.split(' ').map(n => n[0]).join('') || user.email.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-2xl font-bold text-neutral-900" data-testid="heading-dashboard">Brand Dashboard</h1>
-                <p className="text-neutral-600">{user.displayName || user.email}</p>
-              </div>
-            </div>
-            <Button 
-              onClick={() => setShowPostModal(true)}
-              className="bg-primary hover:bg-blue-700"
-              data-testid="button-create-post"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Post
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-steel-50 via-white to-chrome-light/20">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-steel-900 mb-2">
+            Welcome back, {mockProfile.contactName.split(' ')[0]}!
+          </h1>
+          <p className="text-steel-600">
+            Manage your brand presence and connect with the barbering community.
+          </p>
         </div>
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="border-b border-neutral-200">
-          <nav className="-mb-px flex space-x-8">
-            {[
-              { id: 'overview', label: 'Overview', icon: TrendingUp },
-              { id: 'posts', label: 'Social Posts', icon: Share2 },
-              { id: 'profile', label: 'Profile', icon: Globe },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveView(tab.id as any)}
-                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeView === tab.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
-                }`}
-                data-testid={`tab-${tab.id}`}
-              >
-                <tab.icon className="mr-2 h-4 w-4" />
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="content" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Content
+            </TabsTrigger>
+            <TabsTrigger value="subscribers" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Subscribers
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Dashboard Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Overview Tab */}
-        {activeView === 'overview' && (
-          <div className="space-y-6">
-            {/* Stats Cards */}
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Share2 className="h-8 w-8 text-primary" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-neutral-600">Total Posts</p>
-                      <p className="text-2xl font-bold text-neutral-900" data-testid="stat-total-posts">
-                        {stats.totalPosts}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-steel-600">Total Reach</p>
+                      <p className="text-2xl font-bold text-steel-900">{mockMetrics.totalReach.toLocaleString()}</p>
                     </div>
+                    <Eye className="h-8 w-8 text-red-accent" />
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
+                    <span className="text-sm text-green-600">+12% from last month</span>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Eye className="h-8 w-8 text-success" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-neutral-600">Approved Posts</p>
-                      <p className="text-2xl font-bold text-neutral-900" data-testid="stat-approved-posts">
-                        {stats.approvedPosts}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-steel-600">Engagement Rate</p>
+                      <p className="text-2xl font-bold text-steel-900">{mockMetrics.engagement}%</p>
                     </div>
+                    <Heart className="h-8 w-8 text-red-accent" />
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
+                    <span className="text-sm text-green-600">+0.3% from last month</span>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Heart className="h-8 w-8 text-red-500" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-neutral-600">Total Likes</p>
-                      <p className="text-2xl font-bold text-neutral-900" data-testid="stat-total-likes">
-                        {stats.totalLikes}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-steel-600">Subscribers</p>
+                      <p className="text-2xl font-bold text-steel-900">{mockMetrics.subscribers}</p>
                     </div>
+                    <Users className="h-8 w-8 text-red-accent" />
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
+                    <span className="text-sm text-green-600">+18 this week</span>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Users className="h-8 w-8 text-warning" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-neutral-600">Engagement</p>
-                      <p className="text-2xl font-bold text-neutral-900" data-testid="stat-engagement">
-                        {stats.totalEngagement}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-steel-600">Conversion Rate</p>
+                      <p className="text-2xl font-bold text-steel-900">{mockMetrics.conversionRate}%</p>
                     </div>
+                    <Target className="h-8 w-8 text-red-accent" />
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
+                    <span className="text-sm text-green-600">+2.1% from last month</span>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Quick Actions */}
+            {/* Recent Content Performance */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle>Recent Content Performance</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Button
-                    onClick={() => setShowPostModal(true)}
-                    variant="outline"
-                    className="h-20 flex flex-col"
-                    data-testid="quick-action-create-post"
-                  >
-                    <Plus className="h-6 w-6 mb-2" />
-                    Create New Post
-                  </Button>
-                  <Button
-                    onClick={() => setActiveView('posts')}
-                    variant="outline"
-                    className="h-20 flex flex-col"
-                    data-testid="quick-action-manage-posts"
-                  >
-                    <Edit className="h-6 w-6 mb-2" />
-                    Manage Posts
-                  </Button>
-                  <Button
-                    onClick={() => setActiveView('profile')}
-                    variant="outline"
-                    className="h-20 flex flex-col"
-                    data-testid="quick-action-update-profile"
-                  >
-                    <Globe className="h-6 w-6 mb-2" />
-                    Update Profile
-                  </Button>
+                <div className="space-y-4">
+                  {mockContent.map((post) => (
+                    <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex gap-4">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-steel-100">
+                          <img 
+                            src={post.image} 
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-steel-900">{post.title}</h3>
+                          <p className="text-sm text-steel-600">{post.timestamp}</p>
+                          <Badge variant={post.type === 'product' ? 'default' : 'secondary'} className="mt-1">
+                            {post.type === 'product' ? 'Product' : 'Education'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex gap-6 text-sm text-steel-600">
+                        <div className="text-center">
+                          <div className="font-semibold text-steel-900">{post.reach.toLocaleString()}</div>
+                          <div>Reach</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold text-steel-900">{post.engagement.likes}</div>
+                          <div>Likes</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold text-steel-900">{post.clicks}</div>
+                          <div>Clicks</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          </TabsContent>
 
-        {/* Posts Tab */}
-        {activeView === 'posts' && (
-          <div className="space-y-6">
+          {/* Content Tab */}
+          <TabsContent value="content" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Social Posts</h2>
-              <Button onClick={() => setShowPostModal(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Post
+              <h2 className="text-2xl font-bold text-steel-900">Content Management</h2>
+              <Button className="bg-gradient-to-r from-red-accent to-red-accent-dark">
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Post
               </Button>
             </div>
 
-            {isLoading ? (
-              <div data-testid="text-loading">Loading posts...</div>
-            ) : posts.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Share2 className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
-                  <p className="text-neutral-600 mb-4" data-testid="text-no-posts">
-                    No posts created yet.
-                  </p>
-                  <Button onClick={() => setShowPostModal(true)}>
-                    Create Your First Post
+            {/* Create Post Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Create New Content</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="post-title">Post Title</Label>
+                    <Input id="post-title" placeholder="Enter post title" />
+                  </div>
+                  <div>
+                    <Label htmlFor="post-type">Content Type</Label>
+                    <select id="post-type" className="w-full p-2 border rounded-md">
+                      <option value="product">Product Promotion</option>
+                      <option value="education">Educational Content</option>
+                      <option value="event">Event/Workshop</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="post-content">Content</Label>
+                  <Textarea 
+                    id="post-content" 
+                    placeholder="Write your post content here..."
+                    className="min-h-[120px]"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="post-image">Image</Label>
+                  <Input id="post-image" type="file" accept="image/*" />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button className="bg-gradient-to-r from-red-accent to-red-accent-dark">
+                    Publish Post
                   </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {posts.map((post) => (
-                  <Card key={post.id} className="overflow-hidden" data-testid={`post-card-${post.id}`}>
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <Badge 
-                            variant={post.postType === 'discount' ? 'default' : 'outline'}
-                            data-testid={`post-type-${post.id}`}
-                          >
-                            {post.postType}
-                          </Badge>
-                          <Badge 
-                            variant={
-                              post.status === 'approved' ? 'default' : 
-                              post.status === 'rejected' ? 'destructive' : 'secondary'
-                            }
-                            data-testid={`post-status-${post.id}`}
-                          >
+                  <Button variant="outline">Save Draft</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Existing Posts */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Posts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockContent.map((post) => (
+                    <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex gap-4">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-steel-100">
+                          <img 
+                            src={post.image} 
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-steel-900">{post.title}</h3>
+                          <p className="text-sm text-steel-600">{post.timestamp}</p>
+                          <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
                             {post.status}
                           </Badge>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
                       </div>
-
-                      <p className="text-neutral-900 mb-4" data-testid={`post-content-${post.id}`}>
-                        {post.content}
-                      </p>
-
-                      {post.imageUrl && (
-                        <div className="mb-4">
-                          <img 
-                            src={post.imageUrl} 
-                            alt="Post image"
-                            className="rounded-lg max-w-full h-48 object-cover"
-                          />
-                        </div>
-                      )}
-
-                      {post.discountCode && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                          <div className="flex items-center gap-2">
-                            <Tag className="h-4 w-4 text-red-600" />
-                            <span className="font-medium text-red-800">
-                              Discount: {post.discountCode} ({post.discountPercentage}% off)
-                            </span>
-                          </div>
-                          {post.validUntil && (
-                            <p className="text-sm text-red-600 mt-1">
-                              Valid until: {format(new Date(post.validUntil), "MMM d, yyyy")}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex justify-between items-center text-sm text-neutral-500">
-                        <span data-testid={`post-date-${post.id}`}>
-                          {format(new Date(post.createdAt), "MMM d, yyyy 'at' h:mm a")}
-                        </span>
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <Heart className="h-4 w-4" />
-                            {post.likes}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageCircle className="h-4 w-4" />
-                            {post.comments.length}
-                          </span>
-                        </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Share className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Profile Tab */}
-        {activeView === 'profile' && (
-          <div className="max-w-2xl space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Brand Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    placeholder="Your company name"
-                    data-testid="input-company-name"
-                  />
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Tell people about your brand and products..."
-                    className="min-h-[100px]"
-                    data-testid="textarea-description"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    placeholder="https://your-website.com"
-                    data-testid="input-website"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    placeholder="https://example.com/logo.png"
-                    data-testid="input-logo-url"
-                  />
-                </div>
-                <Button className="w-full" data-testid="button-save-profile">
-                  Save Profile
-                </Button>
               </CardContent>
             </Card>
-          </div>
-        )}
+          </TabsContent>
+
+          {/* Subscribers Tab */}
+          <TabsContent value="subscribers" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-steel-900">Subscribers</h2>
+              <div className="flex gap-3">
+                <Button variant="outline">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Send Message
+                </Button>
+                <Button variant="outline">
+                  <Users className="h-4 w-4 mr-2" />
+                  Export List
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {mockSubscribers.map((subscriber) => (
+                <Card key={subscriber.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-4">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={subscriber.avatar} />
+                          <AvatarFallback>{subscriber.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold text-steel-900">{subscriber.name}</h3>
+                          <p className="text-sm text-steel-600">{subscriber.role}</p>
+                          <p className="text-sm text-steel-500">{subscriber.location}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={subscriber.engagement === 'High' ? 'default' : 'secondary'}>
+                          {subscriber.engagement} Engagement
+                        </Badge>
+                        <p className="text-sm text-steel-500 mt-1">Joined {subscriber.subscribedAt}</p>
+                        <p className="text-sm text-steel-500">Last active {subscriber.lastActive}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Company Info */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building className="h-5 w-5" />
+                      Company Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-steel-700">Company Name</label>
+                        <p className="text-steel-900">{mockProfile.companyName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-steel-700">Contact Name</label>
+                        <p className="text-steel-900">{mockProfile.contactName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-steel-700">Email</label>
+                        <p className="text-steel-900">{mockProfile.email}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-steel-700">Phone</label>
+                        <p className="text-steel-900">{mockProfile.phone}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-steel-700">Location</label>
+                        <p className="text-steel-900">{mockProfile.location}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-steel-700">Website</label>
+                        <p className="text-steel-900">{mockProfile.website}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-steel-700">Business Description</label>
+                      <p className="text-steel-900">{mockProfile.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Business Focus
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-steel-700">Product Categories</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {mockProfile.productCategories.map((category) => (
+                          <Badge key={category} variant="secondary">
+                            {category}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-steel-700">Partnership Goals</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {mockProfile.partnershipGoals.map((goal) => (
+                          <Badge key={goal} variant="outline">
+                            {goal}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-steel-700">Target Audience</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {mockProfile.targetAudience.map((audience) => (
+                          <Badge key={audience} variant="outline">
+                            {audience}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Social Media & Stats */}
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Share className="h-5 w-5" />
+                      Social Media
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Instagram className="h-5 w-5 text-pink-600" />
+                      <span className="text-sm text-steel-600">{mockProfile.socialMedia.instagram}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Facebook className="h-5 w-5 text-blue-600" />
+                      <span className="text-sm text-steel-600">{mockProfile.socialMedia.facebook}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Youtube className="h-5 w-5 text-red-600" />
+                      <span className="text-sm text-steel-600">{mockProfile.socialMedia.youtube}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5" />
+                      Brand Stats
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-steel-600">Total Posts</span>
+                      <span className="font-semibold text-steel-900">{mockMetrics.totalPosts}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-steel-600">Subscribers</span>
+                      <span className="font-semibold text-steel-900">{mockMetrics.subscribers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-steel-600">Avg Engagement</span>
+                      <span className="font-semibold text-steel-900">{mockMetrics.avgEngagement}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-steel-600">Total Sales</span>
+                      <span className="font-semibold text-steel-900">{mockMetrics.sales}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-steel-600">Revenue</span>
+                      <span className="font-semibold text-steel-900">${mockMetrics.revenue.toLocaleString()}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Button className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark">
+                  Edit Profile
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Create Post Modal */}
-      <Dialog open={showPostModal} onOpenChange={setShowPostModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create Social Post</DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <Label htmlFor="postType">Post Type</Label>
-              <Select value={formData.postType} onValueChange={(value: any) => 
-                setFormData(prev => ({ ...prev, postType: value }))
-              }>
-                <SelectTrigger data-testid="select-post-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="product">Product Showcase</SelectItem>
-                  <SelectItem value="discount">Special Discount</SelectItem>
-                  <SelectItem value="offer">Limited Offer</SelectItem>
-                  <SelectItem value="announcement">Announcement</SelectItem>
-                  <SelectItem value="event">Event</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="content">Content *</Label>
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                placeholder="Write your post content..."
-                className="min-h-[120px]"
-                required
-                data-testid="textarea-content"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                  data-testid="input-image-url"
-                />
-              </div>
-              <div>
-                <Label htmlFor="linkUrl">Link URL</Label>
-                <Input
-                  id="linkUrl"
-                  value={formData.linkUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, linkUrl: e.target.value }))}
-                  placeholder="https://your-product-page.com"
-                  data-testid="input-link-url"
-                />
-              </div>
-            </div>
-
-            {formData.postType === 'discount' && (
-              <div className="space-y-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h4 className="font-medium text-red-800">Discount Details</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="discountCode">Discount Code</Label>
-                    <Input
-                      id="discountCode"
-                      value={formData.discountCode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, discountCode: e.target.value }))}
-                      placeholder="e.g., BARBER20"
-                      data-testid="input-discount-code"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="discountPercentage">Percentage Off</Label>
-                    <Input
-                      id="discountPercentage"
-                      type="number"
-                      value={formData.discountPercentage}
-                      onChange={(e) => setFormData(prev => ({ ...prev, discountPercentage: Number(e.target.value) }))}
-                      min="1"
-                      max="100"
-                      data-testid="input-discount-percentage"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="validUntil">Valid Until</Label>
-                    <Input
-                      id="validUntil"
-                      type="date"
-                      value={formData.validUntil}
-                      onChange={(e) => setFormData(prev => ({ ...prev, validUntil: e.target.value }))}
-                      min={new Date().toISOString().split('T')[0]}
-                      data-testid="input-valid-until"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> All posts require approval before being visible to users. 
-                You'll be notified once your post is reviewed.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setShowPostModal(false)}
-                data-testid="button-cancel"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createPostMutation.isPending}
-                data-testid="button-submit-post"
-              >
-                {createPostMutation.isPending ? "Submitting..." : "Submit for Review"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
