@@ -2,7 +2,7 @@
 # Master controller for the Replit environment
 
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = ["docker-compose", "-f", "snipshift-next/docker-compose.yml", "up", "--build"]
+run = ["sh", "-c", "cd snipshift-next/api && npm run dev"]
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "snipshift-next/node_modules", "snipshift-next/api/node_modules", "snipshift-next/web/node_modules"]
 
 [nix]
@@ -10,23 +10,12 @@ channel = "stable-24_05"
 packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick", "jq", "docker-compose"]
 
 # =============================================================================
-# DEPLOYMENT CONFIGURATIONS
+# DEPLOYMENT CONFIGURATION
 # =============================================================================
 
-[deployments]
+[deployment]
+run = ["sh", "-c", "cd snipshift-next/api && npm ci && npm run build && npm start"]
 deploymentTarget = "cloudrun"
-
-# API Service Deployment
-[[deployments.releases]]
-name = "snipshift-api"
-build = ["docker", "build", "-f", "snipshift-next/api/Dockerfile", "-t", "snipshift-api", "snipshift-next/api"]
-run = ["docker", "run", "--rm", "-p", "4000:4000", "-e", "NODE_ENV=production", "snipshift-api"]
-
-# Web Service Deployment  
-[[deployments.releases]]
-name = "snipshift-web"
-build = ["docker", "build", "-f", "snipshift-next/web/Dockerfile", "-t", "snipshift-web", "snipshift-next/web"]
-run = ["docker", "run", "--rm", "-p", "3000:3000", "-e", "NODE_ENV=production", "snipshift-web"]
 
 [[ports]]
 localPort = 3000
