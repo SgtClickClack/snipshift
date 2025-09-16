@@ -98,9 +98,7 @@ async function startServer() {
     let stripe: Stripe | null = null;
     if (!process.env.SKIP_STRIPE && process.env.STRIPE_SECRET_KEY) {
       try {
-        stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-          apiVersion: '2024-06-20', // Use stable API version
-        });
+        stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         logger.info('Stripe client initialized');
       } catch (error) {
         if (process.env.NODE_ENV === 'production') {
