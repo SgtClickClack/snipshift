@@ -56,16 +56,14 @@ export const LOGIN_USER = gql`
 `;
 
 export const REGISTER_USER = gql`
-  mutation RegisterUser($input: RegisterInput!) {
+  mutation RegisterUser($input: CreateUserInput!) {
     register(input: $input) {
-      success
-      message
       user {
         id
         email
-        firstName
-        lastName
-        role
+        displayName
+        roles
+        currentRole
         profileComplete
       }
       token
