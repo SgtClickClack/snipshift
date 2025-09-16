@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -32,7 +32,7 @@ interface RegisterFormData {
   role: 'HUB' | 'PROFESSIONAL' | 'BRAND' | 'TRAINER';
 }
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showNotification } = useNotification();
@@ -366,5 +366,13 @@ export default function RegisterPage() {
         </Typography>
       </Paper>
     </Container>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }

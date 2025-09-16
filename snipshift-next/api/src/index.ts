@@ -1,6 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 // Body parser middleware available directly from Express
@@ -73,6 +79,65 @@ async function startServer() {
 
     // Body parsing
     app.use(express.json({ limit: '10mb' }));
+
+    // Serve a simple landing page for the root route
+    app.get('/', (req, res) => {
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>SnipShift - Professional Marketplace</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f5f5; }
+            .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h1 { color: #333; text-align: center; margin-bottom: 30px; }
+            p { color: #666; line-height: 1.6; margin-bottom: 20px; }
+            .status { background: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin: 20px 0; }
+            .links { text-align: center; margin-top: 30px; }
+            .links a { display: inline-block; margin: 0 15px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>🚀 SnipShift 2.0 - Professional Marketplace</h1>
+            
+            <div class="status">
+              ✅ <strong>API Server Running Successfully</strong><br>
+              The SnipShift backend is online and ready to serve the creative community.
+            </div>
+            
+            <p>Welcome to SnipShift, the premier B2B2C marketplace connecting the barbering, hairdressing, and creative industries.</p>
+            
+            <p><strong>What's Working:</strong></p>
+            <ul>
+              <li>✅ GraphQL API Backend</li>
+              <li>✅ Database Connectivity</li>
+              <li>✅ Security & Rate Limiting</li>
+              <li>✅ Real-time Subscriptions</li>
+              <li>✅ Enterprise-grade Authentication</li>
+            </ul>
+            
+            <p><strong>For Developers:</strong></p>
+            <ul>
+              <li>GraphQL Playground: <a href="/graphql">/graphql</a></li>
+              <li>Health Check: <a href="/health">/health</a></li>
+            </ul>
+            
+            <div class="links">
+              <a href="/graphql">🔍 GraphQL Playground</a>
+              <a href="/health">💓 Health Check</a>
+            </div>
+            
+            <p style="text-align: center; margin-top: 30px; color: #999; font-size: 14px;">
+              SnipShift 2.0 - Connecting Professionals, Brands, and Talent
+            </p>
+          </div>
+        </body>
+        </html>
+      `);
+    });
 
     // Health check endpoint
     app.get('/health', (req, res) => {
