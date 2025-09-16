@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { verifyToken } from '../utils/jwt.js';
-import { logger } from '../utils/logger.js';
-import { db } from '../database/connection.js';
+import { verifyToken } from '../utils/jwt.ts';
+import { logger } from '../utils/logger.ts';
+import { db } from '../database/connection.ts';
 
 export interface GraphQLContext {
   user?: {

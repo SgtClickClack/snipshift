@@ -1,3 +1,15 @@
+// Global error handlers must be first to catch schema parse errors
+process.on('uncaughtException', (error) => {
+  console.error('🚨 UNCAUGHT EXCEPTION:', error);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 UNHANDLED REJECTION at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -11,8 +23,7 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 // Body parser middleware available directly from Express
 import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
-import { useServer } from 'graphql-ws/use/ws';
+// WebSocket imports moved to dynamic imports to prevent startup crashes
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { PubSub } from 'graphql-subscriptions';
 import dotenv from 'dotenv';
@@ -20,44 +31,89 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-import { typeDefs } from './graphql/schema.js';
-import { resolvers } from './graphql/resolvers.js';
-import { context } from './graphql/context.js';
-import { authMiddleware } from './middleware/auth.js';
-import { rateLimitMiddleware } from './middleware/rateLimit.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { logger } from './utils/logger.js';
-import { connectDatabase } from './database/connection.js';
-import { initializeRedis } from './config/redis.js';
+import { typeDefs } from './graphql/schema.ts';
+import { resolvers } from './graphql/resolvers.ts';
+import { context } from './graphql/context.ts';
+import { authMiddleware } from './middleware/auth.ts';
+import { rateLimitMiddleware } from './middleware/rateLimit.ts';
+import { errorHandler } from './middleware/errorHandler.ts';
+import { logger } from './utils/logger.ts';
+import { connectDatabase } from './database/connection.ts';
+import { initializeRedis } from './config/redis.ts';
 import Stripe from 'stripe';
 import cookieParser from 'cookie-parser';
 
 // Initialize PubSub for real-time subscriptions
 export const pubsub = new PubSub();
 
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
-});
+// Wrap schema creation to catch SDL parse errors
+let schema;
+try {
+  schema = makeExecutableSchema({
+    typeDefs,
+    resolvers,
+  });
+  console.log('✅ GraphQL schema created successfully');
+} catch (error) {
+  console.error('🚨 GraphQL SDL parse error:', error);
+  console.error('Check schema.ts for malformed SDL:', error.message);
+  process.exit(1);
+}
+
+// Global error handlers moved to top of file
 
 async function startServer() {
   try {
-    // Connect to database
-    await connectDatabase();
-    logger.info('Database connected successfully');
-
-    // Initialize Redis for caching and sessions
-    await initializeRedis();
-    logger.info('Redis connected successfully');
-
-    // Initialize Stripe client
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is required');
+    // Connect to database (optional in development)
+    if (!process.env.SKIP_DB) {
+      try {
+        await connectDatabase();
+        logger.info('Database connected successfully');
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') {
+          throw error;
+        }
+        logger.warn('Database connection failed, continuing in dev mode', { error: (error as Error).message });
+      }
+    } else {
+      logger.info('Skipping database connection (SKIP_DB=1)');
     }
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-06-20',
-    });
-    logger.info('Stripe client initialized');
+
+    // Initialize Redis for caching and sessions (optional in development)
+    if (!process.env.SKIP_REDIS) {
+      try {
+        await initializeRedis();
+        logger.info('Redis connected successfully');
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') {
+          throw error;
+        }
+        logger.warn('Redis connection failed, continuing in dev mode', { error: (error as Error).message });
+      }
+    } else {
+      logger.info('Skipping Redis connection (SKIP_REDIS=1)');
+    }
+
+    // Initialize Stripe client (optional in development)
+    let stripe: Stripe | null = null;
+    if (!process.env.SKIP_STRIPE && process.env.STRIPE_SECRET_KEY) {
+      try {
+        stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: '2024-06-20', // Use stable API version
+        });
+        logger.info('Stripe client initialized');
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') {
+          throw error;
+        }
+        logger.warn('Stripe initialization failed, continuing in dev mode', { error: (error as Error).message });
+        stripe = null;
+      }
+    } else if (process.env.SKIP_STRIPE) {
+      logger.info('Skipping Stripe initialization (SKIP_STRIPE=1)');
+    } else {
+      logger.warn('STRIPE_SECRET_KEY not provided, continuing in dev mode without payment processing');
+    }
 
     const app = express();
     const httpServer = createServer(app);
@@ -1439,9 +1495,13 @@ async function startServer() {
           status: subscription.status 
         });
 
+        // Handle expanded latest_invoice properly
+        const latestInvoice = subscription.latest_invoice as any;
+        const clientSecret = latestInvoice?.payment_intent?.client_secret || undefined;
+
         res.json({
           subscriptionId: subscription.id,
-          clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+          clientSecret,
           customerId: customer.id,
           status: subscription.status,
           planId
@@ -1521,8 +1581,8 @@ async function startServer() {
 
         // Store session server-side (in production, use Redis)
         // For demo, we'll use a simple in-memory store
-        global.sessions = global.sessions || new Map();
-        global.sessions.set(sessionId, sessionData);
+        (global as any).sessions = (global as any).sessions || new Map();
+        (global as any).sessions.set(sessionId, sessionData);
 
         // Set secure httpOnly cookie
         res.cookie('session', sessionId, {
@@ -1569,8 +1629,8 @@ async function startServer() {
     app.post('/api/auth/logout', (req, res) => {
       const sessionId = req.cookies?.session;
       
-      if (sessionId && global.sessions) {
-        global.sessions.delete(sessionId);
+      if (sessionId && (global as any).sessions) {
+        (global as any).sessions.delete(sessionId);
       }
       
       res.clearCookie('session');
@@ -1581,14 +1641,14 @@ async function startServer() {
     const verifySession = (req: any, res: any, next: any) => {
       const sessionId = req.cookies?.session;
       
-      if (!sessionId || !global.sessions?.has(sessionId)) {
+      if (!sessionId || !(global as any).sessions?.has(sessionId)) {
         return res.status(401).json({ 
           error: 'Authentication required',
           code: 'NO_SESSION'
         });
       }
       
-      req.session = global.sessions.get(sessionId);
+      req.session = (global as any).sessions.get(sessionId);
       next();
     };
 
@@ -1608,21 +1668,33 @@ async function startServer() {
       res.json({ status: 'ok', timestamp: new Date().toISOString() });
     });
 
-    // WebSocket server for subscriptions
-    const wsServer = new WebSocketServer({
-      server: httpServer,
-      path: '/graphql',
-    });
+    // WebSocket server for subscriptions (dynamic import)
+    let wsServer: any = null;
+    if (process.env.ENABLE_WS !== 'false') {
+      try {
+        const { WebSocketServer } = await import('ws');
+        const { useServer } = await import('graphql-ws/use/ws');
+        
+        wsServer = new WebSocketServer({
+          server: httpServer,
+          path: '/graphql',
+        });
 
-    useServer(
-      {
-        schema,
-        context: (ctx: any) => context({ req: ctx.extra.request }),
-        onConnect: () => { logger.info('WebSocket client connected'); },
-        onDisconnect: () => { logger.info('WebSocket client disconnected'); },
-      },
-      wsServer as any
-    );
+        useServer(
+          {
+            schema,
+            context: (ctx: any) => context({ req: ctx.extra.request }),
+            onConnect: () => { logger.info('WebSocket client connected'); },
+            onDisconnect: () => { logger.info('WebSocket client disconnected'); },
+          },
+          wsServer as any
+        );
+        console.log('✅ WebSocket server initialized for GraphQL subscriptions');
+      } catch (error) {
+        console.log('⚠️ WebSocket server disabled (ws/graphql-ws not available)');
+        wsServer = null;
+      }
+    }
 
     // Apollo Server setup
     const server = new ApolloServer({
@@ -1634,7 +1706,9 @@ async function startServer() {
           async serverWillStart() {
             return {
               async drainServer() {
-                wsServer.close();
+                if (wsServer) {
+                  wsServer.close();
+                }
               },
             };
           },
@@ -1671,4 +1745,3 @@ async function startServer() {
   }
 }
 
-startServer();
