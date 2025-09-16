@@ -45,6 +45,9 @@ async function startServer() {
     const app = express();
     const httpServer = createServer(app);
 
+    // Trust proxy for Cloud Run (1 proxy layer)
+    app.set('trust proxy', 1);
+
     // Security middleware
     app.use(helmet({
       contentSecurityPolicy: {
