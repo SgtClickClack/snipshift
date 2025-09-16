@@ -47,7 +47,7 @@ import cookieParser from 'cookie-parser';
 export const pubsub = new PubSub();
 
 // Wrap schema creation to catch SDL parse errors
-let schema;
+let schema: any;
 try {
   schema = makeExecutableSchema({
     typeDefs,
@@ -56,7 +56,7 @@ try {
   console.log('✅ GraphQL schema created successfully');
 } catch (error) {
   console.error('🚨 GraphQL SDL parse error:', error);
-  console.error('Check schema.ts for malformed SDL:', error.message);
+  console.error('Check schema.ts for malformed SDL:', (error as Error).message);
   process.exit(1);
 }
 
@@ -159,6 +159,10 @@ async function startServer() {
           return res.status(500).send('Stripe not configured');
         }
 
+        if (!stripe) {
+          return res.status(500).send('Stripe not initialized');
+        }
+        
         const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
         
         logger.info('Webhook event received', { 
@@ -1369,6 +1373,10 @@ async function startServer() {
           paymentIntentParams.idempotency_key = idempotencyKey;
         }
 
+        if (!stripe) {
+          return res.status(500).json({ error: 'Stripe not initialized' });
+        }
+        
         const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
         logger.info('Payment intent created', { 
@@ -1445,9 +1453,15 @@ async function startServer() {
         let customer;
         if (customerId) {
           try {
+            if (!stripe) {
+              return res.status(500).json({ error: 'Stripe not initialized' });
+            }
             customer = await stripe.customers.retrieve(customerId);
           } catch (error: any) {
             logger.warn('Customer not found, creating new customer', { customerId });
+            if (!stripe) {
+              return res.status(500).json({ error: 'Stripe not initialized' });
+            }
             customer = await stripe.customers.create({
               email: userEmail,
               metadata: { service: 'snipshift_pro' }
@@ -1455,6 +1469,10 @@ async function startServer() {
           }
         } else {
           // Check for existing customer by email to prevent duplicates
+          if (!stripe) {
+            return res.status(500).json({ error: 'Stripe not initialized' });
+          }
+          
           const existingCustomers = await stripe.customers.list({
             email: userEmail,
             limit: 1
@@ -1463,6 +1481,9 @@ async function startServer() {
           if (existingCustomers.data.length > 0) {
             customer = existingCustomers.data[0];
           } else {
+            if (!stripe) {
+              return res.status(500).json({ error: 'Stripe not initialized' });
+            }
             customer = await stripe.customers.create({
               email: userEmail,
               metadata: { service: 'snipshift_pro' }
@@ -1486,6 +1507,10 @@ async function startServer() {
           subscriptionParams.idempotency_key = idempotencyKey;
         }
 
+        if (!stripe) {
+          return res.status(500).json({ error: 'Stripe not initialized' });
+        }
+        
         const subscription = await stripe.subscriptions.create(subscriptionParams);
 
         logger.info('Subscription created', { 

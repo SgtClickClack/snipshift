@@ -28,17 +28,13 @@ name = "snipshift-web"
 build = ["docker", "build", "-f", "snipshift-next/web/Dockerfile", "-t", "snipshift-web", "snipshift-next/web"]
 run = ["docker", "run", "--rm", "-p", "3000:3000", "-e", "NODE_ENV=production", "snipshift-web"]
 
-# =============================================================================
-# PORT CONFIGURATION
-# =============================================================================
+[[ports]]
+localPort = 3000
+externalPort = 3000
 
 [[ports]]
 localPort = 4000
 externalPort = 80
-
-[[ports]]
-localPort = 3000
-externalPort = 3000
 
 [[ports]]
 localPort = 5432
@@ -47,6 +43,10 @@ externalPort = 5432
 [[ports]]
 localPort = 6379
 externalPort = 6379
+
+[[ports]]
+localPort = 35961
+externalPort = 3001
 
 # =============================================================================
 # ENVIRONMENT VARIABLES
