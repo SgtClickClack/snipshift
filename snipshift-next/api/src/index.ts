@@ -65,14 +65,16 @@ async function startServer() {
     // Trust proxy for Cloud Run (1 proxy layer)
     app.set('trust proxy', 1);
 
-    // Security middleware
+    // Security middleware with Google CSP permissions
     app.use(helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
           imgSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'", "https://accounts.google.com"],
+          frameSrc: ["https://accounts.google.com"],
         },
       },
     }));
@@ -708,7 +710,7 @@ async function startServer() {
                 </div>
               </div>
 
-              <button id="googleSignUpBtn" class="btn-google" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; background: white; border: 2px solid var(--steel-300); border-radius: 8px; padding: 12px 16px; font-size: 1rem; font-weight: 500; color: var(--steel-700); cursor: pointer; transition: all 0.2s ease; margin-bottom: 24px;">
+              <button id="googleSignUpBtn" class="btn-google" onclick="alert('Button clicked!')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; background: white; border: 2px solid var(--steel-300); border-radius: 8px; padding: 12px 16px; font-size: 1rem; font-weight: 500; color: var(--steel-700); cursor: pointer; transition: all 0.2s ease; margin-bottom: 24px;">
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -781,17 +783,30 @@ async function startServer() {
             }
 
             // Google Sign-Up button click handler
-            document.getElementById('googleSignUpBtn').addEventListener('click', function() {
-              if (!isGoogleLoaded) {
-                alert('Google Sign-In is still loading. Please wait a moment and try again.');
-                return;
-              }
-              
-              try {
-                window.google.accounts.id.prompt();
-              } catch (error) {
-                console.error('Failed to show Google sign-in:', error);
-                alert('Failed to open Google sign-in. Please try again.');
+            document.addEventListener('DOMContentLoaded', function() {
+              const googleBtn = document.getElementById('googleSignUpBtn');
+              if (googleBtn) {
+                googleBtn.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  console.log('Google button clicked!');
+                  console.log('isGoogleLoaded:', isGoogleLoaded);
+                  console.log('window.google:', window.google);
+                  
+                  if (!isGoogleLoaded) {
+                    alert('Google Sign-In is still loading. Please wait a moment and try again.');
+                    return;
+                  }
+                  
+                  try {
+                    console.log('Attempting to show Google prompt...');
+                    window.google.accounts.id.prompt();
+                  } catch (error) {
+                    console.error('Failed to show Google sign-in:', error);
+                    alert('Failed to open Google sign-in. Please try again. Error: ' + error.message);
+                  }
+                });
+              } else {
+                console.error('Google button not found!');
               }
             });
 
