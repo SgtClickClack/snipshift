@@ -15,7 +15,7 @@
     "test:coverage": "jest --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "clean": "rm -rf .next out",
+    "clean": "rimraf .next out",
     "prebuild": "npm run clean",
     "postbuild": "echo 'Build completed successfully'",
     "analyze": "ANALYZE=true npm run build"
@@ -63,7 +63,8 @@
     "eslint-config-next": "^13.4.0",
     "jest": "^29.6.0",
     "jest-environment-jsdom": "^29.6.0",
-    "storybook": "^7.1.0"
+    "storybook": "^7.1.0",
+    "rimraf": "^5.0.5"
   },
   "engines": {
     "node": ">=18.0.0"

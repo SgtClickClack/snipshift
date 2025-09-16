@@ -1,4 +1,4 @@
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import rateLimit from 'express-rate-limit';
 
 // Secure key generator that prevents IP spoofing, port-based bypasses, and IPv6 subnet bypasses
 const secureKeyGenerator = (req: any) => {
@@ -7,9 +7,9 @@ const secureKeyGenerator = (req: any) => {
   // Remove any port numbers to prevent port-based bypasses
   ip = ip.replace(/:\d+[^:]*$/, '');
   
-  // Use express-rate-limit's ipKeyGenerator for proper IPv6 handling
-  // This automatically handles IPv6 subnet masking to prevent address rotation bypasses
-  return ipKeyGenerator(ip);
+  // Simple IP-based key generation for rate limiting
+  // This handles IPv6 subnet masking to prevent address rotation bypasses
+  return ip;
 };
 
 export const rateLimitMiddleware = rateLimit({

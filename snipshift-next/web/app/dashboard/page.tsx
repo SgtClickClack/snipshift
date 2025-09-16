@@ -63,7 +63,7 @@ export default function DashboardPage() {
                 <strong>Email:</strong> {state.user?.email}
               </Typography>
               <Typography variant="body2">
-                <strong>Role:</strong> {state.user?.role}
+                <strong>Role:</strong> {state.user?.currentRole}
               </Typography>
               <Typography variant="body2">
                 <strong>User ID:</strong> {state.user?.id}

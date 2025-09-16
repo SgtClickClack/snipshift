@@ -1,5 +1,4 @@
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@mui/material';
 import { useState, useEffect } from 'react';
 
 interface GoogleAuthProps {
@@ -24,7 +23,6 @@ declare global {
 }
 
 export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
-  const { toast } = useToast();
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -40,11 +38,7 @@ export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
     };
     script.onerror = () => {
       console.error('Failed to load Google Identity Services script');
-      toast({
-        title: "Google Auth Error",
-        description: "Failed to load Google authentication services.",
-        variant: "destructive",
-      });
+      console.error('Google Auth Error: Failed to load Google authentication services.');
     };
     document.head.appendChild(script);
 
@@ -69,11 +63,7 @@ export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
         console.log('Google Auth initialized successfully');
       } catch (error) {
         console.error('Google Auth initialization error:', error);
-        toast({
-          title: "Google Auth Error",
-          description: "Failed to initialize Google authentication.",
-          variant: "destructive",
-        });
+        console.error('Google Auth Error: Failed to initialize Google authentication.');
       }
     } else {
       setTimeout(initializeGoogleAuth, 100);
@@ -107,19 +97,12 @@ export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
 
       const userData = await res.json();
       
-      toast({
-        title: "Success!",
-        description: `Successfully ${mode === 'signin' ? 'signed in' : 'signed up'} with Google`,
-      });
+      console.log(`Successfully ${mode === 'signin' ? 'signed in' : 'signed up'} with Google`);
 
       onSuccess?.(userData);
     } catch (error: any) {
       console.error('Google auth error:', error);
-      toast({
-        title: "Authentication failed",
-        description: error.message || "There was an error with Google authentication. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Authentication failed:', error.message || "There was an error with Google authentication. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -127,11 +110,7 @@ export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
 
   const handleGoogleSignIn = () => {
     if (!isGoogleLoaded) {
-      toast({
-        title: "Not Ready",
-        description: "Google authentication is still loading. Please wait.",
-        variant: "destructive",
-      });
+      console.error('Not Ready: Google authentication is still loading. Please wait.');
       return;
     }
 
@@ -139,24 +118,27 @@ export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
       window.google.accounts.id.prompt();
     } catch (error) {
       console.error('Failed to show Google sign-in prompt:', error);
-      toast({
-        title: "Error",
-        description: "Failed to open Google sign-in. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error: Failed to open Google sign-in. Please try again.');
     }
   };
 
   return (
-    <div className="w-full">
+    <div style={{ width: '100%' }}>
       <Button
         onClick={handleGoogleSignIn}
         disabled={!isGoogleLoaded || isProcessing}
-        variant="outline"
-        className="w-full h-12 text-sm font-medium border-steel-300 hover:bg-steel-50"
+        variant="outlined"
+        fullWidth
+        sx={{ 
+          height: '48px', 
+          fontSize: '14px', 
+          fontWeight: 500,
+          borderColor: '#d1d5db',
+          '&:hover': { backgroundColor: '#f9fafb' }
+        }}
         data-testid={`google-${mode}-button`}
       >
-        <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+        <svg style={{ width: '20px', height: '20px', marginRight: '12px' }} viewBox="0 0 24 24">
           <path
             fill="#4285f4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

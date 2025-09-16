@@ -7,8 +7,15 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'HUB' | 'PROFESSIONAL' | 'BRAND' | 'TRAINER';
+  roles: string[];
+  currentRole: 'HUB' | 'PROFESSIONAL' | 'BRAND' | 'TRAINER';
   profileComplete: boolean;
+  brandProfile?: {
+    verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  };
+  trainerProfile?: {
+    verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  };
 }
 
 interface AuthState {

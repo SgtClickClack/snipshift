@@ -110,7 +110,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd snipshift-next/api && npm install"
-waitForPort = 4000
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -125,7 +124,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd snipshift-next/web && npm install"
-waitForPort = 3000
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

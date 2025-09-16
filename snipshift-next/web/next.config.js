@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typedRoutes: true,
   images: {
     domains: ['localhost', 'snipshift.com.au', 'storage.googleapis.com'],
     remotePatterns: [

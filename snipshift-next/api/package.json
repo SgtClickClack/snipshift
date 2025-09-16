@@ -19,7 +19,7 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
+    "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "postbuild": "echo 'Build completed successfully'"
   },
@@ -74,7 +74,8 @@
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.12",
     "supertest": "^6.3.4",
-    "testcontainers": "^10.7.2"
+    "testcontainers": "^10.7.2",
+    "rimraf": "^5.0.5"
   },
   "engines": {
     "node": ">=18.0.0"
