@@ -1,15 +1,18 @@
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = "cd snipshift-next/api && npm run dev"
+run = "docker-compose up --build"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
 packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick"]
 
-[deployment]
-deploymentTarget = "autoscale"
-build = ["cd snipshift-next/api && npm run build"]
-run = ["cd snipshift-next/api && npm run start"]
+[deployments]
+[[deployments.releases]]
+  name = "production-api"
+  # The command to build the application
+  build = ["npm", "--prefix", "snipshift-next/api", "run", "build"]
+  # The command to run the application after building
+  run = ["npm", "--prefix", "snipshift-next/api", "run", "start"]
 
 [[ports]]
 localPort = 4000

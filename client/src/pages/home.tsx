@@ -1,37 +1,37 @@
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Store, UserCheck, Award, GraduationCap, Scissors } from "lucide-react";
-import { authService } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getDashboardRoute } from "@/lib/roles";
 
 export default function HomePage() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const user = authService.getCurrentUser();
+  const { user, setRolesAndCurrentRole } = useAuth();
 
   // Force all users to stay on home page for role selection
   useEffect(() => {
     if (!user) {
       // No user logged in, redirect to landing page
-      setLocation('/');
+      navigate('/');
       return;
     }
     // All authenticated users can access this page regardless of role
-  }, [user, setLocation]);
+  }, [user, navigate]);
 
   const handleRoleSelection = async (role: "hub" | "professional" | "brand" | "trainer") => {
     setIsLoading(true);
     
     try {
-      // Update user role via API (this adds the role to their account)
-      await apiRequest("PATCH", `/api/users/${user!.id}/role`, { role });
-      
-      // Update local auth state
-      const updatedUser = { ...user!, role };
-      authService.login(updatedUser);
+      // Add role and set as currentRole
+      await apiRequest("PATCH", `/api/users/${user!.id}/roles`, { action: "add", role });
+      await apiRequest("PATCH", `/api/users/${user!.id}/current-role`, { role });
+      const mergedRoles = Array.from(new Set([...(user!.roles || []), role]));
+      setRolesAndCurrentRole(mergedRoles as any, role);
       
       toast({
         title: "Role added!",
@@ -39,16 +39,9 @@ export default function HomePage() {
       });
 
       // Redirect to dashboard for this role
-      const dashboardMap = {
-        hub: '/hub-dashboard',
-        professional: '/professional-dashboard',
-        brand: '/brand-dashboard',
-        trainer: '/trainer-dashboard'
-      };
-      
-      const targetDashboard = dashboardMap[role];
-      console.log('🎯 Navigating to dashboard:', targetDashboard);
-      setTimeout(() => setLocation(targetDashboard), 100); // Small delay to ensure state update
+      const targetDashboard = getDashboardRoute(role);
+      if (import.meta.env.MODE !== 'production') console.log('🎯 Navigating to dashboard:', targetDashboard);
+      setTimeout(() => navigate(targetDashboard), 100); // Small delay to ensure state update
       
     } catch (error) {
       toast({
