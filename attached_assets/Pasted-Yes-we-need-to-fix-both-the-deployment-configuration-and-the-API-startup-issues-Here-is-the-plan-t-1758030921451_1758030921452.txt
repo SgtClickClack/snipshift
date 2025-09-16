@@ -1,0 +1,56 @@
+Yes, we need to fix both the deployment configuration and the API startup issues. Here is the plan to resolve everything in parallel.
+
+-----
+
+### Part 1: Your Action — Correcting the `.replit` File
+
+The current `.replit` file is mixing local development commands (`docker-compose`) with an outdated deployment format that won't work on Cloud Run.
+
+Please **replace the entire content** of your `.replit` file with the following corrected and simplified configuration. This is the definitive version for both local development and deployment.
+
+```toml
+# This is the corrected configuration for both local development and deployment.
+
+# This command is executed by the main "Run" button for local development.
+run = "npm --prefix snipshift-next/api run dev"
+
+# This section defines the commands for production deployment on Replit Autoscale.
+[deployment]
+build = "npm --prefix snipshift-next/api install && npm --prefix snipshift-next/api run build"
+run = "npm --prefix snipshift-next/api run start"
+
+# This tells Replit which port to expose for the web preview.
+[[ports]]
+localPort = 4000
+externalPort = 80
+```
+
+-----
+
+### Part 2: My Action — Fixing the API Startup Issues
+
+While you are updating the `.replit` file, I will provide the prompt for the agent to troubleshoot and fix the underlying server startup problems. This way, we can solve both issues at the same time.
+
+```yaml
+role: |
+  You are a senior backend developer specializing in Node.js, GraphQL, and debugging complex server startup failures.
+
+request: |
+  The deployment configuration is being fixed separately. Your sole focus is to resolve the remaining code-level issues that are preventing the API server from starting successfully.
+
+  Your task is to troubleshoot the API service, identify the root cause of the startup failure, and apply the necessary fixes to make the server operational.
+
+  1.  **Start the Server:** From the `snipshift-next/api` directory, attempt to start the server in development mode using the `npm run dev` command.
+
+  2.  **Analyze the Error:** Carefully examine the error messages and stack traces that appear in the console. Do not focus on deployment; focus only on why the Node.js process itself is failing.
+
+  3.  **Investigate and Fix:** Common issues to investigate include:
+      -   Database connection timeouts or credential errors.
+      -   Missing or incorrect environment variables in the Replit "Secrets" tab.
+      -   Circular dependencies or breaking changes in a recently updated package.
+      -   Type errors or syntax issues in the main `src/index.ts` or server setup files.
+
+  4.  **Confirm the Fix:** Apply the necessary code changes to resolve the issue. The task is complete when you can successfully start the server and it remains running without crashing.
+```
+
+By tackling both the configuration and the code in parallel, we can resolve all blocking issues efficiently. 🔧

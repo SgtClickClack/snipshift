@@ -1,11 +1,11 @@
-import { GraphQLContext } from './context.ts';
-import { userResolvers } from './resolvers/user.ts';
-import { authResolvers } from './resolvers/auth.ts';
-import { jobResolvers } from './resolvers/job.ts';
-import { socialResolvers } from './resolvers/social.ts';
-import { trainingResolvers } from './resolvers/training.ts';
-import { chatResolvers } from './resolvers/chat.ts';
-import { fileResolvers } from './resolvers/file.ts';
+import { GraphQLContext } from './context.js';
+import { userResolvers } from './resolvers/user.js';
+import { authResolvers } from './resolvers/auth.js';
+import { jobResolvers } from './resolvers/job.js';
+import { socialResolvers } from './resolvers/social.js';
+import { trainingResolvers } from './resolvers/training.js';
+import { chatResolvers } from './resolvers/chat.js';
+import { fileResolvers } from './resolvers/file.js';
 import { eq } from 'drizzle-orm';
 import { 
   users, 
@@ -21,7 +21,7 @@ import {
   purchases,
   chats,
   messages
-} from '../database/schema.ts';
+} from '../database/schema.js';
 
 export const resolvers = {
   Query: {

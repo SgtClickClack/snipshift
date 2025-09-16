@@ -31,15 +31,15 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-import { typeDefs } from './graphql/schema.ts';
-import { resolvers } from './graphql/resolvers.ts';
-import { context } from './graphql/context.ts';
-import { authMiddleware } from './middleware/auth.ts';
-import { rateLimitMiddleware } from './middleware/rateLimit.ts';
-import { errorHandler } from './middleware/errorHandler.ts';
-import { logger } from './utils/logger.ts';
-import { connectDatabase } from './database/connection.ts';
-import { initializeRedis } from './config/redis.ts';
+import { typeDefs } from './graphql/schema.js';
+import { resolvers } from './graphql/resolvers.js';
+import { context } from './graphql/context.js';
+import { authMiddleware } from './middleware/auth.js';
+import { rateLimitMiddleware } from './middleware/rateLimit.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { logger } from './utils/logger.js';
+import { connectDatabase } from './database/connection.js';
+import { initializeRedis } from './config/redis.js';
 import Stripe from 'stripe';
 import cookieParser from 'cookie-parser';
 
