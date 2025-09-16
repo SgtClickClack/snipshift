@@ -6,7 +6,7 @@ import { expressMiddleware } from '@as-integrations/express5';
 // Body parser middleware available directly from Express
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { useServer } from 'graphql-ws/use/ws';
+import { useServer } from 'graphql-ws/lib/use/ws';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { PubSub } from 'graphql-subscriptions';
 import dotenv from 'dotenv';
@@ -89,7 +89,7 @@ async function startServer() {
         onConnect: () => { logger.info('WebSocket client connected'); },
         onDisconnect: () => { logger.info('WebSocket client disconnected'); },
       },
-      wsServer
+      wsServer as any
     );
 
     // Apollo Server setup
