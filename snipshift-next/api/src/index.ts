@@ -1640,12 +1640,26 @@ async function startServer() {
     );
     console.log('[DEBUG] Apollo middleware applied successfully');
 
-    // Health check endpoint for Cloud Run deployment
+    // Health check endpoints for Cloud Run deployment
     app.get('/health', (req, res) => {
       res.status(200).json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
         service: 'snipshift-api'
+      });
+    });
+
+    // Root endpoint for Cloud Run health checks (some systems check /)
+    app.get('/', (req, res) => {
+      res.status(200).json({ 
+        status: 'ok', 
+        message: 'SnipShift API is running',
+        timestamp: new Date().toISOString(),
+        service: 'snipshift-api',
+        endpoints: {
+          graphql: '/graphql',
+          health: '/health'
+        }
       });
     });
 
