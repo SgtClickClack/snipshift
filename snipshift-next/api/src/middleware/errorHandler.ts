@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { GraphQLError } from 'graphql';
+import { GraphQLError } from 'graphql/error';
 import { logger } from '../utils/logger.js';
 
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {

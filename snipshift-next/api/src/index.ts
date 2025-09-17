@@ -64,43 +64,57 @@ try {
 
 async function startServer() {
   try {
+    console.log('[DEBUG] Starting server initialization...');
+    
     // Connect to database (optional in development)
     if (!process.env.SKIP_DB) {
+      console.log('[DEBUG] Attempting to connect to database...');
       try {
         await connectDatabase();
+        console.log('[DEBUG] Database connection successful');
         logger.info('Database connected successfully');
       } catch (error) {
+        console.log('[DEBUG] Database connection failed, continuing in dev mode');
         if (process.env.NODE_ENV === 'production') {
           throw error;
         }
         logger.warn('Database connection failed, continuing in dev mode', { error: (error as Error).message });
       }
     } else {
+      console.log('[DEBUG] Skipping database connection (SKIP_DB=1)');
       logger.info('Skipping database connection (SKIP_DB=1)');
     }
 
     // Initialize Redis for caching and sessions (optional in development)
     if (!process.env.SKIP_REDIS) {
+      console.log('[DEBUG] Attempting to connect to Redis...');
       try {
         await initializeRedis();
+        console.log('[DEBUG] Redis connection successful');
         logger.info('Redis connected successfully');
       } catch (error) {
+        console.log('[DEBUG] Redis connection failed, continuing in dev mode');
         if (process.env.NODE_ENV === 'production') {
           throw error;
         }
         logger.warn('Redis connection failed, continuing in dev mode', { error: (error as Error).message });
       }
     } else {
+      console.log('[DEBUG] Skipping Redis connection (SKIP_REDIS=1)');
       logger.info('Skipping Redis connection (SKIP_REDIS=1)');
     }
 
     // Initialize Stripe client (optional in development)
+    console.log('[DEBUG] Checking Stripe configuration...');
     let stripe: Stripe | null = null;
     if (!process.env.SKIP_STRIPE && process.env.STRIPE_SECRET_KEY) {
+      console.log('[DEBUG] Attempting to initialize Stripe client...');
       try {
         stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        console.log('[DEBUG] Stripe client initialized successfully');
         logger.info('Stripe client initialized');
       } catch (error) {
+        console.log('[DEBUG] Stripe initialization failed, continuing in dev mode');
         if (process.env.NODE_ENV === 'production') {
           throw error;
         }
@@ -108,18 +122,24 @@ async function startServer() {
         stripe = null;
       }
     } else if (process.env.SKIP_STRIPE) {
+      console.log('[DEBUG] Skipping Stripe initialization (SKIP_STRIPE=1)');
       logger.info('Skipping Stripe initialization (SKIP_STRIPE=1)');
     } else {
+      console.log('[DEBUG] STRIPE_SECRET_KEY not provided, continuing without payment processing');
       logger.warn('STRIPE_SECRET_KEY not provided, continuing in dev mode without payment processing');
     }
 
+    console.log('[DEBUG] Creating Express application and HTTP server...');
     const app = express();
     const httpServer = createServer(app);
+    console.log('[DEBUG] Express app and HTTP server created successfully');
 
     // Trust proxy for Cloud Run (1 proxy layer)
+    console.log('[DEBUG] Configuring Express middleware...');
     app.set('trust proxy', 1);
 
     // Security middleware with Google CSP permissions
+    console.log('[DEBUG] Setting up Helmet security middleware...');
     app.use(helmet({
       contentSecurityPolicy: {
         directives: {
@@ -132,17 +152,22 @@ async function startServer() {
         },
       },
     }));
+    console.log('[DEBUG] Helmet middleware configured');
 
     // CORS configuration
+    console.log('[DEBUG] Setting up CORS middleware...');
     app.use(cors({
       origin: process.env.NODE_ENV === 'production'
         ? ['https://www.snipshift.com.au', 'https://app.snipshift.com.au']
         : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8081'],
       credentials: true,
     }));
+    console.log('[DEBUG] CORS middleware configured');
 
     // Rate limiting
+    console.log('[DEBUG] Setting up rate limiting middleware...');
     app.use(rateLimitMiddleware);
+    console.log('[DEBUG] Rate limiting middleware configured');
 
     // CRITICAL: Stripe webhook endpoint MUST come before express.json() to use raw body
     app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -1720,6 +1745,7 @@ async function startServer() {
     }
 
     // Apollo Server setup
+    console.log('[DEBUG] Creating Apollo Server...');
     const server = new ApolloServer({
       schema,
       // Security: Disable introspection and playground in production
@@ -1738,10 +1764,14 @@ async function startServer() {
         },
       ],
     });
+    console.log('[DEBUG] Apollo Server created successfully');
 
+    console.log('[DEBUG] Starting Apollo Server...');
     await server.start();
+    console.log('[DEBUG] Apollo Server started successfully');
 
     // Apply Apollo middleware
+    console.log('[DEBUG] Applying Apollo middleware to Express app...');
     app.use(
       '/graphql',
       authMiddleware,
@@ -1749,22 +1779,45 @@ async function startServer() {
         context: context,
       })
     );
+    console.log('[DEBUG] Apollo middleware applied successfully');
 
     // Error handling
+    console.log('[DEBUG] Setting up error handling middleware...');
     app.use(errorHandler);
+    console.log('[DEBUG] Error handling middleware configured');
 
     const PORT = parseInt(process.env.PORT || '4000', 10);
     const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces for containers
     
+    console.log(`[DEBUG] FINAL STEP: Attempting to start HTTP listener on ${HOST}:${PORT}...`);
     httpServer.listen(PORT, HOST, () => {
+      console.log(`[SUCCESS] Server is running and listening on http://${HOST}:${PORT}`);
       logger.info(`🚀 Server running on ${HOST}:${PORT}`);
       logger.info(`📊 GraphQL endpoint: http://${HOST}:${PORT}/graphql`);
       logger.info(`🔍 GraphQL Playground: http://${HOST}:${PORT}/graphql`);
     });
+    console.log('[DEBUG] HTTP server listen() call completed - server should be starting...');
 
   } catch (error) {
+    console.error('[FATAL STARTUP ERROR] The application failed to start:', error);
     logger.error('Failed to start server:', error);
     process.exit(1);
   }
 }
+
+// Main startup function with top-level error handling
+async function main() {
+  try {
+    console.log('[DEBUG] Main startup function called');
+    await startServer();
+  } catch (error) {
+    console.error('[FATAL MAIN ERROR] Unhandled error in main startup:', error);
+    console.error('Error details:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+console.log('[DEBUG] Starting SnipShift API server...');
+main();
 
