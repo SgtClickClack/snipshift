@@ -111,6 +111,7 @@ waitForPort = 5432
 [[workflows.workflow]]
 name = "API Service"
 author = "agent"
+mode = "serial"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
