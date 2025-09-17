@@ -440,6 +440,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile update endpoint for onboarding data
+  app.patch("/api/users/:id/profile", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { profileType, data } = req.body;
+      const sessionUser = (req as any).session?.user;
+      
+      if (!sessionUser) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      if (sessionUser.id !== id) {
+        return res.status(403).json({ error: "Cannot modify another user's profile" });
+      }
+      if (!profileType || !["professional", "hub", "brand", "trainer"].includes(profileType)) {
+        return res.status(400).json({ error: "Invalid profile type" });
+      }
+
+      const user = await storage.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Parse the profile data
+      let profileData;
+      try {
+        profileData = typeof data === 'string' ? JSON.parse(data) : data;
+      } catch (parseError) {
+        return res.status(400).json({ error: "Invalid profile data format" });
+      }
+
+      // Add the role to user's roles if not already present
+      let roles: string[] = (user as any).roles || [];
+      if (!roles.includes(profileType)) {
+        roles = [...roles, profileType];
+      }
+
+      // Set current role to the profile type
+      const currentRole = profileType;
+
+      // Update user with profile data and role
+      const updatedUser = await storage.updateUser(id, { 
+        roles, 
+        currentRole,
+        [`${profileType}Profile`]: profileData,
+        displayName: profileData.fullName || profileData.contactName || profileData.companyName || (user as any).displayName
+      } as any);
+
+      res.json({ 
+        id: updatedUser.id, 
+        email: updatedUser.email, 
+        roles: (updatedUser as any).roles,
+        currentRole: (updatedUser as any).currentRole,
+        displayName: (updatedUser as any).displayName,
+        profileImage: (updatedUser as any).profileImage,
+        profileData: (updatedUser as any)[`${profileType}Profile`]
+      });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      res.status(400).json({ error: "Failed to update profile" });
+    }
+  });
+
   // Training Content endpoints
   app.post("/api/training-content", async (req, res) => {
     try {
