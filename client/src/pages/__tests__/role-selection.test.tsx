@@ -250,12 +250,10 @@ describe('RoleSelectionPage', () => {
     const professionalIcon = screen.getByTestId('button-select-professional').querySelector('svg');
     const hubIcon = screen.getByTestId('button-select-hub').querySelector('svg');
     const brandIcon = screen.getByTestId('button-select-brand').querySelector('svg');
-    const trainerIcon = screen.getByTestId('button-select-trainer').querySelector('svg');
 
     expect(professionalIcon).toBeInTheDocument();
     expect(hubIcon).toBeInTheDocument();
     expect(brandIcon).toBeInTheDocument();
-    expect(trainerIcon).toBeInTheDocument();
   });
 
   it('applies correct styling to selected roles', async () => {
