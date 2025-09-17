@@ -1,8 +1,9 @@
+import { build } from 'vite';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
-export default defineConfig({
+const config = defineConfig({
   plugins: [react()],
   root: 'client',
   publicDir: '../public',
@@ -39,3 +40,12 @@ export default defineConfig({
     'import.meta.env.VITE_GOOGLE_REDIRECT_URI': JSON.stringify(process.env.VITE_GOOGLE_REDIRECT_URI || ''),
   }
 });
+
+try {
+  console.log('Building frontend...');
+  await build(config);
+  console.log('Frontend build completed successfully!');
+} catch (error) {
+  console.error('Build failed:', error);
+  process.exit(1);
+}

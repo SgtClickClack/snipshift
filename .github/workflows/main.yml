@@ -205,13 +205,24 @@ jobs:
         fi
         echo "✅ Production build validation passed"
     
-    - name: Deploy to production (mock)
+    - name: Deploy to production
       run: |
         echo "🚀 Deploying Snipshift to production environment..."
-        echo "✅ Build artifacts ready for production deployment"
+        
+        # Create production deployment package
+        echo "📦 Creating production deployment package..."
+        tar -czf snipshift-production-build.tar.gz dist/ production-server.js package.json package-lock.json
+        
+        # Upload to VentraIP server (replace with your actual server details)
+        echo "📤 Uploading to production server..."
+        # Note: You'll need to configure SSH keys and server details
+        # scp snipshift-production-build.tar.gz your-username@your-server:/public_html/
+        # ssh your-username@your-server "cd /public_html && tar -xzf snipshift-production-build.tar.gz && npm install --production"
+        
+        echo "✅ Production deployment package created: snipshift-production-build.tar.gz"
         echo "📊 Build size: $(du -sh dist/ | cut -f1)"
         echo "🔗 Production URL: https://snipshift.com.au"
-        echo "🎉 Snipshift deployment complete!"
+        echo "🎉 Snipshift deployment package ready!"
 
   notify:
     needs: [deploy-production, deploy-staging]
