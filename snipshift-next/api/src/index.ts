@@ -1651,19 +1651,11 @@ async function startServer() {
     app.use(errorHandler);
     console.log('[DEBUG] Error handling middleware configured');
 
-    // For Cloud Run deployment, override development PORT with 5000
-    let PORT = parseInt(process.env.PORT || '5000', 10);
-    
-    // Override PORT for Cloud Run deployment (Replit deployment sets this to 1)
-    if (process.env.REPLIT_DEPLOYMENT === '1') {
-      PORT = 5000; // Cloud Run requires port 5000
-      console.log('[DEPLOYMENT] Overriding PORT to 5000 for Cloud Run deployment');
-    }
-    
-    const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces for containers
+    // Cloud Run deployment: bind to process.env.PORT on 0.0.0.0
+    const PORT = Number(process.env.PORT) || 8080;
+    const HOST = '0.0.0.0'; // Always bind to all interfaces for containers
     
     console.log(`[DEBUG] Environment PORT: ${process.env.PORT}`);
-    console.log(`[DEBUG] REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT}`);
     console.log(`[DEBUG] Final PORT: ${PORT}`);
     console.log(`[DEBUG] FINAL STEP: Attempting to start HTTP listener on ${HOST}:${PORT}...`);
     httpServer.listen(PORT, HOST, () => {
