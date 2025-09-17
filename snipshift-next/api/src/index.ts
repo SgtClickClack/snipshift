@@ -143,12 +143,14 @@ async function startServer() {
     app.use(helmet({
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+          defaultSrc: ["'self'", "https://www.gstatic.com"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://accounts.google.com"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.gstatic.com", "https://apis.google.com", "https://accounts.google.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
           imgSrc: ["'self'", "data:", "https:"],
-          connectSrc: ["'self'", "https://accounts.google.com"],
-          frameSrc: ["https://accounts.google.com"],
+          connectSrc: ["'self'", "https://www.gstatic.com", "https://apis.google.com", "https://accounts.google.com"],
+          frameSrc: ["'self'", "https://accounts.google.com"],
+          childSrc: ["'self'", "https://accounts.google.com"],
         },
       },
     }));
