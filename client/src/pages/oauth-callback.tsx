@@ -70,13 +70,29 @@ export function OAuthCallback() {
           profileImage: userData.profileImage || '',
         });
         
-        toast({
-          title: "Welcome!",
-          description: "Successfully signed in with Google! Choose your role to continue.",
-        });
-
-        console.log('🎯 Navigating to role selection');
-        navigate('/role-selection');
+        // Check if user has a proper role and redirect accordingly
+        const hasProperRole = userData.currentRole && userData.currentRole !== 'client';
+        
+        if (hasProperRole) {
+          toast({
+            title: "Welcome back!",
+            description: `Successfully signed in with Google! Redirecting to your ${userData.currentRole} dashboard.`,
+          });
+          
+          // Import getDashboardRoute dynamically to avoid circular imports
+          const { getDashboardRoute } = await import('@/lib/roles');
+          const dashboardRoute = getDashboardRoute(userData.currentRole);
+          console.log('🎯 Navigating to dashboard:', dashboardRoute);
+          navigate(dashboardRoute);
+        } else {
+          toast({
+            title: "Welcome!",
+            description: "Successfully signed in with Google! Choose your role to continue.",
+          });
+          
+          console.log('🎯 Navigating to role selection');
+          navigate('/role-selection');
+        }
         
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
