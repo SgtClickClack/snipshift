@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { GraphQLError } from 'graphql/error';
 import { logger } from '../utils/logger.js';
 
-export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = async (err: any, req: Request, res: Response, next: NextFunction) => {
   // Log the error
   logger.error('Error occurred:', {
     error: err.message,
@@ -17,8 +16,14 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
   // GraphQL errors are handled by Apollo Server
-  if (err instanceof GraphQLError) {
-    return next(err);
+  try {
+    const { GraphQLError } = await import('graphql');
+    if (err instanceof GraphQLError) {
+      return next(err);
+    }
+  } catch (importError) {
+    // If GraphQL import fails, continue with other error handling
+    logger.warn('Failed to import GraphQLError:', importError);
   }
 
   // Handle different error types
