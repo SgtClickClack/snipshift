@@ -2,7 +2,7 @@
 # Master controller for the Replit environment
 
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = ["sh", "-c", "cd snipshift-next/api && npm run dev"]
+run = ["sh", "-c", "npm run dev"]
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "snipshift-next/node_modules", "snipshift-next/api/node_modules", "snipshift-next/web/node_modules"]
 
 [nix]
@@ -14,12 +14,12 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 # =============================================================================
 
 [deployment]
-run = ["sh", "-c", "cd snipshift-next/api && npm ci && npm run build && npm start"]
+run = ["sh", "-c", "npm ci && npm run build && npm start"]
 deploymentTarget = "cloudrun"
 
 [[ports]]
-localPort = 3000
-externalPort = 3000
+localPort = 5000
+externalPort = 80
 
 [[ports]]
 localPort = 4000
@@ -44,7 +44,7 @@ externalPort = 3001
 [env]
 # Core Configuration
 NODE_ENV = "development"
-PORT = "3000"
+PORT = "5000"
 
 # Database Configuration
 DATABASE_URL = "postgresql://snipshift:snipshift_password@localhost:5432/snipshift"
