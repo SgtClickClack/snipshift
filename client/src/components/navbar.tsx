@@ -128,7 +128,7 @@ export default function Navbar() {
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(["professional","hub","brand","trainer"] as const)
+                      {(["professional","hub","brand"] as const)
                         .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
                         .map((r) => (
                         <SelectItem key={r} value={r}>
@@ -219,7 +219,7 @@ export default function Navbar() {
             <div className="space-y-2">
               <p className="text-chrome-light text-sm font-medium">Switch Role</p>
               <div className="grid grid-cols-1 gap-2">
-                {(["professional","hub","brand","trainer"] as const)
+                {(["professional","hub","brand"] as const)
                   .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
                   .map((role) => (
                     <Button

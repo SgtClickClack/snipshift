@@ -34,11 +34,40 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Performance optimizations
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': ['@tanstack/react-query', 'react-router-dom'],
+          'auth-vendor': ['firebase', 'google-auth-library'],
+          'icons-vendor': ['react-icons', 'lucide-react'],
+        },
+      },
+    },
+    // Enable source maps for debugging
+    sourcemap: process.env.NODE_ENV !== 'production',
+    // Optimize chunk size
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     fs: {
       strict: true,
       deny: ["**/.*"],
     },
+  },
+  // Performance optimizations
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      '@tanstack/react-query',
+      'react-router-dom',
+    ],
+    exclude: [
+      'firebase',
+      'google-auth-library',
+    ],
   },
 });

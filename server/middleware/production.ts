@@ -32,12 +32,18 @@ export function setupProductionMiddleware(app: express.Application) {
 
   // Compression is handled by express compression middleware in server/index.ts
 
-  // Cache static assets
+  // Cache static assets with optimized headers
   app.use((req, res, next) => {
     if (req.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('ETag', `"${Date.now()}"`); // Simple ETag for cache validation
     } else if (req.url.match(/\.(html|json)$/)) {
       res.setHeader('Cache-Control', 'public, max-age=3600');
+    } else if (req.url.startsWith('/api/')) {
+      // API responses - shorter cache, no-cache for dynamic content
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
     }
     next();
   });

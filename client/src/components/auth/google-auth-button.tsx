@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { googleOAuth } from "@/lib/google-oauth-direct";
-import { FcGoogle } from "react-icons/fc";
+
+// Lazy load the Google icon to reduce initial bundle size
+const FcGoogle = lazy(() => import("react-icons/fc").then(module => ({ default: module.FcGoogle })));
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -39,7 +41,9 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       disabled={isLoading}
       data-testid="button-google-auth"
     >
-      <FcGoogle className="w-5 h-5 mr-2" />
+      <Suspense fallback={<div className="w-5 h-5 mr-2 bg-gray-300 rounded animate-pulse" />}>
+        <FcGoogle className="w-5 h-5 mr-2" />
+      </Suspense>
       {isLoading 
         ? "Connecting..." 
         : `${mode === "signin" ? "Sign in" : "Sign up"} with Google`

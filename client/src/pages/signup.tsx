@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Scissors } from "lucide-react";
-import GoogleAuthButton from "@/components/auth/google-auth-button";
+
+// Lazy load the Google Auth button to reduce initial bundle size
+const GoogleAuthButton = lazy(() => import("@/components/auth/google-auth-button"));
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -149,7 +151,7 @@ export default function SignupPage() {
 
 
   return (
-    <div className="min-h-screen py-12" style={{backgroundColor: 'var(--bg-signup)'}}>
+    <div className="min-h-screen py-12 bg-signup">
       <div className="max-w-md mx-auto px-4">
         <Card className="shadow-xl border-2 border-steel-300/50 bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
@@ -240,7 +242,19 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <GoogleAuthButton mode="signup" />
+            <Suspense fallback={
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full" 
+                disabled
+              >
+                <div className="w-5 h-5 mr-2 bg-gray-300 rounded animate-pulse" />
+                Loading Google Auth...
+              </Button>
+            }>
+              <GoogleAuthButton mode="signup" />
+            </Suspense>
             
             <div className="text-center mt-6">
               <p className="text-steel-600">

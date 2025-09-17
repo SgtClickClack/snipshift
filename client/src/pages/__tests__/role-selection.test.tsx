@@ -62,17 +62,14 @@ describe('RoleSelectionPage', () => {
     expect(screen.getByText('Select one or more roles to personalize your experience.')).toBeInTheDocument();
     
     // Check all role cards are present
-    expect(screen.getByText('Professional')).toBeInTheDocument();
-    expect(screen.getByText('Barber, stylist, or creative professional')).toBeInTheDocument();
+    expect(screen.getByText('Barber')).toBeInTheDocument();
+    expect(screen.getByText('Barbers and stylists looking for work opportunities')).toBeInTheDocument();
     
-    expect(screen.getByText('Hub Owner')).toBeInTheDocument();
-    expect(screen.getByText('Own a barbershop, salon, or creative space')).toBeInTheDocument();
+    expect(screen.getByText('Shop')).toBeInTheDocument();
+    expect(screen.getByText('Barbershop owners posting jobs and managing staff')).toBeInTheDocument();
     
-    expect(screen.getByText('Brand')).toBeInTheDocument();
-    expect(screen.getByText('Product company or brand representative')).toBeInTheDocument();
-    
-    expect(screen.getByText('Trainer')).toBeInTheDocument();
-    expect(screen.getByText('Educator offering courses and training')).toBeInTheDocument();
+    expect(screen.getByText('Brand / Coach')).toBeInTheDocument();
+    expect(screen.getByText('For product companies and educators to connect with professionals')).toBeInTheDocument();
   });
 
   it('allows selecting multiple roles', async () => {

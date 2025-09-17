@@ -2,8 +2,17 @@
 export class GoogleOAuthDirect {
   private clientId: string;
   private redirectUri: string;
+  private isInitialized: boolean = false;
   
   constructor() {
+    // Lazy initialization to avoid blocking initial render
+    this.clientId = '';
+    this.redirectUri = '';
+  }
+
+  private async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+    
     // Require environment configuration - no hardcoded fallbacks for security
     this.clientId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
     if (!this.clientId) {
@@ -17,9 +26,12 @@ export class GoogleOAuthDirect {
     if (import.meta.env?.MODE !== 'production') {
       console.log('OAuth setup', { clientId: this.clientId.substring(0, 10) + '...', redirectUri: this.redirectUri });
     }
+    
+    this.isInitialized = true;
   }
 
   public async signIn(): Promise<void> {
+    await this.initialize(); // Ensure initialization before use
     const authUrl = await this.buildAuthUrl();
     if (import.meta.env?.MODE !== 'production') console.log('🔧 Redirecting to Google OAuth');
     window.location.href = authUrl;

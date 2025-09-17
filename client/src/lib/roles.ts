@@ -1,10 +1,9 @@
-export type AppRole = 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'client';
+export type AppRole = 'hub' | 'professional' | 'brand' | 'admin' | 'client';
 
 export const roleToRoute: Record<AppRole, string> = {
   hub: '/hub-dashboard',
   professional: '/professional-dashboard',
   brand: '/brand-dashboard',
-  trainer: '/trainer-dashboard',
   admin: '/admin',
   client: '/role-selection'
 };

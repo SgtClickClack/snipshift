@@ -4,8 +4,8 @@ export interface User {
   id: string;
   email: string;
   password: string;
-  roles: Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'>;
-  currentRole: 'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | null;
+  roles: Array<'client' | 'hub' | 'professional' | 'brand' | 'admin'>;
+  currentRole: 'client' | 'hub' | 'professional' | 'brand' | 'admin' | null;
   provider?: 'google' | 'email';
   googleId?: string;
   createdAt: Date;
@@ -58,24 +58,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize auth state from localStorage on mount
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        // Convert date strings back to Date objects
-        parsedUser.createdAt = new Date(parsedUser.createdAt);
-        parsedUser.updatedAt = new Date(parsedUser.updatedAt);
-        setUser(parsedUser);
-        // Refresh roles/currentRole from server to avoid stale local cache
-        if (parsedUser?.id) {
-          syncUserFromServer(parsedUser.id);
+    // Use requestIdleCallback for non-critical initialization
+    const initAuth = () => {
+      try {
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          // Convert date strings back to Date objects
+          parsedUser.createdAt = new Date(parsedUser.createdAt);
+          parsedUser.updatedAt = new Date(parsedUser.updatedAt);
+          setUser(parsedUser);
+          // Refresh roles/currentRole from server to avoid stale local cache
+          if (parsedUser?.id) {
+            syncUserFromServer(parsedUser.id);
+          }
         }
+      } catch (error) {
+        console.error('Error loading user from localStorage:', error);
+        localStorage.removeItem('currentUser');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading user from localStorage:', error);
-      localStorage.removeItem('currentUser');
-    } finally {
-      setIsLoading(false);
+    };
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(initAuth);
+    } else {
+      setTimeout(initAuth, 0);
     }
   }, []);
 

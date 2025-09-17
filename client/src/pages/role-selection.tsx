@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, UserCheck, Award, GraduationCap, Scissors } from "lucide-react";
+import { Store, UserCheck, Award, Scissors } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
@@ -11,11 +11,11 @@ import { getDashboardRoute } from "@/lib/roles";
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand" | "trainer">>([]);
+  const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand">>([]);
   const { toast } = useToast();
   const { user, setRolesAndCurrentRole } = useAuth();
   
-  const toggleRole = (role: "hub" | "professional" | "brand" | "trainer") => {
+  const toggleRole = (role: "hub" | "professional" | "brand") => {
     setSelectedRoles((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
   };
 
@@ -60,31 +60,24 @@ export default function RoleSelectionPage() {
   const roles = [
     {
       id: "professional" as const,
-      title: "Professional",
-      description: "Barber, stylist, or creative professional",
+      title: "Barber",
+      description: "Barbers and stylists looking for work opportunities",
       icon: UserCheck,
       color: "border-steel-300 bg-steel-50/80 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     },
     {
       id: "hub" as const,
-      title: "Hub Owner",
-      description: "Own a barbershop, salon, or creative space",
+      title: "Shop",
+      description: "Barbershop owners posting jobs and managing staff",
       icon: Store,
       color: "border-chrome-light bg-chrome-light/20 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     },
     {
       id: "brand" as const,
-      title: "Brand",
-      description: "Product company or brand representative",
+      title: "Brand / Coach",
+      description: "For product companies and educators to connect with professionals",
       icon: Award,
       color: "border-steel-400 bg-steel-100/60 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
-    },
-    {
-      id: "trainer" as const,
-      title: "Trainer",
-      description: "Educator offering courses and training",
-      icon: GraduationCap,
-      color: "border-chrome-dark bg-chrome-dark/10 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     }
   ];
 
@@ -101,7 +94,7 @@ export default function RoleSelectionPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {roles.map((role) => {
             const IconComponent = role.icon;
             const isSelected = selectedRoles.includes(role.id);

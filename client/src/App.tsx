@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
+import { PerformanceMonitor } from '@/components/performance/performance-monitor';
 import Navbar from '@/components/navbar';
 
 // Core pages - load immediately for fast initial render
@@ -30,7 +31,6 @@ const BrandOnboarding = lazy(() => import('@/pages/onboarding/brand'));
 const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
 const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
-const TrainerDashboard = lazy(() => import('@/pages/trainer-dashboard'));
 
 // Feature pages - lazy load for better performance
 const DemoPage = lazy(() => import('@/pages/demo'));
@@ -132,14 +132,6 @@ function AppRoutes() {
           </AuthGuard>
         } />
 
-        <Route path="/onboarding/trainer" element={
-          <AuthGuard requireAuth={true}>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <BrandOnboarding />
-            </Suspense>
-          </AuthGuard>
-        } />
-
         <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route path="/__/auth/handler" element={<OAuthCallback />} />
 
@@ -164,14 +156,6 @@ function AppRoutes() {
           <ProtectedRoute requiredRole="brand">
             <Suspense fallback={<PageLoadingFallback />}>
               <BrandDashboard />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/trainer-dashboard" element={
-          <ProtectedRoute requiredRole="trainer">
-            <Suspense fallback={<PageLoadingFallback />}>
-              <TrainerDashboard />
             </Suspense>
           </ProtectedRoute>
         } />
@@ -294,6 +278,7 @@ function App() {
             <AppRoutes />
             <TutorialOverlay />
             <FeedbackWidget />
+            <PerformanceMonitor />
           </Router>
         </AuthProvider>
       </TooltipProvider>
