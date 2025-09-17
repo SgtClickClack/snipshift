@@ -1,0 +1,76 @@
+name: Deploy API to Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'snipshift-next/api/**'
+      - '.github/workflows/deploy-api-cloud-run.yml'
+
+permissions:
+  contents: read
+
+env:
+  # Required secrets to be set in GitHub → Settings → Secrets and variables → Actions
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ secrets.GCP_REGION }}
+  CLOUD_RUN_SERVICE_DEFAULT: snipshift-api
+
+jobs:
+  deploy:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required inputs
+        run: |
+          if [ -z "${GCP_PROJECT_ID}" ] || [ -z "${GCP_REGION}" ]; then
+            echo "GCP_PROJECT_ID and GCP_REGION must be set as Action secrets." >&2
+            exit 1
+          fi
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Determine service name
+        id: svc
+        run: |
+          SERVICE_NAME="${{ secrets.CLOUD_RUN_SERVICE_API }}"
+          if [ -z "$SERVICE_NAME" ]; then
+            SERVICE_NAME="${CLOUD_RUN_SERVICE_DEFAULT}"
+          fi
+          echo "service_name=$SERVICE_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Build image with Cloud Build
+        run: |
+          IMAGE="gcr.io/${GCP_PROJECT_ID}/${{ steps.svc.outputs.service_name }}:${GITHUB_SHA}"
+          echo "Building image: $IMAGE"
+          gcloud builds submit snipshift-next/api --tag "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${{ steps.svc.outputs.service_name }}" \
+            --image "$image" \
+            --region "$GCP_REGION" \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 4000 \
+            --max-instances 5 \
+            --memory 512Mi \
+            --cpu 1
+
+      - name: Output service URL
+        run: |
+          gcloud run services describe "${{ steps.svc.outputs.service_name }}" \
+            --platform=managed \
+            --region="$GCP_REGION" \
+            --format='value(status.url)'
+
