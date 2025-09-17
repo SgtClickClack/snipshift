@@ -66,6 +66,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 4000 \
+            --set-env-vars "NODE_ENV=production,PORT=4000,SKIP_DB=1,SKIP_REDIS=1,SKIP_STRIPE=1" \
             --max-instances 5 \
             --memory 512Mi \
             --cpu 1
