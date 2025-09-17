@@ -1637,14 +1637,34 @@ async function startServer() {
     );
     console.log('[DEBUG] Apollo middleware applied successfully');
 
+    // Health check endpoint for Cloud Run deployment
+    app.get('/health', (req, res) => {
+      res.status(200).json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        service: 'snipshift-api'
+      });
+    });
+
     // Error handling
     console.log('[DEBUG] Setting up error handling middleware...');
     app.use(errorHandler);
     console.log('[DEBUG] Error handling middleware configured');
 
-    const PORT = parseInt(process.env.PORT || '4000', 10);
+    // For Cloud Run deployment, override development PORT with 5000
+    let PORT = parseInt(process.env.PORT || '5000', 10);
+    
+    // Override PORT for Cloud Run deployment (Replit deployment sets this to 1)
+    if (process.env.REPLIT_DEPLOYMENT === '1') {
+      PORT = 5000; // Cloud Run requires port 5000
+      console.log('[DEPLOYMENT] Overriding PORT to 5000 for Cloud Run deployment');
+    }
+    
     const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces for containers
     
+    console.log(`[DEBUG] Environment PORT: ${process.env.PORT}`);
+    console.log(`[DEBUG] REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT}`);
+    console.log(`[DEBUG] Final PORT: ${PORT}`);
     console.log(`[DEBUG] FINAL STEP: Attempting to start HTTP listener on ${HOST}:${PORT}...`);
     httpServer.listen(PORT, HOST, () => {
       console.log(`[SUCCESS] Server is running and listening on http://${HOST}:${PORT}`);
