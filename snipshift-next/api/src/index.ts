@@ -74,11 +74,12 @@ async function startServer() {
         console.log('[DEBUG] Database connection successful');
         logger.info('Database connected successfully');
       } catch (error) {
-        console.log('[DEBUG] Database connection failed, continuing in dev mode');
+        console.log('[DEBUG] Database connection failed, continuing without database');
         if (process.env.NODE_ENV === 'production') {
-          throw error;
+          logger.error('Database connection failed in production, continuing without database', { error: (error as Error).message });
+        } else {
+          logger.warn('Database connection failed, continuing in dev mode', { error: (error as Error).message });
         }
-        logger.warn('Database connection failed, continuing in dev mode', { error: (error as Error).message });
       }
     } else {
       console.log('[DEBUG] Skipping database connection (SKIP_DB=1)');
@@ -93,11 +94,12 @@ async function startServer() {
         console.log('[DEBUG] Redis connection successful');
         logger.info('Redis connected successfully');
       } catch (error) {
-        console.log('[DEBUG] Redis connection failed, continuing in dev mode');
+        console.log('[DEBUG] Redis connection failed, continuing without Redis');
         if (process.env.NODE_ENV === 'production') {
-          throw error;
+          logger.error('Redis connection failed in production, continuing without Redis', { error: (error as Error).message });
+        } else {
+          logger.warn('Redis connection failed, continuing in dev mode', { error: (error as Error).message });
         }
-        logger.warn('Redis connection failed, continuing in dev mode', { error: (error as Error).message });
       }
     } else {
       console.log('[DEBUG] Skipping Redis connection (SKIP_REDIS=1)');
@@ -114,11 +116,12 @@ async function startServer() {
         console.log('[DEBUG] Stripe client initialized successfully');
         logger.info('Stripe client initialized');
       } catch (error) {
-        console.log('[DEBUG] Stripe initialization failed, continuing in dev mode');
+        console.log('[DEBUG] Stripe initialization failed, continuing without Stripe');
         if (process.env.NODE_ENV === 'production') {
-          throw error;
+          logger.error('Stripe initialization failed in production, continuing without Stripe', { error: (error as Error).message });
+        } else {
+          logger.warn('Stripe initialization failed, continuing in dev mode', { error: (error as Error).message });
         }
-        logger.warn('Stripe initialization failed, continuing in dev mode', { error: (error as Error).message });
         stripe = null;
       }
     } else if (process.env.SKIP_STRIPE) {
