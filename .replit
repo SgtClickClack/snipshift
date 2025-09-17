@@ -63,6 +63,11 @@ CORS_ORIGIN = "http://localhost:3000,http://localhost:3001,http://localhost:8081
 # Logging
 LOG_LEVEL = "info"
 
+# Development Skip Flags (for Replit environment)
+SKIP_DB = "1"
+SKIP_REDIS = "1"
+SKIP_STRIPE = "1"
+
 # Next.js Web App Configuration
 NEXT_PUBLIC_API_URL = "http://localhost:4000/graphql"
 NEXT_PUBLIC_WS_URL = "ws://localhost:4000/graphql"
@@ -109,11 +114,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd snipshift-next/api && npm install"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd snipshift-next/api && npm run dev"
+args = "cd snipshift-next/api && npm ci && npm run dev"
 waitForPort = 4000
 
 # Web Service Workflow
@@ -123,11 +124,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd snipshift-next/web && npm install"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd snipshift-next/web && npm run dev"
+args = "cd snipshift-next/web && npm ci && npm run dev"
 waitForPort = 3000
 
 # =============================================================================
