@@ -20,7 +20,8 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     
     try {
       console.log('🔧 Starting Google OAuth with direct method');
-      googleOAuth.signIn();
+      // Show immediate feedback, then start OAuth
+      await googleOAuth.signIn();
     } catch (error: any) {
       console.error("Google auth error:", error);
       toast({

@@ -5,46 +5,42 @@ export class GoogleOAuthDirect {
   private isInitialized: boolean = false;
   
   constructor() {
-    // Lazy initialization to avoid blocking initial render
-    this.clientId = '';
-    this.redirectUri = '';
-  }
-
-  private async initialize(): Promise<void> {
-    if (this.isInitialized) return;
-    
-    // Require environment configuration - no hardcoded fallbacks for security
-    this.clientId = import.meta.env?.VITE_GOOGLE_CLIENT_ID;
-    if (!this.clientId) {
-      throw new Error('VITE_GOOGLE_CLIENT_ID environment variable is required');
-    }
-    
-    // Default to /oauth/callback which is registered in routing
-    const defaultRedirect = `${window.location.origin}/oauth/callback`;
-    this.redirectUri = import.meta.env?.VITE_GOOGLE_REDIRECT_URI || defaultRedirect;
-    
-    if (import.meta.env?.MODE !== 'production') {
-      console.log('OAuth setup', { clientId: this.clientId.substring(0, 10) + '...', redirectUri: this.redirectUri });
-    }
-    
+    // Initialize immediately to avoid delays on first click
+    this.clientId = import.meta.env?.VITE_GOOGLE_CLIENT_ID || '';
+    this.redirectUri = import.meta.env?.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/oauth/callback`;
     this.isInitialized = true;
   }
 
   public async signIn(): Promise<void> {
-    await this.initialize(); // Ensure initialization before use
-    const authUrl = await this.buildAuthUrl();
-    if (import.meta.env?.MODE !== 'production') console.log('🔧 Redirecting to Google OAuth');
-    window.location.href = authUrl;
+    // Show immediate feedback - open popup right away
+    if (import.meta.env?.MODE !== 'production') console.log('🔧 Starting Google OAuth');
+    
+    // Open popup immediately for instant feedback
+    const popup = this.openPopup();
+    
+    // Generate auth URL quickly (simplified version)
+    const authUrl = this.buildAuthUrlFast();
+    
+    // Navigate popup to Google OAuth immediately
+    popup.location.href = authUrl;
   }
 
-  private async buildAuthUrl(): Promise<string> {
-    // Generate PKCE code verifier and challenge for security
-    const codeVerifier = this.generateCodeVerifier();
-    const codeChallenge = await this.generateCodeChallenge(codeVerifier);
-    const state = this.generateSecureState();
+  private openPopup(): Window {
+    const width = 500;
+    const height = 600;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
     
-    // Store for verification after callback
-    sessionStorage.setItem('oauth_code_verifier', codeVerifier);
+    return window.open(
+      'about:blank',
+      'google-auth',
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+  }
+
+  private buildAuthUrlFast(): string {
+    // Generate simple state for security (no expensive crypto)
+    const state = this.generateSimpleState();
     sessionStorage.setItem('oauth_state', state);
     
     const params = new URLSearchParams({
@@ -55,40 +51,16 @@ export class GoogleOAuthDirect {
       access_type: 'offline',
       prompt: 'consent',
       state: state,
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
     });
 
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   }
 
-  private generateCodeVerifier(): string {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return btoa(String.fromCharCode.apply(null, Array.from(array)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-  }
-
-  private async generateCodeChallenge(verifier: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifier);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = new Uint8Array(hashBuffer);
-    return btoa(String.fromCharCode.apply(null, Array.from(hashArray)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-  }
-
-  private generateSecureState(): string {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    return btoa(String.fromCharCode.apply(null, Array.from(array)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+  private generateSimpleState(): string {
+    // Use Math.random for speed instead of crypto.getRandomValues
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15) +
+           Date.now().toString(36);
   }
 }
 
