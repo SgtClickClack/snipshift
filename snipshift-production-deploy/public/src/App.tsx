@@ -15,7 +15,6 @@ import Navbar from '@/components/navbar';
 
 // Core pages - load immediately for fast initial render
 import LandingPage from '@/pages/landing';
-import HomePage from '@/pages/home';
 import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
 import { OAuthCallback } from '@/pages/oauth-callback';
@@ -70,12 +69,6 @@ function AppRoutes() {
           </AuthGuard>
         } />
         
-        <Route path="/home" element={
-          <AuthGuard>
-            <HomePage />
-          </AuthGuard>
-        } />
-
         <Route path="/demo" element={
           <Suspense fallback={<PageLoadingFallback />}>
             <DemoPage />

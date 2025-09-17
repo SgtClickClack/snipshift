@@ -57,8 +57,8 @@ export default function SignupPage() {
           description: "Successfully signed up with Google! Let's set up your profile.",
         });
 
-        // Navigate to home (role selection)
-        navigate('/home');
+        // Navigate to role selection
+        navigate('/role-selection');
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
         toast({
@@ -135,8 +135,8 @@ export default function SignupPage() {
         description: "Welcome to Snipshift! Let's set up your profile.",
       });
 
-      // Redirect to home (role selection)
-      navigate("/home");
+      // Redirect to role selection
+      navigate("/role-selection");
     } catch (error) {
       toast({
         title: "Registration failed",
