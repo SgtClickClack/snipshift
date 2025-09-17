@@ -23,7 +23,7 @@ export default function HomePage() {
     // All authenticated users can access this page regardless of role
   }, [user, navigate]);
 
-  const handleRoleSelection = async (role: "hub" | "professional" | "brand" | "trainer") => {
+  const handleRoleSelection = async (role: "hub" | "professional" | "brand") => {
     setIsLoading(true);
     
     try {
@@ -101,7 +101,7 @@ export default function HomePage() {
           )}
 
           {/* Role Selection Grid */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <Card 
               className="p-6 bg-white shadow-xl border-2 border-steel-300/50 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300 cursor-pointer group"
               onClick={() => handleRoleSelection('hub')}
@@ -110,8 +110,8 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <Store className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Hub Owner</h3>
-                <p className="text-steel-600">Own a barbershop, salon, or creative space? Post shifts and find professionals.</p>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Shop</h3>
+                <p className="text-steel-600">Barbershop owners posting jobs and managing staff</p>
               </CardContent>
             </Card>
 
@@ -123,8 +123,8 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <UserCheck className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Professional</h3>
-                <p className="text-steel-600">Barber, stylist, or creative professional? Find flexible work opportunities.</p>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Barber</h3>
+                <p className="text-steel-600">Barbers and stylists looking for work opportunities</p>
               </CardContent>
             </Card>
 
@@ -136,21 +136,8 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <Award className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Brand</h3>
-                <p className="text-steel-600">Product company or brand representative? Connect with the creative community.</p>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className="p-6 bg-white shadow-xl border-2 border-steel-300/50 hover:shadow-2xl hover:border-orange-400/50 transition-all duration-300 cursor-pointer group"
-              onClick={() => handleRoleSelection('trainer')}
-            >
-              <CardContent className="pt-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <GraduationCap className="text-white h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Trainer</h3>
-                <p className="text-steel-600">Educator offering courses and training? Share your expertise and monetize your skills.</p>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Brand / Coach</h3>
+                <p className="text-steel-600">For product companies and educators to connect with professionals</p>
               </CardContent>
             </Card>
           </div>
