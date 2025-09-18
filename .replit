@@ -14,7 +14,7 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 # =============================================================================
 
 [deployment]
-run = ["bash", "-c", "cd snipshift-next/api && chmod +x deploy-fast.sh && timeout 90s ./deploy-fast.sh || exit 1"]
+run = ["bash", "-c", "cd snipshift-next/api && npm ci --silent && npm run build:fast && PORT=5000 NODE_ENV=production SKIP_DB=1 SKIP_REDIS=1 SKIP_STRIPE=1 node dist/index.js"]
 deploymentTarget = "cloudrun"
 
 [[ports]]

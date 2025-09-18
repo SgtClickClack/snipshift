@@ -14,11 +14,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-// ES module equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 // Body parser middleware available directly from Express
@@ -31,20 +26,20 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-import { typeDefs } from './graphql/schema.js';
-import { resolvers } from './graphql/resolvers.js';
-import { context } from './graphql/context.js';
-import { authMiddleware } from './middleware/auth.js';
-import { rateLimitMiddleware } from './middleware/rateLimit.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { logger } from './utils/logger.js';
-import { connectDatabase } from './database/connection.js';
-import { initializeRedis } from './config/redis.js';
+import { typeDefs } from './graphql/schema';
+import { resolvers } from './graphql/resolvers';
+import { context } from './graphql/context';
+import { authMiddleware } from './middleware/auth';
+import { rateLimitMiddleware } from './middleware/rateLimit';
+import { errorHandler } from './middleware/errorHandler';
+import { logger } from './utils/logger';
+import { connectDatabase } from './database/connection';
+import { initializeRedis } from './config/redis';
 import Stripe from 'stripe';
 import cookieParser from 'cookie-parser';
 
 // Initialize PubSub for real-time subscriptions
-export const pubsub = new PubSub();
+const pubsub = new PubSub();
 
 // Wrap schema creation to catch SDL parse errors
 let schema: any;
