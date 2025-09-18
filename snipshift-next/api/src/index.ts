@@ -1867,7 +1867,7 @@ async function startServer() {
     console.log('[DEBUG] Error handling middleware configured');
 
     // 404 handler for any unmatched routes
-    app.use('*', (req, res) => {
+    app.use((req, res) => {
       console.log(`[404] Route not found: ${req.method} ${req.originalUrl}`);
       res.status(404).json({
         error: 'Not Found',
