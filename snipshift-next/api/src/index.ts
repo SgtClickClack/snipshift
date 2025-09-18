@@ -1656,6 +1656,7 @@ async function startServer() {
         message: 'SnipShift API is running',
         timestamp: new Date().toISOString(),
         service: 'snipshift-api',
+        port: PORT,
         endpoints: {
           graphql: '/graphql',
           health: '/health'
@@ -1669,18 +1670,33 @@ async function startServer() {
     console.log('[DEBUG] Error handling middleware configured');
 
     // Cloud Run deployment: bind to process.env.PORT on 0.0.0.0
-    const PORT = Number(process.env.PORT) || 8080;
+    // For Replit deployment, use port 5000 as configured in .replit
+    const PORT = Number(process.env.PORT) || 5000;
     const HOST = '0.0.0.0'; // Always bind to all interfaces for containers
     
     console.log(`[DEBUG] Environment PORT: ${process.env.PORT}`);
     console.log(`[DEBUG] Final PORT: ${PORT}`);
     console.log(`[DEBUG] FINAL STEP: Attempting to start HTTP listener on ${HOST}:${PORT}...`);
+    
+    // Add error handling for the server listen
+    httpServer.on('error', (error: any) => {
+      console.error(`[SERVER ERROR] Failed to start server on ${HOST}:${PORT}:`, error);
+      logger.error('Server failed to start:', error);
+      process.exit(1);
+    });
+    
     httpServer.listen(PORT, HOST, () => {
       console.log(`[SUCCESS] Server is running and listening on http://${HOST}:${PORT}`);
+      console.log(`[SUCCESS] Server bound to port ${PORT} successfully`);
+      console.log(`[SUCCESS] Server ready for requests on port ${PORT}`);
       logger.info(`🚀 Server running on ${HOST}:${PORT}`);
       logger.info(`📊 GraphQL endpoint: http://${HOST}:${PORT}/graphql`);
       logger.info(`🔍 GraphQL Playground: http://${HOST}:${PORT}/graphql`);
+      
+      // Signal that the server is ready
+      process.stdout.write(`\n[SERVER_READY] Port ${PORT} is now accepting connections\n`);
     });
+    
     console.log('[DEBUG] HTTP server listen() call completed - server should be starting...');
 
   } catch (error) {

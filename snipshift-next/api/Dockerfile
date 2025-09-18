@@ -42,12 +42,12 @@ COPY --chown=snipshift:nodejs package*.json ./
 # Switch to non-root user
 USER snipshift
 
-# Expose port (Cloud Run will inject PORT env var, default to 8080)
-EXPOSE 8080
+# Expose port (Cloud Run will inject PORT env var, default to 5000 for Replit)
+EXPOSE 5000
 
-# Health check - use PORT environment variable or default to 8080
+# Health check - use PORT environment variable or default to 5000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "const port = process.env.PORT || 8080; require('http').get(\`http://localhost:\${port}/health\`, (res) => { \
+  CMD node -e "const port = process.env.PORT || 5000; require('http').get(\`http://localhost:\${port}/health\`, (res) => { \
     process.exit(res.statusCode === 200 ? 0 : 1) \
   }).on('error', () => process.exit(1))"
 

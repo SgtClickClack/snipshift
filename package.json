@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch server/index.ts",
     "build": "tsc --noEmit --skipLibCheck && tsc-alias",
+    "build-api": "cd snipshift-next/api && npm run build",
     "build-server": "tsc server/index.ts --outDir dist/server --target es2020 --module commonjs --moduleResolution node --esModuleInterop --allowSyntheticDefaultImports --skipLibCheck",
     "start": "node production-server.js",
     "lint": "next lint",
