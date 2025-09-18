@@ -1685,7 +1685,14 @@ async function startServer() {
       process.exit(1);
     });
     
+    // Set a timeout for server startup
+    const startupTimeout = setTimeout(() => {
+      console.error(`[TIMEOUT] Server failed to start within 10 seconds on port ${PORT}`);
+      process.exit(1);
+    }, 10000);
+
     httpServer.listen(PORT, HOST, () => {
+      clearTimeout(startupTimeout);
       console.log(`[SUCCESS] Server is running and listening on http://${HOST}:${PORT}`);
       console.log(`[SUCCESS] Server bound to port ${PORT} successfully`);
       console.log(`[SUCCESS] Server ready for requests on port ${PORT}`);
