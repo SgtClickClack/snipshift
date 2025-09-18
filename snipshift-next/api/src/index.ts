@@ -249,7 +249,7 @@ async function startServer() {
 
     // Body parsing (AFTER webhook route)
     app.use(express.json({ limit: '10mb' }));
-    app.use(cookieParser());
+    app.use(cookieParser() as any);
 
     // Serve static files (for hero background image)
     app.use('/public', express.static(path.join(__dirname, '../public')));
