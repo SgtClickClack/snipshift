@@ -989,6 +989,164 @@ async function startServer() {
       res.send(htmlContent);
     });
 
+    // Role selection route
+    app.get('/auth/role-selection', (req, res) => {
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Choose Your Role - SnipShift</title>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+          <style>
+            :root {
+              --background: hsl(210, 15%, 94%);
+              --foreground: hsl(210, 15%, 12%);
+              --steel-50: hsl(210, 20%, 98%);
+              --steel-300: hsl(210, 12%, 82%);
+              --steel-600: hsl(210, 10%, 38%);
+              --steel-800: hsl(210, 18%, 18%);
+              --steel-900: hsl(210, 20%, 12%);
+              --red-accent: hsl(0, 85%, 35%);
+              --red-accent-hover: hsl(0, 88%, 40%);
+            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Inter', system-ui, -apple-system, sans-serif;
+              background: var(--background);
+              color: var(--foreground);
+              line-height: 1.6;
+            }
+            .container {
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+            }
+            .role-selection-card {
+              background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
+              border: 2px solid var(--steel-300);
+              border-radius: 20px;
+              padding: 48px;
+              max-width: 800px;
+              width: 100%;
+              text-align: center;
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.08);
+            }
+            .logo { margin-bottom: 32px; }
+            .logo h1 { font-size: 2.5rem; font-weight: 700; color: var(--steel-900); margin-bottom: 8px; }
+            .logo p { color: var(--steel-600); font-size: 1.125rem; }
+            .roles-grid { 
+              display: grid; 
+              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+              gap: 24px; 
+              margin-top: 32px;
+            }
+            .role-card { 
+              background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
+              border: 2px solid var(--steel-300);
+              border-radius: 16px; 
+              padding: 32px 24px; 
+              text-align: center; 
+              transition: all 0.3s ease; 
+              cursor: pointer;
+              text-decoration: none;
+              color: inherit;
+            }
+            .role-card:hover { 
+              transform: translateY(-4px); 
+              border-color: var(--red-accent);
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+              text-decoration: none;
+              color: inherit;
+            }
+            .role-icon { 
+              width: 60px; 
+              height: 60px; 
+              border-radius: 50%; 
+              margin: 0 auto 16px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              font-size: 24px; 
+              color: white;
+              background: linear-gradient(145deg, var(--steel-600), var(--steel-700));
+            }
+            .role-icon.hub { background: linear-gradient(145deg, #2196F3, #1976d2); }
+            .role-icon.professional { background: linear-gradient(145deg, #4CAF50, #388e3c); }
+            .role-icon.brand { background: linear-gradient(145deg, #9C27B0, #7b1fa2); }
+            .role-icon.trainer { background: linear-gradient(145deg, #FF9800, #f57c00); }
+            .role-title { 
+              font-size: 1.25rem; 
+              font-weight: 600; 
+              margin-bottom: 8px; 
+              color: var(--steel-900);
+            }
+            .role-description { 
+              color: var(--steel-600); 
+              font-size: 0.875rem; 
+              line-height: 1.5; 
+            }
+            .back-link {
+              display: inline-flex;
+              align-items: center;
+              color: var(--steel-600);
+              text-decoration: none;
+              font-weight: 500;
+              margin-bottom: 24px;
+            }
+            .back-link:hover { color: var(--red-accent); }
+            @media (max-width: 768px) { 
+              .role-selection-card { padding: 32px 24px; }
+              .roles-grid { grid-template-columns: 1fr; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="role-selection-card">
+              <a href="/" class="back-link">← Back to Home</a>
+              <div class="logo">
+                <h1>SnipShift</h1>
+                <p>Choose your role to get started</p>
+              </div>
+              
+              <div class="roles-grid">
+                <a href="/auth/register?role=hub" class="role-card">
+                  <div class="role-icon hub">🏪</div>
+                  <h3 class="role-title">Hub Owner</h3>
+                  <p class="role-description">Own a barbershop or salon? Post shifts and find talented professionals.</p>
+                </a>
+
+                <a href="/auth/register?role=professional" class="role-card">
+                  <div class="role-icon professional">👤</div>
+                  <h3 class="role-title">Professional</h3>
+                  <p class="role-description">Barber or stylist? Find flexible work opportunities and showcase your skills.</p>
+                </a>
+
+                <a href="/auth/register?role=brand" class="role-card">
+                  <div class="role-icon brand">🏆</div>
+                  <h3 class="role-title">Brand</h3>
+                  <p class="role-description">Product company? Connect with professionals and promote your products.</p>
+                </a>
+
+                <a href="/auth/register?role=trainer" class="role-card">
+                  <div class="role-icon trainer">🎓</div>
+                  <h3 class="role-title">Trainer</h3>
+                  <p class="role-description">Educator? Share your expertise and monetize your training content.</p>
+                </a>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      res.send(htmlContent);
+    });
+
     // Login route
     app.get('/auth/login', (req, res) => {
       const htmlContent = `
