@@ -50,7 +50,7 @@ export function setupProductionMiddleware(app: express.Application) {
 
   // Serve static files in production
   if (process.env.NODE_ENV === 'production') {
-    const clientBuildPath = path.join(__dirname, 'public');
+    const clientBuildPath = path.join(__dirname, '..', '..', 'dist', 'public');
     app.use(express.static(clientBuildPath));
     
     // Handle client-side routing - serve index.html for all non-API routes
