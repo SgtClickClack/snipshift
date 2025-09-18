@@ -1,77 +1,50 @@
-# 🚀 Snipshift Production Deployment Guide
+# SnipShift V2 Deployment Guide
 
-## Quick Deployment Steps
+## Hard Reset Deployment Steps
 
-### 1. Access VentraIP cPanel
-- Go to `https://vip.ventraip.com.au/dashboard`
-- Log in to your account
-- Navigate to your `snipshift.com.au` hosting service
-- Click "cPanel"
+### 1. Delete Old Deployment
+- Go to Replit → Deployments/Publishing tab
+- Find the current deployment
+- Click settings (gear icon) → Delete/Archive
+- Confirm deletion
 
-### 2. Upload Deployment Package
-- In cPanel, go to **"File Manager"**
-- Navigate to `/public_html/` (or your web root directory)
-- Upload `snipshift-production-build.zip`
-- Right-click the file → **"Extract"**
+### 2. Create New Deployment
+- Click "New Deployment" or "Deploy from scratch"
+- Ensure it uses `main` branch
+- Configuration will auto-detect from `.replit` file
 
-### 3. Install Dependencies
-- In cPanel, go to **"Terminal"**
-- Navigate to your web directory:
-  ```bash
-  cd public_html
-  ```
-- Install dependencies:
-  ```bash
-  npm install --production
-  ```
+### 3. Expected Build Process
+The deployment should execute these commands:
+```bash
+npm --prefix snipshift-next/api install
+npm --prefix snipshift-next/api run build
+npm --prefix snipshift-next/api run start
+```
 
-### 4. Start the Application
-- In cPanel, go to **"Setup Node.js App"**
-- Click **"Start App"** on your application
-- Or run manually:
-  ```bash
-  node production-server.js
-  ```
+### 4. Verification
+Once deployed, test these endpoints:
+- `https://snipshift.com.au/` - Main site
+- `https://snipshift.com.au/health` - Health check
+- `https://snipshift.com.au/graphql` - GraphQL endpoint
 
-### 5. Clear Cache (Important!)
-- Clear browser cache and cookies
-- If using CDN, purge the cache
-- Test in incognito/private browsing mode
+### 5. Expected Results
+- ✅ V2 3-role page loads correctly
+- ✅ New logo displays
+- ✅ All V2 features working
+- ✅ No more 500 Internal Server Error
 
-## What's Updated
-
-✅ **Role Selection Page**: Now shows 3 roles instead of 4
-- **Barber** (formerly Professional)
-- **Shop** (formerly Hub Owner)  
-- **Brand / Coach** (combined Brand + Trainer)
-
-✅ **Layout**: Changed from 2x2 grid to 3-column layout
-✅ **Routing**: Updated to handle new role structure
-✅ **Tests**: All tests updated to match new structure
+## Configuration Files Status
+- ✅ `.replit` - Perfect deployment configuration
+- ✅ `package.json` - All scripts ready
+- ✅ `tsconfig.json` - Node16 module resolution
+- ✅ `src/index.ts` - Port 4000, error handling
+- ✅ All fixes committed and pushed
 
 ## Troubleshooting
+If deployment still fails:
+1. Check build logs for specific errors
+2. Verify all files are committed to `main` branch
+3. Ensure no deployment overrides in Replit UI
+4. Try creating deployment with different name
 
-### If the old page still shows:
-1. **Clear browser cache completely**
-2. **Check if CDN cache needs purging**
-3. **Verify the new files were uploaded correctly**
-4. **Restart the Node.js application**
-
-### If deployment fails:
-1. **Check file permissions** (should be 755 for directories, 644 for files)
-2. **Verify Node.js version** (should be 18.x or 20.x)
-3. **Check environment variables** are set correctly
-4. **Review server logs** for any errors
-
-## Expected Result
-
-After successful deployment, visiting `snipshift.com.au/auth/role-selection` should show:
-- 3 role cards in a horizontal row
-- "Barber", "Shop", "Brand / Coach" options
-- Clean, modern layout matching your V2 plan
-
----
-
-**Deployment Package**: `snipshift-production-build.zip`  
-**Target URL**: `https://snipshift.com.au/auth/role-selection`  
-**Status**: Ready for deployment ✅
+The hard reset should resolve all cached deployment issues.
