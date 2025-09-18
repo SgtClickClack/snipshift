@@ -1800,32 +1800,81 @@ async function startServer() {
 
     // Health check endpoints for Cloud Run deployment
     app.get('/health', (req, res) => {
-      res.status(200).json({ 
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        service: 'snipshift-api'
-      });
+      try {
+        res.status(200).json({ 
+          status: 'ok', 
+          timestamp: new Date().toISOString(),
+          service: 'snipshift-api'
+        });
+      } catch (error) {
+        console.error('[ERROR] Health endpoint error:', error);
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Health check failed',
+          timestamp: new Date().toISOString()
+        });
+      }
     });
 
     // Root endpoint for Cloud Run health checks (some systems check /)
     app.get('/', (req, res) => {
-      res.status(200).json({ 
-        status: 'ok', 
-        message: 'SnipShift API is running',
-        timestamp: new Date().toISOString(),
-        service: 'snipshift-api',
-        port: PORT,
-        endpoints: {
-          graphql: '/graphql',
-          health: '/health'
-        }
-      });
+      try {
+        res.status(200).json({ 
+          status: 'ok', 
+          message: 'SnipShift API is running',
+          timestamp: new Date().toISOString(),
+          service: 'snipshift-api',
+          port: PORT,
+          endpoints: {
+            graphql: '/graphql',
+            health: '/health'
+          }
+        });
+      } catch (error) {
+        console.error('[ERROR] Root endpoint error:', error);
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Failed to process root request',
+          timestamp: new Date().toISOString()
+        });
+      }
     });
 
-    // Error handling
+    // Error handling middleware
     console.log('[DEBUG] Setting up error handling middleware...');
+    
+    // Catch-all error handler
+    app.use((err: any, req: any, res: any, next: any) => {
+      console.error('[ERROR] Unhandled error:', err);
+      console.error('[ERROR] Stack trace:', err.stack);
+      logger.error('Unhandled error in request', { 
+        error: err.message, 
+        stack: err.stack,
+        url: req.url,
+        method: req.method 
+      });
+      
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+    
     app.use(errorHandler);
     console.log('[DEBUG] Error handling middleware configured');
+
+    // 404 handler for any unmatched routes
+    app.use('*', (req, res) => {
+      console.log(`[404] Route not found: ${req.method} ${req.originalUrl}`);
+      res.status(404).json({
+        error: 'Not Found',
+        message: `Route ${req.method} ${req.originalUrl} not found`,
+        timestamp: new Date().toISOString()
+      });
+    });
 
     // Cloud Run deployment: bind to process.env.PORT on 0.0.0.0
     // For Replit deployment, use port 5000 as configured in .replit
