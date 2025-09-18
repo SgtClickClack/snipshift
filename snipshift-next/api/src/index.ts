@@ -1872,8 +1872,8 @@ async function startServer() {
     });
 
     // Cloud Run deployment: bind to process.env.PORT on 0.0.0.0
-    // For Replit deployment, use port 5000 as configured in .replit
-    const PORT = Number(process.env.PORT) || 5000;
+    // For Replit deployment, use port 4000 as configured in .replit
+    const PORT = Number(process.env.PORT) || 4000;
     const HOST = '0.0.0.0'; // Always bind to all interfaces for containers
     
     console.log(`[DEBUG] Environment PORT: ${process.env.PORT}`);
