@@ -1,18 +1,17 @@
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
 
-// Require environment configuration - no hardcoded fallbacks for security
+// Environment configuration - optional for deployment without Stripe
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-if (!STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is required');
-}
-
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
-if (!STRIPE_PUBLISHABLE_KEY) {
-  throw new Error('STRIPE_PUBLISHABLE_KEY environment variable is required');
-}
 
-const stripe = new Stripe(STRIPE_SECRET_KEY);
+// Only initialize Stripe if keys are provided
+let stripe: Stripe | null = null;
+if (STRIPE_SECRET_KEY) {
+  stripe = new Stripe(STRIPE_SECRET_KEY);
+} else {
+  console.warn('STRIPE_SECRET_KEY not provided - Stripe functionality disabled');
+}
 
 export interface ConnectedAccount {
   id: string;
@@ -30,6 +29,10 @@ const connectedAccounts: Map<string, ConnectedAccount> = new Map();
 
 export class StripeConnectService {
   async createConnectedAccount(trainerId: string, email: string, businessName: string): Promise<string> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured - STRIPE_SECRET_KEY is required');
+    }
+    
     try {
       const account = await stripe.accounts.create({
         type: 'express',
@@ -72,6 +75,10 @@ export class StripeConnectService {
   }
 
   async createAccountLink(accountId: string, returnUrl: string, refreshUrl: string): Promise<string> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured - STRIPE_SECRET_KEY is required');
+    }
+    
     try {
       const accountLink = await stripe.accountLinks.create({
         account: accountId,
@@ -92,6 +99,10 @@ export class StripeConnectService {
     payoutsEnabled: boolean;
     detailsSubmitted: boolean;
   }> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured - STRIPE_SECRET_KEY is required');
+    }
+    
     try {
       const account = await stripe.accounts.retrieve(accountId);
       
@@ -113,6 +124,10 @@ export class StripeConnectService {
     applicationFeeAmount: number,
     metadata: Record<string, string>
   ): Promise<{ clientSecret: string; paymentIntentId: string }> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured - STRIPE_SECRET_KEY is required');
+    }
+    
     try {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
@@ -175,6 +190,16 @@ export const stripeConnectRoutes = {
       
       if (!trainerId || !email || !businessName) {
         return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // If Stripe is not configured, return demo response
+      if (!stripe) {
+        const testAccount = await stripeConnectService.createTestAccount(trainerId);
+        return res.json({
+          accountId: testAccount.stripeAccountId,
+          onboardingUrl: '/trainer-dashboard?tab=payments&demo=true',
+          message: 'Demo account created (Stripe not configured)'
+        });
       }
 
       // For demo mode, create test account
@@ -270,10 +295,16 @@ export const stripeConnectRoutes = {
   // Handle webhook events - IMPORTANT: Use express.raw() middleware for this route
   async handleWebhook(req: Request, res: Response) {
     try {
+      if (!stripe) {
+        console.warn('Stripe webhook received but Stripe is not configured');
+        return res.status(200).send('Stripe not configured');
+      }
+      
       const sig = req.headers['stripe-signature'] as string;
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       if (!webhookSecret) {
-        throw new Error('STRIPE_WEBHOOK_SECRET environment variable is required');
+        console.warn('STRIPE_WEBHOOK_SECRET not configured - skipping webhook verification');
+        return res.status(200).send('Webhook secret not configured');
       }
       
       // Ensure req.body is raw buffer for signature verification
