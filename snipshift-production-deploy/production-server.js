@@ -1,12 +1,8 @@
-// Production server configuration for VentraIP cPanel
-import express from 'express';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync } from 'fs';
-import cors from 'cors';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Production server configuration for Snipshift
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,15 +17,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from public directory
-app.use(express.static(join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Import your existing routes
-import './index.js';
-
-// Catch-all handler for React Router
-app.get('*', (req, res) => {
+// Catch-all handler for React Router - serve the main React app
+app.use((req, res) => {
   try {
-    const html = readFileSync(join(__dirname, 'public', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
     res.send(html);
   } catch (err) {
     res.status(500).send('Server Error');
@@ -42,4 +35,4 @@ app.listen(PORT, () => {
   log(`Environment: ${process.env.NODE_ENV}`);
 });
 
-export default app;
+module.exports = app;

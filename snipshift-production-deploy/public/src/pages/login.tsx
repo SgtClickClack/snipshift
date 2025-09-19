@@ -35,8 +35,8 @@ export default function LoginPage() {
         description: "Welcome back!",
       });
 
-      // Redirect to home for role selection
-      navigate("/home");
+      // Redirect to role selection
+      navigate("/role-selection");
     } catch (error) {
       toast({
         title: "Login failed",
