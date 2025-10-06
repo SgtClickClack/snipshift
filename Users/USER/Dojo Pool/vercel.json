@@ -1,7 +1,5 @@
 {
-  "version": 2,
-  "root": "DojoPool",
-  "installCommand": "yarn install",
-  "buildCommand": "yarn workspace dojopool-frontend build",
-  "outputDirectory": "apps/web/.next"
+  "buildCommand": "cd apps/web && yarn build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "yarn install --frozen-lockfile"
 }
