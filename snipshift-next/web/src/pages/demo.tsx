@@ -1,0 +1,367 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDashboardRoute } from "@/lib/roles";
+import { useNavigate } from "react-router-dom";
+import { Scissors, Store, UserCheck, Award, Globe, Users, Video, Share2, Shield, Play, DollarSign, Star } from "lucide-react";
+
+export default function DemoPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const quickLogin = (role: "hub" | "professional" | "trainer" | "brand") => {
+    const demoUsers = {
+      hub: {
+        id: "demo_hub_1",
+        email: "demo@barbershop.com",
+        password: null,
+        displayName: "Downtown Barbershop",
+        role: "hub" as const,
+        provider: "email" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        profileComplete: true,
+        hubProfile: {
+          businessName: "Downtown Barbershop",
+          location: {
+            address: "123 Main St",
+            city: "New York",
+            state: "NY",
+            postcode: "10001",
+            country: "USA"
+          },
+          businessType: "barbershop" as const
+        }
+      },
+      professional: {
+        id: "demo_pro_1",
+        email: "demo@barber.com",
+        password: null,
+        displayName: "John Smith",
+        role: "professional" as const,
+        provider: "email" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        profileComplete: true,
+        professionalProfile: {
+          firstName: "John",
+          lastName: "Smith",
+          skills: ["Hair Cutting", "Beard Styling"],
+          experience: "5+ years",
+          hourlyRate: 50
+        }
+      },
+      trainer: {
+        id: "demo_trainer_1",
+        email: "demo@trainer.com",
+        password: null,
+        displayName: "Master Barber Mike",
+        role: "trainer" as const,
+        provider: "email" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        profileComplete: true,
+        trainerProfile: {
+          qualifications: ["Master Barber License", "10+ years experience"],
+          specializations: ["Advanced Fades", "Beard Care", "Business Training"],
+          yearsExperience: 12,
+          trainingLocation: "Downtown Training Center"
+        }
+      },
+      brand: {
+        id: "demo_brand_1",
+        email: "demo@brand.com",
+        password: null,
+        displayName: "ProfHair Products",
+        role: "brand" as const,
+        provider: "email" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        profileComplete: true,
+        brandProfile: {
+          companyName: "ProfHair Products",
+          website: "https://profhair.com",
+          description: "Premium professional hair styling products",
+          productCategories: ["Styling Tools", "Hair Products", "Accessories"]
+        }
+      }
+    };
+
+    const user = demoUsers[role];
+    // Ensure roles/currentRole are set so ProtectedRoute allows access
+    const userWithRoles = { ...(user as any), roles: [role], currentRole: role };
+    login(userWithRoles as any);
+    navigate(getDashboardRoute(role));
+  };
+
+  const quickLoginAdmin = () => {
+    const adminUser = {
+      id: "demo_admin_1",
+      email: "admin@snipshift.com",
+      password: null,
+      displayName: "Snipshift Admin",
+      role: "admin" as const,
+      provider: "email" as const,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profileComplete: true,
+    };
+
+    const userWithRoles = { ...(adminUser as any), roles: ["admin"], currentRole: "admin" };
+    login(userWithRoles as any);
+    navigate("/admin");
+  };
+
+  const features = [
+    {
+      title: "Trainer Dashboard",
+      description: "Upload and monetize training content with video courses",
+      icon: Award,
+      color: "bg-blue-100 text-blue-800",
+      demo: () => quickLogin("trainer"),
+      highlights: [
+        "Content upload with pricing",
+        "Revenue analytics",
+        "Student engagement tracking",
+        "Course categorization"
+      ]
+    },
+    {
+      title: "Brand Dashboard", 
+      description: "Create social posts and manage brand promotions",
+      icon: Globe,
+      color: "bg-purple-100 text-purple-800",
+      demo: () => quickLogin("brand"),
+      highlights: [
+        "Social post creation",
+        "Discount code management",
+        "Content approval workflow",
+        "Engagement analytics"
+      ]
+    },
+    {
+      title: "Social Feed",
+      description: "Community feed with brand promotions and trainer events",
+      icon: Share2,
+      color: "bg-green-100 text-green-800",
+      demo: () => navigate("/social-feed"),
+      highlights: [
+        "Approved brand posts",
+        "Training events",
+        "Discount codes",
+        "Interactive engagement"
+      ]
+    },
+    {
+      title: "Training Hub",
+      description: "Video marketplace with paid and free educational content",
+      icon: Video,
+      color: "bg-orange-100 text-orange-800",
+      demo: () => navigate("/training-hub"),
+      highlights: [
+        "Video course library",
+        "Mock payment system",
+        "Progress tracking",
+        "Skill level filtering"
+      ]
+    },
+    {
+      title: "Content Moderation",
+      description: "Admin panel for reviewing and approving content",
+      icon: Shield,
+      color: "bg-red-100 text-red-800",
+      demo: () => quickLoginAdmin(),
+      highlights: [
+        "Post approval workflow",
+        "Training content review",
+        "Quality control",
+        "Spam prevention"
+      ]
+    }
+  ];
+
+  const sampleContent = [
+    {
+      type: "Brand Post",
+      title: "25% Off Premium Tools",
+      author: "ProfHair Products",
+      engagement: "42 likes",
+      status: "Approved"
+    },
+    {
+      type: "Training Event",
+      title: "Advanced Fade Masterclass",
+      author: "Master Barber Mike",
+      engagement: "28 likes",
+      status: "Approved"
+    },
+    {
+      type: "Training Content",
+      title: "Beard Styling Fundamentals",
+      author: "Sarah Chen",
+      engagement: "234 students",
+      status: "Free"
+    },
+    {
+      type: "Training Content",
+      title: "Business Skills for Barbers",
+      author: "Carlos Rodriguez",
+      engagement: "89 students",
+      status: "$29.99"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-neutral-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-primary to-blue-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
+            <Scissors className="text-6xl mx-auto mb-6 opacity-90" />
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              Snipshift Platform Demo
+            </h1>
+            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
+              Comprehensive B2B2C marketplace for the barbering and creative industries
+            </p>
+            <div className="flex justify-center gap-4 mb-8">
+              <Button 
+                variant="accent"
+                size="lg"
+                onClick={() => navigate('/design-showcase')}
+              >
+                View Design System
+              </Button>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 text-sm">
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                ✓ Trainer Content Monetization
+              </Badge>
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                ✓ Brand Social Marketing
+              </Badge>
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                ✓ Content Moderation
+              </Badge>
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                ✓ Training Marketplace
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Access */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-neutral-900 mb-4">Try the Platform</h2>
+          <p className="text-neutral-600 text-lg">Click any role below to instantly access demo accounts</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-16">
+          {[
+            { role: "hub", label: "Hub Owner", icon: Store, description: "Manage barbershop operations" },
+            { role: "professional", label: "Professional", icon: UserCheck, description: "Find jobs and gigs" },
+            { role: "trainer", label: "Trainer", icon: Award, description: "Monetize your expertise" },
+            { role: "brand", label: "Brand", icon: Globe, description: "Promote your products" }
+          ].map((item) => (
+            <Card key={item.role} className="cursor-pointer hover:shadow-lg transition-shadow">
+              <CardContent 
+                className="p-6 text-center" 
+                onClick={() => quickLogin(item.role as any)}
+                data-testid={`demo-login-${item.role}`}
+              >
+                <item.icon className="h-12 w-12 text-primary mx-auto mb-3" />
+                <h3 className="font-semibold text-neutral-900 mb-2">{item.label}</h3>
+                <p className="text-sm text-neutral-600 mb-4">{item.description}</p>
+                <Button size="sm" className="w-full">
+                  Login as {item.label}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Features Showcase */}
+        <h2 className="text-3xl font-bold text-neutral-900 mb-8 text-center">New Platform Features</h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+          {features.map((feature) => (
+            <Card key={feature.title} className="overflow-hidden">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <feature.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                    <Badge className={feature.color} variant="outline">
+                      NEW
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-neutral-600 mb-4">{feature.description}</p>
+                <ul className="space-y-2 mb-6">
+                  {feature.highlights.map((highlight, index) => (
+                    <li key={index} className="flex items-center text-sm text-neutral-600">
+                      <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3"></div>
+                      {highlight}
+                    </li>
+                  ))}
+                </ul>
+                <Button onClick={feature.demo} className="w-full">
+                  Try Feature
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Sample Content */}
+        <div className="bg-white rounded-lg shadow-sm p-8">
+          <h2 className="text-2xl font-bold text-neutral-900 mb-6">Live Platform Content</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {sampleContent.map((content, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Badge variant="outline" className="text-xs">
+                    {content.type}
+                  </Badge>
+                  <Badge variant={content.status === "Approved" ? "default" : content.status === "Free" ? "secondary" : "outline"}>
+                    {content.status}
+                  </Badge>
+                </div>
+                <h3 className="font-semibold text-neutral-900 mb-2 text-sm">{content.title}</h3>
+                <p className="text-xs text-neutral-600 mb-2">by {content.author}</p>
+                <p className="text-xs text-neutral-500">{content.engagement}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Public Features */}
+        <div className="mt-16 text-center">
+          <h2 className="text-2xl font-bold text-neutral-900 mb-6">Explore Public Features</h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button variant="outline" onClick={() => navigate("/social-feed")}>
+              <Share2 className="mr-2 h-4 w-4" />
+              View Social Feed
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/training-hub")}>
+              <Video className="mr-2 h-4 w-4" />
+              Browse Training Hub
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/signup")}>
+              <Users className="mr-2 h-4 w-4" />
+              Create Account
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

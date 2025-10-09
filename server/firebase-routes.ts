@@ -14,6 +14,27 @@ type FetchInit = any;
 // import nodemailer from "nodemailer"; // Unused in current implementation
 
 export async function registerFirebaseRoutes(app: Express): Promise<Server> {
+  // Create test user for E2E tests
+  try {
+    // Check if user already exists
+    const existingUser = await firebaseStorage.getUserByEmail("user@example.com");
+    if (existingUser) {
+      console.log("ℹ️ Firebase test user already exists:", existingUser.email);
+    } else {
+      const testUser = await firebaseStorage.createUser({
+        email: "user@example.com",
+        password: "SecurePassword123!",
+        roles: ["professional"],
+        currentRole: "professional",
+        displayName: "Test User",
+        provider: "email"
+      });
+      console.log("✅ Firebase test user created:", testUser.email, "with password:", testUser.password);
+    }
+  } catch (error) {
+    console.error("❌ Firebase test user creation failed:", error);
+  }
+
   // User authentication routes
   app.post("/api/register", async (req, res) => {
     try {

@@ -23,8 +23,23 @@ declare global {
   namespace Cypress {
     interface Chainable {
       login(email: string, password: string): Chainable<void>
-      quickLogin(role: 'hub' | 'professional' | 'trainer' | 'brand'): Chainable<void>
+      quickLogin(role: 'shop' | 'barber' | 'trainer' | 'brand'): Chainable<void>
       waitForRoute(route: string): Chainable<void>
+      loginWithRole(email: string, role: string): Chainable<void>
+      logout(): Chainable<void>
+      verifyDashboardAccess(role: string): Chainable<void>
+      verifyProtectedRouteRedirect(route: string, expectedRedirect: string): Chainable<void>
+      selectRole(role: string): Chainable<void>
+      verifyAuthenticated(shouldBeAuthenticated: boolean): Chainable<void>
+      assertNoHorizontalOverflow(): Chainable<void>
+      createShift(shiftData: any): Chainable<void>
+      applyForShift(shiftTitle: string, coverLetter?: string): Chainable<void>
+      uploadQualificationDocument(filePath: string): Chainable<void>
+      verifyAccessibility(): Chainable<void>
+      measurePageLoadPerformance(maxLoadTime?: number): Chainable<void>
+      testKeyboardNavigation(): Chainable<void>
+      verifySecurityHeaders(): Chainable<void>
+      testOfflineFunctionality(): Chainable<void>
     }
   }
 }

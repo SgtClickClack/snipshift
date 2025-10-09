@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, loginSchema, insertShiftSchema } from "@shared/firebase-schema";
@@ -10,6 +10,38 @@ import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  // Create test user for E2E tests
+  try {
+    // Check if user already exists
+    const existingUser = await storage.getUserByEmail("user@example.com");
+    if (existingUser) {
+      console.log("ℹ️ Test user already exists:", existingUser.email);
+    } else {
+      const testUser = await storage.createUser({
+        email: "user@example.com",
+        password: "SecurePassword123!",
+        roles: ["professional"],
+        currentRole: "professional",
+        displayName: "Test User",
+        provider: "email"
+      });
+      console.log("✅ Test user created:", testUser.email, "with password:", testUser.password);
+    }
+  } catch (error) {
+    console.error("❌ Test user creation failed:", error);
+  }
+
+  // Debug endpoint to check users
+  app.get("/api/debug/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      console.log("🔍 All users:", users.map(u => ({ email: u.email, password: u.password })));
+      res.json({ users: users.map(u => ({ email: u.email, password: u.password })) });
+    } catch (error) {
+      console.error("❌ Debug users failed:", error);
+      res.status(500).json({ error: "Debug failed" });
+    }
+  });
 
   // Registration endpoint
   app.post("/api/register", async (req, res) => {
@@ -48,11 +80,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/login", async (req, res) => {
     try {
       const { email, password, googleId } = req.body;
+      console.log("🔍 Login attempt for:", email, "with password:", password);
       
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log("❌ User not found:", email);
         return res.status(401).json({ error: "User not found" });
       }
+
+      console.log("✅ User found:", user.email, "stored password:", user.password);
 
       // For Google auth, check googleId instead of password
       if (googleId) {
@@ -61,9 +97,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else {
         // Regular email/password auth
+        console.log("🔍 Comparing passwords - stored:", user.password, "provided:", password);
         if (!user.password || user.password !== password) {
+          console.log("❌ Password mismatch");
           return res.status(401).json({ error: "Invalid email or password" });
         }
+        console.log("✅ Password match!");
       }
 
       // establish session

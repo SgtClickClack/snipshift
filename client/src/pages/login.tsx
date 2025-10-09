@@ -13,6 +13,8 @@ import GoogleAuthButton from "@/components/auth/google-auth-button";
 export default function LoginPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const { toast } = useToast();
   const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
@@ -23,12 +25,15 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
+    setSuccess(null);
 
     try {
       const response = await apiRequest("POST", "/api/login", formData);
       const user = await response.json();
       
       login(user);
+      setSuccess("Login successful! Welcome back!");
       
       toast({
         title: "Login successful",
@@ -38,9 +43,11 @@ export default function LoginPage() {
       // Redirect to role selection
       navigate("/role-selection");
     } catch (error) {
+      const errorMessage = "Invalid email or password";
+      setError(errorMessage);
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -58,7 +65,17 @@ export default function LoginPage() {
             <p className="text-neutral-600">Sign in to your account</p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 text-sm" data-testid="error-message">{error}</p>
+              </div>
+            )}
+            {success && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-green-600 text-sm" data-testid="success-message">{success}</p>
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-6" data-testid="login-form">
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-neutral-700">
                   Email Address
@@ -91,11 +108,21 @@ export default function LoginPage() {
                 />
               </div>
               
+              <div className="text-right">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-primary hover:underline"
+                  data-testid="forgot-password-link"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              
               <Button 
                 type="submit" 
                 className="w-full bg-primary hover:bg-blue-700"
                 disabled={isLoading}
-                data-testid="button-signin"
+                data-testid="button-login"
               >
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
@@ -114,7 +141,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <GoogleAuthButton mode="signin" />
+            <div data-testid="button-google-login">
+              <GoogleAuthButton mode="signin" />
+            </div>
             
             <div className="text-center mt-6">
               <p className="text-neutral-600">

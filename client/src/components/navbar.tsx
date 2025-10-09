@@ -10,6 +10,8 @@ import NotificationBell from "./notifications/notification-bell";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Chat } from "@shared/firebase-schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MobileNavigation from "@/components/mobile/mobile-navigation";
+import MobileUserMenu from "@/components/mobile/mobile-user-menu";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
 
@@ -101,6 +103,7 @@ export default function Navbar() {
               const target = user.currentRole ? getDashboardRoute(user.currentRole) : "/role-selection";
               navigate(target);
             }}
+            data-testid="nav-dashboard"
           >
             <Scissors className="text-red-accent text-2xl mr-3" />
             <span className="text-xl font-bold text-white">Snipshift</span>
@@ -115,6 +118,7 @@ export default function Navbar() {
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className="md:hidden text-white hover:bg-steel-700"
                 aria-label="Toggle mobile menu"
+                data-testid="mobile-menu-button"
               >
                 {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
@@ -141,6 +145,46 @@ export default function Navbar() {
 
                 {/* Desktop Navigation - Hidden on Mobile */}
                 <div className="hidden md:flex md:items-center md:space-x-4">
+                  {/* Navigation Links */}
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/shift-feed')}
+                      className="text-white hover:bg-steel-700"
+                      data-testid="nav-shift-feed"
+                    >
+                      Shift Feed
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/tournaments')}
+                      className="text-white hover:bg-steel-700"
+                      data-testid="nav-tournaments"
+                    >
+                      Tournaments
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/applications')}
+                      className="text-white hover:bg-steel-700"
+                      data-testid="nav-my-applications"
+                    >
+                      Applications
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/analytics')}
+                      className="text-white hover:bg-steel-700"
+                      data-testid="nav-analytics"
+                    >
+                      Analytics
+                    </Button>
+                  </div>
+                  
                   {/* Notifications */}
                   <NotificationBell
                     notifications={notifications}
@@ -167,7 +211,7 @@ export default function Navbar() {
                   </div>
                   
                   {/* User Profile */}
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3" data-testid="user-menu">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
                       <AvatarFallback className="bg-red-accent text-white text-sm">
@@ -177,7 +221,22 @@ export default function Navbar() {
                     <span className="text-chrome-light text-sm">{user.displayName || user.email}</span>
                   </div>
                   
-                  <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => navigate('/profile')} 
+                    className="text-white hover:bg-steel-700"
+                    data-testid="link-profile"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleLogout} 
+                    className="text-white hover:bg-steel-700"
+                    data-testid="button-logout"
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </Button>
@@ -300,6 +359,12 @@ export default function Navbar() {
       <MessagingModal
         isOpen={showMessaging}
         onClose={() => setShowMessaging(false)}
+      />
+
+      {/* Mobile Navigation */}
+      <MobileNavigation 
+        isOpen={showMobileMenu} 
+        onClose={() => setShowMobileMenu(false)} 
       />
     </nav>
   );

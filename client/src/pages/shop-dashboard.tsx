@@ -67,7 +67,7 @@ export default function ShopDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50" data-testid="shop-dashboard">
       {/* Dashboard Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -79,6 +79,7 @@ export default function ShopDashboard() {
             <Button 
               onClick={() => setShowForm(!showForm)}
               className="bg-primary hover:bg-blue-700"
+              data-testid="button-post-shift"
             >
               <Plus className="mr-2 h-4 w-4" />
               Post New Shift

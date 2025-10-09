@@ -11,11 +11,12 @@ import { getDashboardRoute } from "@/lib/roles";
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand">>([]);
+  const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand" | "trainer">>([]);
+  const [success, setSuccess] = useState<string | null>(null);
   const { toast } = useToast();
   const { user, setRolesAndCurrentRole } = useAuth();
   
-  const toggleRole = (role: "hub" | "professional" | "brand") => {
+  const toggleRole = (role: "hub" | "professional" | "brand" | "trainer") => {
     setSelectedRoles((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
   };
 
@@ -39,6 +40,7 @@ export default function RoleSelectionPage() {
       } catch {}
       setRolesAndCurrentRole(mergedRoles as any, updated.currentRole);
 
+      setSuccess("Welcome! Please select your role");
       toast({
         title: "Roles updated",
         description: `You're set as ${selectedRoles.join(", ")}. Starting onboarding...`,
@@ -78,6 +80,13 @@ export default function RoleSelectionPage() {
       description: "For product companies and educators to connect with professionals",
       icon: Award,
       color: "border-steel-400 bg-steel-100/60 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
+    },
+    {
+      id: "trainer" as const,
+      title: "Trainer",
+      description: "Educators and trainers providing professional development",
+      icon: Award,
+      color: "border-steel-400 bg-steel-100/60 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     }
   ];
 
@@ -88,10 +97,15 @@ export default function RoleSelectionPage() {
           <div className="mx-auto w-20 h-20 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mb-6 shadow-lg border-2 border-chrome-light">
             <Scissors className="text-white text-3xl w-10 h-10" />
           </div>
-          <h1 className="text-4xl font-bold text-steel-900 mb-3 tracking-tight">Welcome to Snipshift!</h1>
+          <h1 className="text-4xl font-bold text-steel-900 mb-3 tracking-tight" data-testid="role-selection-title">Welcome to Snipshift!</h1>
           <p className="text-steel-600 text-lg max-w-md mx-auto leading-relaxed">
             Select one or more roles to personalize your experience.
           </p>
+          {success && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md max-w-md mx-auto">
+              <p className="text-green-600 text-sm" data-testid="success-message">{success}</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -109,6 +123,13 @@ export default function RoleSelectionPage() {
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleRole(role.id)}
+                      className="w-4 h-4 text-red-accent bg-gray-100 border-gray-300 rounded focus:ring-red-accent focus:ring-2"
+                      data-testid={`role-checkbox-${role.id}`}
+                    />
                     <div className={`p-2 rounded-lg bg-white/80 shadow-sm ${isSelected ? 'ring-2 ring-red-accent' : ''}`}>
                       <IconComponent className="h-7 w-7 text-steel-700" />
                     </div>

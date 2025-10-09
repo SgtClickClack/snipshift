@@ -1,112 +1,165 @@
-'use client';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-
-interface User {
+export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  roles: string[];
-  currentRole: 'HUB' | 'PROFESSIONAL' | 'BRAND' | 'TRAINER';
-  profileComplete: boolean;
-  brandProfile?: {
-    verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-  };
-  trainerProfile?: {
-    verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-  };
+  password: string;
+  roles: Array<'client' | 'hub' | 'professional' | 'brand' | 'admin'>;
+  currentRole: 'client' | 'hub' | 'professional' | 'brand' | 'admin' | null;
+  provider?: 'google' | 'email';
+  googleId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  displayName?: string;
+  profileImage?: string;
 }
 
-interface AuthState {
+interface AuthContextType {
   user: User | null;
-  token: string | null;
-  loading: boolean;
+  isLoading: boolean;
   isAuthenticated: boolean;
+  login: (user: User) => void;
+  logout: () => void;
+  setCurrentRole: (role: NonNullable<User['currentRole']>) => void;
+  hasRole: (role: NonNullable<User['currentRole']>) => boolean;
+  updateRoles: (roles: User['roles']) => void;
+  setRolesAndCurrentRole: (roles: User['roles'], currentRole: NonNullable<User['currentRole']>) => void;
 }
 
-type AuthAction =
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_AUTH'; payload: { user: User; token: string } }
-  | { type: 'CLEAR_AUTH' }
-  | { type: 'UPDATE_USER'; payload: Partial<User> };
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  loading: true,
-  isAuthenticated: false,
-};
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-const authReducer = (state: AuthState, action: AuthAction): AuthState => {
-  switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    case 'SET_AUTH':
-      return {
-        ...state,
-        user: action.payload.user,
-        token: action.payload.token,
-        isAuthenticated: true,
-        loading: false,
-      };
-    case 'CLEAR_AUTH':
-      return {
-        ...state,
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        loading: false,
-      };
-    case 'UPDATE_USER':
-      return {
-        ...state,
-        user: state.user ? { ...state.user, ...action.payload } : null,
-      };
-    default:
-      return state;
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  async function syncUserFromServer(userId: string) {
+    try {
+      const res = await fetch(`/api/users/${userId}`, { credentials: 'include' });
+      if (!res.ok) return;
+      const serverUser = await res.json();
+      setUser((prev) => {
+        if (!prev) return prev;
+        const merged: User = {
+          ...prev,
+          roles: Array.from(new Set([...(prev.roles || []), ...((serverUser.roles as string[]) || [])])) as any,
+          currentRole: (serverUser.currentRole ?? prev.currentRole) as any,
+          displayName: serverUser.displayName ?? prev.displayName,
+          updatedAt: new Date(),
+        };
+        localStorage.setItem('currentUser', JSON.stringify(merged));
+        return merged;
+      });
+    } catch {}
   }
-};
 
-const AuthContext = createContext<{
-  state: AuthState;
-  dispatch: React.Dispatch<AuthAction>;
-} | null>(null);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-
+  // Initialize auth state from localStorage on mount
   useEffect(() => {
-    // Check for existing auth token on mount
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
-    
-    if (token && userData) {
+    // Use requestIdleCallback for non-critical initialization
+    const initAuth = () => {
       try {
-        const user = JSON.parse(userData);
-        dispatch({ type: 'SET_AUTH', payload: { user, token } });
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          // Convert date strings back to Date objects
+          parsedUser.createdAt = new Date(parsedUser.createdAt);
+          parsedUser.updatedAt = new Date(parsedUser.updatedAt);
+          setUser(parsedUser);
+          // Refresh roles/currentRole from server to avoid stale local cache
+          if (parsedUser?.id) {
+            syncUserFromServer(parsedUser.id);
+          }
+        }
       } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
-        dispatch({ type: 'SET_LOADING', payload: false });
+        console.error('Error loading user from localStorage:', error);
+        localStorage.removeItem('currentUser');
+      } finally {
+        setIsLoading(false);
       }
+    };
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(initAuth);
     } else {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      setTimeout(initAuth, 0);
     }
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ state, dispatch }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const login = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    // Background sync to pull latest roles/currentRole from server after login
+    if (userData?.id) {
+      syncUserFromServer(userData.id);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', headers: { 'X-Snipshift-CSRF': '1' }, credentials: 'include' });
+    } catch (e) {
+      // ignore network errors on logout
+    } finally {
+      setUser(null);
+      localStorage.removeItem('currentUser');
+    }
+  };
+
+  const setCurrentRole = (role: NonNullable<User['currentRole']>) => {
+    if (user) {
+      const roles = Array.isArray(user.roles) ? user.roles : [];
+      const nextRoles = roles.includes(role) ? roles : [...roles, role];
+      const updatedUser = { ...user, roles: nextRoles, currentRole: role, updatedAt: new Date() };
+      setUser(updatedUser);
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    }
+  };
+
+  const updateRoles = (roles: User['roles']) => {
+    if (user) {
+      const uniqueRoles = Array.from(new Set(roles));
+      const updatedUser = { ...user, roles: uniqueRoles, updatedAt: new Date() };
+      setUser(updatedUser);
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    }
+  };
+
+  const setRolesAndCurrentRole = (roles: User['roles'], currentRole: NonNullable<User['currentRole']>) => {
+    if (user) {
+      const uniqueRoles = Array.from(new Set(roles.concat(currentRole as any)));
+      const updatedUser = { ...user, roles: uniqueRoles as any, currentRole, updatedAt: new Date() };
+      setUser(updatedUser);
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    }
+  };
+
+  const hasRole = (role: NonNullable<User['currentRole']>) => {
+    return !!user && Array.isArray(user.roles) && user.roles.includes(role);
+  };
+
+  const value = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login,
+    logout,
+    setCurrentRole,
+    hasRole,
+    updateRoles,
+    setRolesAndCurrentRole,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

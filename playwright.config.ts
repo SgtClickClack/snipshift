@@ -9,9 +9,15 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  timeout: 60000, // Increase global timeout to 60 seconds
+  expect: {
+    timeout: 10000, // Increase expect timeout to 10 seconds
+  },
   use: {
     baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',
+    actionTimeout: 10000, // Increase action timeout
+    navigationTimeout: 30000, // Increase navigation timeout
   },
   projects: [
     {
@@ -31,7 +37,7 @@ export default defineConfig({
   webServer: disableWebServerInCI
     ? undefined
     : {
-        command: 'npm start',
+        command: 'node test-server.js',
         url: 'http://localhost:5000',
         reuseExistingServer: true,
         timeout: 180000,

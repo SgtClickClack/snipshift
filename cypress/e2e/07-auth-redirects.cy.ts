@@ -27,8 +27,14 @@ describe('Auth redirects', () => {
       })
     });
 
-    // Go to role selection
-    cy.visit('/home');
+    // Navigate to home page
+    cy.visit('/');
+    cy.get('[data-testid="button-login"]').click();
+    cy.get('[data-testid="input-email"]').type('e2e@snipshift.test');
+    cy.get('[data-testid="input-password"]').type('password123');
+    cy.get('[data-testid="button-login"]').click();
+    
+    // Should be redirected to role selection
     cy.location('pathname', { timeout: 10000 }).should('eq', '/role-selection');
 
     // Select professional role and continue

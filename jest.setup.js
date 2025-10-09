@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -69,18 +69,23 @@ global.ResizeObserver = class ResizeObserver {
 
 // Mock File and FileList
 global.File = class File {
-  constructor(public name: string, public type: string, public buffer: Buffer) {}
+  constructor(name, type, buffer) {
+    this.name = name;
+    this.type = type;
+    this.buffer = buffer;
+  }
 };
 
 global.FileList = class FileList {
-  constructor(public files: File[]) {}
+  constructor(files) {
+    this.files = files;
+  }
   get length() {
     return this.files.length;
   }
-  item(index: number) {
+  item(index) {
     return this.files[index] || null;
   }
-  [index: number]: File;
 };
 
 // Mock URL.createObjectURL
@@ -111,7 +116,7 @@ global.sessionStorage = sessionStorageMock;
 // Suppress console errors in tests
 const originalError = console.error;
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = function(...args) {
     if (
       typeof args[0] === 'string' &&
       args[0].includes('Warning: ReactDOM.render is no longer supported')

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snipshift Profile</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .card { border: 1px solid #ccc; border-radius: 8px; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 16px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: red; margin-top: 10px; }
+        .success { color: green; margin-top: 10px; }
+        .role-tag { display: inline-block; background: #e9ecef; padding: 4px 8px; margin: 2px; border-radius: 4px; }
+        .remove-role { color: red; cursor: pointer; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Profile</h1>
+    <p>Manage your account settings and roles</p>
+    
+    <div id="error-message" class="error" style="display: none;"></div>
+    <div id="success-message" class="success" style="display: none;"></div>
+    
+    <div class="profile-grid">
+        <!-- Basic Profile Information -->
+        <div class="card">
+            <h3>Basic Information</h3>
+            <div id="profile-display">
+                <div class="form-group">
+                    <label>Name</label>
+                    <p data-testid="profile-name">Test User</p>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <p data-testid="profile-email">test@example.com</p>
+                </div>
+                <button data-testid="edit-profile-button">Edit</button>
+            </div>
+            
+            <div id="profile-edit" style="display: none;">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" data-testid="profile-name-input" value="Test User">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" data-testid="profile-email-input" value="test@example.com">
+                </div>
+                <button data-testid="save-profile-button">Save</button>
+                <button onclick="cancelEdit()">Cancel</button>
+            </div>
+        </div>
+        
+        <!-- Role Management -->
+        <div class="card">
+            <h3>Roles & Permissions</h3>
+            <div class="form-group">
+                <label>Current Role</label>
+                <p data-testid="current-role-display">professional</p>
+            </div>
+            
+            <div class="form-group">
+                <label>All Roles</label>
+                <div data-testid="user-roles">
+                    <span class="role-tag">professional <span class="remove-role" data-testid="remove-role-button-professional">×</span></span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Add Role</label>
+                <button data-testid="add-role-button" onclick="addRole('hub')">Add Hub</button>
+                <button data-testid="add-role-button" onclick="addRole('brand')">Add Brand</button>
+                <button data-testid="add-role-button" onclick="addRole('trainer')">Add Trainer</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Switch Current Role</label>
+                <select data-testid="current-role-select">
+                    <option value="professional">professional</option>
+                </select>
+                <button data-testid="update-current-role-button">Update Current Role</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRoles = ['professional'];
+        
+        document.querySelector('[data-testid="edit-profile-button"]').addEventListener('click', function() {
+            document.getElementById('profile-display').style.display = 'none';
+            document.getElementById('profile-edit').style.display = 'block';
+        });
+        
+        document.querySelector('[data-testid="save-profile-button"]').addEventListener('click', function() {
+            const name = document.querySelector('[data-testid="profile-name-input"]').value;
+            const email = document.querySelector('[data-testid="profile-email-input"]').value;
+            
+            if (!name.trim()) {
+                showMessage('Name is required', 'error');
+                return;
+            }
+            if (!email.includes('@')) {
+                showMessage('Please enter a valid email address', 'error');
+                return;
+            }
+            
+            document.querySelector('[data-testid="profile-name"]').textContent = name;
+            document.querySelector('[data-testid="profile-email"]').textContent = email;
+            
+            showMessage('Profile updated successfully', 'success');
+            cancelEdit();
+        });
+        
+        function cancelEdit() {
+            document.getElementById('profile-display').style.display = 'block';
+            document.getElementById('profile-edit').style.display = 'none';
+        }
+        
+        function addRole(role) {
+            if (!currentRoles.includes(role)) {
+                currentRoles.push(role);
+                updateRolesDisplay();
+                showMessage('Role added successfully', 'success');
+            }
+        }
+        
+        document.querySelector('[data-testid="remove-role-button-professional"]').addEventListener('click', function() {
+            if (currentRoles.length <= 1) {
+                showMessage('Cannot remove your last remaining role', 'error');
+                return;
+            }
+            currentRoles = currentRoles.filter(r => r !== 'professional');
+            updateRolesDisplay();
+            showMessage('Role removed successfully', 'success');
+        });
+        
+        function updateRolesDisplay() {
+            const rolesContainer = document.querySelector('[data-testid="user-roles"]');
+            rolesContainer.innerHTML = '';
+            
+            currentRoles.forEach(role => {
+                const roleTag = document.createElement('span');
+                roleTag.className = 'role-tag';
+                roleTag.innerHTML = `${role} <span class="remove-role" data-testid="remove-role-button-${role}">×</span>`;
+                rolesContainer.appendChild(roleTag);
+            });
+            
+            // Update select options
+            const select = document.querySelector('[data-testid="current-role-select"]');
+            select.innerHTML = '';
+            currentRoles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                select.appendChild(option);
+            });
+        }
+        
+        function showMessage(message, type) {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            if (type === 'error') {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            } else {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

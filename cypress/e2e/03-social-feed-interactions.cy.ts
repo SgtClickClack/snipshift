@@ -39,8 +39,12 @@ describe('Social Feed and Brand Interactions', () => {
   })
 
   it('Admin should be able to review and approve brand posts', () => {
-    // Navigate to content moderation
-    cy.visit('/content-moderation')
+    // Login as admin first
+    cy.quickLogin('admin')
+    
+    // Navigate to content moderation from admin dashboard
+    cy.get('[data-testid="admin-dashboard"]').should('be.visible')
+    cy.get('[data-testid="nav-content-moderation"]').click()
     
     // Should see pending posts
     cy.get('[data-testid="pending-posts"]').should('be.visible')

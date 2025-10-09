@@ -6,7 +6,7 @@ import heroBackgroundImg from "@/assets/hero-background.jpg";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" data-testid="landing-page">
       {/* Hero Section */}
       <div 
         className="relative text-white py-20 overflow-hidden"

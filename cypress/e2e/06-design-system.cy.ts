@@ -1,6 +1,15 @@
 describe('Design System and UI Components', () => {
   beforeEach(() => {
-    cy.visit('/design-showcase')
+    // Start from homepage and navigate to design showcase
+    cy.visit('/')
+    cy.get('[data-testid="button-login"]').click()
+    cy.get('[data-testid="input-email"]').type('test-admin@snipshift.com')
+    cy.get('[data-testid="input-password"]').type('TestPass123!')
+    cy.get('[data-testid="button-login"]').click()
+    
+    // Navigate to design showcase from admin dashboard
+    cy.get('[data-testid="admin-dashboard"]').should('be.visible')
+    cy.get('[data-testid="nav-design-showcase"]').click()
   })
 
   it('should display all chrome button variants', () => {

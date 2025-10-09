@@ -11,12 +11,15 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import { PerformanceMonitor } from '@/components/performance/performance-monitor';
+import { ErrorBoundary } from '@/components/error-handling/error-boundary';
+import OfflineSupport from '@/components/mobile/mobile-offline-support';
 import Navbar from '@/components/navbar';
 
 // Core pages - load immediately for fast initial render
 import LandingPage from '@/pages/landing';
 import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
+import ForgotPasswordPage from '@/pages/forgot-password';
 import { OAuthCallback } from '@/pages/oauth-callback';
 import RoleSelectionPage from '@/pages/role-selection';
 import NotFound from '@/pages/not-found';
@@ -35,6 +38,16 @@ const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
 const DemoPage = lazy(() => import('@/pages/demo'));
 const ProfilePage = lazy(() => import('@/pages/profile'));
 const CommunityPage = lazy(() => import('@/pages/community'));
+const ShiftFeedPage = lazy(() => import('@/pages/shift-feed'));
+const TournamentsPage = lazy(() => import('@/pages/tournaments'));
+const ApplicationsPage = lazy(() => import('@/pages/applications'));
+const AnalyticsPage = lazy(() => import('@/pages/analytics'));
+
+// Mobile pages - lazy load for mobile-specific features
+const MobileJobsPage = lazy(() => import('@/pages/mobile/mobile-jobs'));
+const MobileCommunityPage = lazy(() => import('@/pages/mobile/mobile-community'));
+const MobileMessagesPage = lazy(() => import('@/pages/mobile/mobile-messages'));
+const MobileDashboardPage = lazy(() => import('@/pages/mobile/mobile-dashboard'));
 
 // Complex components - lazy load to reduce bundle size
 const SocialFeed = lazy(() => import('@/components/social/social-feed'));
@@ -94,6 +107,12 @@ function AppRoutes() {
           </AuthGuard>
         } />
 
+        <Route path="/forgot-password" element={
+          <AuthGuard>
+            <ForgotPasswordPage />
+          </AuthGuard>
+        } />
+
         <Route path="/role-selection" element={
           <AuthGuard requireAuth={true}>
             <RoleSelectionPage />
@@ -129,6 +148,30 @@ function AppRoutes() {
         <Route path="/__/auth/handler" element={<OAuthCallback />} />
 
         {/* Protected dashboard routes */}
+        <Route path="/hub/dashboard" element={
+          <ProtectedRoute requiredRole="hub">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <HubDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/professional/dashboard" element={
+          <ProtectedRoute requiredRole="professional">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ProfessionalDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/brand/dashboard" element={
+          <ProtectedRoute requiredRole="brand">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <BrandDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
         <Route path="/hub-dashboard" element={
           <ProtectedRoute requiredRole="hub">
             <Suspense fallback={<PageLoadingFallback />}>
@@ -153,11 +196,52 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
+        {/* Profile route */}
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ProfilePage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
         {/* Protected feature routes */}
         <Route path="/community" element={
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <CommunityPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/shift-feed" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ShiftFeedPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tournaments" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <TournamentsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/applications" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ApplicationsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/analytics" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <AnalyticsPage />
             </Suspense>
           </ProtectedRoute>
         } />
@@ -228,6 +312,39 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
+        {/* Mobile-specific routes */}
+        <Route path="/mobile/jobs" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <MobileJobsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/mobile/community" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <MobileCommunityPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/mobile/messages" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <MobileMessagesPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/mobile/dashboard" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <MobileDashboardPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
         {/* Legal pages - public access */}
         <Route path="/terms-of-service" element={
           <Suspense fallback={<PageLoadingFallback />}>
@@ -263,19 +380,23 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <Router>
-            <Toaster />
-            <AppRoutes />
-            <TutorialOverlay />
-            <FeedbackWidget />
-            <PerformanceMonitor />
-          </Router>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <Router>
+              <OfflineSupport>
+                <Toaster />
+                <AppRoutes />
+                <TutorialOverlay />
+                <FeedbackWidget />
+                <PerformanceMonitor />
+              </OfflineSupport>
+            </Router>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

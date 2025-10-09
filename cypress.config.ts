@@ -3,6 +3,11 @@ import { defineConfig } from 'cypress'
 export default defineConfig({
   e2e: {
     baseUrl: 'http://localhost:5000',
+    env: {
+      E2E_TEST: '1'
+    },
+    // Skip server verification for testing
+    experimentalStudio: true,
     viewportWidth: 1280,
     viewportHeight: 720,
     supportFile: 'cypress/support/e2e.ts',

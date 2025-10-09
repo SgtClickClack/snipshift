@@ -16,12 +16,16 @@ const GoogleAuthButton = lazy(() => import("@/components/auth/google-auth-button
 export default function SignupPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const { toast } = useToast();
   const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
+    displayName: "",
+    role: "",
   });
 
 
@@ -73,8 +77,12 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
     
     if (formData.password !== formData.confirmPassword) {
+      const errorMessage = "Passwords don't match";
+      setError(errorMessage);
       toast({
         title: "Passwords don't match",
         description: "Please make sure both passwords are the same",
@@ -84,6 +92,8 @@ export default function SignupPage() {
     }
 
     if (formData.password.length < 6) {
+      const errorMessage = "Password too short";
+      setError(errorMessage);
       toast({
         title: "Password too short",
         description: "Password must be at least 6 characters long",
@@ -98,6 +108,8 @@ export default function SignupPage() {
       const response = await apiRequest("POST", "/api/register", {
         email: formData.email,
         password: formData.password,
+        displayName: formData.displayName,
+        role: formData.role,
         provider: "email"
       });
       const userData = await response.json();
@@ -129,6 +141,7 @@ export default function SignupPage() {
       
       console.log('🔧 New user created:', newUser); // Debug log
       login(newUser);
+      setSuccess("Account created successfully! Welcome to Snipshift!");
       
       toast({
         title: "Account created successfully",
@@ -137,10 +150,14 @@ export default function SignupPage() {
 
       // Redirect to role selection
       navigate("/role-selection");
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.message?.includes('already exists') 
+        ? "User already exists with this email" 
+        : "Please check your information and try again";
+      setError(errorMessage);
       toast({
         title: "Registration failed",
-        description: "Please check your information and try again",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -164,7 +181,33 @@ export default function SignupPage() {
             <p className="text-steel-600 font-medium">Connect with the creative industry network</p>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 text-sm" data-testid="error-message">{error}</p>
+              </div>
+            )}
+            {success && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-green-600 text-sm" data-testid="success-message">{success}</p>
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <Label htmlFor="displayName" className="text-sm font-medium text-steel-700">
+                  Display Name
+                </Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  required
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  placeholder="Enter your display name"
+                  className="mt-2"
+                  data-testid="input-display-name"
+                />
+              </div>
+              
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-steel-700">
                   Email Address
@@ -213,6 +256,26 @@ export default function SignupPage() {
                 />
               </div>
               
+              <div>
+                <Label htmlFor="role" className="text-sm font-medium text-steel-700">
+                  Role
+                </Label>
+                <select
+                  id="role"
+                  required
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="mt-2 w-full px-3 py-2 border border-steel-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-accent focus:border-transparent"
+                  data-testid="select-role"
+                >
+                  <option value="">Select your role</option>
+                  <option value="barber" data-testid="option-barber">Barber</option>
+                  <option value="shop" data-testid="option-shop">Shop</option>
+                  <option value="trainer" data-testid="option-trainer">Trainer</option>
+                  <option value="brand" data-testid="option-brand">Brand</option>
+                </select>
+              </div>
+              
               <Button 
                 type="submit" 
                 className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
@@ -242,19 +305,21 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <Suspense fallback={
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full" 
-                disabled
-              >
-                <div className="w-5 h-5 mr-2 bg-gray-300 rounded animate-pulse" />
-                Loading Google Auth...
-              </Button>
-            }>
-              <GoogleAuthButton mode="signup" />
-            </Suspense>
+            <div data-testid="google-signup-button">
+              <Suspense fallback={
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full" 
+                  disabled
+                >
+                  <div className="w-5 h-5 mr-2 bg-gray-300 rounded animate-pulse" />
+                  Loading Google Auth...
+                </Button>
+              }>
+                <GoogleAuthButton mode="signup" />
+              </Suspense>
+            </div>
             
             <div className="text-center mt-6">
               <p className="text-steel-600">

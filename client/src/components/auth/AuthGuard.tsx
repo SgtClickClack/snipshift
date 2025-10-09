@@ -44,10 +44,10 @@ export function AuthGuard({
     return <Navigate to={userDashboard} replace />;
   }
 
-  // If user is authenticated and on login/signup, redirect to their dashboard
+  // If user is authenticated and on login/signup/homepage, redirect to their dashboard
   if (isAuthenticated && user && user.currentRole && user.currentRole !== 'client') {
     const currentPath = location.pathname;
-    if (currentPath === '/login' || currentPath === '/signup' || currentPath === '/role-selection') {
+    if (currentPath === '/login' || currentPath === '/signup' || currentPath === '/role-selection' || currentPath === '/') {
       const userDashboard = getDashboardRoute(user.currentRole);
       return <Navigate to={userDashboard} replace />;
     }

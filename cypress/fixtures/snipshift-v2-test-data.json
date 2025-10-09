@@ -1,0 +1,252 @@
+{
+  "users": {
+    "shop": {
+      "email": "shop.owner@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Shop Owner",
+      "role": "shop",
+      "businessName": "Elite Barbershop",
+      "address": {
+        "street": "123 Main Street",
+        "city": "Sydney",
+        "state": "NSW",
+        "postcode": "2000",
+        "country": "Australia"
+      },
+      "businessType": "barbershop",
+      "operatingHours": {
+        "monday": { "open": "09:00", "close": "18:00" },
+        "tuesday": { "open": "09:00", "close": "18:00" },
+        "wednesday": { "open": "09:00", "close": "18:00" },
+        "thursday": { "open": "09:00", "close": "18:00" },
+        "friday": { "open": "09:00", "close": "19:00" },
+        "saturday": { "open": "08:00", "close": "17:00" },
+        "sunday": { "open": "10:00", "close": "16:00" }
+      }
+    },
+    "barber": {
+      "email": "barber.pro@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Barber Pro",
+      "role": "barber",
+      "skills": ["Hair Cutting", "Beard Trimming", "Fade Techniques", "Customer Service"],
+      "experience": "5+ years",
+      "certifications": [
+        {
+          "type": "Barber License",
+          "issuer": "NSW Department of Fair Trading",
+          "date": "2020-01-15",
+          "documentUrl": "/uploads/certifications/barber-license.pdf"
+        }
+      ],
+      "homeLocation": {
+        "city": "Sydney",
+        "state": "NSW",
+        "country": "Australia"
+      },
+      "isRoamingNomad": false,
+      "preferredRegions": ["Sydney", "Melbourne"]
+    },
+    "brand": {
+      "email": "brand.rep@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Brand Rep",
+      "role": "brand",
+      "companyName": "Professional Hair Products Co.",
+      "website": "https://prohair.com",
+      "description": "Leading supplier of professional barbering tools and products",
+      "productCategories": ["Clippers", "Scissors", "Styling Products", "Aftercare"],
+      "logoUrl": "/uploads/brands/prohair-logo.png",
+      "websiteLink": "https://prohair.com",
+      "socialPostsCount": 0,
+      "approvalStatus": "pending"
+    },
+    "trainer": {
+      "email": "trainer.expert@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Trainer Expert",
+      "role": "trainer",
+      "qualifications": ["Master Barber Certification", "Teaching Certificate"],
+      "specializations": ["Advanced Fade Techniques", "Beard Styling", "Business Skills"],
+      "yearsExperience": 10,
+      "trainingLocation": "Sydney Training Center",
+      "credentials": ["Master Barber", "Certified Instructor"],
+      "trainingOfferings": [
+        {
+          "id": "training-1",
+          "title": "Advanced Fade Masterclass",
+          "description": "Learn professional fade cutting techniques",
+          "price": 199.99,
+          "duration": "4 hours",
+          "level": "advanced",
+          "category": "Hair Cutting"
+        }
+      ],
+      "approvalStatus": "pending"
+    },
+    "admin": {
+      "email": "admin@snipshift.com",
+      "password": "AdminPass123!",
+      "displayName": "System Administrator",
+      "role": "admin"
+    }
+  },
+  "shifts": {
+    "seniorBarberWeekend": {
+      "title": "Senior Barber - Weekend Shift",
+      "description": "Looking for an experienced barber for weekend coverage at our busy downtown location. Must have excellent customer service skills and be able to work in a fast-paced environment.",
+      "date": "2025-01-15",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "skillsRequired": ["Hair Cutting", "Beard Trimming", "Customer Service", "Fade Techniques"],
+      "payRate": 35,
+      "payType": "hourly",
+      "location": {
+        "city": "Sydney",
+        "state": "NSW",
+        "postcode": "2000"
+      },
+      "urgency": "medium",
+      "maxApplicants": 5
+    },
+    "mobileBarberService": {
+      "title": "Mobile Barber Service",
+      "description": "Experienced barber for mobile service covering Gold Coast area. Own transport required. Great opportunity for flexible work schedule.",
+      "date": "2025-01-18",
+      "startTime": "11:00",
+      "endTime": "19:00",
+      "skillsRequired": ["Mobile Service", "Hair Cutting", "Professional Presentation"],
+      "payRate": 45,
+      "payType": "hourly",
+      "location": {
+        "city": "Gold Coast",
+        "state": "QLD",
+        "postcode": "4217"
+      },
+      "urgency": "high",
+      "maxApplicants": 1
+    },
+    "apprenticeOpportunity": {
+      "title": "Apprentice Barber Opportunity",
+      "description": "Great opportunity for a barber apprentice to learn from experienced professionals in a modern salon environment.",
+      "date": "2025-01-20",
+      "startTime": "08:30",
+      "endTime": "16:30",
+      "skillsRequired": ["Basic Hair Cutting", "Willingness to Learn"],
+      "payRate": 25,
+      "payType": "hourly",
+      "location": {
+        "city": "Brisbane",
+        "state": "QLD",
+        "postcode": "4000"
+      },
+      "urgency": "low",
+      "maxApplicants": 2
+    }
+  },
+  "socialPosts": {
+    "brandPromotion": {
+      "postType": "discount",
+      "content": "🔥 SPECIAL OFFER! Get 25% off all premium styling products this week only. Perfect for professional barbers looking to upgrade their toolkit!",
+      "imageUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600",
+      "linkUrl": "https://prohair.com/products",
+      "discountCode": "BARBER25",
+      "discountPercentage": 25,
+      "validUntil": "2025-02-01T23:59:59Z"
+    },
+    "trainingEvent": {
+      "postType": "event",
+      "content": "Join me for an exclusive 2-day masterclass on advanced fade techniques! Limited spots available. Hands-on training with live models.",
+      "imageUrl": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600",
+      "eventDate": "2025-02-15T09:00:00Z",
+      "location": "Downtown Training Center, Sydney"
+    },
+    "productLaunch": {
+      "postType": "product",
+      "content": "Introducing our new wireless clipper series! 8-hour battery life, precision blades, and ergonomic design. The future of barbering is here.",
+      "imageUrl": "https://images.unsplash.com/photo-1585747256711-1154de8c06da?w=600",
+      "linkUrl": "https://prohair.com/clippers"
+    }
+  },
+  "trainingContent": {
+    "advancedFadeTechniques": {
+      "title": "Advanced Fade Techniques Masterclass",
+      "description": "Learn professional fade cutting techniques used by top barbers worldwide. Covers high fades, low fades, and skin fades with detailed step-by-step instruction.",
+      "videoUrl": "https://youtube.com/watch?v=advanced-fade-demo",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400",
+      "price": 199.99,
+      "duration": "4h 15m",
+      "level": "advanced",
+      "category": "Hair Cutting",
+      "isPaid": true
+    },
+    "beardStylingFundamentals": {
+      "title": "Beard Styling Fundamentals",
+      "description": "Master the art of beard trimming and styling. Perfect for beginners looking to expand their services or improve their technique.",
+      "videoUrl": "https://youtube.com/watch?v=beard-styling-demo",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400",
+      "price": 0,
+      "duration": "45m",
+      "level": "beginner",
+      "category": "Beard Care",
+      "isPaid": false
+    },
+    "businessSkillsForBarbers": {
+      "title": "Business Skills for Barbers",
+      "description": "Learn how to run a successful barbershop business. Covers marketing, customer service, pricing strategies, and building a loyal client base.",
+      "videoUrl": "https://youtube.com/watch?v=business-skills-demo",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400",
+      "price": 99.99,
+      "duration": "2h 30m",
+      "level": "intermediate",
+      "category": "Business Skills",
+      "isPaid": true
+    }
+  },
+  "messages": {
+    "applicationInquiry": {
+      "content": "Hi, I'm very interested in this shift opportunity. I have 5+ years of experience and specialize in fade techniques. I'm available for the full duration and can start immediately.",
+      "messageType": "text"
+    },
+    "shiftConfirmation": {
+      "content": "Great! Your application has been approved. Please arrive 15 minutes early for orientation. The address is 123 Main Street, Sydney. Looking forward to working with you!",
+      "messageType": "text"
+    }
+  },
+  "qualificationDocuments": {
+    "barberLicense": {
+      "filename": "barber-license.pdf",
+      "type": "application/pdf",
+      "size": 2048576,
+      "description": "NSW Barber License Certificate"
+    },
+    "certification": {
+      "filename": "master-barber-cert.jpg",
+      "type": "image/jpeg",
+      "size": 1024768,
+      "description": "Master Barber Certification"
+    }
+  },
+  "testScenarios": {
+    "performance": {
+      "maxPageLoadTime": 3000,
+      "maxApiResponseTime": 1000,
+      "maxImageLoadTime": 2000
+    },
+    "accessibility": {
+      "minContrastRatio": 4.5,
+      "maxTabOrderDepth": 10,
+      "requiredAriaLabels": ["navigation", "main", "contentinfo"]
+    },
+    "security": {
+      "requiredHeaders": [
+        "x-content-type-options",
+        "x-frame-options",
+        "x-xss-protection",
+        "strict-transport-security"
+      ],
+      "maxLoginAttempts": 5,
+      "sessionTimeout": 3600000
+    }
+  }
+}

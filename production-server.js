@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Catch-all handler for React Router - serve the main React app
-app.get('*', (req, res) => {
+app.use((req, res) => {
   try {
     const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
     res.send(html);
