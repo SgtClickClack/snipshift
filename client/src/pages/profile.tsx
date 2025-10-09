@@ -306,7 +306,7 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div>
                     <Label>Name</Label>
-                    <p className="text-sm text-neutral-600" data-testid="profile-name">
+                    <p className="text-sm text-neutral-600" data-testid="profile-display-name">
                       {user.displayName || "Not set"}
                     </p>
                   </div>

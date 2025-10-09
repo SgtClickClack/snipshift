@@ -29,7 +29,7 @@ export default function HubDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-100 py-8">
+    <div className="min-h-screen bg-neutral-100 py-8" data-testid="hub-dashboard">
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-neutral-900" data-testid="dashboard-title">
@@ -99,7 +99,7 @@ export default function HubDashboard() {
               <Button
                 onClick={() => navigate("/hub/create-job")}
                 className="h-20 flex flex-col items-center justify-center gap-2"
-                data-testid="create-job-button"
+                data-testid="button-post-job"
               >
                 <Plus className="h-6 w-6" />
                 <span>Post New Job</span>

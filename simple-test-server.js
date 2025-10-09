@@ -47,7 +47,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Catch-all handler for React Router
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  try {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  } catch (err) {
+    console.error('Error serving index.html:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 app.listen(PORT, () => {
