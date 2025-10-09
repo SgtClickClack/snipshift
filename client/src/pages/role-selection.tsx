@@ -158,7 +158,7 @@ export default function RoleSelectionPage() {
             onClick={handleContinue}
             disabled={selectedRoles.length === 0 || isLoading}
             className="w-full max-w-lg bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-dark hover:to-red-accent text-white font-semibold py-4 px-8 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-            data-testid="button-continue"
+            data-testid="confirm-roles-button"
           >
             {isLoading ? "Setting up your account..." : selectedRoles.length > 1 ? "Continue with selected roles" : "Continue to Dashboard"}
           </Button>
