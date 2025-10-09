@@ -142,6 +142,7 @@
     "@types/nodemailer": "^7.0.1",
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^5.0.3",
+    "cypress": "^15.4.0",
     "cypress-axe": "^1.7.0",
     "drizzle-zod": "^0.8.3",
     "eslint": "^8.45.0",

@@ -54,7 +54,8 @@ const SocialFeed = lazy(() => import('@/components/social/social-feed'));
 const TrainingHub = lazy(() => import('@/components/training/training-hub'));
 const ContentModeration = lazy(() => import('@/components/admin/content-moderation'));
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
-const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
+const DesignSystemShowcase = lazy(() => import('@/pages/design-showcase'));
+const AdminDashboard = lazy(() => import('@/pages/admin-dashboard'));
 
 // Legal pages - lazy load for compliance
 const TermsOfService = lazy(() => import('@/pages/terms-of-service'));
@@ -265,7 +266,7 @@ function AppRoutes() {
         <Route path="/admin" element={
           <ProtectedRoute requiredRole="admin">
             <Suspense fallback={<PageLoadingFallback />}>
-              <ContentModeration />
+              <AdminDashboard />
             </Suspense>
           </ProtectedRoute>
         } />
