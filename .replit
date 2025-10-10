@@ -14,14 +14,12 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 # =============================================================================
 
 [deployment]
-run = ["sh", "-c", "npm install --production=false && npm run build && npm start"]
+build = ["sh", "-c", "cd snipshift-next/api && npm ci --production=false && npm run build"]
+run = ["sh", "-c", "cd snipshift-next/api && node dist/index.js"]
 deploymentTarget = "cloudrun"
 
-[build]
-command = "npm install --production=false && npm run build"
-
 [[ports]]
-localPort = 5000
+localPort = 8080
 externalPort = 80
 
 # =============================================================================
@@ -31,7 +29,7 @@ externalPort = 80
 [env]
 # Core Configuration
 NODE_ENV = "production"
-PORT = "5000"
+# PORT - Let Cloud Run set this dynamically during deployment
 
 # Database Configuration
 DATABASE_URL = "postgresql://snipshift:snipshift_password@localhost:5432/snipshift"
