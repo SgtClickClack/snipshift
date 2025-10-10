@@ -19,7 +19,7 @@ deploymentTarget = "cloudrun"
 
 [[ports]]
 localPort = 3000
-externalPort = 3000
+externalPort = 80
 
 # =============================================================================
 # ENVIRONMENT VARIABLES
