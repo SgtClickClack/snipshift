@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch server/index.ts",
-    "build": "npm run build:client && npm run build:server",
+    "build": "npm run build:client && npm run copy-build",
+    "copy-build": "powershell -Command \"if (!(Test-Path dist)) { New-Item -ItemType Directory -Path dist }; Copy-Item client/dist/public dist/public -Recurse -Force\"",
     "build:client": "vite build --outDir dist/public",
     "build:server": "tsc server/index.ts --outDir dist/server --target es2020 --module commonjs --moduleResolution node --esModuleInterop --allowSyntheticDefaultImports --skipLibCheck",
     "build:api": "cd snipshift-next/api && npm run build",

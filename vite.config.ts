@@ -7,10 +7,6 @@ export default defineConfig({
     react(),
     // Remove Replit-specific plugins for production builds
   ],
-  define: {
-    'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(process.env.VITE_GOOGLE_CLIENT_ID || ''),
-    'import.meta.env.VITE_GOOGLE_REDIRECT_URI': JSON.stringify(process.env.VITE_GOOGLE_REDIRECT_URI || ''),
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
@@ -32,7 +28,7 @@ export default defineConfig({
           // Vendor chunks for better caching
           'react-vendor': ['react', 'react-dom'],
           'ui-vendor': ['@tanstack/react-query', 'react-router-dom'],
-          'auth-vendor': ['firebase', 'google-auth-library'],
+          'firebase-vendor': ['firebase/app', 'firebase/auth'],
           'icons-vendor': ['react-icons', 'lucide-react'],
         },
       },
@@ -41,6 +37,10 @@ export default defineConfig({
     sourcemap: process.env.NODE_ENV !== 'production',
     // Optimize chunk size
     chunkSizeWarningLimit: 1000,
+    // CommonJS compatibility
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
   },
   server: {
     fs: {
@@ -55,10 +55,20 @@ export default defineConfig({
       'react-dom',
       '@tanstack/react-query',
       'react-router-dom',
+      'firebase/app',
+      'firebase/auth',
     ],
     exclude: [
-      'firebase',
       'google-auth-library',
     ],
+  },
+  // Firebase compatibility
+  define: {
+    ...defineConfig({}).define,
+    'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(process.env.VITE_GOOGLE_CLIENT_ID || ''),
+    'import.meta.env.VITE_GOOGLE_REDIRECT_URI': JSON.stringify(process.env.VITE_GOOGLE_REDIRECT_URI || ''),
+    'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(process.env.VITE_FIREBASE_API_KEY || ''),
+    'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(process.env.VITE_FIREBASE_PROJECT_ID || ''),
+    'import.meta.env.VITE_FIREBASE_APP_ID': JSON.stringify(process.env.VITE_FIREBASE_APP_ID || ''),
   },
 });

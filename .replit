@@ -55,6 +55,15 @@ SKIP_DB = "1"
 SKIP_REDIS = "1"
 SKIP_STRIPE = "1"
 
+# Firebase Configuration
+VITE_FIREBASE_API_KEY = "your-firebase-api-key"
+VITE_FIREBASE_PROJECT_ID = "your-firebase-project-id"
+VITE_FIREBASE_APP_ID = "your-firebase-app-id"
+
+# Google OAuth Configuration
+VITE_GOOGLE_CLIENT_ID = "your-google-client-id"
+VITE_GOOGLE_REDIRECT_URI = "http://localhost:5000/oauth-callback"
+
 # Next.js Web App Configuration
 NEXT_PUBLIC_API_URL = "http://localhost:4000/graphql"
 NEXT_PUBLIC_WS_URL = "ws://localhost:4000/graphql"
