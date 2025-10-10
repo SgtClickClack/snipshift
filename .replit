@@ -1,32 +1,154 @@
-# SnipShift V2 - Replit Configuration
-# Optimized for current project structure
+# SnipShift 2.0 - Replit Configuration
+# Master controller for the Replit environment
 
-modules = ["nodejs-20", "web"]
-run = "npm run dev"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "coverage", "test-results", "playwright-report", "cypress/videos", "cypress/screenshots"]
+modules = ["nodejs-20", "web", "postgresql-16"]
+run = ["sh", "-c", "cd snipshift-next/api && npm run dev"]
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "snipshift-next/node_modules", "snipshift-next/api/node_modules", "snipshift-next/web/node_modules"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick", "jq"]
+packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick", "jq", "docker-compose"]
 
 # =============================================================================
 # DEPLOYMENT CONFIGURATION
 # =============================================================================
 
 [deployment]
-build = "npm --prefix snipshift-next/api install && npm --prefix snipshift-next/api run build"
-run = "npm --prefix snipshift-next/api start"
+run = ["sh", "-c", "cd snipshift-next/api && npm ci && npm run build && npm start"]
 deploymentTarget = "cloudrun"
 
 [[ports]]
-<<<<<<< HEAD
 localPort = 3000
-externalPort = 80
+externalPort = 3000
 
 [[ports]]
 localPort = 4000
-externalPort = 3000
-=======
-localPort = 8080
 externalPort = 80
->>>>>>> faccf83296543f9f97f10bcf4da7bddfcf5bcd08
+
+[[ports]]
+localPort = 5432
+externalPort = 5432
+
+[[ports]]
+localPort = 6379
+externalPort = 6379
+
+[[ports]]
+localPort = 35961
+externalPort = 3001
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
+
+[env]
+# Core Configuration
+NODE_ENV = "development"
+PORT = "4000"
+
+# Database Configuration
+DATABASE_URL = "postgresql://snipshift:snipshift_password@localhost:5432/snipshift"
+POSTGRES_PASSWORD = "snipshift_password"
+
+# Redis Configuration
+REDIS_URL = "redis://localhost:6379"
+
+# JWT & Authentication
+JWT_SECRET = "your-super-secret-jwt-key-change-in-production"
+SESSION_SECRET = "your-session-secret-change-in-production"
+
+# CORS Configuration
+CORS_ORIGIN = "http://localhost:3000,http://localhost:3001,http://localhost:8081"
+
+# Logging
+LOG_LEVEL = "info"
+
+# Next.js Web App Configuration
+NEXT_PUBLIC_API_URL = "http://localhost:4000/graphql"
+NEXT_PUBLIC_WS_URL = "ws://localhost:4000/graphql"
+NEXT_PUBLIC_ENVIRONMENT = "development"
+
+# =============================================================================
+# WORKFLOWS FOR DEVELOPMENT
+# =============================================================================
+
+[workflows]
+runButton = "SnipShift 2.0 Full Stack"
+
+[[workflows.workflow]]
+name = "SnipShift 2.0 Full Stack"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Database Services"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "API Service"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Web Service"
+
+# Database Services Workflow
+[[workflows.workflow]]
+name = "Database Services"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd snipshift-next && docker-compose up postgres redis -d"
+waitForPort = 5432
+
+# API Service Workflow
+[[workflows.workflow]]
+name = "API Service"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd snipshift-next/api && npm install"
+waitForPort = 4000
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd snipshift-next/api && npm run dev"
+waitForPort = 4000
+
+# Web Service Workflow
+[[workflows.workflow]]
+name = "Web Service"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd snipshift-next/web && npm install"
+waitForPort = 3000
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd snipshift-next/web && npm run dev"
+waitForPort = 3000
+
+# =============================================================================
+# REplit AGENT INTEGRATIONS
+# =============================================================================
+
+[agent]
+integrations = [
+  "javascript_object_storage==1.0.0",
+  "javascript_database==1.0.0", 
+  "javascript_stripe==1.0.0",
+  "javascript_log_in_with_replit==1.0.0"
+]
+
+# =============================================================================
+# WEB PREVIEW CONFIGURATION
+# =============================================================================
+
+[webPreview]
+# Configure web preview to show the Next.js web application
+# This tells Replit which service and port to display in the web preview window
+preview = "http://localhost:3000"
