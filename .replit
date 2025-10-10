@@ -2,7 +2,6 @@
 # Master controller for the Replit environment
 
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = ["sh", "-c", "npm run dev"]
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "snipshift-next/node_modules", "snipshift-next/api/node_modules", "snipshift-next/web/node_modules"]
 
 [nix]
