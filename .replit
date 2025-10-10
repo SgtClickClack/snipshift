@@ -17,6 +17,7 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 run = ["sh", "-c", "cd snipshift-next/api && npm ci && npm run build && npm start"]
 deploymentTarget = "cloudrun"
 
+<<<<<<< HEAD
 [[ports]]
 localPort = 3000
 externalPort = 3000
@@ -152,3 +153,8 @@ integrations = [
 # Configure web preview to show the Next.js web application
 # This tells Replit which service and port to display in the web preview window
 preview = "http://localhost:3000"
+=======
+[ports]
+localPort = 8080
+externalPort = 80
+>>>>>>> 3dd6d8fa09af04fd316b2218507fe04e77bc0ca8
