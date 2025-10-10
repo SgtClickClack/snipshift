@@ -1,22 +1,19 @@
-<<<<<<< HEAD
 # SnipShift 2.0 - Replit Configuration
 # Master controller for the Replit environment
 
 modules = ["nodejs-20", "web", "postgresql-16"]
 run = ["sh", "-c", "cd snipshift-next/api && npm run dev"]
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "snipshift-next/node_modules", "snipshift-next/api/node_modules", "snipshift-next/web/node_modules"]
-=======
-modules = ["nodejs-20", "web"]
-run = "npm run dev"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "coverage", "test-results", "playwright-report", "cypress/videos", "cypress/screenshots"]
->>>>>>> 63e4ed66142f628f77ffa4478ec17f39c1fdd7c1
 
 [nix]
 channel = "stable-24_05"
 packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick", "jq", "docker-compose"]
 
+# =============================================================================
+# DEPLOYMENT CONFIGURATION
+# =============================================================================
+
 [deployment]
-<<<<<<< HEAD
 run = ["sh", "-c", "cd snipshift-next/api && npm ci && npm run build && npm start"]
 deploymentTarget = "cloudrun"
 
@@ -47,7 +44,7 @@ externalPort = 3001
 [env]
 # Core Configuration
 NODE_ENV = "development"
-PORT = "4000"
+PORT = "3000"
 
 # Database Configuration
 DATABASE_URL = "postgresql://snipshift:snipshift_password@localhost:5432/snipshift"
@@ -114,7 +111,7 @@ waitForPort = 5432
 [[workflows.workflow]]
 name = "API Service"
 author = "agent"
-mode = "serial"
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -151,8 +148,3 @@ integrations = [
 # Configure web preview to show the Next.js web application
 # This tells Replit which service and port to display in the web preview window
 preview = "http://localhost:3000"
-=======
-build = "npm --prefix snipshift-next/api install && npm --prefix snipshift-next/api run build"
-run = "npm --prefix snipshift-next/api start"
-deploymentTarget = "cloudrun"
->>>>>>> 63e4ed66142f628f77ffa4478ec17f39c1fdd7c1
