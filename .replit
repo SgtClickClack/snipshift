@@ -89,9 +89,10 @@ args = "Database Services"
 task = "workflow.run"
 args = "API Service"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Web Service"
+# [[workflows.workflow.tasks]]
+# task = "workflow.run"
+# args = "Web Service"
+# DISABLED FOR API DEPLOYMENT
 
 # Database Services Workflow
 [[workflows.workflow]]
