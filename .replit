@@ -14,7 +14,7 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 # =============================================================================
 
 [deployment]
-run = ["sh", "-c", "npm start"]
+run = ["sh", "-c", "npm install --production=false && npm run build && npm start"]
 deploymentTarget = "cloudrun"
 
 [build]
