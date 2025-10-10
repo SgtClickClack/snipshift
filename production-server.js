@@ -5,7 +5,7 @@ const fs = require('fs');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // CORS configuration for production and Replit
 const allowedOrigins = [
@@ -51,13 +51,13 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from dist/public directory (built assets)
+app.use(express.static(path.join(__dirname, 'dist', 'public')));
 
 // Catch-all handler for React Router - serve the main React app
 app.use((req, res) => {
   try {
-    const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, 'dist', 'public', 'index.html'), 'utf8');
     res.send(html);
   } catch (err) {
     console.error('Error serving index.html:', err);
