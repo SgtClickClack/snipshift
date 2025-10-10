@@ -18,6 +18,6 @@ build = "npm --prefix snipshift-next/api install && npm --prefix snipshift-next/
 run = "npm --prefix snipshift-next/api start"
 deploymentTarget = "cloudrun"
 
-[[ports]]
+[ports]
 localPort = 8080
 externalPort = 80
