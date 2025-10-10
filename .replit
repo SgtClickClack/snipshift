@@ -1,6 +1,3 @@
-# SnipShift V2 - Replit Configuration
-# Optimized for current project structure
-
 modules = ["nodejs-20", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "coverage", "test-results", "playwright-report", "cypress/videos", "cypress/screenshots"]
@@ -9,15 +6,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "cove
 channel = "stable-24_05"
 packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick", "jq"]
 
-# =============================================================================
-# DEPLOYMENT CONFIGURATION
-# =============================================================================
-
 [deployment]
 build = "npm --prefix snipshift-next/api install && npm --prefix snipshift-next/api run build"
 run = "npm --prefix snipshift-next/api start"
 deploymentTarget = "cloudrun"
-
-[deployment.ports]
-localPort = 8080
-externalPort = 80
