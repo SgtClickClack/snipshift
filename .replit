@@ -17,7 +17,6 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 run = ["sh", "-c", "cd snipshift-next/api && npm ci && npm run build && npm start"]
 deploymentTarget = "cloudrun"
 
-<<<<<<< HEAD
 [[ports]]
 localPort = 3000
 externalPort = 3000
@@ -64,6 +63,11 @@ CORS_ORIGIN = "http://localhost:3000,http://localhost:3001,http://localhost:8081
 # Logging
 LOG_LEVEL = "info"
 
+# Development Skip Flags (for Replit environment)
+SKIP_DB = "1"
+SKIP_REDIS = "1"
+SKIP_STRIPE = "1"
+
 # Next.js Web App Configuration
 NEXT_PUBLIC_API_URL = "http://localhost:4000/graphql"
 NEXT_PUBLIC_WS_URL = "ws://localhost:4000/graphql"
@@ -107,15 +111,11 @@ waitForPort = 5432
 [[workflows.workflow]]
 name = "API Service"
 author = "agent"
+mode = "serial"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd snipshift-next/api && npm install"
-waitForPort = 4000
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd snipshift-next/api && npm run dev"
+args = "cd snipshift-next/api && npm ci && npm run dev"
 waitForPort = 4000
 
 # Web Service Workflow
@@ -125,12 +125,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd snipshift-next/web && npm install"
-waitForPort = 3000
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd snipshift-next/web && npm run dev"
+args = "cd snipshift-next/web && npm ci && npm run dev"
 waitForPort = 3000
 
 # =============================================================================
@@ -153,8 +148,3 @@ integrations = [
 # Configure web preview to show the Next.js web application
 # This tells Replit which service and port to display in the web preview window
 preview = "http://localhost:3000"
-=======
-[ports]
-localPort = 8080
-externalPort = 80
->>>>>>> 3dd6d8fa09af04fd316b2218507fe04e77bc0ca8
