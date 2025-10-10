@@ -14,10 +14,10 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 # =============================================================================
 
 [deployment]
-build = "npm install && npm run build"
-run = "npm run start"
+build = "npm --prefix snipshift-next/api install && npm --prefix snipshift-next/api run build"
+run = "npm --prefix snipshift-next/api start"
 deploymentTarget = "cloudrun"
 
 [[ports]]
-localPort = 3000
+localPort = 8080
 externalPort = 80
