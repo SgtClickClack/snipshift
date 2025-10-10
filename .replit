@@ -16,6 +16,9 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 build = ["sh", "-c", "cd snipshift-next/api && npm ci --production=false && npm run build"]
 run = ["sh", "-c", "cd snipshift-next/api && node dist/index.js"]
 deploymentTarget = "cloudrun"
+healthCheck = "/health"
+alwaysOn = true
+restartPolicy = "always"
 
 [[ports]]
 localPort = 8080
@@ -111,15 +114,15 @@ task = "shell.exec"
 args = "cd snipshift-next/api && npm ci && npm run dev"
 waitForPort = 4000
 
-# Web Service Workflow
-[[workflows.workflow]]
-name = "Web Service"
-author = "agent"
+# Web Service Workflow - DISABLED FOR API DEPLOYMENT
+# [[workflows.workflow]]
+# name = "Web Service"
+# author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd snipshift-next/web && npm ci && npm run dev"
-waitForPort = 3000
+# [[workflows.workflow.tasks]]
+# task = "shell.exec"
+# args = "cd snipshift-next/web && npm ci && npm run dev"
+# waitForPort = 3000
 
 # =============================================================================
 # REplit AGENT INTEGRATIONS
@@ -137,7 +140,8 @@ integrations = [
 # WEB PREVIEW CONFIGURATION
 # =============================================================================
 
-[webPreview]
+# [webPreview]
 # Configure web preview to show the Next.js web application
 # This tells Replit which service and port to display in the web preview window
-preview = "http://localhost:3000"
+# preview = "http://localhost:3000"
+# DISABLED FOR API DEPLOYMENT
