@@ -13,8 +13,8 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 # =============================================================================
 
 [deployment]
-build = ["sh", "-c", "cd snipshift-next/api && npm ci --production=false && npm run build"]
-run = ["sh", "-c", "cd snipshift-next/api && node dist/index.js"]
+build = ["sh", "-c", "npm run build"]
+run = ["sh", "-c", "npm start"]
 deploymentTarget = "cloudrun"
 healthCheck = "/health"
 alwaysOn = true
