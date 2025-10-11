@@ -1,17 +1,21 @@
 describe('User Onboarding Flow', () => {
+  const openSignup = () => {
+    cy.get('[data-testid="link-signup"]').should('be.visible').click()
+    cy.url().should('include', '/signup')
+    cy.get('[data-testid="heading-signup"]').should('contain', 'Create Account')
+  }
+
   beforeEach(() => {
     cy.visit('/')
   })
 
   it('should navigate to signup page from homepage', () => {
-    cy.get('[data-testid="link-signup"]').click()
-    cy.url().should('include', '/signup')
-    cy.get('[data-testid="heading-signup"]').should('contain', 'Create Account')
+    openSignup()
   })
 
   it('should display all role options in signup form', () => {
-    cy.visit('/signup')
-    
+    openSignup()
+
     // Check that all user roles are available
     cy.get('[data-testid="select-role"]').click()
     cy.get('[data-testid="option-hub"]').should('be.visible')
@@ -24,7 +28,7 @@ describe('User Onboarding Flow', () => {
     cy.fixture('users').then((users) => {
       const testUser = users.testUsers.professional
       
-      cy.visit('/signup')
+      openSignup()
       
       // Fill out signup form
       cy.get('[data-testid="input-email"]').type(testUser.email)
@@ -48,7 +52,7 @@ describe('User Onboarding Flow', () => {
     cy.fixture('users').then((users) => {
       const testUser = users.testUsers.hub
       
-      cy.visit('/signup')
+      openSignup()
       
       // Fill out signup form
       cy.get('[data-testid="input-email"]').type(testUser.email)
@@ -69,7 +73,7 @@ describe('User Onboarding Flow', () => {
   })
 
   it('should display validation errors for invalid input', () => {
-    cy.visit('/signup')
+    openSignup()
     
     // Try to submit empty form
     cy.get('[data-testid="button-signup"]').click()
@@ -82,11 +86,12 @@ describe('User Onboarding Flow', () => {
   })
 
   it('should allow user to switch between login and signup', () => {
-    cy.visit('/login')
-    cy.get('[data-testid="link-signup"]').click()
-    cy.url().should('include', '/signup')
-    
-    cy.get('[data-testid="link-login"]').click()
+    openSignup()
+
+    cy.get('[data-testid="link-login"]').should('be.visible').click()
     cy.url().should('include', '/login')
+
+    cy.get('[data-testid="link-signup"]').should('be.visible').click()
+    cy.url().should('include', '/signup')
   })
 })
