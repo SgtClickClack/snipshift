@@ -277,12 +277,12 @@ export const messageSchema = z.object({
 export const chatSchema = z.object({
   id: z.string(),
   participants: z.array(z.string()).length(2), // Array of two user IDs
-  participantNames: z.record(z.string()), // Map of userId -> displayName
-  participantRoles: z.record(z.string()), // Map of userId -> role
+  participantNames: z.record(z.string(), z.string()), // Map of userId -> displayName
+  participantRoles: z.record(z.string(), z.string()), // Map of userId -> role
   lastMessage: z.string().optional(),
   lastMessageSender: z.string().optional(),
   lastMessageTimestamp: z.date().optional(),
-  unreadCount: z.record(z.number()).default({}), // Map of userId -> unreadCount
+  unreadCount: z.record(z.string(), z.number()).default({}), // Map of userId -> unreadCount
   createdAt: z.date(),
   updatedAt: z.date(),
 });
