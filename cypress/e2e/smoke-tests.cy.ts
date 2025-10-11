@@ -270,12 +270,20 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
 
   describe('Error Handling and Edge Cases', () => {
     it('should handle navigation to non-existent pages gracefully', () => {
-      // Try to navigate to a non-existent page
-      cy.visit('/non-existent-page')
-      
+      // Inject a broken link the way a user might encounter it and click through
+      cy.document().then((doc) => {
+        const brokenLink = doc.createElement('a')
+        brokenLink.href = '/non-existent-page'
+        brokenLink.innerText = 'Broken Link Test'
+        brokenLink.setAttribute('data-testid', 'broken-link')
+        doc.body.appendChild(brokenLink)
+      })
+
+      cy.get('[data-testid="broken-link"]').click()
+
       // Should redirect to dashboard or show 404
-      cy.url().should('satisfy', (url) => {
-        return url.includes('/barber-dashboard') || url.includes('/404')
+      cy.location('pathname').should((pathname) => {
+        expect(pathname.includes('/barber-dashboard') || pathname.includes('/404')).to.be.true
       })
     })
 
