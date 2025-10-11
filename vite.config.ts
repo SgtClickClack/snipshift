@@ -50,17 +50,7 @@ export default defineConfig({
   },
   // Performance optimizations
   optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      '@tanstack/react-query',
-      'react-router-dom',
-      'firebase/app',
-      'firebase/auth',
-    ],
-    exclude: [
-      'google-auth-library',
-    ],
+    disabled: true,
   },
   // Firebase compatibility
   define: {

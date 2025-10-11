@@ -938,7 +938,7 @@ async function startServer() {
                 
                 if (data.success) {
                   alert('Google sign-up successful! Welcome to SnipShift.');
-                  window.location.href = '/auth/role-selection';
+                  window.location.href = '/';
                 } else {
                   alert('Google sign-up failed: ' + (data.error || 'Unknown error'));
                 }
