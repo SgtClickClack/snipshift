@@ -1728,6 +1728,10 @@ async function startServer() {
       res.json({ status: 'ok', timestamp: new Date().toISOString() });
     });
 
+    app.get('/', (_req, res) => {
+      res.json({ status: 'ok', service: 'snipshift-api', uptime: process.uptime() });
+    });
+
     // WebSocket server for subscriptions (dynamic import)
     let wsServer: any = null;
     if (process.env.ENABLE_WS !== 'false') {
