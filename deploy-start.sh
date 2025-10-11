@@ -1,22 +1,22 @@
 #!/bin/bash
-# Production start script for deployment
+# Deployment start script
 
 set -e
 
-echo "=== SnipShift Production Start ==="
-echo "Starting production server..."
+echo "=== SnipShift Deployment Start ==="
+echo "Starting server..."
 echo ""
-
-# Set production environment
-export NODE_ENV=production
 
 # Use PORT from environment or default to 5000
 PORT=${PORT:-5000}
 export PORT
 
-echo "Environment: $NODE_ENV"
+# Note: Using development mode with Vite middleware for reliability
+# This serves the app dynamically without needing a pre-built dist folder
+export NODE_ENV=development
+
 echo "Port: $PORT"
 echo ""
 
-# Start server with tsx (faster than compiled)
-exec npx tsx server/index.ts
+# Start server - npm run dev works reliably in all environments
+exec npm run dev

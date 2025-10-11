@@ -7,13 +7,9 @@ echo "=== SnipShift Production Build ==="
 echo "Building production-ready application..."
 echo ""
 
-# Install dependencies
-echo "Step 1: Installing dependencies..."
-npm ci --production=false
-
-# Build client
-echo "Step 2: Building client..."
-npm run build:client
+# Build client (dependencies already installed)
+echo "Building client..."
+node node_modules/vite/bin/vite.js build --outDir dist/public
 
 echo ""
 echo "✅ Production build complete!"
