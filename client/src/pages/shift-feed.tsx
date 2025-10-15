@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { MapPin, Clock, DollarSign, Users, Filter, Search } from 'lucide-react';
 
 interface Shift {
@@ -72,7 +73,9 @@ export default function ShiftFeedPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const { toast } = useToast();
 
   const handleApplyForShift = (shift: Shift) => {
     setSelectedShift(shift);
@@ -85,6 +88,11 @@ export default function ShiftFeedPage() {
     setShowApplicationModal(false);
     setCoverLetter('');
     setSelectedShift(null);
+    
+    toast({
+      title: "Application submitted successfully",
+      description: "Your application has been sent to the shop owner.",
+    });
   };
 
   const filteredShifts = shifts.filter(shift => {
@@ -181,7 +189,15 @@ export default function ShiftFeedPage() {
         {/* Shift Results */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" data-testid="shift-results">
           {filteredShifts.map((shift) => (
-            <Card key={shift.id} className="hover:shadow-lg transition-shadow cursor-pointer" data-testid="shift-card">
+            <Card 
+              key={shift.id} 
+              className="hover:shadow-lg transition-shadow cursor-pointer" 
+              data-testid="shift-card"
+              onClick={() => {
+                setSelectedShift(shift);
+                setShowDetailsModal(true);
+              }}
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg" data-testid="shift-title">{shift.title}</CardTitle>
@@ -223,14 +239,21 @@ export default function ShiftFeedPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedShift(shift)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedShift(shift);
+                      setShowDetailsModal(true);
+                    }}
                     data-testid="button-view-shift"
                   >
                     View Details
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => handleApplyForShift(shift)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApplyForShift(shift);
+                    }}
                     data-testid="button-apply-shift"
                   >
                     Apply Now
@@ -248,9 +271,89 @@ export default function ShiftFeedPage() {
         )}
       </div>
 
+      {/* Shift Details Modal */}
+      {showDetailsModal && selectedShift && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" data-testid="modal-shift-details">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-bold" data-testid="shift-detail-title">{selectedShift.title}</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDetailsModal(false)}
+                data-testid="button-close-modal"
+              >
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <h3 className="font-semibold mb-2">Description</h3>
+                <p className="text-gray-700" data-testid="shift-detail-description">{selectedShift.description}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">Requirements</h3>
+                <p className="text-gray-700" data-testid="shift-detail-requirements">{selectedShift.description}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">Skills Required</h3>
+                <div className="flex flex-wrap gap-1" data-testid="shift-detail-skills">
+                  {selectedShift.skills.map((skill) => (
+                    <Badge key={skill} variant="outline" className="text-xs">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium">Location</h4>
+                  <p data-testid="shift-detail-location">{selectedShift.location}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium">Pay Rate</h4>
+                  <p data-testid="shift-detail-pay">${selectedShift.payRate}/hr</p>
+                </div>
+                <div>
+                  <h4 className="font-medium">Schedule</h4>
+                  <p data-testid="shift-detail-schedule">{selectedShift.startTime} - {selectedShift.endTime}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium">Shop</h4>
+                  <p>{selectedShift.shopName}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowDetailsModal(false)}
+                className="flex-1"
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  handleApplyForShift(selectedShift);
+                }}
+                className="flex-1"
+              >
+                Apply Now
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Application Modal */}
       {showApplicationModal && selectedShift && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" data-testid="modal-shift-application">
             <h2 className="text-xl font-bold mb-4">Apply for Shift</h2>
             <div className="mb-4">

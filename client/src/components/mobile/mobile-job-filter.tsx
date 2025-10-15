@@ -58,7 +58,7 @@ export default function MobileJobFilter({ filters, onApply, onClose }: MobileJob
               value={localFilters.location}
               onChange={(e) => setLocalFilters({ ...localFilters, location: e.target.value })}
               className="mt-2"
-              data-testid="mobile-location-input"
+              data-testid="input-location-filter"
             />
           </div>
 
@@ -153,13 +153,14 @@ export default function MobileJobFilter({ filters, onApply, onClose }: MobileJob
               variant="outline"
               className="flex-1"
               onClick={handleClear}
+              data-testid="button-clear-filters"
             >
               Clear All
             </Button>
             <Button
               className="flex-1"
               onClick={handleApply}
-              data-testid="mobile-apply-filter"
+              data-testid="button-apply-location-filter"
             >
               Apply Filters
             </Button>

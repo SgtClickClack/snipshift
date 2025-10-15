@@ -50,7 +50,12 @@ export default defineConfig({
   },
   // Performance optimizations
   optimizeDeps: {
-    disabled: true,
+    include: [
+      'react',
+      'react-dom',
+      '@tanstack/react-query',
+      'react-router-dom',
+    ],
   },
   // Firebase compatibility
   define: {

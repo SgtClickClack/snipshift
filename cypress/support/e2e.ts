@@ -17,14 +17,34 @@
 import './commands'
 import './visual-testing'
 
+// Add CSRF header to all API requests
+beforeEach(() => {
+  cy.intercept('**', (req) => {
+    if (req.url.includes('/api/') && (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE')) {
+      req.headers['X-Snipshift-CSRF'] = '1'
+    }
+  })
+})
+
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
 declare global {
   namespace Cypress {
     interface Chainable {
+      // 🚀 FAST LOGIN COMMANDS
+      programmaticLogin(userType?: 'professional' | 'business' | 'admin'): Chainable<void>
+      instantLogin(role?: 'professional' | 'business'): Chainable<void>
+      
+      // 🛡️ API MOCKING COMMANDS
+      mockApiResponse(method: string, url: string, response: any, statusCode?: number): Chainable<void>
+      mockLoginSuccess(userType?: 'professional' | 'business'): Chainable<void>
+      mockShiftsData(shifts?: any[]): Chainable<void>
+      mockUserProfile(userType?: 'professional' | 'business'): Chainable<void>
+      
+      // Original commands
       login(email: string, password: string): Chainable<void>
-      quickLogin(role: 'shop' | 'barber' | 'trainer' | 'brand'): Chainable<void>
+      quickLogin(role: 'professional' | 'business'): Chainable<void>
       waitForRoute(route: string): Chainable<void>
       loginWithRole(email: string, role: string): Chainable<void>
       logout(): Chainable<void>

@@ -31,7 +31,7 @@ export function AuthGuard({
   }
 
   // If user is authenticated but doesn't have a current role, redirect to role selection
-  if (isAuthenticated && user && (!user.currentRole || user.currentRole === 'client')) {
+  if (isAuthenticated && user && !user.currentRole) {
     // Avoid redirect loop when already on role selection
     if (location.pathname !== '/role-selection') {
       return <Navigate to="/role-selection" replace />;
@@ -45,7 +45,7 @@ export function AuthGuard({
   }
 
   // If user is authenticated and on login/signup/homepage, redirect to their dashboard
-  if (isAuthenticated && user && user.currentRole && user.currentRole !== 'client') {
+  if (isAuthenticated && user && user.currentRole) {
     const currentPath = location.pathname;
     if (currentPath === '/login' || currentPath === '/signup' || currentPath === '/role-selection' || currentPath === '/') {
       const userDashboard = getDashboardRoute(user.currentRole);

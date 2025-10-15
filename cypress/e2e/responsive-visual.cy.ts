@@ -1,3 +1,8 @@
+const visitVisualRoute = (path: string = '/') => {
+  // VISUAL-TEST: Direct visit is intentional.
+  cy.visit(path)
+}
+
 describe('Responsive Visual Tests - SnipShift V2', () => {
   beforeEach(() => {
     cy.clearLocalStorage()
@@ -7,7 +12,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
   describe('Mobile Responsiveness', () => {
     it('should be fully functional on mobile devices', () => {
       cy.viewport('iphone-x')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test mobile layout
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -25,7 +30,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should have proper mobile touch targets', () => {
       cy.viewport('iphone-x')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test button size on mobile
       cy.get('[data-testid="button-login"]').then(($button) => {
@@ -39,7 +44,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should have readable text on mobile', () => {
       cy.viewport('iphone-x')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test text readability
       cy.get('body').should('have.css', 'font-size')
@@ -52,7 +57,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should have proper mobile spacing', () => {
       cy.viewport('iphone-x')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test mobile spacing
       cy.get('[data-testid="landing-page"]').should('have.css', 'padding')
@@ -67,7 +72,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
   describe('Tablet Responsiveness', () => {
     it('should adapt to tablet viewport', () => {
       cy.viewport('ipad-2')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test tablet layout
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -80,7 +85,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should have proper tablet grid layout', () => {
       cy.viewport('ipad-2')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test grid responsiveness
       cy.get('body').then(($body) => {
@@ -93,7 +98,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should maintain aspect ratios on tablet', () => {
       cy.viewport('ipad-2')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test image and card aspect ratios
       cy.get('body').then(($body) => {
@@ -112,7 +117,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
   describe('Desktop Responsiveness', () => {
     it('should utilize desktop screen space effectively', () => {
       cy.viewport(1920, 1080)
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test desktop layout
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -127,7 +132,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should have proper desktop navigation', () => {
       cy.viewport(1280, 720)
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test desktop navigation
       cy.get('nav, [data-testid*="nav"]').should('be.visible')
@@ -146,7 +151,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should have proper desktop typography', () => {
       cy.viewport(1280, 720)
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test desktop typography
       cy.get('h1').should('have.css', 'font-size')
@@ -162,7 +167,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
     it('should transition smoothly between breakpoints', () => {
       // Test mobile to tablet transition
       cy.viewport('iphone-x')
-      cy.visit('/')
+      visitVisualRoute()
       cy.get('[data-testid="landing-page"]').should('be.visible')
       
       cy.viewport('ipad-2')
@@ -181,7 +186,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
       
       viewports.forEach(viewport => {
         cy.viewport(viewport.width, viewport.height)
-        cy.visit('/')
+        visitVisualRoute()
         
         // Test core functionality at each breakpoint
         cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -194,7 +199,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
   describe('Orientation Changes', () => {
     it('should handle portrait orientation', () => {
       cy.viewport(375, 667) // Portrait mobile
-      cy.visit('/')
+      visitVisualRoute()
       
       cy.get('[data-testid="landing-page"]').should('be.visible')
       cy.get('[data-testid="button-login"]').should('be.visible')
@@ -202,7 +207,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should handle landscape orientation', () => {
       cy.viewport(667, 375) // Landscape mobile
-      cy.visit('/')
+      visitVisualRoute()
       
       cy.get('[data-testid="landing-page"]').should('be.visible')
       cy.get('[data-testid="button-login"]').should('be.visible')
@@ -211,7 +216,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
     it('should adapt layout for orientation changes', () => {
       // Start in portrait
       cy.viewport(375, 667)
-      cy.visit('/')
+      visitVisualRoute()
       cy.get('[data-testid="landing-page"]').should('be.visible')
       
       // Switch to landscape
@@ -227,7 +232,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
   describe('Content Overflow Handling', () => {
     it('should handle content overflow on small screens', () => {
       cy.viewport(320, 568) // Very small screen
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test that content doesn't overflow
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -236,7 +241,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
 
     it('should have proper scrolling behavior', () => {
       cy.viewport('iphone-x')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test scroll behavior
       cy.get('body').should('have.css', 'overflow-y', 'auto')
@@ -253,7 +258,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
       
       viewports.forEach(viewport => {
         cy.viewport(viewport.width, viewport.height)
-        cy.visit('/')
+        visitVisualRoute()
         
         // Test that important content is always visible
         cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -267,7 +272,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
       cy.viewport('iphone-x')
       
       const startTime = Date.now()
-      cy.visit('/')
+      visitVisualRoute()
       cy.get('[data-testid="landing-page"]').should('be.visible')
       
       cy.then(() => {
@@ -280,7 +285,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
       cy.viewport('ipad-2')
       
       const startTime = Date.now()
-      cy.visit('/')
+      visitVisualRoute()
       cy.get('[data-testid="landing-page"]').should('be.visible')
       
       cy.then(() => {
@@ -293,7 +298,7 @@ describe('Responsive Visual Tests - SnipShift V2', () => {
       cy.viewport(1920, 1080)
       
       const startTime = Date.now()
-      cy.visit('/')
+      visitVisualRoute()
       cy.get('[data-testid="landing-page"]').should('be.visible')
       
       cy.then(() => {

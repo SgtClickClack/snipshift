@@ -49,9 +49,10 @@ describe('Dashboard & Analytics - SnipShift V2', () => {
         // Login as barber
         cy.login(barberUser.email, barberUser.password)
         
-        // Should redirect to barber dashboard
-        cy.url().should('include', '/barber-dashboard')
-        cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+        // Should redirect to role selection
+        cy.url().should('include', '/role-selection')
+        cy.completeRoleSelection('professional')
+        cy.get('[data-testid="professional-dashboard"]').should('be.visible')
         
         // Should show job recommendations
         cy.get('[data-testid="job-recommendations"]').should('be.visible')

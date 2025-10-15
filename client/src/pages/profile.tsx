@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
-import { User, Edit, Plus, Trash2 } from "lucide-react";
+import { User, Edit, Plus, Trash2, FileText, Trophy } from "lucide-react";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -241,174 +242,235 @@ export default function ProfilePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Basic Profile Information */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Basic Information
-                </CardTitle>
-                {!isEditing && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditProfile}
-                    data-testid="button-edit-profile"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      data-testid="input-display-name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      data-testid="input-email"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleSaveProfile}
-                      disabled={isLoading}
-                      data-testid="save-profile-button"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleCancelEdit}
-                      disabled={isLoading}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <Label>Name</Label>
-                    <p className="text-sm text-neutral-600" data-testid="profile-display-name">
-                      {user.displayName || "Not set"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <p className="text-sm text-neutral-600" data-testid="profile-email">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Role Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Roles & Permissions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label>Current Role</Label>
-                  <p className="text-sm text-neutral-600" data-testid="current-role-display">
-                    {user.currentRole || "None"}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label>All Roles</Label>
-                  <div className="flex flex-wrap gap-2 mt-2" data-testid="user-roles">
-                    {user.roles && user.roles.length > 0 ? (
-                      user.roles.map((role) => (
-                        <div key={role} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
-                          <span>{role}</span>
-                          {user.roles && user.roles.length > 1 && (
-                            <button
-                              onClick={() => handleRemoveRole(role)}
-                              className="text-red-600 hover:text-red-800"
-                              data-testid={`remove-role-button-${role}`}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-neutral-500">No roles assigned</p>
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile" data-testid="tab-profile">Profile</TabsTrigger>
+            <TabsTrigger value="qualifications" data-testid="tab-qualifications">Qualifications</TabsTrigger>
+            <TabsTrigger value="tournaments" data-testid="tab-tournament-registrations">Tournaments</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="profile" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Basic Profile Information */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Basic Information
+                    </CardTitle>
+                    {!isEditing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEditProfile}
+                        data-testid="button-edit-profile"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
                     )}
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Add Role</Label>
-                  <div className="flex gap-2">
-                    {["hub", "professional", "brand", "trainer"].map((role) => (
-                      !user.roles?.includes(role) && (
+                </CardHeader>
+                <CardContent>
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          data-testid="input-display-name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          data-testid="input-email"
+                        />
+                      </div>
+                      <div className="flex gap-2">
                         <Button
-                          key={role}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddRole(role)}
+                          onClick={handleSaveProfile}
                           disabled={isLoading}
-                          data-testid="add-role-button"
+                          data-testid="button-save-profile"
                         >
-                          <Plus className="h-4 w-4 mr-1" />
-                          {role}
+                          Save
                         </Button>
-                      )
-                    ))}
+                        <Button
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                          disabled={isLoading}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Name</Label>
+                        <p className="text-sm text-neutral-600" data-testid="profile-display-name">
+                          {user.displayName || "Not set"}
+                        </p>
+                      </div>
+                      <div>
+                        <Label>Email</Label>
+                        <p className="text-sm text-neutral-600" data-testid="profile-email">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Role Management */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Roles & Permissions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                  <div>
+                    <Label>Current Role</Label>
+                    <p className="text-sm text-neutral-600" data-testid="profile-role">
+                      {user.currentRole === 'professional' ? 'Barber' : user.currentRole || "None"}
+                    </p>
+                  </div>
+                    
+                    <div>
+                      <Label>All Roles</Label>
+                      <div className="flex flex-wrap gap-2 mt-2" data-testid="user-roles">
+                        {user.roles && user.roles.length > 0 ? (
+                          user.roles.map((role) => (
+                            <div key={role} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                              <span>{role}</span>
+                              {user.roles && user.roles.length > 1 && (
+                                <button
+                                  onClick={() => handleRemoveRole(role)}
+                                  className="text-red-600 hover:text-red-800"
+                                  data-testid={`remove-role-button-${role}`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-neutral-500">No roles assigned</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Add Role</Label>
+                      <div className="flex gap-2">
+                        {["hub", "professional", "brand", "trainer"].map((role) => (
+                          !user.roles?.includes(role) && (
+                            <Button
+                              key={role}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddRole(role)}
+                              disabled={isLoading}
+                              data-testid="add-role-button"
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              {role}
+                            </Button>
+                          )
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Switch Current Role</Label>
+                      <select
+                        value={user.currentRole || ""}
+                        onChange={(e) => handleChangeCurrentRole(e.target.value)}
+                        className="w-full p-2 border border-neutral-300 rounded"
+                        data-testid="current-role-select"
+                      >
+                        {user.roles?.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        onClick={() => user.currentRole && handleChangeCurrentRole(user.currentRole)}
+                        disabled={isLoading}
+                        data-testid="update-current-role-button"
+                      >
+                        Update Current Role
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="qualifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Qualifications
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4" data-testid="qualifications-section">
+                  <div>
+                    <Label htmlFor="qualification-document">Upload Qualification Document</Label>
+                    <Input
+                      id="qualification-document"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      data-testid="input-qualification-document"
+                    />
+                  </div>
+                  <Button data-testid="button-upload-qualification">
+                    Upload Qualification
+                  </Button>
+                  <div className="text-sm text-neutral-500">
+                    Upload your professional qualifications, certifications, and licenses.
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className="space-y-2">
-                  <Label>Switch Current Role</Label>
-                  <select
-                    value={user.currentRole || ""}
-                    onChange={(e) => handleChangeCurrentRole(e.target.value)}
-                    className="w-full p-2 border border-neutral-300 rounded"
-                    data-testid="current-role-select"
-                  >
-                    {user.roles?.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    onClick={() => user.currentRole && handleChangeCurrentRole(user.currentRole)}
-                    disabled={isLoading}
-                    data-testid="update-current-role-button"
-                  >
-                    Update Current Role
-                  </Button>
+          <TabsContent value="tournaments" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Tournament Registrations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-sm text-neutral-500">
+                    Your tournament registrations will appear here.
+                  </div>
+                  <div data-testid="tournament-registration">
+                    <p className="text-sm text-neutral-600">No tournament registrations yet.</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

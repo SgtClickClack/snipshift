@@ -9,6 +9,21 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // Exclude test files from webpack compilation
+    config.module.rules.push({
+      test: /\.(test|spec)\.(ts|tsx|js|jsx)$/,
+      use: 'ignore-loader',
+    });
+    
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': './src',
+      '@shared': '../shared',
+    };
+    
+    return config;
+  },
   async rewrites() {
     return [
       {
@@ -27,17 +42,6 @@ const nextConfig = {
     FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
     FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,
     FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
-  },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': './src',
-      '@shared': '../shared',
-    };
-    
-    // Removed parent node_modules hack for production build compatibility
-    
-    return config;
   },
   async headers() {
     return [

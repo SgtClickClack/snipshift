@@ -29,8 +29,8 @@ export default function ProfessionalDashboard() {
   }
 
   return (
-    <div data-testid="barber-dashboard">
-      <div className="min-h-screen bg-neutral-100 py-8" data-testid="professional-dashboard">
+    <div data-testid="professional-dashboard">
+      <div className="min-h-screen bg-neutral-100 py-8">
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-neutral-900" data-testid="dashboard-title">

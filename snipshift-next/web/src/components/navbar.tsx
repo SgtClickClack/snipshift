@@ -8,7 +8,7 @@ import { messagingService } from "@/lib/messaging";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import NotificationBell from "./notifications/notification-bell";
 import { useNotifications } from "@/hooks/use-notifications";
-import { Chat } from "@shared/firebase-schema";
+import { Chat } from "@shared/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
@@ -87,7 +87,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50" data-testid="nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <button
@@ -101,6 +101,7 @@ export default function Navbar() {
               const target = user.currentRole ? getDashboardRoute(user.currentRole) : "/role-selection";
               navigate(target);
             }}
+            data-testid="nav-home"
           >
             <Scissors className="text-red-accent text-2xl mr-3" />
             <span className="text-xl font-bold text-white">Snipshift</span>
@@ -141,6 +142,20 @@ export default function Navbar() {
 
                 {/* Desktop Navigation - Hidden on Mobile */}
                 <div className="hidden md:flex md:items-center md:space-x-4">
+                  {/* Navigation Links */}
+                  <Link to="/shift-feed" className="text-white hover:text-red-accent transition-colors" data-testid="nav-shift-feed">
+                    Shift Feed
+                  </Link>
+                  <Link to="/tournaments" className="text-white hover:text-red-accent transition-colors" data-testid="nav-tournaments">
+                    Tournaments
+                  </Link>
+                  <Link to="/applications" className="text-white hover:text-red-accent transition-colors" data-testid="nav-my-applications">
+                    My Applications
+                  </Link>
+                  <Link to="/analytics" className="text-white hover:text-red-accent transition-colors" data-testid="nav-analytics">
+                    Analytics
+                  </Link>
+                  
                   {/* Notifications */}
                   <NotificationBell
                     notifications={notifications}
@@ -167,7 +182,7 @@ export default function Navbar() {
                   </div>
                   
                   {/* User Profile */}
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3" data-testid="user-menu">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
                       <AvatarFallback className="bg-red-accent text-white text-sm">
@@ -177,10 +192,20 @@ export default function Navbar() {
                     <span className="text-chrome-light text-sm">{user.displayName || user.email}</span>
                   </div>
                   
-                  <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
+                  <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700" data-testid="button-logout">
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </Button>
+                  {user?.roles?.includes('admin') && (
+                    <Button
+                      variant="ghost"
+                      className="text-white hover:bg-steel-700"
+                      data-testid="link-admin-panel"
+                      onClick={() => navigate('/admin')}
+                    >
+                      Admin Panel
+                    </Button>
+                  )}
                 </div>
               </>
             ) : (

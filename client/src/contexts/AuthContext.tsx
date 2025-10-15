@@ -58,7 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize auth state from localStorage on mount
   useEffect(() => {
-    // Use requestIdleCallback for non-critical initialization
+    // Initialize immediately for better test compatibility
     const initAuth = () => {
       try {
         const storedUser = localStorage.getItem('currentUser');
@@ -81,12 +81,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    // Use requestIdleCallback if available, otherwise setTimeout
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(initAuth);
-    } else {
-      setTimeout(initAuth, 0);
-    }
+    // Initialize immediately for better test compatibility
+    initAuth();
   }, []);
 
   const login = (userData: User) => {

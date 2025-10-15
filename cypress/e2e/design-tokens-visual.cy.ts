@@ -1,3 +1,8 @@
+const visitVisualRoute = (path: string = '/') => {
+  // VISUAL-TEST: Direct visit is intentional.
+  cy.visit(path)
+}
+
 describe('Design Tokens Visual Tests - SnipShift V2', () => {
   beforeEach(() => {
     cy.clearLocalStorage()
@@ -6,7 +11,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
   describe('CSS Custom Properties Validation', () => {
     it('should have correct CSS custom properties loaded', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test critical CSS variables are loaded
       cy.get('body').then(($body) => {
@@ -28,7 +33,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should apply correct color values to elements', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test that red accent color is applied correctly
       cy.get('[data-testid="button-login"]').should('be.visible')
@@ -44,7 +49,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
   describe('Design System Color Consistency', () => {
     it('should maintain consistent steel color usage', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test steel color consistency across elements
       cy.get('body').should('have.css', 'background-color')
@@ -55,7 +60,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper chrome gradient effects', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test chrome gradient classes are applied
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -72,7 +77,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
   describe('Typography and Text Styling', () => {
     it('should have correct typography hierarchy', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test heading styles
       cy.get('h1').should('have.css', 'font-weight', '700')
@@ -85,7 +90,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper text color contrast', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test text color is dark enough for contrast
       cy.get('body').should('have.css', 'color')
@@ -98,7 +103,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
   describe('Component Visual Styling', () => {
     it('should render buttons with correct styling', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test button styling
       cy.get('[data-testid="button-login"]').should('be.visible')
@@ -115,7 +120,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should render cards with proper styling', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test card styling if cards are present
       cy.get('body').then(($body) => {
@@ -134,7 +139,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
   describe('Responsive Design Validation', () => {
     it('should be responsive on mobile viewport', () => {
       cy.viewport('iphone-x')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test mobile layout
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -151,7 +156,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
     it('should be responsive on tablet viewport', () => {
       cy.viewport('ipad-2')
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test tablet layout
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -167,7 +172,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
     it('should be responsive on desktop viewport', () => {
       cy.viewport(1280, 720)
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test desktop layout
       cy.get('[data-testid="landing-page"]').should('be.visible')
@@ -183,7 +188,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
   describe('Dark Mode Visual Tests', () => {
     it('should switch to dark mode correctly', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test dark mode toggle if available
       cy.get('body').then(($body) => {
@@ -203,7 +208,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should maintain contrast in dark mode', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Apply dark mode
       cy.get('body').then(($body) => {
@@ -219,7 +224,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
   describe('Accessibility Visual Tests', () => {
     it('should have proper focus indicators', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test focus styles
       cy.get('[data-testid="button-login"]').focus()
@@ -231,7 +236,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should have sufficient color contrast', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test text contrast against background
       cy.get('body').then(($body) => {
@@ -247,7 +252,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper button sizing for touch targets', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test button size meets minimum touch target requirements
       cy.get('[data-testid="button-login"]').then(($button) => {
@@ -262,7 +267,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
 
   describe('Animation and Transition Tests', () => {
     it('should have smooth hover transitions', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test button hover effects
       cy.get('[data-testid="button-login"]').should('have.css', 'transition')
@@ -273,7 +278,7 @@ describe('Design Tokens Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper loading states', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test that loading states are visually distinct
       cy.get('[data-testid="button-login"]').then(($button) => {

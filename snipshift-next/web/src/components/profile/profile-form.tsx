@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { User } from '@shared/firebase-schema';
+import { User } from '@shared/types';
 import { Save, Plus, X, MapPin, Phone, Globe, Award, Star } from 'lucide-react';
 
 interface ProfileFormProps {
@@ -432,7 +432,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           {user.currentRole === 'hub' && renderHubFields()}
           {user.currentRole === 'professional' && renderProfessionalFields()}
           {user.currentRole === 'brand' && renderBrandFields()}
-          {user.currentRole === 'trainer' && renderTrainerFields()}
+          {user.currentRole === 'professional' && renderTrainerFields()}
         </form>
       </CardContent>
     </Card>

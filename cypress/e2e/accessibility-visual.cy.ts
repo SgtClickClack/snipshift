@@ -1,3 +1,8 @@
+const visitVisualRoute = (path: string = '/') => {
+  // VISUAL-TEST: Direct visit is intentional.
+  cy.visit(path)
+}
+
 describe('Accessibility Visual Tests - SnipShift V2', () => {
   beforeEach(() => {
     cy.clearLocalStorage()
@@ -6,7 +11,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Color Contrast Validation', () => {
     it('should have sufficient color contrast for text', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test main text contrast
       cy.get('body').then(($body) => {
@@ -31,7 +36,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper button contrast', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test button text contrast
       cy.get('[data-testid="button-login"]').then(($button) => {
@@ -56,7 +61,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should maintain contrast in dark mode', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Apply dark mode
       cy.get('body').then(($body) => {
@@ -76,7 +81,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Focus Indicators', () => {
     it('should have visible focus indicators on interactive elements', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test button focus
       cy.get('[data-testid="button-login"]').focus()
@@ -88,7 +93,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper focus ring styling', () => {
-      cy.visit('/login')
+      visitVisualRoute('/login')
       
       // Test input focus
       cy.get('[data-testid="input-email"]').focus()
@@ -100,7 +105,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have consistent focus styling across elements', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test multiple interactive elements
       const interactiveElements = [
@@ -126,7 +131,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Touch Target Sizing', () => {
     it('should have minimum touch target sizes for buttons', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test button size meets WCAG guidelines (44px minimum)
       cy.get('[data-testid="button-login"]').then(($button) => {
@@ -139,7 +144,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper spacing between interactive elements', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test spacing between buttons
       cy.get('body').then(($body) => {
@@ -161,7 +166,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Text Readability', () => {
     it('should have readable font sizes', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test body text size
       cy.get('body').should('have.css', 'font-size')
@@ -173,7 +178,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper line height for readability', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test line height
       cy.get('body').should('have.css', 'line-height')
@@ -185,7 +190,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have sufficient text spacing', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test paragraph spacing
       cy.get('body').then(($body) => {
@@ -204,7 +209,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Keyboard Navigation', () => {
     it('should be navigable with keyboard', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test tab navigation
       cy.get('body').tab()
@@ -216,7 +221,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have logical tab order', () => {
-      cy.visit('/login')
+      visitVisualRoute('/login')
       
       // Test tab order through form
       cy.get('[data-testid="input-email"]').focus()
@@ -232,7 +237,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Screen Reader Support', () => {
     it('should have proper ARIA labels', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test that interactive elements have accessible names
       cy.get('[data-testid="button-login"]').should('have.attr', 'aria-label')
@@ -241,7 +246,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper heading structure', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test heading hierarchy
       cy.get('h1').should('exist')
@@ -251,7 +256,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper form labels', () => {
-      cy.visit('/login')
+      visitVisualRoute('/login')
       
       // Test form labels
       cy.get('[data-testid="input-email"]').should('have.attr', 'aria-label')
@@ -262,7 +267,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Motion and Animation Accessibility', () => {
     it('should respect reduced motion preferences', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test that animations can be disabled
       cy.get('body').then(($body) => {
@@ -278,7 +283,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should not have flashing content', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test that no elements have rapid flashing animations
       cy.get('body').then(($body) => {
@@ -301,7 +306,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
 
   describe('Color Independence', () => {
     it('should not rely solely on color to convey information', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test that interactive elements have other indicators besides color
       cy.get('[data-testid="button-login"]').should('have.css', 'border')
@@ -310,7 +315,7 @@ describe('Accessibility Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper error state indicators', () => {
-      cy.visit('/login')
+      visitVisualRoute('/login')
       
       // Test error states have multiple indicators
       cy.get('[data-testid="input-email"]').then(($input) => {

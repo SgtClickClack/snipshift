@@ -1,34 +1,10 @@
 {
   "users": {
-    "shop": {
-      "email": "shop.owner@snipshift.com",
+    "professional": {
+      "email": "professional@snipshift.com",
       "password": "SecurePass123!",
-      "displayName": "Test Shop Owner",
-      "role": "shop",
-      "businessName": "Elite Barbershop",
-      "address": {
-        "street": "123 Main Street",
-        "city": "Sydney",
-        "state": "NSW",
-        "postcode": "2000",
-        "country": "Australia"
-      },
-      "businessType": "barbershop",
-      "operatingHours": {
-        "monday": { "open": "09:00", "close": "18:00" },
-        "tuesday": { "open": "09:00", "close": "18:00" },
-        "wednesday": { "open": "09:00", "close": "18:00" },
-        "thursday": { "open": "09:00", "close": "18:00" },
-        "friday": { "open": "09:00", "close": "19:00" },
-        "saturday": { "open": "08:00", "close": "17:00" },
-        "sunday": { "open": "10:00", "close": "16:00" }
-      }
-    },
-    "barber": {
-      "email": "barber.pro@snipshift.com",
-      "password": "SecurePass123!",
-      "displayName": "Test Barber Pro",
-      "role": "barber",
+      "displayName": "Test Professional",
+      "role": "professional",
       "skills": ["Hair Cutting", "Beard Trimming", "Fade Techniques", "Customer Service"],
       "experience": "5+ years",
       "certifications": [
@@ -47,30 +23,39 @@
       "isRoamingNomad": false,
       "preferredRegions": ["Sydney", "Melbourne"]
     },
-    "brand": {
-      "email": "brand.rep@snipshift.com",
+    "business": {
+      "email": "business@snipshift.com",
       "password": "SecurePass123!",
-      "displayName": "Test Brand Rep",
-      "role": "brand",
-      "companyName": "Professional Hair Products Co.",
-      "website": "https://prohair.com",
-      "description": "Leading supplier of professional barbering tools and products",
-      "productCategories": ["Clippers", "Scissors", "Styling Products", "Aftercare"],
-      "logoUrl": "/uploads/brands/prohair-logo.png",
-      "websiteLink": "https://prohair.com",
+      "displayName": "Test Business Owner",
+      "role": "business",
+      "businessName": "Elite Barbershop",
+      "businessType": "barbershop",
+      "address": {
+        "street": "123 Main Street",
+        "city": "Sydney",
+        "state": "NSW",
+        "postcode": "2000",
+        "country": "Australia"
+      },
+      "operatingHours": {
+        "monday": { "open": "09:00", "close": "18:00" },
+        "tuesday": { "open": "09:00", "close": "18:00" },
+        "wednesday": { "open": "09:00", "close": "18:00" },
+        "thursday": { "open": "09:00", "close": "18:00" },
+        "friday": { "open": "09:00", "close": "19:00" },
+        "saturday": { "open": "08:00", "close": "17:00" },
+        "sunday": { "open": "10:00", "close": "16:00" }
+      },
+      "website": "https://elitebarbershop.com",
+      "description": "Premium barbershop offering professional grooming services",
+      "productCategories": ["Hair Care", "Beard Care", "Styling Products"],
+      "logoUrl": "/uploads/businesses/elite-logo.png",
       "socialPostsCount": 0,
-      "approvalStatus": "pending"
-    },
-    "trainer": {
-      "email": "trainer.expert@snipshift.com",
-      "password": "SecurePass123!",
-      "displayName": "Test Trainer Expert",
-      "role": "trainer",
-      "qualifications": ["Master Barber Certification", "Teaching Certificate"],
-      "specializations": ["Advanced Fade Techniques", "Beard Styling", "Business Skills"],
-      "yearsExperience": 10,
+      "qualifications": ["Master Barber Certification", "Business License"],
+      "specializations": ["Classic Cuts", "Modern Styles", "Beard Grooming"],
+      "yearsExperience": 8,
       "trainingLocation": "Sydney Training Center",
-      "credentials": ["Master Barber", "Certified Instructor"],
+      "credentials": ["Master Barber", "Certified Business Owner"],
       "trainingOfferings": [
         {
           "id": "training-1",
@@ -82,7 +67,7 @@
           "category": "Hair Cutting"
         }
       ],
-      "approvalStatus": "pending"
+      "approvalStatus": "approved"
     },
     "admin": {
       "email": "admin@snipshift.com",

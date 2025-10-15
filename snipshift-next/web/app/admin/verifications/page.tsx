@@ -55,12 +55,12 @@ interface PendingUser {
 }
 
 export default function AdminVerificationsPage() {
-  const { state } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   // Check if user is admin
-  const isAdmin = state.user?.roles?.includes('admin');
+  const isAdmin = user?.roles?.includes('admin');
 
   // GraphQL queries and mutations
   const { data, loading, refetch } = useQuery(GET_PENDING_VERIFICATIONS, {
@@ -87,7 +87,7 @@ export default function AdminVerificationsPage() {
   });
 
   useEffect(() => {
-    if (!state.isAuthenticated) {
+    if (!isAuthenticated) {
       router.push('/auth/register');
       return;
     }
@@ -96,7 +96,7 @@ export default function AdminVerificationsPage() {
       router.push('/dashboard');
       return;
     }
-  }, [state.isAuthenticated, isAdmin, router]);
+  }, [isAuthenticated, isAdmin, router]);
 
   const handleApprove = async (userId: string) => {
     try {
@@ -114,7 +114,7 @@ export default function AdminVerificationsPage() {
     }
   };
 
-  if (!state.isAuthenticated || !isAdmin) {
+  if (!isAuthenticated || !isAdmin) {
     return null;
   }
 

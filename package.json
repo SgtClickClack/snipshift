@@ -15,7 +15,7 @@
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch",
+    "test:watch:jest": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "test:unit": "jest --testPathIgnorePatterns=tests/",
@@ -37,7 +37,13 @@
     "cypress:run:auth": "cypress run --spec \"cypress/e2e/01-authentication-user-management.cy.ts\"",
     "cypress:run:shifts": "cypress run --spec \"cypress/e2e/02-shift-marketplace.cy.ts\"",
     "cypress:run:social": "cypress run --spec \"cypress/e2e/03-social-features-community.cy.ts\"",
-    "cypress:run:tournaments": "cypress run --spec \"cypress/e2e/11-tournament-system.cy.ts\""
+    "cypress:run:tournaments": "cypress run --spec \"cypress/e2e/11-tournament-system.cy.ts\"",
+    "cypress:component:open": "cypress open --component",
+    "cypress:component:run": "cypress run --component",
+    "test:fast": "cypress run --spec \"cypress/e2e/smoke-tests.cy.ts\" --config defaultCommandTimeout=5000,requestTimeout=5000,responseTimeout=5000",
+    "test:single": "cypress run --spec",
+    "test:watch": "cypress open --config watchForFileChanges=true",
+    "test:debug": "cypress open --config watchForFileChanges=true,defaultCommandTimeout=60000"
   },
   "dependencies": {
     "@apollo/client": "^3.8.0",

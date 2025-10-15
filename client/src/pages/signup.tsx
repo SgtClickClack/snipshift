@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const { toast } = useToast();
   const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
@@ -79,6 +80,19 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setShowValidationErrors(true);
+    
+    // Check for required fields
+    if (!formData.email || !formData.password || !formData.displayName || !formData.role) {
+      const errorMessage = "Please fill in all required fields";
+      setError(errorMessage);
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (formData.password !== formData.confirmPassword) {
       const errorMessage = "Passwords don't match";
@@ -130,8 +144,8 @@ export default function SignupPage() {
         id: userData.id,
         email: userData.email,
         password: '', // Don't store password in frontend
-        roles: Array.isArray(userData.roles) ? userData.roles : ['client'],
-        currentRole: userData.currentRole ?? 'client',
+        roles: Array.isArray(userData.roles) ? userData.roles : [formData.role],
+        currentRole: formData.role,
         provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -148,8 +162,14 @@ export default function SignupPage() {
         description: "Welcome to Snipshift! Let's set up your profile.",
       });
 
-      // Redirect to role selection
-      navigate("/role-selection");
+      // Redirect to appropriate dashboard based on role
+      if (formData.role === 'professional') {
+        navigate("/professional-dashboard");
+      } else if (formData.role === 'hub') {
+        navigate("/hub-dashboard");
+      } else {
+        navigate("/role-selection");
+      }
     } catch (error: any) {
       const errorMessage = error.message?.includes('already exists') 
         ? "User already exists with this email" 
@@ -177,7 +197,7 @@ export default function SignupPage() {
                 <Scissors className="h-8 w-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-steel-900" data-testid="heading-signup">Join Snipshift</CardTitle>
+            <CardTitle className="text-2xl font-bold text-steel-900" data-testid="heading-signup">Create Account</CardTitle>
             <p className="text-steel-600 font-medium">Connect with the creative industry network</p>
           </CardHeader>
           <CardContent>
@@ -206,6 +226,11 @@ export default function SignupPage() {
                   className="mt-2"
                   data-testid="input-display-name"
                 />
+                {showValidationErrors && !formData.displayName && (
+                  <p className="text-red-600 text-sm mt-1" data-testid="error-display-name">
+                    Display name is required
+                  </p>
+                )}
               </div>
               
               <div>
@@ -222,6 +247,11 @@ export default function SignupPage() {
                   className="mt-2"
                   data-testid="input-email"
                 />
+                {showValidationErrors && !formData.email && (
+                  <p className="text-red-600 text-sm mt-1" data-testid="error-email">
+                    Email is required
+                  </p>
+                )}
               </div>
               
               <div>
@@ -238,6 +268,11 @@ export default function SignupPage() {
                   className="mt-2"
                   data-testid="input-password"
                 />
+                {showValidationErrors && !formData.password && (
+                  <p className="text-red-600 text-sm mt-1" data-testid="error-password">
+                    Password is required
+                  </p>
+                )}
               </div>
               
               <div>
@@ -269,11 +304,16 @@ export default function SignupPage() {
                   data-testid="select-role"
                 >
                   <option value="">Select your role</option>
-                  <option value="barber" data-testid="option-barber">Barber</option>
-                  <option value="shop" data-testid="option-shop">Shop</option>
+                  <option value="professional" data-testid="option-professional">Professional</option>
+                  <option value="hub" data-testid="option-hub">Hub</option>
                   <option value="trainer" data-testid="option-trainer">Trainer</option>
                   <option value="brand" data-testid="option-brand">Brand</option>
                 </select>
+                {showValidationErrors && !formData.role && (
+                  <p className="text-red-600 text-sm mt-1" data-testid="error-role">
+                    Role is required
+                  </p>
+                )}
               </div>
               
               <Button 

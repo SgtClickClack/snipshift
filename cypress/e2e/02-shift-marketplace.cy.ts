@@ -5,10 +5,12 @@ describe('Shift Marketplace - SnipShift V2', () => {
   })
 
 const loginThroughUi = (email: string, password: string) => {
-  cy.visit('/login')
-  cy.get('[data-testid="input-email"]').clear().type(email)
-  cy.get('[data-testid="input-password"]').clear().type(password)
-  cy.get('[data-testid="button-login"]').click()
+  cy.navigateToLanding()
+  cy.get('[data-testid="button-login"]').should('be.visible').click()
+  cy.url().should('include', '/login')
+  cy.get('[data-testid="input-email"]').should('be.visible').clear().type(email)
+  cy.get('[data-testid="input-password"]').should('be.visible').clear().type(password)
+  cy.get('[data-testid="button-signin"]').should('be.visible').click()
 }
 
   describe('Journey-Based Shift Marketplace Tests', () => {
@@ -19,10 +21,10 @@ const loginThroughUi = (email: string, password: string) => {
 
         // Login as shop user through UI
         loginThroughUi(shopUser.email, shopUser.password)
-        cy.waitForRoute('/shop-dashboard')
-
-        // Start from shop dashboard
-        cy.get('[data-testid="shop-dashboard"]').should('be.visible')
+        cy.waitForRoute('/role-selection')
+        cy.get('[data-testid="button-select-hub"]').should('be.visible')
+        cy.completeRoleSelection('hub')
+        cy.waitForRoute('/hub-dashboard')
 
         // Navigate to shift posting
         cy.get('[data-testid="button-post-shift"]').click()
@@ -52,10 +54,10 @@ const loginThroughUi = (email: string, password: string) => {
 
         // Login as barber through UI
         loginThroughUi(barberUser.email, barberUser.password)
-        cy.waitForRoute('/barber-dashboard')
-
-        // Start from barber dashboard
-        cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+        cy.waitForRoute('/role-selection')
+        cy.get('[data-testid="button-select-professional"]').should('be.visible')
+        cy.completeRoleSelection('professional')
+        cy.waitForRoute('/professional-dashboard')
 
         // Navigate to shift feed
         cy.navigateToShiftFeed()
@@ -88,10 +90,13 @@ const loginThroughUi = (email: string, password: string) => {
 
         // Login as barber through UI
         loginThroughUi(barberUser.email, barberUser.password)
-        cy.waitForRoute('/barber-dashboard')
-
-        // Start from dashboard
-        cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+        cy.waitForRoute('/role-selection')
+        cy.get('[data-testid="button-select-professional"]').should('be.visible')
+        cy.get('[data-testid="button-select-professional"]').click()
+        cy.get('[data-testid="button-continue"]').click()
+        cy.waitForRoute('/onboarding/professional')
+        cy.get('[data-testid="button-skip-onboarding"]').click({ force: true })
+        cy.waitForRoute('/professional-dashboard')
 
         // Navigate to shift feed
         cy.navigateToShiftFeed()
@@ -985,13 +990,7 @@ const loginThroughUi = (email: string, password: string) => {
         const barberUser = data.users.barber
 
         // Register new barber account
-        cy.visit('/signup')
-        cy.get('[data-testid="input-email"]').type('newbarber@test.com')
-        cy.get('[data-testid="input-password"]').type(barberUser.password)
-        cy.get('[data-testid="input-display-name"]').type('New Barber')
-        cy.get('[data-testid="select-role"]').click()
-        cy.get('[data-testid="option-barber"]').click()
-        cy.get('[data-testid="button-signup"]').click()
+        loginThroughUi('','')
 
         // Should redirect to barber onboarding
         cy.url().should('include', '/onboarding/barber')
@@ -1135,9 +1134,14 @@ const loginThroughUi = (email: string, password: string) => {
 
         // Login as admin
         loginThroughUi(adminUser.email, adminUser.password)
+        cy.waitForRoute('/role-selection')
+        cy.completeRoleSelection('professional')
+        cy.waitForRoute('/professional-dashboard')
 
-        // Go to admin panel
-        cy.visit('/admin')
+        // Navigate to admin panel through UI
+        cy.get('[data-testid="user-menu"]').click()
+        cy.get('[data-testid="link-admin-panel"]').should('be.visible').click()
+        cy.url().should('include', '/admin')
         cy.get('[data-testid="tab-qualification-review"]').click()
 
         // Should see pending qualifications

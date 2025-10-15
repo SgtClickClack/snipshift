@@ -48,6 +48,8 @@ export default function LandingPage() {
             <Link to="/signup" className="underline" data-testid="link-signup">Sign up</Link>
             <span className="mx-2">•</span>
             <Link to="/login" className="underline" data-testid="link-login">Log in</Link>
+            <span className="mx-2">•</span>
+            <Link to="/demo" className="underline" data-testid="link-demo">View Demo</Link>
           </div>
           
           <p className="text-sm opacity-75">Join thousands of professionals already on Snipshift</p>

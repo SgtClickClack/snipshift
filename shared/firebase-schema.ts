@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-// Snipshift User Roles - expanded to support the new multi-role model
-export type UserRole = "hub" | "professional" | "brand" | "trainer" | "client";
+// Snipshift User Roles - simplified to two-role model
+export type UserRole = "professional" | "business";
 
 // Base User Schema (multi-role)
 export const userSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   password: z.string().nullable(),
-  roles: z.array(z.enum(["hub", "professional", "brand", "trainer", "client"])).default([]),
-  currentRole: z.enum(["hub", "professional", "brand", "trainer", "client"]).nullable().default(null),
+  roles: z.array(z.enum(["professional", "business"])).default(["professional"]),
+  currentRole: z.enum(["professional", "business"]).nullable().default("professional"),
   displayName: z.string().optional(),
   profileImage: z.string().optional(),
   googleId: z.string().optional(),
@@ -43,9 +43,10 @@ export const professionalProfileSchema = z.object({
   preferredRegions: z.array(z.string()).default([]),
 });
 
-// Hub-specific fields  
-export const hubProfileSchema = z.object({
+// Business-specific fields (consolidated from hub, brand, trainer)
+export const businessProfileSchema = z.object({
   businessName: z.string(),
+  businessType: z.enum(["barbershop", "salon", "spa", "brand", "training", "other"]),
   address: z.object({
     street: z.string(),
     city: z.string(),
@@ -56,8 +57,7 @@ export const hubProfileSchema = z.object({
       lat: z.number(),
       lng: z.number(),
     }).optional(),
-  }),
-  businessType: z.enum(["barbershop", "salon", "spa", "other"]),
+  }).optional(),
   operatingHours: z.object({
     monday: z.object({ open: z.string(), close: z.string() }).optional(),
     tuesday: z.object({ open: z.string(), close: z.string() }).optional(),
@@ -67,21 +67,12 @@ export const hubProfileSchema = z.object({
     saturday: z.object({ open: z.string(), close: z.string() }).optional(),
     sunday: z.object({ open: z.string(), close: z.string() }).optional(),
   }).optional(),
-});
-
-// Brand-specific fields
-export const brandProfileSchema = z.object({
-  companyName: z.string(),
   website: z.string().optional(),
   description: z.string().optional(),
   productCategories: z.array(z.string()).default([]),
   logoUrl: z.string().optional(),
-  websiteLink: z.string().optional(),
   socialPostsCount: z.number().default(0),
-});
-
-// Trainer-specific fields
-export const trainerProfileSchema = z.object({
+  // Training-specific fields (for businesses offering training)
   qualifications: z.array(z.string()).default([]),
   specializations: z.array(z.string()).default([]),
   yearsExperience: z.number().optional(),
@@ -109,10 +100,11 @@ export const trainerProfileSchema = z.object({
   })).default([]),
 });
 
+
 // Job/Shift Schema - renamed from shift to job for clarity
 export const jobSchema = z.object({
   id: z.string(),
-  hubId: z.string(), // Reference to hub user ID
+  businessId: z.string(), // Reference to business user ID (formerly hubId)
   title: z.string(),
   description: z.string(),
   date: z.date(),
@@ -128,7 +120,7 @@ export const jobSchema = z.object({
   }),
   status: z.enum(["open", "filled", "cancelled"]).default("open"),
   applicants: z.array(z.string()).default([]), // Array of professional IDs
-  selectedProfessional: z.string().optional(),
+  selectedProfessionalId: z.string().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -137,7 +129,7 @@ export const jobSchema = z.object({
 export const socialPostSchema = z.object({
   id: z.string(),
   authorId: z.string(),
-  authorRole: z.enum(["brand", "trainer"]),
+  authorRole: z.enum(["business"]),
   postType: z.enum(["offer", "event", "announcement", "product", "discount"]),
   content: z.string(),
   imageUrl: z.string().optional(),
@@ -162,7 +154,7 @@ export const socialPostSchema = z.object({
 // Training Content Schema
 export const trainingContentSchema = z.object({
   id: z.string(),
-  trainerId: z.string(),
+  businessId: z.string(), // Reference to business user ID (formerly trainerId)
   title: z.string(),
   description: z.string(),
   videoUrl: z.string(),
@@ -182,7 +174,7 @@ export const purchaseSchema = z.object({
   id: z.string(),
   userId: z.string(),
   contentId: z.string(),
-  trainerId: z.string(),
+  businessId: z.string(), // Reference to business user ID (formerly trainerId)
   amount: z.number(),
   paymentStatus: z.enum(["pending", "completed", "failed"]).default("pending"),
   purchasedAt: z.date(),
@@ -194,7 +186,7 @@ export const applicationSchema = z.object({
   id: z.string(),
   jobId: z.string(),
   professionalId: z.string(),
-  hubId: z.string(),
+  businessId: z.string(), // Reference to business user ID (formerly hubId)
   status: z.enum(["pending", "accepted", "rejected"]).default("pending"),
   message: z.string().optional(),
   appliedAt: z.date(),
@@ -207,9 +199,9 @@ export const insertUserSchema = userSchema
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
     name: z.string().optional(),
-    role: z.enum(["hub", "professional", "brand", "trainer", "client"]).optional(),
-    roles: z.array(z.enum(["hub", "professional", "brand", "trainer", "client"]).optional()).optional(),
-    currentRole: z.enum(["hub", "professional", "brand", "trainer", "client"]).nullable().optional(),
+    role: z.enum(["professional", "business"]).optional(),
+    roles: z.array(z.enum(["professional", "business"]).optional()).optional(),
+    currentRole: z.enum(["professional", "business"]).nullable().optional(),
   })
   .transform((data) => {
     const legacyRole = (data as any).role as UserRole | undefined;
@@ -250,9 +242,7 @@ export const insertApplicationSchema = applicationSchema.omit({ id: true, applie
 // Type exports
 export type User = z.infer<typeof userSchema>;
 export type ProfessionalProfile = z.infer<typeof professionalProfileSchema>;
-export type HubProfile = z.infer<typeof hubProfileSchema>;
-export type BrandProfile = z.infer<typeof brandProfileSchema>;
-export type TrainerProfile = z.infer<typeof trainerProfileSchema>;
+export type BusinessProfile = z.infer<typeof businessProfileSchema>;
 export type Job = z.infer<typeof jobSchema>;
 export type SocialPost = z.infer<typeof socialPostSchema>;
 export type Application = z.infer<typeof applicationSchema>;

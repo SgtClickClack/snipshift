@@ -1,3 +1,8 @@
+const visitVisualRoute = (path: string = '/') => {
+  // VISUAL-TEST: Direct visit is intentional.
+  cy.visit(path)
+}
+
 describe('Component Visual Tests - SnipShift V2', () => {
   beforeEach(() => {
     cy.clearLocalStorage()
@@ -6,7 +11,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Button Component Visual Tests', () => {
     it('should render chrome button variants correctly', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test chrome button styling
       cy.get('[data-testid="button-login"]').should('be.visible')
@@ -25,7 +30,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper button hover effects', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test hover state
       cy.get('[data-testid="button-login"]').trigger('mouseover')
@@ -37,7 +42,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should render industrial button styling', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test industrial button class if present
       cy.get('body').then(($body) => {
@@ -55,7 +60,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Card Component Visual Tests', () => {
     it('should render chrome cards with proper styling', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test chrome card styling
       cy.get('body').then(($body) => {
@@ -77,7 +82,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper card shadows', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test card shadow effects
       cy.get('body').then(($body) => {
@@ -95,7 +100,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Navigation Component Visual Tests', () => {
     it('should render navbar with proper styling', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test navbar styling
       cy.get('nav, [data-testid*="nav"]').should('be.visible')
@@ -107,7 +112,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper navigation link styling', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test navigation links
       cy.get('a, [data-testid*="nav"]').then(($links) => {
@@ -124,7 +129,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Form Component Visual Tests', () => {
     it('should render input fields with proper styling', () => {
-      cy.visit('/login')
+      visitVisualRoute('/login')
       
       // Test input field styling
       cy.get('[data-testid="input-email"]').should('be.visible')
@@ -143,7 +148,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper form validation styling', () => {
-      cy.visit('/login')
+      visitVisualRoute('/login')
       
       // Test form container
       cy.get('[data-testid="login-form"]').should('be.visible')
@@ -158,7 +163,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
   describe('Dashboard Component Visual Tests', () => {
     it('should render dashboard with proper layout', () => {
       // Login first to access dashboard
-      cy.visit('/')
+      visitVisualRoute()
       cy.get('[data-testid="button-login"]').click()
       cy.get('[data-testid="input-email"]').type('user@example.com')
       cy.get('[data-testid="input-password"]').type('SecurePassword123!')
@@ -175,7 +180,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
     it('should have proper dashboard card styling', () => {
       // Login and navigate to dashboard
-      cy.visit('/')
+      visitVisualRoute()
       cy.get('[data-testid="button-login"]').click()
       cy.get('[data-testid="input-email"]').type('user@example.com')
       cy.get('[data-testid="input-password"]').type('SecurePassword123!')
@@ -198,7 +203,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Modal Component Visual Tests', () => {
     it('should render modals with proper overlay', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test modal overlay if modals are present
       cy.get('body').then(($body) => {
@@ -214,7 +219,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper modal backdrop', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test modal backdrop styling
       cy.get('body').then(($body) => {
@@ -232,7 +237,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Loading State Visual Tests', () => {
     it('should have proper loading indicators', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test loading states
       cy.get('body').then(($body) => {
@@ -248,7 +253,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper disabled state styling', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test disabled button styling
       cy.get('[data-testid="button-login"]').then(($button) => {
@@ -266,7 +271,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Typography Component Visual Tests', () => {
     it('should have proper heading hierarchy', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test heading sizes
       cy.get('h1').should('have.css', 'font-size')
@@ -283,7 +288,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper text color hierarchy', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test text color consistency
       cy.get('body').should('have.css', 'color')
@@ -296,7 +301,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
 
   describe('Icon Component Visual Tests', () => {
     it('should render icons with proper sizing', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test icon sizing
       cy.get('body').then(($body) => {
@@ -313,7 +318,7 @@ describe('Component Visual Tests - SnipShift V2', () => {
     })
 
     it('should have proper icon colors', () => {
-      cy.visit('/')
+      visitVisualRoute()
       
       // Test icon colors
       cy.get('body').then(($body) => {

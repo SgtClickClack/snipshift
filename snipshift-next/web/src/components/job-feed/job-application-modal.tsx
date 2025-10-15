@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Job } from "@shared/firebase-schema";
+import { Job } from "@shared/types";
 import { X, Calendar, DollarSign, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
 
@@ -79,7 +79,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
 
   if (!isOpen || !job) return null;
 
-  const hasAlreadyApplied = job.applicants?.includes(user?.id || "");
+  const hasAlreadyApplied = job.applicants?.some(app => app.professionalId === user?.id);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

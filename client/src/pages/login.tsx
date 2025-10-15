@@ -122,7 +122,7 @@ export default function LoginPage() {
                 type="submit" 
                 className="w-full bg-primary hover:bg-blue-700"
                 disabled={isLoading}
-                data-testid="button-login"
+                data-testid="button-signin"
               >
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>

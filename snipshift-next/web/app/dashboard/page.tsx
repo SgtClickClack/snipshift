@@ -8,7 +8,7 @@ import AccessControl from '../../src/components/AccessControl';
 import Image from 'next/image';
 
 export default function DashboardPage() {
-  const { state, dispatch } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -16,13 +16,13 @@ export default function DashboardPage() {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
     }
-    dispatch({ type: 'CLEAR_AUTH' });
+    logout();
     router.push('/');
   };
 
   return (
     <AccessControl requireVerification={true}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }} data-testid="professional-dashboard">
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Image
             src="/logo-new.svg"
@@ -56,17 +56,17 @@ export default function DashboardPage() {
               <Typography variant="subtitle2" gutterBottom>
                 User Information:
               </Typography>
-              <Typography variant="body2">
-                <strong>Name:</strong> {state.user?.firstName} {state.user?.lastName}
+              <Typography variant="body2" data-testid="profile-display-name">
+                <strong>Name:</strong> {user?.displayName}
+              </Typography>
+              <Typography variant="body2" data-testid="profile-email">
+                <strong>Email:</strong> {user?.email}
               </Typography>
               <Typography variant="body2">
-                <strong>Email:</strong> {state.user?.email}
+                <strong>Role:</strong> {user?.currentRole}
               </Typography>
               <Typography variant="body2">
-                <strong>Role:</strong> {state.user?.currentRole}
-              </Typography>
-              <Typography variant="body2">
-                <strong>User ID:</strong> {state.user?.id}
+                <strong>User ID:</strong> {user?.id}
               </Typography>
             </Box>
           </Paper>

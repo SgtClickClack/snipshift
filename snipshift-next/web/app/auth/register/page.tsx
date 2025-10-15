@@ -36,7 +36,7 @@ function RegisterPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showNotification } = useNotification();
-  const { dispatch } = useAuth();
+  const { login } = useAuth();
   
   const [formData, setFormData] = useState<RegisterFormData>({
     email: '',
@@ -44,7 +44,7 @@ function RegisterPageContent() {
     confirmPassword: '',
     firstName: '',
     lastName: '',
-    role: (searchParams.get('role')?.toUpperCase() as RegisterFormData['role']) || 'PROFESSIONAL',
+    role: (searchParams?.get('role')?.toUpperCase() as RegisterFormData['role']) || 'PROFESSIONAL',
   });
   
   const [errors, setErrors] = useState<Partial<RegisterFormData>>({});
@@ -109,7 +109,7 @@ function RegisterPageContent() {
         localStorage.setItem('userData', JSON.stringify(user));
         
         // Update auth context
-        dispatch({ type: 'SET_AUTH', payload: { user, token } });
+        login(user);
         
         console.log('✅ Registration successful! User data:', user);
         console.log('🔑 JWT Token received:', token.substring(0, 20) + '...');

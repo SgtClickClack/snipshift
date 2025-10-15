@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { messagingService } from '@/lib/messaging';
 import { useAuth } from '@/contexts/AuthContext';
-import { Message } from '@shared/firebase-schema';
+import { Message } from '@shared/types';
 import { Send, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 

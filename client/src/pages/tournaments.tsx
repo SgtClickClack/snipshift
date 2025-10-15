@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { Calendar, Users, Trophy, MapPin, Clock } from 'lucide-react';
 
 interface Tournament {
@@ -70,6 +71,7 @@ export default function TournamentsPage() {
     specialization: '',
     yearsExperience: ''
   });
+  const { toast } = useToast();
 
   const handleRegisterForTournament = (tournament: Tournament) => {
     setSelectedTournament(tournament);
@@ -87,6 +89,11 @@ export default function TournamentsPage() {
     setShowRegistrationModal(false);
     setRegistrationData({ whyParticipate: '', specialization: '', yearsExperience: '' });
     setSelectedTournament(null);
+    
+    toast({
+      title: "Tournament registration submitted successfully",
+      description: "Your registration has been submitted and is under review.",
+    });
   };
 
   const getStatusColor = (status: string) => {

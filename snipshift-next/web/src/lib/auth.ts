@@ -1,5 +1,5 @@
 // Temporary compatibility shim: prefer useAuth from contexts/AuthContext
-import type { User } from '@shared/firebase-schema';
+import type { User } from '@shared/types';
 
 let currentUser: User | null = null;
 

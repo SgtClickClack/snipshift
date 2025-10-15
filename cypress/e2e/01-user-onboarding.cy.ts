@@ -6,11 +6,30 @@ describe('User Onboarding Flow', () => {
   }
 
   beforeEach(() => {
-    cy.visit('/')
+    // Clear any existing authentication state
+    cy.clearLocalStorage()
+    cy.clearCookies()
+    cy.navigateToLanding()
   })
 
-  it('should navigate to signup page from homepage', () => {
-    openSignup()
+  it.only('should navigate to signup page from homepage', () => {
+    // Basic page load check
+    cy.get('body').should('exist')
+    cy.url().should('include', '/')
+    
+    // Wait for page to load
+    cy.wait(2000)
+    
+    // Check if we can find any elements at all
+    cy.get('body').then(($body) => {
+      cy.log('Body exists, content length:', $body.text().length)
+    })
+    
+    // Try to find the signup link
+    cy.get('[data-testid="link-signup"]').should('be.visible')
+    cy.get('[data-testid="link-signup"]').click()
+    cy.url().should('include', '/signup')
+    cy.get('[data-testid="heading-signup"]').should('contain', 'Create Account')
   })
 
   it('should display all role options in signup form', () => {

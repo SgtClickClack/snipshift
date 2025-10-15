@@ -1,6 +1,8 @@
 describe('Job Posting and Application Flow', () => {
   beforeEach(() => {
-    cy.visit('/login')
+    cy.navigateToLanding()
+    cy.get('[data-testid="button-login"]').should('be.visible').click()
+    cy.url().should('include', '/login')
   })
 
   it('Hub user should be able to post a job', () => {

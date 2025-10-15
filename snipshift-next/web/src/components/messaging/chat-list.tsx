@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { messagingService } from '@/lib/messaging';
 import { useAuth } from '@/contexts/AuthContext';
-import { Chat } from '@shared/firebase-schema';
+import { Chat } from '@shared/types';
 import { MessageCircle, Search, User } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -142,7 +142,7 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
                       </div>
                       
                       <div className="flex items-center text-sm text-muted-foreground">
-                        {chat.lastMessageSender === user.id && (
+                        {chat.lastMessageSenderId === user?.id && (
                           <span className="mr-1">You:</span>
                         )}
                         <span className="truncate" data-testid={`last-message-${chat.id}`}>

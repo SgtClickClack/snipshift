@@ -1,5 +1,7 @@
 describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
   beforeEach(() => {
+    // Set mobile viewport
+    cy.viewport(375, 667)
     // Login once at the beginning of each test
     cy.login()
   })
@@ -7,7 +9,7 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
   describe('Core Navigation Journeys', () => {
     it('should navigate from dashboard to shift feed and back', () => {
       // Start from dashboard (where cy.login() leaves us)
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
       
       // Navigate to shift feed
       cy.navigateToShiftFeed()
@@ -17,13 +19,13 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
       
       // Navigate back to dashboard
       cy.get('[data-testid="nav-dashboard"]').click()
-      cy.url().should('include', '/barber-dashboard')
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.url().should('include', '/professional-dashboard')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
     })
 
     it('should navigate from dashboard to tournaments page', () => {
       // Start from dashboard
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
       
       // Navigate to tournaments
       cy.navigateToTournaments()
@@ -35,7 +37,7 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
 
     it('should navigate from dashboard to profile page', () => {
       // Start from dashboard
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
       
       // Navigate to profile
       cy.navigateToProfile()
@@ -47,7 +49,7 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
 
     it('should navigate from dashboard to applications page', () => {
       // Start from dashboard
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
       
       // Navigate to applications
       cy.navigateToApplications()
@@ -58,7 +60,7 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
 
     it('should verify all navigation elements are present on dashboard', () => {
       // Start from dashboard
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
       
       // Verify navigation elements
       cy.verifyNavigationElements()
@@ -225,7 +227,7 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
   describe('Cross-Feature Navigation Journey', () => {
     it('should complete a full user journey: dashboard -> shift feed -> apply -> applications', () => {
       // Start from dashboard
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
       
       // Navigate to shift feed
       cy.navigateToShiftFeed()
@@ -247,7 +249,7 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
 
     it('should complete a tournament journey: dashboard -> tournaments -> register -> profile', () => {
       // Start from dashboard
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
       
       // Navigate to tournaments
       cy.navigateToTournaments()
@@ -283,20 +285,32 @@ describe('Smoke Tests - SnipShift V2 Journey-Based Testing', () => {
 
       // Should redirect to dashboard or show 404
       cy.location('pathname').should((pathname) => {
-        expect(pathname.includes('/barber-dashboard') || pathname.includes('/404')).to.be.true
+        expect(pathname.includes('/professional-dashboard') || pathname.includes('/404')).to.be.true
       })
     })
 
     it('should maintain session across page refreshes', () => {
-      // Verify we're logged in
-      cy.get('[data-testid="user-menu"]').should('be.visible')
+      // Verify we're logged in - check for either desktop or mobile user menu
+      cy.get('body').then(($body) => {
+        if ($body.find('[data-testid="user-menu"]:visible').length > 0) {
+          cy.get('[data-testid="user-menu"]').should('be.visible')
+        } else {
+          cy.get('[data-testid="mobile-menu-button"]').should('be.visible')
+        }
+      })
       
       // Refresh page
       cy.reload()
       
       // Should still be logged in
-      cy.get('[data-testid="user-menu"]').should('be.visible')
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.get('body').then(($body) => {
+        if ($body.find('[data-testid="user-menu"]:visible').length > 0) {
+          cy.get('[data-testid="user-menu"]').should('be.visible')
+        } else {
+          cy.get('[data-testid="mobile-menu-button"]').should('be.visible')
+        }
+      })
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
     })
   })
 })

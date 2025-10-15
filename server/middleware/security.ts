@@ -12,13 +12,13 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // trustProxy: true, // Always trust proxy for Replit deployment
-  skip: (req) => process.env.NODE_ENV === 'development' && req.ip === '::1',
+  skip: (req) => process.env.NODE_ENV === 'development' && req.ip === '::1' || process.env.E2E_TEST === '1' || process.env.NODE_ENV === 'test',
 });
 
 // Rate limiting for API endpoints
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // Higher limit for development
+  max: process.env.NODE_ENV === 'development' || process.env.E2E_TEST === '1' ? 10000 : 100, // Much higher limit for development and E2E tests
   message: {
     error: 'Too many requests, please try again later.',
     retryAfter: '15 minutes'
@@ -26,7 +26,7 @@ export const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // trustProxy: true, // Always trust proxy for Replit deployment
-  skip: (req) => process.env.NODE_ENV === 'development' && req.ip === '::1',
+  skip: (req) => process.env.NODE_ENV === 'development' && req.ip === '::1' || process.env.E2E_TEST === '1' || process.env.NODE_ENV === 'test',
 });
 
 // Minimal CSRF protection via custom header on state-changing requests

@@ -38,7 +38,7 @@ interface RecentActivity {
 
 export default function MobileDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'earnings' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'earnings' | 'profile' | 'applications'>('overview');
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -295,6 +295,60 @@ export default function MobileDashboard() {
     </div>
   );
 
+  const renderApplications = () => (
+    <div className="space-y-4" data-testid="applications-page">
+      <div className="text-center py-8">
+        <h3 className="text-lg font-medium text-steel-900 mb-2">My Applications</h3>
+        <p className="text-steel-600 mb-4">Track your shift applications and their status</p>
+        
+        {/* Mock Application Cards */}
+        <div className="space-y-4">
+          <Card data-testid="application-card">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h4 className="font-semibold" data-testid="application-shift-title">Senior Barber - Weekend Shift</h4>
+                  <p className="text-sm text-steel-600">Elite Barbershop</p>
+                </div>
+                <Badge className="bg-yellow-100 text-yellow-800" data-testid="application-status">Pending</Badge>
+              </div>
+              <div className="space-y-2 text-sm text-steel-600">
+                <div className="flex justify-between">
+                  <span data-testid="application-location">Sydney, NSW</span>
+                  <span data-testid="application-date">2025-01-15</span>
+                </div>
+                <div className="text-xs text-steel-500">
+                  Applied on: 2025-01-10
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h4 className="font-semibold">Mobile Barber Service</h4>
+                  <p className="text-sm text-steel-600">Mobile Grooming Co</p>
+                </div>
+                <Badge className="bg-green-100 text-green-800">Approved</Badge>
+              </div>
+              <div className="space-y-2 text-sm text-steel-600">
+                <div className="flex justify-between">
+                  <span>Melbourne, VIC</span>
+                  <span>2025-01-20</span>
+                </div>
+                <div className="text-xs text-steel-500">
+                  Applied on: 2025-01-08
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full">
       {/* Tab Navigation */}
@@ -331,6 +385,14 @@ export default function MobileDashboard() {
         >
           Profile
         </Button>
+        <Button
+          variant={activeTab === 'applications' ? 'default' : 'ghost'}
+          className="flex-1 rounded-none"
+          onClick={() => setActiveTab('applications')}
+          data-testid="mobile-tab-applications"
+        >
+          Applications
+        </Button>
       </div>
 
       {/* Tab Content */}
@@ -339,6 +401,7 @@ export default function MobileDashboard() {
         {activeTab === 'jobs' && renderJobs()}
         {activeTab === 'earnings' && renderEarnings()}
         {activeTab === 'profile' && renderProfile()}
+        {activeTab === 'applications' && renderApplications()}
       </div>
     </div>
   );

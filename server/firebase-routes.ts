@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { firebaseStorage } from "./firebase-storage";
+import { authLimiter } from "./middleware/security";
 import { 
   insertUserSchema, 
   loginSchema, 
@@ -14,12 +15,44 @@ type FetchInit = any;
 // import nodemailer from "nodemailer"; // Unused in current implementation
 
 export async function registerFirebaseRoutes(app: Express): Promise<Server> {
-  // Create test user for E2E tests
+  // Create test users for E2E tests
   try {
-    // Check if user already exists
+    // Create barber test user
+    const existingBarber = await firebaseStorage.getUserByEmail("barber.pro@snipshift.com");
+    if (existingBarber) {
+      console.log("ℹ️ Firebase barber test user already exists:", existingBarber.email);
+    } else {
+      const barberUser = await firebaseStorage.createUser({
+        email: "barber.pro@snipshift.com",
+        password: "SecurePass123!",
+        roles: ["professional"],
+        currentRole: "professional",
+        displayName: "Test Barber Pro",
+        provider: "email"
+      });
+      console.log("✅ Firebase barber test user created:", barberUser.email, "with password:", barberUser.password);
+    }
+
+    // Create shop test user
+    const existingShop = await firebaseStorage.getUserByEmail("shop.owner@snipshift.com");
+    if (existingShop) {
+      console.log("ℹ️ Firebase shop test user already exists:", existingShop.email);
+    } else {
+      const shopUser = await firebaseStorage.createUser({
+        email: "shop.owner@snipshift.com",
+        password: "SecurePass123!",
+        roles: ["shop"],
+        currentRole: "shop",
+        displayName: "Test Shop Owner",
+        provider: "email"
+      });
+      console.log("✅ Firebase shop test user created:", shopUser.email, "with password:", shopUser.password);
+    }
+
+    // Create general test user
     const existingUser = await firebaseStorage.getUserByEmail("user@example.com");
     if (existingUser) {
-      console.log("ℹ️ Firebase test user already exists:", existingUser.email);
+      console.log("ℹ️ Firebase general test user already exists:", existingUser.email);
     } else {
       const testUser = await firebaseStorage.createUser({
         email: "user@example.com",
@@ -29,7 +62,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
         displayName: "Test User",
         provider: "email"
       });
-      console.log("✅ Firebase test user created:", testUser.email, "with password:", testUser.password);
+      console.log("✅ Firebase general test user created:", testUser.email, "with password:", testUser.password);
     }
   } catch (error) {
     console.error("❌ Firebase test user creation failed:", error);
@@ -60,7 +93,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/login", async (req, res) => {
+  app.post("/api/login", authLimiter, async (req, res) => {
     try {
       const loginData = loginSchema.parse(req.body);
       const user = await firebaseStorage.getUserByEmail(loginData.email);

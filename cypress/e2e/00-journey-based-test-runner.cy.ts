@@ -20,12 +20,12 @@ describe('Journey-Based Test Runner - SnipShift V2', () => {
         
         // Complete role selection
         cy.url().should('include', '/role-selection')
-        cy.get('[data-testid="button-select-barber"]').click()
+        cy.get('[data-testid="button-select-professional"]').click()
         cy.get('[data-testid="button-continue"]').click()
         
         // 2. Dashboard Journey
-        cy.url().should('include', '/barber-dashboard')
-        cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+        cy.url().should('include', '/professional-dashboard')
+        cy.get('[data-testid="professional-dashboard"]').should('be.visible')
         cy.get('[data-testid="user-menu"]').should('be.visible')
         
         // 3. Shift Feed Journey
@@ -184,8 +184,8 @@ describe('Journey-Based Test Runner - SnipShift V2', () => {
       
       // Navigate back to dashboard
       cy.get('[data-testid="nav-dashboard"]').click()
-      cy.url().should('include', '/barber-dashboard')
-      cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+      cy.url().should('include', '/professional-dashboard')
+      cy.get('[data-testid="professional-dashboard"]').should('be.visible')
     })
 
     it('should test navigation persistence and session management', () => {

@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 export default function HomePage() {
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }} data-testid="landing-page">
       {/* Hero Section */}
       <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 12 }}>
         <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
@@ -26,16 +26,30 @@ export default function HomePage() {
           <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
             Connect barbershops, professionals, brands, and trainers through our advanced marketplace platform
           </Typography>
-          <Button
-            component={Link}
-            href="/auth/register"
-            variant="contained"
-            color="secondary"
-            size="large"
-            sx={{ px: 4, py: 1.5 }}
-          >
-            Get Started
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button
+              component={Link}
+              href="/auth/register"
+              variant="contained"
+              color="secondary"
+              size="large"
+              sx={{ px: 4, py: 1.5 }}
+              data-testid="button-get-started"
+            >
+              Get Started
+            </Button>
+            <Button
+              component={Link}
+              href="/auth/login"
+              variant="outlined"
+              color="secondary"
+              size="large"
+              sx={{ px: 4, py: 1.5, borderColor: 'white', color: 'white', '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)' } }}
+              data-testid="button-login"
+            >
+              Login
+            </Button>
+          </Box>
         </Container>
       </Box>
 

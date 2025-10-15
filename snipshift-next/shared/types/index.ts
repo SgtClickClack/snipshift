@@ -1,5 +1,5 @@
 // Shared types for SnipShift platform
-export type UserRole = 'client' | 'hub' | 'professional' | 'brand' | 'trainer';
+export type UserRole = 'professional' | 'business';
 
 export type JobStatus = 'open' | 'filled' | 'cancelled' | 'completed';
 
@@ -55,14 +55,23 @@ export interface User {
   updatedAt: Date;
 }
 
-export interface HubProfile {
+export interface BusinessProfile {
   businessName: string;
-  address: Address;
   businessType: string;
+  address?: Address;
   operatingHours?: OperatingHours;
   description?: string;
   website?: string;
   logoUrl?: string;
+  productCategories?: string[];
+  socialPostsCount: number;
+  // Training-specific fields (for businesses offering training)
+  qualifications?: string[];
+  specializations?: string[];
+  yearsExperience?: number;
+  trainingLocation?: string;
+  credentials?: string[];
+  trainingOfferings?: TrainingOffering[];
 }
 
 export interface ProfessionalProfile {
@@ -77,26 +86,6 @@ export interface ProfessionalProfile {
   reviewCount: number;
 }
 
-export interface BrandProfile {
-  companyName: string;
-  website?: string;
-  description?: string;
-  productCategories?: string[];
-  logoUrl?: string;
-  socialPostsCount: number;
-}
-
-export interface TrainerProfile {
-  qualifications?: string[];
-  specializations?: string[];
-  yearsExperience?: number;
-  trainingLocation?: string;
-  credentials?: string[];
-  rating?: number;
-  reviewCount: number;
-  totalStudents: number;
-  trainingOfferings?: TrainingOffering[];
-}
 
 export interface Certification {
   type: string;
@@ -128,8 +117,8 @@ export interface Job {
   startTime: string;
   endTime: string;
   status: JobStatus;
-  hubId: string;
-  hub?: User;
+  businessId: string;
+  business?: User;
   applicants?: Application[];
   selectedProfessionalId?: string;
   selectedProfessional?: User;
@@ -137,6 +126,9 @@ export interface Job {
   updatedAt: Date;
   applicationsCount: number;
 }
+
+// Alias for backward compatibility
+export type Shift = Job;
 
 export interface Application {
   id: string;
@@ -180,8 +172,8 @@ export interface Comment {
 // Training types
 export interface TrainingContent {
   id: string;
-  trainerId: string;
-  trainer?: User;
+  businessId: string;
+  business?: User;
   title: string;
   description: string;
   contentType: ContentType;
@@ -206,6 +198,8 @@ export interface Purchase {
   user?: User;
   contentId: string;
   content?: TrainingContent;
+  businessId: string;
+  business?: User;
   amount: number;
   paymentStatus: PaymentStatus;
   purchasedAt: Date;
@@ -298,7 +292,7 @@ export interface CreateJobData {
   date: Date;
   startTime: string;
   endTime: string;
-  hubId: string;
+  businessId: string;
 }
 
 // Mobile-specific types
@@ -332,7 +326,7 @@ export class ApiError extends Error {
 }
 
 // Constants
-export const USER_ROLES: UserRole[] = ['client', 'hub', 'professional', 'brand', 'trainer'];
+export const USER_ROLES: UserRole[] = ['professional', 'business'];
 export const JOB_STATUSES: JobStatus[] = ['open', 'filled', 'cancelled', 'completed'];
 export const PAYMENT_STATUSES: PaymentStatus[] = ['pending', 'completed', 'failed', 'refunded'];
 export const CONTENT_TYPES: ContentType[] = ['video', 'article', 'workshop', 'course'];

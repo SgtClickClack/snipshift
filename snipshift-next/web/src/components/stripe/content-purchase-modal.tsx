@@ -9,9 +9,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 // Load Stripe (use test key for demo)
 const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 
   'pk_test_51OqJxYBEZQGWNXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-);
+) as any;
 
 interface TrainingContent {
   id: string;

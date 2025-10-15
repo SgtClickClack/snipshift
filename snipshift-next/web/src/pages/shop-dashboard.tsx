@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Shift } from "@shared/schema";
+import { Shift } from "@shared/types";
 import { Plus, Calendar, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 

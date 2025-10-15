@@ -54,7 +54,7 @@ export function setupProductionMiddleware(app: express.Application) {
     app.use(express.static(clientBuildPath));
     
     // Handle client-side routing - serve index.html for all non-API routes
-    app.get('*', (req, res, next) => {
+    app.use((req, res, next) => {
       if (req.url.startsWith('/api/')) {
         return next();
       }

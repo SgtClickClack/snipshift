@@ -22,14 +22,11 @@ import RoleSelectionPage from '@/pages/role-selection';
 import NotFound from '@/pages/not-found';
 
 // Onboarding pages - lazy load for better performance
-const BarberOnboarding = lazy(() => import('@/pages/onboarding/barber'));
-const ShopOnboarding = lazy(() => import('@/pages/onboarding/shop'));
-const BrandOnboarding = lazy(() => import('@/pages/onboarding/brand'));
+const ProfessionalOnboarding = lazy(() => import('@/pages/onboarding/barber'));
 
 // Dashboard pages - lazy load to reduce initial bundle
-const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
-const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
+const BusinessDashboard = lazy(() => import('@/pages/business-dashboard'));
 
 // Feature pages - lazy load for better performance
 const DemoPage = lazy(() => import('@/pages/demo'));
@@ -129,14 +126,6 @@ function AppRoutes() {
         <Route path="/__/auth/handler" element={<OAuthCallback />} />
 
         {/* Protected dashboard routes */}
-        <Route path="/hub-dashboard" element={
-          <ProtectedRoute requiredRole="hub">
-            <Suspense fallback={<PageLoadingFallback />}>
-              <HubDashboard />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-
         <Route path="/professional-dashboard" element={
           <ProtectedRoute requiredRole="professional">
             <Suspense fallback={<PageLoadingFallback />}>
@@ -145,10 +134,10 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="/brand-dashboard" element={
-          <ProtectedRoute requiredRole="brand">
+        <Route path="/business-dashboard" element={
+          <ProtectedRoute requiredRole="business">
             <Suspense fallback={<PageLoadingFallback />}>
-              <BrandDashboard />
+              <BusinessDashboard />
             </Suspense>
           </ProtectedRoute>
         } />

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock, DollarSign, X } from 'lucide-react';
 import { loadGoogleMaps, calculateDistance } from '@/lib/google-maps';
-import { Job } from '@shared/firebase-schema';
+import { Job } from '@shared/types';
 
 interface GoogleMapViewProps {
   jobs: Job[];

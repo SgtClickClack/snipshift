@@ -1,4 +1,4 @@
-import { Chat, Message, InsertMessage } from '@shared/firebase-schema';
+import { Chat, Message } from '@shared/types';
 import { apiRequest } from '@/lib/queryClient';
 
 export class MessagingService {

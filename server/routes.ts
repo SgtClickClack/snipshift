@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { authLimiter } from "./middleware/security";
 import { insertUserSchema, loginSchema, insertShiftSchema } from "@shared/firebase-schema";
 import { stripeConnectRoutes } from "./stripe-connect";
 import { purchaseRoutes } from "./purchase-tracking";
@@ -10,12 +11,44 @@ import nodemailer from "nodemailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
-  // Create test user for E2E tests
+  // Create test users for E2E tests
   try {
-    // Check if user already exists
+    // Create barber test user
+    const existingBarber = await storage.getUserByEmail("barber.pro@snipshift.com");
+    if (existingBarber) {
+      console.log("ℹ️ Barber test user already exists:", existingBarber.email);
+    } else {
+      const barberUser = await storage.createUser({
+        email: "barber.pro@snipshift.com",
+        password: "SecurePass123!",
+        roles: ["professional"],
+        currentRole: "professional",
+        displayName: "Test Barber Pro",
+        provider: "email"
+      });
+      console.log("✅ Barber test user created:", barberUser.email, "with password:", barberUser.password);
+    }
+
+    // Create shop test user
+    const existingShop = await storage.getUserByEmail("shop.owner@snipshift.com");
+    if (existingShop) {
+      console.log("ℹ️ Shop test user already exists:", existingShop.email);
+    } else {
+      const shopUser = await storage.createUser({
+        email: "shop.owner@snipshift.com",
+        password: "SecurePass123!",
+        roles: ["shop"],
+        currentRole: "shop",
+        displayName: "Test Shop Owner",
+        provider: "email"
+      });
+      console.log("✅ Shop test user created:", shopUser.email, "with password:", shopUser.password);
+    }
+
+    // Create general test user
     const existingUser = await storage.getUserByEmail("user@example.com");
     if (existingUser) {
-      console.log("ℹ️ Test user already exists:", existingUser.email);
+      console.log("ℹ️ General test user already exists:", existingUser.email);
     } else {
       const testUser = await storage.createUser({
         email: "user@example.com",
@@ -25,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         displayName: "Test User",
         provider: "email"
       });
-      console.log("✅ Test user created:", testUser.email, "with password:", testUser.password);
+      console.log("✅ General test user created:", testUser.email, "with password:", testUser.password);
     }
   } catch (error) {
     console.error("❌ Test user creation failed:", error);
@@ -77,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Login endpoint (supports both email/password and Google auth)
-  app.post("/api/login", async (req, res) => {
+  app.post("/api/login", authLimiter, async (req, res) => {
     try {
       const { email, password, googleId } = req.body;
       console.log("🔍 Login attempt for:", email, "with password:", password);

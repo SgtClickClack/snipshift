@@ -1,4 +1,4 @@
-import { Shift } from "@shared/schema";
+import { Shift } from "@shared/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, DollarSign, MapPin } from "lucide-react";
@@ -25,16 +25,16 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
           </div>
           <div className="flex items-center text-neutral-600">
             <DollarSign className="mr-2 h-4 w-4 text-primary" />
-            <span>${shift.pay}/hour</span>
+            <span>${shift.payRate}/hour</span>
           </div>
         </div>
         
-        <p className="text-neutral-700 mb-4">{shift.requirements}</p>
+        <p className="text-neutral-700 mb-4">{shift.skillsRequired.join(', ')}</p>
         
         {showApplyButton && (
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <span className="text-xl font-bold text-neutral-900">${shift.pay}</span>
+              <span className="text-xl font-bold text-neutral-900">${shift.payRate}</span>
               <span className="text-neutral-600 ml-2">/hour</span>
             </div>
             <Button onClick={() => onApply?.(shift.id)} className="bg-primary hover:bg-blue-700">

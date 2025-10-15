@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Job } from "@shared/firebase-schema";
+import { Job } from "@shared/types";
 import { MapPin, DollarSign, Calendar, X } from "lucide-react";
 import { format } from "date-fns";
 

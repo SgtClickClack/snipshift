@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 export default function ApplicationPendingPage() {
-  const { state } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -19,16 +19,16 @@ export default function ApplicationPendingPage() {
     router.push('/');
   };
 
-  if (!state.isAuthenticated) {
+  if (!isAuthenticated) {
     if (typeof window !== 'undefined') {
       router.push('/auth/register');
     }
     return null;
   }
 
-  const isBrandOrTrainer = state.user?.roles?.includes('brand') || state.user?.roles?.includes('trainer');
+  const isBrandOrProfessional = user?.roles?.includes('brand') || user?.roles?.includes('professional');
 
-  if (!isBrandOrTrainer) {
+  if (!isBrandOrProfessional) {
     router.push('/dashboard');
     return null;
   }
@@ -53,7 +53,7 @@ export default function ApplicationPendingPage() {
         </Typography>
         
         <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-          Thank you for submitting your {state.user?.roles?.includes('brand') ? 'Brand' : 'Trainer'} application!
+          Thank you for submitting your {user?.roles?.includes('brand') ? 'Brand' : 'Trainer'} application!
         </Typography>
 
         <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>

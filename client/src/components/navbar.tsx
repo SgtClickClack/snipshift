@@ -14,6 +14,7 @@ import MobileNavigation from "@/components/mobile/mobile-navigation";
 import MobileUserMenu from "@/components/mobile/mobile-user-menu";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
+import { RoleSwitcher } from "@/components/auth/role-switcher";
 
 export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
@@ -127,20 +128,7 @@ export default function Navbar() {
               <>
                 {/* Role Switcher */}
                 <div className="hidden md:block">
-                  <Select value={user.currentRole || undefined} onValueChange={handleSwitchRole}>
-                    <SelectTrigger className="w-[200px] bg-steel-800 text-white border-steel-600">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(["professional","hub","brand"] as const)
-                        .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
-                        .map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r.charAt(0).toUpperCase() + r.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <RoleSwitcher />
                 </div>
 
                 {/* Desktop Navigation - Hidden on Mobile */}
@@ -278,8 +266,8 @@ export default function Navbar() {
             <div className="space-y-2">
               <p className="text-chrome-light text-sm font-medium">Switch Role</p>
               <div className="grid grid-cols-1 gap-2">
-                {(["professional","hub","brand"] as const)
-                  .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
+                {(["professional","business"] as const)
+                  .filter((role) => (user?.roles || []).includes(role))
                   .map((role) => (
                     <Button
                       key={role}

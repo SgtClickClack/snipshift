@@ -10,7 +10,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
         const testUser = data.users.barber
         
         // Start registration journey
-        cy.visit('/signup')
+        cy.navigateToLanding()
+        cy.get('[data-testid="link-signup"]').should('be.visible').click()
         
         // Fill out registration form
         cy.get('[data-testid="input-email"]').type('newuser@test.com')
@@ -19,7 +20,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Select role
         cy.get('[data-testid="select-role"]').click()
-        cy.get('[data-testid="option-barber"]').click()
+        cy.get('[data-testid="option-professional"]').click()
         
         // Submit form
         cy.get('[data-testid="button-signup"]').click()
@@ -29,13 +30,12 @@ describe('Authentication & User Management - SnipShift V2', () => {
         cy.get('[data-testid="success-message"]').should('contain', 'Account created successfully')
         
         // Complete role selection journey
-        cy.get('[data-testid="button-select-barber"]').click()
-        cy.get('[data-testid="button-continue"]').click()
+        cy.get('[data-testid="button-select-professional"]').click()
+        cy.get('[data-testid="confirm-role-button"]').click()
         
-        // Should land on dashboard
-        cy.url().should('include', '/barber-dashboard')
-        cy.get('[data-testid="barber-dashboard"]').should('be.visible')
-        cy.get('[data-testid="user-menu"]').should('be.visible')
+        // Should land on onboarding flow
+        cy.url().should('include', '/onboarding/professional')
+        cy.get('[data-testid="onboarding-professional"]').should('be.visible')
       })
     })
 
@@ -44,18 +44,19 @@ describe('Authentication & User Management - SnipShift V2', () => {
         const testUser = data.users.barber
         
         // Start login journey
-        cy.visit('/login')
+        cy.navigateToLanding()
+        cy.get('[data-testid="link-login"]').should('be.visible').click()
         
         // Fill out login form
         cy.get('[data-testid="input-email"]').type(testUser.email)
         cy.get('[data-testid="input-password"]').type(testUser.password)
         
         // Submit form
-        cy.get('[data-testid="button-login"]').click()
+        cy.get('[data-testid="button-signin"]').click()
         
-        // Should redirect to dashboard
-        cy.url().should('include', '/barber-dashboard')
-        cy.get('[data-testid="user-menu"]').should('be.visible')
+        // Should redirect to role selection
+        cy.url().should('include', '/role-selection')
+        cy.get('[data-testid="button-select-professional"]').should('be.visible')
         
         // Navigate to profile from dashboard
         cy.navigateToProfile()
@@ -72,7 +73,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Login first
         cy.loginWithCredentials(testUser.email, testUser.password)
-        cy.url().should('include', '/barber-dashboard')
+        cy.url().should('include', '/role-selection')
+        cy.completeRoleSelection('professional')
         
         // Start logout journey from dashboard
         cy.get('[data-testid="user-menu"]').click()
@@ -90,7 +92,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
       cy.fixture('snipshift-v2-test-data').then((data) => {
         const testUser = data.users.barber
         
-        cy.visit('/signup')
+        cy.navigateToLanding()
+        cy.get('[data-testid="link-signup"]').should('be.visible').click()
         
         // Fill out registration form
         cy.get('[data-testid="input-email"]').type(testUser.email)
@@ -99,7 +102,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Select role
         cy.get('[data-testid="select-role"]').click()
-        cy.get('[data-testid="option-barber"]').click()
+        cy.get('[data-testid="option-professional"]').click()
         
         // Submit form
         cy.get('[data-testid="button-signup"]').click()
@@ -111,7 +114,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
     })
 
     it('should register with Google OAuth authentication', () => {
-      cy.visit('/signup')
+      cy.navigateToLanding()
+      cy.get('[data-testid="link-signup"]').should('be.visible').click()
       
       // Click Google OAuth button
       cy.get('[data-testid="button-google-signup"]').click()
@@ -137,23 +141,26 @@ describe('Authentication & User Management - SnipShift V2', () => {
       cy.fixture('snipshift-v2-test-data').then((data) => {
         const testUser = data.users.barber
         
-        cy.visit('/login')
+        cy.navigateToLanding()
+        cy.get('[data-testid="button-login"]').should('be.visible').click()
+        cy.url().should('include', '/login')
         
         // Fill out login form
         cy.get('[data-testid="input-email"]').type(testUser.email)
         cy.get('[data-testid="input-password"]').type(testUser.password)
         
         // Submit form
-        cy.get('[data-testid="button-login"]').click()
+        cy.get('[data-testid="button-signin"]').click()
         
-        // Should redirect to dashboard
-        cy.url().should('include', '/barber-dashboard')
-        cy.get('[data-testid="user-menu"]').should('be.visible')
+        // Should redirect to role selection
+        cy.url().should('include', '/role-selection')
+        cy.get('[data-testid="button-select-professional"]').should('be.visible')
       })
     })
 
     it('should login with Google OAuth', () => {
-      cy.visit('/login')
+      cy.navigateToLanding()
+      cy.get('[data-testid="link-login"]').click()
       
       // Click Google OAuth button
       cy.get('[data-testid="button-google-login"]').click()
@@ -171,11 +178,12 @@ describe('Authentication & User Management - SnipShift V2', () => {
       }).as('googleOAuth')
       
       cy.wait('@googleOAuth')
-      cy.url().should('include', '/barber-dashboard')
+      cy.url().should('include', '/role-selection')
     })
 
     it('should receive appropriate error messages for invalid login credentials', () => {
-      cy.visit('/login')
+      cy.navigateToLanding()
+      cy.get('[data-testid="link-login"]').click()
       
       // Try invalid credentials
       cy.get('[data-testid="input-email"]').type('invalid@email.com')
@@ -191,14 +199,15 @@ describe('Authentication & User Management - SnipShift V2', () => {
       cy.fixture('snipshift-v2-test-data').then((data) => {
         const testUser = data.users.barber
         
-        cy.visit('/signup')
+        cy.navigateToLanding()
+        cy.get('[data-testid="link-signup"]').click()
         
         // Try to register with existing email
         cy.get('[data-testid="input-email"]').type(testUser.email)
         cy.get('[data-testid="input-password"]').type(testUser.password)
         cy.get('[data-testid="input-display-name"]').type('Another User')
         cy.get('[data-testid="select-role"]').click()
-        cy.get('[data-testid="option-barber"]').click()
+        cy.get('[data-testid="option-professional"]').click()
         cy.get('[data-testid="button-signup"]').click()
         
         // Should show error message
@@ -207,7 +216,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
     })
 
     it('should reset password via email link', () => {
-      cy.visit('/login')
+      cy.navigateToLanding()
+      cy.get('[data-testid="link-login"]').click()
       
       // Click forgot password link
       cy.get('[data-testid="link-forgot-password"]').click()
@@ -227,14 +237,15 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Login
         cy.login(testUser.email, testUser.password)
-        cy.url().should('include', '/barber-dashboard')
+        cy.url().should('include', '/role-selection')
+        cy.completeRoleSelection('professional')
         
         // Refresh page
         cy.reload()
         
         // Should still be logged in
         cy.get('[data-testid="user-menu"]').should('be.visible')
-        cy.url().should('include', '/barber-dashboard')
+        cy.url().should('include', '/professional-dashboard')
       })
     })
 
@@ -244,6 +255,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Login first
         cy.login(testUser.email, testUser.password)
+        cy.url().should('include', '/role-selection')
+        cy.completeRoleSelection('professional')
         
         // Logout
         cy.get('[data-testid="user-menu"]').click()
@@ -270,6 +283,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         })
         
         // Try to access protected route
+        cy.navigateToLanding()
         cy.visit('/barber-dashboard')
         
         // Should redirect to login
@@ -280,7 +294,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
 
   describe('Multi-Role User System', () => {
     it('should select multiple roles during registration', () => {
-      cy.visit('/signup')
+      cy.navigateToLanding()
+      cy.get('[data-testid="link-signup"]').click()
       
       cy.fixture('snipshift-v2-test-data').then((data) => {
         const testUser = data.users.barber
@@ -292,7 +307,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Select multiple roles
         cy.get('[data-testid="select-role"]').click()
-        cy.get('[data-testid="option-barber"]').click()
+        cy.get('[data-testid="option-professional"]').click()
         cy.get('[data-testid="option-shop"]').click()
         cy.get('[data-testid="option-trainer"]').click()
         
@@ -389,8 +404,9 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Login as barber
         cy.login(testUser.email, testUser.password)
-        cy.url().should('include', '/barber-dashboard')
-        cy.get('[data-testid="barber-dashboard"]').should('be.visible')
+        cy.url().should('include', '/role-selection')
+        cy.completeRoleSelection('professional')
+        cy.get('[data-testid="professional-dashboard"]').should('be.visible')
         
         // Add and switch to shop role
         cy.get('[data-testid="user-menu"]').click()
@@ -413,22 +429,26 @@ describe('Authentication & User Management - SnipShift V2', () => {
         const testUser = data.users.barber
         
         // Start from homepage and navigate to login
-        cy.visit('/')
-        cy.get('[data-testid="button-login"]').click()
+        cy.navigateToLanding()
+        cy.get('[data-testid="button-signin"]').click()
         
         // Login as barber only
         cy.get('[data-testid="input-email"]').type(testUser.email)
         cy.get('[data-testid="input-password"]').type(testUser.password)
         cy.get('[data-testid="button-login"]').click()
         
-        // Should land on barber dashboard
-        cy.url().should('include', '/barber-dashboard')
+        // Should land on role selection
+        cy.url().should('include', '/role-selection')
+        cy.completeRoleSelection('professional')
         
         // Try to access shop features via URL
+        cy.navigateToLanding()
+        cy.navigateToLanding()
+        cy.navigateToLanding()
         cy.visit('/shop-dashboard')
         
-        // Should redirect back to barber dashboard or show error
-        cy.url().should('include', '/barber-dashboard')
+        // Should redirect back to professional dashboard or show error
+        cy.url().should('include', '/professional-dashboard')
         cy.get('[data-testid="error-message"]').should('contain', 'Access denied')
       })
     })
@@ -439,8 +459,13 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Login as barber
         cy.login(testUser.email, testUser.password)
+        cy.url().should('include', '/role-selection')
+        cy.completeRoleSelection('professional')
         
         // Try to access admin features
+        cy.navigateToLanding()
+        cy.navigateToLanding()
+        cy.navigateToLanding()
         cy.visit('/admin')
         
         // Should show access denied
@@ -564,7 +589,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
         const testUser = data.users.brand
         
         // Register as brand
-        cy.visit('/signup')
+        cy.navigateToLanding()
+        cy.get('[data-testid="link-signup"]').click()
         cy.get('[data-testid="input-email"]').type(testUser.email)
         cy.get('[data-testid="input-password"]').type(testUser.password)
         cy.get('[data-testid="input-display-name"]').type(testUser.displayName)
@@ -584,6 +610,8 @@ describe('Authentication & User Management - SnipShift V2', () => {
         
         // Try to access brand dashboard without approval
         cy.login(testUser.email, testUser.password)
+        cy.navigateToLanding()
+        cy.navigateToLanding()
         cy.visit('/brand-dashboard')
         
         // Should redirect to pending approval page
@@ -600,6 +628,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         cy.login(adminUser.email, adminUser.password)
         
         // Go to admin panel
+        cy.navigateToLanding()
         cy.visit('/admin')
         cy.get('[data-testid="tab-pending-applications"]').click()
         
@@ -617,6 +646,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         cy.login(adminUser.email, adminUser.password)
         
         // Go to admin panel
+        cy.navigateToLanding()
         cy.visit('/admin')
         cy.get('[data-testid="tab-pending-applications"]').click()
         
@@ -637,6 +667,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         cy.login(adminUser.email, adminUser.password)
         
         // Go to admin panel
+        cy.navigateToLanding()
         cy.visit('/admin')
         cy.get('[data-testid="tab-pending-applications"]').click()
         
@@ -689,6 +720,7 @@ describe('Authentication & User Management - SnipShift V2', () => {
         cy.login(adminUser.email, adminUser.password)
         
         // Go to admin audit log
+        cy.navigateToLanding()
         cy.visit('/admin')
         cy.get('[data-testid="tab-audit-log"]').click()
         
