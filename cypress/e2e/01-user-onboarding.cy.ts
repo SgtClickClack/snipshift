@@ -6,30 +6,19 @@ describe('User Onboarding Flow', () => {
   }
 
   beforeEach(() => {
-    // Clear any existing authentication state
-    cy.clearLocalStorage()
-    cy.clearCookies()
-    cy.navigateToLanding()
+    // Force a completely clean, unauthenticated state
+    cy.logout()
+    
+    // Ensure we start fresh by visiting the landing page directly
+    cy.visit('/')
+    
+    // Wait for page to load and verify we're on the landing page
+    cy.url().should('include', '/')
+    cy.wait(5000) // Allow time for AuthContext to initialize and any redirects to complete
   })
 
-  it.only('should navigate to signup page from homepage', () => {
-    // Basic page load check
-    cy.get('body').should('exist')
-    cy.url().should('include', '/')
-    
-    // Wait for page to load
-    cy.wait(2000)
-    
-    // Check if we can find any elements at all
-    cy.get('body').then(($body) => {
-      cy.log('Body exists, content length:', $body.text().length)
-    })
-    
-    // Try to find the signup link
-    cy.get('[data-testid="link-signup"]').should('be.visible')
-    cy.get('[data-testid="link-signup"]').click()
-    cy.url().should('include', '/signup')
-    cy.get('[data-testid="heading-signup"]').should('contain', 'Create Account')
+  it('should navigate to signup page from homepage', () => {
+    openSignup()
   })
 
   it('should display all role options in signup form', () => {

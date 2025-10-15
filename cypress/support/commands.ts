@@ -278,6 +278,17 @@ Cypress.Commands.add('navigateToLanding', () => {
   cy.wait(1000)
 })
 
+// Logout command - clears all authentication state
+Cypress.Commands.add('logout', () => {
+  cy.clearCookies()
+  cy.clearLocalStorage()
+  
+  // Clear session storage manually
+  cy.window().then((win) => {
+    win.sessionStorage.clear()
+  })
+})
+
 // Custom command to create a shift posting
 Cypress.Commands.add('createShift', (shiftData: any) => {
   cy.get('[data-testid="button-post-shift"]').click()
