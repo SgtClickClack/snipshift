@@ -1,29 +1,6 @@
 {
   "users": {
-    "professional": {
-      "email": "professional@snipshift.com",
-      "password": "SecurePass123!",
-      "displayName": "Test Professional",
-      "role": "professional",
-      "skills": ["Hair Cutting", "Beard Trimming", "Fade Techniques", "Customer Service"],
-      "experience": "5+ years",
-      "certifications": [
-        {
-          "type": "Barber License",
-          "issuer": "NSW Department of Fair Trading",
-          "date": "2020-01-15",
-          "documentUrl": "/uploads/certifications/barber-license.pdf"
-        }
-      ],
-      "homeLocation": {
-        "city": "Sydney",
-        "state": "NSW",
-        "country": "Australia"
-      },
-      "isRoamingNomad": false,
-      "preferredRegions": ["Sydney", "Melbourne"]
-    },
-    "business": {
+    "shop": {
       "email": "business@snipshift.com",
       "password": "SecurePass123!",
       "displayName": "Test Business Owner",
@@ -68,6 +45,29 @@
         }
       ],
       "approvalStatus": "approved"
+    },
+    "barber": {
+      "email": "professional@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Professional",
+      "role": "professional",
+      "skills": ["Hair Cutting", "Beard Trimming", "Fade Techniques", "Customer Service"],
+      "experience": "5+ years",
+      "certifications": [
+        {
+          "type": "Barber License",
+          "issuer": "NSW Department of Fair Trading",
+          "date": "2020-01-15",
+          "documentUrl": "/uploads/certifications/barber-license.pdf"
+        }
+      ],
+      "homeLocation": {
+        "city": "Sydney",
+        "state": "NSW",
+        "country": "Australia"
+      },
+      "isRoamingNomad": false,
+      "preferredRegions": ["Sydney", "Melbourne"]
     },
     "admin": {
       "email": "admin@snipshift.com",
