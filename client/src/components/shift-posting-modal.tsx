@@ -56,7 +56,7 @@ export default function ShiftPostingModal({ isOpen, onClose }: ShiftPostingModal
       const response = await apiRequest("POST", "/api/shifts", shiftData);
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data: any, variables: any) => {
       const isDraft = variables.status === "draft";
       toast({
         title: isDraft ? "Draft saved successfully!" : "Shift posted successfully!",
