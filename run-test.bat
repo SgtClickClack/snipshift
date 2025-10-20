@@ -1,0 +1,9 @@
+@echo off
+echo Starting server...
+start "Server" cmd /k "npm run dev"
+echo Waiting for server to start...
+timeout /t 10 /nobreak
+echo Running test...
+npx cypress run --spec "cypress/e2e/01-authentication-user-management.cy.ts" --browser chrome
+echo Test completed.
+pause

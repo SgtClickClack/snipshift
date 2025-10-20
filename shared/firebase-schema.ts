@@ -107,6 +107,7 @@ export const jobSchema = z.object({
   businessId: z.string(), // Reference to business user ID (formerly hubId)
   title: z.string(),
   description: z.string(),
+  requirements: z.string().optional(), // Additional requirements field
   date: z.date(),
   startTime: z.string(),
   endTime: z.string(),
@@ -114,13 +115,22 @@ export const jobSchema = z.object({
   payRate: z.number(),
   payType: z.enum(["hourly", "daily", "fixed"]).default("hourly"),
   location: z.object({
+    street: z.string().optional(),
     city: z.string(),
     state: z.string(),
+    postcode: z.string().optional(),
     isRemote: z.boolean().default(false),
+    coordinates: z.object({
+      lat: z.number(),
+      lng: z.number(),
+    }).optional(),
   }),
-  status: z.enum(["open", "filled", "cancelled"]).default("open"),
+  status: z.enum(["draft", "open", "filled", "cancelled", "expired"]).default("open"),
+  urgency: z.enum(["low", "medium", "high"]).default("medium"),
+  maxApplicants: z.number().default(5),
   applicants: z.array(z.string()).default([]), // Array of professional IDs
   selectedProfessionalId: z.string().optional(),
+  deadline: z.date().optional(), // Application deadline
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -187,10 +197,13 @@ export const applicationSchema = z.object({
   jobId: z.string(),
   professionalId: z.string(),
   businessId: z.string(), // Reference to business user ID (formerly hubId)
-  status: z.enum(["pending", "accepted", "rejected"]).default("pending"),
+  status: z.enum(["pending", "accepted", "rejected", "withdrawn"]).default("pending"),
+  coverLetter: z.string().optional(),
+  portfolioSamples: z.array(z.string()).default([]), // Array of file URLs
   message: z.string().optional(),
   appliedAt: z.date(),
   respondedAt: z.date().optional(),
+  withdrawnAt: z.date().optional(),
 });
 
 // Insert schemas (for creating new records)
@@ -280,7 +293,48 @@ export const chatSchema = z.object({
 export const insertMessageSchema = messageSchema.omit({ id: true, timestamp: true, isRead: true });
 export const insertChatSchema = chatSchema.omit({ id: true, createdAt: true, updatedAt: true });
 
+// Rating and Review Schema
+export const ratingSchema = z.object({
+  id: z.string(),
+  raterId: z.string(), // User who gave the rating
+  ratedId: z.string(), // User who received the rating
+  jobId: z.string().optional(), // Optional reference to the job/shift
+  rating: z.number().min(1).max(5),
+  review: z.string().optional(),
+  createdAt: z.date(),
+});
+
+// Saved Shift Schema (for professionals to save shifts for later)
+export const savedShiftSchema = z.object({
+  id: z.string(),
+  professionalId: z.string(),
+  jobId: z.string(),
+  savedAt: z.date(),
+});
+
+// Notification Schema
+export const notificationSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  type: z.enum(["new_shift", "application_update", "new_application", "message"]),
+  title: z.string(),
+  message: z.string(),
+  isRead: z.boolean().default(false),
+  relatedId: z.string().optional(), // ID of related job, application, etc.
+  createdAt: z.date(),
+});
+
+export const insertRatingSchema = ratingSchema.omit({ id: true, createdAt: true });
+export const insertSavedShiftSchema = savedShiftSchema.omit({ id: true, savedAt: true });
+export const insertNotificationSchema = notificationSchema.omit({ id: true, createdAt: true });
+
 export type Message = z.infer<typeof messageSchema>;
 export type Chat = z.infer<typeof chatSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertChat = z.infer<typeof insertChatSchema>;
+export type Rating = z.infer<typeof ratingSchema>;
+export type SavedShift = z.infer<typeof savedShiftSchema>;
+export type Notification = z.infer<typeof notificationSchema>;
+export type InsertRating = z.infer<typeof insertRatingSchema>;
+export type InsertSavedShift = z.infer<typeof insertSavedShiftSchema>;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

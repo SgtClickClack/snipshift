@@ -1,17 +1,13 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Scissors } from "lucide-react";
-
-// Lazy load the Google Auth button to reduce initial bundle size
-const GoogleAuthButton = lazy(() => import("@/components/auth/google-auth-button"));
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -28,7 +24,6 @@ export default function SignupPage() {
     displayName: "",
     role: "",
   });
-
 
   // Handle OAuth callback (new universal flow)
   useEffect(() => {
@@ -81,38 +76,20 @@ export default function SignupPage() {
     setError(null);
     setSuccess(null);
     setShowValidationErrors(true);
-    
-    // Check for required fields
-    if (!formData.email || !formData.password || !formData.displayName || !formData.role) {
-      const errorMessage = "Please fill in all required fields";
-      setError(errorMessage);
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+
+    // Basic validation
+    if (!formData.email || !formData.password || !formData.confirmPassword || !formData.displayName || !formData.role) {
+      setError("Please fill in all fields");
       return;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
-      const errorMessage = "Passwords don't match";
-      setError(errorMessage);
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same",
-        variant: "destructive",
-      });
+      setError("Passwords don't match");
       return;
     }
 
     if (formData.password.length < 6) {
-      const errorMessage = "Password too short";
-      setError(errorMessage);
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
+      setError("Password must be at least 6 characters long");
       return;
     }
 
@@ -128,52 +105,32 @@ export default function SignupPage() {
       });
       const userData = await response.json();
       
-      // Ensure a server session is established immediately after registration
-      try {
-        await apiRequest("POST", "/api/login", {
-          email: userData.email,
-          password: formData.password,
-        });
-      } catch (e) {
-        // Non-fatal for UI purposes; local auth state will still work
-        console.warn('Login after register failed (session may be missing):', e);
-      }
-
       // Create properly formatted user object for auth service
       const newUser = {
         id: userData.id,
         email: userData.email,
         password: '', // Don't store password in frontend
         roles: Array.isArray(userData.roles) ? userData.roles : [formData.role],
-        currentRole: formData.role,
+        currentRole: userData.currentRole ?? formData.role,
         provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
-        displayName: userData.displayName || formData.email.split('@')[0],
+        displayName: userData.displayName || formData.displayName,
         profileImage: userData.profileImage || '',
       };
       
-      console.log('🔧 New user created:', newUser); // Debug log
       login(newUser);
-      setSuccess("Account created successfully! Welcome to Snipshift!");
       
       toast({
         title: "Account created successfully",
-        description: "Welcome to Snipshift! Let's set up your profile.",
+        description: "Welcome to SnipShift! Let's set up your profile.",
       });
 
-      // Redirect to appropriate dashboard based on role
-      if (formData.role === 'professional') {
-        navigate("/professional-dashboard");
-      } else if (formData.role === 'hub') {
-        navigate("/hub-dashboard");
-      } else {
-        navigate("/role-selection");
-      }
+      // Navigate to role selection
+      navigate('/role-selection');
     } catch (error: any) {
-      const errorMessage = error.message?.includes('already exists') 
-        ? "User already exists with this email" 
-        : "Please check your information and try again";
+      console.error('Registration error:', error);
+      const errorMessage = error.message || "Failed to create account. Please try again.";
       setError(errorMessage);
       toast({
         title: "Registration failed",
@@ -185,33 +142,33 @@ export default function SignupPage() {
     }
   };
 
-
-
   return (
-    <div className="min-h-screen py-12 bg-signup">
+    <div className="min-h-screen bg-neutral-100 py-12">
       <div className="max-w-md mx-auto px-4">
-        <Card className="shadow-xl border-2 border-steel-300/50 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="text-center bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full shadow-lg">
-                <Scissors className="h-8 w-8 text-white" />
-              </div>
+        <Card className="shadow-lg">
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center mb-4">
+              <Scissors className="h-8 w-8 text-red-accent mr-2" />
+              <CardTitle className="text-2xl font-bold text-steel-900">SnipShift</CardTitle>
             </div>
-            <CardTitle className="text-2xl font-bold text-steel-900" data-testid="heading-signup">Create Account</CardTitle>
-            <p className="text-steel-600 font-medium">Connect with the creative industry network</p>
+            <CardTitle className="text-xl" data-testid="heading-signup">Join Snipshift</CardTitle>
+            <p className="text-steel-600 text-sm">Join the future of barbering</p>
           </CardHeader>
+          
           <CardContent>
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-red-600 text-sm" data-testid="error-message">{error}</p>
               </div>
             )}
+            
             {success && (
               <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
                 <p className="text-green-600 text-sm" data-testid="success-message">{success}</p>
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <form onSubmit={handleSubmit} className="space-y-6" data-testid="login-form">
               <div>
                 <Label htmlFor="displayName" className="text-sm font-medium text-steel-700">
                   Display Name
@@ -302,6 +259,7 @@ export default function SignupPage() {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="mt-2 w-full px-3 py-2 border border-steel-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-accent focus:border-transparent"
                   data-testid="select-role"
+                  aria-label="Select your role"
                 >
                   <option value="">Select your role</option>
                   <option value="professional" data-testid="option-professional">Professional</option>
@@ -326,14 +284,6 @@ export default function SignupPage() {
               </Button>
             </form>
 
-            {/* Role Options (test visibility for onboarding tests) */}
-            <div className="grid grid-cols-2 gap-2 mt-6">
-              <div className="text-sm" data-testid="option-hub">Hub</div>
-              <div className="text-sm" data-testid="option-professional">Professional</div>
-              <div className="text-sm" data-testid="option-trainer">Trainer</div>
-              <div className="text-sm" data-testid="option-brand">Brand</div>
-            </div>
-
             <div className="my-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -346,19 +296,15 @@ export default function SignupPage() {
             </div>
 
             <div data-testid="google-signup-button">
-              <Suspense fallback={
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full" 
-                  disabled
-                >
-                  <div className="w-5 h-5 mr-2 bg-gray-300 rounded animate-pulse" />
-                  Loading Google Auth...
-                </Button>
-              }>
-                <GoogleAuthButton mode="signup" />
-              </Suspense>
+              {/* Temporarily disable Google Auth to debug rendering issue */}
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full" 
+                disabled
+              >
+                Google Auth temporarily disabled
+              </Button>
             </div>
             
             <div className="text-center mt-6">
@@ -371,8 +317,6 @@ export default function SignupPage() {
             </div>
           </CardContent>
         </Card>
-
-
       </div>
     </div>
   );

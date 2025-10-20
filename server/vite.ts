@@ -49,7 +49,7 @@ export async function setupVite(app: Express, server: Server) {
   // Use Vite middleware to handle all requests
   app.use(vite.middlewares);
   
-  // Catch-all route for SPA - must be last
+  // Catch-all route for SPA - serve static HTML without SSR
   app.use(async (req, res, next) => {
     const url = req.originalUrl;
 
@@ -61,14 +61,13 @@ export async function setupVite(app: Express, server: Server) {
         "index.html",
       );
 
-      // always reload the index.html file from disk incase it changes
+      // Serve static HTML without SSR to avoid hydration issues
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
+        `src="/client/src/main.tsx?v=${nanoid()}"`,
       );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      res.status(200).set({ "Content-Type": "text/html" }).end(template);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);

@@ -233,10 +233,10 @@ export default function Navbar() {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" className="text-white hover:bg-steel-700">Login</Button>
+                  <Button variant="ghost" className="text-white hover:bg-steel-700" data-testid="link-login">Login</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button className="bg-red-accent hover:bg-red-accent-hover">Sign Up</Button>
+                  <Button className="bg-red-accent hover:bg-red-accent-hover" data-testid="link-signup">Sign Up</Button>
                 </Link>
               </>
             )}

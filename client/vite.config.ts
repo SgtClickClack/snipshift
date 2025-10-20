@@ -11,14 +11,11 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
-  root: "./client", // Set root to client directory
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "client", "src"),
-      "@shared": path.resolve(__dirname, "shared"),
-      "@assets": path.resolve(__dirname, "attached_assets"),
-      react: path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      "@": path.resolve(__dirname, "src"),
+      "@shared": path.resolve(__dirname, "..", "shared"),
+      "@assets": path.resolve(__dirname, "..", "attached_assets"),
     },
   },
   server: {
@@ -26,7 +23,7 @@ export default defineConfig({
     host: true,
   },
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
   },
 });

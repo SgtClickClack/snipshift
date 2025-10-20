@@ -774,11 +774,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create shift endpoint (legacy support)
   app.post("/api/shifts", async (req, res) => {
     try {
-      const shiftData = insertShiftSchema.parse(req.body);
-      const shift = await storage.createShift(shiftData);
+      // Transform the frontend data to match the database schema
+      const frontendData = req.body;
+      const shiftData = {
+        hubId: frontendData.hubId,
+        title: frontendData.title,
+        date: new Date(`${frontendData.date}T${frontendData.startTime}`),
+        requirements: frontendData.description || frontendData.requirements || '',
+        pay: parseFloat(frontendData.payRate)
+      };
+      
+      const validatedData = insertShiftSchema.parse(shiftData);
+      const shift = await storage.createShift(validatedData);
       res.json(shift);
     } catch (error) {
-      res.status(400).json({ message: "Invalid shift data" });
+      console.error('Shift creation error:', error);
+      res.status(400).json({ message: "Invalid shift data", error: error.message });
     }
   });
 

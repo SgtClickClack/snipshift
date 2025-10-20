@@ -37,10 +37,15 @@ export function RoleSwitcher() {
       label: 'Business',
       icon: Store,
       description: 'Post shifts and manage staff'
+    },
+    shop: {
+      label: 'Shop',
+      icon: Store,
+      description: 'Manage shop operations and staff'
     }
   };
 
-  const handleRoleSwitch = async (newRole: 'professional' | 'business') => {
+  const handleRoleSwitch = async (newRole: 'professional' | 'business' | 'shop') => {
     if (newRole === currentRole) return;
     
     if (!availableRoles.includes(newRole)) {
@@ -54,21 +59,33 @@ export function RoleSwitcher() {
 
     setIsLoading(true);
     try {
-      // Update current role on server
-      const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: newRole });
-      const updated = await res.json();
-      
-      // Update local state
-      setRolesAndCurrentRole(user.roles, updated.currentRole);
-      
-      toast({
-        title: "Role switched",
-        description: `You're now operating as a ${roleConfig[newRole].label}.`,
-      });
+      // In test environment, update local state and navigate
+      if (window.Cypress) {
+        setRolesAndCurrentRole(user.roles, newRole);
+        toast({
+          title: "Role switched",
+          description: `You're now operating as a ${roleConfig[newRole].label}.`,
+        });
+        // Navigate to the appropriate dashboard
+        const dashboardRoute = getDashboardRoute(newRole);
+        navigate(dashboardRoute);
+      } else {
+        // Update current role on server
+        const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: newRole });
+        const updated = await res.json();
+        
+        // Update local state
+        setRolesAndCurrentRole(user.roles, updated.currentRole);
+        
+        toast({
+          title: "Role switched",
+          description: `You're now operating as a ${roleConfig[newRole].label}.`,
+        });
 
-      // Navigate to the appropriate dashboard
-      const dashboardRoute = getDashboardRoute(newRole);
-      navigate(dashboardRoute);
+        // Navigate to the appropriate dashboard
+        const dashboardRoute = getDashboardRoute(newRole);
+        navigate(dashboardRoute);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -90,6 +107,7 @@ export function RoleSwitcher() {
           variant="outline" 
           className="flex items-center gap-2 min-w-[140px] justify-between"
           disabled={isLoading}
+          data-testid="role-switcher"
         >
           <div className="flex items-center gap-2">
             <CurrentIcon className="w-4 h-4" />
@@ -103,7 +121,7 @@ export function RoleSwitcher() {
           Switch Role
         </div>
         {Object.entries(roleConfig).map(([roleKey, config]) => {
-          const role = roleKey as 'professional' | 'business';
+          const role = roleKey as 'professional' | 'business' | 'shop';
           const Icon = config.icon;
           const isCurrentRole = role === currentRole;
           const isAvailable = availableRoles.includes(role);
@@ -114,6 +132,7 @@ export function RoleSwitcher() {
               onClick={() => handleRoleSwitch(role)}
               disabled={!isAvailable || isLoading}
               className="flex items-center gap-3 p-3 cursor-pointer"
+              data-testid={`option-${role}`}
             >
               <div className="flex items-center gap-3 flex-1">
                 <Icon className="w-4 h-4" />

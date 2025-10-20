@@ -430,6 +430,44 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Shift management routes (for backward compatibility and test requirements)
+  app.post("/api/shifts", async (req, res) => {
+    try {
+      // Transform shift data to job format for consistency
+      const shiftData = req.body;
+      const jobData = {
+        ...shiftData,
+        businessId: shiftData.businessId || shiftData.hubId,
+        date: new Date(shiftData.date),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const job = await firebaseStorage.createJob(jobData);
+      res.json(job);
+    } catch (error) {
+      console.error('Shift creation error:', error);
+      res.status(400).json({ message: "Invalid shift data" });
+    }
+  });
+
+  app.get("/api/shifts", async (req, res) => {
+    try {
+      const { status, location, businessId } = req.query;
+      const filters: any = {};
+      
+      if (status) filters.status = status;
+      if (location) filters.location = location;
+      if (businessId) filters.businessId = businessId;
+      
+      const jobs = await firebaseStorage.getJobs(filters);
+      res.json({ shifts: jobs });
+    } catch (error) {
+      console.error('Shift fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch shifts" });
+    }
+  });
+
   app.get("/api/jobs", async (req, res) => {
     try {
       const { status, location, hubId } = req.query;

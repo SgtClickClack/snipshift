@@ -14,7 +14,7 @@ describe('User Onboarding Flow', () => {
     
     // Wait for page to load and verify we're on the landing page
     cy.url().should('include', '/')
-    cy.wait(5000) // Allow time for AuthContext to initialize and any redirects to complete
+    cy.waitForAuth() // Wait for AuthContext to initialize before proceeding
   })
 
   it('should navigate to signup page from homepage', () => {

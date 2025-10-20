@@ -74,6 +74,17 @@
       "password": "AdminPass123!",
       "displayName": "System Administrator",
       "role": "admin"
+    },
+    "brand": {
+      "email": "brand@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Brand",
+      "role": "brand",
+      "companyName": "Elite Hair Products",
+      "website": "https://elitehair.com",
+      "description": "Premium hair care products for professionals",
+      "productCategories": ["Shampoo", "Conditioner", "Styling Products", "Tools"],
+      "approvalStatus": "pending"
     }
   },
   "shifts": {
