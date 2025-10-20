@@ -33,7 +33,27 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet({ contentSecurityPolicy: false })); // Allow Vite's inline scripts in dev
+// Enable CSP in production; relax in development for Vite/HMR
+const helmetOptions: Parameters<typeof helmet>[0] =
+  process.env.NODE_ENV === 'production'
+    ? {
+        contentSecurityPolicy: {
+          useDefaults: true,
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:'],
+            connectSrc: ["'self'", '*'],
+            frameAncestors: ["'none'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: null,
+          },
+        },
+        crossOriginEmbedderPolicy: false,
+      }
+    : { contentSecurityPolicy: false };
+app.use(helmet(helmetOptions));
 app.use(compression());
 app.use(securityHeaders);
 app.use(sanitizeInput);
@@ -125,8 +145,9 @@ app.use((req, res, next) => {
 (async () => {
   // Apply rate limiting to API routes
   app.use('/api', apiLimiter);
-  // Skip CSRF header requirement in CI/E2E and test runs to allow UI-based POSTs
-  if (process.env.E2E_TEST !== '1' && process.env.CI !== 'true') {
+  // CSRF header required by default; allow explicit disable for CI/E2E
+  const disableCsrf = process.env.DISABLE_CSRF === '1' || process.env.DISABLE_CSRF === 'true';
+  if (!disableCsrf && process.env.E2E_TEST !== '1' && process.env.CI !== 'true') {
     app.use('/api', requireCsrfHeader);
   }
   
@@ -192,8 +213,10 @@ app.use((req, res, next) => {
       port,
       host: "0.0.0.0",
     }, () => {
+      const mode = isDevelopment ? 'development' : 'production';
       log(`serving on port ${port}`);
       log(`Server is ready! Visit: http://localhost:${port}`);
+      log(`Startup mode: ${mode} (${isDevelopment ? 'vite-middleware or static fallback' : 'static'})`);
     });
     
     server.on('error', (error: any) => {
