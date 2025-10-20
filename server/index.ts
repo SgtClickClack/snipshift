@@ -169,13 +169,31 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
-    log(`Server is ready! Visit: http://localhost:${port}`);
+  // Use a promise-based approach to keep the async function alive
+  await new Promise<void>((resolve, reject) => {
+    server.listen(port, "0.0.0.0", () => {
+      log(`serving on port ${port}`);
+      log(`Server is ready! Visit: http://localhost:${port}`);
+      // Don't resolve - keep the promise pending to keep process alive
+    });
+    
+    server.on('error', (error: any) => {
+      console.error('Server error:', error);
+      reject(error);
+    });
+    
+    // Handle shutdown signals gracefully
+    process.on('SIGTERM', () => {
+      console.log('Received SIGTERM, shutting down gracefully');
+      server.close(() => resolve());
+    });
+    
+    process.on('SIGINT', () => {
+      console.log('Received SIGINT, shutting down gracefully');
+      server.close(() => resolve());
+    });
   });
-  
-  server.on('error', (error: any) => {
-    console.error('Server error:', error);
-    process.exit(1);
-  });
-})();
+})().catch((error) => {
+  console.error('Fatal server error:', error);
+  process.exit(1);
+});
