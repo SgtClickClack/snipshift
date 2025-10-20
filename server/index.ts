@@ -119,7 +119,7 @@ async function startServer() {
     app.use('/api', requireCsrfHeader);
   }
   
-  const server = await registerFirebaseRoutes(app);
+  await registerFirebaseRoutes(app);
   
   // CRITICAL: Register Stripe and other routes (including webhook)
   await registerRoutes(app);
@@ -142,6 +142,10 @@ async function startServer() {
   }
   const isDevelopment = process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production";
   console.log("Environment:", process.env.NODE_ENV, "isDevelopment:", isDevelopment);
+  
+  // Create HTTP server AFTER all routes are registered
+  const { createServer } = await import("http");
+  const server = createServer(app);
   
   if (isDevelopment) {
     console.log("Setting up Vite development server...");

@@ -1,5 +1,4 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
 import { firebaseStorage } from "./firebase-storage";
 import { authLimiter } from "./middleware/security";
 import { 
@@ -14,7 +13,7 @@ import fetch from 'node-fetch';
 type FetchInit = any;
 // import nodemailer from "nodemailer"; // Unused in current implementation
 
-export async function registerFirebaseRoutes(app: Express): Promise<Server> {
+export async function registerFirebaseRoutes(app: Express): Promise<void> {
   // Create test users for E2E tests
   try {
     // Create barber test user
@@ -672,7 +671,4 @@ export async function registerFirebaseRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to mark messages as read" });
     }
   });
-
-  const httpServer = createServer(app);
-  return httpServer;
 }
