@@ -128,6 +128,18 @@ app.use((req, res, next) => {
   
   if (isDevelopment) {
     console.log("Setting up Vite development server...");
+    
+    // Fix path mismatch: server/vite.ts adds /client prefix but Vite expects files without it
+    // due to root: "./client" in vite.config.ts
+    app.use((req, res, next) => {
+      if (req.url.startsWith('/client/src/')) {
+        req.url = req.url.replace('/client/src/', '/src/');
+      } else if (req.url.startsWith('/client/public/')) {
+        req.url = req.url.replace('/client/public/', '/public/');
+      }
+      next();
+    });
+    
     await setupVite(app, server);
   } else {
     console.log("Serving static files...");
