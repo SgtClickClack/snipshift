@@ -198,9 +198,8 @@ async function startServer() {
     server.close(() => process.exit(0));
   });
   
-  // Keep process alive - return a promise that never resolves
-  // This is necessary for tsx watch to keep the process running
-  return new Promise(() => {});
+  // The HTTP server listening is enough to keep the event loop alive
+  // No need for additional promises with tsx watch
 }
 
 // Start the server
