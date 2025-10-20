@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
@@ -9,9 +8,8 @@ export default defineConfig({
       include: "**/*.{jsx,tsx}",
       jsxRuntime: "automatic",
     }),
-    tailwindcss(),
   ],
-  root: "./client", // Set root to client directory
+  root: "./client",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
@@ -29,7 +27,12 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
+  // Vite 5.1+ syntax to disable dependency optimization (prevents esbuild deadlock)
   optimizeDeps: {
-    disabled: true,
+    noDiscovery: true,
+    include: [],
+  },
+  css: {
+    postcss: './postcss.config.cjs',
   },
 });
