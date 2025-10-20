@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
@@ -9,7 +8,6 @@ export default defineConfig({
       include: "**/*.{jsx,tsx}",
       jsxRuntime: "automatic",
     }),
-    tailwindcss(),
   ],
   resolve: {
     alias: {
@@ -25,5 +23,13 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
+  },
+  // Vite 5.1+ syntax to prevent esbuild deadlock
+  optimizeDeps: {
+    noDiscovery: true,
+    include: [],
+  },
+  css: {
+    postcss: '../postcss.config.cjs',
   },
 });
