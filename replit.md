@@ -10,6 +10,23 @@ The project maintains two implementations:
 
 Preferred communication style: Simple, everyday language.
 
+# Running the Development Server
+
+**Important**: To start the development server, use:
+```bash
+npm run dev
+```
+
+Do NOT use `npm run start:dev` - that command uses `tsx` which exits immediately after startup. The `dev` command uses `tsx watch` which keeps the server running and enables hot-reload on file changes.
+
+**Note**: The `.replit` file is currently configured with `run = "npm run start:dev"` which does not work. It should be changed to `run = "npm run dev"` but this file cannot be edited programmatically.
+
+**Server Startup**:
+- The server runs on port 5000
+- Test users are automatically created on startup
+- Vite development server provides HMR (Hot Module Replacement)
+- Server logs appear in the console where you run the command
+
 # System Architecture
 
 ## Original Architecture (`client/`, `server/`, `shared/`)
