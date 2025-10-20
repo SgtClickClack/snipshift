@@ -159,7 +159,11 @@
         app.use('/api', requireCsrfHeader);
       }
 
-      const server = await registerFirebaseRoutes(app);
+      await registerFirebaseRoutes(app);
+      
+      // Create HTTP server after routes are registered
+      const { createServer } = await import("http");
+      const server = createServer(app);
 
       // CRITICAL: Register Stripe and other routes (including webhook)
       await registerRoutes(app);
