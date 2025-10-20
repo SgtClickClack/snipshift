@@ -193,14 +193,6 @@ async function startServer() {
     console.log('Received SIGINT, shutting down gracefully');
     server.close(() => process.exit(0));
   });
-  
-  // Keep the event loop active and prevent the async function from completing
-  // This is critical for tsx to not exit the process
-  await new Promise<never>(() => {
-    // This promise never resolves, keeping the async function alive forever
-    // The setInterval ensures the event loop stays active
-    setInterval(() => {}, 1000000);
-  });
 }
 
 // Start the server
