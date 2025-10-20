@@ -173,6 +173,13 @@ async function startServer() {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
+  // Track all active connections for forced shutdown
+  const connections = new Set<any>();
+  server.on('connection', (conn) => {
+    connections.add(conn);
+    conn.on('close', () => connections.delete(conn));
+  });
+  
   // Promisify server.listen to ensure it completes before function returns
   await new Promise<void>((resolve, reject) => {
     server.listen(port, "0.0.0.0", () => {
@@ -187,16 +194,31 @@ async function startServer() {
     });
   });
   
-  // Handle shutdown signals gracefully
-  process.on('SIGTERM', () => {
-    console.log('Received SIGTERM, shutting down gracefully');
-    server.close(() => process.exit(0));
-  });
+  // Handle shutdown signals with forced connection cleanup
+  const shutdown = () => {
+    console.log('Shutting down server...');
+    
+    // Force destroy all active connections (including Vite HMR websocket)
+    for (const conn of connections) {
+      conn.destroy();
+    }
+    connections.clear();
+    
+    // Close server and exit immediately
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+    
+    // Fallback: force exit after 1 second if server.close() hangs
+    setTimeout(() => {
+      console.log('Force exit');
+      process.exit(0);
+    }, 1000);
+  };
   
-  process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down gracefully');
-    server.close(() => process.exit(0));
-  });
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
   
   // The HTTP server listening is enough to keep the event loop alive
   // No need for additional promises with tsx watch
