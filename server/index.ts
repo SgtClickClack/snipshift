@@ -48,6 +48,17 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: false }));
 
+// Enforce SESSION_SECRET presence with safe defaults
+if (!process.env.SESSION_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL ERROR: SESSION_SECRET environment variable is not set.');
+    process.exit(1);
+  } else {
+    console.warn('WARNING: SESSION_SECRET not set. Using insecure default "dev-secret-change-me" for development.');
+    process.env.SESSION_SECRET = 'dev-secret-change-me';
+  }
+}
+
 // Session middleware
 const useMemoryStore = !process.env.DATABASE_URL || process.env.E2E_TEST === '1' || process.env.NODE_ENV === 'test';
 const PgSession = connectPg(session);
@@ -61,7 +72,7 @@ app.use(session({
         conString: process.env.DATABASE_URL,
         createTableIfMissing: true,
       }),
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -145,7 +156,7 @@ app.use((req, res, next) => {
   
   if (isDevelopment) {
     console.log("Setting up Vite development server...");
-    
+
     // Fix path mismatch: server/vite.ts adds /client prefix but Vite expects files without it
     // due to root: "./client" in vite.config.ts
     app.use((req, res, next) => {
@@ -156,8 +167,14 @@ app.use((req, res, next) => {
       }
       next();
     });
-    
-    await setupVite(app, server);
+
+    try {
+      await setupVite(app, server);
+    } catch (error) {
+      console.error("Vite setup failed. Falling back to static files.", error);
+      console.log("Serving static files as fallback...");
+      serveStatic(app);
+    }
   } else {
     console.log("Serving static files...");
     serveStatic(app);
