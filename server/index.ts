@@ -28,6 +28,8 @@ process.on('uncaughtException', (error) => {
 });
 
 const app = express();
+// Remove framework fingerprints
+app.disable('x-powered-by');
 
 // Trust proxy for accurate IP detection (always needed in Replit)
 app.set('trust proxy', 1);
@@ -54,6 +56,10 @@ const helmetOptions: Parameters<typeof helmet>[0] =
       }
     : { contentSecurityPolicy: false };
 app.use(helmet(helmetOptions));
+// Enforce HSTS in production (behind HTTPS proxy)
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet.hsts({ maxAge: 15552000, includeSubDomains: true, preload: false }));
+}
 app.use(compression());
 app.use(securityHeaders);
 app.use(sanitizeInput);
@@ -63,10 +69,11 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/stripe/webhook')) {
     next(); // Skip JSON parsing for webhook (handles query params/variations)
   } else {
-    express.json()(req, res, next);
+    // Set conservative body limits to prevent abuse
+    express.json({ limit: '1mb' })(req, res, next);
   }
 });
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // Enforce SESSION_SECRET presence with safe defaults
 if (!process.env.SESSION_SECRET) {
@@ -175,7 +182,8 @@ app.use((req, res, next) => {
   const isDevelopment = process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production";
   console.log("Environment:", process.env.NODE_ENV, "isDevelopment:", isDevelopment);
   
-  if (isDevelopment) {
+  const disableVite = process.env.DISABLE_VITE === '1' || process.env.DISABLE_VITE === 'true';
+  if (isDevelopment && !disableVite) {
     console.log("Setting up Vite development server...");
 
     // Fix path mismatch: server/vite.ts adds /client prefix but Vite expects files without it
@@ -205,7 +213,13 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
+  // Validate and sanitize the port
+  let parsedPort = Number(process.env.PORT || 5000);
+  if (!Number.isInteger(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
+    console.warn(`Invalid PORT value "${process.env.PORT}". Falling back to 5000.`);
+    parsedPort = 5000;
+  }
+  const port = parsedPort;
   
   // Return a promise that only resolves when server errors occur
   return new Promise<void>((resolve, reject) => {
