@@ -1,0 +1,67 @@
+~/workspace$ ^[[200~npm run start:dev~
+npm run start:dev~bash: npm: command not found
+~/workspace$ npm run start:dev
+
+> snipshift-api@2.0.0 start:dev
+> tsx server/index.ts
+
+✅ Firebase barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Firebase shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ Firebase general test user created: user@example.com with password: SecurePassword123!
+✅ Barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ General test user created: user@example.com with password: SecurePassword123!
+Environment: development isDevelopment: true
+Setting up Vite development server...
+10:22:00 AM [express] serving on port 5000
+10:22:00 AM [express] Server is ready! Visit: http://localhost:5000
+~/workspace$ ps aux | grep "tsx.*server" | grep -v grep
+~/workspace$ curl http://localhost:5000
+curl: (7) Failed to connect to localhost port 5000 after 0 ms: Couldn't connect to server
+~/workspace$ npm run start:dev
+
+> snipshift-api@2.0.0 start:dev
+> tsx server/index.ts
+
+✅ Firebase barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Firebase shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ Firebase general test user created: user@example.com with password: SecurePassword123!
+✅ Barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ General test user created: user@example.com with password: SecurePassword123!
+Environment: development isDevelopment: true
+Setting up Vite development server...
+10:26:38 AM [express] serving on port 5000
+10:26:38 AM [express] Server is ready! Visit: http://localhost:5000
+~/workspace$ npm run start:dev
+
+> snipshift-api@2.0.0 start:dev
+> tsx server/index.ts
+
+✅ Firebase barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Firebase shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ Firebase general test user created: user@example.com with password: SecurePassword123!
+✅ Barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ General test user created: user@example.com with password: SecurePassword123!
+Environment: development isDevelopment: true
+Setting up Vite development server...
+10:32:13 AM [express] serving on port 5000
+10:32:13 AM [express] Server is ready! Visit: http://localhost:5000
+~/workspace$ npm run start:dev
+
+> snipshift-api@2.0.0 start:dev
+> tsx server/index.ts
+
+✅ Firebase barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Firebase shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ Firebase general test user created: user@example.com with password: SecurePassword123!
+✅ Barber test user created: barber.pro@snipshift.com with password: SecurePass123!
+✅ Shop test user created: shop.owner@snipshift.com with password: SecurePass123!
+✅ General test user created: user@example.com with password: SecurePassword123!
+Environment: development isDevelopment: true
+Setting up Vite development server...
+10:35:09 AM [express] serving on port 5000
+10:35:10 AM [express] Server is ready! Visit: http://localhost:5000
+~/workspace$ ^C
+~/workspace$ 
