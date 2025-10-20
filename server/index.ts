@@ -173,14 +173,18 @@ async function startServer() {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
-    log(`Server is ready! Visit: http://localhost:${port}`);
-  });
-  
-  server.on('error', (error: any) => {
-    console.error('Server error:', error);
-    process.exit(1);
+  // Promisify server.listen to ensure it completes before function returns
+  await new Promise<void>((resolve, reject) => {
+    server.listen(port, "0.0.0.0", () => {
+      log(`serving on port ${port}`);
+      log(`Server is ready! Visit: http://localhost:${port}`);
+      resolve();
+    });
+    
+    server.on('error', (error: any) => {
+      console.error('Server error:', error);
+      reject(error);
+    });
   });
   
   // Handle shutdown signals gracefully
@@ -193,6 +197,10 @@ async function startServer() {
     console.log('Received SIGINT, shutting down gracefully');
     server.close(() => process.exit(0));
   });
+  
+  // Keep process alive - return a promise that never resolves
+  // This is necessary for tsx watch to keep the process running
+  return new Promise(() => {});
 }
 
 // Start the server
