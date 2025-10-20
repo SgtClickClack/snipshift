@@ -169,22 +169,13 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
-  // Return a promise that only resolves when server errors occur
-  return new Promise<void>((resolve, reject) => {
-    server.listen({
-      port,
-      host: "0.0.0.0",
-    }, () => {
-      log(`serving on port ${port}`);
-      log(`Server is ready! Visit: http://localhost:${port}`);
-    });
-    
-    server.on('error', (error: any) => {
-      console.error('Server error:', error);
-      reject(error);
-    });
+  server.listen(port, "0.0.0.0", () => {
+    log(`serving on port ${port}`);
+    log(`Server is ready! Visit: http://localhost:${port}`);
   });
-})().catch((error) => {
-  console.error('Fatal error during server startup:', error);
-  process.exit(1);
-});
+  
+  server.on('error', (error: any) => {
+    console.error('Server error:', error);
+    process.exit(1);
+  });
+})();
