@@ -10,6 +10,23 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import createMemoryStore from "memorystore";
 
+// Global error handlers to prevent silent crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit in development
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit in development
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+});
+
 const app = express();
 
 // Trust proxy for accurate IP detection (always needed in Replit)
@@ -128,6 +145,18 @@ app.use((req, res, next) => {
   
   if (isDevelopment) {
     console.log("Setting up Vite development server...");
+    
+    // Fix path mismatch: server/vite.ts adds /client prefix but Vite expects files without it
+    // due to root: "./client" in vite.config.ts
+    app.use((req, res, next) => {
+      if (req.url.startsWith('/client/src/')) {
+        req.url = req.url.replace('/client/src/', '/src/');
+      } else if (req.url.startsWith('/client/public/')) {
+        req.url = req.url.replace('/client/public/', '/public/');
+      }
+      next();
+    });
+    
     await setupVite(app, server);
   } else {
     console.log("Serving static files...");
@@ -139,11 +168,23 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-  }, () => {
-    log(`serving on port ${port}`);
-    log(`Server is ready! Visit: http://localhost:${port}`);
+  
+  // Return a promise that only resolves when server errors occur
+  return new Promise<void>((resolve, reject) => {
+    server.listen({
+      port,
+      host: "0.0.0.0",
+    }, () => {
+      log(`serving on port ${port}`);
+      log(`Server is ready! Visit: http://localhost:${port}`);
+    });
+    
+    server.on('error', (error: any) => {
+      console.error('Server error:', error);
+      reject(error);
+    });
   });
-})();
+})().catch((error) => {
+  console.error('Fatal error during server startup:', error);
+  process.exit(1);
+});
