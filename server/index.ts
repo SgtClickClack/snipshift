@@ -168,21 +168,22 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-  }, () => {
-    log(`serving on port ${port}`);
-    log(`Server is ready! Visit: http://localhost:${port}`);
-  });
   
-  // Keep the process alive
-  server.on('error', (error: any) => {
-    console.error('Server error:', error);
+  // Return a promise that only resolves when server errors occur
+  return new Promise<void>((resolve, reject) => {
+    server.listen({
+      port,
+      host: "0.0.0.0",
+    }, () => {
+      log(`serving on port ${port}`);
+      log(`Server is ready! Visit: http://localhost:${port}`);
+    });
+    
+    server.on('error', (error: any) => {
+      console.error('Server error:', error);
+      reject(error);
+    });
   });
-  
-  // Prevent the async IIFE from completing
-  await new Promise(() => {});
 })().catch((error) => {
   console.error('Fatal error during server startup:', error);
   process.exit(1);
