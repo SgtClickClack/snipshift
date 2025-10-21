@@ -214,22 +214,23 @@
         serveStatic(app);
       }
 
-      // Validate and sanitize the port
-      let parsedPort = Number(process.env.PORT || 5000);
-      if (!Number.isInteger(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
-        console.warn(`Invalid PORT value "${process.env.PORT}". Falling back to 5000.`);
-        parsedPort = 5000;
-      }
-      const port = parsedPort;
+    // Validate and sanitize the port
+    let parsedPort = Number(process.env.PORT || 5000);
+    if (!Number.isInteger(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
+      console.warn(`Invalid PORT value "${process.env.PORT}". Falling back to 5000.`);
+      parsedPort = 5000;
+    }
+    const port = parsedPort;
+    
+    console.log(`Starting server on port ${port} (PORT env: ${process.env.PORT})`);
 
       // Return a promise that only resolves when server errors occur
       return new Promise<void>((resolve, reject) => {
         server.listen({
           port,
-          host: "0.0.0.0",
+          host: "localhost", // Changed from "0.0.0.0" to "localhost" for Replit compatibility
         }, () => {
           const mode = isDevelopment ? 'development' : 'production';
-          log(`serving on port ${port}`);
           log(`Server is ready! Visit: http://localhost:${port}`);
           log(`Startup mode: ${mode} (${isDevelopment ? 'vite-middleware or static fallback' : 'static'})`);
         });
