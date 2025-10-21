@@ -161,7 +161,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         const text = await tokenRes.text();
         return res.status(400).json({ message: 'Token exchange failed', detail: text });
       }
-      const tokenJson = await tokenRes.json();
+      const tokenJson = await tokenRes.json() as any;
       const idToken = tokenJson.id_token as string | undefined;
       if (!idToken) return res.status(400).json({ message: 'No id_token in response' });
 
@@ -174,8 +174,8 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         }
         
         const payload = await verifyResponse.json() as any;
-        email = payload?.email as string | undefined;
-        sub = payload?.sub as string | undefined;
+        email = payload?.email || '';
+        sub = payload?.sub || '';
         const aud = payload?.aud as string | undefined;
         const exp = payload?.exp as number | undefined;
         const iss = payload?.iss as string | undefined;
@@ -510,7 +510,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       }
 
       const application = await firebaseStorage.applyToJob(jobId, professionalId);
-      const hubOwner = await firebaseStorage.getUser(job.hubId);
+      const hubOwner = await firebaseStorage.getUser(job.businessId);
       
       // Email notification simulation
       console.log('📧 EMAIL NOTIFICATION SENT:');
