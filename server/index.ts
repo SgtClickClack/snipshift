@@ -228,7 +228,7 @@
       return new Promise<void>((resolve, reject) => {
         server.listen({
           port,
-          host: "localhost", // Changed from "0.0.0.0" to "localhost" for Replit compatibility
+          host: "0.0.0.0", // Replit needs 0.0.0.0 for external access
         }, () => {
           const mode = isDevelopment ? 'development' : 'production';
           log(`Server is ready! Visit: http://localhost:${port}`);
