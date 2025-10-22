@@ -1,29 +1,52 @@
 # SnipShift V2 - Replit Configuration
-# Optimized for current project structure
+# PRODUCTION-ONLY DEPLOYMENT (Avoids Vite/esbuild compatibility issues)
+# For development, use Cursor locally where everything works perfectly
 
-modules = ["nodejs-20", "web"]
-run = "./run-dev.sh"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "coverage", "test-results", "playwright-report", "cypress/videos", "cypress/screenshots"]
+modules = ["nodejs-20"]
+# Disabled run command to prevent Vite/esbuild issues in Replit sandbox
+# run = "./run-dev.sh"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "coverage", "test-results", "playwright-report", "cypress/videos", "cypress/screenshots", "client", "snipshift-next"]
 
 [nix]
 channel = "stable-24_05"
 packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick", "jq"]
 
 # =============================================================================
-# DEPLOYMENT CONFIGURATION
+# PRODUCTION DEPLOYMENT CONFIGURATION ONLY
 # =============================================================================
 
 [deployment]
-build = ["sh", "-c", "npm ci --prefix snipshift-next/api --production=false && npm run --prefix snipshift-next/api build"]
-run = ["sh", "-c", "PORT=$PORT npm run --prefix snipshift-next/api start"]
+# Production build using only the API service (no Vite)
+build = ["sh", "-c", "cd snipshift-next/api && npm ci --production=false && npm run build"]
+run = ["sh", "-c", "cd snipshift-next/api && PORT=$PORT npm run start"]
 deploymentTarget = "cloudrun"
 
 [deployment.ports]
-localPort = 8080
+localPort = 4000
 externalPort = 80
 
+<<<<<<< Updated upstream
 [[ports]]
 localPort = 5000
 externalPort = 80
 exposeLocalhost = true
+=======
+# =============================================================================
+# DEVELOPMENT INSTRUCTIONS
+# =============================================================================
+# 
+# IMPORTANT: This Replit workspace is configured for PRODUCTION DEPLOYMENT ONLY
+# 
+# For development:
+# 1. Use Cursor locally where Vite/esbuild works perfectly
+# 2. Run: npm run dev (starts both client and server)
+# 3. Access: http://localhost:3000
+# 
+# For production deployment:
+# 1. Use Replit Deployments tab
+# 2. Deploy the API service only
+# 3. Access: https://your-replit-url.replit.dev
+#
+# This avoids the Vite/esbuild compatibility issues in Replit's sandbox environment
+>>>>>>> Stashed changes
 

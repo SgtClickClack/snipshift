@@ -143,7 +143,7 @@
             logLine = logLine.slice(0, 79) + "…";
           }
 
-          log(logLine);
+          console.log(logLine);
         }
       });
 
@@ -228,7 +228,7 @@
       return new Promise<void>((resolve, reject) => {
         server.listen({
           port,
-          host: "0.0.0.0", // Replit needs 0.0.0.0 for external access
+          host: "0.0.0.0", // Bind to all interfaces for better compatibility
         }, () => {
           const mode = isDevelopment ? 'development' : 'production';
           log(`Server is ready! Visit: http://localhost:${port}`);

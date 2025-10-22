@@ -140,7 +140,11 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
   }
   
   if (req.query) {
-    req.query = sanitizeObject(req.query);
+    // Create a new sanitized query object instead of reassigning
+    const sanitizedQuery = sanitizeObject(req.query);
+    Object.keys(sanitizedQuery).forEach(key => {
+      req.query[key] = sanitizedQuery[key];
+    });
   }
   
   if (req.params) {

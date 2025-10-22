@@ -3,7 +3,9 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch server/index.ts",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "tsx watch server/index.ts",
+    "dev:client": "vite --port 3001",
     "build": "cd snipshift-next/api && npm ci --production=false && npm run build",
     "copy-build": "node copy-build.js",
     "build:client": "vite build --outDir dist/public",
@@ -156,6 +158,7 @@
     "@types/nodemailer": "^7.0.1",
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^5.0.3",
+    "concurrently": "^9.2.1",
     "cypress": "^15.4.0",
     "cypress-axe": "^1.7.0",
     "drizzle-zod": "^0.8.3",

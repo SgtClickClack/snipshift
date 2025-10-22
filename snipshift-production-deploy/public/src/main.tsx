@@ -1,4 +1,5 @@
-import { createRoot } from "react-dom/client";
+import React from "react";
+import ReactDOM from "react-dom";
 import App from "./App";
 import "./index-critical.css";
 
@@ -21,6 +22,4 @@ if (document.readyState === 'loading') {
   loadNonCriticalCSS();
 }
 
-createRoot(document.getElementById("root")!).render(
-  <App />
-);
+ReactDOM.render(<App />, document.getElementById("root"));
