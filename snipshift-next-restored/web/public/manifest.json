@@ -1,0 +1,23 @@
+{
+  "name": "SnipShift - Connect. Create. Collaborate.",
+  "short_name": "SnipShift",
+  "description": "The premier platform connecting barbering professionals, hubs, brands, and trainers in the creative industry.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF6B6B",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
