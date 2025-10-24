@@ -1,14 +1,18 @@
-    import express, { type Request, Response, NextFunction } from "express";
-    import { registerFirebaseRoutes } from "./firebase-routes";
-    import { registerRoutes } from "./routes";
-    import { setupVite, serveStatic, log } from "./vite";
-    import { setupProductionMiddleware, setupHealthCheck } from "./middleware/production";
-    import { apiLimiter, securityHeaders, sanitizeInput, requireCsrfHeader } from "./middleware/security";
-    import helmet from "helmet";
-    import compression from "compression";
-    import session from "express-session";
-    import connectPg from "connect-pg-simple";
-    import createMemoryStore from "memorystore";
+import express, { type Request, Response, NextFunction } from 'express';
+import { registerFirebaseRoutes } from './firebase-routes';
+import { registerRoutes } from './routes';
+import { setupVite, serveStatic, log } from './vite';
+import { setupProductionMiddleware, setupHealthCheck } from './middleware/production';
+import { apiLimiter, securityHeaders, sanitizeInput, requireCsrfHeader } from './middleware/security';
+import { initializeDatabase } from './database-storage';
+import { apiLogger, generalLogger, addStartTime } from './middleware/logging';
+import { appLogger, errorLogger } from './utils/logger';
+import { createErrorHandler } from './utils/error-handler';
+import helmet from 'helmet';
+import compression from 'compression';
+import session from 'express-session';
+import connectPg from 'connect-pg-simple';
+import createMemoryStore from 'memorystore';
 
     // Global error handlers to prevent silent crashes
     process.on('unhandledRejection', (reason, promise) => {
@@ -131,16 +135,16 @@
         return originalResJson.apply(res, [bodyJson, ...args]);
       };
 
-      res.on("finish", () => {
+      res.on('finish', () => {
         const duration = Date.now() - start;
-        if (path.startsWith("/api")) {
+        if (path.startsWith('/api')) {
           let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
           if (capturedJsonResponse) {
             logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
           }
 
           if (logLine.length > 80) {
-            logLine = logLine.slice(0, 79) + "…";
+            logLine = logLine.slice(0, 79) + '…';
           }
 
           console.log(logLine);
@@ -151,6 +155,16 @@
     });
 
     (async () => {
+      // Initialize database connection
+      initializeDatabase();
+      
+      // Add request timing middleware
+      app.use(addStartTime);
+      
+      // Add HTTP logging middleware
+      app.use('/api', apiLogger);
+      app.use(generalLogger);
+      
       // Apply rate limiting to API routes
       app.use('/api', apiLimiter);
       // CSRF header required by default; allow explicit disable for CI/E2E
@@ -162,34 +176,27 @@
       await registerFirebaseRoutes(app);
       
       // Create HTTP server after routes are registered
-      const { createServer } = await import("http");
+      const { createServer } = await import('http');
       const server = createServer(app);
 
       // CRITICAL: Register Stripe and other routes (including webhook)
       await registerRoutes(app);
 
-      app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-        const status = err.status || err.statusCode || 500;
-        const message = err.message || "Internal Server Error";
-
-        if (!res.headersSent) {
-          res.status(status).json({ message });
-        }
-      });
+      app.use(createErrorHandler());
 
       // importantly only setup vite in development and after
       // setting up all the other routes so the catch-all route
       // doesn't interfere with the other routes
       // Default to development if NODE_ENV is not set
       if (!process.env.NODE_ENV) {
-        process.env.NODE_ENV = "development";
+        process.env.NODE_ENV = 'development';
       }
-      const isDevelopment = process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production";
-      console.log("Environment:", process.env.NODE_ENV, "isDevelopment:", isDevelopment);
+      const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production';
+      console.log('Environment:', process.env.NODE_ENV, 'isDevelopment:', isDevelopment);
 
       const disableVite = process.env.DISABLE_VITE === '1' || process.env.DISABLE_VITE === 'true';
       if (isDevelopment && !disableVite) {
-        console.log("Setting up Vite development server...");
+        console.log('Setting up Vite development server...');
 
         // Fix path mismatch: server/vite.ts adds /client prefix but Vite expects files without it
         // due to root: "./client" in vite.config.ts
@@ -205,12 +212,12 @@
         try {
           await setupVite(app, server);
         } catch (error) {
-          console.error("Vite setup failed. Falling back to static files.", error);
-          console.log("Serving static files as fallback...");
+          console.error('Vite setup failed. Falling back to static files.', error);
+          console.log('Serving static files as fallback...');
           serveStatic(app);
         }
       } else {
-        console.log("Serving static files...");
+        console.log('Serving static files...');
         serveStatic(app);
       }
 
@@ -228,9 +235,10 @@
       return new Promise<void>((resolve, reject) => {
         server.listen({
           port,
-          host: "0.0.0.0", // Bind to all interfaces for better compatibility
+          host: '0.0.0.0', // Bind to all interfaces for better compatibility
         }, () => {
           const mode = isDevelopment ? 'development' : 'production';
+          appLogger.serverStart(port, mode);
           log(`Server is ready! Visit: http://localhost:${port}`);
           log(`Startup mode: ${mode} (${isDevelopment ? 'vite-middleware or static fallback' : 'static'})`);
         });
