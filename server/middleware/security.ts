@@ -79,15 +79,81 @@ export function requireRole(allowedRoles: string[]) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    if (!allowedRoles.includes(user.role)) {
+    // Support both single role and multi-role systems
+    const userRoles = user.roles || (user.role ? [user.role] : []);
+    const hasRequiredRole = allowedRoles.some(role => userRoles.includes(role));
+    
+    if (!hasRequiredRole) {
       return res.status(403).json({ 
         error: 'Access denied',
-        message: `This endpoint requires one of the following roles: ${allowedRoles.join(', ')}`
+        message: `This endpoint requires one of the following roles: ${allowedRoles.join(', ')}`,
+        userRoles: userRoles
       });
     }
     
     next();
   };
+}
+
+// Enhanced role-based access control with current role checking
+export function requireCurrentRole(allowedRoles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as any).session?.user;
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Check if user has the required role in their available roles
+    const userRoles = user.roles || (user.role ? [user.role] : []);
+    const hasRequiredRole = allowedRoles.some(role => userRoles.includes(role));
+    
+    if (!hasRequiredRole) {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: `This endpoint requires one of the following roles: ${allowedRoles.join(', ')}`,
+        userRoles: userRoles
+      });
+    }
+    
+    // If currentRole is set, ensure it's one of the allowed roles
+    if (user.currentRole && !allowedRoles.includes(user.currentRole)) {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: `Current role '${user.currentRole}' is not authorized for this endpoint`,
+        requiredRoles: allowedRoles,
+        userRoles: userRoles
+      });
+    }
+    
+    next();
+  };
+}
+
+// Middleware to require authentication without specific role
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).session?.user;
+  
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  next();
+}
+
+// Middleware to require admin role
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  return requireRole(['admin', 'hub'])(req, res, next);
+}
+
+// Middleware to require professional role
+export function requireProfessional(req: Request, res: Response, next: NextFunction) {
+  return requireRole(['professional', 'hub', 'admin'])(req, res, next);
+}
+
+// Middleware to require hub role
+export function requireHub(req: Request, res: Response, next: NextFunction) {
+  return requireRole(['hub', 'admin'])(req, res, next);
 }
 
 // Enhanced input sanitization middleware

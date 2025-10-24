@@ -1,37 +1,39 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Shield, Lock, AlertTriangle, CheckCircle, Eye, Globe } from "lucide-react";
+import React from 'react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Shield, Lock, AlertTriangle, CheckCircle, Eye, Globe } from 'lucide-react';
 
 export function SecurityDashboard() {
   const securityFeatures = [
     {
-      name: "Rate Limiting",
-      status: "active",
-      description: "API requests limited to prevent abuse",
+      name: 'Rate Limiting',
+      status: 'active',
+      description: 'API requests limited to prevent abuse',
       icon: Shield,
-      details: "100 requests per 15 minutes"
+      details: '100 requests per 15 minutes'
     },
     {
-      name: "Input Sanitization",
-      status: "active", 
-      description: "All user inputs sanitized against XSS",
+      name: 'Input Sanitization',
+      status: 'active', 
+      description: 'All user inputs sanitized against XSS',
       icon: Lock,
-      details: "HTML tags stripped automatically"
+      details: 'HTML tags stripped automatically'
     },
     {
-      name: "Security Headers",
-      status: "active",
-      description: "HTTPS enforced, clickjacking prevented",
+      name: 'Security Headers',
+      status: 'active',
+      description: 'HTTPS enforced, clickjacking prevented',
       icon: Globe,
-      details: "CSP, XSS protection enabled"
+      details: 'CSP, XSS protection enabled'
     },
     {
-      name: "Role-Based Access",
-      status: "active",
-      description: "Users can only access their permitted features",
+      name: 'Role-Based Access',
+      status: 'active',
+      description: 'Users can only access their permitted features',
       icon: Eye,
-      details: "Hub, Professional, Brand, Trainer roles"
+      details: 'Hub, Professional, Brand, Trainer roles'
     }
   ];
 

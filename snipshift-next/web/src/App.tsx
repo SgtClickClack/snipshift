@@ -1,16 +1,14 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './lib/queryClient';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { AuthProvider } from '@/contexts/AuthContext';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import { PerformanceMonitor } from '@/components/performance/performance-monitor';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Navbar from '@/components/navbar';
 
 // Core pages - load immediately for fast initial render
@@ -32,6 +30,7 @@ const BusinessDashboard = lazy(() => import('@/pages/business-dashboard'));
 const DemoPage = lazy(() => import('@/pages/demo'));
 const ProfilePage = lazy(() => import('@/pages/profile'));
 const CommunityPage = lazy(() => import('@/pages/community'));
+const ShiftFeedPage = lazy(() => import('@/pages/shift-feed'));
 
 // Complex components - lazy load to reduce bundle size
 const SocialFeed = lazy(() => import('@/components/social/social-feed'));
@@ -101,7 +100,7 @@ function AppRoutes() {
         <Route path="/onboarding/professional" element={
           <AuthGuard requireAuth={true}>
             <Suspense fallback={<PageLoadingFallback />}>
-              <BarberOnboarding />
+              <ProfessionalOnboarding />
             </Suspense>
           </AuthGuard>
         } />
@@ -109,7 +108,7 @@ function AppRoutes() {
         <Route path="/onboarding/hub" element={
           <AuthGuard requireAuth={true}>
             <Suspense fallback={<PageLoadingFallback />}>
-              <ShopOnboarding />
+              <ProfessionalOnboarding />
             </Suspense>
           </AuthGuard>
         } />
@@ -117,7 +116,7 @@ function AppRoutes() {
         <Route path="/onboarding/brand" element={
           <AuthGuard requireAuth={true}>
             <Suspense fallback={<PageLoadingFallback />}>
-              <BrandOnboarding />
+              <ProfessionalOnboarding />
             </Suspense>
           </AuthGuard>
         } />
@@ -138,6 +137,15 @@ function AppRoutes() {
           <ProtectedRoute requiredRole="business">
             <Suspense fallback={<PageLoadingFallback />}>
               <BusinessDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        {/* Shift Feed Route */}
+        <Route path="/shift-feed" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ShiftFeedPage />
             </Suspense>
           </ProtectedRoute>
         } />
@@ -168,7 +176,7 @@ function AppRoutes() {
         } />
 
         <Route path="/admin" element={
-          <ProtectedRoute requiredRole="admin">
+          <ProtectedRoute requiredRole="business">
             <Suspense fallback={<PageLoadingFallback />}>
               <ContentModeration />
             </Suspense>
@@ -252,19 +260,15 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
       <TooltipProvider>
-        <AuthProvider>
-          <Router>
-            <Toaster />
-            <AppRoutes />
-            <TutorialOverlay />
-            <FeedbackWidget />
-            <PerformanceMonitor />
-          </Router>
-        </AuthProvider>
+        <Toaster />
+        <AppRoutes />
+        <TutorialOverlay />
+        <FeedbackWidget />
+        <PerformanceMonitor />
       </TooltipProvider>
-    </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

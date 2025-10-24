@@ -22,7 +22,7 @@ export const trainingResolvers = {
       },
       context: GraphQLContext
     ) => {
-      let conditions = [];
+      const conditions = [];
 
       if (category) {
         conditions.push(eq(trainingContent.category, category));

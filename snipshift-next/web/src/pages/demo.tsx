@@ -1,90 +1,65 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { getDashboardRoute } from "@/lib/roles";
-import { useNavigate } from "react-router-dom";
-import { Scissors, Store, UserCheck, Award, Globe, Users, Video, Share2, Shield, Play, DollarSign, Star } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardRoute } from '@/lib/roles';
+import { useNavigate } from 'react-router-dom';
+import { Scissors, Store, UserCheck, Award, Globe, Users, Video, Share2, Shield, Play, DollarSign, Star } from 'lucide-react';
 
 export default function DemoPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const quickLogin = (role: "hub" | "professional" | "trainer" | "brand") => {
+  const quickLogin = (role: 'professional' | 'business') => {
     const demoUsers = {
-      hub: {
-        id: "demo_hub_1",
-        email: "demo@barbershop.com",
+      business: {
+        id: 'demo_business_1',
+        email: 'demo@barbershop.com',
         password: null,
-        displayName: "Downtown Barbershop",
-        role: "hub" as const,
-        provider: "email" as const,
+        displayName: 'Downtown Barbershop',
+        roles: ['business'],
+        currentRole: 'business' as const,
+        provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
-        profileComplete: true,
-        hubProfile: {
-          businessName: "Downtown Barbershop",
-          location: {
-            address: "123 Main St",
-            city: "New York",
-            state: "NY",
-            postcode: "10001",
-            country: "USA"
-          },
-          businessType: "barbershop" as const
+        businessProfile: {
+          businessName: 'Downtown Barbershop',
+          businessType: 'barbershop' as const,
+          address: {
+            street: '123 Main St',
+            city: 'New York',
+            state: 'NY',
+            postcode: '10001',
+            country: 'USA'
+          }
         }
       },
       professional: {
-        id: "demo_pro_1",
-        email: "demo@barber.com",
+        id: 'demo_pro_1',
+        email: 'demo@barber.com',
         password: null,
-        displayName: "John Smith",
-        role: "professional" as const,
-        provider: "email" as const,
+        displayName: 'John Smith',
+        roles: ['professional'],
+        currentRole: 'professional' as const,
+        provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
-        profileComplete: true,
         professionalProfile: {
-          firstName: "John",
-          lastName: "Smith",
-          skills: ["Hair Cutting", "Beard Styling"],
-          experience: "5+ years",
-          hourlyRate: 50
-        }
-      },
-      trainer: {
-        id: "demo_trainer_1",
-        email: "demo@trainer.com",
-        password: null,
-        displayName: "Master Barber Mike",
-        role: "trainer" as const,
-        provider: "email" as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        profileComplete: true,
-        trainerProfile: {
-          qualifications: ["Master Barber License", "10+ years experience"],
-          specializations: ["Advanced Fades", "Beard Care", "Business Training"],
-          yearsExperience: 12,
-          trainingLocation: "Downtown Training Center"
-        }
-      },
-      brand: {
-        id: "demo_brand_1",
-        email: "demo@brand.com",
-        password: null,
-        displayName: "ProfHair Products",
-        role: "brand" as const,
-        provider: "email" as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        profileComplete: true,
-        brandProfile: {
-          companyName: "ProfHair Products",
-          website: "https://profhair.com",
-          description: "Premium professional hair styling products",
-          productCategories: ["Styling Tools", "Hair Products", "Accessories"]
+          isVerified: true,
+          verifiedBy: [],
+          certifications: [],
+          skills: ['Hair Cutting', 'Beard Styling'],
+          experience: '5+ years',
+          homeLocation: {
+            city: 'New York',
+            state: 'NY',
+            country: 'USA'
+          },
+          isRoamingNomad: false,
+          preferredRegions: []
         }
       }
     };
@@ -98,118 +73,118 @@ export default function DemoPage() {
 
   const quickLoginAdmin = () => {
     const adminUser = {
-      id: "demo_admin_1",
-      email: "admin@snipshift.com",
+      id: 'demo_admin_1',
+      email: 'admin@snipshift.com',
       password: null,
-      displayName: "Snipshift Admin",
-      role: "admin" as const,
-      provider: "email" as const,
+      displayName: 'Snipshift Admin',
+      role: 'admin' as const,
+      provider: 'email' as const,
       createdAt: new Date(),
       updatedAt: new Date(),
       profileComplete: true,
     };
 
-    const userWithRoles = { ...(adminUser as any), roles: ["admin"], currentRole: "admin" };
+    const userWithRoles = { ...(adminUser as any), roles: ['admin'], currentRole: 'admin' };
     login(userWithRoles as any);
-    navigate("/admin");
+    navigate('/admin');
   };
 
   const features = [
     {
-      title: "Trainer Dashboard",
-      description: "Upload and monetize training content with video courses",
+      title: 'Trainer Dashboard',
+      description: 'Upload and monetize training content with video courses',
       icon: Award,
-      color: "bg-blue-100 text-blue-800",
-      demo: () => quickLogin("trainer"),
+      color: 'bg-blue-100 text-blue-800',
+      demo: () => quickLogin('business'),
       highlights: [
-        "Content upload with pricing",
-        "Revenue analytics",
-        "Student engagement tracking",
-        "Course categorization"
+        'Content upload with pricing',
+        'Revenue analytics',
+        'Student engagement tracking',
+        'Course categorization'
       ]
     },
     {
-      title: "Brand Dashboard", 
-      description: "Create social posts and manage brand promotions",
+      title: 'Brand Dashboard', 
+      description: 'Create social posts and manage brand promotions',
       icon: Globe,
-      color: "bg-purple-100 text-purple-800",
-      demo: () => quickLogin("brand"),
+      color: 'bg-purple-100 text-purple-800',
+      demo: () => quickLogin('business'),
       highlights: [
-        "Social post creation",
-        "Discount code management",
-        "Content approval workflow",
-        "Engagement analytics"
+        'Social post creation',
+        'Discount code management',
+        'Content approval workflow',
+        'Engagement analytics'
       ]
     },
     {
-      title: "Social Feed",
-      description: "Community feed with brand promotions and trainer events",
+      title: 'Social Feed',
+      description: 'Community feed with brand promotions and trainer events',
       icon: Share2,
-      color: "bg-green-100 text-green-800",
-      demo: () => navigate("/social-feed"),
+      color: 'bg-green-100 text-green-800',
+      demo: () => navigate('/social-feed'),
       highlights: [
-        "Approved brand posts",
-        "Training events",
-        "Discount codes",
-        "Interactive engagement"
+        'Approved brand posts',
+        'Training events',
+        'Discount codes',
+        'Interactive engagement'
       ]
     },
     {
-      title: "Training Hub",
-      description: "Video marketplace with paid and free educational content",
+      title: 'Training Hub',
+      description: 'Video marketplace with paid and free educational content',
       icon: Video,
-      color: "bg-orange-100 text-orange-800",
-      demo: () => navigate("/training-hub"),
+      color: 'bg-orange-100 text-orange-800',
+      demo: () => navigate('/training-hub'),
       highlights: [
-        "Video course library",
-        "Mock payment system",
-        "Progress tracking",
-        "Skill level filtering"
+        'Video course library',
+        'Mock payment system',
+        'Progress tracking',
+        'Skill level filtering'
       ]
     },
     {
-      title: "Content Moderation",
-      description: "Admin panel for reviewing and approving content",
+      title: 'Content Moderation',
+      description: 'Admin panel for reviewing and approving content',
       icon: Shield,
-      color: "bg-red-100 text-red-800",
+      color: 'bg-red-100 text-red-800',
       demo: () => quickLoginAdmin(),
       highlights: [
-        "Post approval workflow",
-        "Training content review",
-        "Quality control",
-        "Spam prevention"
+        'Post approval workflow',
+        'Training content review',
+        'Quality control',
+        'Spam prevention'
       ]
     }
   ];
 
   const sampleContent = [
     {
-      type: "Brand Post",
-      title: "25% Off Premium Tools",
-      author: "ProfHair Products",
-      engagement: "42 likes",
-      status: "Approved"
+      type: 'Brand Post',
+      title: '25% Off Premium Tools',
+      author: 'ProfHair Products',
+      engagement: '42 likes',
+      status: 'Approved'
     },
     {
-      type: "Training Event",
-      title: "Advanced Fade Masterclass",
-      author: "Master Barber Mike",
-      engagement: "28 likes",
-      status: "Approved"
+      type: 'Training Event',
+      title: 'Advanced Fade Masterclass',
+      author: 'Master Barber Mike',
+      engagement: '28 likes',
+      status: 'Approved'
     },
     {
-      type: "Training Content",
-      title: "Beard Styling Fundamentals",
-      author: "Sarah Chen",
-      engagement: "234 students",
-      status: "Free"
+      type: 'Training Content',
+      title: 'Beard Styling Fundamentals',
+      author: 'Sarah Chen',
+      engagement: '234 students',
+      status: 'Free'
     },
     {
-      type: "Training Content",
-      title: "Business Skills for Barbers",
-      author: "Carlos Rodriguez",
-      engagement: "89 students",
-      status: "$29.99"
+      type: 'Training Content',
+      title: 'Business Skills for Barbers',
+      author: 'Carlos Rodriguez',
+      engagement: '89 students',
+      status: '$29.99'
     }
   ];
 
@@ -262,10 +237,10 @@ export default function DemoPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-16">
           {[
-            { role: "hub", label: "Hub Owner", icon: Store, description: "Manage barbershop operations" },
-            { role: "professional", label: "Professional", icon: UserCheck, description: "Find jobs and gigs" },
-            { role: "trainer", label: "Trainer", icon: Award, description: "Monetize your expertise" },
-            { role: "brand", label: "Brand", icon: Globe, description: "Promote your products" }
+            { role: 'hub', label: 'Hub Owner', icon: Store, description: 'Manage barbershop operations' },
+            { role: 'professional', label: 'Professional', icon: UserCheck, description: 'Find jobs and gigs' },
+            { role: 'trainer', label: 'Trainer', icon: Award, description: 'Monetize your expertise' },
+            { role: 'brand', label: 'Brand', icon: Globe, description: 'Promote your products' }
           ].map((item) => (
             <Card key={item.role} className="cursor-pointer hover:shadow-lg transition-shadow">
               <CardContent 
@@ -331,7 +306,7 @@ export default function DemoPage() {
                   <Badge variant="outline" className="text-xs">
                     {content.type}
                   </Badge>
-                  <Badge variant={content.status === "Approved" ? "default" : content.status === "Free" ? "secondary" : "outline"}>
+                  <Badge variant={content.status === 'Approved' ? 'default' : content.status === 'Free' ? 'secondary' : 'outline'}>
                     {content.status}
                   </Badge>
                 </div>
@@ -347,15 +322,15 @@ export default function DemoPage() {
         <div className="mt-16 text-center">
           <h2 className="text-2xl font-bold text-neutral-900 mb-6">Explore Public Features</h2>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="outline" onClick={() => navigate("/social-feed")}>
+            <Button variant="outline" onClick={() => navigate('/social-feed')}>
               <Share2 className="mr-2 h-4 w-4" />
               View Social Feed
             </Button>
-            <Button variant="outline" onClick={() => navigate("/training-hub")}>
+            <Button variant="outline" onClick={() => navigate('/training-hub')}>
               <Video className="mr-2 h-4 w-4" />
               Browse Training Hub
             </Button>
-            <Button variant="outline" onClick={() => navigate("/signup")}>
+            <Button variant="outline" onClick={() => navigate('/signup')}>
               <Users className="mr-2 h-4 w-4" />
               Create Account
             </Button>

@@ -45,9 +45,9 @@ export function RoleSwitcher() {
     
     if (!availableRoles.includes(newRole)) {
       toast({
-        title: "Role not available",
+        title: 'Role not available',
         description: "You don't have access to this role. Please contact support to add it to your account.",
-        variant: "destructive",
+        variant: 'destructive',
       });
       return;
     }
@@ -55,14 +55,14 @@ export function RoleSwitcher() {
     setIsLoading(true);
     try {
       // Update current role on server
-      const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: newRole });
+      const res = await apiRequest('PATCH', `/api/users/${user.id}/current-role`, { role: newRole });
       const updated = await res.json();
       
       // Update local state
       setRolesAndCurrentRole(user.roles, updated.currentRole);
       
       toast({
-        title: "Role switched",
+        title: 'Role switched',
         description: `You're now operating as a ${roleConfig[newRole].label}.`,
       });
 
@@ -71,9 +71,9 @@ export function RoleSwitcher() {
       navigate(dashboardRoute);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to switch roles. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to switch roles. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

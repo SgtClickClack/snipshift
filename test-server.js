@@ -27,7 +27,7 @@ app.post('/api/register', (req, res) => {
   
   // Mock duplicate email check
   if (email === 'existing@example.com') {
-    return res.status(400).json({ message: "User already exists with this email" });
+    return res.status(400).json({ message: 'User already exists with this email' });
   }
   
   // Mock successful registration
@@ -46,7 +46,7 @@ app.post('/api/login', (req, res) => {
   
   // Mock invalid credentials
   if (email === 'invalid@example.com' || password === 'wrongpassword') {
-    return res.status(401).json({ message: "Invalid email or password" });
+    return res.status(401).json({ message: 'Invalid email or password' });
   }
   
   // Store user session

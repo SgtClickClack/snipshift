@@ -1,4 +1,6 @@
-import CommunityFeed from "@/components/social/community-feed";
+import React from 'react';
+
+import CommunityFeed from '@/components/social/community-feed';
 
 export default function CommunityPage() {
   return (

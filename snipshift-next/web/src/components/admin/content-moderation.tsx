@@ -1,25 +1,27 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, Eye, Shield, AlertTriangle, Clock, Filter } from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Check, X, Eye, Shield, AlertTriangle, Clock, Filter } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface PendingPost {
   id: string;
   authorId: string;
-  authorRole: "brand" | "trainer";
+  authorRole: 'brand' | 'trainer';
   authorName?: string;
   authorCompany?: string;
-  postType: "offer" | "event" | "announcement" | "product" | "discount";
+  postType: 'offer' | 'event' | 'announcement' | 'product' | 'discount';
   content: string;
   imageUrl?: string;
   linkUrl?: string;
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   discountCode?: string;
   discountPercentage?: number;
@@ -36,87 +38,87 @@ interface PendingContent {
   thumbnailUrl?: string;
   price: number;
   duration: string;
-  level: "beginner" | "intermediate" | "advanced";
+  level: 'beginner' | 'intermediate' | 'advanced';
   category: string;
   isPaid: boolean;
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
 
 export default function ContentModeration() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "posts" | "training">("all");
+  const [filter, setFilter] = useState<'all' | 'posts' | 'training'>('all');
 
   const { data: pendingPosts = [], isLoading: loadingPosts } = useQuery<PendingPost[]>({
-    queryKey: ["/api/admin/pending-posts"],
+    queryKey: ['/api/admin/pending-posts'],
   });
 
   const { data: pendingTraining = [], isLoading: loadingTraining } = useQuery<PendingContent[]>({
-    queryKey: ["/api/admin/pending-training"],
+    queryKey: ['/api/admin/pending-training'],
   });
 
   const moderatePostMutation = useMutation({
-    mutationFn: async ({ postId, action, reason }: { postId: string; action: "approve" | "reject"; reason?: string }) => {
-      const response = await apiRequest("POST", `/api/admin/moderate-post/${postId}`, { action, reason });
+    mutationFn: async ({ postId, action, reason }: { postId: string; action: 'approve' | 'reject'; reason?: string }) => {
+      const response = await apiRequest('POST', `/api/admin/moderate-post/${postId}`, { action, reason });
       return response.json();
     },
     onSuccess: (_, { action }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/pending-posts"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/pending-posts'] });
       toast({
-        title: action === "approve" ? "Post approved" : "Post rejected",
+        title: action === 'approve' ? 'Post approved' : 'Post rejected',
         description: `The post has been ${action}d successfully.`,
       });
     },
   });
 
   const moderateTrainingMutation = useMutation({
-    mutationFn: async ({ contentId, action, reason }: { contentId: string; action: "approve" | "reject"; reason?: string }) => {
-      const response = await apiRequest("POST", `/api/admin/moderate-training/${contentId}`, { action, reason });
+    mutationFn: async ({ contentId, action, reason }: { contentId: string; action: 'approve' | 'reject'; reason?: string }) => {
+      const response = await apiRequest('POST', `/api/admin/moderate-training/${contentId}`, { action, reason });
       return response.json();
     },
     onSuccess: (_, { action }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/pending-training"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/pending-training'] });
       toast({
-        title: action === "approve" ? "Content approved" : "Content rejected",
+        title: action === 'approve' ? 'Content approved' : 'Content rejected',
         description: `The training content has been ${action}d successfully.`,
       });
     },
   });
 
-  const handlePostModeration = (postId: string, action: "approve" | "reject", reason?: string) => {
+  const handlePostModeration = (postId: string, action: 'approve' | 'reject', reason?: string) => {
     moderatePostMutation.mutate({ postId, action, reason });
   };
 
-  const handleTrainingModeration = (contentId: string, action: "approve" | "reject", reason?: string) => {
+  const handleTrainingModeration = (contentId: string, action: 'approve' | 'reject', reason?: string) => {
     moderateTrainingMutation.mutate({ contentId, action, reason });
   };
 
   const getPostTypeColor = (postType: string) => {
     switch (postType) {
-      case "discount":
-        return "bg-red-100 text-red-800";
-      case "event":
-        return "bg-blue-100 text-blue-800";
-      case "offer":
-        return "bg-green-100 text-green-800";
-      case "product":
-        return "bg-purple-100 text-purple-800";
+      case 'discount':
+        return 'bg-red-100 text-red-800';
+      case 'event':
+        return 'bg-blue-100 text-blue-800';
+      case 'offer':
+        return 'bg-green-100 text-green-800';
+      case 'product':
+        return 'bg-purple-100 text-purple-800';
       default:
-        return "bg-neutral-100 text-neutral-800";
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
   const getLevelColor = (level: string) => {
     switch (level) {
-      case "beginner":
-        return "bg-green-100 text-green-800";
-      case "intermediate":
-        return "bg-red-100 text-red-800";
-      case "advanced":
-        return "bg-red-100 text-red-800";
+      case 'beginner':
+        return 'bg-green-100 text-green-800';
+      case 'intermediate':
+        return 'bg-red-100 text-red-800';
+      case 'advanced':
+        return 'bg-red-100 text-red-800';
       default:
-        return "bg-neutral-100 text-neutral-800";
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -177,12 +179,12 @@ export default function ContentModeration() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                           <span className="text-primary font-bold text-sm">
-                            {(post.authorCompany || post.authorName || "U").charAt(0).toUpperCase()}
+                            {(post.authorCompany || post.authorName || 'U').charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
                           <h3 className="font-semibold text-neutral-900" data-testid={`post-author-${post.id}`}>
-                            {post.authorCompany || post.authorName || "Unknown"}
+                            {post.authorCompany || post.authorName || 'Unknown'}
                           </h3>
                           <p className="text-sm text-neutral-500">
                             {format(new Date(post.createdAt), "MMM d, yyyy 'at' h:mm a")}
@@ -228,7 +230,7 @@ export default function ContentModeration() {
                         </div>
                         {post.validUntil && (
                           <p className="text-sm text-yellow-600 mt-1">
-                            Valid until: {format(new Date(post.validUntil), "MMM d, yyyy")}
+                            Valid until: {format(new Date(post.validUntil), 'MMM d, yyyy')}
                           </p>
                         )}
                       </div>
@@ -244,7 +246,7 @@ export default function ContentModeration() {
                     <div className="flex justify-end gap-3 pt-4 border-t border-neutral-100">
                       <Button
                         variant="outline"
-                        onClick={() => handlePostModeration(post.id, "reject", "Content does not meet guidelines")}
+                        onClick={() => handlePostModeration(post.id, 'reject', 'Content does not meet guidelines')}
                         disabled={moderatePostMutation.isPending}
                         data-testid={`reject-post-${post.id}`}
                       >
@@ -252,7 +254,7 @@ export default function ContentModeration() {
                         Reject
                       </Button>
                       <Button
-                        onClick={() => handlePostModeration(post.id, "approve")}
+                        onClick={() => handlePostModeration(post.id, 'approve')}
                         disabled={moderatePostMutation.isPending}
                         data-testid={`approve-post-${post.id}`}
                       >
@@ -312,7 +314,7 @@ export default function ContentModeration() {
                           {content.title}
                         </h3>
                         <p className="text-sm text-neutral-600" data-testid={`training-author-${content.id}`}>
-                          by {content.trainerName || "Unknown Trainer"}
+                          by {content.trainerName || 'Unknown Trainer'}
                         </p>
                       </div>
 
@@ -347,7 +349,7 @@ export default function ContentModeration() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleTrainingModeration(content.id, "reject", "Content does not meet quality standards")}
+                          onClick={() => handleTrainingModeration(content.id, 'reject', 'Content does not meet quality standards')}
                           disabled={moderateTrainingMutation.isPending}
                           className="flex-1"
                           data-testid={`reject-training-${content.id}`}
@@ -357,7 +359,7 @@ export default function ContentModeration() {
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => handleTrainingModeration(content.id, "approve")}
+                          onClick={() => handleTrainingModeration(content.id, 'approve')}
                           disabled={moderateTrainingMutation.isPending}
                           className="flex-1"
                           data-testid={`approve-training-${content.id}`}

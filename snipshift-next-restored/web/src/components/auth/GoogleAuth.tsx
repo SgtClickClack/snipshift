@@ -102,7 +102,7 @@ export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
       onSuccess?.(userData);
     } catch (error: any) {
       console.error('Google auth error:', error);
-      console.error('Authentication failed:', error.message || "There was an error with Google authentication. Please try again.");
+      console.error('Authentication failed:', error.message || 'There was an error with Google authentication. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -157,9 +157,9 @@ export function GoogleAuth({ mode, onSuccess }: GoogleAuthProps) {
           />
         </svg>
         {isProcessing 
-          ? "Processing..." 
+          ? 'Processing...' 
           : !isGoogleLoaded 
-          ? "Loading..."
+          ? 'Loading...'
           : `${mode === 'signin' ? 'Sign in' : 'Sign up'} with Google`
         }
       </Button>

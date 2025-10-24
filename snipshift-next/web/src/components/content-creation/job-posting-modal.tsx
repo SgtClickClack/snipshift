@@ -1,16 +1,18 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { X, Plus, MapPin, DollarSign, Calendar, Clock } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { X, Plus, MapPin, DollarSign, Calendar, Clock } from 'lucide-react';
 
 interface JobPostingModalProps {
   isOpen: boolean;
@@ -23,53 +25,53 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    location: { street: "", city: "", state: "", zipCode: "" },
-    payRate: "",
-    payType: "hour" as "hour" | "day" | "shift",
-    date: "",
-    time: "",
+    title: '',
+    description: '',
+    location: { street: '', city: '', state: '', zipCode: '' },
+    payRate: '',
+    payType: 'hour' as 'hour' | 'day' | 'shift',
+    date: '',
+    time: '',
     skillsRequired: [] as string[],
-    newSkill: ""
+    newSkill: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createJobMutation = useMutation({
     mutationFn: async (jobData: any) => {
-      const response = await apiRequest("POST", "/api/jobs", jobData);
+      const response = await apiRequest('POST', '/api/jobs', jobData);
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Job posted successfully!",
-        description: "Your job posting is now live and professionals can apply.",
+        title: 'Job posted successfully!',
+        description: 'Your job posting is now live and professionals can apply.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       onClose();
       resetForm();
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to post job",
-        description: error.message || "Please try again later",
-        variant: "destructive",
+        title: 'Failed to post job',
+        description: error.message || 'Please try again later',
+        variant: 'destructive',
       });
     },
   });
 
   const resetForm = () => {
     setFormData({
-      title: "",
-      description: "",
-      location: { street: "", city: "", state: "", zipCode: "" },
-      payRate: "",
-      payType: "hour",
-      date: "",
-      time: "",
+      title: '',
+      description: '',
+      location: { street: '', city: '', state: '', zipCode: '' },
+      payRate: '',
+      payType: 'hour',
+      date: '',
+      time: '',
       skillsRequired: [],
-      newSkill: ""
+      newSkill: ''
     });
     setErrors({});
   };
@@ -77,13 +79,13 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.title.trim()) newErrors.title = "Job title is required";
-    if (!formData.description.trim()) newErrors.description = "Job description is required";
-    if (!formData.location.city.trim()) newErrors.city = "City is required";
-    if (!formData.location.state.trim()) newErrors.state = "State is required";
-    if (!formData.payRate.trim()) newErrors.payRate = "Pay rate is required";
-    if (!formData.date) newErrors.date = "Date is required";
-    if (!formData.time) newErrors.time = "Time is required";
+    if (!formData.title.trim()) newErrors.title = 'Job title is required';
+    if (!formData.description.trim()) newErrors.description = 'Job description is required';
+    if (!formData.location.city.trim()) newErrors.city = 'City is required';
+    if (!formData.location.state.trim()) newErrors.state = 'State is required';
+    if (!formData.payRate.trim()) newErrors.payRate = 'Pay rate is required';
+    if (!formData.date) newErrors.date = 'Date is required';
+    if (!formData.time) newErrors.time = 'Time is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -94,7 +96,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
       setFormData(prev => ({
         ...prev,
         skillsRequired: [...prev.skillsRequired, prev.newSkill.trim()],
-        newSkill: ""
+        newSkill: ''
       }));
     }
   };
@@ -115,17 +117,17 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
       title: formData.title,
       description: formData.description,
       location: {
-        street: formData.location.street || "",
+        street: formData.location.street || '',
         city: formData.location.city,
         state: formData.location.state,
-        zipCode: formData.location.zipCode || ""
+        zipCode: formData.location.zipCode || ''
       },
       payRate: parseFloat(formData.payRate),
       payType: formData.payType,
       date: new Date(`${formData.date}T${formData.time}`).toISOString(),
       skillsRequired: formData.skillsRequired,
       hubId: user?.id,
-      status: "open",
+      status: 'open',
       applicants: []
     };
 
@@ -160,7 +162,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Full-time Barber, Chair Rental"
                 data-testid="input-job-title"
-                className={errors.title ? "border-red-500" : ""}
+                className={errors.title ? 'border-red-500' : ''}
               />
               {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
             </div>
@@ -175,7 +177,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                 placeholder="Describe the role, responsibilities, and requirements..."
                 rows={4}
                 data-testid="textarea-job-description"
-                className={errors.description ? "border-red-500" : ""}
+                className={errors.description ? 'border-red-500' : ''}
               />
               {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
             </div>
@@ -208,7 +210,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                     })}
                     placeholder="City"
                     data-testid="input-job-city"
-                    className={errors.city ? "border-red-500" : ""}
+                    className={errors.city ? 'border-red-500' : ''}
                   />
                   {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                 </div>
@@ -223,7 +225,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                     })}
                     placeholder="State"
                     data-testid="input-job-state"
-                    className={errors.state ? "border-red-500" : ""}
+                    className={errors.state ? 'border-red-500' : ''}
                   />
                   {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
                 </div>
@@ -255,7 +257,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                   onChange={(e) => setFormData({ ...formData, payRate: e.target.value })}
                   placeholder="25.00"
                   data-testid="input-pay-rate"
-                  className={errors.payRate ? "border-red-500" : ""}
+                  className={errors.payRate ? 'border-red-500' : ''}
                 />
                 {errors.payRate && <p className="text-red-500 text-sm mt-1">{errors.payRate}</p>}
               </div>
@@ -263,7 +265,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                 <Label htmlFor="payType">Pay Type *</Label>
                 <Select
                   value={formData.payType}
-                  onValueChange={(value: "hour" | "day" | "shift") => 
+                  onValueChange={(value: 'hour' | 'day' | 'shift') => 
                     setFormData({ ...formData, payType: value })
                   }
                 >
@@ -289,7 +291,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   data-testid="input-job-date"
-                  className={errors.date ? "border-red-500" : ""}
+                  className={errors.date ? 'border-red-500' : ''}
                 />
                 {errors.date && <p className="text-red-500 text-sm mt-1">{errors.date}</p>}
               </div>
@@ -301,7 +303,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                   data-testid="input-job-time"
-                  className={errors.time ? "border-red-500" : ""}
+                  className={errors.time ? 'border-red-500' : ''}
                 />
                 {errors.time && <p className="text-red-500 text-sm mt-1">{errors.time}</p>}
               </div>
@@ -360,7 +362,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                 data-testid="button-post-job"
                 className="bg-primary hover:bg-primary/90"
               >
-                {createJobMutation.isPending ? "Posting..." : "Post Job"}
+                {createJobMutation.isPending ? 'Posting...' : 'Post Job'}
               </Button>
             </div>
           </form>

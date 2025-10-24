@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Job } from "@shared/types";
-import { MapPin, DollarSign, Calendar, X } from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+
+import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Job } from '@shared/types';
+import { MapPin, DollarSign, Calendar, X } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface MapViewProps {
   jobs: Job[];
@@ -37,20 +39,20 @@ export default function MapView({
   // Mock coordinates for demonstration - in real app, these would come from geocoding
   const getMockCoordinates = (job: Job) => {
     const locations: Record<string, { lat: number; lng: number }> = {
-      "Sydney": { lat: -33.8688, lng: 151.2093 },
-      "Melbourne": { lat: -37.8136, lng: 144.9631 },
-      "Brisbane": { lat: -27.4698, lng: 153.0251 },
-      "Perth": { lat: -31.9505, lng: 115.8605 },
-      "Adelaide": { lat: -34.9285, lng: 138.6007 },
-      "Gold Coast": { lat: -28.0167, lng: 153.4000 },
-      "Newcastle": { lat: -32.9283, lng: 151.7817 },
-      "Canberra": { lat: -35.2809, lng: 149.1300 },
-      "Darwin": { lat: -12.4634, lng: 130.8456 },
-      "Hobart": { lat: -42.8821, lng: 147.3272 }
+      'Sydney': { lat: -33.8688, lng: 151.2093 },
+      'Melbourne': { lat: -37.8136, lng: 144.9631 },
+      'Brisbane': { lat: -27.4698, lng: 153.0251 },
+      'Perth': { lat: -31.9505, lng: 115.8605 },
+      'Adelaide': { lat: -34.9285, lng: 138.6007 },
+      'Gold Coast': { lat: -28.0167, lng: 153.4000 },
+      'Newcastle': { lat: -32.9283, lng: 151.7817 },
+      'Canberra': { lat: -35.2809, lng: 149.1300 },
+      'Darwin': { lat: -12.4634, lng: 130.8456 },
+      'Hobart': { lat: -42.8821, lng: 147.3272 }
     };
     
     const cityName = job.location.city;
-    const baseCoords = locations[cityName] || locations["Sydney"];
+    const baseCoords = locations[cityName] || locations['Sydney'];
     
     // Add some random offset for variety within the city
     const offset = 0.05; // ~5km variance
@@ -127,7 +129,7 @@ export default function MapView({
           <MapPin className="h-5 w-5" />
           <span className="font-medium">Travel Mode Active</span>
           <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            {searchLocation || "Current Location"}
+            {searchLocation || 'Current Location'}
           </Badge>
           <Badge variant="outline" className="text-blue-700">
             {radius}km radius
@@ -201,8 +203,8 @@ export default function MapView({
                   <circle
                     cx={marker.x}
                     cy={marker.y}
-                    r={hoveredMarker === marker.id ? "12" : "8"}
-                    fill={selectedJob?.id === marker.id ? "#ef4444" : "#10b981"}
+                    r={hoveredMarker === marker.id ? '12' : '8'}
+                    fill={selectedJob?.id === marker.id ? '#ef4444' : '#10b981'}
                     stroke="#ffffff"
                     strokeWidth="2"
                     className="cursor-pointer transition-all duration-200"
@@ -256,7 +258,7 @@ export default function MapView({
                       </div>
                       <div className="flex items-center">
                         <Calendar className="mr-2 h-4 w-4" />
-                        <span>{format(new Date(selectedJob.date), "MMM d, yyyy")}</span>
+                        <span>{format(new Date(selectedJob.date), 'MMM d, yyyy')}</span>
                       </div>
                     </div>
                     

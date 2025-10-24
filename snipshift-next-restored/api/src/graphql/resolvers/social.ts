@@ -10,7 +10,7 @@ export const socialResolvers = {
       { first = 20, after }: { first?: number; after?: string },
       context: GraphQLContext
     ) => {
-      let conditions = [];
+      const conditions = [];
 
       if (after) {
         conditions.push(sql`${socialPosts.createdAt} < ${after}`);

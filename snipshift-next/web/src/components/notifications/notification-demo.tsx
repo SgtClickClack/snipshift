@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useNotifications } from "@/hooks/use-notifications";
-import { Bell, Zap, Users, MessageSquare, Heart, Briefcase } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useNotifications } from '@/hooks/use-notifications';
+import { Bell, Zap, Users, MessageSquare, Heart, Briefcase } from 'lucide-react';
 
 export default function NotificationDemo() {
   const { 
@@ -165,7 +167,7 @@ export default function NotificationDemo() {
                 <Button
                   onClick={() => {
                     // Create custom notification logic would go here
-                    console.log("Custom notification:", customNotification);
+                    console.log('Custom notification:', customNotification);
                     simulateNewNotification();
                   }}
                   disabled={!customNotification.senderName || !customNotification.message}

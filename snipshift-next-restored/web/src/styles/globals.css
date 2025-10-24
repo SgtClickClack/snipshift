@@ -10,16 +10,16 @@
 
 /* CSS Custom Properties (Design Tokens) */
 :root {
-  /* Brand Colors */
-  --brand-primary: #FF6B6B;
-  --brand-primary-dark: #E55A5A;
-  --brand-primary-light: #FF8A8A;
-  --brand-secondary: #4ECDC4;
-  --brand-secondary-dark: #3BB5AC;
-  --brand-secondary-light: #6ED5CE;
-  --brand-accent: #45B7D1;
-  --brand-accent-dark: #3A9BC1;
-  --brand-accent-light: #5BC3D6;
+  /* Brand Colors - Original SnipShift Palette: Greys, Charcoals, Chrome + Lipstick Red */
+  --brand-primary: #2C2C2C;        /* Charcoal */
+  --brand-primary-dark: #1A1A1A;   /* Dark Charcoal */
+  --brand-primary-light: #404040;  /* Medium Charcoal */
+  --brand-secondary: #DC143C;       /* Deep Lipstick Red */
+  --brand-secondary-dark: #B22222;  /* Darker Lipstick Red */
+  --brand-secondary-light: #FF1744; /* Bright Lipstick Red */
+  --brand-accent: #C0C0C0;         /* Chrome/Silver */
+  --brand-accent-dark: #A8A8A8;     /* Dark Chrome */
+  --brand-accent-light: #D3D3D3;   /* Light Chrome */
 
   /* Neutral Colors */
   --neutral-50: #FAFAFA;
@@ -227,15 +227,17 @@ a:hover {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-dark));
+  background: var(--brand-secondary);
   color: white;
-  box-shadow: var(--shadow-md);
+  border: 2px solid var(--brand-secondary);
+  box-shadow: 0 4px 12px rgba(220, 20, 60, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--brand-primary-dark), var(--brand-primary));
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
+  background: var(--brand-secondary-dark);
+  border-color: var(--brand-secondary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(220, 20, 60, 0.4);
 }
 
 .btn-secondary {
@@ -252,13 +254,16 @@ a:hover {
 
 .btn-outline {
   background: transparent;
-  color: var(--brand-primary);
-  border-color: var(--brand-primary);
+  color: white;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: var(--brand-primary);
-  color: white;
+  background: white;
+  color: var(--brand-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
 }
 
 .btn-ghost {
@@ -358,11 +363,14 @@ a:hover {
 }
 
 /* Logo Styling */
+/* Logo styling - Fixed sizing with container */
 .logo-container {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  max-width: 200px; /* Constrain container size */
+  margin: 0 auto;
 }
 
 .logo-image {
@@ -370,10 +378,14 @@ a:hover {
   box-shadow: var(--shadow-lg);
   transition: all var(--transition-base);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  object-fit: contain; /* Maintain aspect ratio */
+  max-width: 100%;
+  height: auto;
+  width: 100%; /* Fill container */
 }
 
 .logo-image:hover {
-  transform: scale(1.05) rotate(1deg);
+  transform: scale(1.05);
   box-shadow: var(--shadow-xl);
 }
 
@@ -392,6 +404,23 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
+  display: flex !important;
+  align-items: center !important;
+  height: 64px !important;
+}
+
+/* Clean navbar styles - using MUI best practices */
+
+/* Scissors Divider Animation */
+@keyframes scissorsFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.6; 
+  }
+  50% { 
+    transform: translateY(-3px) rotate(5deg); 
+    opacity: 0.8; 
+  }
 }
 
 .navbar-brand {
@@ -424,15 +453,20 @@ a:hover {
   background: var(--neutral-100);
 }
 
-/* Hero Section */
+/* Hero Section - Clean Design with Proper Background */
 .hero {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
   color: white;
-  padding: var(--space-24) 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
   overflow: hidden;
+  padding: var(--space-16) 0;
 }
 
+/* Hero Background - Using Proper Hero Image */
 .hero::before {
   content: '';
   position: absolute;
@@ -440,36 +474,42 @@ a:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
+  background-image: url('/hero-background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1;
+  z-index: 0;
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   text-align: center;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-6);
+  width: 100%;
 }
 
 .hero-title {
   font-size: var(--font-size-6xl);
   font-weight: var(--font-weight-extrabold);
-  margin-bottom: var(--space-6);
-  background: linear-gradient(135deg, white, rgba(255, 255, 255, 0.8));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-bottom: var(--space-8);
+  color: #C0C0C0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.1;
 }
 
 .hero-subtitle {
   font-size: var(--font-size-xl);
-  margin-bottom: var(--space-8);
-  opacity: 0.9;
-  max-width: 600px;
+  margin-bottom: var(--space-12);
+  opacity: 0.95;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Grid System */
@@ -631,11 +671,41 @@ a:hover {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .hero {
+    min-height: 100vh;
+    padding: var(--space-12) 0;
+  }
+  
+  .hero-content {
+    padding: 0 var(--space-4);
+  }
+  
   .hero-title {
     font-size: var(--font-size-4xl);
+    margin-bottom: var(--space-6);
   }
   
   .hero-subtitle {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-10);
+    max-width: 100%;
+  }
+  
+  .logo-image {
+    max-width: 400px;
+    height: auto;
+    object-fit: contain;
+  }
+  
+  .btn {
+    min-width: 120px;
+    height: 44px;
+    font-size: var(--font-size-base);
+  }
+  
+  .btn-lg {
+    min-width: 150px;
+    height: 48px;
     font-size: var(--font-size-lg);
   }
   
@@ -645,14 +715,8 @@ a:hover {
     grid-template-columns: 1fr;
   }
   
-  .logo-image {
-    max-width: 200px;
-    height: auto;
-  }
-  
-  .btn {
-    width: 100%;
-    justify-content: center;
+  .card {
+    padding: var(--space-4);
   }
   
   .navbar-nav {

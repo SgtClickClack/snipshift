@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import React from 'react';
+
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { 
   Scale, 
   Shield, 
@@ -12,7 +14,7 @@ import {
   GraduationCap,
   Building2,
   Flag
-} from "lucide-react";
+} from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();

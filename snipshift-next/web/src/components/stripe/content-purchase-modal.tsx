@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import PaymentElement from "./payment-element";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import PaymentElement from './payment-element';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Load Stripe (use test key for demo)
 const stripePromise = loadStripe(
@@ -21,7 +23,7 @@ interface TrainingContent {
   trainerId: string;
   trainerName?: string;
   duration: string;
-  level: "beginner" | "intermediate" | "advanced";
+  level: 'beginner' | 'intermediate' | 'advanced';
 }
 
 interface ContentPurchaseModalProps {
@@ -74,9 +76,9 @@ export default function ContentPurchaseModal({
     } catch (error) {
       console.error('Error creating payment intent:', error);
       toast({
-        title: "Payment Setup Failed",
-        description: "Unable to initialize payment. Please try again.",
-        variant: "destructive",
+        title: 'Payment Setup Failed',
+        description: 'Unable to initialize payment. Please try again.',
+        variant: 'destructive',
       });
       onClose();
     } finally {

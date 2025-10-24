@@ -1,12 +1,12 @@
-# Snipshift - B2B2C Marketplace Platform
+# SnipShift - Professional Beauty Services Marketplace
 
-A comprehensive marketplace platform connecting the barbering and creative industries through advanced geospatial networking and job discovery features.
+A comprehensive platform connecting beauty professionals with salons, barbershops, and spas for flexible work opportunities.
 
 ## 🚀 Overview
 
-Snipshift is a production-ready B2B2C marketplace that connects four user types:
-- **Hub Owners** (barbershops) - Post jobs and manage teams
-- **Professionals** (barbers/stylists) - Find opportunities and showcase skills
+SnipShift is a production-ready marketplace that connects:
+- **Professionals** (barbers, stylists, beauticians) - Find flexible work opportunities
+- **Businesses** (salons, barbershops, spas) - Post jobs and manage teams  
 - **Brands** (product companies) - Promote products to professional community
 - **Trainers** (educators) - Monetize training content and expertise
 
@@ -14,25 +14,26 @@ Snipshift is a production-ready B2B2C marketplace that connects four user types:
 
 ### Frontend
 - **React 18** with TypeScript
-- **Vite** for build tooling and development server
-- **Tailwind CSS** with shadcn/ui components
-- **TanStack Query** for server state management
-- **Wouter** for client-side routing
-- **React Hook Form** with Zod validation
+- **Next.js 13** with App Router
+- **Tailwind CSS** with custom design system
+- **React Query** for server state management
+- **Custom UI Components** based on Radix UI
+- **Vite** for development tooling
 
 ### Backend
 - **Node.js** with Express.js
-- **TypeScript** with ES modules
-- **Firebase Authentication** (Google OAuth + Email/Password)
-- **Drizzle ORM** with PostgreSQL schema
-- **Express Rate Limit** for API protection
+- **TypeScript** with strict mode
+- **PostgreSQL** with Drizzle ORM
+- **JWT + Session** authentication
+- **Winston** structured logging
+- **Zod** validation schemas
 
-### Development & Deployment
-- **Vite** development server with HMR
-- **esbuild** for server bundling
-- **Playwright** & **Cypress** for E2E testing
+### Development & Testing
+- **ESLint** with TypeScript rules
+- **Jest** for unit testing
+- **Cypress** for E2E testing
+- **Playwright** for visual testing
 - **GitHub Actions** CI/CD pipeline
-- **VentraIP hosting** with Node.js support
 
 ## 🔧 Installation & Setup
 

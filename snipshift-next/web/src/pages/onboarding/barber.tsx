@@ -94,17 +94,17 @@ export default function BarberOnboarding() {
       });
 
       toast({
-        title: "Onboarding Complete!",
-        description: "Your professional profile has been created successfully.",
+        title: 'Onboarding Complete!',
+        description: 'Your professional profile has been created successfully.',
       });
 
       navigate(getDashboardRoute('professional'));
     } catch (error) {
       console.error('Onboarding error:', error);
       toast({
-        title: "Error",
-        description: "Failed to complete onboarding. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to complete onboarding. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

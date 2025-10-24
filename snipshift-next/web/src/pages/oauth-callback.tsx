@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -75,7 +77,7 @@ export function OAuthCallback() {
         
         if (hasProperRole) {
           toast({
-            title: "Welcome back!",
+            title: 'Welcome back!',
             description: `Successfully signed in with Google! Redirecting to your ${userData.currentRole} dashboard.`,
           });
           
@@ -86,8 +88,8 @@ export function OAuthCallback() {
           navigate(dashboardRoute);
         } else {
           toast({
-            title: "Welcome!",
-            description: "Successfully signed in with Google! Choose your role to continue.",
+            title: 'Welcome!',
+            description: 'Successfully signed in with Google! Choose your role to continue.',
           });
           
           console.log('🎯 Navigating to role selection');
@@ -97,9 +99,9 @@ export function OAuthCallback() {
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
         toast({
-          title: "Authentication failed",
-          description: "There was an error processing your Google authentication. Please try again.",
-          variant: "destructive",
+          title: 'Authentication failed',
+          description: 'There was an error processing your Google authentication. Please try again.',
+          variant: 'destructive',
         });
         navigate('/login');
       }

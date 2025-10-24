@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Bell } from "lucide-react";
-import { Notification } from "./notification-types";
-import NotificationDropdown from "./notification-dropdown";
+import React from 'react';
+
+import { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Bell } from 'lucide-react';
+import { Notification } from './notification-types';
+import NotificationDropdown from './notification-dropdown';
 
 interface NotificationBellProps {
   notifications: Notification[];
@@ -15,7 +17,7 @@ export default function NotificationBell({
   notifications,
   onNotificationClick,
   onMarkAllRead,
-  className = ""
+  className = ''
 }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);

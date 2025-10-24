@@ -1,8 +1,8 @@
-import { defineConfig } from 'cypress'
+import { defineConfig } from 'cypress';
 
 export default defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:5000',
+    baseUrl: 'http://localhost:3000',
     env: {
       E2E_TEST: '1'
     },
@@ -34,55 +34,55 @@ export default defineConfig({
       // 🚀 ADDITIONAL OPTIMIZATIONS
       on('task', {
         log(message) {
-          console.log(message)
-          return null
+          console.log(message);
+          return null;
         },
         
         // Task to clear localStorage and sessionStorage
         clearStorage() {
           return cy.clearLocalStorage().then(() => {
-            return cy.clearCookies()
-          })
+            return cy.clearCookies();
+          });
         },
         
         // Task to wait for network idle
         waitForNetworkIdle() {
           return cy.window().then((win) => {
             return new Promise((resolve) => {
-              let timeoutId: NodeJS.Timeout
+              let timeoutId: NodeJS.Timeout;
               const checkIdle = () => {
                 if (win.performance && win.performance.getEntriesByType) {
-                  const requests = win.performance.getEntriesByType('resource')
+                  const requests = win.performance.getEntriesByType('resource');
                   const recentRequests = requests.filter(req => 
                     Date.now() - req.startTime < 1000
-                  )
+                  );
                   if (recentRequests.length === 0) {
-                    clearTimeout(timeoutId)
-                    resolve(null)
+                    clearTimeout(timeoutId);
+                    resolve(null);
                   } else {
-                    timeoutId = setTimeout(checkIdle, 100)
+                    timeoutId = setTimeout(checkIdle, 100);
                   }
                 } else {
-                  resolve(null)
+                  resolve(null);
                 }
-              }
-              checkIdle()
-            })
-          })
+              };
+              checkIdle();
+            });
+          });
         }
-      })
+      });
       
       // 🎯 IMPROVED ERROR HANDLING
       on('before:browser:launch', (browser, launchOptions) => {
         if (browser.name === 'chrome') {
-          launchOptions.args.push('--disable-web-security')
-          launchOptions.args.push('--disable-features=VizDisplayCompositor')
-          launchOptions.args.push('--disable-background-timer-throttling')
-          launchOptions.args.push('--disable-renderer-backgrounding')
-          launchOptions.args.push('--disable-backgrounding-occluded-windows')
+          launchOptions.args.push('--disable-web-security');
+          launchOptions.args.push('--disable-features=VizDisplayCompositor');
+          launchOptions.args.push('--disable-background-timer-throttling');
+          launchOptions.args.push('--disable-renderer-backgrounding');
+          launchOptions.args.push('--disable-backgrounding-occluded-windows');
         }
-        return launchOptions
-      })
+        return launchOptions;
+      });
     },
   },
   
@@ -98,4 +98,4 @@ export default defineConfig({
     viewportWidth: 1280,
     viewportHeight: 720,
   },
-})
+});

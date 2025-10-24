@@ -68,9 +68,9 @@ export class TestUtils {
   static async cleanupTestData() {
     try {
       // Clean up test data in reverse dependency order
-      await db.execute(`DELETE FROM applications WHERE professional_id LIKE 'test-%'`);
-      await db.execute(`DELETE FROM jobs WHERE hub_id LIKE 'test-%'`);
-      await db.execute(`DELETE FROM users WHERE email LIKE 'test-%@example.com'`);
+      await db.execute('DELETE FROM applications WHERE professional_id LIKE \'test-%\'');
+      await db.execute('DELETE FROM jobs WHERE hub_id LIKE \'test-%\'');
+      await db.execute('DELETE FROM users WHERE email LIKE \'test-%@example.com\'');
       
       logger.info('Test data cleaned up successfully');
     } catch (error) {

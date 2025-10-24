@@ -75,7 +75,7 @@ export function MultiStepForm({
   };
 
   return (
-    <div className={cn("min-h-screen bg-gradient-to-br from-steel-50 via-white to-chrome-light/20 p-6", className)}>
+    <div className={cn('min-h-screen bg-gradient-to-br from-steel-50 via-white to-chrome-light/20 p-6', className)}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -106,13 +106,13 @@ export function MultiStepForm({
                 key={step.id}
                 onClick={() => handleStepClick(index)}
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all",
+                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all',
                   {
-                    "bg-red-accent text-white": index === currentStep,
-                    "bg-steel-200 text-steel-600": index < currentStep && !completedSteps.has(index),
-                    "bg-green-500 text-white": completedSteps.has(index),
-                    "bg-steel-100 text-steel-400 cursor-not-allowed": index > currentStep + 1,
-                    "bg-steel-200 text-steel-600 cursor-pointer": index === currentStep + 1,
+                    'bg-red-accent text-white': index === currentStep,
+                    'bg-steel-200 text-steel-600': index < currentStep && !completedSteps.has(index),
+                    'bg-green-500 text-white': completedSteps.has(index),
+                    'bg-steel-100 text-steel-400 cursor-not-allowed': index > currentStep + 1,
+                    'bg-steel-200 text-steel-600 cursor-pointer': index === currentStep + 1,
                   }
                 )}
                 disabled={index > currentStep + 1}

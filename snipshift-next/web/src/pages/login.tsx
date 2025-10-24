@@ -1,14 +1,16 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Scissors } from "lucide-react";
-import GoogleAuthButton from "@/components/auth/google-auth-button";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Scissors } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingButton } from '@/components/ui/standard-button';
+import GoogleAuthButton from '@/components/auth/google-auth-button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -16,8 +18,8 @@ export default function LoginPage() {
   const { toast } = useToast();
   const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,32 +27,50 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await apiRequest("POST", "/api/login", formData);
+      const response = await apiRequest('POST', '/api/login', formData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+      }
+      
       const user = await response.json();
       
       login(user);
       
       toast({
-        title: "Login successful",
-        description: "Welcome back!",
+        title: 'Login successful',
+        description: 'Welcome back!',
       });
 
-      // Redirect to role selection
-      navigate("/role-selection");
+      // Redirect based on user's current role
+      if (user.currentRole) {
+        // User already has a role, redirect to appropriate dashboard
+        const dashboardRoute = user.currentRole === 'professional' ? '/professional-dashboard' : '/business-dashboard';
+        navigate(dashboardRoute);
+      } else {
+        // User needs to select a role
+        navigate('/role-selection');
+      }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      
       toast({
-        title: "Login failed",
-        description: "Invalid email or password",
-        variant: "destructive",
+        title: 'Login failed',
+        description: errorMessage,
+        variant: 'destructive',
       });
+      
+      // Log error for debugging
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 py-12">
-      <div className="max-w-md mx-auto px-4">
+    <div className="min-h-screen bg-neutral-100 py-8 sm:py-12" data-testid="login-page">
+      <div className="max-w-md mx-auto px-4 sm:px-6">
         <Card className="shadow-sm">
           <CardHeader className="text-center">
             <Scissors className="text-primary text-3xl mx-auto mb-4" />
@@ -58,7 +78,7 @@ export default function LoginPage() {
             <p className="text-neutral-600">Sign in to your account</p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" data-testid="login-form">
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-neutral-700">
                   Email Address
@@ -91,14 +111,15 @@ export default function LoginPage() {
                 />
               </div>
               
-              <Button 
+              <LoadingButton 
                 type="submit" 
-                className="w-full bg-primary hover:bg-blue-700"
-                disabled={isLoading}
+                className="w-full"
+                loading={isLoading}
+                loadingText="Signing In..."
                 data-testid="button-signin"
               >
-                {isLoading ? "Signing In..." : "Sign In"}
-              </Button>
+                Sign In
+              </LoadingButton>
             </form>
 
 
@@ -118,7 +139,7 @@ export default function LoginPage() {
             
             <div className="text-center mt-6">
               <p className="text-neutral-600">
-                Don't have an account?{" "}
+                Don't have an account?{' '}
                 <Link to="/signup" className="text-primary hover:underline font-medium" data-testid="link-signup">
                   Sign up here
                 </Link>

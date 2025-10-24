@@ -3,7 +3,7 @@ import { AuthGuard } from './AuthGuard';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'hub' | 'professional' | 'brand' | 'trainer' | 'admin';
+  requiredRole?: 'professional' | 'business';
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {

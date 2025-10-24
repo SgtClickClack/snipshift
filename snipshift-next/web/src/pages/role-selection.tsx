@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, UserCheck, Scissors } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/queryClient";
-import { getDashboardRoute } from "@/lib/roles";
+import React from 'react';
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Store, UserCheck, Scissors } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"professional" | "business" | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'professional' | 'business' | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { toast } = useToast();
   const { user, setRolesAndCurrentRole } = useAuth();
   
-  const selectRole = (role: "professional" | "business") => {
+  const selectRole = (role: 'professional' | 'business') => {
     setSelectedRole(role);
   };
 
@@ -24,29 +24,23 @@ export default function RoleSelectionPage() {
     if (!user || !selectedRole) return;
     setIsLoading(true);
     try {
-      // Set the user's role and current role
-      const roles = selectedRole === "professional" ? ["professional"] : ["professional", "business"];
-      await apiRequest("PATCH", `/api/users/${user.id}/roles`, { roles });
-      const res = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: selectedRole });
-      const updated = await res.json();
-      
-      // Update local state
-      setRolesAndCurrentRole(roles as any, updated.currentRole);
+      // Update local state directly since we don't have API endpoints yet
+      setRolesAndCurrentRole([selectedRole] as any, selectedRole);
 
-      setSuccess("Welcome! Your role has been set.");
+      setSuccess('Welcome! Your role has been set.');
       toast({
-        title: "Role updated",
-        description: `You're now set as a ${selectedRole === "professional" ? "Professional" : "Business"}.`,
+        title: 'Role updated',
+        description: `You're now set as a ${selectedRole === 'professional' ? 'Professional' : 'Business'}.`,
       });
 
       // Redirect to appropriate dashboard
-      const dashboardRoute = getDashboardRoute(selectedRole);
+      const dashboardRoute = selectedRole === 'professional' ? '/professional-dashboard' : '/business-dashboard';
       navigate(dashboardRoute);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update your role. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update your role. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -55,21 +49,21 @@ export default function RoleSelectionPage() {
 
   const roles = [
     {
-      id: "professional" as const,
-      title: "I want to find shifts",
-      subtitle: "Professional",
-      description: "Barbers, stylists, and technicians looking for flexible work opportunities",
+      id: 'professional' as const,
+      title: 'I want to find shifts',
+      subtitle: 'Professional',
+      description: 'Barbers, stylists, and technicians looking for flexible work opportunities',
       icon: UserCheck,
-      color: "border-steel-300 bg-steel-50/80 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg",
+      color: 'border-steel-300 bg-steel-50/80 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg',
       isDefault: true
     },
     {
-      id: "business" as const,
-      title: "I want to offer shifts",
-      subtitle: "Business",
-      description: "Barbershops, salons, and businesses posting shifts and managing staff",
+      id: 'business' as const,
+      title: 'I want to offer shifts',
+      subtitle: 'Business',
+      description: 'Barbershops, salons, and businesses posting shifts and managing staff',
       icon: Store,
-      color: "border-chrome-light bg-chrome-light/20 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg",
+      color: 'border-chrome-light bg-chrome-light/20 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg',
       isDefault: false
     }
   ];
@@ -142,7 +136,7 @@ export default function RoleSelectionPage() {
             className="w-full max-w-lg bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-dark hover:to-red-accent text-white font-semibold py-4 px-8 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
             data-testid="confirm-role-button"
           >
-            {isLoading ? "Setting up your account..." : `Continue as ${selectedRole === "professional" ? "Professional" : "Business"}`}
+            {isLoading ? 'Setting up your account...' : `Continue as ${selectedRole === 'professional' ? 'Professional' : 'Business'}`}
           </Button>
           <p className="text-steel-500 text-sm mt-6 max-w-sm mx-auto">
             You can switch between Professional and Business roles anytime from your profile.

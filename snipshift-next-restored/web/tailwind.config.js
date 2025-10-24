@@ -8,18 +8,18 @@ module.exports = {
   ],
   theme: {
     extend: {
-      colors: {
-        brand: {
-          primary: '#FF6B6B',
-          'primary-dark': '#E55A5A',
-          'primary-light': '#FF8A8A',
-          secondary: '#4ECDC4',
-          'secondary-dark': '#3BB5AC',
-          'secondary-light': '#6ED5CE',
-          accent: '#45B7D1',
-          'accent-dark': '#3A9BC1',
-          'accent-light': '#5BC3D6',
-        },
+             colors: {
+               brand: {
+                 primary: '#2C2C2C',        /* Charcoal */
+                 'primary-dark': '#1A1A1A', /* Dark Charcoal */
+                 'primary-light': '#404040', /* Medium Charcoal */
+                 secondary: '#DC143C',       /* Deep Lipstick Red */
+                 'secondary-dark': '#B22222', /* Darker Lipstick Red */
+                 'secondary-light': '#FF1744', /* Bright Lipstick Red */
+                 accent: '#C0C0C0',         /* Chrome/Silver */
+                 'accent-dark': '#A8A8A8',   /* Dark Chrome */
+                 'accent-light': '#D3D3D3',  /* Light Chrome */
+               },
         neutral: {
           50: '#FAFAFA',
           100: '#F5F5F5',

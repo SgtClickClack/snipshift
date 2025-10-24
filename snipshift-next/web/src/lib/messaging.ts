@@ -2,7 +2,7 @@ import { Chat, Message } from '@shared/types';
 import { apiRequest } from '@/lib/queryClient';
 
 export class MessagingService {
-  private pollingIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private pollingIntervals: Map<string, ReturnType<typeof setInterval>> = new Map();
 
   // Generate chat ID from two user IDs (consistent ordering)
   private generateChatId(userId1: string, userId2: string): string {

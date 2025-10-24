@@ -17,11 +17,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import JobPostingModal from '@/components/jobs/job-posting-modal';
 
 export default function BusinessDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  const [showJobPostingModal, setShowJobPostingModal] = useState(false);
 
   // Mock data - replace with actual API calls
   const [stats, setStats] = useState({
@@ -53,16 +55,13 @@ export default function BusinessDashboard() {
   ]);
 
   const handlePostShift = () => {
-    toast({
-      title: "Post New Shift",
-      description: "Shift posting functionality will be implemented here.",
-    });
+    setShowJobPostingModal(true);
   };
 
   const handleViewApplications = () => {
     toast({
-      title: "View Applications", 
-      description: "Application management will be implemented here.",
+      title: 'View Applications', 
+      description: 'Application management will be implemented here.',
     });
   };
 
@@ -279,6 +278,13 @@ export default function BusinessDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Job Posting Modal */}
+      <JobPostingModal
+        isOpen={showJobPostingModal}
+        onClose={() => setShowJobPostingModal(false)}
+        hubId={user?.id || 'default-hub-id'}
+      />
     </div>
   );
 }

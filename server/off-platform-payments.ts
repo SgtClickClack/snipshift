@@ -4,16 +4,16 @@ interface OffPlatformPayment {
   id: string;
   jobId: string;
   payerName: string;
-  payerType: "hub" | "professional" | "brand" | "client";
+  payerType: 'hub' | 'professional' | 'brand' | 'client';
   recipientName: string;
-  recipientType: "hub" | "professional" | "brand" | "client";
+  recipientType: 'hub' | 'professional' | 'brand' | 'client';
   amount: number;
-  paymentMethod: "cash" | "bank_transfer" | "card" | "other";
+  paymentMethod: 'cash' | 'bank_transfer' | 'card' | 'other';
   description: string;
   paymentDate: string;
-  category: "shift_payment" | "tip" | "product_purchase" | "training" | "other";
+  category: 'shift_payment' | 'tip' | 'product_purchase' | 'training' | 'other';
   notes?: string;
-  status: "pending" | "verified" | "disputed";
+  status: 'pending' | 'verified' | 'disputed';
   submittedBy: string;
   submittedAt: Date;
   verifiedAt?: Date;
@@ -40,7 +40,7 @@ export class OffPlatformPaymentService {
     const payment: OffPlatformPayment = {
       ...paymentData,
       id: `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      status: "pending",
+      status: 'pending',
       submittedAt: new Date()
     };
 
@@ -80,11 +80,11 @@ export class OffPlatformPaymentService {
 
   verifyPayment(paymentId: string, verifierId: string): boolean {
     const payment = offPlatformPayments.get(paymentId);
-    if (!payment || payment.status !== "pending") {
+    if (!payment || payment.status !== 'pending') {
       return false;
     }
 
-    payment.status = "verified";
+    payment.status = 'verified';
     payment.verifiedAt = new Date();
     payment.verifiedBy = verifierId;
     
@@ -98,7 +98,7 @@ export class OffPlatformPaymentService {
       return false;
     }
 
-    payment.status = "disputed";
+    payment.status = 'disputed';
     // In production, would also store dispute reason and create dispute record
     
     offPlatformPayments.set(paymentId, payment);
@@ -116,9 +116,9 @@ export class OffPlatformPaymentService {
 
     const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
     const totalCount = payments.length;
-    const verifiedCount = payments.filter(p => p.status === "verified").length;
-    const pendingCount = payments.filter(p => p.status === "pending").length;
-    const disputedCount = payments.filter(p => p.status === "disputed").length;
+    const verifiedCount = payments.filter(p => p.status === 'verified').length;
+    const pendingCount = payments.filter(p => p.status === 'pending').length;
+    const disputedCount = payments.filter(p => p.status === 'disputed').length;
 
     // Category counts
     const categoryCounts: Record<string, number> = {};
@@ -161,73 +161,73 @@ export class OffPlatformPaymentService {
   createTestPaymentData(): void {
     const testPayments = [
       {
-        jobId: "job_001",
-        payerName: "Golden Style Barbershop",
-        payerType: "hub" as const,
-        recipientName: "Jake Thompson",
-        recipientType: "professional" as const,
+        jobId: 'job_001',
+        payerName: 'Golden Style Barbershop',
+        payerType: 'hub' as const,
+        recipientName: 'Jake Thompson',
+        recipientType: 'professional' as const,
         amount: 280,
-        paymentMethod: "cash" as const,
-        description: "Weekend shift payment - 8 hours at $35/hour",
-        paymentDate: "2024-09-06",
-        category: "shift_payment" as const,
-        notes: "Excellent work, regular customer feedback was outstanding",
-        submittedBy: "jake_thompson"
+        paymentMethod: 'cash' as const,
+        description: 'Weekend shift payment - 8 hours at $35/hour',
+        paymentDate: '2024-09-06',
+        category: 'shift_payment' as const,
+        notes: 'Excellent work, regular customer feedback was outstanding',
+        submittedBy: 'jake_thompson'
       },
       {
-        jobId: "job_002",
-        payerName: "Client - Sarah M.",
-        payerType: "client" as const,
-        recipientName: "Emma Foster",
-        recipientType: "professional" as const,
+        jobId: 'job_002',
+        payerName: 'Client - Sarah M.',
+        payerType: 'client' as const,
+        recipientName: 'Emma Foster',
+        recipientType: 'professional' as const,
         amount: 25,
-        paymentMethod: "cash" as const,
-        description: "Tip for exceptional styling service",
-        paymentDate: "2024-09-05",
-        category: "tip" as const,
-        notes: "Client was extremely happy with the cut and style",
-        submittedBy: "emma_foster"
+        paymentMethod: 'cash' as const,
+        description: 'Tip for exceptional styling service',
+        paymentDate: '2024-09-05',
+        category: 'tip' as const,
+        notes: 'Client was extremely happy with the cut and style',
+        submittedBy: 'emma_foster'
       },
       {
-        jobId: "other",
-        payerName: "Ryan Mitchell",
-        payerType: "professional" as const,
-        recipientName: "Aussie Barber Tools",
-        recipientType: "brand" as const,
+        jobId: 'other',
+        payerName: 'Ryan Mitchell',
+        payerType: 'professional' as const,
+        recipientName: 'Aussie Barber Tools',
+        recipientType: 'brand' as const,
         amount: 89,
-        paymentMethod: "card" as const,
-        description: "Premium clipper set purchase",
-        paymentDate: "2024-09-04",
-        category: "product_purchase" as const,
-        notes: "Purchased after seeing the product demo at the barbershop",
-        submittedBy: "ryan_mitchell"
+        paymentMethod: 'card' as const,
+        description: 'Premium clipper set purchase',
+        paymentDate: '2024-09-04',
+        category: 'product_purchase' as const,
+        notes: 'Purchased after seeing the product demo at the barbershop',
+        submittedBy: 'ryan_mitchell'
       },
       {
-        jobId: "training_session",
-        payerName: "Urban Cuts Studio",
-        payerType: "hub" as const,
-        recipientName: "Master Tony Ricci",
-        recipientType: "professional" as const,
+        jobId: 'training_session',
+        payerName: 'Urban Cuts Studio',
+        payerType: 'hub' as const,
+        recipientName: 'Master Tony Ricci',
+        recipientType: 'professional' as const,
         amount: 350,
-        paymentMethod: "bank_transfer" as const,
-        description: "On-site advanced fade training for team",
-        paymentDate: "2024-09-03",
-        category: "training" as const,
-        notes: "Full team training session, 3 hours on-site at our studio",
-        submittedBy: "sarah_williams"
+        paymentMethod: 'bank_transfer' as const,
+        description: 'On-site advanced fade training for team',
+        paymentDate: '2024-09-03',
+        category: 'training' as const,
+        notes: 'Full team training session, 3 hours on-site at our studio',
+        submittedBy: 'sarah_williams'
       },
       {
-        jobId: "job_003",
-        payerName: "Classic Barbers Co.",
-        payerType: "hub" as const,
-        recipientName: "Marcus Chen",
-        recipientType: "professional" as const,
+        jobId: 'job_003',
+        payerName: 'Classic Barbers Co.',
+        payerType: 'hub' as const,
+        recipientName: 'Marcus Chen',
+        recipientType: 'professional' as const,
         amount: 210,
-        paymentMethod: "cash" as const,
-        description: "Cover shift payment - Friday evening",
-        paymentDate: "2024-09-02",
-        category: "shift_payment" as const,
-        submittedBy: "marcus_chen"
+        paymentMethod: 'cash' as const,
+        description: 'Cover shift payment - Friday evening',
+        paymentDate: '2024-09-02',
+        category: 'shift_payment' as const,
+        submittedBy: 'marcus_chen'
       }
     ];
 
@@ -238,7 +238,7 @@ export class OffPlatformPaymentService {
     // Auto-verify some payments for demo
     const allPayments = Array.from(offPlatformPayments.values());
     allPayments.slice(0, 3).forEach(payment => {
-      this.verifyPayment(payment.id, "admin_user");
+      this.verifyPayment(payment.id, 'admin_user');
     });
   }
 }
@@ -253,14 +253,14 @@ export const offPlatformPaymentRoutes = {
       const { userId } = req.params;
       
       if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
+        return res.status(400).json({ error: 'User ID is required' });
       }
 
       const payments = offPlatformPaymentService.getUserPayments(userId);
       res.json(payments);
     } catch (error) {
-      console.error("Get user payments error:", error);
-      res.status(500).json({ error: "Failed to get payments" });
+      console.error('Get user payments error:', error);
+      res.status(500).json({ error: 'Failed to get payments' });
     }
   },
 
@@ -284,11 +284,11 @@ export const offPlatformPaymentRoutes = {
 
       // Validation
       if (!jobId || !payerName || !recipientName || !amount || !description || !submittedBy) {
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({ error: 'Missing required fields' });
       }
 
       if (amount <= 0) {
-        return res.status(400).json({ error: "Amount must be greater than 0" });
+        return res.status(400).json({ error: 'Amount must be greater than 0' });
       }
 
       const payment = offPlatformPaymentService.createPayment({
@@ -309,11 +309,11 @@ export const offPlatformPaymentRoutes = {
       res.json({
         paymentId: payment.id,
         status: payment.status,
-        message: "Payment recorded successfully"
+        message: 'Payment recorded successfully'
       });
     } catch (error) {
-      console.error("Create payment error:", error);
-      res.status(500).json({ error: "Failed to create payment record" });
+      console.error('Create payment error:', error);
+      res.status(500).json({ error: 'Failed to create payment record' });
     }
   },
 
@@ -321,18 +321,18 @@ export const offPlatformPaymentRoutes = {
   async verifyPayment(req: Request, res: Response) {
     try {
       const { paymentId } = req.params;
-      const verifierId = "admin_user"; // In production, get from auth
+      const verifierId = 'admin_user'; // In production, get from auth
 
       const success = offPlatformPaymentService.verifyPayment(paymentId, verifierId);
       
       if (!success) {
-        return res.status(404).json({ error: "Payment not found or already verified" });
+        return res.status(404).json({ error: 'Payment not found or already verified' });
       }
 
-      res.json({ message: "Payment verified successfully" });
+      res.json({ message: 'Payment verified successfully' });
     } catch (error) {
-      console.error("Verify payment error:", error);
-      res.status(500).json({ error: "Failed to verify payment" });
+      console.error('Verify payment error:', error);
+      res.status(500).json({ error: 'Failed to verify payment' });
     }
   },
 
@@ -343,19 +343,19 @@ export const offPlatformPaymentRoutes = {
       const { reason } = req.body;
 
       if (!reason) {
-        return res.status(400).json({ error: "Dispute reason is required" });
+        return res.status(400).json({ error: 'Dispute reason is required' });
       }
 
       const success = offPlatformPaymentService.disputePayment(paymentId, reason);
       
       if (!success) {
-        return res.status(404).json({ error: "Payment not found" });
+        return res.status(404).json({ error: 'Payment not found' });
       }
 
-      res.json({ message: "Payment dispute recorded" });
+      res.json({ message: 'Payment dispute recorded' });
     } catch (error) {
-      console.error("Dispute payment error:", error);
-      res.status(500).json({ error: "Failed to dispute payment" });
+      console.error('Dispute payment error:', error);
+      res.status(500).json({ error: 'Failed to dispute payment' });
     }
   },
 
@@ -366,8 +366,8 @@ export const offPlatformPaymentRoutes = {
       const stats = offPlatformPaymentService.getPaymentStats(userId);
       res.json(stats);
     } catch (error) {
-      console.error("Get payment stats error:", error);
-      res.status(500).json({ error: "Failed to get payment statistics" });
+      console.error('Get payment stats error:', error);
+      res.status(500).json({ error: 'Failed to get payment statistics' });
     }
   },
 
@@ -379,29 +379,29 @@ export const offPlatformPaymentRoutes = {
       // Mock recent jobs data for demo
       const recentJobs = [
         {
-          id: "job_001",
-          title: "Weekend Barber - Premium Location",
-          hubName: "Golden Style Barbershop",
-          date: "2024-09-07"
+          id: 'job_001',
+          title: 'Weekend Barber - Premium Location',
+          hubName: 'Golden Style Barbershop',
+          date: '2024-09-07'
         },
         {
-          id: "job_002",
-          title: "Senior Stylist - Flexible Hours", 
-          hubName: "Urban Cuts Studio",
-          date: "2024-09-08"
+          id: 'job_002',
+          title: 'Senior Stylist - Flexible Hours', 
+          hubName: 'Urban Cuts Studio',
+          date: '2024-09-08'
         },
         {
-          id: "job_003",
-          title: "Traditional Barber Needed",
-          hubName: "Classic Barbers Co.",
-          date: "2024-09-09"
+          id: 'job_003',
+          title: 'Traditional Barber Needed',
+          hubName: 'Classic Barbers Co.',
+          date: '2024-09-09'
         }
       ];
 
       res.json(recentJobs);
     } catch (error) {
-      console.error("Get recent jobs error:", error);
-      res.status(500).json({ error: "Failed to get recent jobs" });
+      console.error('Get recent jobs error:', error);
+      res.status(500).json({ error: 'Failed to get recent jobs' });
     }
   },
 
@@ -409,10 +409,10 @@ export const offPlatformPaymentRoutes = {
   async createTestData(req: Request, res: Response) {
     try {
       offPlatformPaymentService.createTestPaymentData();
-      res.json({ message: "Test payment data created successfully" });
+      res.json({ message: 'Test payment data created successfully' });
     } catch (error) {
-      console.error("Create test data error:", error);
-      res.status(500).json({ error: "Failed to create test data" });
+      console.error('Create test data error:', error);
+      res.status(500).json({ error: 'Failed to create test data' });
     }
   }
 };

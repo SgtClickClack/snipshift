@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import OffPlatformTracker from "@/components/payments/off-platform-tracker";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import OffPlatformTracker from '@/components/payments/off-platform-tracker';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Receipt, 
   CreditCard, 
@@ -18,11 +20,11 @@ import {
   Users,
   Building2,
   GraduationCap
-} from "lucide-react";
+} from 'lucide-react';
 
 export default function PaymentTracking() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("tracker");
+  const [activeTab, setActiveTab] = useState('tracker');
 
   if (!user) {
     return (

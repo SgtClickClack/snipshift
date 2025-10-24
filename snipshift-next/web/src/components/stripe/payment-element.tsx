@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
-import { useStripe, useElements, PaymentElement as StripePaymentElement } from "@stripe/react-stripe-js";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { useStripe, useElements, PaymentElement as StripePaymentElement } from '@stripe/react-stripe-js';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Shield, 
   CreditCard, 
@@ -11,7 +13,7 @@ import {
   AlertTriangle,
   DollarSign,
   Clock
-} from "lucide-react";
+} from 'lucide-react';
 
 interface PaymentElementProps {
   contentId: string;
@@ -76,8 +78,8 @@ export default function PaymentElement({
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         setPaymentStatus('success');
         toast({
-          title: "Payment Successful!",
-          description: "Your purchase is complete. Accessing content now...",
+          title: 'Payment Successful!',
+          description: 'Your purchase is complete. Accessing content now...',
         });
         onSuccess(paymentIntent.id);
       }
@@ -85,9 +87,9 @@ export default function PaymentElement({
       setError(err.message || 'Payment failed');
       setPaymentStatus('error');
       toast({
-        title: "Payment Failed",
-        description: err.message || "Something went wrong. Please try again.",
-        variant: "destructive",
+        title: 'Payment Failed',
+        description: err.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsProcessing(false);

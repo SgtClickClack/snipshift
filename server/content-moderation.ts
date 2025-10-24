@@ -5,9 +5,9 @@ interface PostContent {
   userId: string;
   content: string;
   images?: string[];
-  postType: "promotion" | "training" | "general" | "job_posting";
+  postType: 'promotion' | 'training' | 'general' | 'job_posting';
   submittedAt: Date;
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   moderationFlags: string[];
   riskScore: number;
   moderatedBy?: string;
@@ -28,67 +28,67 @@ interface ModerationRule {
 const pendingPosts: Map<string, PostContent> = new Map();
 const moderationRules: ModerationRule[] = [
   {
-    id: "spam_keywords",
-    name: "Spam Keywords",
+    id: 'spam_keywords',
+    name: 'Spam Keywords',
     pattern: /\b(buy now|click here|limited time|act fast|guaranteed|make money|work from home)\b/gi,
     riskWeight: 0.3,
-    description: "Detects common spam keywords",
+    description: 'Detects common spam keywords',
     active: true
   },
   {
-    id: "excessive_caps",
-    name: "Excessive Capitals",
+    id: 'excessive_caps',
+    name: 'Excessive Capitals',
     pattern: /[A-Z]{4,}/g,
     riskWeight: 0.2,
-    description: "Detects excessive use of capital letters",
+    description: 'Detects excessive use of capital letters',
     active: true
   },
   {
-    id: "multiple_exclamation",
-    name: "Multiple Exclamation",
+    id: 'multiple_exclamation',
+    name: 'Multiple Exclamation',
     pattern: /!{3,}/g,
     riskWeight: 0.15,
-    description: "Detects excessive exclamation marks",
+    description: 'Detects excessive exclamation marks',
     active: true
   },
   {
-    id: "external_links",
-    name: "External Links",
+    id: 'external_links',
+    name: 'External Links',
     pattern: /(https?:\/\/(?!snipshift\.com)[\w\-\.]+\.[a-z]{2,})/gi,
     riskWeight: 0.4,
-    description: "Detects links to external websites",
+    description: 'Detects links to external websites',
     active: true
   },
   {
-    id: "phone_numbers",
-    name: "Phone Numbers",
+    id: 'phone_numbers',
+    name: 'Phone Numbers',
     pattern: /\b(\+?61|0)[1-9]\d{8,9}\b/g,
     riskWeight: 0.25,
-    description: "Detects phone numbers (potential direct contact)",
+    description: 'Detects phone numbers (potential direct contact)',
     active: true
   },
   {
-    id: "email_addresses",
-    name: "Email Addresses",
+    id: 'email_addresses',
+    name: 'Email Addresses',
     pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
     riskWeight: 0.25,
-    description: "Detects email addresses (potential direct contact)",
+    description: 'Detects email addresses (potential direct contact)',
     active: true
   },
   {
-    id: "currency_symbols",
-    name: "Currency Focus",
+    id: 'currency_symbols',
+    name: 'Currency Focus',
     pattern: /\$\d+|\b\d+\s?(dollars?|bucks?|cash)\b/gi,
     riskWeight: 0.2,
-    description: "Detects excessive focus on money/prices",
+    description: 'Detects excessive focus on money/prices',
     active: true
   },
   {
-    id: "urgent_language",
-    name: "Urgent Language",
+    id: 'urgent_language',
+    name: 'Urgent Language',
     pattern: /\b(urgent|asap|immediately|right now|don't wait|hurry)\b/gi,
     riskWeight: 0.25,
-    description: "Detects urgency-creating language",
+    description: 'Detects urgency-creating language',
     active: true
   }
 ];
@@ -111,16 +111,16 @@ export class ContentModerationService {
     }
 
     // Additional risk factors based on post type
-    if (postType === "promotion") {
+    if (postType === 'promotion') {
       totalRisk += 0.1; // Promotions get slight risk increase
     }
 
     // Content length analysis
     if (content.length < 20) {
-      flags.push("Very Short Content");
+      flags.push('Very Short Content');
       totalRisk += 0.15;
     } else if (content.length > 1000) {
-      flags.push("Very Long Content");
+      flags.push('Very Long Content');
       totalRisk += 0.1;
     }
 
@@ -129,7 +129,7 @@ export class ContentModerationService {
     const uniqueWords = new Set(words);
     const repetitionRatio = uniqueWords.size / words.length;
     if (repetitionRatio < 0.5) {
-      flags.push("Repetitive Content");
+      flags.push('Repetitive Content');
       totalRisk += 0.2;
     }
 
@@ -154,12 +154,12 @@ export class ContentModerationService {
       images: postData.images,
       postType: postData.postType as any,
       submittedAt: new Date(),
-      status: riskScore >= 0.7 ? "pending" : riskScore >= 0.3 ? "pending" : "approved",
+      status: riskScore >= 0.7 ? 'pending' : riskScore >= 0.3 ? 'pending' : 'approved',
       moderationFlags: flags,
       riskScore
     };
 
-    if (post.status === "pending") {
+    if (post.status === 'pending') {
       pendingPosts.set(post.id, post);
     }
 
@@ -176,7 +176,7 @@ export class ContentModerationService {
     const post = pendingPosts.get(postId);
     if (!post) return false;
 
-    post.status = "approved";
+    post.status = 'approved';
     post.moderatedBy = moderatorId;
     post.moderatedAt = new Date();
     
@@ -188,7 +188,7 @@ export class ContentModerationService {
     const post = pendingPosts.get(postId);
     if (!post) return false;
 
-    post.status = "rejected";
+    post.status = 'rejected';
     post.moderatedBy = moderatorId;
     post.moderatedAt = new Date();
     post.rejectionReason = reason;
@@ -217,29 +217,29 @@ export class ContentModerationService {
   createTestModerationData(): void {
     const testPosts = [
       {
-        userId: "user_1",
+        userId: 'user_1',
         content: "🔥🔥🔥 AMAZING DISCOUNT!!! BUY NOW - LIMITED TIME ONLY!!! Visit www.external-deals.com for the BEST PRICES!!! Don't wait, ACT FAST!!! Call 0412345678 NOW!!!",
-        postType: "promotion"
+        postType: 'promotion'
       },
       {
-        userId: "user_2", 
-        content: "Check out my new barbering course! Learn advanced fade techniques. Contact me at john@barber-school.com for more info. $299 special price this week only!",
-        postType: "training"
+        userId: 'user_2', 
+        content: 'Check out my new barbering course! Learn advanced fade techniques. Contact me at john@barber-school.com for more info. $299 special price this week only!',
+        postType: 'training'
       },
       {
-        userId: "user_3",
-        content: "Great shift at the shop today. Thanks to the team for the support! 💪",
-        postType: "general"
+        userId: 'user_3',
+        content: 'Great shift at the shop today. Thanks to the team for the support! 💪',
+        postType: 'general'
       },
       {
-        userId: "user_4",
-        content: "URGENT!!! Need barber ASAP for weekend shift. Top rates paid immediately. Email barber.jobs@external.com or call 0423456789 RIGHT NOW!",
-        postType: "job_posting"
+        userId: 'user_4',
+        content: 'URGENT!!! Need barber ASAP for weekend shift. Top rates paid immediately. Email barber.jobs@external.com or call 0423456789 RIGHT NOW!',
+        postType: 'job_posting'
       },
       {
-        userId: "user_5",
-        content: "Hi everyone! New to the platform. Looking forward to connecting with other professionals and learning from the community.",
-        postType: "general"
+        userId: 'user_5',
+        content: 'Hi everyone! New to the platform. Looking forward to connecting with other professionals and learning from the community.',
+        postType: 'general'
       }
     ];
 
@@ -263,14 +263,14 @@ export const moderationRoutes = {
         ...post,
         userName: `User ${post.userId.slice(-1)}`,
         userAvatar: undefined,
-        userRole: ["hub", "professional", "brand", "trainer"][Math.floor(Math.random() * 4)],
+        userRole: ['hub', 'professional', 'brand', 'trainer'][Math.floor(Math.random() * 4)],
         automaticFlags: post.moderationFlags
       }));
 
       res.json(enrichedPosts);
     } catch (error) {
-      console.error("Get pending posts error:", error);
-      res.status(500).json({ error: "Failed to get pending posts" });
+      console.error('Get pending posts error:', error);
+      res.status(500).json({ error: 'Failed to get pending posts' });
     }
   },
 
@@ -278,18 +278,18 @@ export const moderationRoutes = {
   async approvePost(req: Request, res: Response) {
     try {
       const { postId } = req.params;
-      const moderatorId = "admin_user"; // In production, get from auth
+      const moderatorId = 'admin_user'; // In production, get from auth
 
       const success = contentModerationService.approvePost(postId, moderatorId);
       
       if (!success) {
-        return res.status(404).json({ error: "Post not found" });
+        return res.status(404).json({ error: 'Post not found' });
       }
 
-      res.json({ message: "Post approved successfully" });
+      res.json({ message: 'Post approved successfully' });
     } catch (error) {
-      console.error("Approve post error:", error);
-      res.status(500).json({ error: "Failed to approve post" });
+      console.error('Approve post error:', error);
+      res.status(500).json({ error: 'Failed to approve post' });
     }
   },
 
@@ -298,22 +298,22 @@ export const moderationRoutes = {
     try {
       const { postId } = req.params;
       const { reason } = req.body;
-      const moderatorId = "admin_user"; // In production, get from auth
+      const moderatorId = 'admin_user'; // In production, get from auth
 
       if (!reason) {
-        return res.status(400).json({ error: "Rejection reason is required" });
+        return res.status(400).json({ error: 'Rejection reason is required' });
       }
 
       const success = contentModerationService.rejectPost(postId, moderatorId, reason);
       
       if (!success) {
-        return res.status(404).json({ error: "Post not found" });
+        return res.status(404).json({ error: 'Post not found' });
       }
 
-      res.json({ message: "Post rejected successfully" });
+      res.json({ message: 'Post rejected successfully' });
     } catch (error) {
-      console.error("Reject post error:", error);
-      res.status(500).json({ error: "Failed to reject post" });
+      console.error('Reject post error:', error);
+      res.status(500).json({ error: 'Failed to reject post' });
     }
   },
 
@@ -323,8 +323,8 @@ export const moderationRoutes = {
       const stats = contentModerationService.getModerationStats();
       res.json(stats);
     } catch (error) {
-      console.error("Get moderation stats error:", error);
-      res.status(500).json({ error: "Failed to get moderation stats" });
+      console.error('Get moderation stats error:', error);
+      res.status(500).json({ error: 'Failed to get moderation stats' });
     }
   },
 
@@ -334,7 +334,7 @@ export const moderationRoutes = {
       const { userId, content, images, postType } = req.body;
 
       if (!userId || !content || !postType) {
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({ error: 'Missing required fields' });
       }
 
       const post = contentModerationService.submitForModeration({
@@ -349,13 +349,13 @@ export const moderationRoutes = {
         status: post.status,
         riskScore: post.riskScore,
         flags: post.moderationFlags,
-        message: post.status === "approved" 
-          ? "Post approved automatically" 
-          : "Post submitted for moderation"
+        message: post.status === 'approved' 
+          ? 'Post approved automatically' 
+          : 'Post submitted for moderation'
       });
     } catch (error) {
-      console.error("Submit content error:", error);
-      res.status(500).json({ error: "Failed to submit content" });
+      console.error('Submit content error:', error);
+      res.status(500).json({ error: 'Failed to submit content' });
     }
   },
 
@@ -363,10 +363,10 @@ export const moderationRoutes = {
   async createTestData(req: Request, res: Response) {
     try {
       contentModerationService.createTestModerationData();
-      res.json({ message: "Test moderation data created successfully" });
+      res.json({ message: 'Test moderation data created successfully' });
     } catch (error) {
-      console.error("Create test data error:", error);
-      res.status(500).json({ error: "Failed to create test data" });
+      console.error('Create test data error:', error);
+      res.status(500).json({ error: 'Failed to create test data' });
     }
   }
 };

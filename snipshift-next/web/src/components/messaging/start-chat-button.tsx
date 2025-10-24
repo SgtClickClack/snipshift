@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { messagingService } from '@/lib/messaging';
@@ -11,8 +13,8 @@ interface StartChatButtonProps {
   otherUserRole: string;
   className?: string;
   children?: React.ReactNode;
-  variant?: "default" | "outline" | "ghost" | "secondary" | "destructive";
-  size?: "default" | "sm" | "lg" | "icon";
+  variant?: 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
 export default function StartChatButton({
@@ -21,8 +23,8 @@ export default function StartChatButton({
   otherUserRole,
   className,
   children,
-  variant = "outline",
-  size = "sm"
+  variant = 'outline',
+  size = 'sm'
 }: StartChatButtonProps) {
   const [showMessaging, setShowMessaging] = useState(false);
   const [chatId, setChatId] = useState<string | undefined>();

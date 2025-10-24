@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface User {
   id: string;
   email: string;
   password: string;
-  roles: Array<'client' | 'hub' | 'professional' | 'brand' | 'admin'>;
-  currentRole: 'client' | 'hub' | 'professional' | 'brand' | 'admin' | null;
+  roles: Array<'professional' | 'business'>;
+  currentRole: 'professional' | 'business' | null;
   provider?: 'google' | 'email';
   googleId?: string;
   createdAt: Date;
@@ -39,7 +39,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   async function syncUserFromServer(userId: string) {
     try {
       const res = await fetch(`/api/users/${userId}`, { credentials: 'include' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        throw new Error(`Failed to sync user: ${res.status}`);
+      }
       const serverUser = await res.json();
       setUser((prev) => {
         if (!prev) return prev;
@@ -53,7 +55,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.setItem('currentUser', JSON.stringify(merged));
         return merged;
       });
-    } catch {}
+    } catch (error) {
+      console.error('Failed to sync user from server:', error);
+      // Don't throw - this is not critical for app functionality
+    }
   }
 
   // Initialize auth state from localStorage on mount

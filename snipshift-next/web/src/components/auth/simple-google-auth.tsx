@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,9 +46,9 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
     script.onerror = () => {
       console.error('Failed to load Google Identity Services script');
       toast({
-        title: "Google Auth Error",
-        description: "Failed to load Google authentication services.",
-        variant: "destructive",
+        title: 'Google Auth Error',
+        description: 'Failed to load Google authentication services.',
+        variant: 'destructive',
       });
     };
     document.head.appendChild(script);
@@ -71,9 +73,9 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
       } catch (error) {
         console.error('Google Auth initialization error:', error);
         toast({
-          title: "Google Auth Error",
-          description: "Failed to initialize Google authentication.",
-          variant: "destructive",
+          title: 'Google Auth Error',
+          description: 'Failed to initialize Google authentication.',
+          variant: 'destructive',
         });
       }
     }
@@ -115,7 +117,7 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
       login(googleUser as any);
       
       toast({
-        title: mode === 'signin' ? "Welcome back!" : "Account created!",
+        title: mode === 'signin' ? 'Welcome back!' : 'Account created!',
         description: `Successfully ${mode === 'signin' ? 'signed in' : 'signed up'} with Google as ${payload.name}`,
       });
 
@@ -129,8 +131,8 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
       console.error('Google auth error:', error);
       toast({
         title: `${mode === 'signin' ? 'Sign-in' : 'Sign-up'} failed`,
-        description: "There was an error with Google authentication. Please try again.",
-        variant: "destructive",
+        description: 'There was an error with Google authentication. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -138,9 +140,9 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
   const handleGoogleSignIn = () => {
     if (!isGoogleLoaded || !window.google) {
       toast({
-        title: "Google Auth Not Ready",
-        description: "Google authentication is still loading. Please wait a moment.",
-        variant: "destructive",
+        title: 'Google Auth Not Ready',
+        description: 'Google authentication is still loading. Please wait a moment.',
+        variant: 'destructive',
       });
       return;
     }
@@ -151,9 +153,9 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
     } catch (error) {
       console.error('Error starting Google sign-in:', error);
       toast({
-        title: "Sign-in Error",
-        description: "Failed to start Google authentication process.",
-        variant: "destructive",
+        title: 'Sign-in Error',
+        description: 'Failed to start Google authentication process.',
+        variant: 'destructive',
       });
     }
   };

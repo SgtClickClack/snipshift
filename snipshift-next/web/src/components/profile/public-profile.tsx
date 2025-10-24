@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, MapPin, Calendar, Star, MessageCircle, Briefcase, Award, Users } from "lucide-react";
-import { format } from "date-fns";
-import StartChatButton from "@/components/messaging/start-chat-button";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, MapPin, Calendar, Star, MessageCircle, Briefcase, Award, Users } from 'lucide-react';
+import { format } from 'date-fns';
+import StartChatButton from '@/components/messaging/start-chat-button';
 
 interface PortfolioItem {
   id: string;
@@ -18,7 +20,7 @@ interface UserProfile {
   id: string;
   displayName: string;
   email: string;
-  role: "professional" | "hub" | "brand" | "trainer";
+  role: 'professional' | 'hub' | 'brand' | 'trainer';
   bio?: string;
   profileImageURL?: string;
   bannerImageURL?: string;
@@ -58,14 +60,14 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
   
   const getRoleDisplay = (role: string) => {
     switch (role) {
-      case "professional":
-        return "Professional";
-      case "hub":
-        return "Barbershop/Salon";
-      case "brand":
-        return "Brand";
-      case "trainer":
-        return "Trainer/Educator";
+      case 'professional':
+        return 'Professional';
+      case 'hub':
+        return 'Barbershop/Salon';
+      case 'brand':
+        return 'Brand';
+      case 'trainer':
+        return 'Trainer/Educator';
       default:
         return role;
     }
@@ -73,16 +75,16 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "professional":
-        return "bg-blue-100 text-blue-800";
-      case "hub":
-        return "bg-green-100 text-green-800";
-      case "brand":
-        return "bg-purple-100 text-purple-800";
-      case "trainer":
-        return "bg-orange-100 text-orange-800";
+      case 'professional':
+        return 'bg-blue-100 text-blue-800';
+      case 'hub':
+        return 'bg-green-100 text-green-800';
+      case 'brand':
+        return 'bg-purple-100 text-purple-800';
+      case 'trainer':
+        return 'bg-orange-100 text-orange-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -197,7 +199,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                 {profile.joinedDate && (
                   <div className="flex items-center text-sm text-gray-500">
                     <Calendar className="w-4 h-4 mr-2" />
-                    Joined {format(new Date(profile.joinedDate), "MMM yyyy")}
+                    Joined {format(new Date(profile.joinedDate), 'MMM yyyy')}
                   </div>
                 )}
               </CardContent>
@@ -300,7 +302,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                     {portfolioCategories.length > 0 && (
                       <div className="flex gap-2">
                         <Button
-                          variant={selectedPortfolioCategory === null ? "default" : "outline"}
+                          variant={selectedPortfolioCategory === null ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setSelectedPortfolioCategory(null)}
                         >
@@ -309,7 +311,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                         {portfolioCategories.map((category) => (
                           <Button
                             key={category}
-                            variant={selectedPortfolioCategory === category ? "default" : "outline"}
+                            variant={selectedPortfolioCategory === category ? 'default' : 'outline'}
                             size="sm"
                             onClick={() => setSelectedPortfolioCategory(category)}
                           >

@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Bell, 
   Briefcase, 
@@ -16,9 +18,9 @@ import {
   CheckCheck,
   X,
   Eye
-} from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
-import { Notification, getNotificationIcon, getNotificationColor } from "./notification-types";
+} from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { Notification, getNotificationIcon, getNotificationColor } from './notification-types';
 
 interface NotificationDropdownProps {
   notifications: Notification[];
@@ -91,7 +93,7 @@ export default function NotificationDropdown({
     if (diffInHours < 24) {
       return formatDistanceToNow(date, { addSuffix: true });
     } else {
-      return format(date, "MMM d, yyyy");
+      return format(date, 'MMM d, yyyy');
     }
   };
 

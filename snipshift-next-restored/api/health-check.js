@@ -27,7 +27,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, host, () => {
   console.log(`✅ Health check server running on http://${host}:${port}`);
-  console.log(`✅ Ready for deployment verification`);
+  console.log('✅ Ready for deployment verification');
 });
 
 server.on('error', (err) => {

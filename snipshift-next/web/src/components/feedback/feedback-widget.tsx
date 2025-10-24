@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, X, Send } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MessageSquare, X, Send } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FeedbackData {
   type: string;
@@ -20,8 +22,8 @@ interface FeedbackData {
 
 export function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState("");
-  const [message, setMessage] = useState("");
+  const [feedbackType, setFeedbackType] = useState('');
+  const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -30,9 +32,9 @@ export function FeedbackWidget() {
     e.preventDefault();
     if (!feedbackType || !message.trim()) {
       toast({
-        title: "Missing Information",
-        description: "Please select a feedback type and enter your message.",
-        variant: "destructive"
+        title: 'Missing Information',
+        description: 'Please select a feedback type and enter your message.',
+        variant: 'destructive'
       });
       return;
     }
@@ -51,27 +53,27 @@ export function FeedbackWidget() {
 
     try {
       // In a real app, this would send to your feedback API
-      console.log("Feedback submitted:", feedbackData);
+      console.log('Feedback submitted:', feedbackData);
       
       // Store locally for now (in production, send to server)
-      const existingFeedback = JSON.parse(localStorage.getItem("user-feedback") || "[]");
+      const existingFeedback = JSON.parse(localStorage.getItem('user-feedback') || '[]');
       existingFeedback.push(feedbackData);
-      localStorage.setItem("user-feedback", JSON.stringify(existingFeedback));
+      localStorage.setItem('user-feedback', JSON.stringify(existingFeedback));
 
       toast({
-        title: "Feedback Sent",
+        title: 'Feedback Sent',
         description: "Thank you for your feedback! We'll review it shortly."
       });
 
       // Reset form
-      setMessage("");
-      setFeedbackType("");
+      setMessage('');
+      setFeedbackType('');
       setIsOpen(false);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to send feedback. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to send feedback. Please try again.',
+        variant: 'destructive'
       });
     } finally {
       setIsSubmitting(false);
@@ -151,7 +153,7 @@ export function FeedbackWidget() {
                     data-testid="button-submit-feedback"
                   >
                     {isSubmitting ? (
-                      "Sending..."
+                      'Sending...'
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />

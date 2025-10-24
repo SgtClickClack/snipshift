@@ -1,15 +1,17 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { X, Image, Link as LinkIcon } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { X, Image, Link as LinkIcon } from 'lucide-react';
 
 interface SocialPostingModalProps {
   isOpen: boolean;
@@ -22,49 +24,49 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
-    content: "",
-    postType: "offer" as "offer" | "event" | "announcement",
-    imageUrl: "",
-    linkUrl: "",
-    eventDate: "",
-    eventTime: "",
-    location: ""
+    content: '',
+    postType: 'offer' as 'offer' | 'event' | 'announcement',
+    imageUrl: '',
+    linkUrl: '',
+    eventDate: '',
+    eventTime: '',
+    location: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createPostMutation = useMutation({
     mutationFn: async (postData: any) => {
-      const response = await apiRequest("POST", "/api/social-posts", postData);
+      const response = await apiRequest('POST', '/api/social-posts', postData);
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Post created successfully!",
-        description: "Your post is now live in the social feed.",
+        title: 'Post created successfully!',
+        description: 'Your post is now live in the social feed.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/social-posts"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/social-posts'] });
       onClose();
       resetForm();
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create post",
-        description: error.message || "Please try again later",
-        variant: "destructive",
+        title: 'Failed to create post',
+        description: error.message || 'Please try again later',
+        variant: 'destructive',
       });
     },
   });
 
   const resetForm = () => {
     setFormData({
-      content: "",
-      postType: "offer",
-      imageUrl: "",
-      linkUrl: "",
-      eventDate: "",
-      eventTime: "",
-      location: ""
+      content: '',
+      postType: 'offer',
+      imageUrl: '',
+      linkUrl: '',
+      eventDate: '',
+      eventTime: '',
+      location: ''
     });
     setErrors({});
   };
@@ -73,13 +75,13 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
     const newErrors: Record<string, string> = {};
 
     if (!formData.content.trim()) {
-      newErrors.content = "Post content is required";
+      newErrors.content = 'Post content is required';
     }
 
-    if (formData.postType === "event") {
-      if (!formData.eventDate) newErrors.eventDate = "Event date is required";
-      if (!formData.eventTime) newErrors.eventTime = "Event time is required";
-      if (!formData.location.trim()) newErrors.location = "Event location is required";
+    if (formData.postType === 'event') {
+      if (!formData.eventDate) newErrors.eventDate = 'Event date is required';
+      if (!formData.eventTime) newErrors.eventTime = 'Event time is required';
+      if (!formData.location.trim()) newErrors.location = 'Event location is required';
     }
 
     setErrors(newErrors);
@@ -111,14 +113,14 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
 
   const getPostTypeDescription = () => {
     switch (formData.postType) {
-      case "offer":
-        return "Share a special offer, promotion, or product announcement";
-      case "event":
-        return "Announce a training event, workshop, or educational session";
-      case "announcement":
-        return "Share general updates, news, or company announcements";
+      case 'offer':
+        return 'Share a special offer, promotion, or product announcement';
+      case 'event':
+        return 'Announce a training event, workshop, or educational session';
+      case 'announcement':
+        return 'Share general updates, news, or company announcements';
       default:
-        return "";
+        return '';
     }
   };
 
@@ -146,7 +148,7 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
               <Label htmlFor="postType">Post Type *</Label>
               <Select
                 value={formData.postType}
-                onValueChange={(value: "offer" | "event" | "announcement") => 
+                onValueChange={(value: 'offer' | 'event' | 'announcement') => 
                   setFormData({ ...formData, postType: value })
                 }
               >
@@ -172,21 +174,21 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 placeholder={
-                  formData.postType === "offer" 
-                    ? "Share details about your special offer, new product, or promotion..."
-                    : formData.postType === "event"
-                    ? "Describe your training event, workshop details, and what participants will learn..."
-                    : "Share your announcement, company news, or general updates..."
+                  formData.postType === 'offer' 
+                    ? 'Share details about your special offer, new product, or promotion...'
+                    : formData.postType === 'event'
+                    ? 'Describe your training event, workshop details, and what participants will learn...'
+                    : 'Share your announcement, company news, or general updates...'
                 }
                 rows={6}
                 data-testid="textarea-post-content"
-                className={errors.content ? "border-red-500" : ""}
+                className={errors.content ? 'border-red-500' : ''}
               />
               {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content}</p>}
             </div>
 
             {/* Event-specific fields */}
-            {formData.postType === "event" && (
+            {formData.postType === 'event' && (
               <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
                 <h3 className="font-medium text-sm text-muted-foreground">Event Details</h3>
                 
@@ -199,7 +201,7 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
                       value={formData.eventDate}
                       onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
                       data-testid="input-event-date"
-                      className={errors.eventDate ? "border-red-500" : ""}
+                      className={errors.eventDate ? 'border-red-500' : ''}
                     />
                     {errors.eventDate && <p className="text-red-500 text-sm mt-1">{errors.eventDate}</p>}
                   </div>
@@ -211,7 +213,7 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
                       value={formData.eventTime}
                       onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })}
                       data-testid="input-event-time"
-                      className={errors.eventTime ? "border-red-500" : ""}
+                      className={errors.eventTime ? 'border-red-500' : ''}
                     />
                     {errors.eventTime && <p className="text-red-500 text-sm mt-1">{errors.eventTime}</p>}
                   </div>
@@ -225,7 +227,7 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="Event venue or address"
                     data-testid="input-event-location"
-                    className={errors.location ? "border-red-500" : ""}
+                    className={errors.location ? 'border-red-500' : ''}
                   />
                   {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
                 </div>
@@ -289,7 +291,7 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
                 data-testid="button-create-post"
                 className="bg-primary hover:bg-primary/90"
               >
-                {createPostMutation.isPending ? "Posting..." : "Create Post"}
+                {createPostMutation.isPending ? 'Posting...' : 'Create Post'}
               </Button>
             </div>
           </form>

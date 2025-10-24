@@ -1,17 +1,20 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Scissors, MessageCircle, LogOut, User, Menu, X, ChevronDown } from "lucide-react";
-import { messagingService } from "@/lib/messaging";
-import MessagingModal from "@/components/messaging/messaging-modal";
-import NotificationBell from "./notifications/notification-bell";
-import { useNotifications } from "@/hooks/use-notifications";
-import { Chat } from "@shared/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiRequest } from "@/lib/queryClient";
-import { getDashboardRoute } from "@/lib/roles";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Scissors, MessageCircle, LogOut, User, Menu, X, ChevronDown } from 'lucide-react';
+import { messagingService } from '@/lib/messaging';
+import MessagingModal from '@/components/messaging/messaging-modal';
+import NotificationBell from './notifications/notification-bell';
+import { useNotifications } from '@/hooks/use-notifications';
+import { Chat } from '@shared/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { apiRequest } from '@/lib/queryClient';
+import { getDashboardRoute } from '@/lib/roles';
+import { frontendLogger } from '@/lib/logger';
 
 export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
@@ -54,33 +57,44 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/";
+    window.location.href = '/';
   };
 
   const handleSwitchRole = async (role: string) => {
     if (!user) {
-      console.log("No user found for role switching");
+      frontendLogger.warn('No user found for role switching', { component: 'navbar' });
       return;
     }
     
-    console.log("Switching to role:", role, "User roles:", user.roles);
+    frontendLogger.userAction('Role switch', { 
+      component: 'navbar', 
+      fromRole: user.currentRole, 
+      toRole: role,
+      availableRoles: user.roles 
+    });
     
     try {
-      const response = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role });
-      console.log("Role switch response:", response);
-      
+      // Update local state directly since we don't have API endpoints yet
       setCurrentRole(role as any);
+      
+      // Store in localStorage for persistence
       try {
         const merged = Array.from(new Set([...(user.roles || []), role]));
         localStorage.setItem('selectedRoles', JSON.stringify(merged));
-      } catch {}
+      } catch (error) {
+        console.warn('Failed to save role to localStorage:', error);
+      }
       
       // Navigate to the selected role's dashboard immediately
       const target = getDashboardRoute(role as any);
-      console.log("Navigating to:", target);
+      frontendLogger.navigation(window.location.pathname, target, { component: 'navbar', reason: 'role_switch' });
       navigate(target);
     } catch (e) {
-      console.error("Role switch failed:", e);
+      frontendLogger.error('Role switch failed', { 
+        component: 'navbar', 
+        error: e instanceof Error ? e.message : String(e),
+        role 
+      });
       // Show user feedback about the error
       alert(`Failed to switch to ${role} role. Please try again.`);
     }
@@ -95,10 +109,10 @@ export default function Navbar() {
             className="flex items-center"
             onClick={() => {
               if (!user) {
-                navigate("/");
+                navigate('/');
                 return;
               }
-              const target = user.currentRole ? getDashboardRoute(user.currentRole) : "/role-selection";
+              const target = user.currentRole ? getDashboardRoute(user.currentRole) : '/role-selection';
               navigate(target);
             }}
             data-testid="nav-home"
@@ -129,7 +143,7 @@ export default function Navbar() {
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(["professional","hub","brand"] as const)
+                      {(['professional','business'] as const)
                         .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
                         .map((r) => (
                         <SelectItem key={r} value={r}>
@@ -196,7 +210,7 @@ export default function Navbar() {
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </Button>
-                  {user?.roles?.includes('admin') && (
+                  {user?.roles?.includes('business') && (
                     <Button
                       variant="ghost"
                       className="text-white hover:bg-steel-700"
@@ -244,12 +258,12 @@ export default function Navbar() {
             <div className="space-y-2">
               <p className="text-chrome-light text-sm font-medium">Switch Role</p>
               <div className="grid grid-cols-1 gap-2">
-                {(["professional","hub","brand"] as const)
+                {(['professional','business'] as const)
                   .filter((role) => (user?.roles || []).includes(role) || persistedRoles.includes(role))
                   .map((role) => (
                     <Button
                       key={role}
-                      variant={user.currentRole === role ? "accent" : "ghost"}
+                      variant={user.currentRole === role ? 'accent' : 'ghost'}
                       size="sm"
                       onClick={() => {
                         handleSwitchRole(role);
@@ -257,8 +271,8 @@ export default function Navbar() {
                       }}
                       className={`w-full justify-start text-left ${
                         user.currentRole === role
-                          ? "bg-red-accent text-white"
-                          : "text-white hover:bg-steel-700"
+                          ? 'bg-red-accent text-white'
+                          : 'text-white hover:bg-steel-700'
                       }`}
                     >
                       {role.charAt(0).toUpperCase() + role.slice(1)}

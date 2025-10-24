@@ -1,18 +1,20 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Eye, Edit } from "lucide-react";
-import PublicProfile from "./public-profile";
-import ProfileEditForm, { type UserProfile as EditableUserProfile } from "./profile-edit-form";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { Eye, Edit } from 'lucide-react';
+import PublicProfile from './public-profile';
+import ProfileEditForm, { type UserProfile as EditableUserProfile } from './profile-edit-form';
 
 interface UserProfile {
   id: string;
   displayName: string;
   email: string;
-  role: "professional" | "hub" | "brand" | "trainer";
+  role: 'professional' | 'hub' | 'brand' | 'trainer';
   bio?: string;
   profileImageURL?: string;
   bannerImageURL?: string;
@@ -61,38 +63,38 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
   // Mock profile data - in real app would come from API
   const mockProfile: UserProfile = {
     id: profileUserId!,
-    displayName: currentUser?.displayName || "John Doe",
-    email: currentUser?.email || "john@example.com",
-    role: (currentUser?.currentRole as any) || "professional",
-    bio: "Passionate barber with 8+ years of experience specializing in modern cuts and classic styles. Always learning new techniques and staying up-to-date with the latest trends.",
-    profileImageURL: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
-    bannerImageURL: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&h=300&fit=crop",
+    displayName: currentUser?.displayName || 'John Doe',
+    email: currentUser?.email || 'john@example.com',
+    role: (currentUser?.currentRole as any) || 'professional',
+    bio: 'Passionate barber with 8+ years of experience specializing in modern cuts and classic styles. Always learning new techniques and staying up-to-date with the latest trends.',
+    profileImageURL: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
+    bannerImageURL: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&h=300&fit=crop',
     location: {
-      city: "Sydney",
-      state: "NSW"
+      city: 'Sydney',
+      state: 'NSW'
     },
     portfolio: [
       {
-        id: "1",
-        imageURL: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&h=400&fit=crop",
-        caption: "Modern fade with textured top",
-        category: "Hair Cut"
+        id: '1',
+        imageURL: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&h=400&fit=crop',
+        caption: 'Modern fade with textured top',
+        category: 'Hair Cut'
       },
       {
-        id: "2", 
-        imageURL: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=400&fit=crop",
-        caption: "Classic beard trim and style",
-        category: "Beard"
+        id: '2', 
+        imageURL: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=400&fit=crop',
+        caption: 'Classic beard trim and style',
+        category: 'Beard'
       },
       {
-        id: "3",
-        imageURL: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&h=400&fit=crop",
-        caption: "Wedding day special styling",
-        category: "Special Event"
+        id: '3',
+        imageURL: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&h=400&fit=crop',
+        caption: 'Wedding day special styling',
+        category: 'Special Event'
       }
     ],
-    skills: ["Hair Cutting", "Beard Trimming", "Hair Styling", "Color", "Scissor Work", "Razor Work"],
-    experience: "8+ years",
+    skills: ['Hair Cutting', 'Beard Trimming', 'Hair Styling', 'Color', 'Scissor Work', 'Razor Work'],
+    experience: '8+ years',
     rating: 4.8,
     reviewCount: 127,
     joinedDate: new Date(2020, 2, 15).toISOString(),
@@ -100,28 +102,28 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
   };
 
   const { data: profile = mockProfile, isLoading } = useQuery<UserProfile>({
-    queryKey: ["/api/profiles", profileUserId],
+    queryKey: ['/api/profiles', profileUserId],
     enabled: !!profileUserId,
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: EditableUserProfile) => {
-      const response = await apiRequest("PUT", `/api/profiles/${profileUserId}`, profileData);
+      const response = await apiRequest('PUT', `/api/profiles/${profileUserId}`, profileData);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profiles", profileUserId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/profiles', profileUserId] });
       toast({
-        title: "Profile updated successfully",
-        description: "Your changes have been saved",
+        title: 'Profile updated successfully',
+        description: 'Your changes have been saved',
       });
       setViewMode('view');
     },
     onError: () => {
       toast({
-        title: "Failed to update profile",
-        description: "Please try again later",
-        variant: "destructive",
+        title: 'Failed to update profile',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
     },
   });

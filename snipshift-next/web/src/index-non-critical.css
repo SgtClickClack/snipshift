@@ -2,6 +2,18 @@
 
 :root {
   /* Extended Steel & Chrome with Improved Contrast Variations */
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(210, 15%, 12%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(210, 15%, 12%);
+  --border: hsl(210, 10%, 85%);
+  --input: hsl(210, 12%, 95%);
+  --primary: hsl(210, 8%, 52%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(210, 8%, 88%);
+  --secondary-foreground: hsl(210, 15%, 8%);
+  --accent: hsl(0, 85%, 35%);
+  --accent-foreground: hsl(0, 0%, 100%);
   --muted: hsl(210, 12%, 85%);
   --muted-foreground: hsl(210, 8%, 42%);
   --popover: hsl(0, 0%, 100%);

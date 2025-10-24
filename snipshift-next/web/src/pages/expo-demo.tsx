@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import ExpoDemoMode from "@/components/demo/expo-demo-mode";
-import { DesignSystemShowcase } from "@/components/demo/design-system-showcase";
+import React from 'react';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import ExpoDemoMode from '@/components/demo/expo-demo-mode';
+import { DesignSystemShowcase } from '@/components/demo/design-system-showcase';
 import { 
   Presentation, 
   Users, 
@@ -17,76 +19,76 @@ import {
   Globe,
   Smartphone,
   Zap
-} from "lucide-react";
+} from 'lucide-react';
 
 export default function ExpoDemo() {
-  const [activeDemo, setActiveDemo] = useState<string>("overview");
+  const [activeDemo, setActiveDemo] = useState<string>('overview');
 
   const demoSections = [
     {
-      id: "overview",
-      title: "Platform Overview",
+      id: 'overview',
+      title: 'Platform Overview',
       icon: Presentation,
-      description: "Complete marketplace demonstration"
+      description: 'Complete marketplace demonstration'
     },
     {
-      id: "live-demo",
-      title: "Live Scenarios",
+      id: 'live-demo',
+      title: 'Live Scenarios',
       icon: Zap,
-      description: "Interactive user journey simulations"
+      description: 'Interactive user journey simulations'
     },
     {
-      id: "design",
-      title: "Design System",
+      id: 'design',
+      title: 'Design System',
       icon: Palette,
-      description: "UI components and branding"
+      description: 'UI components and branding'
     }
   ];
 
   const platformFeatures = [
     {
       icon: Users,
-      title: "Multi-Role Platform",
-      description: "Hub Owners, Professionals, Brands, and Trainers",
-      highlights: ["Role-specific dashboards", "Targeted workflows", "Professional verification"]
+      title: 'Multi-Role Platform',
+      description: 'Hub Owners, Professionals, Brands, and Trainers',
+      highlights: ['Role-specific dashboards', 'Targeted workflows', 'Professional verification']
     },
     {
       icon: Globe,
-      title: "Geolocation Matching",
-      description: "Smart job matching with location-based filters",
-      highlights: ["15-50km radius search", "Interstate toggle", "Real-time availability"]
+      title: 'Geolocation Matching',
+      description: 'Smart job matching with location-based filters',
+      highlights: ['15-50km radius search', 'Interstate toggle', 'Real-time availability']
     },
     {
       icon: CreditCard,
-      title: "Secure Payments",
-      description: "Stripe-powered escrow system with automated payouts",
-      highlights: ["90/10 trainer revenue split", "Instant payment confirmation", "Fraud protection"]
+      title: 'Secure Payments',
+      description: 'Stripe-powered escrow system with automated payouts',
+      highlights: ['90/10 trainer revenue split', 'Instant payment confirmation', 'Fraud protection']
     },
     {
       icon: MessageSquare,
-      title: "Community Features",
-      description: "Social feed with content moderation and professional networking",
-      highlights: ["Anti-spam protection", "Brand promotion", "Direct messaging"]
+      title: 'Community Features',
+      description: 'Social feed with content moderation and professional networking',
+      highlights: ['Anti-spam protection', 'Brand promotion', 'Direct messaging']
     },
     {
       icon: Shield,
-      title: "Content Moderation",
-      description: "Automated spam detection with human review",
-      highlights: ["Risk scoring algorithm", "Professional standards", "Appeals process"]
+      title: 'Content Moderation',
+      description: 'Automated spam detection with human review',
+      highlights: ['Risk scoring algorithm', 'Professional standards', 'Appeals process']
     },
     {
       icon: Smartphone,
-      title: "Mobile Optimized",
-      description: "Responsive design for on-the-go professionals",
-      highlights: ["Touch-friendly interface", "Fast loading", "Offline capabilities"]
+      title: 'Mobile Optimized',
+      description: 'Responsive design for on-the-go professionals',
+      highlights: ['Touch-friendly interface', 'Fast loading', 'Offline capabilities']
     }
   ];
 
   const businessMetrics = [
-    { label: "Target Market Size", value: "45,000+", subtitle: "Licensed barbers in Australia" },
-    { label: "Platform Revenue", value: "10%", subtitle: "Transaction fee model" },
-    { label: "User Retention", value: "85%", subtitle: "Monthly active users" },
-    { label: "Job Fill Rate", value: "92%", subtitle: "Posted shifts filled" }
+    { label: 'Target Market Size', value: '45,000+', subtitle: 'Licensed barbers in Australia' },
+    { label: 'Platform Revenue', value: '10%', subtitle: 'Transaction fee model' },
+    { label: 'User Retention', value: '85%', subtitle: 'Monthly active users' },
+    { label: 'Job Fill Rate', value: '92%', subtitle: 'Posted shifts filled' }
   ];
 
   return (
@@ -126,7 +128,7 @@ export default function ExpoDemo() {
               return (
                 <Button
                   key={section.id}
-                  variant={activeDemo === section.id ? "default" : "outline"}
+                  variant={activeDemo === section.id ? 'default' : 'outline'}
                   onClick={() => setActiveDemo(section.id)}
                   className="flex items-center gap-2"
                   data-testid={`demo-nav-${section.id}`}
@@ -141,7 +143,7 @@ export default function ExpoDemo() {
 
         {/* Demo Content */}
         <div className="space-y-8">
-          {activeDemo === "overview" && (
+          {activeDemo === 'overview' && (
             <>
               {/* Business Metrics */}
               <Card>
@@ -278,11 +280,11 @@ export default function ExpoDemo() {
             </>
           )}
 
-          {activeDemo === "live-demo" && (
+          {activeDemo === 'live-demo' && (
             <ExpoDemoMode />
           )}
 
-          {activeDemo === "design" && (
+          {activeDemo === 'design' && (
             <DesignSystemShowcase />
           )}
         </div>

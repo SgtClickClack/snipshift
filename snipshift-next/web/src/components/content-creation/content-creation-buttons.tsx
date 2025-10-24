@@ -1,19 +1,21 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, Edit } from "lucide-react";
-import JobPostingModal from "./job-posting-modal";
-import SocialPostingModal from "./social-posting-modal";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus, Edit } from 'lucide-react';
+import JobPostingModal from './job-posting-modal';
+import SocialPostingModal from './social-posting-modal';
 
 interface ContentCreationButtonsProps {
-  userRole: "hub" | "professional" | "brand" | "trainer";
-  variant?: "default" | "outline" | "ghost";
-  size?: "default" | "sm" | "lg";
+  userRole: 'hub' | 'professional' | 'brand' | 'trainer';
+  variant?: 'default' | 'outline' | 'ghost';
+  size?: 'default' | 'sm' | 'lg';
 }
 
 export default function ContentCreationButtons({ 
   userRole, 
-  variant = "default", 
-  size = "default" 
+  variant = 'default', 
+  size = 'default' 
 }: ContentCreationButtonsProps) {
   const [showJobModal, setShowJobModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
@@ -28,7 +30,7 @@ export default function ContentCreationButtons({
 
   return (
     <>
-      {userRole === "hub" && (
+      {userRole === 'hub' && (
         <Button
           onClick={handlePostJob}
           variant={variant}
@@ -41,7 +43,7 @@ export default function ContentCreationButtons({
         </Button>
       )}
 
-      {(userRole === "brand" || userRole === "trainer") && (
+      {(userRole === 'brand' || userRole === 'trainer') && (
         <Button
           onClick={handleCreateSocialPost}
           variant={variant}

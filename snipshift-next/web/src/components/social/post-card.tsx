@@ -1,22 +1,24 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Heart, MessageCircle, Share, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
-import { format } from "date-fns";
-import StartChatButton from "@/components/messaging/start-chat-button";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Heart, MessageCircle, Share, MapPin, Calendar, DollarSign, Briefcase } from 'lucide-react';
+import { format } from 'date-fns';
+import StartChatButton from '@/components/messaging/start-chat-button';
 
 export interface Post {
   id: string;
   authorId: string;
   authorName: string;
-  authorRole: "professional" | "hub" | "brand" | "trainer";
+  authorRole: 'professional' | 'hub' | 'brand' | 'trainer';
   authorAvatar?: string;
   content: string;
   images?: string[];
-  postType: "social" | "job";
+  postType: 'social' | 'job';
   likes: number;
   comments: Array<{
     id: string;
@@ -47,26 +49,26 @@ interface PostCardProps {
 
 export default function PostCard({ post, onLike, onComment, currentUserId }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
-  const [newComment, setNewComment] = useState("");
+  const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "professional":
-        return "bg-blue-100 text-blue-800";
-      case "hub":
-        return "bg-green-100 text-green-800";
-      case "brand":
-        return "bg-purple-100 text-purple-800";
-      case "trainer":
-        return "bg-orange-100 text-orange-800";
+      case 'professional':
+        return 'bg-blue-100 text-blue-800';
+      case 'hub':
+        return 'bg-green-100 text-green-800';
+      case 'brand':
+        return 'bg-purple-100 text-purple-800';
+      case 'trainer':
+        return 'bg-orange-100 text-orange-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPostTypeIcon = () => {
-    if (post.postType === "job") {
+    if (post.postType === 'job') {
       return <Briefcase className="w-4 h-4" />;
     }
     return null;
@@ -82,7 +84,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
     setIsSubmittingComment(true);
     await onComment(post.id, newComment.trim());
-    setNewComment("");
+    setNewComment('');
     setIsSubmittingComment(false);
   };
 
@@ -105,9 +107,9 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               </h4>
               <Badge variant="outline" className={getRoleColor(post.authorRole)}>
                 {getPostTypeIcon()}
-                {post.postType === "job" ? "Job Post" : post.authorRole}
+                {post.postType === 'job' ? 'Job Post' : post.authorRole}
               </Badge>
-              {post.postType === "job" && post.location && (
+              {post.postType === 'job' && post.location && (
                 <div className="flex items-center text-sm text-gray-500">
                   <MapPin className="w-3 h-3 mr-1" />
                   {post.location.city}, {post.location.state}
@@ -139,13 +141,13 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
           </p>
 
           {/* Job-specific info */}
-          {post.postType === "job" && (
+          {post.postType === 'job' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                 {post.date && (
                   <div className="flex items-center text-blue-700">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {format(new Date(post.date), "MMM d, yyyy")}
+                    {format(new Date(post.date), 'MMM d, yyyy')}
                   </div>
                 )}
                 {post.payRate && (
@@ -231,7 +233,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
             </Button>
           </div>
 
-          {post.postType === "job" && (
+          {post.postType === 'job' && (
             <Button
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -261,7 +263,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                   disabled={!newComment.trim() || isSubmittingComment}
                   data-testid={`button-submit-comment-${post.id}`}
                 >
-                  {isSubmittingComment ? "..." : "Post"}
+                  {isSubmittingComment ? '...' : 'Post'}
                 </Button>
               </div>
             </form>

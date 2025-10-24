@@ -1,97 +1,99 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { X, ArrowRight, ArrowLeft } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { X, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TutorialStep {
   id: string;
   title: string;
   content: string;
   target?: string;
-  position: "top" | "bottom" | "left" | "right" | "center";
+  position: 'top' | 'bottom' | 'left' | 'right' | 'center';
 }
 
 const tutorialSteps: Record<string, TutorialStep[]> = {
   hub: [
     {
-      id: "welcome",
-      title: "Welcome to Snipshift!",
+      id: 'welcome',
+      title: 'Welcome to Snipshift!',
       content: "Let's take a quick tour of your Hub dashboard and key features.",
-      position: "center"
+      position: 'center'
     },
     {
-      id: "post-job",
-      title: "Post Your First Job",
-      content: "Click here to post jobs and attract talented professionals to your barbershop.",
+      id: 'post-job',
+      title: 'Post Your First Job',
+      content: 'Click here to post jobs and attract talented professionals to your barbershop.',
       target: "[data-testid='button-post-job']",
-      position: "bottom"
+      position: 'bottom'
     },
     {
-      id: "manage-team",
-      title: "Manage Your Team",
-      content: "View and manage your professional team members and their schedules.",
+      id: 'manage-team',
+      title: 'Manage Your Team',
+      content: 'View and manage your professional team members and their schedules.',
       target: "[data-testid='card-team-overview']",
-      position: "top"
+      position: 'top'
     },
     {
-      id: "social-feed",
-      title: "Community Connection",
-      content: "Stay connected with the barbering community through our social feed.",
+      id: 'social-feed',
+      title: 'Community Connection',
+      content: 'Stay connected with the barbering community through our social feed.',
       target: "[data-testid='link-social-feed']",
-      position: "left"
+      position: 'left'
     }
   ],
   professional: [
     {
-      id: "welcome",
-      title: "Welcome Professional!",
-      content: "Discover jobs, connect with Hubs, and showcase your skills.",
-      position: "center"
+      id: 'welcome',
+      title: 'Welcome Professional!',
+      content: 'Discover jobs, connect with Hubs, and showcase your skills.',
+      position: 'center'
     },
     {
-      id: "job-search",
-      title: "Find Your Next Opportunity",
-      content: "Browse available jobs near you using our interactive map and filters.",
+      id: 'job-search',
+      title: 'Find Your Next Opportunity',
+      content: 'Browse available jobs near you using our interactive map and filters.',
       target: "[data-testid='button-browse-jobs']",
-      position: "bottom"
+      position: 'bottom'
     },
     {
-      id: "profile",
-      title: "Build Your Profile",
-      content: "Complete your profile to attract the best Hub opportunities.",
+      id: 'profile',
+      title: 'Build Your Profile',
+      content: 'Complete your profile to attract the best Hub opportunities.',
       target: "[data-testid='link-profile']",
-      position: "right"
+      position: 'right'
     }
   ],
   brand: [
     {
-      id: "welcome",
-      title: "Welcome Brand Partner!",
-      content: "Reach the barbering community with your products and promotions.",
-      position: "center"
+      id: 'welcome',
+      title: 'Welcome Brand Partner!',
+      content: 'Reach the barbering community with your products and promotions.',
+      position: 'center'
     },
     {
-      id: "create-promotion",
-      title: "Create Promotions",
-      content: "Share your latest products and offers with our professional community.",
+      id: 'create-promotion',
+      title: 'Create Promotions',
+      content: 'Share your latest products and offers with our professional community.',
       target: "[data-testid='button-create-promotion']",
-      position: "bottom"
+      position: 'bottom'
     }
   ],
   trainer: [
     {
-      id: "welcome",
-      title: "Welcome Trainer!",
-      content: "Share your expertise and monetize your training content.",
-      position: "center"
+      id: 'welcome',
+      title: 'Welcome Trainer!',
+      content: 'Share your expertise and monetize your training content.',
+      position: 'center'
     },
     {
-      id: "upload-content",
-      title: "Upload Training Content",
-      content: "Create and upload your training videos to build your education business.",
+      id: 'upload-content',
+      title: 'Upload Training Content',
+      content: 'Create and upload your training videos to build your education business.',
       target: "[data-testid='button-upload-content']",
-      position: "bottom"
+      position: 'bottom'
     }
   ]
 };
@@ -99,7 +101,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
 export function TutorialOverlay() {
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [userRole, setUserRole] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -136,7 +138,7 @@ export function TutorialOverlay() {
 
   const handleClose = () => {
     setIsVisible(false);
-    localStorage.setItem(`tutorial-seen-${userRole}`, "true");
+    localStorage.setItem(`tutorial-seen-${userRole}`, 'true');
   };
 
   const handleSkip = () => {
@@ -205,7 +207,7 @@ export function TutorialOverlay() {
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </>
                   ) : (
-                    "Get Started"
+                    'Get Started'
                   )}
                 </Button>
               </div>

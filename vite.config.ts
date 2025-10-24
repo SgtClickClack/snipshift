@@ -4,21 +4,18 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  root: "./src",
+  root: "./snipshift-next/web",
   server: {
-    port: 3001,
+    port: 3002,
     host: true,
   },
   build: {
-    outDir: "../dist/public",
+    outDir: "../../dist/public",
     emptyOutDir: true,
-  },
-  esbuild: {
-    jsx: 'automatic',
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "./snipshift-next/web/src"),
       "@shared": path.resolve(__dirname, "./shared"),
     },
   },

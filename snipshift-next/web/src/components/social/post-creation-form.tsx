@@ -1,14 +1,16 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Image, Send, X } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Image, Send, X } from 'lucide-react';
 
 interface PostCreationFormProps {
-  userRole: "professional" | "hub" | "brand" | "trainer";
+  userRole: 'professional' | 'hub' | 'brand' | 'trainer';
   userName: string;
   userAvatar?: string;
   onSubmit: (postData: {
@@ -25,21 +27,21 @@ export default function PostCreationForm({
   onSubmit,
   isSubmitting = false
 }: PostCreationFormProps) {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
 
-  const canCreatePosts = userRole === "brand" || userRole === "trainer";
+  const canCreatePosts = userRole === 'brand' || userRole === 'trainer';
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "brand":
-        return "bg-purple-100 text-purple-800";
-      case "trainer":
-        return "bg-orange-100 text-orange-800";
+      case 'brand':
+        return 'bg-purple-100 text-purple-800';
+      case 'trainer':
+        return 'bg-orange-100 text-orange-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -53,16 +55,16 @@ export default function PostCreationForm({
     });
 
     // Reset form
-    setContent("");
+    setContent('');
     setImages([]);
-    setImageUrl("");
+    setImageUrl('');
     setShowImageInput(false);
   };
 
   const handleAddImage = () => {
     if (imageUrl.trim() && !images.includes(imageUrl.trim())) {
       setImages([...images, imageUrl.trim()]);
-      setImageUrl("");
+      setImageUrl('');
       setShowImageInput(false);
     }
   };
@@ -86,8 +88,8 @@ export default function PostCreationForm({
               Social posting is currently available for Brands and Trainers.
             </p>
             <p className="text-sm text-gray-400">
-              {userRole === "professional" && "Professionals can interact with posts and apply to jobs."}
-              {userRole === "hub" && "Hubs can post jobs through the job posting feature."}
+              {userRole === 'professional' && 'Professionals can interact with posts and apply to jobs.'}
+              {userRole === 'hub' && 'Hubs can post jobs through the job posting feature.'}
             </p>
           </div>
         </CardContent>
@@ -175,7 +177,7 @@ export default function PostCreationForm({
                   variant="ghost"
                   onClick={() => {
                     setShowImageInput(false);
-                    setImageUrl("");
+                    setImageUrl('');
                   }}
                 >
                   <X className="w-4 h-4" />
@@ -223,7 +225,7 @@ export default function PostCreationForm({
                 data-testid="button-submit-post"
               >
                 <Send className="w-4 h-4 mr-1" />
-                {isSubmitting ? "Posting..." : "Post"}
+                {isSubmitting ? 'Posting...' : 'Post'}
               </Button>
             </div>
           </div>

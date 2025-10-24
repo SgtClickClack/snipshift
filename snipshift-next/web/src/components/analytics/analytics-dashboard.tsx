@@ -1,24 +1,26 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, TrendingDown, Eye, Users, Heart, MessageSquare } from "lucide-react";
+import React from 'react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, TrendingDown, Eye, Users, Heart, MessageSquare } from 'lucide-react';
 // Removed legacy auth import; component takes userRole via props
 
 // Mock analytics data - in production, this would come from your analytics API
 const mockAnalyticsData = {
   hub: {
     jobViews: [
-      { month: "Jan", views: 120, applications: 45 },
-      { month: "Feb", views: 180, applications: 67 },
-      { month: "Mar", views: 240, applications: 89 },
-      { month: "Apr", views: 200, applications: 76 },
-      { month: "May", views: 280, applications: 102 }
+      { month: 'Jan', views: 120, applications: 45 },
+      { month: 'Feb', views: 180, applications: 67 },
+      { month: 'Mar', views: 240, applications: 89 },
+      { month: 'Apr', views: 200, applications: 76 },
+      { month: 'May', views: 280, applications: 102 }
     ],
     teamPerformance: [
-      { name: "Sarah J.", revenue: 4500, clients: 89, rating: 4.8 },
-      { name: "Mike R.", revenue: 3800, clients: 76, rating: 4.6 },
-      { name: "Alex T.", revenue: 4200, clients: 82, rating: 4.9 }
+      { name: 'Sarah J.', revenue: 4500, clients: 89, rating: 4.8 },
+      { name: 'Mike R.', revenue: 3800, clients: 76, rating: 4.6 },
+      { name: 'Alex T.', revenue: 4200, clients: 82, rating: 4.9 }
     ],
     summary: {
       totalJobs: 12,
@@ -29,16 +31,16 @@ const mockAnalyticsData = {
   },
   brand: {
     postEngagement: [
-      { month: "Jan", reach: 2400, engagement: 340, clicks: 89 },
-      { month: "Feb", reach: 3200, engagement: 480, clicks: 142 },
-      { month: "Mar", reach: 2800, engagement: 420, clicks: 125 },
-      { month: "Apr", reach: 3600, engagement: 560, clicks: 178 },
-      { month: "May", reach: 4200, engagement: 680, clicks: 234 }
+      { month: 'Jan', reach: 2400, engagement: 340, clicks: 89 },
+      { month: 'Feb', reach: 3200, engagement: 480, clicks: 142 },
+      { month: 'Mar', reach: 2800, engagement: 420, clicks: 125 },
+      { month: 'Apr', reach: 3600, engagement: 560, clicks: 178 },
+      { month: 'May', reach: 4200, engagement: 680, clicks: 234 }
     ],
     topProducts: [
-      { name: "Premium Clippers", orders: 45, revenue: 6750 },
-      { name: "Styling Gel", orders: 78, revenue: 2340 },
-      { name: "Beard Oil", orders: 62, revenue: 1860 }
+      { name: 'Premium Clippers', orders: 45, revenue: 6750 },
+      { name: 'Styling Gel', orders: 78, revenue: 2340 },
+      { name: 'Beard Oil', orders: 62, revenue: 1860 }
     ],
     summary: {
       totalPosts: 24,
@@ -49,16 +51,16 @@ const mockAnalyticsData = {
   },
   trainer: {
     contentViews: [
-      { month: "Jan", views: 420, purchases: 18, revenue: 540 },
-      { month: "Feb", views: 580, purchases: 24, revenue: 720 },
-      { month: "Mar", views: 680, purchases: 31, revenue: 930 },
-      { month: "Apr", views: 740, purchases: 28, revenue: 840 },
-      { month: "May", views: 890, purchases: 39, revenue: 1170 }
+      { month: 'Jan', views: 420, purchases: 18, revenue: 540 },
+      { month: 'Feb', views: 580, purchases: 24, revenue: 720 },
+      { month: 'Mar', views: 680, purchases: 31, revenue: 930 },
+      { month: 'Apr', views: 740, purchases: 28, revenue: 840 },
+      { month: 'May', views: 890, purchases: 39, revenue: 1170 }
     ],
     topCourses: [
-      { name: "Advanced Fade Techniques", students: 89, revenue: 2670, rating: 4.9 },
-      { name: "Beard Styling Mastery", students: 67, revenue: 2010, rating: 4.7 },
-      { name: "Hair Color Fundamentals", students: 54, revenue: 1620, rating: 4.8 }
+      { name: 'Advanced Fade Techniques', students: 89, revenue: 2670, rating: 4.9 },
+      { name: 'Beard Styling Mastery', students: 67, revenue: 2010, rating: 4.7 },
+      { name: 'Hair Color Fundamentals', students: 54, revenue: 1620, rating: 4.8 }
     ],
     summary: {
       totalStudents: 210,

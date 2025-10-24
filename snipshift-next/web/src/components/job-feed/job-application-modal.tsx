@@ -1,16 +1,18 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Job } from "@shared/types";
-import { X, Calendar, DollarSign, MapPin, Clock } from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { Job } from '@shared/types';
+import { X, Calendar, DollarSign, MapPin, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface JobApplicationModalProps {
   isOpen: boolean;
@@ -23,30 +25,30 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [coverLetter, setCoverLetter] = useState("");
+  const [coverLetter, setCoverLetter] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const applyJobMutation = useMutation({
     mutationFn: async (applicationData: any) => {
-      const response = await apiRequest("POST", `/api/jobs/${job?.id}/apply`, applicationData);
+      const response = await apiRequest('POST', `/api/jobs/${job?.id}/apply`, applicationData);
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Application submitted successfully!",
-        description: "The hub owner has been notified of your interest.",
-        variant: "default",
+        title: 'Application submitted successfully!',
+        description: 'The hub owner has been notified of your interest.',
+        variant: 'default',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       onClose();
-      setCoverLetter("");
+      setCoverLetter('');
       setErrors({});
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to submit application",
-        description: error.message || "Please try again later",
-        variant: "destructive",
+        title: 'Failed to submit application',
+        description: error.message || 'Please try again later',
+        variant: 'destructive',
       });
     },
   });
@@ -55,9 +57,9 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
     const newErrors: Record<string, string> = {};
     
     if (!coverLetter.trim()) {
-      newErrors.coverLetter = "Please write a brief message about your interest in this position";
+      newErrors.coverLetter = 'Please write a brief message about your interest in this position';
     } else if (coverLetter.trim().length < 20) {
-      newErrors.coverLetter = "Please provide a more detailed message (at least 20 characters)";
+      newErrors.coverLetter = 'Please provide a more detailed message (at least 20 characters)';
     }
 
     setErrors(newErrors);
@@ -79,7 +81,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
 
   if (!isOpen || !job) return null;
 
-  const hasAlreadyApplied = job.applicants?.some(app => app.professionalId === user?.id);
+  const hasAlreadyApplied = job.applicants?.some(app => app === user?.id);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -106,7 +108,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
               <div className="flex items-center">
                 <Calendar className="mr-2 h-4 w-4 text-primary" />
                 <span data-testid="text-job-date">
-                  {format(new Date(job.date), "EEE, MMM d, yyyy")}
+                  {format(new Date(job.date), 'EEE, MMM d, yyyy')}
                 </span>
               </div>
               <div className="flex items-center">
@@ -124,7 +126,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
               <div className="flex items-center">
                 <Clock className="mr-2 h-4 w-4 text-primary" />
                 <span data-testid="text-job-time">
-                  {format(new Date(job.date), "h:mm a")}
+                  {format(new Date(job.date), 'h:mm a')}
                 </span>
               </div>
             </div>
@@ -177,7 +179,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
                   placeholder="Tell the hub owner why you're interested in this position and what makes you a good fit. Include your experience, skills, and availability..."
                   rows={6}
                   data-testid="textarea-cover-letter"
-                  className={errors.coverLetter ? "border-red-500" : ""}
+                  className={errors.coverLetter ? 'border-red-500' : ''}
                 />
                 {errors.coverLetter && (
                   <p className="text-red-500 text-sm mt-1">{errors.coverLetter}</p>
@@ -214,7 +216,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
                   data-testid="button-submit-application"
                   className="bg-primary hover:bg-primary/90"
                 >
-                  {applyJobMutation.isPending ? "Submitting..." : "Submit Application"}
+                  {applyJobMutation.isPending ? 'Submitting...' : 'Submit Application'}
                 </Button>
               </div>
             </form>

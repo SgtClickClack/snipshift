@@ -1,31 +1,59 @@
-import { useState, useEffect, lazy, Suspense } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React from 'react';
 
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Scissors } from "lucide-react";
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { Scissors } from 'lucide-react';
+import { AuthErrorBoundary } from '@/components/auth/AuthErrorBoundary';
+
+// Zod validation schema
+const signupSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
+type SignupFormData = z.infer<typeof signupSchema>;
 
 // Lazy load the Google Auth button to reduce initial bundle size
-const GoogleAuthButton = lazy(() => import("@/components/auth/google-auth-button"));
+const GoogleAuthButton = lazy(() => import('@/components/auth/google-auth-button'));
 
 export default function SignupPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { login, isAuthenticated } = useAuth();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    mode: 'onChange'
   });
 
 
-  // Handle OAuth callback (new universal flow)
+  // Handle OAuth callback (proper backend integration)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -34,96 +62,82 @@ export default function SignupPage() {
     // Handle OAuth callback if code is present
     if (code && state) {
       console.log('🔄 OAuth callback detected on signup page');
-      try {
-        // Create mock Google user with client role (universal signup)
-        const mockUser = {
-          id: `google_${Date.now()}`,
-          email: 'demo@snipshift.com.au',
-          password: '',
-          roles: ['client' as const],
-          currentRole: 'client' as const,
-          provider: 'google' as const,
-          googleId: `google_${Date.now()}`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          displayName: 'Google User',
-          profileImage: '',
-        };
-
-        login(mockUser);
-        
-        toast({
-          title: "Welcome!",
-          description: "Successfully signed up with Google! Let's set up your profile.",
-        });
-
-        // Navigate to role selection
-        navigate('/role-selection');
-      } catch (error) {
-        console.error('❌ OAuth callback error:', error);
-        toast({
-          title: "Authentication Error",
-          description: "There was an issue processing your Google authentication.",
-          variant: "destructive",
-        });
-      }
+      handleOAuthCallback(code, state);
       return;
     }
   }, [navigate, toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
+  const handleOAuthCallback = async (code: string, state: string) => {
     try {
-      const response = await apiRequest("POST", "/api/register", {
-        email: formData.email,
-        password: formData.password,
-        provider: "email"
+      setIsLoading(true);
+      
+      // Call backend OAuth exchange endpoint
+      const response = await apiRequest('POST', '/api/oauth/google/exchange', {
+        code,
+        redirectUri: window.location.origin + '/oauth/callback',
+        codeVerifier: sessionStorage.getItem('pkce_verifier')
       });
+      
       const userData = await response.json();
       
-      // Ensure a server session is established immediately after registration
-      try {
-        await apiRequest("POST", "/api/login", {
-          email: userData.email,
-          password: formData.password,
-        });
-      } catch (e) {
-        // Non-fatal for UI purposes; local auth state will still work
-        console.warn('Login after register failed (session may be missing):', e);
-      }
-
       // Create properly formatted user object for auth service
       const newUser = {
         id: userData.id,
         email: userData.email,
         password: '', // Don't store password in frontend
-        roles: Array.isArray(userData.roles) ? userData.roles : ['client'],
-        currentRole: userData.currentRole ?? 'client',
+        roles: Array.isArray(userData.roles) ? userData.roles : ['professional'],
+        currentRole: userData.currentRole ?? 'professional',
+        provider: 'google' as const,
+        googleId: userData.googleId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        displayName: userData.displayName || userData.email.split('@')[0],
+        profileImage: userData.profileImage || '',
+      };
+      
+      login(newUser);
+      
+      toast({
+        title: 'Welcome!',
+        description: "Successfully signed up with Google! Let's set up your profile.",
+      });
+
+      // Navigate to role selection
+      navigate('/role-selection');
+    } catch (error) {
+      console.error('❌ OAuth callback error:', error);
+      toast({
+        title: 'Authentication Error',
+        description: 'There was an issue processing your Google authentication.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data: SignupFormData) => {
+    setIsLoading(true);
+
+    try {
+      const response = await apiRequest('POST', '/api/register', {
+        email: data.email,
+        password: data.password,
+        provider: 'email'
+      });
+      const userData = await response.json();
+      
+      // Create properly formatted user object for auth service
+      const newUser = {
+        id: userData.id,
+        email: userData.email,
+        password: '', // Don't store password in frontend
+        roles: Array.isArray(userData.roles) ? userData.roles : ['professional'],
+        currentRole: userData.currentRole ?? 'professional',
         provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
-        displayName: userData.displayName || formData.email.split('@')[0],
+        displayName: userData.displayName || data.email.split('@')[0],
         profileImage: userData.profileImage || '',
       };
       
@@ -131,17 +145,17 @@ export default function SignupPage() {
       login(newUser);
       
       toast({
-        title: "Account created successfully",
+        title: 'Account created successfully',
         description: "Welcome to Snipshift! Let's set up your profile.",
       });
 
       // Redirect to role selection
-      navigate("/role-selection");
+      navigate('/role-selection');
     } catch (error) {
       toast({
-        title: "Registration failed",
-        description: "Please check your information and try again",
-        variant: "destructive",
+        title: 'Registration failed',
+        description: 'Please check your information and try again',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -151,7 +165,8 @@ export default function SignupPage() {
 
 
   return (
-    <div className="min-h-screen py-12 bg-signup">
+    <AuthErrorBoundary>
+      <div className="min-h-screen py-12 bg-signup">
       <div className="max-w-md mx-auto px-4">
         <Card className="shadow-xl border-2 border-steel-300/50 bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
@@ -164,7 +179,7 @@ export default function SignupPage() {
             <p className="text-steel-600 font-medium">Connect with the creative industry network</p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-steel-700">
                   Email Address
@@ -172,13 +187,14 @@ export default function SignupPage() {
                 <Input
                   id="email"
                   type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  {...register('email')}
                   placeholder="Enter your email"
                   className="mt-2"
                   data-testid="input-email"
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                )}
               </div>
               
               <div>
@@ -188,13 +204,14 @@ export default function SignupPage() {
                 <Input
                   id="password"
                   type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  {...register('password')}
                   placeholder="Create a password"
                   className="mt-2"
                   data-testid="input-password"
                 />
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+                )}
               </div>
               
               <div>
@@ -204,13 +221,14 @@ export default function SignupPage() {
                 <Input
                   id="confirmPassword"
                   type="password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  {...register('confirmPassword')}
                   placeholder="Confirm your password"
                   className="mt-2"
                   data-testid="input-confirm-password"
                 />
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>
+                )}
               </div>
               
               <Button 
@@ -219,7 +237,7 @@ export default function SignupPage() {
                 disabled={isLoading}
                 data-testid="button-signup"
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
 
@@ -258,7 +276,7 @@ export default function SignupPage() {
             
             <div className="text-center mt-6">
               <p className="text-steel-600">
-                Already have an account?{" "}
+                Already have an account?{' '}
                 <Link to="/login" className="text-steel-700 hover:text-steel-900 hover:underline font-medium" data-testid="link-login">
                   Sign in here
                 </Link>
@@ -270,5 +288,6 @@ export default function SignupPage() {
 
       </div>
     </div>
+    </AuthErrorBoundary>
   );
 }

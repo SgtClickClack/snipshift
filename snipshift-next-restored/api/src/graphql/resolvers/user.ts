@@ -35,7 +35,7 @@ export const userResolvers = {
       { role, verified }: { role?: string; verified?: boolean },
       context: GraphQLContext
     ) => {
-      let conditions = [];
+      const conditions = [];
 
       if (role) {
         // This is a simplified check - in reality you'd need to check if role is in the roles array

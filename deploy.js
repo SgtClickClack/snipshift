@@ -39,7 +39,7 @@ process.env.NODE_ENV = 'development';
 // This script is provided as a reference but has the same limitations as npm run dev
 
 console.log(`Port: ${PORT}`);
-console.log(`Mode: Vite dev middleware (esbuild will crash)`);
+console.log('Mode: Vite dev middleware (esbuild will crash)');
 console.log('\nStarting server...\n');
 
 // Use tsx from node_modules directly to avoid PATH issues

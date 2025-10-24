@@ -1,25 +1,35 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Heart, MessageCircle, Share, Tag, ExternalLink, Calendar, MapPin, Filter } from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { Heart, MessageCircle, Share, Tag, ExternalLink, Calendar, MapPin, Filter } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface Comment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  timestamp: string;
+}
 
 interface SocialPost {
   id: string;
   authorId: string;
-  authorRole: "brand" | "trainer";
-  postType: "offer" | "event" | "announcement" | "product" | "discount";
+  authorRole: 'brand' | 'trainer';
+  postType: 'offer' | 'event' | 'announcement' | 'product' | 'discount';
   content: string;
   imageUrl?: string;
   linkUrl?: string;
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   likes: number;
-  comments: any[];
+  comments: Comment[];
   discountCode?: string;
   discountPercentage?: number;
   validUntil?: string;
@@ -34,32 +44,32 @@ export default function SocialFeed() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "offers" | "events" | "products">("all");
+  const [filter, setFilter] = useState<'all' | 'offers' | 'events' | 'products'>('all');
   
   const { data: posts = [], isLoading } = useQuery<SocialPost[]>({
-    queryKey: ["/api/social-feed"],
+    queryKey: ['/api/social-feed'],
   });
 
   const likeMutation = useMutation({
-    mutationFn: async ({ postId, action }: { postId: string; action: "like" | "unlike" }) => {
-      const response = await apiRequest("POST", `/api/social-posts/${postId}/like`, { action });
+    mutationFn: async ({ postId, action }: { postId: string; action: 'like' | 'unlike' }) => {
+      const response = await apiRequest('POST', `/api/social-posts/${postId}/like`, { action });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/social-feed"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/social-feed'] });
     },
   });
 
   const handleLike = (postId: string) => {
     if (!user) {
       toast({
-        title: "Please log in",
-        description: "You need to be logged in to like posts.",
-        variant: "destructive",
+        title: 'Please log in',
+        description: 'You need to be logged in to like posts.',
+        variant: 'destructive',
       });
       return;
     }
-    likeMutation.mutate({ postId, action: "like" });
+    likeMutation.mutate({ postId, action: 'like' });
   };
 
   const handleShare = (post: SocialPost) => {
@@ -72,28 +82,28 @@ export default function SocialFeed() {
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast({
-        title: "Link copied!",
-        description: "Post link copied to clipboard.",
+        title: 'Link copied!',
+        description: 'Post link copied to clipboard.',
       });
     }
   };
 
   const filteredPosts = posts.filter(post => {
-    if (post.status !== "approved") return false;
-    if (filter === "all") return true;
-    if (filter === "offers") return post.postType === "offer" || post.postType === "discount";
-    if (filter === "events") return post.postType === "event";
-    if (filter === "products") return post.postType === "product";
+    if (post.status !== 'approved') return false;
+    if (filter === 'all') return true;
+    if (filter === 'offers') return post.postType === 'offer' || post.postType === 'discount';
+    if (filter === 'events') return post.postType === 'event';
+    if (filter === 'products') return post.postType === 'product';
     return true;
   });
 
   const getPostTypeIcon = (postType: string) => {
     switch (postType) {
-      case "discount":
+      case 'discount':
         return <Tag className="h-4 w-4" />;
-      case "event":
+      case 'event':
         return <Calendar className="h-4 w-4" />;
-      case "offer":
+      case 'offer':
         return <Tag className="h-4 w-4" />;
       default:
         return <Share className="h-4 w-4" />;
@@ -102,16 +112,16 @@ export default function SocialFeed() {
 
   const getPostTypeColor = (postType: string) => {
     switch (postType) {
-      case "discount":
-        return "bg-red-100 text-red-800";
-      case "event":
-        return "bg-blue-100 text-blue-800";
-      case "offer":
-        return "bg-green-100 text-green-800";
-      case "product":
-        return "bg-purple-100 text-purple-800";
+      case 'discount':
+        return 'bg-red-100 text-red-800';
+      case 'event':
+        return 'bg-blue-100 text-blue-800';
+      case 'offer':
+        return 'bg-green-100 text-green-800';
+      case 'product':
+        return 'bg-purple-100 text-purple-800';
       default:
-        return "bg-neutral-100 text-neutral-800";
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -127,14 +137,14 @@ export default function SocialFeed() {
         {/* Filter Buttons */}
         <div className="flex gap-2">
           {[
-            { key: "all", label: "All" },
-            { key: "offers", label: "Offers" },
-            { key: "events", label: "Events" },
-            { key: "products", label: "Products" },
+            { key: 'all', label: 'All' },
+            { key: 'offers', label: 'Offers' },
+            { key: 'events', label: 'Events' },
+            { key: 'products', label: 'Products' },
           ].map((filterOption) => (
             <Button
               key={filterOption.key}
-              variant={filter === filterOption.key ? "default" : "outline"}
+              variant={filter === filterOption.key ? 'default' : 'outline'}
               size="sm"
               onClick={() => setFilter(filterOption.key as any)}
               data-testid={`filter-${filterOption.key}`}
@@ -168,12 +178,12 @@ export default function SocialFeed() {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                       <span className="text-primary font-bold text-sm">
-                        {(post.authorCompany || post.authorName || "U").charAt(0).toUpperCase()}
+                        {(post.authorCompany || post.authorName || 'U').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
                       <h3 className="font-semibold text-neutral-900" data-testid={`author-${post.id}`}>
-                        {post.authorCompany || post.authorName || "Unknown"}
+                        {post.authorCompany || post.authorName || 'Unknown'}
                       </h3>
                       <p className="text-sm text-neutral-500">
                         {format(new Date(post.createdAt), "MMM d, yyyy 'at' h:mm a")}
@@ -189,12 +199,12 @@ export default function SocialFeed() {
                       {getPostTypeIcon(post.postType)}
                       {post.postType}
                     </Badge>
-                    {post.authorRole === "brand" && (
+                    {post.authorRole === 'brand' && (
                       <Badge variant="outline" data-testid={`author-role-${post.id}`}>
                         Brand
                       </Badge>
                     )}
-                    {post.authorRole === "trainer" && (
+                    {post.authorRole === 'trainer' && (
                       <Badge variant="outline" data-testid={`author-role-${post.id}`}>
                         Trainer
                       </Badge>
@@ -222,7 +232,7 @@ export default function SocialFeed() {
                 )}
 
                 {/* Event Details */}
-                {post.postType === "event" && post.eventDate && (
+                {post.postType === 'event' && post.eventDate && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <div className="flex items-center gap-2 text-blue-800">
                       <Calendar className="h-4 w-4" />
@@ -240,7 +250,7 @@ export default function SocialFeed() {
                 )}
 
                 {/* Discount Details */}
-                {post.postType === "discount" && post.discountCode && (
+                {post.postType === 'discount' && post.discountCode && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -258,10 +268,10 @@ export default function SocialFeed() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          navigator.clipboard.writeText(post.discountCode || "");
+                          navigator.clipboard.writeText(post.discountCode || '');
                           toast({
-                            title: "Code copied!",
-                            description: "Discount code copied to clipboard.",
+                            title: 'Code copied!',
+                            description: 'Discount code copied to clipboard.',
                           });
                         }}
                         data-testid={`copy-code-${post.id}`}
@@ -271,7 +281,7 @@ export default function SocialFeed() {
                     </div>
                     {post.validUntil && (
                       <p className="text-red-600 text-sm mt-2">
-                        Valid until: {format(new Date(post.validUntil), "MMM d, yyyy")}
+                        Valid until: {format(new Date(post.validUntil), 'MMM d, yyyy')}
                       </p>
                     )}
                   </div>

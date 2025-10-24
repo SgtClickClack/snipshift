@@ -37,8 +37,8 @@ export const jobResolvers = {
       },
       context: GraphQLContext
     ) => {
-      let conditions = [];
-      let orderBy = [desc(jobs.createdAt)];
+      const conditions = [];
+      const orderBy = [desc(jobs.createdAt)];
 
       // Apply filters
       if (filters?.status) {
@@ -100,7 +100,7 @@ export const jobResolvers = {
       { hubId, first = 20, after }: { hubId: string; first?: number; after?: string },
       context: GraphQLContext
     ) => {
-      let conditions = [eq(jobs.hubId, hubId)];
+      const conditions = [eq(jobs.hubId, hubId)];
 
       if (after) {
         conditions.push(sql`${jobs.createdAt} < ${after}`);

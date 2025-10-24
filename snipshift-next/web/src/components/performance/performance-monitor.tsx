@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useEffect, useState } from 'react';
 
 interface PerformanceMetrics {
@@ -44,10 +46,11 @@ export function PerformanceMonitor() {
               setMetrics(prev => ({ ...prev, cls: (prev.cls || 0) + (entry as any).value }));
             }
             break;
-          case 'navigation':
+          case 'navigation': {
             const navEntry = entry as PerformanceNavigationTiming;
             setMetrics(prev => ({ ...prev, ttfb: navEntry.responseStart - navEntry.requestStart }));
             break;
+          }
         }
       });
     });

@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import React from 'react';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   CheckCircle, 
   XCircle, 
@@ -19,17 +21,17 @@ import {
   MessageSquare,
   Image as ImageIcon,
   ExternalLink
-} from "lucide-react";
+} from 'lucide-react';
 
 interface PendingPost {
   id: string;
   userId: string;
   userName: string;
   userAvatar?: string;
-  userRole: "hub" | "professional" | "brand" | "trainer";
+  userRole: 'hub' | 'professional' | 'brand' | 'trainer';
   content: string;
   images?: string[];
-  postType: "promotion" | "training" | "general" | "job_posting";
+  postType: 'promotion' | 'training' | 'general' | 'job_posting';
   submittedAt: Date;
   flagReason?: string;
   riskScore: number;
@@ -42,63 +44,63 @@ export default function ContentModerationQueue() {
   const [selectedPost, setSelectedPost] = useState<PendingPost | null>(null);
 
   const { data: pendingPosts = [], isLoading } = useQuery<PendingPost[]>({
-    queryKey: ["/api/moderation/pending-posts"],
+    queryKey: ['/api/moderation/pending-posts'],
   });
 
   const { data: moderationStats = { pending: 0, approved: 0, rejected: 0, highRisk: 0 } } = useQuery<{ pending: number; approved: number; rejected: number; highRisk: number }>({
-    queryKey: ["/api/moderation/stats"],
+    queryKey: ['/api/moderation/stats'],
   });
 
   const approveMutation = useMutation({
     mutationFn: async (postId: string) => {
-      const response = await apiRequest("POST", `/api/moderation/approve/${postId}`, {});
+      const response = await apiRequest('POST', `/api/moderation/approve/${postId}`, {});
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Post Approved",
-        description: "The post has been approved and is now visible to users.",
+        title: 'Post Approved',
+        description: 'The post has been approved and is now visible to users.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/moderation/pending-posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/moderation/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/moderation/pending-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/moderation/stats'] });
       setSelectedPost(null);
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: async ({ postId, reason }: { postId: string; reason: string }) => {
-      const response = await apiRequest("POST", `/api/moderation/reject/${postId}`, { reason });
+      const response = await apiRequest('POST', `/api/moderation/reject/${postId}`, { reason });
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Post Rejected",
-        description: "The post has been rejected and the user has been notified.",
+        title: 'Post Rejected',
+        description: 'The post has been rejected and the user has been notified.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/moderation/pending-posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/moderation/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/moderation/pending-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/moderation/stats'] });
       setSelectedPost(null);
     },
   });
 
   const getRiskBadgeColor = (score: number) => {
-    if (score >= 0.7) return "bg-red-600";
-    if (score >= 0.4) return "bg-yellow-600";
-    return "bg-green-600";
+    if (score >= 0.7) return 'bg-red-600';
+    if (score >= 0.4) return 'bg-yellow-600';
+    return 'bg-green-600';
   };
 
   const getRiskLabel = (score: number) => {
-    if (score >= 0.7) return "High Risk";
-    if (score >= 0.4) return "Medium Risk";
-    return "Low Risk";
+    if (score >= 0.7) return 'High Risk';
+    if (score >= 0.4) return 'Medium Risk';
+    return 'Low Risk';
   };
 
   const getPostTypeColor = (type: string) => {
     switch (type) {
-      case "promotion": return "bg-purple-600";
-      case "training": return "bg-blue-600";
-      case "job_posting": return "bg-green-600";
-      default: return "bg-neutral-600";
+      case 'promotion': return 'bg-purple-600';
+      case 'training': return 'bg-blue-600';
+      case 'job_posting': return 'bg-green-600';
+      default: return 'bg-neutral-600';
     }
   };
 
@@ -106,8 +108,8 @@ export default function ContentModerationQueue() {
     all: pendingPosts,
     high_risk: pendingPosts.filter(p => p.riskScore >= 0.7),
     medium_risk: pendingPosts.filter(p => p.riskScore >= 0.4 && p.riskScore < 0.7),
-    promotions: pendingPosts.filter(p => p.postType === "promotion"),
-    training: pendingPosts.filter(p => p.postType === "training"),
+    promotions: pendingPosts.filter(p => p.postType === 'promotion'),
+    training: pendingPosts.filter(p => p.postType === 'training'),
   };
 
   if (isLoading) {
@@ -281,7 +283,7 @@ export default function ContentModerationQueue() {
                             e.stopPropagation();
                             rejectMutation.mutate({ 
                               postId: post.id, 
-                              reason: "Content does not meet community guidelines" 
+                              reason: 'Content does not meet community guidelines' 
                             });
                           }}
                           disabled={rejectMutation.isPending}
@@ -399,7 +401,7 @@ export default function ContentModerationQueue() {
                     className="flex-1 text-red-700 border-red-200 hover:bg-red-50"
                     onClick={() => rejectMutation.mutate({ 
                       postId: selectedPost.id, 
-                      reason: "Content does not meet community guidelines" 
+                      reason: 'Content does not meet community guidelines' 
                     })}
                     disabled={rejectMutation.isPending}
                     data-testid="button-reject-detailed"

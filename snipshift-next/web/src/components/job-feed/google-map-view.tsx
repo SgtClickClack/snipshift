@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -154,7 +156,7 @@ export default function GoogleMapView({
               const infoContent = `
                 <div style="max-width: 300px; padding: 8px;">
                   <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${job.title}</h3>
-                  <p style="margin: 0 0 4px 0; color: #6b7280;">Hub ${job.hubId}</p>
+                  <p style="margin: 0 0 4px 0; color: #6b7280;">Business ${job.businessId}</p>
                   <p style="margin: 0 0 4px 0; color: #6b7280;">${job.location.city}, ${job.location.state}</p>
                   <p style="margin: 0 0 8px 0; color: #10b981; font-weight: 600;">$${job.payRate}/hour</p>
                   <p style="margin: 0; color: #6b7280; font-size: 12px;">${distance.toFixed(1)} km away</p>
@@ -190,20 +192,20 @@ export default function GoogleMapView({
   // Mock coordinates function (same as original)
   const getMockCoordinates = (job: Job) => {
     const locations: Record<string, { lat: number; lng: number }> = {
-      "Sydney": { lat: -33.8688, lng: 151.2093 },
-      "Melbourne": { lat: -37.8136, lng: 144.9631 },
-      "Brisbane": { lat: -27.4698, lng: 153.0251 },
-      "Perth": { lat: -31.9505, lng: 115.8605 },
-      "Adelaide": { lat: -34.9285, lng: 138.6007 },
-      "Gold Coast": { lat: -28.0167, lng: 153.4000 },
-      "Newcastle": { lat: -32.9283, lng: 151.7817 },
-      "Canberra": { lat: -35.2809, lng: 149.1300 },
-      "Darwin": { lat: -12.4634, lng: 130.8456 },
-      "Hobart": { lat: -42.8821, lng: 147.3272 }
+      'Sydney': { lat: -33.8688, lng: 151.2093 },
+      'Melbourne': { lat: -37.8136, lng: 144.9631 },
+      'Brisbane': { lat: -27.4698, lng: 153.0251 },
+      'Perth': { lat: -31.9505, lng: 115.8605 },
+      'Adelaide': { lat: -34.9285, lng: 138.6007 },
+      'Gold Coast': { lat: -28.0167, lng: 153.4000 },
+      'Newcastle': { lat: -32.9283, lng: 151.7817 },
+      'Canberra': { lat: -35.2809, lng: 149.1300 },
+      'Darwin': { lat: -12.4634, lng: 130.8456 },
+      'Hobart': { lat: -42.8821, lng: 147.3272 }
     };
     
-    const cityName = job.location?.city || "Sydney";
-    const baseCoords = locations[cityName] || locations["Sydney"];
+    const cityName = job.location?.city || 'Sydney';
+    const baseCoords = locations[cityName] || locations['Sydney'];
     
     // Add some random offset for variety within the city
     const offset = 0.05; // ~5km variance
@@ -313,7 +315,7 @@ export default function GoogleMapView({
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-lg">{selectedJob.title}</CardTitle>
-                  <p className="text-neutral-600">Hub {selectedJob.hubId}</p>
+                  <p className="text-neutral-600">Business {selectedJob.businessId}</p>
                 </div>
                 <Button
                   variant="ghost"
@@ -328,7 +330,7 @@ export default function GoogleMapView({
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4 text-neutral-500" />
-                  <span>{selectedJob.location?.city || "Sydney"}, {selectedJob.location?.state || "NSW"}</span>
+                  <span>{selectedJob.location?.city || 'Sydney'}, {selectedJob.location?.state || 'NSW'}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4 text-neutral-500" />
@@ -405,7 +407,7 @@ export default function GoogleMapView({
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-lg">{selectedJob.title}</CardTitle>
-                <p className="text-neutral-600">Hub {selectedJob.hubId}</p>
+                <p className="text-neutral-600">Business {selectedJob.businessId}</p>
               </div>
               <Button
                 variant="ghost"

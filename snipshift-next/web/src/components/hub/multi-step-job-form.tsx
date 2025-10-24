@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Save, Send, Calendar, DollarSign, MapPin } from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, ChevronRight, Save, Send, Calendar, DollarSign, MapPin } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface JobFormData {
   title: string;
@@ -17,9 +19,9 @@ interface JobFormData {
   endTime: string;
   skillsRequired: string;
   payRate: string;
-  payType: "hourly" | "daily" | "commission" | "fixed";
+  payType: 'hourly' | 'daily' | 'commission' | 'fixed';
   location: { city: string; state: string; isRemote: boolean };
-  status: "draft" | "published";
+  status: 'draft' | 'published';
 }
 
 interface MultiStepJobFormProps {
@@ -33,13 +35,13 @@ interface MultiStepJobFormProps {
 }
 
 const AUSTRALIAN_STATES = [
-  "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"
+  'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'
 ];
 
 const COMMON_SKILLS = [
-  "Hair Cutting", "Beard Trimming", "Hair Styling", "Hair Color", 
-  "Highlights", "Perms", "Shampoo & Conditioning", "Blow Dry",
-  "Razor Work", "Fade Cuts", "Scissor Work", "Customer Service"
+  'Hair Cutting', 'Beard Trimming', 'Hair Styling', 'Hair Color', 
+  'Highlights', 'Perms', 'Shampoo & Conditioning', 'Blow Dry',
+  'Razor Work', 'Fade Cuts', 'Scissor Work', 'Customer Service'
 ];
 
 export default function MultiStepJobForm({
@@ -100,13 +102,13 @@ export default function MultiStepJobForm({
   };
 
   const handleSubmit = () => {
-    updateFormData({ status: "published" });
-    onSubmit({ ...formData, status: "published" });
+    updateFormData({ status: 'published' });
+    onSubmit({ ...formData, status: 'published' });
   };
 
   const handleSaveDraft = () => {
-    updateFormData({ status: "draft" });
-    onSaveDraft({ ...formData, status: "draft" });
+    updateFormData({ status: 'draft' });
+    onSaveDraft({ ...formData, status: 'draft' });
   };
 
   return (
@@ -142,9 +144,9 @@ export default function MultiStepJobForm({
         </div>
         
         <div className="text-sm text-muted-foreground mt-2">
-          {currentStep === 1 && "Step 1: Job Details"}
-          {currentStep === 2 && "Step 2: Compensation & Location"}
-          {currentStep === 3 && "Step 3: Review & Publish"}
+          {currentStep === 1 && 'Step 1: Job Details'}
+          {currentStep === 2 && 'Step 2: Compensation & Location'}
+          {currentStep === 3 && 'Step 3: Review & Publish'}
         </div>
       </CardHeader>
       
@@ -183,7 +185,7 @@ export default function MultiStepJobForm({
                     <Button
                       key={skill}
                       type="button"
-                      variant={selectedSkills.includes(skill) ? "default" : "outline"}
+                      variant={selectedSkills.includes(skill) ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => selectedSkills.includes(skill) ? removeSkill(skill) : addSkill(skill)}
                       data-testid={`button-skill-${skill.toLowerCase().replace(/\s+/g, '-')}`}
@@ -338,7 +340,7 @@ export default function MultiStepJobForm({
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center">
                   <Calendar className="mr-2 h-4 w-4 text-primary" />
-                  <span>{format(new Date(formData.date), "EEE, MMM d, yyyy")} at {formData.startTime}</span>
+                  <span>{format(new Date(formData.date), 'EEE, MMM d, yyyy')} at {formData.startTime}</span>
                 </div>
                 <div className="flex items-center">
                   <DollarSign className="mr-2 h-4 w-4 text-primary" />
@@ -411,7 +413,7 @@ export default function MultiStepJobForm({
                 data-testid="button-publish-job"
               >
                 <Send className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Publishing..." : "Publish Job"}
+                {isSubmitting ? 'Publishing...' : 'Publish Job'}
               </Button>
             )}
           </div>

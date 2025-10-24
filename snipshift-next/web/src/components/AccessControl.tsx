@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 interface AccessControlProps {
   children: React.ReactNode;
-  allowedRoles?: Array<'client' | 'hub' | 'professional' | 'brand' | 'admin'>;
+  allowedRoles?: Array<'professional' | 'business'>;
   requireVerification?: boolean;
 }
 
@@ -36,12 +36,12 @@ export default function AccessControl({
       }
     }
 
-    // Check verification status for Brand/Professional users
+    // Check verification status for Business/Professional users
     if (requireVerification) {
-      const isBrandOrProfessional = user?.roles?.includes('brand') || 
+      const isBusinessOrProfessional = user?.roles?.includes('business') || 
                                     user?.roles?.includes('professional');
       
-      if (isBrandOrProfessional) {
+      if (isBusinessOrProfessional) {
         // For now, skip verification check as User interface doesn't include verification properties
         // TODO: Add verification properties to User interface when needed
       }
@@ -65,10 +65,10 @@ export default function AccessControl({
 
   // Check verification requirements
   if (requireVerification) {
-    const isBrandOrProfessional = user?.roles?.includes('brand') || 
+    const isBusinessOrProfessional = user?.roles?.includes('business') || 
                                   user?.roles?.includes('professional');
     
-    if (isBrandOrProfessional) {
+    if (isBusinessOrProfessional) {
       // For now, skip verification check as User interface doesn't include verification properties
       // TODO: Add verification properties to User interface when needed
     }

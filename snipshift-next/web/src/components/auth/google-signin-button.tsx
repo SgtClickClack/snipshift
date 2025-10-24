@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +19,7 @@ interface GoogleSignInButtonProps {
   buttonText?: string;
 }
 
-export function GoogleSignInButton({ onSuccess, buttonText = "Sign in with Google" }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ onSuccess, buttonText = 'Sign in with Google' }: GoogleSignInButtonProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -55,7 +57,7 @@ export function GoogleSignInButton({ onSuccess, buttonText = "Sign in with Googl
       login(userData as any);
       
       toast({
-        title: "Welcome back!",
+        title: 'Welcome back!',
         description: `Successfully signed in with Google as ${userData.name}`,
       });
 
@@ -67,18 +69,18 @@ export function GoogleSignInButton({ onSuccess, buttonText = "Sign in with Googl
     } catch (error) {
       console.error('Google sign-in error:', error);
       toast({
-        title: "Sign-in failed",
-        description: "There was an error signing in with Google. Please try again.",
-        variant: "destructive",
+        title: 'Sign-in failed',
+        description: 'There was an error signing in with Google. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
   const handleGoogleError = () => {
     toast({
-      title: "Sign-in cancelled",
-      description: "Google sign-in was cancelled or failed.",
-      variant: "destructive",
+      title: 'Sign-in cancelled',
+      description: 'Google sign-in was cancelled or failed.',
+      variant: 'destructive',
     });
   };
 

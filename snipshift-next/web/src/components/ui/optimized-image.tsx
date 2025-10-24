@@ -42,7 +42,7 @@ export function OptimizedImage({
     return (
       <div 
         className={cn(
-          "bg-gray-200 flex items-center justify-center text-gray-500",
+          'bg-gray-200 flex items-center justify-center text-gray-500',
           className
         )}
         style={{ width: width ? `${width}px` : undefined, height: height ? `${height}px` : undefined }}
@@ -53,7 +53,7 @@ export function OptimizedImage({
   }
 
   return (
-    <div className={cn("relative overflow-hidden", className)}>
+    <div className={cn('relative overflow-hidden', className)}>
       {isLoading && placeholder === 'blur' && blurDataURL && (
         <img
           src={blurDataURL}
@@ -71,8 +71,8 @@ export function OptimizedImage({
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
         className={cn(
-          "transition-opacity duration-300",
-          isLoading ? "opacity-0" : "opacity-100"
+          'transition-opacity duration-300',
+          isLoading ? 'opacity-0' : 'opacity-100'
         )}
         onLoad={handleLoad}
         onError={handleError}

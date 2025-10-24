@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
-import { Filter, X, Search, MapPin, DollarSign, Calendar } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import { Filter, X, Search, MapPin, DollarSign, Calendar } from 'lucide-react';
 
 export interface JobFilterOptions {
   searchQuery: string;
@@ -29,9 +31,9 @@ interface AdvancedJobFiltersProps {
 }
 
 const COMMON_SKILLS = [
-  "Fades", "Beard Trim", "Hair Washing", "Styling", "Coloring", 
-  "Highlights", "Perm", "Straightening", "Braiding", "Extensions",
-  "Manicure", "Pedicure", "Facial", "Massage", "Waxing"
+  'Fades', 'Beard Trim', 'Hair Washing', 'Styling', 'Coloring', 
+  'Highlights', 'Perm', 'Straightening', 'Braiding', 'Extensions',
+  'Manicure', 'Pedicure', 'Facial', 'Massage', 'Waxing'
 ];
 
 export default function AdvancedJobFilters({
@@ -41,7 +43,7 @@ export default function AdvancedJobFilters({
   isExpanded,
   onToggleExpanded
 }: AdvancedJobFiltersProps) {
-  const [newSkill, setNewSkill] = useState("");
+  const [newSkill, setNewSkill] = useState('');
 
   const handleFilterChange = (key: keyof JobFilterOptions, value: any) => {
     onFiltersChange({
@@ -54,7 +56,7 @@ export default function AdvancedJobFilters({
     if (skill && !filters.skillsRequired.includes(skill)) {
       handleFilterChange('skillsRequired', [...filters.skillsRequired, skill]);
     }
-    setNewSkill("");
+    setNewSkill('');
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
@@ -98,7 +100,7 @@ export default function AdvancedJobFilters({
               data-testid="button-toggle-filters"
             >
               <Filter className="mr-2 h-4 w-4" />
-              {isExpanded ? "Hide Filters" : "Show Filters"}
+              {isExpanded ? 'Hide Filters' : 'Show Filters'}
             </Button>
           </div>
         </div>
@@ -151,13 +153,13 @@ export default function AdvancedJobFilters({
                 </div>
               </div>
               <Button
-                variant={filters.allowInterstate ? "default" : "outline"}
+                variant={filters.allowInterstate ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleFilterChange('allowInterstate', !filters.allowInterstate)}
                 data-testid="button-interstate-toggle"
-                className={filters.allowInterstate ? "bg-blue-600 hover:bg-blue-700" : "border-blue-300 text-blue-700 hover:bg-blue-100"}
+                className={filters.allowInterstate ? 'bg-blue-600 hover:bg-blue-700' : 'border-blue-300 text-blue-700 hover:bg-blue-100'}
               >
-                {filters.allowInterstate ? "Enabled" : "Local Only"}
+                {filters.allowInterstate ? 'Enabled' : 'Local Only'}
               </Button>
             </div>
 

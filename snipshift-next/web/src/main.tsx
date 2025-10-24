@@ -1,7 +1,11 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import App from "./App";
-import "./index-critical.css";
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import './index-critical.css';
 
 // Load non-critical CSS after initial render
 const loadNonCriticalCSS = () => {
@@ -22,4 +26,21 @@ if (document.readyState === 'loading') {
   loadNonCriticalCSS();
 }
 
-ReactDOM.render(<App />, document.getElementById("root"));
+// Use modern React 18 createRoot API
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
+
+const root = createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
+);

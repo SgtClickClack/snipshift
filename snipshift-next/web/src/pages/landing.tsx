@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Handshake, Store, UserCheck, Scissors } from "lucide-react";
-import heroBackgroundImg from "@/assets/hero-background.jpg";
+import React from 'react';
+
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Search, Handshake, Store, UserCheck, Scissors } from 'lucide-react';
+import heroBackgroundImg from '@/assets/hero-background.jpg';
 
 export default function LandingPage() {
   return (
@@ -24,22 +26,22 @@ export default function LandingPage() {
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">
             Connect. Cover. Grow.
           </h1>
-          <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 opacity-90 max-w-3xl mx-auto px-4">
             Snipshift bridges barbershops, salons and creative hubs with verified professionals for seamless workforce flexibility
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8">
-            <Link to="/signup">
-              <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl" data-testid="button-get-started">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8 px-4">
+            <Link to="/signup" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-4 shadow-xl" data-testid="button-get-started">
                 Get Started Today
               </Button>
             </Link>
             
-            <Link to="/login">
-              <Button size="lg" variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-lg px-8 py-4" data-testid="button-login">
+            <Link to="/login" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4" data-testid="button-login">
                 Already have an account? Login
               </Button>
             </Link>

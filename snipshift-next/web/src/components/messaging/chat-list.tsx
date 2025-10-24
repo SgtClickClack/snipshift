@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,7 +115,7 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
                     data-testid={`chat-item-${chat.id}`}
                   >
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={`/api/placeholder/40/40`} />
+                      <AvatarImage src={'/api/placeholder/40/40'} />
                       <AvatarFallback>
                         {getInitials(otherParticipant.name)}
                       </AvatarFallback>
@@ -142,7 +144,7 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
                       </div>
                       
                       <div className="flex items-center text-sm text-muted-foreground">
-                        {chat.lastMessageSenderId === user?.id && (
+                        {chat.lastMessageSender === user?.id && (
                           <span className="mr-1">You:</span>
                         )}
                         <span className="truncate" data-testid={`last-message-${chat.id}`}>

@@ -7,7 +7,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  requiredRole?: 'hub' | 'professional' | 'brand' | 'trainer' | 'admin';
+  requiredRole?: 'professional' | 'business';
   redirectTo?: string;
 }
 

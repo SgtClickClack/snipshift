@@ -60,7 +60,7 @@ export const chatResolvers = {
         throw new Error('Chat not found or access denied');
       }
 
-      let conditions = [eq(messages.chatId, chatId)];
+      const conditions = [eq(messages.chatId, chatId)];
 
       if (after) {
         conditions.push(sql`${messages.timestamp} < ${after}`);

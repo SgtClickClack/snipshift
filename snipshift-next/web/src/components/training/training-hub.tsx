@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Play, DollarSign, Clock, BookOpen, Star, Users, ShoppingCart, CheckCircle, Lock, Filter } from "lucide-react";
-import ContentPurchaseModal from "@/components/stripe/content-purchase-modal";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { Play, DollarSign, Clock, BookOpen, Star, Users, ShoppingCart, CheckCircle, Lock, Filter } from 'lucide-react';
+import ContentPurchaseModal from '@/components/stripe/content-purchase-modal';
 
 interface TrainingContent {
   id: string;
@@ -21,7 +23,7 @@ interface TrainingContent {
   thumbnailUrl?: string;
   price: number;
   duration: string;
-  level: "beginner" | "intermediate" | "advanced";
+  level: 'beginner' | 'intermediate' | 'advanced';
   category: string;
   isPaid: boolean;
   purchaseCount: number;
@@ -34,16 +36,16 @@ export default function TrainingHub() {
   const queryClient = useQueryClient();
   const [selectedContent, setSelectedContent] = useState<TrainingContent | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [filter, setFilter] = useState<"all" | "free" | "paid" | "beginner" | "intermediate" | "advanced">("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState<'all' | 'free' | 'paid' | 'beginner' | 'intermediate' | 'advanced'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const { data: content = [], isLoading } = useQuery<TrainingContent[]>({
-    queryKey: ["/api/training-content"],
+    queryKey: ['/api/training-content'],
   });
 
   // Check content access for purchased items
   const { data: userPurchases = [] } = useQuery({
-    queryKey: ["/api/purchases/user", user?.id],
+    queryKey: ['/api/purchases/user', user?.id],
     enabled: !!user?.id,
     select: (data: any) => data.purchases || []
   });
@@ -51,9 +53,9 @@ export default function TrainingHub() {
   const handlePurchase = (content: TrainingContent) => {
     if (!user) {
       toast({
-        title: "Please log in",
-        description: "You need to be logged in to purchase content.",
-        variant: "destructive",
+        title: 'Please log in',
+        description: 'You need to be logged in to purchase content.',
+        variant: 'destructive',
       });
       return;
     }
@@ -64,25 +66,25 @@ export default function TrainingHub() {
 
   const handlePurchaseComplete = async (contentId: string, paymentIntentId: string) => {
     try {
-      await apiRequest("POST", "/api/purchases/complete", {
+      await apiRequest('POST', '/api/purchases/complete', {
         paymentIntentId,
         contentId,
         userId: user?.id
       });
 
       toast({
-        title: "Purchase Complete!",
-        description: "Your content is now available. Enjoy your training!",
+        title: 'Purchase Complete!',
+        description: 'Your content is now available. Enjoy your training!',
       });
 
       // Refresh purchase data
-      queryClient.invalidateQueries({ queryKey: ["/api/purchases/user", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/purchases/user', user?.id] });
     } catch (error) {
-      console.error("Error completing purchase:", error);
+      console.error('Error completing purchase:', error);
       toast({
-        title: "Purchase Error",
-        description: "There was an issue completing your purchase. Please contact support.",
-        variant: "destructive",
+        title: 'Purchase Error',
+        description: 'There was an issue completing your purchase. Please contact support.',
+        variant: 'destructive',
       });
     }
   };
@@ -102,12 +104,12 @@ export default function TrainingHub() {
                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = 
-      filter === "all" ||
-      (filter === "free" && !item.isPaid) ||
-      (filter === "paid" && item.isPaid) ||
-      (filter === "beginner" && item.level === "beginner") ||
-      (filter === "intermediate" && item.level === "intermediate") ||
-      (filter === "advanced" && item.level === "advanced");
+      filter === 'all' ||
+      (filter === 'free' && !item.isPaid) ||
+      (filter === 'paid' && item.isPaid) ||
+      (filter === 'beginner' && item.level === 'beginner') ||
+      (filter === 'intermediate' && item.level === 'intermediate') ||
+      (filter === 'advanced' && item.level === 'advanced');
 
     return matchesSearch && matchesFilter;
   });
@@ -116,11 +118,11 @@ export default function TrainingHub() {
     if (hasContentAccess(content)) {
       // Navigate to content player or open content
       toast({
-        title: "Opening Content",
+        title: 'Opening Content',
         description: `Starting "${content.title}"`,
       });
       // In a real app, this would navigate to the video player
-      console.log("Opening content:", content);
+      console.log('Opening content:', content);
     } else {
       handlePurchase(content);
     }
@@ -262,7 +264,7 @@ export default function TrainingHub() {
                 {/* Trainer Info */}
                 <div className="flex items-center text-sm text-neutral-500">
                   <Users className="h-4 w-4 mr-1" />
-                  <span>by {item.trainerName || "Professional Trainer"}</span>
+                  <span>by {item.trainerName || 'Professional Trainer'}</span>
                 </div>
 
                 {/* Course Details */}
@@ -328,14 +330,14 @@ export default function TrainingHub() {
           <p className="text-neutral-600 mb-4">
             {searchTerm 
               ? `No training content matches "${searchTerm}"` 
-              : "No content available for the selected filter"
+              : 'No content available for the selected filter'
             }
           </p>
           <Button 
             variant="outline" 
             onClick={() => {
-              setSearchTerm("");
-              setFilter("all");
+              setSearchTerm('');
+              setFilter('all');
             }}
           >
             Clear Filters

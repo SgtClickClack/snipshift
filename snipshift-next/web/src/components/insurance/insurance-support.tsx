@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Shield, 
   AlertTriangle, 
@@ -12,8 +14,8 @@ import {
   Phone,
   FileText,
   Calculator
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface InsuranceSupportProps {
   userRole: string;
@@ -33,34 +35,34 @@ interface InsuranceProvider {
 
 const INSURANCE_PROVIDERS: InsuranceProvider[] = [
   {
-    id: "tradie-protect",
-    name: "Tradie Protect Insurance",
-    description: "Specialized coverage for barbering and beauty professionals",
-    coverage: ["Public Liability", "Professional Indemnity", "Product Liability", "Personal Accident"],
-    premium: "From $29/month",
+    id: 'tradie-protect',
+    name: 'Tradie Protect Insurance',
+    description: 'Specialized coverage for barbering and beauty professionals',
+    coverage: ['Public Liability', 'Professional Indemnity', 'Product Liability', 'Personal Accident'],
+    premium: 'From $29/month',
     rating: 4.8,
-    website: "https://www.tradieprotect.com.au/barber-insurance",
-    phone: "1300 123 456"
+    website: 'https://www.tradieprotect.com.au/barber-insurance',
+    phone: '1300 123 456'
   },
   {
-    id: "aami-business",
-    name: "AAMI Business Insurance",
-    description: "Comprehensive business insurance for service professionals",
-    coverage: ["Public Liability", "Professional Indemnity", "Contents Insurance", "Business Interruption"],
-    premium: "From $35/month",
+    id: 'aami-business',
+    name: 'AAMI Business Insurance',
+    description: 'Comprehensive business insurance for service professionals',
+    coverage: ['Public Liability', 'Professional Indemnity', 'Contents Insurance', 'Business Interruption'],
+    premium: 'From $35/month',
     rating: 4.6,
-    website: "https://www.aami.com.au/business-insurance",
-    phone: "13 22 44"
+    website: 'https://www.aami.com.au/business-insurance',
+    phone: '13 22 44'
   },
   {
-    id: "guild-insurance",
-    name: "Guild Insurance",
+    id: 'guild-insurance',
+    name: 'Guild Insurance',
     description: "Australia's leading mutual insurer for professionals",
-    coverage: ["Public Liability", "Professional Indemnity", "Cyber Liability", "Employment Practices"],
-    premium: "From $42/month",
+    coverage: ['Public Liability', 'Professional Indemnity', 'Cyber Liability', 'Employment Practices'],
+    premium: 'From $42/month',
     rating: 4.7,
-    website: "https://www.guildinsurance.com.au/small-business",
-    phone: "1800 810 213"
+    website: 'https://www.guildinsurance.com.au/small-business',
+    phone: '1800 810 213'
   }
 ];
 
@@ -82,7 +84,7 @@ export default function InsuranceSupport({ userRole, currentState }: InsuranceSu
     const quoteUrl = `${provider.website}?${quoteParams.toString()}`;
     
     toast({
-      title: "Opening Insurance Quote",
+      title: 'Opening Insurance Quote',
       description: `Redirecting to ${provider.name} with your details pre-filled`,
     });
     

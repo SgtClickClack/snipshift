@@ -1,12 +1,13 @@
-import type { Express } from "express";
-import { firebaseStorage } from "./firebase-storage";
-import { authLimiter } from "./middleware/security";
+import type { Express } from 'express';
+import { hybridStorage } from './hybrid-storage';
+import { authLimiter, requireAuth, requireRole, requireHub, requireProfessional } from './middleware/security';
 import { 
   insertUserSchema, 
   loginSchema, 
   insertJobSchema, 
   insertSocialPostSchema 
-} from "@shared/firebase-schema";
+} from '@shared/firebase-schema';
+import { hashPassword, verifyPassword, validatePasswordStrength, sanitizeForLogging } from './utils/auth';
 import fetch from 'node-fetch';
 // Minimal type shim for node-fetch on ESM without types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,68 +18,97 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
   // Create test users for E2E tests
   try {
     // Create barber test user
-    const existingBarber = await firebaseStorage.getUserByEmail("barber.pro@snipshift.com");
+    const existingBarber = await hybridStorage.getUserByEmail('barber.pro@snipshift.com');
     if (existingBarber) {
-      console.log("ℹ️ Firebase barber test user already exists:", existingBarber.email);
+      console.log('ℹ️ Firebase barber test user already exists:', existingBarber.email);
     } else {
-      const barberUser = await firebaseStorage.createUser({
-        email: "barber.pro@snipshift.com",
-        password: "SecurePass123!",
-        roles: ["professional"],
-        currentRole: "professional",
-        displayName: "Test Barber Pro",
-        provider: "email"
+      const barberUser = await hybridStorage.createUser({
+        email: 'barber.pro@snipshift.com',
+        password: 'SecurePass123!',
+        roles: ['professional'],
+        currentRole: 'professional',
+        displayName: 'Test Barber Pro',
+        provider: 'email'
       });
-      console.log("✅ Firebase barber test user created:", barberUser.email, "with password:", barberUser.password);
+      console.log('✅ Firebase barber test user created:', barberUser.email, 'with password:', barberUser.password);
     }
 
     // Create shop test user
-    const existingShop = await firebaseStorage.getUserByEmail("shop.owner@snipshift.com");
+    const existingShop = await hybridStorage.getUserByEmail('shop.owner@snipshift.com');
     if (existingShop) {
-      console.log("ℹ️ Firebase shop test user already exists:", existingShop.email);
+      console.log('ℹ️ Firebase shop test user already exists:', existingShop.email);
     } else {
-      const shopUser = await firebaseStorage.createUser({
-        email: "shop.owner@snipshift.com",
-        password: "SecurePass123!",
-        roles: ["shop"],
-        currentRole: "shop",
-        displayName: "Test Shop Owner",
-        provider: "email"
+      const shopUser = await hybridStorage.createUser({
+        email: 'shop.owner@snipshift.com',
+        password: 'SecurePass123!',
+        roles: ['shop'],
+        currentRole: 'shop',
+        displayName: 'Test Shop Owner',
+        provider: 'email'
       });
-      console.log("✅ Firebase shop test user created:", shopUser.email, "with password:", shopUser.password);
+      console.log('✅ Firebase shop test user created:', shopUser.email, 'with password:', shopUser.password);
     }
 
     // Create general test user
-    const existingUser = await firebaseStorage.getUserByEmail("user@example.com");
+    const existingUser = await hybridStorage.getUserByEmail('user@example.com');
     if (existingUser) {
-      console.log("ℹ️ Firebase general test user already exists:", existingUser.email);
+      console.log('ℹ️ Firebase general test user already exists:', existingUser.email);
     } else {
-      const testUser = await firebaseStorage.createUser({
-        email: "user@example.com",
-        password: "SecurePassword123!",
-        roles: ["professional"],
-        currentRole: "professional",
-        displayName: "Test User",
-        provider: "email"
+      const testUser = await hybridStorage.createUser({
+        email: 'user@example.com',
+        password: 'SecurePassword123!',
+        roles: ['professional'],
+        currentRole: 'professional',
+        displayName: 'Test User',
+        provider: 'email'
       });
-      console.log("✅ Firebase general test user created:", testUser.email, "with password:", testUser.password);
+      console.log('✅ Firebase general test user created:', testUser.email, 'with password:', testUser.password);
     }
   } catch (error) {
-    console.error("❌ Firebase test user creation failed:", error);
+    console.error('❌ Firebase test user creation failed:', error);
   }
 
   // User authentication routes
-  app.post("/api/register", async (req, res) => {
+  app.post('/api/register', async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
+      // Validate password strength if password is provided
+      if (userData.password) {
+        const passwordValidation = validatePasswordStrength(userData.password);
+        if (!passwordValidation.valid) {
+          return res.status(400).json({ 
+            error: 'VALIDATION_FAILED',
+            code: 'PASSWORD_WEAK',
+            message: 'Password validation failed', 
+            details: passwordValidation.errors 
+          });
+        }
+        
+        // Hash the password before storing
+        userData.password = await hashPassword(userData.password);
+      }
+      
       // Check if user already exists
-      const existingUser = await firebaseStorage.getUserByEmail(userData.email);
+      const existingUser = await hybridStorage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(400).json({ message: "User already exists with this email" });
+        return res.status(400).json({ 
+          error: 'USER_EXISTS',
+          code: 'EMAIL_TAKEN',
+          message: 'User already exists with this email' 
+        });
       }
 
-      const user = await firebaseStorage.createUser(userData);
+      const user = await hybridStorage.createUser(userData);
+      
+      // Establish session immediately after user creation
+      (req as any).session.user = { 
+        id: user.id, 
+        roles: (user as any).roles, 
+        currentRole: (user as any).currentRole, 
+        email: user.email 
+      };
+      
       res.json({ 
         id: user.id, 
         email: user.email, 
@@ -88,32 +118,57 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       });
     } catch (error) {
       console.error('Registration error:', error);
-      res.status(400).json({ message: "Invalid registration data" });
+      res.status(400).json({ 
+        error: 'REGISTRATION_FAILED',
+        code: 'INVALID_DATA',
+        message: 'Invalid registration data' 
+      });
     }
   });
 
-  app.post("/api/login", authLimiter, async (req, res) => {
+  app.post('/api/login', authLimiter, async (req, res) => {
     try {
       const loginData = loginSchema.parse(req.body);
-      const user = await firebaseStorage.getUserByEmail(loginData.email);
+      const user = await hybridStorage.getUserByEmail(loginData.email);
       if (!user) {
-        return res.status(401).json({ message: "Invalid email or password" });
+        return res.status(401).json({ 
+          error: 'AUTHENTICATION_FAILED',
+          code: 'USER_NOT_FOUND',
+          message: 'Invalid email or password' 
+        });
       }
 
       // Support Google OAuth login: accept googleId instead of password
       if (loginData.googleId) {
         const storedGoogleId = (user as any).googleId;
         if (storedGoogleId && storedGoogleId !== loginData.googleId) {
-          return res.status(401).json({ message: "Invalid Google authentication" });
+          return res.status(401).json({ 
+            error: 'AUTHENTICATION_FAILED',
+            code: 'INVALID_GOOGLE_ID',
+            message: 'Invalid Google authentication' 
+          });
         }
         // Optionally attach googleId if missing (first Google login)
         if (!storedGoogleId) {
-          await firebaseStorage.updateUser(user.id, { googleId: loginData.googleId, provider: 'google' } as any);
+          await hybridStorage.updateUser(user.id, { googleId: loginData.googleId, provider: 'google' } as any);
         }
       } else {
-        // Password-based auth path
-        if (!user.password || user.password !== loginData.password) {
-          return res.status(401).json({ message: "Invalid email or password" });
+        // Password-based auth path - verify hashed password
+        if (!user.password) {
+          return res.status(401).json({ 
+            error: 'AUTHENTICATION_FAILED',
+            code: 'NO_PASSWORD_SET',
+            message: 'Invalid email or password' 
+          });
+        }
+        
+        const isValidPassword = await verifyPassword(loginData.password!, user.password);
+        if (!isValidPassword) {
+          return res.status(401).json({ 
+            error: 'AUTHENTICATION_FAILED',
+            code: 'INVALID_PASSWORD',
+            message: 'Invalid email or password' 
+          });
         }
       }
 
@@ -129,7 +184,11 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       });
     } catch (error) {
       console.error('Login error:', error);
-      res.status(400).json({ message: "Invalid login data" });
+      res.status(400).json({ 
+        error: 'LOGIN_FAILED',
+        code: 'INVALID_DATA',
+        message: 'Invalid login data' 
+      });
     }
   });
 
@@ -193,9 +252,9 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       }
 
       // Upsert user
-      let user = await firebaseStorage.getUserByEmail(email);
+      let user = await hybridStorage.getUserByEmail(email);
       if (!user) {
-        user = await firebaseStorage.createUser({
+        user = await hybridStorage.createUser({
           email,
           password: null,
           provider: 'google' as any,
@@ -204,7 +263,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
           currentRole: null,
         } as any);
       } else if ((user as any).googleId !== sub) {
-        user = await firebaseStorage.updateUser(user.id, { googleId: sub, provider: 'google' } as any);
+        user = await hybridStorage.updateUser(user.id, { googleId: sub, provider: 'google' } as any);
       }
 
       // create session
@@ -223,11 +282,11 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
   });
 
   // User role management (requires active session)
-  app.get("/api/users/:id", async (req, res) => {
+  app.get('/api/users/:id', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      const user = await firebaseStorage.getUser(id);
-      if (!user) return res.status(404).json({ error: "User not found" });
+      const user = await hybridStorage.getUser(id);
+      if (!user) return res.status(404).json({ error: 'User not found' });
       res.json({
         id: user.id,
         email: user.email,
@@ -236,30 +295,30 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         displayName: (user as any).displayName,
       });
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch user" });
+      res.status(500).json({ error: 'Failed to fetch user' });
     }
   });
-  app.patch("/api/users/:id/current-role", async (req, res) => {
+  app.patch('/api/users/:id/current-role', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { role } = req.body as { role?: string };
       const sessionUser = (req as any).session?.user;
       if (!sessionUser) {
-        return res.status(401).json({ error: "Authentication required" });
+        return res.status(401).json({ error: 'Authentication required' });
       }
       if (sessionUser.id !== id) {
         return res.status(403).json({ error: "Cannot modify another user's role" });
       }
-      if (!role || !["hub", "professional", "brand", "trainer", "client"].includes(role)) {
-        return res.status(400).json({ error: "Invalid role" });
+      if (!role || !['professional', 'business'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role' });
       }
 
-      const user = await firebaseStorage.getUser(id);
-      if (!user) return res.status(404).json({ error: "User not found" });
+      const user = await hybridStorage.getUser(id);
+      if (!user) return res.status(404).json({ error: 'User not found' });
 
       const roles = ([...(user as any).roles || []] as string[]);
       if (!roles.includes(role)) roles.push(role);
-      const updatedUser = await firebaseStorage.updateUser(id, { roles, currentRole: role } as any);
+      const updatedUser = await hybridStorage.updateUser(id, { roles, currentRole: role } as any);
       res.json({
         id: updatedUser.id,
         email: updatedUser.email,
@@ -268,37 +327,37 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         displayName: (updatedUser as any).displayName
       });
     } catch (error) {
-      res.status(400).json({ error: "Failed to update currentRole" });
+      res.status(400).json({ error: 'Failed to update currentRole' });
     }
   });
 
-  app.patch("/api/users/:id/roles", async (req, res) => {
+  app.patch('/api/users/:id/roles', requireRole(['admin']), async (req, res) => {
     try {
       const { id } = req.params;
-      const { action, role } = req.body as { action: "add" | "remove"; role: string };
+      const { action, role } = req.body as { action: 'add' | 'remove'; role: string };
       const sessionUser = (req as any).session?.user;
-      if (!sessionUser) return res.status(401).json({ error: "Authentication required" });
+      if (!sessionUser) return res.status(401).json({ error: 'Authentication required' });
       if (sessionUser.id !== id) return res.status(403).json({ error: "Cannot modify another user's roles" });
-      if (!role || !["hub", "professional", "brand", "trainer", "client"].includes(role)) {
-        return res.status(400).json({ error: "Invalid role" });
+      if (!role || !['professional', 'business'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role' });
       }
 
-      const user = await firebaseStorage.getUser(id);
-      if (!user) return res.status(404).json({ error: "User not found" });
+      const user = await hybridStorage.getUser(id);
+      if (!user) return res.status(404).json({ error: 'User not found' });
 
       let roles: string[] = (user as any).roles || [];
       let currentRole: string | null = (user as any).currentRole ?? null;
-      if (action === "add") {
+      if (action === 'add') {
         if (!roles.includes(role)) roles = [...roles, role];
         if (!currentRole) currentRole = role;
-      } else if (action === "remove") {
+      } else if (action === 'remove') {
         roles = roles.filter(r => r !== role);
         if (currentRole === role) currentRole = roles[0] ?? null;
       } else {
-        return res.status(400).json({ error: "Invalid action" });
+        return res.status(400).json({ error: 'Invalid action' });
       }
 
-      const updatedUser = await firebaseStorage.updateUser(id, { roles, currentRole } as any);
+      const updatedUser = await hybridStorage.updateUser(id, { roles, currentRole } as any);
       res.json({
         id: updatedUser.id,
         email: updatedUser.email,
@@ -307,30 +366,30 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         displayName: (updatedUser as any).displayName
       });
     } catch (error) {
-      res.status(400).json({ error: "Failed to update roles" });
+      res.status(400).json({ error: 'Failed to update roles' });
     }
   });
 
   // Profile update endpoint for onboarding data
-  app.patch("/api/users/:id/profile", async (req, res) => {
+  app.patch('/api/users/:id/profile', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { profileType, data } = req.body;
       const sessionUser = (req as any).session?.user;
       
       if (!sessionUser) {
-        return res.status(401).json({ error: "Authentication required" });
+        return res.status(401).json({ error: 'Authentication required' });
       }
       if (sessionUser.id !== id) {
         return res.status(403).json({ error: "Cannot modify another user's profile" });
       }
-      if (!profileType || !["professional", "hub", "brand", "trainer"].includes(profileType)) {
-        return res.status(400).json({ error: "Invalid profile type" });
+      if (!profileType || !['professional', 'hub', 'brand', 'trainer'].includes(profileType)) {
+        return res.status(400).json({ error: 'Invalid profile type' });
       }
 
-      const user = await firebaseStorage.getUser(id);
+      const user = await hybridStorage.getUser(id);
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({ error: 'User not found' });
       }
 
       // Parse the profile data
@@ -338,7 +397,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       try {
         profileData = typeof data === 'string' ? JSON.parse(data) : data;
       } catch (parseError) {
-        return res.status(400).json({ error: "Invalid profile data format" });
+        return res.status(400).json({ error: 'Invalid profile data format' });
       }
 
       // Add the role to user's roles if not already present
@@ -351,7 +410,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       const currentRole = profileType;
 
       // Update user with profile data and role
-      const updatedUser = await firebaseStorage.updateUser(id, { 
+      const updatedUser = await hybridStorage.updateUser(id, { 
         roles, 
         currentRole,
         [`${profileType}Profile`]: profileData,
@@ -369,7 +428,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       });
     } catch (error) {
       console.error('Profile update error:', error);
-      res.status(400).json({ error: "Failed to update profile" });
+      res.status(400).json({ error: 'Failed to update profile' });
     }
   });
 
@@ -386,9 +445,9 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         const { email, password = 'password123', role = 'professional', displayName = 'E2E User' } = req.body || {};
         if (!email) return res.status(400).json({ message: 'email is required' });
 
-        let user = await firebaseStorage.getUserByEmail(email);
+        let user = await hybridStorage.getUserByEmail(email);
         if (!user) {
-          user = await firebaseStorage.createUser({
+          user = await hybridStorage.createUser({
             email,
             password,
             roles: [role],
@@ -398,7 +457,7 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         } else if (!(user as any).roles?.includes(role)) {
           const nextRoles = ([...(user as any).roles || [], role]).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
           const nextCurrent = (user as any).currentRole || role;
-          user = await firebaseStorage.updateUser(user.id, { roles: nextRoles, currentRole: nextCurrent } as any);
+          user = await hybridStorage.updateUser(user.id, { roles: nextRoles, currentRole: nextCurrent } as any);
         }
 
         (req as any).session.user = { id: user.id, roles: (user as any).roles, currentRole: (user as any).currentRole, email: user.email };
@@ -418,19 +477,19 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
 
 
   // Job management routes
-  app.post("/api/jobs", async (req, res) => {
+  app.post('/api/jobs', requireHub, async (req, res) => {
     try {
       const jobData = insertJobSchema.parse(req.body);
-      const job = await firebaseStorage.createJob(jobData);
+      const job = await hybridStorage.createJob(jobData);
       res.json(job);
     } catch (error) {
       console.error('Job creation error:', error);
-      res.status(400).json({ message: "Invalid job data" });
+      res.status(400).json({ message: 'Invalid job data' });
     }
   });
 
   // Shift management routes (for backward compatibility and test requirements)
-  app.post("/api/shifts", async (req, res) => {
+  app.post('/api/shifts', async (req, res) => {
     try {
       // Transform shift data to job format for consistency
       const shiftData = req.body;
@@ -442,15 +501,15 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         updatedAt: new Date()
       };
       
-      const job = await firebaseStorage.createJob(jobData);
+      const job = await hybridStorage.createJob(jobData);
       res.json(job);
     } catch (error) {
       console.error('Shift creation error:', error);
-      res.status(400).json({ message: "Invalid shift data" });
+      res.status(400).json({ message: 'Invalid shift data' });
     }
   });
 
-  app.get("/api/shifts", async (req, res) => {
+  app.get('/api/shifts', async (req, res) => {
     try {
       const { status, location, businessId } = req.query;
       const filters: any = {};
@@ -459,15 +518,15 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       if (location) filters.location = location;
       if (businessId) filters.businessId = businessId;
       
-      const jobs = await firebaseStorage.getJobs(filters);
+      const jobs = await hybridStorage.getJobs(filters);
       res.json({ shifts: jobs });
     } catch (error) {
       console.error('Shift fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch shifts" });
+      res.status(500).json({ message: 'Failed to fetch shifts' });
     }
   });
 
-  app.get("/api/jobs", async (req, res) => {
+  app.get('/api/jobs', async (req, res) => {
     try {
       const { status, location, hubId } = req.query;
       const filters: any = {};
@@ -476,41 +535,41 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       if (location) filters.location = location;
       if (hubId) filters.hubId = hubId;
       
-      const jobs = await firebaseStorage.getJobs(filters);
+      const jobs = await hybridStorage.getJobs(filters);
       res.json(jobs);
     } catch (error) {
       console.error('Job fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch jobs" });
+      res.status(500).json({ message: 'Failed to fetch jobs' });
     }
   });
 
-  app.get("/api/jobs/hub/:hubId", async (req, res) => {
+  app.get('/api/jobs/hub/:hubId', async (req, res) => {
     try {
       const { hubId } = req.params;
-      const jobs = await firebaseStorage.getJobsByHub(hubId);
+      const jobs = await hybridStorage.getJobsByHub(hubId);
       res.json(jobs);
     } catch (error) {
       console.error('Hub jobs fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch hub jobs" });
+      res.status(500).json({ message: 'Failed to fetch hub jobs' });
     }
   });
 
-  app.post("/api/jobs/:id/apply", async (req, res) => {
+  app.post('/api/jobs/:id/apply', requireProfessional, async (req, res) => {
     try {
       const { id: jobId } = req.params;
       const { professionalId } = req.body;
       
       if (!professionalId) {
-        return res.status(400).json({ message: "Professional ID is required" });
+        return res.status(400).json({ message: 'Professional ID is required' });
       }
 
-      const job = await firebaseStorage.getJob(jobId);
+      const job = await hybridStorage.getJob(jobId);
       if (!job) {
-        return res.status(404).json({ message: "Job not found" });
+        return res.status(404).json({ message: 'Job not found' });
       }
 
-      const application = await firebaseStorage.applyToJob(jobId, professionalId);
-      const hubOwner = await firebaseStorage.getUser(job.businessId);
+      const application = await hybridStorage.applyToJob(jobId, professionalId);
+      const hubOwner = await hybridStorage.getUser(job.businessId);
       
       // Email notification simulation
       console.log('📧 EMAIL NOTIFICATION SENT:');
@@ -519,17 +578,17 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       console.log(`Message: A professional has applied for your job "${job.title}" scheduled for ${job.date}. Please log in to your dashboard to review the application.`);
 
       res.json({ 
-        message: "Application submitted successfully",
+        message: 'Application submitted successfully',
         applicationId: application.id 
       });
     } catch (error) {
       console.error('Job application error:', error);
-      res.status(500).json({ message: "Failed to submit application" });
+      res.status(500).json({ message: 'Failed to submit application' });
     }
   });
 
   // Social feed routes
-  app.post("/api/social-posts", async (req, res) => {
+  app.post('/api/social-posts', requireAuth, async (req, res) => {
     try {
       const postData = insertSocialPostSchema.parse({
         ...req.body,
@@ -539,15 +598,15 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         likes: 0,
         comments: []
       });
-      const post = await firebaseStorage.createSocialPost(postData);
+      const post = await hybridStorage.createSocialPost(postData);
       res.json(post);
     } catch (error) {
       console.error('Social post creation error:', error);
-      res.status(400).json({ message: "Invalid post data" });
+      res.status(400).json({ message: 'Invalid post data' });
     }
   });
 
-  app.get("/api/social-posts", async (req, res) => {
+  app.get('/api/social-posts', async (req, res) => {
     try {
       const { postType, authorRole, authorId } = req.query;
       const filters: any = {};
@@ -556,44 +615,65 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
       if (authorRole) filters.authorRole = authorRole;
       if (authorId) filters.authorId = authorId;
       
-      const posts = await firebaseStorage.getSocialPosts(filters);
+      const posts = await hybridStorage.getSocialPosts(filters);
       res.json(posts);
     } catch (error) {
       console.error('Social posts fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch social posts" });
+      res.status(500).json({ message: 'Failed to fetch social posts' });
     }
   });
 
   // Application management routes
-  app.get("/api/applications/job/:jobId", async (req, res) => {
+  app.get('/api/applications/job/:jobId', async (req, res) => {
     try {
       const { jobId } = req.params;
-      const applications = await firebaseStorage.getApplicationsByJob(jobId);
+      const applications = await hybridStorage.getApplicationsByJob(jobId);
       res.json(applications);
     } catch (error) {
       console.error('Applications fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch applications" });
+      res.status(500).json({ message: 'Failed to fetch applications' });
     }
   });
 
-  app.get("/api/applications/professional/:professionalId", async (req, res) => {
+  app.get('/api/applications/professional/:professionalId', async (req, res) => {
     try {
       const { professionalId } = req.params;
-      const applications = await firebaseStorage.getApplicationsByProfessional(professionalId);
+      const applications = await hybridStorage.getApplicationsByProfessional(professionalId);
       res.json(applications);
     } catch (error) {
       console.error('Professional applications fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch professional applications" });
+      res.status(500).json({ message: 'Failed to fetch professional applications' });
+    }
+  });
+
+  app.post('/api/applications', async (req, res) => {
+    try {
+      const { jobId, coverLetter } = req.body;
+      const userId = (req as any).session?.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      
+      if (!jobId) {
+        return res.status(400).json({ message: 'Job ID is required' });
+      }
+
+      const application = await hybridStorage.applyToJob(jobId, userId);
+      res.json(application);
+    } catch (error) {
+      console.error('Application creation error:', error);
+      res.status(500).json({ message: 'Failed to create application' });
     }
   });
 
   // Messaging routes
-  app.post("/api/chats", async (req, res) => {
+  app.post('/api/chats', async (req, res) => {
     try {
       const { chatId, participants, participantNames, participantRoles } = req.body;
       
       if (!chatId || !participants || participants.length !== 2) {
-        return res.status(400).json({ message: "Invalid chat data" });
+        return res.status(400).json({ message: 'Invalid chat data' });
       }
 
       const chatData = {
@@ -604,71 +684,77 @@ export async function registerFirebaseRoutes(app: Express): Promise<void> {
         unreadCount: {
           [participants[0]]: 0,
           [participants[1]]: 0
-        }
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
-      await firebaseStorage.createChat(chatId, chatData);
+      await hybridStorage.createChat(chatId, chatData);
       res.json({ chatId });
     } catch (error) {
       console.error('Chat creation error:', error);
-      res.status(500).json({ message: "Failed to create chat" });
+      res.status(500).json({ message: 'Failed to create chat' });
     }
   });
 
-  app.get("/api/chats/user/:userId", async (req, res) => {
+  app.get('/api/chats/user/:userId', async (req, res) => {
     try {
       const { userId } = req.params;
-      const chats = await firebaseStorage.getUserChats(userId);
+      const chats = await hybridStorage.getUserChats(userId);
       res.json(chats);
     } catch (error) {
       console.error('User chats fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch user chats" });
+      res.status(500).json({ message: 'Failed to fetch user chats' });
     }
   });
 
-  app.post("/api/chats/:chatId/messages", async (req, res) => {
+  app.post('/api/chats/:chatId/messages', async (req, res) => {
     try {
       const { chatId } = req.params;
       const { senderId, receiverId, content } = req.body;
       
       if (!senderId || !receiverId || !content) {
-        return res.status(400).json({ message: "Missing required message data" });
+        return res.status(400).json({ message: 'Missing required message data' });
       }
 
       const messageData = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        chatId,
         senderId,
         receiverId,
         content,
-        messageType: 'text'
+        messageType: 'text',
+        timestamp: new Date(),
+        readBy: {}
       };
 
-      await firebaseStorage.sendMessage(chatId, messageData);
-      res.json({ message: "Message sent successfully" });
+      await hybridStorage.sendMessage(chatId, messageData);
+      res.json({ message: 'Message sent successfully' });
     } catch (error) {
       console.error('Message send error:', error);
-      res.status(500).json({ message: "Failed to send message" });
+      res.status(500).json({ message: 'Failed to send message' });
     }
   });
 
-  app.get("/api/chats/:chatId/messages", async (req, res) => {
+  app.get('/api/chats/:chatId/messages', async (req, res) => {
     try {
       const { chatId } = req.params;
-      const messages = await firebaseStorage.getChatMessages(chatId);
+      const messages = await hybridStorage.getChatMessages(chatId);
       res.json(messages);
     } catch (error) {
       console.error('Messages fetch error:', error);
-      res.status(500).json({ message: "Failed to fetch messages" });
+      res.status(500).json({ message: 'Failed to fetch messages' });
     }
   });
 
-  app.put("/api/chats/:chatId/read/:userId", async (req, res) => {
+  app.put('/api/chats/:chatId/read/:userId', async (req, res) => {
     try {
       const { chatId, userId } = req.params;
-      await firebaseStorage.markMessagesAsRead(chatId, userId);
-      res.json({ message: "Messages marked as read" });
+      await hybridStorage.markMessagesAsRead(chatId, userId);
+      res.json({ message: 'Messages marked as read' });
     } catch (error) {
       console.error('Mark as read error:', error);
-      res.status(500).json({ message: "Failed to mark messages as read" });
+      res.status(500).json({ message: 'Failed to mark messages as read' });
     }
   });
 }

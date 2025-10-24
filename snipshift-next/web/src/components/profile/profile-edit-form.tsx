@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, X, Plus, Save, Image as ImageIcon } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Upload, X, Plus, Save, Image as ImageIcon } from 'lucide-react';
 
 interface PortfolioItem {
   id: string;
@@ -20,7 +22,7 @@ export interface UserProfile {
   id: string;
   displayName: string;
   email: string;
-  role: "professional" | "hub" | "brand" | "trainer";
+  role: 'professional' | 'hub' | 'brand' | 'trainer';
   bio?: string;
   profileImageURL?: string;
   bannerImageURL?: string;
@@ -51,28 +53,28 @@ interface ProfileEditFormProps {
   isSaving?: boolean;
 }
 
-const AUSTRALIAN_STATES = ["NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"];
-const DAYS_OF_WEEK = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const AUSTRALIAN_STATES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
+const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 const PORTFOLIO_CATEGORIES = {
-  professional: ["Hair Cut", "Color", "Styling", "Beard", "Special Event", "Before/After"],
-  hub: ["Interior", "Team", "Equipment", "Events", "Customer Work"],
-  brand: ["Products", "Campaign", "Events", "Behind the Scenes"],
-  trainer: ["Workshop", "Students", "Techniques", "Events", "Certification"]
+  professional: ['Hair Cut', 'Color', 'Styling', 'Beard', 'Special Event', 'Before/After'],
+  hub: ['Interior', 'Team', 'Equipment', 'Events', 'Customer Work'],
+  brand: ['Products', 'Campaign', 'Events', 'Behind the Scenes'],
+  trainer: ['Workshop', 'Students', 'Techniques', 'Events', 'Certification']
 };
 
 export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = false }: ProfileEditFormProps) {
   const [formData, setFormData] = useState<UserProfile>(profile);
-  const [newSkill, setNewSkill] = useState("");
+  const [newSkill, setNewSkill] = useState('');
   const [newPortfolioItem, setNewPortfolioItem] = useState({
-    imageURL: "",
-    caption: "",
-    category: ""
+    imageURL: '',
+    caption: '',
+    category: ''
   });
   const [newTeamMember, setNewTeamMember] = useState({
-    name: "",
-    role: "",
-    imageURL: ""
+    name: '',
+    role: '',
+    imageURL: ''
   });
 
   const updateFormData = (updates: Partial<UserProfile>) => {
@@ -101,7 +103,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
         [fieldName]: [...currentItems, newSkill.trim()]
       });
     }
-    setNewSkill("");
+    setNewSkill('');
   };
 
   const removeSkillOrService = (item: string) => {
@@ -125,7 +127,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
       portfolio: [...(formData.portfolio || []), portfolioItem]
     });
     
-    setNewPortfolioItem({ imageURL: "", caption: "", category: "" });
+    setNewPortfolioItem({ imageURL: '', caption: '', category: '' });
   };
 
   const removePortfolioItem = (id: string) => {
@@ -141,7 +143,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
       teamMembers: [...(formData.teamMembers || []), { ...newTeamMember }]
     });
     
-    setNewTeamMember({ name: "", role: "", imageURL: "" });
+    setNewTeamMember({ name: '', role: '', imageURL: '' });
   };
 
   const removeTeamMember = (index: number) => {
@@ -177,7 +179,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
           </Button>
           <Button onClick={handleSubmit} disabled={isSaving} data-testid="button-save-profile">
             <Save className="w-4 h-4 mr-2" />
-            {isSaving ? "Saving..." : "Save Profile"}
+            {isSaving ? 'Saving...' : 'Save Profile'}
           </Button>
         </div>
       </div>
@@ -255,7 +257,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
                   <Label htmlFor="businessName">Business Name</Label>
                   <Input
                     id="businessName"
-                    value={formData.businessName || ""}
+                    value={formData.businessName || ''}
                     onChange={(e) => updateFormData({ businessName: e.target.value })}
                     data-testid="input-business-name"
                   />
@@ -268,7 +270,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
               <Textarea
                 id="bio"
                 rows={4}
-                value={formData.bio || ""}
+                value={formData.bio || ''}
                 onChange={(e) => updateFormData({ bio: e.target.value })}
                 placeholder="Tell others about yourself..."
                 data-testid="input-bio"
@@ -281,7 +283,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
                 <Textarea
                   id="businessDescription"
                   rows={4}
-                  value={formData.businessDescription || ""}
+                  value={formData.businessDescription || ''}
                   onChange={(e) => updateFormData({ businessDescription: e.target.value })}
                   placeholder="Describe your business..."
                   data-testid="input-business-description"
@@ -294,9 +296,9 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
                 <Label htmlFor="city">City</Label>
                 <Input
                   id="city"
-                  value={formData.location?.city || ""}
+                  value={formData.location?.city || ''}
                   onChange={(e) => updateFormData({ 
-                    location: { ...formData.location, city: e.target.value, state: formData.location?.state || "" }
+                    location: { ...formData.location, city: e.target.value, state: formData.location?.state || '' }
                   })}
                   data-testid="input-city"
                 />
@@ -304,9 +306,9 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
               <div>
                 <Label htmlFor="state">State</Label>
                 <Select 
-                  value={formData.location?.state || ""} 
+                  value={formData.location?.state || ''} 
                   onValueChange={(value) => updateFormData({ 
-                    location: { ...formData.location, state: value, city: formData.location?.city || "" }
+                    location: { ...formData.location, state: value, city: formData.location?.city || '' }
                   })}
                 >
                   <SelectTrigger data-testid="select-state">
@@ -511,13 +513,13 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
                     <Label className="capitalize font-medium">{day}</Label>
                     <Input
                       type="time"
-                      value={formData.operatingHours?.[day]?.open || ""}
+                      value={formData.operatingHours?.[day]?.open || ''}
                       onChange={(e) => updateOperatingHours(day, 'open', e.target.value)}
                       data-testid={`input-${day}-open`}
                     />
                     <Input
                       type="time"
-                      value={formData.operatingHours?.[day]?.close || ""}
+                      value={formData.operatingHours?.[day]?.close || ''}
                       onChange={(e) => updateOperatingHours(day, 'close', e.target.value)}
                       data-testid={`input-${day}-close`}
                     />

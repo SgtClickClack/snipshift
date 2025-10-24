@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import { 
   Play, 
   Pause, 
@@ -19,7 +21,7 @@ import {
   MessageSquare,
   Star,
   DollarSign
-} from "lucide-react";
+} from 'lucide-react';
 
 interface DemoStats {
   users: number;
@@ -54,57 +56,57 @@ export default function ExpoDemoMode() {
 
   const scenarios: DemoScenario[] = [
     {
-      id: "hub_onboarding",
-      title: "Hub Owner Onboarding",
-      description: "Barbershop owner creates account and posts first job",
+      id: 'hub_onboarding',
+      title: 'Hub Owner Onboarding',
+      description: 'Barbershop owner creates account and posts first job',
       steps: [
-        "Create Hub Owner account",
-        "Complete business profile",
-        "Upload insurance verification",
-        "Post urgent weekend shift",
-        "Set competitive hourly rate"
+        'Create Hub Owner account',
+        'Complete business profile',
+        'Upload insurance verification',
+        'Post urgent weekend shift',
+        'Set competitive hourly rate'
       ],
       duration: 30,
       icon: Building2
     },
     {
-      id: "professional_booking",
-      title: "Professional Job Booking",
-      description: "Barber finds and books shift using geolocation",
+      id: 'professional_booking',
+      title: 'Professional Job Booking',
+      description: 'Barber finds and books shift using geolocation',
       steps: [
-        "Professional logs in",
-        "Search jobs within 15km radius",
-        "Filter by weekend availability",
-        "Apply for premium barbershop shift",
-        "Receive instant confirmation"
+        'Professional logs in',
+        'Search jobs within 15km radius',
+        'Filter by weekend availability',
+        'Apply for premium barbershop shift',
+        'Receive instant confirmation'
       ],
       duration: 25,
       icon: Briefcase
     },
     {
-      id: "training_purchase",
-      title: "Training Content Purchase",
-      description: "Professional buys advanced fade course with Stripe",
+      id: 'training_purchase',
+      title: 'Training Content Purchase',
+      description: 'Professional buys advanced fade course with Stripe',
       steps: [
-        "Browse training marketplace",
-        "Preview advanced fade course",
-        "Secure Stripe payment ($149)",
-        "Access premium video content",
-        "Track learning progress"
+        'Browse training marketplace',
+        'Preview advanced fade course',
+        'Secure Stripe payment ($149)',
+        'Access premium video content',
+        'Track learning progress'
       ],
       duration: 35,
       icon: GraduationCap
     },
     {
-      id: "community_engagement",
-      title: "Community Interaction",
-      description: "Users engage with social feed and messaging",
+      id: 'community_engagement',
+      title: 'Community Interaction',
+      description: 'Users engage with social feed and messaging',
       steps: [
-        "Brand posts product showcase",
-        "Content passes moderation",
-        "Professionals engage with likes",
-        "Direct messaging for inquiries",
-        "Build professional network"
+        'Brand posts product showcase',
+        'Content passes moderation',
+        'Professionals engage with likes',
+        'Direct messaging for inquiries',
+        'Build professional network'
       ],
       duration: 20,
       icon: MessageSquare
@@ -136,7 +138,7 @@ export default function ExpoDemoMode() {
   };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     
     if (isRunning && currentScenario) {
       const scenario = scenarios.find(s => s.id === currentScenario);

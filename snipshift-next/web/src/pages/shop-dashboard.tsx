@@ -1,16 +1,18 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Shift } from "@shared/types";
-import { Plus, Calendar, DollarSign } from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { Shift } from '@shared/types';
+import { Plus, Calendar, DollarSign } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function ShopDashboard() {
   const { user } = useAuth();
@@ -18,20 +20,20 @@ export default function ShopDashboard() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    date: "",
-    requirements: "",
-    pay: "",
+    title: '',
+    date: '',
+    requirements: '',
+    pay: '',
   });
 
   const { data: shifts = [], isLoading } = useQuery<Shift[]>({
-    queryKey: ["/api/shifts/shop", user?.id],
+    queryKey: ['/api/shifts/shop', user?.id],
     enabled: !!user?.id,
   });
 
   const createShiftMutation = useMutation({
     mutationFn: async (shiftData: any) => {
-      const response = await apiRequest("POST", "/api/shifts", {
+      const response = await apiRequest('POST', '/api/shifts', {
         ...shiftData,
         shopId: user?.id,
         date: new Date(shiftData.date).toISOString(),
@@ -40,19 +42,19 @@ export default function ShopDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts/shop", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts/shop', user?.id] });
       toast({
-        title: "Shift posted successfully",
-        description: "Your shift is now live and visible to professionals",
+        title: 'Shift posted successfully',
+        description: 'Your shift is now live and visible to professionals',
       });
-      setFormData({ title: "", date: "", requirements: "", pay: "" });
+      setFormData({ title: '', date: '', requirements: '', pay: '' });
       setShowForm(false);
     },
     onError: () => {
       toast({
-        title: "Failed to post shift",
-        description: "Please check your information and try again",
-        variant: "destructive",
+        title: 'Failed to post shift',
+        description: 'Please check your information and try again',
+        variant: 'destructive',
       });
     },
   });
@@ -62,7 +64,7 @@ export default function ShopDashboard() {
     createShiftMutation.mutate(formData);
   };
 
-  if (!user || user.currentRole !== "hub") {
+  if (!user || user.currentRole !== 'business') {
     return <div>Access denied</div>;
   }
 
@@ -150,7 +152,7 @@ export default function ShopDashboard() {
                       className="w-full"
                       disabled={createShiftMutation.isPending}
                     >
-                      {createShiftMutation.isPending ? "Posting..." : "Post Shift"}
+                      {createShiftMutation.isPending ? 'Posting...' : 'Post Shift'}
                     </Button>
                   </form>
                 </CardContent>
@@ -159,7 +161,7 @@ export default function ShopDashboard() {
           )}
 
           {/* Posted Shifts List */}
-          <div className={showForm ? "lg:col-span-2" : "lg:col-span-3"}>
+          <div className={showForm ? 'lg:col-span-2' : 'lg:col-span-3'}>
             <Card>
               <CardHeader>
                 <CardTitle>Your Posted Shifts</CardTitle>
@@ -192,7 +194,7 @@ export default function ShopDashboard() {
                           <div className="grid sm:grid-cols-2 gap-4 text-sm text-neutral-600 mb-3">
                             <div className="flex items-center">
                               <Calendar className="mr-2 h-4 w-4 text-primary" />
-                              <span>{format(new Date(shift.date), "EEE, MMM d, yyyy - h:mm a")}</span>
+                              <span>{format(new Date(shift.date), 'EEE, MMM d, yyyy - h:mm a')}</span>
                             </div>
                             <div className="flex items-center">
                               <DollarSign className="mr-2 h-4 w-4 text-primary" />

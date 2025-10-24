@@ -28,7 +28,7 @@ app.post('/api/login', (req, res) => {
       displayName: 'Test User'
     });
   } else {
-    res.status(401).json({ message: "Invalid email or password" });
+    res.status(401).json({ message: 'Invalid email or password' });
   }
 });
 

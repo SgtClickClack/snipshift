@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import React from 'react';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import { 
   Scale, 
   Shield, 
@@ -21,13 +23,13 @@ import {
   ExternalLink,
   Download,
   Flag
-} from "lucide-react";
+} from 'lucide-react';
 
 interface ComplianceItem {
   id: string;
   title: string;
   description: string;
-  status: "compliant" | "warning" | "action_required";
+  status: 'compliant' | 'warning' | 'action_required';
   lastChecked: Date;
   resources: string[];
 }
@@ -40,109 +42,109 @@ interface ContractorRight {
 }
 
 export default function ContractorCompliance() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState('overview');
 
   const complianceChecklist: ComplianceItem[] = [
     {
-      id: "abn_verification",
-      title: "ABN Verification Required",
-      description: "All contractors must provide valid Australian Business Number",
-      status: "compliant",
+      id: 'abn_verification',
+      title: 'ABN Verification Required',
+      description: 'All contractors must provide valid Australian Business Number',
+      status: 'compliant',
       lastChecked: new Date(),
-      resources: ["ABN Lookup Tool", "Business Registration Guide"]
+      resources: ['ABN Lookup Tool', 'Business Registration Guide']
     },
     {
-      id: "insurance_requirements",
-      title: "Professional Indemnity & Public Liability Insurance",
-      description: "Minimum $1M coverage required for barbering services",
-      status: "compliant", 
+      id: 'insurance_requirements',
+      title: 'Professional Indemnity & Public Liability Insurance',
+      description: 'Minimum $1M coverage required for barbering services',
+      status: 'compliant', 
       lastChecked: new Date(),
-      resources: ["Insurance Partner Portal", "Coverage Requirements"]
+      resources: ['Insurance Partner Portal', 'Coverage Requirements']
     },
     {
-      id: "pay_rate_compliance",
-      title: "Minimum Pay Rate Standards",
-      description: "Rates must meet or exceed industry award minimums",
-      status: "warning",
+      id: 'pay_rate_compliance',
+      title: 'Minimum Pay Rate Standards',
+      description: 'Rates must meet or exceed industry award minimums',
+      status: 'warning',
       lastChecked: new Date(),
-      resources: ["Fair Work Ombudsman", "Award Rate Calculator"]
+      resources: ['Fair Work Ombudsman', 'Award Rate Calculator']
     },
     {
-      id: "worker_classification",
-      title: "Contractor vs Employee Classification",
-      description: "Proper classification to avoid sham contracting",
-      status: "compliant",
+      id: 'worker_classification',
+      title: 'Contractor vs Employee Classification',
+      description: 'Proper classification to avoid sham contracting',
+      status: 'compliant',
       lastChecked: new Date(),
-      resources: ["ATO Decision Tool", "Classification Guidelines"]
+      resources: ['ATO Decision Tool', 'Classification Guidelines']
     },
     {
-      id: "superannuation",
-      title: "Superannuation Obligations",
-      description: "Understanding when super is required for contractors",
-      status: "action_required",
+      id: 'superannuation',
+      title: 'Superannuation Obligations',
+      description: 'Understanding when super is required for contractors',
+      status: 'action_required',
       lastChecked: new Date(),
-      resources: ["ATO Super Guidelines", "Contractor Super Tool"]
+      resources: ['ATO Super Guidelines', 'Contractor Super Tool']
     },
     {
-      id: "gst_compliance",
-      title: "GST Registration & Invoicing",
-      description: "GST obligations for contractors earning >$75,000",
-      status: "compliant",
+      id: 'gst_compliance',
+      title: 'GST Registration & Invoicing',
+      description: 'GST obligations for contractors earning >$75,000',
+      status: 'compliant',
       lastChecked: new Date(),
-      resources: ["GST Registration Portal", "Invoice Templates"]
+      resources: ['GST Registration Portal', 'Invoice Templates']
     }
   ];
 
   const contractorRights: ContractorRight[] = [
     {
-      title: "Right to Fair Payment",
-      description: "Contractors have the right to be paid in accordance with agreed terms and within reasonable timeframes.",
-      legislation: "Independent Contractors Act 2006",
+      title: 'Right to Fair Payment',
+      description: 'Contractors have the right to be paid in accordance with agreed terms and within reasonable timeframes.',
+      legislation: 'Independent Contractors Act 2006',
       examples: [
-        "Payment within 30 days unless otherwise agreed",
-        "Clear payment terms in contracts",
-        "Right to dispute unfair payment terms"
+        'Payment within 30 days unless otherwise agreed',
+        'Clear payment terms in contracts',
+        'Right to dispute unfair payment terms'
       ]
     },
     {
-      title: "Right to Unfair Contract Protection",
-      description: "Protection against unfair contract terms that create significant imbalance.",
-      legislation: "Competition and Consumer Act 2010",
+      title: 'Right to Unfair Contract Protection',
+      description: 'Protection against unfair contract terms that create significant imbalance.',
+      legislation: 'Competition and Consumer Act 2010',
       examples: [
-        "Unreasonable termination clauses",
-        "Excessive penalties or fees",
-        "Unilateral contract variations"
+        'Unreasonable termination clauses',
+        'Excessive penalties or fees',
+        'Unilateral contract variations'
       ]
     },
     {
-      title: "Workplace Health & Safety",
-      description: "Right to a safe working environment, even as a contractor.",
-      legislation: "Work Health and Safety Act 2011",
+      title: 'Workplace Health & Safety',
+      description: 'Right to a safe working environment, even as a contractor.',
+      legislation: 'Work Health and Safety Act 2011',
       examples: [
-        "Proper safety equipment provided",
-        "Safe work procedures followed",
-        "Incident reporting procedures"
+        'Proper safety equipment provided',
+        'Safe work procedures followed',
+        'Incident reporting procedures'
       ]
     },
     {
-      title: "Anti-Discrimination Protection",
-      description: "Protection from discrimination based on protected attributes.",
-      legislation: "Australian Human Rights Commission Act 1986",
+      title: 'Anti-Discrimination Protection',
+      description: 'Protection from discrimination based on protected attributes.',
+      legislation: 'Australian Human Rights Commission Act 1986',
       examples: [
-        "Equal opportunity regardless of gender, age, ethnicity",
-        "Reasonable adjustments for disability",
-        "Protection from harassment"
+        'Equal opportunity regardless of gender, age, ethnicity',
+        'Reasonable adjustments for disability',
+        'Protection from harassment'
       ]
     }
   ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "compliant":
+      case 'compliant':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "warning":
+      case 'warning':
         return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
-      case "action_required":
+      case 'action_required':
         return <Clock className="h-4 w-4 text-red-600" />;
       default:
         return <Clock className="h-4 w-4 text-gray-600" />;
@@ -151,15 +153,15 @@ export default function ContractorCompliance() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "compliant": return "bg-green-600";
-      case "warning": return "bg-yellow-600";
-      case "action_required": return "bg-red-600";
-      default: return "bg-gray-600";
+      case 'compliant': return 'bg-green-600';
+      case 'warning': return 'bg-yellow-600';
+      case 'action_required': return 'bg-red-600';
+      default: return 'bg-gray-600';
     }
   };
 
   const complianceScore = Math.round(
-    (complianceChecklist.filter(item => item.status === "compliant").length / 
+    (complianceChecklist.filter(item => item.status === 'compliant').length / 
      complianceChecklist.length) * 100
   );
 
@@ -436,17 +438,17 @@ export default function ContractorCompliance() {
                       </div>
 
                       <div className="ml-6">
-                        {item.status === "action_required" && (
+                        {item.status === 'action_required' && (
                           <Button size="sm" className="bg-red-600 hover:bg-red-700">
                             Take Action
                           </Button>
                         )}
-                        {item.status === "warning" && (
+                        {item.status === 'warning' && (
                           <Button size="sm" variant="outline" className="border-yellow-600 text-yellow-600">
                             Review
                           </Button>
                         )}
-                        {item.status === "compliant" && (
+                        {item.status === 'compliant' && (
                           <Button size="sm" variant="outline" className="border-green-600 text-green-600">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Compliant

@@ -1,11 +1,13 @@
-import { Shift } from "@shared/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, DollarSign, MapPin } from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+
+import { Job } from '@shared/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar, Clock, DollarSign, MapPin } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ShiftCardProps {
-  shift: Shift;
+  shift: Job;
   onApply?: (shiftId: string) => void;
   showApplyButton?: boolean;
 }
@@ -21,11 +23,11 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
         <div className="grid md:grid-cols-2 gap-4 mb-4 text-sm">
           <div className="flex items-center text-neutral-600">
             <Calendar className="mr-2 h-4 w-4 text-primary" />
-            <span>{format(new Date(shift.date), "EEE, MMM d - h:mm a")}</span>
+            <span>{format(new Date(shift.date), 'EEE, MMM d - h:mm a')}</span>
           </div>
           <div className="flex items-center text-neutral-600">
             <DollarSign className="mr-2 h-4 w-4 text-primary" />
-            <span>${shift.payRate}/hour</span>
+            <span>${shift.payRate}/${shift.payType}</span>
           </div>
         </div>
         
@@ -35,7 +37,7 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <span className="text-xl font-bold text-neutral-900">${shift.payRate}</span>
-              <span className="text-neutral-600 ml-2">/hour</span>
+              <span className="text-neutral-600 ml-2">/${shift.payType}</span>
             </div>
             <Button onClick={() => onApply?.(shift.id)} className="bg-primary hover:bg-blue-700">
               I'm Interested

@@ -8,8 +8,8 @@ import {
   InsertSocialPost, 
   InsertApplication, 
   UserRole 
-} from "@shared/firebase-schema";
-import { randomUUID } from "crypto";
+} from '@shared/firebase-schema';
+import { randomUUID } from 'crypto';
 
 // Firebase-compatible storage interface
 export interface IFirebaseStorage {
@@ -103,7 +103,7 @@ export class MemFirebaseStorage implements IFirebaseStorage {
     const job: Job = {
       ...insertJob,
       id,
-      status: "open",
+      status: 'open',
       applicants: [],
       createdAt: new Date(),
       updatedAt: new Date()
@@ -122,7 +122,7 @@ export class MemFirebaseStorage implements IFirebaseStorage {
       jobs = jobs.filter(job => job.location.city === filters.location);
     }
     if (filters?.hubId) {
-      jobs = jobs.filter(job => job.hubId === filters.hubId);
+      jobs = jobs.filter(job => job.businessId === filters.hubId);
     }
     
     return jobs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -161,8 +161,9 @@ export class MemFirebaseStorage implements IFirebaseStorage {
       id: applicationId,
       jobId,
       professionalId,
-      hubId: job.hubId,
-      status: "pending",
+      businessId: job.businessId,
+      status: 'pending',
+      portfolioSamples: [],
       appliedAt: new Date()
     };
     

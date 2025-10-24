@@ -4,20 +4,21 @@ import React from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { AuthProvider } from '../contexts/AuthContext';
+import { NotificationProvider } from '../contexts/NotificationContext';
 
 // Create a custom theme that matches our design system
 const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#FF6B6B',
-      dark: '#E55A5A',
-      light: '#FF8A8A',
-    },
-    secondary: {
-      main: '#4ECDC4',
-      dark: '#3BB5AC',
-      light: '#6ED5CE',
-    },
+       palette: {
+         primary: {
+           main: '#DC143C',       /* Deep Lipstick Red */
+           dark: '#B22222',       /* Darker Lipstick Red */
+           light: '#FF1744',      /* Bright Lipstick Red */
+         },
+         secondary: {
+           main: '#C0C0C0',       /* Chrome/Silver */
+           dark: '#A8A8A8',       /* Dark Chrome */
+           light: '#D3D3D3',      /* Light Chrome */
+         },
     background: {
       default: '#FAFAFA',
       paper: '#FFFFFF',
@@ -114,7 +115,9 @@ export default function ClientProviders({ children }: { children: React.ReactNod
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        {children}
+        <NotificationProvider>
+          {children}
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

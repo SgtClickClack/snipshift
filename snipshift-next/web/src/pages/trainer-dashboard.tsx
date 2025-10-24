@@ -1,19 +1,21 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Trash, Eye, CreditCard } from "lucide-react";
-import ConnectOnboarding from "@/components/stripe/connect-onboarding";
+import React from 'react';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Trash, Eye, CreditCard } from 'lucide-react';
+import ConnectOnboarding from '@/components/stripe/connect-onboarding';
 
 interface TrainingContent {
   id: string;
@@ -23,7 +25,7 @@ interface TrainingContent {
   thumbnailUrl?: string;
   price: number;
   duration: string;
-  level: "beginner" | "intermediate" | "advanced";
+  level: 'beginner' | 'intermediate' | 'advanced';
   category: string;
   isPaid: boolean;
   purchaseCount: number;
@@ -36,7 +38,7 @@ interface ContentFormData {
   thumbnailUrl: string;
   price: number;
   duration: string;
-  level: "beginner" | "intermediate" | "advanced";
+  level: 'beginner' | 'intermediate' | 'advanced';
   category: string;
   isPaid: boolean;
 }
@@ -50,55 +52,55 @@ export default function TrainerDashboard() {
   const [editingContent, setEditingContent] = useState<TrainingContent | null>(null);
   
   const [formData, setFormData] = useState<ContentFormData>({
-    title: "",
-    description: "",
-    videoUrl: "",
-    thumbnailUrl: "",
+    title: '',
+    description: '',
+    videoUrl: '',
+    thumbnailUrl: '',
     price: 0,
-    duration: "",
-    level: "beginner",
-    category: "Hair Cutting",
+    duration: '',
+    level: 'beginner',
+    category: 'Hair Cutting',
     isPaid: false
   });
 
   const { data: content = [], isLoading } = useQuery<TrainingContent[]>({
-    queryKey: ["/api/training-content", user?.id],
+    queryKey: ['/api/training-content', user?.id],
     enabled: !!user?.id,
   });
 
   const createContentMutation = useMutation({
     mutationFn: async (contentData: any) => {
-      const response = await apiRequest("POST", "/api/training-content", contentData);
+      const response = await apiRequest('POST', '/api/training-content', contentData);
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Content uploaded successfully!",
-        description: "Your training content is now available.",
+        title: 'Content uploaded successfully!',
+        description: 'Your training content is now available.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/training-content"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/training-content'] });
       setShowContentModal(false);
       resetForm();
     },
     onError: () => {
       toast({
-        title: "Failed to upload content",
-        description: "Please try again later.",
-        variant: "destructive",
+        title: 'Failed to upload content',
+        description: 'Please try again later.',
+        variant: 'destructive',
       });
     },
   });
 
   const resetForm = () => {
     setFormData({
-      title: "",
-      description: "",
-      videoUrl: "",
-      thumbnailUrl: "",
+      title: '',
+      description: '',
+      videoUrl: '',
+      thumbnailUrl: '',
       price: 0,
-      duration: "",
-      level: "beginner",
-      category: "Hair Cutting",
+      duration: '',
+      level: 'beginner',
+      category: 'Hair Cutting',
       isPaid: false
     });
     setEditingContent(null);
@@ -109,9 +111,9 @@ export default function TrainerDashboard() {
     
     if (!formData.title || !formData.description || !formData.videoUrl) {
       toast({
-        title: "Missing required fields",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
+        title: 'Missing required fields',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
       });
       return;
     }
@@ -134,7 +136,7 @@ export default function TrainerDashboard() {
     avgRating: 4.8
   };
 
-  if (!user || user.currentRole !== "trainer") {
+  if (!user || user.currentRole !== 'business') {
     return <div>Access denied</div>;
   }
 
@@ -528,7 +530,7 @@ export default function TrainerDashboard() {
               </div>
               <div>
                 <Label htmlFor="level">Level</Label>
-                <Select value={formData.level} onValueChange={(value: "beginner" | "intermediate" | "advanced") => 
+                <Select value={formData.level} onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') => 
                   setFormData(prev => ({ ...prev, level: value }))
                 }>
                   <SelectTrigger data-testid="select-level">
@@ -576,7 +578,7 @@ export default function TrainerDashboard() {
                 disabled={createContentMutation.isPending}
                 data-testid="button-upload"
               >
-                {createContentMutation.isPending ? "Uploading..." : "Upload Content"}
+                {createContentMutation.isPending ? 'Uploading...' : 'Upload Content'}
               </Button>
             </div>
           </form>

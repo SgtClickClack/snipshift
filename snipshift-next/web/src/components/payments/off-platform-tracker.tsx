@@ -1,20 +1,22 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
+import React from 'react';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   Receipt, 
   Plus, 
@@ -29,19 +31,19 @@ import {
   Building2,
   FileText,
   TrendingUp
-} from "lucide-react";
+} from 'lucide-react';
 
 const offPlatformPaymentSchema = z.object({
-  jobId: z.string().min(1, "Job ID is required"),
-  payerName: z.string().min(2, "Payer name must be at least 2 characters"),
-  payerType: z.enum(["hub", "professional", "brand", "client"]),
-  recipientName: z.string().min(2, "Recipient name must be at least 2 characters"),
-  recipientType: z.enum(["hub", "professional", "brand", "client"]),
-  amount: z.number().min(0.01, "Amount must be greater than 0"),
-  paymentMethod: z.enum(["cash", "bank_transfer", "card", "other"]),
-  description: z.string().min(5, "Description must be at least 5 characters"),
-  paymentDate: z.string().min(1, "Payment date is required"),
-  category: z.enum(["shift_payment", "tip", "product_purchase", "training", "other"]),
+  jobId: z.string().min(1, 'Job ID is required'),
+  payerName: z.string().min(2, 'Payer name must be at least 2 characters'),
+  payerType: z.enum(['hub', 'professional', 'brand', 'client']),
+  recipientName: z.string().min(2, 'Recipient name must be at least 2 characters'),
+  recipientType: z.enum(['hub', 'professional', 'brand', 'client']),
+  amount: z.number().min(0.01, 'Amount must be greater than 0'),
+  paymentMethod: z.enum(['cash', 'bank_transfer', 'card', 'other']),
+  description: z.string().min(5, 'Description must be at least 5 characters'),
+  paymentDate: z.string().min(1, 'Payment date is required'),
+  category: z.enum(['shift_payment', 'tip', 'product_purchase', 'training', 'other']),
   notes: z.string().optional()
 });
 
@@ -60,7 +62,7 @@ interface OffPlatformPayment {
   paymentDate: string;
   category: string;
   notes?: string;
-  status: "pending" | "verified" | "disputed";
+  status: 'pending' | 'verified' | 'disputed';
   submittedBy: string;
   submittedAt: Date;
   verifiedAt?: Date;
@@ -76,32 +78,32 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>('all');
 
   const form = useForm<OffPlatformPaymentForm>({
     resolver: zodResolver(offPlatformPaymentSchema),
     defaultValues: {
-      paymentMethod: "cash",
-      category: "shift_payment",
+      paymentMethod: 'cash',
+      category: 'shift_payment',
       paymentDate: new Date().toISOString().split('T')[0]
     }
   });
 
   const { data: payments = [], isLoading } = useQuery<OffPlatformPayment[]>({
-    queryKey: ["/api/payments/off-platform", userId],
+    queryKey: ['/api/payments/off-platform', userId],
   });
 
   const { data: recentJobs = [] } = useQuery<any[]>({
-    queryKey: ["/api/jobs/recent", userId],
+    queryKey: ['/api/jobs/recent', userId],
   });
 
   const { data: paymentStats = { totalAmount: 0, totalCount: 0, verifiedCount: 0, pendingCount: 0 } } = useQuery<{ totalAmount: number; totalCount: number; verifiedCount: number; pendingCount: number }>({
-    queryKey: ["/api/payments/off-platform/stats", userId],
+    queryKey: ['/api/payments/off-platform/stats', userId],
   });
 
   const submitPaymentMutation = useMutation({
     mutationFn: async (data: OffPlatformPaymentForm) => {
-      const response = await apiRequest("POST", "/api/payments/off-platform", {
+      const response = await apiRequest('POST', '/api/payments/off-platform', {
         ...data,
         submittedBy: userId
       });
@@ -109,34 +111,34 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
     },
     onSuccess: () => {
       toast({
-        title: "Payment Recorded",
-        description: "Off-platform payment has been logged for transparency.",
+        title: 'Payment Recorded',
+        description: 'Off-platform payment has been logged for transparency.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/payments/off-platform"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/payments/off-platform/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/payments/off-platform'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/payments/off-platform/stats'] });
       setIsDialogOpen(false);
       form.reset();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to record payment",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to record payment',
+        variant: 'destructive',
       });
     }
   });
 
   const verifyPaymentMutation = useMutation({
     mutationFn: async (paymentId: string) => {
-      const response = await apiRequest("POST", `/api/payments/off-platform/${paymentId}/verify`, {});
+      const response = await apiRequest('POST', `/api/payments/off-platform/${paymentId}/verify`, {});
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Payment Verified",
-        description: "Payment has been marked as verified.",
+        title: 'Payment Verified',
+        description: 'Payment has been marked as verified.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/payments/off-platform"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/payments/off-platform'] });
     }
   });
 
@@ -146,9 +148,9 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "verified":
+      case 'verified':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "disputed":
+      case 'disputed':
         return <AlertTriangle className="h-4 w-4 text-red-600" />;
       default:
         return <Clock className="h-4 w-4 text-yellow-600" />;
@@ -157,17 +159,17 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "verified": return "bg-green-600";
-      case "disputed": return "bg-red-600";
-      default: return "bg-yellow-600";
+      case 'verified': return 'bg-green-600';
+      case 'disputed': return 'bg-red-600';
+      default: return 'bg-yellow-600';
     }
   };
 
   const getPaymentMethodIcon = (method: string) => {
     switch (method) {
-      case "cash":
+      case 'cash':
         return <Banknote className="h-4 w-4" />;
-      case "card":
+      case 'card':
         return <CreditCard className="h-4 w-4" />;
       default:
         return <DollarSign className="h-4 w-4" />;
@@ -175,10 +177,10 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
   };
 
   const filteredPayments = payments.filter(payment => {
-    if (filter === "all") return true;
-    if (filter === "verified") return payment.status === "verified";
-    if (filter === "pending") return payment.status === "pending";
-    if (filter === "disputed") return payment.status === "disputed";
+    if (filter === 'all') return true;
+    if (filter === 'verified') return payment.status === 'verified';
+    if (filter === 'pending') return payment.status === 'pending';
+    if (filter === 'disputed') return payment.status === 'disputed';
     return payment.category === filter;
   });
 
@@ -447,7 +449,7 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
                     disabled={submitPaymentMutation.isPending}
                     data-testid="button-submit-payment"
                   >
-                    {submitPaymentMutation.isPending ? "Recording..." : "Record Payment"}
+                    {submitPaymentMutation.isPending ? 'Recording...' : 'Record Payment'}
                   </Button>
                   <Button 
                     type="button" 
@@ -500,37 +502,37 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <Button
-          variant={filter === "all" ? "default" : "outline"}
+          variant={filter === 'all' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFilter("all")}
+          onClick={() => setFilter('all')}
         >
           All
         </Button>
         <Button
-          variant={filter === "pending" ? "default" : "outline"}
+          variant={filter === 'pending' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFilter("pending")}
+          onClick={() => setFilter('pending')}
         >
           Pending
         </Button>
         <Button
-          variant={filter === "verified" ? "default" : "outline"}
+          variant={filter === 'verified' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFilter("verified")}
+          onClick={() => setFilter('verified')}
         >
           Verified
         </Button>
         <Button
-          variant={filter === "shift_payment" ? "default" : "outline"}
+          variant={filter === 'shift_payment' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFilter("shift_payment")}
+          onClick={() => setFilter('shift_payment')}
         >
           Shift Payments
         </Button>
         <Button
-          variant={filter === "tip" ? "default" : "outline"}
+          variant={filter === 'tip' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFilter("tip")}
+          onClick={() => setFilter('tip')}
         >
           Tips
         </Button>
@@ -603,7 +605,7 @@ export default function OffPlatformTracker({ userId, userRole }: OffPlatformTrac
                     <div className="text-2xl font-bold text-green-600">
                       ${payment.amount.toFixed(2)}
                     </div>
-                    {payment.status === "pending" && userRole === "admin" && (
+                    {payment.status === 'pending' && userRole === 'admin' && (
                       <Button
                         size="sm"
                         variant="outline"

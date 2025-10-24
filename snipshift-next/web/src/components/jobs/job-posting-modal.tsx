@@ -1,16 +1,18 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, X, Calendar, DollarSign, MapPin, Users, Clock } from "lucide-react";
+import React from 'react';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, X, Calendar, DollarSign, MapPin, Users, Clock } from 'lucide-react';
 
 interface JobPostingModalProps {
   isOpen: boolean;
@@ -23,7 +25,7 @@ interface JobFormData {
   description: string;
   skillsRequired: string[];
   payRate: number;
-  payType: "hour" | "day" | "project";
+  payType: 'hour' | 'day' | 'project';
   date: string;
   startTime: string;
   endTime: string;
@@ -34,15 +36,15 @@ interface JobFormData {
     postcode: string;
   };
   requirements: string;
-  urgency: "low" | "medium" | "high";
+  urgency: 'low' | 'medium' | 'high';
   maxApplicants: number;
 }
 
 const PREDEFINED_SKILLS = [
-  "Hair Cutting", "Hair Styling", "Hair Coloring", "Beard Trimming", 
-  "Shaving", "Hair Washing", "Blow Drying", "Perming", "Hair Extensions",
-  "Makeup", "Facial Treatments", "Eyebrow Shaping", "Customer Service",
-  "Product Knowledge", "Sanitation", "Cash Handling"
+  'Hair Cutting', 'Hair Styling', 'Hair Coloring', 'Beard Trimming', 
+  'Shaving', 'Hair Washing', 'Blow Drying', 'Perming', 'Hair Extensions',
+  'Makeup', 'Facial Treatments', 'Eyebrow Shaping', 'Customer Service',
+  'Product Knowledge', 'Sanitation', 'Cash Handling'
 ];
 
 export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingModalProps) {
@@ -50,72 +52,72 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState<JobFormData>({
-    title: "",
-    description: "",
+    title: '',
+    description: '',
     skillsRequired: [],
     payRate: 25,
-    payType: "hour",
-    date: "",
-    startTime: "09:00",
-    endTime: "17:00",
+    payType: 'hour',
+    date: '',
+    startTime: '09:00',
+    endTime: '17:00',
     location: {
-      street: "",
-      city: "",
-      state: "",
-      postcode: ""
+      street: '',
+      city: '',
+      state: '',
+      postcode: ''
     },
-    requirements: "",
-    urgency: "medium",
+    requirements: '',
+    urgency: 'medium',
     maxApplicants: 5
   });
 
-  const [newSkill, setNewSkill] = useState("");
+  const [newSkill, setNewSkill] = useState('');
 
   const createJobMutation = useMutation({
     mutationFn: async (jobData: any) => {
-      const response = await apiRequest("POST", "/api/jobs", jobData);
+      const response = await apiRequest('POST', '/api/jobs', jobData);
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Job posted successfully!",
-        description: "Your job posting is now live and visible to professionals.",
+        title: 'Job posted successfully!',
+        description: 'Your job posting is now live and visible to professionals.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       queryClient.invalidateQueries({ queryKey: [`/api/jobs/hub/${hubId}`] });
       onClose();
       resetForm();
     },
     onError: () => {
       toast({
-        title: "Failed to post job",
-        description: "Please try again later.",
-        variant: "destructive",
+        title: 'Failed to post job',
+        description: 'Please try again later.',
+        variant: 'destructive',
       });
     },
   });
 
   const resetForm = () => {
     setFormData({
-      title: "",
-      description: "",
+      title: '',
+      description: '',
       skillsRequired: [],
       payRate: 25,
-      payType: "hour",
-      date: "",
-      startTime: "09:00",
-      endTime: "17:00",
+      payType: 'hour',
+      date: '',
+      startTime: '09:00',
+      endTime: '17:00',
       location: {
-        street: "",
-        city: "",
-        state: "",
-        postcode: ""
+        street: '',
+        city: '',
+        state: '',
+        postcode: ''
       },
-      requirements: "",
-      urgency: "medium",
+      requirements: '',
+      urgency: 'medium',
       maxApplicants: 5
     });
-    setNewSkill("");
+    setNewSkill('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -123,9 +125,9 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
     
     if (!formData.title || !formData.description || !formData.date) {
       toast({
-        title: "Missing required fields",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
+        title: 'Missing required fields',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
       });
       return;
     }
@@ -134,7 +136,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
       ...formData,
       hubId,
       createdAt: new Date().toISOString(),
-      status: "active",
+      status: 'active',
       applicants: [],
       views: 0
     };
@@ -148,7 +150,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
         ...prev,
         skillsRequired: [...prev.skillsRequired, newSkill.trim()]
       }));
-      setNewSkill("");
+      setNewSkill('');
     }
   };
 
@@ -205,7 +207,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
                   <Label htmlFor="urgency" className="text-sm font-medium">
                     Urgency
                   </Label>
-                  <Select value={formData.urgency} onValueChange={(value: "low" | "medium" | "high") => 
+                  <Select value={formData.urgency} onValueChange={(value: 'low' | 'medium' | 'high') => 
                     setFormData(prev => ({ ...prev, urgency: value }))
                   }>
                     <SelectTrigger data-testid="select-urgency">
@@ -274,13 +276,13 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
                   {PREDEFINED_SKILLS.map(skill => (
                     <Badge
                       key={skill}
-                      variant={formData.skillsRequired.includes(skill) ? "default" : "outline"}
+                      variant={formData.skillsRequired.includes(skill) ? 'default' : 'outline'}
                       className="cursor-pointer"
                       onClick={() => addPredefinedSkill(skill)}
                       data-testid={`badge-skill-${skill.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       {skill}
-                      {formData.skillsRequired.includes(skill) && " ✓"}
+                      {formData.skillsRequired.includes(skill) && ' ✓'}
                     </Badge>
                   ))}
                 </div>
@@ -333,7 +335,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
                   <Label htmlFor="payType" className="text-sm font-medium">
                     Pay Type
                   </Label>
-                  <Select value={formData.payType} onValueChange={(value: "hour" | "day" | "project") => 
+                  <Select value={formData.payType} onValueChange={(value: 'hour' | 'day' | 'project') => 
                     setFormData(prev => ({ ...prev, payType: value }))
                   }>
                     <SelectTrigger data-testid="select-pay-type">
@@ -496,7 +498,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
               disabled={createJobMutation.isPending}
               data-testid="button-post-job"
             >
-              {createJobMutation.isPending ? "Posting..." : "Post Job"}
+              {createJobMutation.isPending ? 'Posting...' : 'Post Job'}
             </Button>
           </div>
         </form>

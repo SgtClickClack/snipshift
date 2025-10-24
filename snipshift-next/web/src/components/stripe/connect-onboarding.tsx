@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import React from 'react';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 import { 
   CreditCard, 
   CheckCircle, 
@@ -13,8 +15,8 @@ import {
   Shield,
   Clock,
   TrendingUp
-} from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+} from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ConnectOnboardingProps {
   trainerId: string;
@@ -68,8 +70,8 @@ export default function ConnectOnboarding({ trainerId, businessName, email }: Co
       if (data.demo) {
         // Demo mode - no external redirect needed
         toast({
-          title: "Demo Account Created",
-          description: "Your test payment account has been set up successfully",
+          title: 'Demo Account Created',
+          description: 'Your test payment account has been set up successfully',
         });
         await checkAccountStatus();
       } else {
@@ -79,9 +81,9 @@ export default function ConnectOnboarding({ trainerId, businessName, email }: Co
     } catch (error) {
       console.error('Error creating account:', error);
       toast({
-        title: "Account Creation Failed",
-        description: "Failed to create payment account. Please try again.",
-        variant: "destructive",
+        title: 'Account Creation Failed',
+        description: 'Failed to create payment account. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsCreatingAccount(false);
@@ -120,40 +122,40 @@ export default function ConnectOnboarding({ trainerId, businessName, email }: Co
   const getStatusMessage = () => {
     if (!accountStatus) {
       return {
-        title: "Payment Account Required",
-        description: "To sell training content and receive payments, you need to set up a payment account.",
-        type: "setup" as const
+        title: 'Payment Account Required',
+        description: 'To sell training content and receive payments, you need to set up a payment account.',
+        type: 'setup' as const
       };
     }
 
     if (accountStatus.demo) {
       return {
-        title: "Demo Payment Account Active",
+        title: 'Demo Payment Account Active',
         description: "Your test payment account is ready. In production, you'll need to complete full verification.",
-        type: "demo" as const
+        type: 'demo' as const
       };
     }
 
     if (accountStatus.onboardingComplete && accountStatus.payoutsEnabled) {
       return {
-        title: "Payment Account Active",
-        description: "Your payment account is fully set up and ready to receive payments.",
-        type: "success" as const
+        title: 'Payment Account Active',
+        description: 'Your payment account is fully set up and ready to receive payments.',
+        type: 'success' as const
       };
     }
 
     if (accountStatus.detailsSubmitted) {
       return {
-        title: "Account Under Review",
-        description: "Your account details are being reviewed. This usually takes 1-2 business days.",
-        type: "pending" as const
+        title: 'Account Under Review',
+        description: 'Your account details are being reviewed. This usually takes 1-2 business days.',
+        type: 'pending' as const
       };
     }
 
     return {
-      title: "Setup Incomplete",
-      description: "Please complete your account setup to start receiving payments.",
-      type: "incomplete" as const
+      title: 'Setup Incomplete',
+      description: 'Please complete your account setup to start receiving payments.',
+      type: 'incomplete' as const
     };
   };
 

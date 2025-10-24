@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,17 +80,17 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       console.log('Saving profile data:', formData);
       
       toast({
-        title: "Profile updated",
-        description: "Your profile has been saved successfully.",
+        title: 'Profile updated',
+        description: 'Your profile has been saved successfully.',
       });
       
       setIsEditing(false);
       onSave?.(formData);
     } catch (error) {
       toast({
-        title: "Failed to update profile",
-        description: "Please try again later.",
-        variant: "destructive",
+        title: 'Failed to update profile',
+        description: 'Please try again later.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -429,9 +431,9 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {renderBasicFields()}
           
-          {user.currentRole === 'hub' && renderHubFields()}
+          {user.currentRole === 'business' && renderHubFields()}
           {user.currentRole === 'professional' && renderProfessionalFields()}
-          {user.currentRole === 'brand' && renderBrandFields()}
+          {user.currentRole === 'business' && renderBrandFields()}
           {user.currentRole === 'professional' && renderTrainerFields()}
         </form>
       </CardContent>

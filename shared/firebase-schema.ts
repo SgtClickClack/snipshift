@@ -1,19 +1,19 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Snipshift User Roles - simplified to two-role model
-export type UserRole = "professional" | "business";
+export type UserRole = 'professional' | 'business';
 
 // Base User Schema (multi-role)
 export const userSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   password: z.string().nullable(),
-  roles: z.array(z.enum(["professional", "business"])).default(["professional"]),
-  currentRole: z.enum(["professional", "business"]).nullable().default("professional"),
+  roles: z.array(z.enum(['professional', 'business'])).default(['professional']),
+  currentRole: z.enum(['professional', 'business']).nullable().default('professional'),
   displayName: z.string().optional(),
   profileImage: z.string().optional(),
   googleId: z.string().optional(),
-  provider: z.enum(["email", "google"]).default("email"),
+  provider: z.enum(['email', 'google']).default('email'),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -46,7 +46,7 @@ export const professionalProfileSchema = z.object({
 // Business-specific fields (consolidated from hub, brand, trainer)
 export const businessProfileSchema = z.object({
   businessName: z.string(),
-  businessType: z.enum(["barbershop", "salon", "spa", "brand", "training", "other"]),
+  businessType: z.enum(['barbershop', 'salon', 'spa', 'brand', 'training', 'other']),
   address: z.object({
     street: z.string(),
     city: z.string(),
@@ -84,7 +84,7 @@ export const businessProfileSchema = z.object({
     description: z.string(),
     price: z.number().optional(),
     duration: z.string().optional(),
-    level: z.enum(["beginner", "intermediate", "advanced"]),
+    level: z.enum(['beginner', 'intermediate', 'advanced']),
     category: z.string(),
   })).default([]),
   trainingHubContent: z.array(z.object({
@@ -113,7 +113,7 @@ export const jobSchema = z.object({
   endTime: z.string(),
   skillsRequired: z.array(z.string()).default([]),
   payRate: z.number(),
-  payType: z.enum(["hourly", "daily", "fixed"]).default("hourly"),
+  payType: z.enum(['hourly', 'daily', 'fixed']).default('hourly'),
   location: z.object({
     street: z.string().optional(),
     city: z.string(),
@@ -125,8 +125,8 @@ export const jobSchema = z.object({
       lng: z.number(),
     }).optional(),
   }),
-  status: z.enum(["draft", "open", "filled", "cancelled", "expired"]).default("open"),
-  urgency: z.enum(["low", "medium", "high"]).default("medium"),
+  status: z.enum(['draft', 'open', 'filled', 'cancelled', 'expired']).default('open'),
+  urgency: z.enum(['low', 'medium', 'high']).default('medium'),
   maxApplicants: z.number().default(5),
   applicants: z.array(z.string()).default([]), // Array of professional IDs
   selectedProfessionalId: z.string().optional(),
@@ -139,8 +139,8 @@ export const jobSchema = z.object({
 export const socialPostSchema = z.object({
   id: z.string(),
   authorId: z.string(),
-  authorRole: z.enum(["business"]),
-  postType: z.enum(["offer", "event", "announcement", "product", "discount"]),
+  authorRole: z.enum(['business']),
+  postType: z.enum(['offer', 'event', 'announcement', 'product', 'discount']),
   content: z.string(),
   imageUrl: z.string().optional(),
   linkUrl: z.string().optional(),
@@ -148,7 +148,7 @@ export const socialPostSchema = z.object({
   eventDate: z.date().optional(), // For training/workshops
   createdAt: z.date(),
   updatedAt: z.date(),
-  status: z.enum(["pending", "approved", "rejected"]).default("pending"),
+  status: z.enum(['pending', 'approved', 'rejected']).default('pending'),
   likes: z.number().default(0),
   comments: z.array(z.object({
     id: z.string(),
@@ -171,7 +171,7 @@ export const trainingContentSchema = z.object({
   thumbnailUrl: z.string().optional(),
   price: z.number().default(0),
   duration: z.string(),
-  level: z.enum(["beginner", "intermediate", "advanced"]),
+  level: z.enum(['beginner', 'intermediate', 'advanced']),
   category: z.string(),
   isPaid: z.boolean().default(false),
   purchaseCount: z.number().default(0),
@@ -186,7 +186,7 @@ export const purchaseSchema = z.object({
   contentId: z.string(),
   businessId: z.string(), // Reference to business user ID (formerly trainerId)
   amount: z.number(),
-  paymentStatus: z.enum(["pending", "completed", "failed"]).default("pending"),
+  paymentStatus: z.enum(['pending', 'completed', 'failed']).default('pending'),
   purchasedAt: z.date(),
   accessGranted: z.boolean().default(false),
 });
@@ -197,7 +197,7 @@ export const applicationSchema = z.object({
   jobId: z.string(),
   professionalId: z.string(),
   businessId: z.string(), // Reference to business user ID (formerly hubId)
-  status: z.enum(["pending", "accepted", "rejected", "withdrawn"]).default("pending"),
+  status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn']).default('pending'),
   coverLetter: z.string().optional(),
   portfolioSamples: z.array(z.string()).default([]), // Array of file URLs
   message: z.string().optional(),
@@ -212,9 +212,9 @@ export const insertUserSchema = userSchema
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
     name: z.string().optional(),
-    role: z.enum(["professional", "business"]).optional(),
-    roles: z.array(z.enum(["professional", "business"]).optional()).optional(),
-    currentRole: z.enum(["professional", "business"]).nullable().optional(),
+    role: z.enum(['professional', 'business']).optional(),
+    roles: z.array(z.enum(['professional', 'business']).optional()).optional(),
+    currentRole: z.enum(['professional', 'business']).nullable().optional(),
   })
   .transform((data) => {
     const legacyRole = (data as any).role as UserRole | undefined;
@@ -274,7 +274,7 @@ export const messageSchema = z.object({
   content: z.string(),
   timestamp: z.date(),
   isRead: z.boolean().default(false),
-  messageType: z.enum(["text", "system"]).default("text"),
+  messageType: z.enum(['text', 'system']).default('text'),
 });
 
 export const chatSchema = z.object({
@@ -316,7 +316,7 @@ export const savedShiftSchema = z.object({
 export const notificationSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  type: z.enum(["new_shift", "application_update", "new_application", "message"]),
+  type: z.enum(['new_shift', 'application_update', 'new_application', 'message']),
   title: z.string(),
   message: z.string(),
   isRead: z.boolean().default(false),

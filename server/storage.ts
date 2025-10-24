@@ -1,5 +1,5 @@
-import { type User, type InsertUser, type Shift, type InsertShift, type UserRole } from "@shared/firebase-schema";
-import { randomUUID } from "crypto";
+import { type User, type InsertUser, type Shift, type InsertShift, type UserRole } from '@shared/firebase-schema';
+import { randomUUID } from 'crypto';
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -49,7 +49,7 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...(insertUser as any), 
       id,
-      provider: (insertUser as any).provider || "email",
+      provider: (insertUser as any).provider || 'email',
       roles,
       currentRole,
       createdAt: now,
@@ -62,7 +62,7 @@ export class MemStorage implements IStorage {
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
     const user = this.users.get(id);
     if (!user) {
-      throw new Error("User not found");
+      throw new Error('User not found');
     }
     const updatedUser = { 
       ...user, 

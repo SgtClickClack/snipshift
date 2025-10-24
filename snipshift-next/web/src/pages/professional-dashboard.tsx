@@ -1,26 +1,24 @@
 import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   Calendar, 
+  TrendingUp, 
+  MessageSquare, 
+  User, 
   MapPin, 
   Clock, 
   DollarSign, 
   Star, 
-  MessageSquare, 
-  User, 
-  Settings,
-  Scissors,
-  TrendingUp,
-  Shield,
-  CreditCard,
-  Instagram,
-  Phone,
-  Mail
+  Scissors, 
+  Settings, 
+  Shield, 
+  CreditCard, 
+  Instagram 
 } from 'lucide-react';
 
 export default function ProfessionalDashboard() {
@@ -118,7 +116,7 @@ export default function ProfessionalDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-steel-50 via-white to-chrome-light/20">
+    <div className="min-h-screen bg-gradient-to-br from-steel-50 via-white to-chrome-light/20" data-testid="professional-dashboard">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
@@ -220,8 +218,8 @@ export default function ProfessionalDashboard() {
 
                         <div className="flex gap-3">
                           <Button 
-                            variant={shift.applied ? "outline" : "default"}
-                            className={shift.applied ? "" : "bg-gradient-to-r from-red-accent to-red-accent-dark"}
+                            variant={shift.applied ? 'outline' : 'default'}
+                            className={shift.applied ? '' : 'bg-gradient-to-r from-red-accent to-red-accent-dark'}
                             disabled={shift.applied}
                           >
                             {shift.applied ? 'Applied' : 'Apply Now'}
