@@ -147,13 +147,13 @@ export class InputValidator {
 // Common validation schemas
 export const ValidationSchemas = {
   createUser: {
-    email: { required: true, type: 'email', maxLength: 255, sanitize: true },
-    password: { required: false, type: 'string', minLength: 8, maxLength: 128 },
-    displayName: { required: false, type: 'string', maxLength: 100, sanitize: true },
-    roles: { required: true, type: 'string' },
-    currentRole: { required: false, type: 'string' },
-    googleId: { required: false, type: 'string', maxLength: 255 },
-    profileImage: { required: false, type: 'url', maxLength: 500 },
+    email: { required: true, type: 'email' as const, maxLength: 255, sanitize: true },
+    password: { required: false, type: 'string' as const, minLength: 8, maxLength: 128 },
+    displayName: { required: false, type: 'string' as const, maxLength: 100, sanitize: true },
+    roles: { required: true, custom: (value: any) => Array.isArray(value) },
+    currentRole: { required: false, type: 'string' as const },
+    googleId: { required: false, type: 'string' as const, maxLength: 255 },
+    profileImage: { required: false, type: 'url' as const, maxLength: 500 },
   },
 
   createJob: {

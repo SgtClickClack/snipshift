@@ -12,33 +12,13 @@ export async function initializeRedis(): Promise<void> {
       redis = new Redis(redisUrl, {
         lazyConnect: true,
         maxRetriesPerRequest: 3,
-        retryDelayOnFailover: 100,
         enableReadyCheck: false,
-        maxLoadingTimeout: 5000,
         connectTimeout: 10000,
         commandTimeout: 5000,
-        // Connection pool settings
         family: 4,
-        keepAlive: true,
-        // Performance optimizations
+        keepAlive: 30000,
         enableOfflineQueue: false,
         enableAutoPipelining: true,
-        // Error handling
-        onError: (error: Error) => {
-          logger.error('Redis error:', error);
-        },
-        onConnect: () => {
-          logger.info('Redis connected successfully');
-        },
-        onReady: () => {
-          logger.info('Redis ready for operations');
-        },
-        onReconnecting: () => {
-          logger.warn('Redis reconnecting...');
-        },
-        onClose: () => {
-          logger.warn('Redis connection closed');
-        },
       });
 
       await redis.connect();
@@ -74,7 +54,7 @@ export async function closeRedis(): Promise<void> {
 // Cache utility functions
 export class CacheService {
   private static instance: CacheService;
-  private redis: Redis | null;
+  public redis: Redis | null;
 
   private constructor() {
     this.redis = getRedis();

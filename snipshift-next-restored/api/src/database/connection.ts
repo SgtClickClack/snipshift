@@ -36,11 +36,8 @@ const client = postgres(connectionString, connectionConfig);
 export const db = drizzle(client, { 
   schema, 
   logger: process.env.NODE_ENV === 'development' ? {
-    logQuery: (query, params) => {
+    logQuery: (query: string, params: unknown[]) => {
       logger.debug('SQL Query:', { query, params });
-    },
-    logQueryError: (error, query, params) => {
-      logger.error('SQL Query Error:', { error, query, params });
     },
   } : false,
 });

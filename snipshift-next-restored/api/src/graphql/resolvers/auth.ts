@@ -64,7 +64,7 @@ export const authResolvers = {
 
         // Validate roles
         const validRoles = ['CLIENT', 'HUB', 'PROFESSIONAL', 'BRAND', 'TRAINER'];
-        const invalidRoles = roles.filter(role => !validRoles.includes(role));
+        const invalidRoles = roles.filter((role: string) => !validRoles.includes(role));
         if (invalidRoles.length > 0) {
           throw new Error(`Invalid roles: ${invalidRoles.join(', ')}`);
         }

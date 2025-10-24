@@ -2,7 +2,7 @@ import { logger } from '../utils/logger.js';
 import { CacheService } from '../config/redis.js';
 
 // Performance monitoring
-export class PerformanceMonitor {
+class PerformanceMonitor {
   private static instance: PerformanceMonitor;
   private metrics: Map<string, Array<{ timestamp: Date; duration: number; metadata?: any }>> = new Map();
   private readonly MAX_METRICS_PER_OPERATION = 1000;
@@ -80,7 +80,7 @@ export class PerformanceMonitor {
 }
 
 // Error tracking
-export class ErrorTracker {
+class ErrorTracker {
   private static instance: ErrorTracker;
   private errors: Array<{
     timestamp: Date;
@@ -172,7 +172,7 @@ export class ErrorTracker {
 }
 
 // Health monitoring
-export class HealthMonitor {
+class HealthMonitor {
   private static instance: HealthMonitor;
   private healthChecks: Map<string, () => Promise<{ status: string; details?: any }>> = new Map();
 
@@ -231,7 +231,7 @@ export class HealthMonitor {
 }
 
 // Request monitoring middleware
-export class RequestMonitor {
+class RequestMonitor {
   private static instance: RequestMonitor;
   private requests: Array<{
     timestamp: Date;
@@ -299,7 +299,7 @@ export class RequestMonitor {
 }
 
 // Alerting system
-export class AlertManager {
+class AlertManager {
   private static instance: AlertManager;
   private alerts: Array<{
     timestamp: Date;
@@ -448,10 +448,5 @@ export function initializeMonitoring(): void {
   }, 5 * 60 * 1000); // Every 5 minutes
 }
 
-export {
-  PerformanceMonitor,
-  ErrorTracker,
-  HealthMonitor,
-  RequestMonitor,
-  AlertManager,
-};
+// Export all monitoring classes
+export { PerformanceMonitor, ErrorTracker, HealthMonitor, RequestMonitor, AlertManager };
