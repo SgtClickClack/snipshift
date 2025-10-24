@@ -87,47 +87,20 @@ function RegisterPageContent() {
   }, []);
 
   // Query to get available user roles (for testing purposes)
-  const { data: rolesData, loading: rolesLoading, error: rolesError } = useQuery(GET_USER_ROLES, {
-    onCompleted: (data) => {
-      console.log('📋 User roles fetched successfully:', data);
-    },
-    onError: (error) => {
-      console.error('❌ Failed to fetch user roles:', error);
+  const { data: rolesData, loading: rolesLoading, error: rolesError } = useQuery(GET_USER_ROLES);
+
+  // Handle query results with useEffect
+  useEffect(() => {
+    if (rolesData) {
+      console.log('📋 User roles fetched successfully:', rolesData);
     }
-  });
+    if (rolesError) {
+      console.error('❌ Failed to fetch user roles:', rolesError);
+    }
+  }, [rolesData, rolesError]);
 
   // Register user mutation
-  const [registerUser, { loading: registerLoading }] = useMutation(REGISTER_USER, {
-    onCompleted: (data) => {
-      console.log('🎉 Registration mutation completed:', data);
-      
-      if (data.register.success) {
-        const { user, token } = data.register;
-        
-        // Store auth data
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify(user));
-        
-        // Update auth context
-        login(user);
-        
-        console.log('✅ Registration successful! User data:', user);
-        console.log('🔑 JWT Token received:', token.substring(0, 20) + '...');
-        
-        showNotification('Registration successful! Welcome to SnipShift!', 'success');
-        
-        // Redirect to dashboard
-        router.push('/dashboard');
-      } else {
-        console.error('❌ Registration failed:', data.register.message);
-        showNotification(data.register.message || 'Registration failed', 'error');
-      }
-    },
-    onError: (error) => {
-      console.error('💥 Registration mutation error:', error);
-      showNotification(`Registration error: ${error.message}`, 'error');
-    }
-  });
+  const [registerUser, { loading: registerLoading, error: registerError }] = useMutation(REGISTER_USER);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<RegisterFormData> = {};
@@ -174,7 +147,7 @@ function RegisterPageContent() {
     console.log('🚀 Sending registration mutation to API...');
     
     try {
-      await registerUser({
+      const result = await registerUser({
         variables: {
           input: {
             email: formData.email,
@@ -185,8 +158,33 @@ function RegisterPageContent() {
           }
         }
       });
+
+      console.log('🎉 Registration mutation completed:', result.data);
+      
+      if (result.data?.register?.success) {
+        const { user, token } = result.data.register;
+        
+        // Store auth data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('userData', JSON.stringify(user));
+        
+        // Update auth context
+        login(user);
+        
+        console.log('✅ Registration successful! User data:', user);
+        console.log('🔑 JWT Token received:', token.substring(0, 20) + '...');
+        
+        showNotification('Registration successful! Welcome to SnipShift!', 'success');
+        
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } else {
+        console.error('❌ Registration failed:', result.data?.register?.message);
+        showNotification(result.data?.register?.message || 'Registration failed', 'error');
+      }
     } catch (error) {
       console.error('💥 Registration submission failed:', error);
+      showNotification(`Registration error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     }
   };
 

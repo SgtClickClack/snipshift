@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Container, Typography, Paper, Box, Card, CardContent, Chip } from '@mui/material';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ApplicationsPage() {
   const { user } = useAuth();

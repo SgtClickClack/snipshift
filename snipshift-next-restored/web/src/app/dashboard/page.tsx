@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Container, Typography, Paper, Box, Grid, Button } from '@mui/material';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import AccessControl from '../../src/components/AccessControl';
+import AccessControl from '../../components/AccessControl';
 import Image from 'next/image';
 
 export default function DashboardPage() {

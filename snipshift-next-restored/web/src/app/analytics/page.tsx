@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Container, Typography, Paper, Box, Grid, Card, CardContent } from '@mui/material';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function AnalyticsPage() {
   const { user } = useAuth();

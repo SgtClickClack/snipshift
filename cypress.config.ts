@@ -2,7 +2,7 @@ import { defineConfig } from 'cypress'
 
 export default defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:5000', // Correct port for SnipShift Express server
+    baseUrl: 'http://localhost:3002', // Frontend Vite server port
     env: {
       E2E_TEST: '1'
     },

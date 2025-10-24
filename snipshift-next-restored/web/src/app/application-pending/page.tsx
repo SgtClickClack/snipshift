@@ -3,7 +3,7 @@
 import React from 'react';
 import { Container, Typography, Paper, Box, Button, Alert } from '@mui/material';
 import { CheckCircle, Schedule, Email } from '@mui/icons-material';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Container, Typography, Paper, Box, Avatar, Button } from '@mui/material';
-import { useAuth } from '../../src/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfilePage() {
   const { user } = useAuth();
