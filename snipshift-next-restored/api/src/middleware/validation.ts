@@ -1,7 +1,7 @@
 import { GraphQLError } from 'graphql';
 import { logger } from '../utils/logger.js';
 import validator from 'validator';
-import DOMPurify from 'isomorphic-dompurify';
+import * as DOMPurify from 'isomorphic-dompurify';
 
 // Input validation schemas
 export interface ValidationRule {
