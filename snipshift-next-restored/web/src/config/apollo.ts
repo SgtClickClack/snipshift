@@ -11,9 +11,9 @@ export const testApiConnectivity = async () => {
         query: '{ __typename }',
       }),
     });
-    return response.ok;
+    return { success: response.ok, error: response.ok ? null : new Error('API request failed') };
   } catch (error) {
     console.error('API connectivity test failed:', error);
-    return false;
+    return { success: false, error: error instanceof Error ? error : new Error('Unknown error') };
   }
 };

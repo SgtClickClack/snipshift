@@ -14,9 +14,13 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notification, setNotification] = useState({
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    visible: boolean;
+  }>({
     message: '',
-    type: 'info' as const,
+    type: 'info',
     visible: false,
   });
 

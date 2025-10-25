@@ -36,7 +36,7 @@ function RegisterPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showNotification } = useNotification();
-  const { login } = useAuth();
+  const { setUser } = useAuth();
   
   const [formData, setFormData] = useState<RegisterFormData>({
     email: '',
@@ -169,7 +169,7 @@ function RegisterPageContent() {
         localStorage.setItem('userData', JSON.stringify(user));
         
         // Update auth context
-        login(user);
+        setUser(user);
         
         console.log('✅ Registration successful! User data:', user);
         console.log('🔑 JWT Token received:', token.substring(0, 20) + '...');

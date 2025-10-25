@@ -6,13 +6,17 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  displayName?: string;
   role: string;
+  currentRole?: string;
+  profileImage?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  setUser: (user: User | null) => void;
   logout: () => void;
   loading: boolean;
 }
@@ -61,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: !!user,
       login,
+      setUser,
       logout,
       loading,
     }}>

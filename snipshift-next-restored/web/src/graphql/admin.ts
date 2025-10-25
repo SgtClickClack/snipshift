@@ -1,5 +1,7 @@
 // Admin GraphQL queries placeholder
-export const GET_PENDING_VERIFICATIONS = `
+import { gql } from '@apollo/client';
+
+export const GET_PENDING_VERIFICATIONS = gql`
   query GetPendingVerifications {
     pendingVerifications {
       id
@@ -30,7 +32,7 @@ export const GET_PENDING_VERIFICATIONS = `
   }
 `;
 
-export const APPROVE_USER = `
+export const APPROVE_USER = gql`
   mutation ApproveUser($userId: ID!) {
     approveUser(userId: $userId) {
       id
@@ -39,7 +41,7 @@ export const APPROVE_USER = `
   }
 `;
 
-export const REJECT_USER = `
+export const REJECT_USER = gql`
   mutation RejectUser($userId: ID!) {
     rejectUser(userId: $userId) {
       id

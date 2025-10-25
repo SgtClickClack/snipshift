@@ -26,7 +26,7 @@ export default function ApplicationPendingPage() {
     return null;
   }
 
-  const isBrandOrProfessional = user?.roles?.includes('brand') || user?.roles?.includes('professional');
+  const isBrandOrProfessional = user?.role === 'brand' || user?.role === 'professional';
 
   if (!isBrandOrProfessional) {
     router.push('/dashboard');
@@ -54,7 +54,7 @@ export default function ApplicationPendingPage() {
         </Typography>
         
         <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-          Thank you for submitting your {user?.roles?.includes('brand') ? 'Brand' : 'Trainer'} application!
+          Thank you for submitting your {user?.role === 'brand' ? 'Brand' : 'Trainer'} application!
         </Typography>
 
         <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>

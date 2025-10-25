@@ -84,7 +84,7 @@ export default function ProfilePage() {
                 Available Roles
               </Typography>
               <Typography variant="body1">
-                {user?.roles?.join(', ') || 'None'}
+                {user?.role || 'None'}
               </Typography>
             </Box>
             <Box sx={{ mb: 2 }}>

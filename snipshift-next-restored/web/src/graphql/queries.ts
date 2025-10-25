@@ -1,5 +1,7 @@
 // GraphQL queries placeholder
-export const REGISTER_USER = `
+import { gql } from '@apollo/client';
+
+export const REGISTER_USER = gql`
   mutation RegisterUser($input: RegisterUserInput!) {
     registerUser(input: $input) {
       id
@@ -11,7 +13,7 @@ export const REGISTER_USER = `
   }
 `;
 
-export const GET_USER_ROLES = `
+export const GET_USER_ROLES = gql`
   query GetUserRoles {
     userRoles {
       id

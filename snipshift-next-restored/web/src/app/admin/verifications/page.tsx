@@ -60,7 +60,7 @@ export default function AdminVerificationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Check if user is admin
-  const isAdmin = user?.roles?.includes('admin');
+  const isAdmin = user?.role === 'admin';
 
   // GraphQL queries and mutations
   const { data, loading, refetch } = useQuery(GET_PENDING_VERIFICATIONS, {
