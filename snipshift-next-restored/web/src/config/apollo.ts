@@ -1,8 +1,30 @@
-// Apollo config placeholder
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+
+// Create HTTP link
+const httpLink = createHttpLink({
+  uri: process.env.NEXT_PUBLIC_API_BASE_URL 
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/graphql`
+    : '/api/graphql',
+});
+
+// Create Apollo Client
+export const apolloClient = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache(),
+  defaultOptions: {
+    watchQuery: {
+      errorPolicy: 'all',
+    },
+    query: {
+      errorPolicy: 'all',
+    },
+  },
+});
+
+// API connectivity test
 export const testApiConnectivity = async () => {
   try {
-    // Placeholder API connectivity test
-    const response = await fetch('/graphql', {
+    const response = await fetch('/api/graphql', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

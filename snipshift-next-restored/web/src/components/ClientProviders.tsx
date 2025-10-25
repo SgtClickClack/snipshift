@@ -3,8 +3,10 @@
 import React from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
+import { ApolloProvider } from '@apollo/client';
 import { AuthProvider } from '../contexts/AuthContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
+import { apolloClient } from '../config/apollo';
 
 // Create a custom theme that matches our design system
 const theme = createTheme({
@@ -112,13 +114,15 @@ const theme = createTheme({
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AuthProvider>
-        <NotificationProvider>
-          {children}
-        </NotificationProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ApolloProvider client={apolloClient}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AuthProvider>
+          <NotificationProvider>
+            {children}
+          </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ApolloProvider>
   );
 }
