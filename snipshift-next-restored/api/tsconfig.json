@@ -14,9 +14,8 @@
     "noEmit": false,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["./src/*"],
       "@shared/*": ["../shared/*"]
     },
     "declaration": false,
