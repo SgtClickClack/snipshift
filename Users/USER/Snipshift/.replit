@@ -14,8 +14,8 @@ packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn"
 # =============================================================================
 
 [deployment]
-build = ["sh", "-c", "npm ci --prefix snipshift-next/api --production=false && npm run --prefix snipshift-next/api build"]
-run = ["sh", "-c", "PORT=$PORT npm run --prefix snipshift-next/api start"]
+build = ["sh", "-c", "npm ci --prefix snipshift-next-restored/api --production=false && npm run --prefix snipshift-next-restored/api build && npm run --prefix snipshift-next-restored/api db:migrate"]
+run = ["sh", "-c", "PORT=$PORT npm run --prefix snipshift-next-restored/api start"]
 deploymentTarget = "cloudrun"
 
 [deployment.ports]
