@@ -25,6 +25,32 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
+ * Setup global error handlers for unhandled promise rejections and uncaught exceptions
+ * This ensures the application doesn't crash silently and logs errors properly
+ */
+function setupGlobalErrorHandlers(): void {
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // In production, you might want to exit the process, but for now we'll just log
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Exiting due to unhandled rejection in production');
+      process.exit(1);
+    }
+  });
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (error: Error) => {
+    console.error('Uncaught Exception:', error);
+    // Always exit on uncaught exceptions as the application is in an undefined state
+    process.exit(1);
+  });
+}
+
+// Setup error handlers immediately
+setupGlobalErrorHandlers();
+
+/**
  * Runs database migrations if DATABASE_URL is configured
  */
 async function runMigrations(pool: any): Promise<void> {
@@ -81,6 +107,7 @@ let userBankRepo: UserBankRepository;
 let userRepo: UserRepository;
 let pairingCodeRepo: PairingCodeRepository;
 let appFacade: AppFacade;
+let isInitialized: boolean = false;
 
 /**
  * Initializes the application asynchronously
@@ -89,7 +116,7 @@ let appFacade: AppFacade;
  * @throws Error if migrations fail or initialization fails
  */
 export async function initializeApp(): Promise<AppFacade> {
-  const databasePool = createDatabaseConnection();
+  databasePool = createDatabaseConnection();
 
   if (databasePool) {
     // Use PostgreSQL repositories
@@ -133,7 +160,16 @@ export async function initializeApp(): Promise<AppFacade> {
   );
 
   console.log('Chore Motivation App Core Initialized and Dependencies Wired');
+  isInitialized = true;
   return appFacade;
+}
+
+/**
+ * Checks if the application has been initialized
+ * @returns true if initialized, false otherwise
+ */
+export function isAppInitialized(): boolean {
+  return isInitialized;
 }
 
 /**
@@ -150,4 +186,14 @@ export function startApp(): void {
  * Note: This will be undefined until initializeApp() is called
  */
 export { appFacade };
+
+/**
+ * Gets the database pool if it exists
+ * Used for graceful shutdown
+ */
+let databasePool: any = null;
+
+export function getDatabasePool(): any {
+  return databasePool;
+}
 
