@@ -1,0 +1,54 @@
+{
+  "testUsers": {
+    "professional": {
+      "id": "test-professional-001",
+      "email": "barber.pro@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Professional",
+      "roles": ["professional"],
+      "currentRole": "professional"
+    },
+    "hub": {
+      "id": "test-hub-001",
+      "email": "shop.owner@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Hub Manager",
+      "roles": ["hub"],
+      "currentRole": "hub"
+    },
+    "business": {
+      "id": "test-business-001",
+      "email": "shop.owner@snipshift.com",
+      "password": "SecurePass123!",
+      "displayName": "Test Business Owner",
+      "roles": ["business"],
+      "currentRole": "business"
+    },
+    "admin": {
+      "id": "test-admin-001",
+      "email": "user@example.com",
+      "password": "SecurePassword123!",
+      "displayName": "Test Administrator",
+      "roles": ["admin"],
+      "currentRole": "admin"
+    }
+  },
+  "testJob": {
+    "id": "test-job-123",
+    "title": "Senior Barber - Weekend Shift",
+    "description": "Looking for an experienced barber to cover weekend shifts. Must have at least 3 years of experience and be available for Saturday and Sunday shifts.",
+    "hubId": "test-hub-001",
+    "location": {
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia"
+    },
+    "payRate": 35,
+    "payType": "hour",
+    "date": "2025-12-01T00:00:00.000Z",
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "skillsRequired": ["barbering", "customer service", "time management"]
+  }
+}
+
