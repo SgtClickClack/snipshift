@@ -26,6 +26,13 @@ This file tracks progress on the critical issues identified by the holistic code
     - Updated `build:server` script in root package.json to compile both `snipshift-next-restored/api` and `snipshift/server` directories using project references
     - Ensures proper module resolution for Drizzle ORM and database imports from `snipshift-next-restored/api/src/`
     - File paths: `snipshift/server/tsconfig.json`, `snipshift/server/utils/logger.ts`, `snipshift/package.json`
+- [x] Align test helpers (Cypress/Playwright) with actual API endpoints.
+  - Completed 2025-11-03: Verified and documented that all test helpers are correctly using the `/api/testing/sessions` endpoint:
+    - Cypress `cy.instantLogin()` and `cy.loginWithSession()` commands use `/api/testing/sessions` (lines 130, 217 in `snipshift/cypress/support/commands.ts`)
+    - Playwright `loginAsUser()` helper uses `/api/testing/sessions` (line 99 in `snipshift/tests/utils/auth-helpers.ts`)
+    - All helpers properly send session payload with userId, email, roles, currentRole, provider, and mode
+    - Debug test files that intercept `/api/login` are intentionally testing UI login flow, separate from programmatic helpers
+    - File paths: `snipshift/cypress/support/commands.ts`, `snipshift/tests/utils/auth-helpers.ts`
 
 #### Critical Priority 3: Frontend Module Health
 - [ ] Restore or implement missing shared/UI components (e.g., '@shared/types', '@/components/ui/button').
