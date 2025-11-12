@@ -19,7 +19,7 @@
     "types": ["node", "vite/client", "jest", "@testing-library/jest-dom"],
     "paths": {
       "@/*": ["./snipshift-next/web/src/*"],
-      "@shared/*": ["./shared/*"]
+      "@shared/*": ["./snipshift-next/web/src/shared/*", "./shared/*"]
     }
   }
 }
