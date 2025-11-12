@@ -33,6 +33,12 @@ This file tracks progress on the critical issues identified by the holistic code
     - All helpers properly send session payload with userId, email, roles, currentRole, provider, and mode
     - Debug test files that intercept `/api/login` are intentionally testing UI login flow, separate from programmatic helpers
     - File paths: `snipshift/cypress/support/commands.ts`, `snipshift/tests/utils/auth-helpers.ts`
+- [x] Implement VITE proxy configuration for API connectivity.
+  - Completed 2025-01-13: Added proxy configuration to VITE dev server to forward `/api` and `/graphql` requests from client (port 3002) to backend API (port 5000):
+    - Added `server.proxy` block to `vite.config.ts` with proxy rules for `/api` and `/graphql` endpoints
+    - Configured both proxies to target `http://localhost:5000` with `changeOrigin: true` and `secure: false` for local development
+    - Resolves API connectivity mismatch between VITE client and backend server
+    - File path: `snipshift/vite.config.ts`
 
 #### Critical Priority 3: Frontend Module Health
 - [ ] Restore or implement missing shared/UI components (e.g., '@shared/types', '@/components/ui/button').
