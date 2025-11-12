@@ -1,6 +1,6 @@
 {
   "include": ["snipshift-next/web/src/**/*", "shared/**/*", "server/**/*"],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "tests/**/*.spec.ts", "_client_DEACTIVATED/**/*"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "tests/**/*.spec.ts", "_client_DEACTIVATED/**/*", "client/**/*"],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
