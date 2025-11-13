@@ -1,6 +1,48 @@
 ### Snipshift Stabilization Tracking - Code Audit Fixes
 ---
 This file tracks progress on the critical issues identified by the holistic code audit.
+#### 2025-11-13: Cypress baseUrl Restoration & Full Suite Audit
+
+**Core Components**
+- `snipshift/cypress.config.ts`
+
+**Key Features**
+- Verified `baseUrl` restored to `http://localhost:3002`, re-enabling relative-route Cypress specs to exercise the Vite client correctly.
+- Captured latest end-to-end audit after configuration fix to surface true feature/state gaps (45 tests executed, 43 failing).
+
+**Integration Points**
+- `npm run start:ci:servers`
+- `npm run cypress:run`
+
+**File Paths**
+- `snipshift/cypress.config.ts`
+- `cypress-run.log`
+
+**Next Priority Task**
+- Triaging uncovered Cypress failures (missing signup navigation, auth form inputs, job marketplace dashboards, subscription APIs returning 404/timeout) to map against outstanding stabilization fixes.
+
+#### 2025-11-13: API Env Boot Hardening (Redis)
+
+**Core Components**
+- `snipshift-next-restored/api/src/index.ts`
+- `snipshift/package.json`
+
+**Key Features**
+- Force the API bootstrapper to load `snipshift-next-restored/api/.env` before initialization so Redis and database settings are always available.
+- Ensure CI/local scripts (`dev:server`, `start:dev`, `start:ci:servers`) pass the `.env` file into `tsx` via Node's `--env-file` support.
+
+**Integration Points**
+- `npm run dev:server`
+- `npm run start:dev`
+- `npm run test:e2e:ci`
+
+**File Paths**
+- `snipshift-next-restored/api/src/index.ts`
+- `snipshift/package.json`
+
+**Next Priority Task**
+- Add a non-blocking Redis guard (e.g., `SKIP_REDIS` default or retry suppression) so local CI runs stop flooding logs when Redis is unavailable.
+
 #### Critical Priority 1: Authentication & Session Stability (Completed: 90%)
 - [x] Migrate in-memory session (global.sessions) to Redis.
 - [x] Implement Google ID token verification (GraphQL/REST).
