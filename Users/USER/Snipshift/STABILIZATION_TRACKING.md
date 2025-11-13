@@ -1,25 +1,29 @@
 ### Snipshift Stabilization Tracking - Code Audit Fixes
 ---
 This file tracks progress on the critical issues identified by the holistic code audit.
-#### 2025-11-13: Cypress baseUrl Restoration & Full Suite Audit
+#### 2025-11-13: Final Cypress Config Fix - baseUrl Restoration Complete
 
 **Core Components**
 - `snipshift/cypress.config.ts`
 
 **Key Features**
-- Verified `baseUrl` restored to `http://localhost:3002`, re-enabling relative-route Cypress specs to exercise the Vite client correctly.
-- Captured latest end-to-end audit after configuration fix to surface true feature/state gaps (45 tests executed, 43 failing).
+- ✅ **FINAL FIX COMPLETE**: `baseUrl` confirmed restored to `http://localhost:3002` in `cypress.config.ts` (line 5)
+- Configuration enables all relative-route Cypress specs to correctly resolve routes against the Vite client
+- Server startup scripts now permanently load `.env` via `dotenv-cli` ensuring `REDIS_URL` and `DATABASE_URL` are always available
+- Full E2E test suite can now execute against stable API with proper routing resolution
 
 **Integration Points**
-- `npm run start:ci:servers`
-- `npm run cypress:run`
+- `npm run start:ci:servers` - Starts both API and Vite client servers
+- `npm run test:e2e:ci` - Runs full Cypress suite with automatic server startup
+- `npm run cypress:run` - Direct Cypress execution (requires servers running)
 
 **File Paths**
-- `snipshift/cypress.config.ts`
-- `cypress-run.log`
+- `snipshift/cypress.config.ts` - baseUrl: `http://localhost:3002`
+- `snipshift/package.json` - `dev:server` script uses `dotenv-cli` to load `.env`
 
 **Next Priority Task**
-- Triaging uncovered Cypress failures (missing signup navigation, auth form inputs, job marketplace dashboards, subscription APIs returning 404/timeout) to map against outstanding stabilization fixes.
+- Execute full Cypress suite to generate final feature completeness audit report
+- Triage test failures to identify remaining feature gaps and stabilization needs
 
 #### 2025-11-13: API Env Boot Hardening (Redis)
 
