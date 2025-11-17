@@ -5,6 +5,7 @@
   "scripts": {
     "start:ci:servers": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "test:e2e:ci": "start-server-and-test start:ci:servers http-get://localhost:3002 cypress:run",
+    "test:e2e:ci:job-posting": "start-server-and-test start:ci:servers http-get://localhost:3002 cypress:run:job-posting",
     "dev:start": "node start-dev.js",
     "dev:start:doppler": "doppler run -- node start-dev.js",
     "dev:server": "tsx watch snipshift-next-restored/api/src/index.ts",
@@ -49,6 +50,7 @@
     "cypress:run:shifts": "cypress run --spec \"cypress/e2e/02-shift-marketplace.cy.ts\"",
     "cypress:run:social": "cypress run --spec \"cypress/e2e/03-social-features-community.cy.ts\"",
     "cypress:run:tournaments": "cypress run --spec \"cypress/e2e/11-tournament-system.cy.ts\"",
+    "cypress:run:job-posting": "cypress run --spec \"cypress/e2e/jobPostingFlow.cy.ts\"",
     "cypress:component:open": "cypress open --component",
     "cypress:component:run": "cypress run --component",
     "test:fast": "cypress run --spec \"cypress/e2e/smoke-tests.cy.ts\" --config defaultCommandTimeout=5000,requestTimeout=5000,responseTimeout=5000",

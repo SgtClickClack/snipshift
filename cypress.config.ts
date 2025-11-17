@@ -4,7 +4,7 @@ export default defineConfig({
   e2e: {
     baseUrl: 'http://localhost:3002',
     pageLoadTimeout: 120000, // 120 seconds
-    specPattern: 'cypress/e2e/**/*.cy.ts',
+    specPattern: ['cypress/e2e/**/*.cy.ts', 'snipshift-next/web/e2e/**/*.cy.ts'],
     supportFile: 'cypress/support/e2e.ts',
     viewportWidth: 1280,
     viewportHeight: 720,
