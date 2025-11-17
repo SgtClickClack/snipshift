@@ -1,0 +1,407 @@
+
+> snipshift-root@1.0.0 test:e2e:ci
+> npm --prefix snipshift run test:e2e:ci
+
+
+> snipshift-api@2.0.0 test:e2e:ci
+> npm run pretest:cleanup && node scripts/manual-server-test.js
+
+
+> snipshift-api@2.0.0 pretest:cleanup
+> powershell -Command "try { Write-Host '🔧 Super-aggressive cleanup: Killing Node processes on ports 3002 and 5000...'; $currentPid = $PID; $p3002 = (Get-NetTCPConnection -LocalPort 3002 -State Listen -ErrorAction SilentlyContinue).OwningProcess -join ','; if ($p3002) { $p3002.Split(',') | ForEach-Object { if ($_ -ne $currentPid) { taskkill /PID $_ /F /T 2>$null } } }; $p5000 = (Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue).OwningProcess -join ','; if ($p5000) { $p5000.Split(',') | ForEach-Object { if ($_ -ne $currentPid) { taskkill /PID $_ /F /T 2>$null } } }; Write-Host '🔧 Killing other Node processes (excluding current)...'; Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $currentPid } | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host '⏳ Waiting 5 seconds for ports to be released...'; Start-Sleep -Seconds 5; Write-Host '✅ Cleanup complete' } catch { Write-Host '⚠️ Cleanup completed with errors (continuing anyway)' }"
+
+?? Super-aggressive cleanup: Killing Node processes on ports 3002 and 5000...
+?? Killing other Node processes (excluding current)...
+? Waiting 5 seconds for ports to be released...
+? Cleanup complete
+🚀 Starting E2E test suite with manual server management...
+🔧 Performing super-aggressive cleanup before starting servers...
+⏳ Waiting 5 seconds for ports to be fully released...
+✅ All ports are free after cleanup
+🚀 Starting API server on port 5000 using tsx...
+[DEBUG] Setting NODE_ENV to: test
+🚀 Starting client server on port 3002...
+⏳ Waiting 45 seconds for servers to be ready...
+   - Client: http://localhost:3002
+   - API: http://localhost:5000/health
+(node:40844) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+> snipshift-api@2.0.0 dev:client
+> vite --port 3002 --strictPort
+
+[2m11:54:49 am[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Forced re-optimization of dependencies
+
+  [32m[1mVITE[22m v7.2.2[39m  [2mready in [0m[1m645[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3002[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+⚠️  STRIPE_SECRET_KEY not provided - Stripe functionality disabled
+⚠️  PayPal credentials not provided - PayPal functionality disabled
+⚠️  STRIPE_SECRET_KEY not provided - Stripe functionality disabled
+⚠️  PayPal credentials not provided - PayPal functionality disabled
+⚠️  Payment Configuration Warnings:
+   - No payment providers configured. Payment features will be disabled.
+✅ GraphQL schema created successfully
+[DEBUG] Starting SnipShift API server...
+[DEBUG] Main startup function called
+[DEBUG] Starting server initialization...
+[DEBUG] Skipping database connection (SKIP_DB=1)
+[32minfo[39m: Skipping database connection (SKIP_DB=1) {"service":"snipshift-api","timestamp":"2025-11-17T01:54:54.635Z"}
+[DEBUG] Attempting to connect to Redis (parallel)...
+[32minfo[39m: Initializing Redis connection to: redis://localhost:6379 {"service":"snipshift-api","timestamp":"2025-11-17T01:54:54.646Z"}
+[32minfo[39m: Redis connection test successful {"service":"snipshift-api","timestamp":"2025-11-17T01:54:54.731Z"}
+[DEBUG] Redis connection successful
+[32minfo[39m: Redis connected successfully {"service":"snipshift-api","timestamp":"2025-11-17T01:54:54.731Z"}
+[DEBUG] Checking Stripe configuration...
+[DEBUG] STRIPE_SECRET_KEY not provided, continuing without payment processing
+[33mwarn[39m: STRIPE_SECRET_KEY not provided, continuing in dev mode without payment processing {"service":"snipshift-api","timestamp":"2025-11-17T01:54:54.732Z"}
+[DEBUG] Creating Express application and HTTP server...
+[DEBUG] Express app and HTTP server created successfully
+[DEBUG] Configuring Express middleware...
+[DEBUG] Setting up Helmet security middleware...
+[DEBUG] Helmet middleware configured
+[DEBUG] Setting up CORS middleware...
+[DEBUG] CORS middleware configured
+[DEBUG] Setting up rate limiting middleware...
+[DEBUG] Rate limiting middleware configured
+[DEBUG] NODE_ENV is: test
+[DEBUG] Registering /api/testing/sessions route (NODE_ENV is not production)
+[DEBUG] /api/testing/sessions route registered successfully
+⚠️ WebSocket server disabled (ws/graphql-ws not available)
+[DEBUG] Creating Apollo Server...
+[DEBUG] Starting Apollo Server...
+[DEBUG] Apollo Server started successfully
+[DEBUG] Applying Apollo middleware to Express app...
+[DEBUG] Apollo middleware applied successfully
+[DEBUG] Environment PORT: 5000
+[DEBUG] Final PORT: 5000
+[DEBUG] FINAL STEP: Attempting to start HTTP listener on 0.0.0.0:5000...
+[SUCCESS] Server is running and listening on http://0.0.0.0:5000
+[32minfo[39m: 🚀 Server running on 0.0.0.0:5000 {"service":"snipshift-api","timestamp":"2025-11-17T01:54:54.950Z"}
+[32minfo[39m: 📊 GraphQL endpoint: http://0.0.0.0:5000/graphql {"service":"snipshift-api","timestamp":"2025-11-17T01:54:54.952Z"}
+
+[SERVER_READY] Port 5000 is now accepting connections
+🔍 Verifying servers are responding...
+✅ Both servers verified to be running and responding
+✅ Startup delay complete. Servers verified running. Starting Cypress tests...
+🧪 Running Cypress tests...
+
+> snipshift-api@2.0.0 cypress:run
+> node --max-old-space-size=4096 node_modules/cypress/bin/cypress run
+
+
+
+DevTools listening on ws://127.0.0.1:54040/devtools/browser/38db1d49-4e6e-45ed-ab23-e0b600a61da8
+
+====================================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        15.6.0                                                                         │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v24.4.1 (C:\Program Files\nodejs\node.exe)                                     │
+  │ Specs:          7 found (01-user-onboarding-debug.cy.ts, debug-login-detailed.cy.ts, debug-log │
+  │                 in-flow.cy.ts, hubOwnerApplications.cy.ts, paymentSubscriptionFlow.cy.ts, prof │
+  │                 essionalApplications.cy.ts, payments/checkout-flow.cy.ts)                      │
+  │ Searched:       cypress/e2e/**/*.cy.ts                                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  01-user-onboarding-debug.cy.ts                                                  (1 of 7)
+
+
+  User Onboarding Flow - DEBUG
+    √ should navigate to signup page from homepage (9910ms)
+
+
+  1 passing (10s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     9 seconds                                                                        │
+  │ Spec Ran:     01-user-onboarding-debug.cy.ts                                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\Users\USER\Snipshift\snipshift\cypress\screenshots\01-user-onboarding-debug.c     (1280x720)
+     y.ts\before-each-landing-page.png                                                              
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  debug-login-detailed.cy.ts                                                      (2 of 7)
+
+
+  🔍 Detailed Login Flow Debug
+    √ should capture complete login flow data (755ms)
+    √ should verify AuthContext state after programmatic login (294ms)
+    √ should check session cookie on subsequent requests (78ms)
+
+
+  3 passing (1s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     debug-login-detailed.cy.ts                                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  debug-login-flow.cy.ts                                                          (3 of 7)
+
+
+  Debug: Login Flow Investigation
+    √ should verify session-based login and redirect to dashboard (1069ms)
+
+
+  1 passing (1s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     debug-login-flow.cy.ts                                                           │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\Users\USER\Snipshift\snipshift\cypress\screenshots\debug-login-flow.cy.ts\log     (1280x720)
+     in-attempt-result.png                                                                          
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  hubOwnerApplications.cy.ts                                                      (4 of 7)
+
+
+  Hub Owner Application Review Feature
+    √ Hub owner should be able to view and review applications (1295ms)
+    √ Hub owner should be able to accept an application (1137ms)
+    √ Hub owner should be able to reject an application (1101ms)
+    √ Hub owner should see empty state when no applications exist (850ms)
+    √ Hub owner should see cover letter in application details (877ms)
+    √ Hub owner should see application date in application card (857ms)
+
+
+  6 passing (6s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        6                                                                                │
+  │ Passing:      6                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     6 seconds                                                                        │
+  │ Spec Ran:     hubOwnerApplications.cy.ts                                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  paymentSubscriptionFlow.cy.ts                                                   (5 of 7)
+
+
+  Payment Subscription Flow - E2E Test Suite
+    Subscription Plans Display
+      √ should display available subscription plans (1570ms)
+      √ should highlight selected plan (1399ms)
+      √ should show savings badge for yearly plans (1286ms)
+    Subscription Checkout Flow
+      √ should open checkout modal when plan is selected (1428ms)
+      √ should display subscription summary in checkout (1414ms)
+      1) should show Stripe payment form in checkout
+      √ should allow canceling checkout (1817ms)
+      √ should show success message after successful subscription (1383ms)
+    Subscription Management
+      √ should display active subscription details (1871ms)
+      √ should show next billing date (1257ms)
+      √ should allow canceling subscription (1318ms)
+      √ should show cancellation options in dialog (1317ms)
+      √ should confirm cancellation when confirmed (1923ms)
+    Payment History
+      √ should display payment history (1218ms)
+      √ should show payment transactions with details (1242ms)
+      √ should show download receipt button for each payment (1234ms)
+      √ should display empty state when no payments exist (1230ms)
+    Webhook Event Simulation
+      √ should handle subscription created webhook event (63ms)
+      √ should handle payment intent succeeded webhook event (54ms)
+      √ should handle invoice paid webhook event (62ms)
+    Error Handling
+      √ should handle subscription creation failure (1335ms)
+      √ should handle payment history loading failure (1336ms)
+    Integration Flow
+      √ should complete full subscription flow: select plan -> checkout -> subscribe -> view in history (2540ms)
+
+
+  22 passing (42s)
+  1 failing
+
+  1) Payment Subscription Flow - E2E Test Suite
+       Subscription Checkout Flow
+         should show Stripe payment form in checkout:
+     AssertionError: Timed out retrying after 10000ms: Expected to find content: 'Payment Details' within the element: <div.min-h-screen.bg-gradient-to-br.from-steel-50.via-white.to-chrome-light/20> but never did.
+      at Context.eval (webpack://snipshift-api/./cypress/e2e/paymentSubscriptionFlow.cy.ts:269:39)
+      at withinFn (http://localhost:3002/__cypress/runner/cypress_runner.js:135335:8)
+      at <unknown> (http://localhost:3002/__cypress/runner/cypress_runner.js:135416:16)
+      at __WEBPACK_DEFAULT_EXPORT__ (http://localhost:3002/__cypress/runner/cypress_runner.js:133269:10)
+      at Context.within (http://localhost:3002/__cypress/runner/cypress_runner.js:135402:67)
+      at wrapped (http://localhost:3002/__cypress/runner/cypress_runner.js:145681:19)
+
+
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        23                                                                               │
+  │ Passing:      22                                                                               │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     41 seconds                                                                       │
+  │ Spec Ran:     paymentSubscriptionFlow.cy.ts                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\Users\USER\Snipshift\snipshift\cypress\screenshots\paymentSubscriptionFlow.cy     (1280x720)
+     .ts\Payment Subscription Flow - E2E Test Suite -- Subscription Checkout Flow --                
+     should show Stripe payment form in checkout (failed).png                                       
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  professionalApplications.cy.ts                                                  (6 of 7)
+
+
+  Professional Application Status Tracker
+    √ Professional should be able to view all their applications (1138ms)
+    √ Professional should be able to filter applications by status (1132ms)
+    √ Professional should see application status update when hub owner accepts application (2740ms)
+    √ Professional should see application status update when hub owner rejects application (1503ms)
+    √ Professional should see empty state when no applications exist (807ms)
+    √ Professional should see empty state when filtering returns no results (831ms)
+    √ Professional should see job details in application cards (781ms)
+    √ Professional should see responded date when application has been reviewed (752ms)
+    √ Professional should see loading state while applications are being fetched (1291ms)
+    √ Professional should see error state when API request fails (745ms)
+    √ Professional should see applications sorted by date (newest first) (752ms)
+
+
+  11 passing (13s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        11                                                                               │
+  │ Passing:      11                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     12 seconds                                                                       │
+  │ Spec Ran:     professionalApplications.cy.ts                                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  payments/checkout-flow.cy.ts                                                    (7 of 7)
+
+
+  E2E Payment: Stripe Checkout Flow
+    √ should navigate to checkout and successfully create a Stripe session (1436ms)
+
+
+  1 passing (2s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     payments/checkout-flow.cy.ts                                                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+====================================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ √  01-user-onboarding-debug.cy.ts           00:09        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  debug-login-detailed.cy.ts               00:01        3        3        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  debug-login-flow.cy.ts                   00:01        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  hubOwnerApplications.cy.ts               00:06        6        6        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ×  paymentSubscriptionFlow.cy.ts            00:41       23       22        1        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  professionalApplications.cy.ts           00:12       11       11        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  payments/checkout-flow.cy.ts             00:01        1        1        -        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ×  1 of 7 failed (14%)                      01:14       46       45        1        -        -  
+
+
+✅ Cypress tests completed with exit code 1
+
+🛑 Cleaning up processes...
