@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Job } from '../types';
@@ -6,6 +6,7 @@ import { apiRequest } from '../lib/apiRequest';
 
 export default function BusinessDashboard() {
   const queryClient = useQueryClient();
+  const [deletionError, setDeletionError] = useState<string | null>(null);
 
   const { data: jobs, isLoading, error } = useQuery<Job[]>({
     queryKey: ['jobs'],
@@ -16,12 +17,21 @@ export default function BusinessDashboard() {
     mutationFn: (jobId: string) =>
       apiRequest<void>(`/api/jobs/${jobId}`, { method: 'DELETE' }),
     onSuccess: () => {
+      // Clear any previous deletion errors
+      setDeletionError(null);
       // Invalidate and refetch jobs query after successful deletion
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+    onError: (error: Error) => {
+      // Handle deletion errors and provide user feedback
+      setDeletionError(error.message || 'Failed to delete job. Please try again.');
+      console.error('Job deletion failed:', error);
     },
   });
 
   const handleDelete = (jobId: string) => {
+    // Clear any previous errors
+    setDeletionError(null);
     if (window.confirm('Are you sure you want to delete this job?')) {
       deleteMutation.mutate(jobId);
     }
@@ -55,6 +65,9 @@ export default function BusinessDashboard() {
                   Edit
                 </button>
               </Link>
+              <Link to={`/jobs/${job.id}/applications`} data-testid="button-view-applications">
+                View Applications
+              </Link>
               <button
                 data-testid="delete-job-button"
                 onClick={() => handleDelete(job.id)}
@@ -75,6 +88,11 @@ export default function BusinessDashboard() {
       <Link to="/create-job" data-testid="button-post-job">
         Post a Job
       </Link>
+      {deletionError && (
+        <div data-testid="deletion-error" style={{ color: 'red', margin: '10px 0' }}>
+          {deletionError}
+        </div>
+      )}
       <div data-testid="job-list-container">
         {renderJobList()}
       </div>
