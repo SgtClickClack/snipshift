@@ -1,6 +1,6 @@
 {
-  "buildCommand": "rm -rf node_modules package-lock.json .npm && npm cache clean --force && sleep 2 && npm install --force --legacy-peer-deps && npm run build:client",
+  "buildCommand": "cd snipshift && rm -rf node_modules package-lock.json .npm && npm cache clean --force && sleep 2 && npm install --force --legacy-peer-deps && npm run build:client",
   "installCommand": "echo 'Install handled in buildCommand'",
   "framework": null,
-  "outputDirectory": "dist"
+  "outputDirectory": "snipshift/snipshift-next/web/dist"
 }
