@@ -1,0 +1,7 @@
+{
+  "buildCommand": "(npm cache clean --force || true) && rm -rf node_modules package-lock.json && sleep 1 && npm install --force --legacy-peer-deps && npm run build:client",
+  "installCommand": "npm install --force --legacy-peer-deps",
+  "framework": null,
+  "outputDirectory": "snipshift/dist"
+}
+
