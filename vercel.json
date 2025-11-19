@@ -1,12 +1,11 @@
 {
-  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/src/index.ts"
     },
     {
-      "source": "/((?!api/|.*\\..*|_next).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
