@@ -1,0 +1,32 @@
+# SnipShift V2 - Replit Configuration
+# Optimized for current project structure
+
+modules = ["nodejs-20", "web"]
+run = "cd snipshift && npm run dev"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist", "coverage", "test-results", "playwright-report", "cypress/videos", "cypress/screenshots"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["google-cloud-sdk", "glib", "gtk3", "nss", "dnsutils", "openssh_hpn", "stripe-cli", "imagemagick", "jq"]
+
+# =============================================================================
+# DEPLOYMENT CONFIGURATION
+# =============================================================================
+
+[deployment]
+build = ["sh", "-c", "npm ci --prefix snipshift-next-restored/api --production=false && npm run --prefix snipshift-next-restored/api build && npm run --prefix snipshift-next-restored/api db:migrate"]
+run = ["sh", "-c", "PORT=$PORT npm run --prefix snipshift-next-restored/api start"]
+deploymentTarget = "cloudrun"
+
+[deployment.ports]
+localPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 24678
+externalPort = 3000
+
