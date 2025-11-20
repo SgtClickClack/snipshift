@@ -159,3 +159,27 @@ This file tracks development progress on the Snipshift project starting from 202
 **Code Organization & Quality**
 - Centralizes provider composition in one place, preventing future regressions when adding global context wrappers.
 
+---
+
+#### 2025-11-20: Fix Missing Styles - Hard-Link PostCSS Configuration
+
+**Core Components**
+- `postcss.config.js`
+
+**Key Features**
+- Explicitly linked `tailwind.config.js` in `postcss.config.js` to ensure PostCSS can locate the configuration file during Vercel builds.
+- Verified that `index.css` is imported as the first line in `src/main.tsx` to ensure correct cascade order.
+
+**Integration Points**
+- PostCSS ↔ Tailwind CSS configuration
+- Vite build process
+
+**File Paths**
+- `postcss.config.js`
+- `src/main.tsx` (verified)
+
+**Next Priority Task**
+- Monitor deployment to confirm styles are rendering correctly.
+
+**Code Organization & Quality**
+- Removes ambiguity in configuration file resolution, making the build process more robust across different environments.
