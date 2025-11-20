@@ -144,3 +144,51 @@
 
 **Next Priority Task**
 - Implement Job Detail View & Application Flow.
+
+#### 2025-11-20: Production Deployment & Configuration
+
+**Core Components**
+- Vercel Deployment
+- Environment Configuration
+
+**Key Features**
+- **Environment Setup**:
+  - Configured critical Firebase environment variables (`VITE_FIREBASE_API_KEY`, etc.) for Preview, Development, and Production environments on Vercel.
+  - Resolved `auth/invalid-api-key` runtime error.
+- **Deployment**:
+  - Successfully deployed to Vercel Preview for validation.
+  - Successfully deployed to Vercel Production (`snipshift-web` project).
+- **Verification**:
+  - Verified application build and runtime in cloud environment.
+  - Confirmed production URL accessibility.
+
+**Integration Points**
+- Vercel CLI ↔ Vercel Cloud Platform
+- Environment Variables ↔ Frontend Build Process
+
+**File Paths**
+- `vercel.json` (Configuration)
+- `.vercel/` (Local CLI state)
+
+**Next Priority Task**
+- Monitor production logs for any runtime issues.
+
+#### 2025-11-20: UI Asset Updates
+
+**Core Components**
+- Navbar
+- Hero
+
+**Key Features**
+- Updated logo references to use `logo-white.png` for transparency and correct background handling.
+- Fixed visibility issue with logo on dark backgrounds where the previous non-transparent logo was creating visual artifacts or was invisible.
+
+**Integration Points**
+- N/A
+
+**File Paths**
+- `src/components/navbar.tsx`
+- `src/components/hero.tsx`
+
+**Next Priority Task**
+- Verify other assets and ensure consistency across the application.
