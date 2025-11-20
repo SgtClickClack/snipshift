@@ -21,6 +21,7 @@ const firebaseConfig = apiKey ? {
   storageBucket: sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
   messagingSenderId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
   appId: sanitizeEnv(import.meta.env.VITE_FIREBASE_APP_ID),
+  measurementId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID),
 } : fallbackConfig;
 
 // Debug Firebase config (dev only)
