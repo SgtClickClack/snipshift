@@ -20,3 +20,21 @@
 
 **Next Priority Task**
 - Verify visual appearance in browser.
+
+#### 2025-11-20: Hero Logo Update
+
+**Core Components**
+- `src/components/hero.tsx`
+
+**Key Features**
+- Switched hero logo to `/logo-white.png` to resolve background and visibility issues.
+- Increased logo size from `h-20` to `h-48` (approx 2.5x larger) for better visibility.
+
+**Integration Points**
+- N/A
+
+**File Paths**
+- `src/components/hero.tsx`
+
+**Next Priority Task**
+- Verify visual appearance in browser.
