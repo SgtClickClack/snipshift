@@ -110,3 +110,37 @@
 
 **Next Priority Task**
 - Implement "Recent Activity" feed in User Dashboard.
+
+#### 2025-11-20: Shift Marketplace (Job Feed & Map)
+
+**Core Components**
+- `src/pages/job-feed.tsx`
+- `src/components/job-feed/google-map-view.tsx`
+- `api/src/repositories/jobs.repository.ts`
+- `api/src/db/schema.ts`
+
+**Key Features**
+- **Backend (Job Search)**:
+  - Extended `jobs` schema with `lat`, `lng`, `shopName`, `address`.
+  - Updated `getJobs` repo to support city/date filtering.
+  - Enhanced `GET /api/jobs` to return location data.
+- **Frontend (Marketplace)**:
+  - Created `JobFeedPage` with toggleable List/Map views.
+  - Integrated `GoogleMapView` with real job data (removed random mock coordinates).
+  - Added search bar and filter placeholders.
+  - Wired navigation via Navbar "Find Shifts" link.
+
+**Integration Points**
+- `JobFeedPage` ↔ `GET /api/jobs`
+- `GoogleMapView` ↔ Real Lat/Lng Data
+
+**File Paths**
+- `src/pages/job-feed.tsx` (New)
+- `api/src/db/schema.ts`
+- `api/src/repositories/jobs.repository.ts`
+- `src/lib/api.ts`
+- `src/App.tsx`
+- `src/components/navbar.tsx`
+
+**Next Priority Task**
+- Implement Job Detail View & Application Flow.
