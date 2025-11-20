@@ -5,13 +5,7 @@ import { Scissors } from "lucide-react";
 export default function Hero() {
   return (
     <div 
-      className="relative text-white py-20 overflow-hidden"
-      style={{
-        backgroundImage: `linear-gradient(rgba(168, 85, 247, 0.05), rgba(30, 64, 175, 0.05)), url('/hero-background.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
+      className="relative text-white py-20 overflow-hidden bg-steel-900"
     >
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="flex justify-center mb-8">
@@ -46,4 +40,3 @@ export default function Hero() {
     </div>
   );
 }
-
