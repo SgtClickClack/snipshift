@@ -3,10 +3,11 @@
 // Values are public and safe to commit for frontend apps
 
 export const fallbackConfig = {
-  apiKey: "AIzaSyB...", // Will replace with actual key if provided by user or found in codebase
+  apiKey: "AIzaSyAeEQ0qFLP_w_8wpD3I9x7SEK5qhxeu0_I",
   authDomain: "snipshift-75b04.firebaseapp.com",
   projectId: "snipshift-75b04",
   storageBucket: "snipshift-75b04.firebasestorage.app",
-  messagingSenderId: "399353553154",
-  appId: "1:399353553154:web:33f12993489424248a64a0"
+  messagingSenderId: "769818802438",
+  appId: "1:769818802438:web:37254646426bd6aaf3c687",
+  measurementId: "G-LVF9BT8EQ2"
 };

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
+import { getAnalytics } from "firebase/analytics";
 import { fallbackConfig } from "./firebase-fallback";
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
@@ -27,7 +28,9 @@ const firebaseConfig = apiKey ? {
   authDomain,
   projectId,
   storageBucket,
+  messagingSenderId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
   appId: sanitizeEnv(import.meta.env.VITE_FIREBASE_APP_ID),
+  measurementId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID),
 } : fallbackConfig;
 
 // Log configuration status (safe for production, doesn't expose secrets)
@@ -48,6 +51,7 @@ if (!firebaseConfig.apiKey) {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 // Configure Google provider
 googleProvider.addScope('email');
