@@ -27,7 +27,59 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api', usersRouter);
 
 // Fallback in-memory store for when DATABASE_URL is not configured (dev only)
-let mockJobs: any[] = [];
+// Mock jobs data for development/testing
+const mockJobs = [
+  {
+    id: 'job-1',
+    title: 'Hair Stylist Needed',
+    shopName: 'Downtown Salon',
+    rate: '$25/hour',
+    date: '2024-12-20',
+    lat: 40.7128,
+    lng: -74.0060,
+    location: '123 Main St, New York, NY 10001',
+  },
+  {
+    id: 'job-2',
+    title: 'Barber Position Available',
+    shopName: 'Classic Cuts',
+    rate: '$30/hour',
+    date: '2024-12-21',
+    lat: 40.7589,
+    lng: -73.9851,
+    location: '456 Broadway, New York, NY 10013',
+  },
+  {
+    id: 'job-3',
+    title: 'Part-time Stylist',
+    shopName: 'Beauty Bar',
+    rate: '$22/hour',
+    date: '2024-12-22',
+    lat: 40.7505,
+    lng: -73.9934,
+    location: '789 5th Ave, New York, NY 10022',
+  },
+  {
+    id: 'job-4',
+    title: 'Senior Hair Stylist',
+    shopName: 'Elite Hair Studio',
+    rate: '$35/hour',
+    date: '2024-12-23',
+    lat: 40.7282,
+    lng: -73.9942,
+    location: '321 Greenwich St, New York, NY 10013',
+  },
+  {
+    id: 'job-5',
+    title: 'Color Specialist Wanted',
+    shopName: 'Color Me Beautiful',
+    rate: '$28/hour',
+    date: '2024-12-24',
+    lat: 40.7614,
+    lng: -73.9776,
+    location: '654 Park Ave, New York, NY 10021',
+  },
+];
 
 // Health check endpoint
 app.get('/health', asyncHandler(async (req, res) => {
@@ -168,21 +220,27 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
 
   if (result) {
     // Transform database results to match frontend expectations
-    const transformedJobs = result.data.map((job) => ({
-      id: job.id,
-      title: job.title,
-      payRate: job.payRate,
-      description: job.description,
-      date: job.date,
-      startTime: job.startTime,
-      endTime: job.endTime,
-      shopName: job.shopName,
-      address: job.address,
-      city: job.city,
-      state: job.state,
-      lat: job.lat ? parseFloat(job.lat) : undefined,
-      lng: job.lng ? parseFloat(job.lng) : undefined,
-    }));
+    const transformedJobs = result.data.map((job) => {
+      // Construct location string from address components
+      const locationParts = [job.address, job.city, job.state].filter(Boolean);
+      const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+
+      return {
+        id: job.id,
+        title: job.title,
+        shopName: job.shopName,
+        rate: job.payRate,
+        date: job.date,
+        lat: job.lat ? parseFloat(job.lat) : undefined,
+        lng: job.lng ? parseFloat(job.lng) : undefined,
+        location,
+        // Include additional fields for compatibility
+        payRate: job.payRate,
+        description: job.description,
+        startTime: job.startTime,
+        endTime: job.endTime,
+      };
+    });
 
     // Include pagination metadata if pagination was requested
     if (limit !== undefined || offset !== undefined) {
@@ -198,7 +256,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
     return;
   }
 
-  // Fallback to in-memory storage if database is not available
+  // Fallback to mock data when database is not available
   res.status(200).json(mockJobs);
 }));
 

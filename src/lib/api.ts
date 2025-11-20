@@ -26,5 +26,7 @@ export async function fetchJobs(params: JobFilterParams = {}) {
   if (params.offset) query.append('offset', params.offset.toString());
   
   const res = await apiRequest('GET', `/api/jobs?${query.toString()}`);
-  return res.json();
+  const data = await res.json();
+  // Handle both array response and paginated response
+  return Array.isArray(data) ? data : (data.data || []);
 }

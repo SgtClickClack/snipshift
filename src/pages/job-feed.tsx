@@ -9,26 +9,25 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { MapPin, Clock, DollarSign, Filter } from 'lucide-react';
 
-// Temporary type definition if not imported
+// Job type matching API response structure
 interface JobType {
   id: string;
   title: string;
-  payRate: string;
-  description: string;
-  date: string;
-  startTime: string;
-  endTime: string;
   shopName?: string;
+  rate?: string;
+  payRate?: string; // For backward compatibility
+  date: string;
+  lat?: number;
+  lng?: number;
+  location?: string; // Full location string from API
+  // Additional fields
+  description?: string;
+  startTime?: string;
+  endTime?: string;
   address?: string;
   city?: string;
   state?: string;
-  lat?: number;
-  lng?: number;
   hubId?: string;
-  location: {
-    city: string;
-    state: string;
-  };
   skillsRequired?: string[];
 }
 
@@ -36,10 +35,10 @@ export default function JobFeedPage() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
   
-  // Default center (Sydney)
-  const [centerLocation, setCenterLocation] = useState({ lat: -33.8688, lng: 151.2093 });
+  // Default center (New York - matching mock data)
+  const [centerLocation, setCenterLocation] = useState({ lat: 40.7128, lng: -74.0060 });
   const [radius, setRadius] = useState(50);
-  const [searchLocation, setSearchLocation] = useState('Sydney');
+  const [searchLocation, setSearchLocation] = useState('New York');
 
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
@@ -59,15 +58,35 @@ export default function JobFeedPage() {
     );
   }
 
-  const jobList = (jobs || []).map((job: any) => ({
-    ...job,
-    // Normalize location data if needed
-    location: {
-      city: job.city || 'Unknown',
-      state: job.state || ''
-    },
-    hubId: 'HUB-001' // Mock hub ID for now
-  }));
+  // Normalize jobs to ensure consistent structure
+  const jobList = (jobs || []).map((job: any) => {
+    // Extract city and state from location string if needed
+    let locationCity = job.city || 'Unknown';
+    let locationState = job.state || '';
+    
+    if (job.location && typeof job.location === 'string') {
+      // Parse location string like "123 Main St, New York, NY 10001"
+      const parts = job.location.split(',').map((p: string) => p.trim());
+      if (parts.length >= 2) {
+        locationCity = parts[parts.length - 2] || locationCity;
+        locationState = parts[parts.length - 1]?.split(' ')[0] || locationState;
+      }
+    }
+    
+    return {
+      ...job,
+      // Use rate if available, otherwise payRate
+      rate: job.rate || job.payRate,
+      payRate: job.rate || job.payRate,
+      // Normalize location data
+      location: job.location || (locationCity && locationState ? `${locationCity}, ${locationState}` : undefined),
+      locationCity,
+      locationState,
+      // Ensure coordinates are numbers
+      lat: job.lat ? Number(job.lat) : undefined,
+      lng: job.lng ? Number(job.lng) : undefined,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -104,9 +123,9 @@ export default function JobFeedPage() {
             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-steel-400 h-4 w-4" />
             <input 
               type="text" 
-              placeholder="Search by location (e.g. Sydney)" 
+              placeholder="Search by location (e.g. New York)" 
               className="w-full pl-10 pr-4 py-2 border border-steel-200 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-              defaultValue="Sydney"
+              defaultValue="New York"
             />
           </div>
           <Button variant="outline" className="flex items-center gap-2">
@@ -133,19 +152,31 @@ export default function JobFeedPage() {
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-lg text-steel-900">{job.title}</h3>
                       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                        ${job.payRate}/hr
+                        {job.rate || job.payRate || 'Rate TBD'}
                       </Badge>
                     </div>
                     
                     <div className="space-y-2 text-sm text-steel-600 mb-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{job.location.city}, {job.location.state}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>{job.date} • {job.startTime} - {job.endTime}</span>
-                      </div>
+                      {job.location && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{job.location}</span>
+                        </div>
+                      )}
+                      {job.date && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span>
+                            {job.date}
+                            {job.startTime && job.endTime && ` • ${job.startTime} - ${job.endTime}`}
+                          </span>
+                        </div>
+                      )}
+                      {job.shopName && (
+                        <div className="text-steel-500 text-xs">
+                          {job.shopName}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-2">

@@ -1,51 +1,40 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { fallbackConfig } from "./firebase-fallback";
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
-const sanitizeEnv = (val: string | undefined) => {
-  if (!val || val === 'undefined' || val === 'null') return undefined;
+const sanitizeEnv = (val: string | undefined): string => {
+  if (!val || val === 'undefined' || val === 'null') {
+    throw new Error('Firebase environment variable is missing or invalid');
+  }
   // Remove all whitespace including newlines, carriage returns, tabs, etc.
   // Also remove quotes if they were accidentally included in the value
-  return String(val).replace(/[\s"']/g, '');
+  const sanitized = String(val).replace(/[\s"']/g, '');
+  if (!sanitized) {
+    throw new Error('Firebase environment variable is empty after sanitization');
+  }
+  return sanitized;
 };
 
-const projectId = sanitizeEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID);
-
-// Prioritize explicit auth domain, fallback to constructed one
-const authDomain = sanitizeEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || 
-  (projectId ? `${projectId}.firebaseapp.com` : undefined);
-
-const storageBucket = sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || 
-  (projectId ? `${projectId}.firebasestorage.app` : undefined);
-
-const apiKey = sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY);
-
-// Construct config with fallback logic
-const firebaseConfig = apiKey ? {
-  apiKey,
-  authDomain,
-  projectId,
-  storageBucket,
+// Explicitly load all required Firebase configuration from environment variables
+// If any are missing, the app will fail to initialize (no fallbacks)
+const firebaseConfig = {
+  apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY),
+  authDomain: sanitizeEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
+  projectId: sanitizeEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID),
+  storageBucket: sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
   messagingSenderId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
   appId: sanitizeEnv(import.meta.env.VITE_FIREBASE_APP_ID),
   measurementId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID),
-} : fallbackConfig;
+};
 
 // Log configuration status (safe for production, doesn't expose secrets)
 console.log('🔥 Firebase Config Status:', {
   authDomain: firebaseConfig.authDomain,
   projectId: firebaseConfig.projectId,
   apiKey: firebaseConfig.apiKey ? `Set (${firebaseConfig.apiKey.substring(0, 5)}...)` : 'Missing',
-  appId: (firebaseConfig as any).appId ? 'Set' : 'Missing',
+  appId: firebaseConfig.appId ? 'Set' : 'Missing',
 });
-
-if (!firebaseConfig.apiKey) {
-  console.error('❌ Firebase API Key is missing! Check VITE_FIREBASE_API_KEY environment variable.');
-} else if (firebaseConfig === fallbackConfig) {
-  console.warn('⚠️ Using fallback Firebase configuration. Environment variables may be missing.');
-}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
