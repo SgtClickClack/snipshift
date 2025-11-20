@@ -1,20 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
 import { Scissors } from "lucide-react";
 import GoogleAuthButton from "@/components/auth/google-auth-button";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -25,10 +24,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await apiRequest("POST", "/api/login", formData);
-      const user = await response.json();
-      
-      login(user);
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
       
       toast({
         title: "Login successful",
@@ -36,8 +32,10 @@ export default function LoginPage() {
       });
 
       // Redirect to home for role selection
+      // Auth state sync happens via onAuthStateChanged in AuthContext
       navigate("/home");
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: "Invalid email or password",
@@ -100,8 +98,6 @@ export default function LoginPage() {
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
-
-
 
             <div className="my-6">
               <div className="relative">

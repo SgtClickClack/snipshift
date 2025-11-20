@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { auth } from "./firebase";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -13,12 +14,24 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const isSafe = method.toUpperCase() === 'GET' || method.toUpperCase() === 'HEAD' || method.toUpperCase() === 'OPTIONS';
+  
+  const headers: Record<string, string> = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(isSafe ? {} : { 'X-Snipshift-CSRF': '1' }),
+  };
+
+  if (auth.currentUser) {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      headers['Authorization'] = `Bearer ${token}`;
+    } catch (error) {
+      console.error("Error getting auth token for request:", error);
+    }
+  }
+
   const res = await fetch(url, {
     method,
-    headers: {
-      ...(data ? { "Content-Type": "application/json" } : {}),
-      ...(isSafe ? {} : { 'X-Snipshift-CSRF': '1' }),
-    },
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -33,8 +46,20 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const headers: Record<string, string> = {};
+    
+    if (auth.currentUser) {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      } catch (error) {
+        console.error("Error getting auth token for query:", error);
+      }
+    }
+
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

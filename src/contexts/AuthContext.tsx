@@ -1,17 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { onAuthStateChange, signOutUser, auth } from '../lib/firebase';
+import { User as FirebaseUser } from 'firebase/auth';
 
 export interface User {
   id: string;
   email: string;
-  password: string;
+  password?: string;
   roles: Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'>;
   currentRole: 'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | null;
   provider?: 'google' | 'email';
   googleId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   displayName?: string;
   profileImage?: string;
+  uid?: string;
+  name?: string;
 }
 
 interface AuthContextType {
@@ -19,10 +23,11 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   setCurrentRole: (role: NonNullable<User['currentRole']>) => void;
   hasRole: (role: NonNullable<User['currentRole']>) => boolean;
   updateRoles: (roles: User['roles']) => void;
+  getToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,39 +40,64 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from localStorage on mount
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        // Convert date strings back to Date objects
-        parsedUser.createdAt = new Date(parsedUser.createdAt);
-        parsedUser.updatedAt = new Date(parsedUser.updatedAt);
-        setUser(parsedUser);
+    const unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        try {
+          const token = await firebaseUser.getIdToken();
+          const res = await fetch('/api/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            const profile = await res.json();
+            setUser({ 
+              ...profile, 
+              uid: firebaseUser.uid,
+              // Ensure roles is array
+              roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
+              // Ensure date strings are Dates
+              createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
+              updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date()
+            });
+          } else {
+            console.warn('User authenticated in Firebase but profile fetch failed', res.status);
+            // Optional: Set a minimal user or redirect to signup completion?
+            // For now, we logout if we can't identify the user in our system
+            setUser(null);
+            if (res.status === 401) {
+                // Token invalid or user not found
+                // await signOutUser(); 
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
-    } catch (error) {
-      console.error('Error loading user from localStorage:', error);
-      localStorage.removeItem('currentUser');
-    } finally {
       setIsLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = (userData: User) => {
+    // With Firebase, login is handled by the auth state change listener.
+    // This method might be used for optimistic updates or legacy calls.
     setUser(userData);
-    localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
   const logout = async () => {
     try {
-      await fetch('/api/logout', { method: 'POST', headers: { 'X-Snipshift-CSRF': '1' }, credentials: 'include' });
+      await signOutUser();
     } catch (e) {
-      // ignore network errors on logout
-    } finally {
-      setUser(null);
-      localStorage.removeItem('currentUser');
+      console.error('Logout error', e);
     }
+    // State update handled by onAuthStateChange
   };
 
   const setCurrentRole = (role: NonNullable<User['currentRole']>) => {
@@ -76,7 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const nextRoles = roles.includes(role) ? roles : [...roles, role];
       const updatedUser = { ...user, roles: nextRoles, currentRole: role, updatedAt: new Date() };
       setUser(updatedUser);
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      // TODO: Sync with backend
     }
   };
 
@@ -85,12 +115,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const uniqueRoles = Array.from(new Set(roles));
       const updatedUser = { ...user, roles: uniqueRoles, updatedAt: new Date() };
       setUser(updatedUser);
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      // TODO: Sync with backend
     }
   };
 
   const hasRole = (role: NonNullable<User['currentRole']>) => {
     return !!user && Array.isArray(user.roles) && user.roles.includes(role);
+  };
+
+  const getToken = async () => {
+    if (auth.currentUser) {
+      return auth.currentUser.getIdToken();
+    }
+    return null;
   };
 
   const value = {
@@ -102,6 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setCurrentRole,
     hasRole,
     updateRoles,
+    getToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

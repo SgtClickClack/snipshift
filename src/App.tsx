@@ -5,12 +5,12 @@ import { queryClient } from './lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { AuthGuard } from '@/components/auth/AuthGuard';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { AuthGuard } from '@/components/auth/auth-guard';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar';
 
 // Core pages - load immediately for fast initial render
 import LandingPage from '@/pages/landing';
@@ -22,6 +22,7 @@ import RoleSelectionPage from '@/pages/role-selection';
 import NotFound from '@/pages/not-found';
 
 // Dashboard pages - lazy load to reduce initial bundle
+const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
 const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
 const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
@@ -92,6 +93,14 @@ function AppRoutes() {
         <Route path="/__/auth/handler" element={<OAuthCallback />} />
 
         {/* Protected dashboard routes */}
+        <Route path="/user-dashboard" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <UserDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
         <Route path="/hub-dashboard" element={
           <ProtectedRoute requiredRole="hub">
             <Suspense fallback={<PageLoadingFallback />}>

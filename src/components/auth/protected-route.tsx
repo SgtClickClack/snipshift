@@ -1,5 +1,5 @@
 import React from 'react';
-import { AuthGuard } from './AuthGuard';
+import { AuthGuard } from './auth-guard';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

@@ -43,3 +43,36 @@
 - Removed unused imports.
 - Centralized auth logic using existing Firebase configuration.
 - Enforced consistent branding across key landing pages.
+
+#### 2025-11-20: Phase 1-3 Progress (Logo Kill, Refactor, User Dashboard)
+
+**Core Components**
+- `src/App.tsx`
+- `src/pages/user-dashboard.tsx`
+- `src/index.css`
+- `src/components/navbar.tsx` (Renamed from Navbar.tsx)
+- `src/components/hero.tsx` (Renamed from Hero.tsx)
+
+**Key Features**
+- **Logo Kill (Phase 1)**: 
+  - Replaced generic icons with `brand-logo.png` in Navbar and Hero.
+  - Standardized sizing and placement.
+- **Refactor Verification (Phase 2)**:
+  - Confirmed build success after kebab-case renaming.
+  - Verified Auth token handling in `queryClient.ts`.
+- **User Dashboard (Phase 3)**:
+  - Created shell implementation of `UserDashboard`.
+  - Integrated protected route `/user-dashboard`.
+  - Added `.card-chrome` style class for consistent dashboard UI.
+
+**Integration Points**
+- `AppRoutes` ↔ `UserDashboard`
+- `AuthGuard` ↔ `/user-dashboard` route
+
+**File Paths**
+- `src/pages/user-dashboard.tsx` (New)
+- `src/App.tsx`
+- `src/index.css`
+
+**Next Priority Task**
+- Flesh out User Dashboard features (Profile editing, Recent Activity).

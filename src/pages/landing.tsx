@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Search, Handshake, Store, UserCheck } from "lucide-react";
-import Hero from "@/components/Hero";
-import Pricing from "@/components/Pricing";
+import Hero from "@/components/hero";
+import Pricing from "@/components/pricing";
 
 export default function LandingPage() {
   return (

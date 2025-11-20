@@ -37,6 +37,24 @@ app.get('/health', asyncHandler(async (req, res) => {
   });
 }));
 
+// Get current user profile
+app.get('/api/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+  
+  // Map DB user to frontend User shape
+  res.status(200).json({
+    id: req.user.id,
+    email: req.user.email,
+    name: req.user.name,
+    roles: [req.user.role], // Adapt single role to array for frontend compatibility
+    currentRole: req.user.role,
+    uid: req.user.uid
+  });
+}));
+
 // API login endpoint
 app.post('/api/login', asyncHandler(async (req, res) => {
   // Validate request body
