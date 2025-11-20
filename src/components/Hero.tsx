@@ -1,31 +1,33 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Scissors } from "lucide-react";
 
 export default function Hero() {
   return (
     <div 
-      className="relative text-white py-20 overflow-hidden bg-steel-900"
+      className="relative text-white py-32 overflow-hidden bg-steel-900"
       style={{
-        // Fallback to a professional gradient since the specific hero image is missing/incorrect
-        background: `linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`, 
+        backgroundImage: `url('/hero-background.png'), linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundBlendMode: 'overlay'
       }}
     >
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* Dark Overlay for contrast */}
+      <div className="absolute inset-0 bg-black/60" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
         <div className="flex justify-center mb-8">
-          <div className="p-4 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full shadow-xl">
-            <Scissors className="h-12 w-12 text-white" />
-          </div>
+          <img src="/brand-logo.png" alt="Snipshift Logo" className="h-20 w-auto mx-auto mb-6 drop-shadow-2xl" />
         </div>
         
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+        <h1 className="text-5xl md:text-7xl font-bold mb-6 drop-shadow-lg tracking-tight">
           Connect. Cover. Grow.
         </h1>
-        <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+        <p className="text-xl md:text-2xl mb-10 text-gray-100 max-w-3xl mx-auto drop-shadow-md font-medium">
           Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
         </p>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
           <Link to="/signup">
             <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl" data-testid="button-get-started">
               Get Started Today

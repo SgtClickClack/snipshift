@@ -121,8 +121,8 @@ export default function Pricing() {
                 <Button
                   className={`w-full ${
                     tier.highlighted
-                      ? "bg-red-accent hover:bg-red-accent-hover text-white"
-                      : "bg-steel-100 hover:bg-steel-200 text-steel-900"
+                      ? "red-accent-button"
+                      : "steel-button text-steel-900"
                   } font-semibold py-6`}
                 >
                   {tier.cta}
