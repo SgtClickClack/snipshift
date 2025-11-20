@@ -23,6 +23,7 @@ import NotFound from '@/pages/not-found';
 
 // Dashboard pages - lazy load to reduce initial bundle
 const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
+const EditProfilePage = lazy(() => import('@/pages/edit-profile'));
 const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
 const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
@@ -97,6 +98,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <UserDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/profile/edit" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <EditProfilePage />
             </Suspense>
           </ProtectedRoute>
         } />

@@ -13,6 +13,7 @@ import * as jobsRepo from './repositories/jobs.repository';
 import * as applicationsRepo from './repositories/applications.repository';
 import * as usersRepo from './repositories/users.repository';
 import { getDatabase } from './db/connection';
+import usersRouter from './routes/users';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +22,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api', usersRouter);
 
 // Fallback in-memory store for when DATABASE_URL is not configured (dev only)
 let mockJobs: any[] = [];
@@ -34,24 +38,6 @@ app.get('/health', asyncHandler(async (req, res) => {
     status: 'ok', 
     message: 'Server is running',
     database: dbStatus,
-  });
-}));
-
-// Get current user profile
-app.get('/api/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-  
-  // Map DB user to frontend User shape
-  res.status(200).json({
-    id: req.user.id,
-    email: req.user.email,
-    name: req.user.name,
-    roles: [req.user.role], // Adapt single role to array for frontend compatibility
-    currentRole: req.user.role,
-    uid: req.user.uid
   });
 }));
 

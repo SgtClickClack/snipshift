@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -31,7 +32,9 @@ export default function UserDashboard() {
                   <p className="text-sm text-steel-500">{user?.email}</p>
                 </div>
               </div>
-              <Button variant="chrome" className="w-full">Edit Profile</Button>
+              <Link to="/profile/edit">
+                <Button variant="chrome" className="w-full">Edit Profile</Button>
+              </Link>
             </CardContent>
           </Card>
 

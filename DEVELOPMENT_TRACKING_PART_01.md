@@ -76,3 +76,37 @@
 
 **Next Priority Task**
 - Flesh out User Dashboard features (Profile editing, Recent Activity).
+
+#### 2025-11-20: Profile Editing Feature
+
+**Core Components**
+- `api/src/routes/users.ts`
+- `api/src/db/schema.ts`
+- `src/pages/edit-profile.tsx`
+- `src/lib/api.ts`
+
+**Key Features**
+- **Backend (Profile API)**:
+  - Implemented `PUT /api/me` endpoint with Zod validation.
+  - Added `updateUser` to repository.
+  - Extended DB schema with `bio`, `phone`, `location` fields.
+- **Frontend (Edit Profile)**:
+  - Created `EditProfilePage` with pre-filled form data.
+  - Integrated `updateUserProfile` API call.
+  - Added loading states and toast notifications.
+  - Linked from User Dashboard.
+
+**Integration Points**
+- `UserDashboard` → `/profile/edit` link
+- `EditProfilePage` → `PUT /api/me` API
+
+**File Paths**
+- `api/src/routes/users.ts` (New)
+- `src/pages/edit-profile.tsx` (New)
+- `src/lib/api.ts` (New)
+- `api/src/db/schema.ts`
+- `api/src/index.ts`
+- `src/App.tsx`
+
+**Next Priority Task**
+- Implement "Recent Activity" feed in User Dashboard.

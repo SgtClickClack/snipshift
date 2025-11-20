@@ -64,6 +64,30 @@ export async function createUser(
 }
 
 /**
+ * Update a user
+ */
+export async function updateUser(
+  id: string,
+  updates: Partial<typeof users.$inferInsert>
+): Promise<typeof users.$inferSelect | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      ...updates,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, id))
+    .returning();
+
+  return updatedUser || null;
+}
+
+/**
  * Get or create a mock business user for development
  * This is a temporary helper until proper authentication is implemented
  */
