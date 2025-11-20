@@ -11,7 +11,7 @@ import { Chat } from "@shared/firebase-schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
-import logo from "@/assets/brand-logo.png";
+import logo from "@/assets/logo-processed.png";
 
 export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
@@ -77,7 +77,7 @@ export default function Navbar() {
             <img 
               src={logo} 
               alt="Snipshift Logo" 
-              className="h-10 w-auto mr-3 grayscale invert mix-blend-screen" 
+              className="h-10 w-auto mr-3" 
             />
             <span className="text-xl font-bold text-white">Snipshift</span>
           </button>
