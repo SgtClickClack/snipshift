@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Search, Handshake, Store, UserCheck } from "lucide-react";
 import Hero from "@/components/Hero";
+import Pricing from "@/components/Pricing";
 
 export default function LandingPage() {
   return (
@@ -110,6 +111,9 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
+
+      {/* Pricing Section */}
+      <Pricing />
 
       {/* CTA Section */}
       <div className="py-20 bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900">
