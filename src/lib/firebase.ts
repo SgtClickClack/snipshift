@@ -1,13 +1,39 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+// Helper to sanitize env vars and handle common issues like accidental whitespace
+const getEnv = (key: string) => {
+  const val = import.meta.env[key];
+  if (!val) return undefined;
+  // Remove all whitespace including newlines, carriage returns, tabs, etc.
+  // Also remove quotes if they were accidentally included in the value
+  return String(val).replace(/[\s"']/g, '');
 };
+
+const projectId = getEnv('VITE_FIREBASE_PROJECT_ID');
+
+// Prioritize explicit auth domain, fallback to constructed one
+const authDomain = getEnv('VITE_FIREBASE_AUTH_DOMAIN') || 
+  (projectId ? `${projectId}.firebaseapp.com` : undefined);
+
+const storageBucket = getEnv('VITE_FIREBASE_STORAGE_BUCKET') || 
+  (projectId ? `${projectId}.firebasestorage.app` : undefined);
+
+const firebaseConfig = {
+  apiKey: getEnv('VITE_FIREBASE_API_KEY'),
+  authDomain,
+  projectId,
+  storageBucket,
+  appId: getEnv('VITE_FIREBASE_APP_ID'),
+};
+
+// Log configuration status (safe for production, doesn't expose secrets)
+console.log('🔥 Firebase Config Status:', {
+  authDomain,
+  projectId: projectId ? 'Set' : 'Missing',
+  apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+  appId: firebaseConfig.appId ? 'Set' : 'Missing',
+});
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
