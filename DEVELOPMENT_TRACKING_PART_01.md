@@ -6,10 +6,10 @@
 - `src/components/hero.tsx`
 
 **Key Features**
-- **Navbar**: Reverted to `logo-processed.png` as `logo-white.png` was causing display issues (white box).
+- **Navbar**: Reverted to `logo-processed.png` (confirmed transparent and correct size).
 - **Hero**: 
-  - Reverted to `logo-processed.png` but maintained the increased size (`h-48`).
-  - Removed `logo-white.png` reference which was incorrect.
+  - Kept `logo-processed.png` but applied `filter: invert(1)` and `mix-blend-mode: screen` to force transparency and visibility on dark background (addressing white box issue).
+  - Maintained increased size (`h-48`).
 
 **Integration Points**
 - N/A
