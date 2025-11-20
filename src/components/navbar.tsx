@@ -74,9 +74,9 @@ export default function Navbar() {
             }}
           >
             <img 
-              src="/logo-white.png" 
+              src="/brand-logo.png" 
               alt="Snipshift Logo" 
-              className="h-10 w-auto mr-3" 
+              className="h-10 w-auto mr-3 grayscale invert mix-blend-screen" 
             />
             <span className="text-xl font-bold text-white">Snipshift</span>
           </button>
