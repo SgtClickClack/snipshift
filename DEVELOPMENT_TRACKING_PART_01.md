@@ -6,10 +6,10 @@
 - `src/components/hero.tsx`
 
 **Key Features**
-- **Navbar**: Removed redundant "Snipshift" text next to the logo as requested.
+- **Navbar**: Reverted to `logo-processed.png` as `logo-white.png` was causing display issues (white box).
 - **Hero**: 
-  - Updated logo source to `/logo-white.png` for definitive transparency and consistency.
-  - Increased logo size significantly (`h-48`) as per feedback.
+  - Reverted to `logo-processed.png` but maintained the increased size (`h-48`).
+  - Removed `logo-white.png` reference which was incorrect.
 
 **Integration Points**
 - N/A
