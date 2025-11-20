@@ -22,7 +22,7 @@ export default function Hero() {
           Connect. Cover. Grow.
         </h1>
         <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
-          Snipshift bridges barbershops, salons and creative hubs with verified professionals for seamless workforce flexibility
+          Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8">
