@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
 const sanitizeEnv = (val: string | undefined) => {
-  if (!val) return undefined;
+  if (!val || val === 'undefined' || val === 'null') return undefined;
   // Remove all whitespace including newlines, carriage returns, tabs, etc.
   // Also remove quotes if they were accidentally included in the value
   return String(val).replace(/[\s"']/g, '');

@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
 const sanitizeEnv = (val: string | undefined) => {
-  if (!val) return undefined;
+  if (!val || val === 'undefined' || val === 'null') return undefined;
   // Remove all whitespace including newlines, carriage returns, tabs, etc.
   // Also remove quotes if they were accidentally included in the value
   return String(val).replace(/[\s"']/g, '');
@@ -30,9 +30,13 @@ const firebaseConfig = {
 console.log('🔥 Firebase Config Status:', {
   authDomain,
   projectId: projectId ? 'Set' : 'Missing',
-  apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+  apiKey: firebaseConfig.apiKey ? `Set (${firebaseConfig.apiKey.substring(0, 5)}...)` : 'Missing',
   appId: firebaseConfig.appId ? 'Set' : 'Missing',
 });
+
+if (!firebaseConfig.apiKey) {
+  console.error('❌ Firebase API Key is missing! Check VITE_FIREBASE_API_KEY environment variable.');
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
