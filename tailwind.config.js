@@ -54,6 +54,7 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         steel: colors.slate,
+        'red-accent': colors.red,
       },
       borderRadius: {
         lg: "var(--radius)",
