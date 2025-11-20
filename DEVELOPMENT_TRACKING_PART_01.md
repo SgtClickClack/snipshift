@@ -192,3 +192,25 @@
 
 **Next Priority Task**
 - Verify other assets and ensure consistency across the application.
+
+#### 2025-11-20: Auth Environment Variable Sanitization
+
+**Core Components**
+- `src/lib/firebase.ts`
+- `src/lib/firebase-config.ts`
+
+**Key Features**
+- **Env Var Sanitization**:
+  - Implemented `getEnv` helper function to strip invisible characters (whitespace, newlines, quotes) from environment variables.
+  - Fixed `Illegal url for new iframe` error caused by hidden carriage returns in `VITE_FIREBASE_API_KEY` and other config values.
+  - Applied sanitization to both main `firebase.ts` and `firebase-config.ts`.
+
+**Integration Points**
+- Firebase App Initialization
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/lib/firebase-config.ts`
+
+**Next Priority Task**
+- Verify Auth flow end-to-end with sanitized credentials.
