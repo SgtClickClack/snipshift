@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
-import { FcGoogle } from "react-icons/fc";
+import { Chrome } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface GoogleAuthUnifiedProps {
@@ -97,7 +97,7 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
       disabled={isLoading}
       data-testid={`google-${mode}-button`}
     >
-      <FcGoogle className="h-4 w-4" />
+      <Chrome className="h-4 w-4 text-blue-500" />
       {isLoading 
         ? `${mode === "signin" ? "Signing in" : "Signing up"}...` 
         : `${mode === "signin" ? "Sign in" : "Sign up"} with Google`

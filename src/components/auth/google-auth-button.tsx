@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { googleOAuth } from "@/lib/google-oauth-direct";
-import { FcGoogle } from "react-icons/fc";
+import { Chrome } from "lucide-react";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -39,7 +39,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       disabled={isLoading}
       data-testid="button-google-auth"
     >
-      <FcGoogle className="w-5 h-5 mr-2" />
+      <Chrome className="w-5 h-5 mr-2 text-blue-500" />
       {isLoading 
         ? "Connecting..." 
         : `${mode === "signin" ? "Sign in" : "Sign up"} with Google`

@@ -428,7 +428,7 @@
   .input-chrome {
     @apply bg-steel-50 border border-steel-300 rounded-lg px-4 py-3;
     @apply text-steel-900 placeholder:text-steel-500;
-    @apply focus:outline-none focus:ring-2 focus:ring-red-accent focus:border-transparent;
+    @apply focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent;
     @apply transition-all duration-200;
   }
   

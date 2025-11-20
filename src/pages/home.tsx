@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Store, UserCheck, Award, GraduationCap, Scissors } from "lucide-react";
 import { authService } from "@/lib/auth";
@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function HomePage() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const user = authService.getCurrentUser();
@@ -16,11 +16,11 @@ export default function HomePage() {
   useEffect(() => {
     if (!user) {
       // No user logged in, redirect to landing page
-      setLocation('/');
+      navigate('/');
       return;
     }
     // All authenticated users can access this page regardless of role
-  }, [user, setLocation]);
+  }, [user, navigate]);
 
   const handleRoleSelection = async (role: "hub" | "professional" | "brand" | "trainer") => {
     setIsLoading(true);
@@ -48,7 +48,7 @@ export default function HomePage() {
       
       const targetDashboard = dashboardMap[role];
       console.log('🎯 Navigating to dashboard:', targetDashboard);
-      setTimeout(() => setLocation(targetDashboard), 100); // Small delay to ensure state update
+      setTimeout(() => navigate(targetDashboard), 100); // Small delay to ensure state update
       
     } catch (error) {
       toast({
