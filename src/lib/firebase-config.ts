@@ -1,6 +1,7 @@
 // Firebase configuration for Google OAuth
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { fallbackConfig } from './firebase-fallback';
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
 const sanitizeEnv = (val: string | undefined) => {
@@ -10,25 +11,27 @@ const sanitizeEnv = (val: string | undefined) => {
   return String(val).replace(/[\s"']/g, '');
 };
 
+const apiKey = sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY);
+
 // Firebase config using Google Console Client ID
-const firebaseConfig = {
-  apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY),
+const firebaseConfig = apiKey ? {
+  apiKey,
   authDomain: sanitizeEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
   projectId: sanitizeEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID),
   storageBucket: sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
   messagingSenderId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
   appId: sanitizeEnv(import.meta.env.VITE_FIREBASE_APP_ID),
-};
+} : fallbackConfig;
 
 // Debug Firebase config (dev only)
-if (import.meta.env.MODE !== 'production') {
+if (import.meta.env.MODE !== 'production' || !apiKey) {
   console.log('🔧 Firebase Config:', {
     apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
     authDomain: firebaseConfig.authDomain || 'Missing',
     projectId: firebaseConfig.projectId || 'Missing',
     storageBucket: firebaseConfig.storageBucket || 'Missing',
     messagingSenderId: firebaseConfig.messagingSenderId || 'Missing',
-    appId: firebaseConfig.appId ? 'Set' : 'Missing',
+    appId: (firebaseConfig as any).appId ? 'Set' : 'Missing',
   });
 }
 

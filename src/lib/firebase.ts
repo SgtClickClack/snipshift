@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
+import { fallbackConfig } from "./firebase-fallback";
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
 const sanitizeEnv = (val: string | undefined) => {
@@ -18,24 +19,29 @@ const authDomain = sanitizeEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) ||
 const storageBucket = sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || 
   (projectId ? `${projectId}.firebasestorage.app` : undefined);
 
-const firebaseConfig = {
-  apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY),
+const apiKey = sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY);
+
+// Construct config with fallback logic
+const firebaseConfig = apiKey ? {
+  apiKey,
   authDomain,
   projectId,
   storageBucket,
   appId: sanitizeEnv(import.meta.env.VITE_FIREBASE_APP_ID),
-};
+} : fallbackConfig;
 
 // Log configuration status (safe for production, doesn't expose secrets)
 console.log('🔥 Firebase Config Status:', {
-  authDomain,
-  projectId: projectId ? 'Set' : 'Missing',
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
   apiKey: firebaseConfig.apiKey ? `Set (${firebaseConfig.apiKey.substring(0, 5)}...)` : 'Missing',
-  appId: firebaseConfig.appId ? 'Set' : 'Missing',
+  appId: (firebaseConfig as any).appId ? 'Set' : 'Missing',
 });
 
 if (!firebaseConfig.apiKey) {
   console.error('❌ Firebase API Key is missing! Check VITE_FIREBASE_API_KEY environment variable.');
+} else if (firebaseConfig === fallbackConfig) {
+  console.warn('⚠️ Using fallback Firebase configuration. Environment variables may be missing.');
 }
 
 // Initialize Firebase
