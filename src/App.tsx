@@ -11,11 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <>
-      <div className="bg-red-500 text-white p-4 font-bold text-center">
-        TAILWIND TEST BANNER: If this is red, Tailwind is working!
-      </div>
-      <Routes>
+    <Routes>
       <Route element={<Layout />}>
         {/* Public Routes */}
         <Route path="/" element={<PublicJobBoard />} />
@@ -31,8 +27,7 @@ function App() {
           <Route path="/edit-job/:jobId" element={<EditJobPage />} />
         </Route>
       </Route>
-      </Routes>
-    </>
+    </Routes>
   );
 }
 
