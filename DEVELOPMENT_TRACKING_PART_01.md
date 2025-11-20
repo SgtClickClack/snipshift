@@ -7,6 +7,7 @@
 - `src/components/Pricing.tsx`
 - `src/components/auth/google-auth-button.tsx`
 - `public/brand-logo.png`
+- `package.json`
 
 **Key Features**
 - **Asset Recovery**: Located user's uploaded logo and normalized it to `public/brand-logo.png`.
@@ -18,6 +19,9 @@
   - Switched Google Auth implementation from manual redirect to Firebase SDK (`signInWithGoogle`).
   - Added robust error handling for popup blocking and unauthorized domains.
   - Implemented backend session creation flow after successful Firebase auth.
+- **Build Fixes**:
+  - Downgraded `firebase` to stable `^11.0.0` to avoid potential build issues with future versions.
+  - Added `vercel-build` script to `package.json` to explicitly force the build command on Vercel.
 
 **Integration Points**
 - Firebase Auth SDK ↔ `GoogleAuthButton`
@@ -30,6 +34,7 @@
 - `src/components/Pricing.tsx`
 - `src/components/auth/google-auth-button.tsx`
 - `public/brand-logo.png`
+- `package.json`
 
 **Next Priority Task**
 - Verify Google Auth on production (requires User to add Vercel URL to Google Cloud Console).
