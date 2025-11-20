@@ -153,6 +153,8 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
   const businessId = req.query.businessId as string | undefined;
   const status = req.query.status as 'open' | 'filled' | 'closed' | undefined;
+  const city = req.query.city as string | undefined;
+  const date = req.query.date as string | undefined;
 
   // Try to use database first
   const result = await jobsRepo.getJobs({
@@ -160,6 +162,8 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
     status,
     limit,
     offset,
+    city,
+    date,
   });
 
   if (result) {
@@ -172,6 +176,12 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
       date: job.date,
       startTime: job.startTime,
       endTime: job.endTime,
+      shopName: job.shopName,
+      address: job.address,
+      city: job.city,
+      state: job.state,
+      lat: job.lat ? parseFloat(job.lat) : undefined,
+      lng: job.lng ? parseFloat(job.lng) : undefined,
     }));
 
     // Include pagination metadata if pagination was requested

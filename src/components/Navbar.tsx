@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Scissors, MessageCircle, LogOut, User } from "lucide-react";
+import { MessageCircle, LogOut } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import NotificationBell from "./notifications/notification-bell";
@@ -73,7 +73,11 @@ export default function Navbar() {
               navigate(target);
             }}
           >
-            <Scissors className="text-red-accent text-2xl mr-3" />
+            <img 
+              src="/brand-logo.png" 
+              alt="Snipshift Logo" 
+              className="h-10 w-auto mr-3" 
+            />
             <span className="text-xl font-bold text-white">Snipshift</span>
           </button>
           
@@ -95,6 +99,11 @@ export default function Navbar() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Find Shifts Link */}
+                <Link to="/jobs">
+                  <Button variant="ghost" className="text-white hover:bg-steel-700">Find Shifts</Button>
+                </Link>
 
                 {/* Notifications */}
                 <NotificationBell

@@ -13,6 +13,8 @@ export interface JobFilters {
   status?: 'open' | 'filled' | 'closed';
   limit?: number;
   offset?: number;
+  city?: string;
+  date?: string;
 }
 
 export interface PaginatedJobs {
@@ -31,7 +33,7 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
     return null;
   }
 
-  const { businessId, status, limit = 50, offset = 0 } = filters;
+  const { businessId, status, limit = 50, offset = 0, city, date } = filters;
 
   const conditions = [];
   if (businessId) {
@@ -39,6 +41,12 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
   }
   if (status) {
     conditions.push(eq(jobs.status, status));
+  }
+  if (city) {
+    conditions.push(eq(jobs.city, city));
+  }
+  if (date) {
+    conditions.push(eq(jobs.date, date));
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -90,6 +98,12 @@ export async function createJob(
     date: string;
     startTime: string;
     endTime: string;
+    shopName?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    lat?: string;
+    lng?: string;
   }
 ): Promise<typeof jobs.$inferSelect | null> {
   const db = getDb();
@@ -108,6 +122,12 @@ export async function createJob(
       startTime: jobData.startTime,
       endTime: jobData.endTime,
       status: 'open',
+      shopName: jobData.shopName,
+      address: jobData.address,
+      city: jobData.city,
+      state: jobData.state,
+      lat: jobData.lat,
+      lng: jobData.lng,
     })
     .returning();
 

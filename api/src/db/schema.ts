@@ -51,17 +51,25 @@ export const jobs = pgTable('jobs', {
   businessId: uuid('business_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
   payRate: decimal('pay_rate', { precision: 10, scale: 2 }).notNull(),
-  description: text('description').notNull(), // Made NOT NULL to align with UI requirements
-  date: date('date').notNull(), // Made NOT NULL to align with UI requirements
-  startTime: time('start_time').notNull(), // Made NOT NULL to align with UI requirements
-  endTime: time('end_time').notNull(), // Made NOT NULL to align with UI requirements
+  description: text('description').notNull(),
+  date: date('date').notNull(),
+  startTime: time('start_time').notNull(),
+  endTime: time('end_time').notNull(),
   status: jobStatusEnum('status').notNull().default('open'),
+  shopName: varchar('shop_name', { length: 255 }),
+  address: varchar('address', { length: 512 }),
+  city: varchar('city', { length: 100 }),
+  state: varchar('state', { length: 50 }),
+  lat: decimal('lat', { precision: 10, scale: 7 }),
+  lng: decimal('lng', { precision: 10, scale: 7 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   businessIdDateIdx: index('jobs_business_id_date_idx').on(table.businessId, table.date),
   statusDateIdx: index('jobs_status_date_idx').on(table.status, table.date),
   businessIdIdx: index('jobs_business_id_idx').on(table.businessId),
+  cityIdx: index('jobs_city_idx').on(table.city),
+  latLngIdx: index('jobs_lat_lng_idx').on(table.lat, table.lng),
 }));
 
 /**

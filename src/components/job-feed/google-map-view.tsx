@@ -133,7 +133,7 @@ export default function GoogleMapView({
 
         // Add job markers using AdvancedMarkerElement
         jobs.forEach((job) => {
-          const jobLocation = getMockCoordinates(job);
+          const jobLocation = getJobCoordinates(job);
           const distance = calculateDistance(centerLocation, jobLocation);
 
           // Only show jobs within radius
@@ -175,6 +175,14 @@ export default function GoogleMapView({
 
     updateMarkers();
   }, [jobs, centerLocation, radius, onJobSelect, usesFallback]);
+
+  // Fallback coordinate helper
+  const getJobCoordinates = (job: Job) => {
+    if (job.lat && job.lng) {
+      return { lat: job.lat, lng: job.lng };
+    }
+    return getMockCoordinates(job);
+  };
 
   // Convert lat/lng to SVG coordinates for fallback map
   const coordsToSVG = (lat: number, lng: number, svgWidth: number, svgHeight: number) => {
@@ -222,7 +230,7 @@ export default function GoogleMapView({
             <h3 className="text-lg font-semibold text-neutral-900">Job Locations</h3>
             <p className="text-sm text-neutral-600">
               Showing {jobs.filter(job => {
-                const jobLocation = getMockCoordinates(job);
+                const jobLocation = getJobCoordinates(job);
                 const distance = calculateDistance(centerLocation, jobLocation);
                 return distance <= radius;
               }).length} jobs within {radius}km of {searchLocation}
@@ -281,11 +289,11 @@ export default function GoogleMapView({
                 
                 {/* Job markers */}
                 {jobs.filter(job => {
-                  const jobLocation = getMockCoordinates(job);
+                  const jobLocation = getJobCoordinates(job);
                   const distance = calculateDistance(centerLocation, jobLocation);
                   return distance <= radius;
                 }).map((job) => {
-                  const jobLocation = getMockCoordinates(job);
+                  const jobLocation = getJobCoordinates(job);
                   const svgCoords = coordsToSVG(jobLocation.lat, jobLocation.lng, 800, 600);
                   return (
                     <circle
@@ -369,7 +377,7 @@ export default function GoogleMapView({
           <h3 className="text-lg font-semibold text-neutral-900">Job Locations</h3>
           <p className="text-sm text-neutral-600">
             Showing {jobs.filter(job => {
-              const jobLocation = getMockCoordinates(job);
+              const jobLocation = getJobCoordinates(job);
               const distance = calculateDistance(centerLocation, jobLocation);
               return distance <= radius;
             }).length} jobs within {radius}km of {searchLocation}
