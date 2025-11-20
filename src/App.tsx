@@ -10,7 +10,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
-import Navbar from '@/components/navbar';
+import Navbar from '@/components/Navbar';
 
 // Core pages - load immediately for fast initial render
 import LandingPage from '@/pages/landing';
