@@ -7,10 +7,8 @@ export default function Hero() {
     <div 
       className="relative text-white py-20 overflow-hidden bg-steel-900"
       style={{
-        backgroundImage: `linear-gradient(rgba(168, 85, 247, 0.05), rgba(30, 64, 175, 0.05)), url('/hero-background.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        // Fallback to a professional gradient since the specific hero image is missing/incorrect
+        background: `linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`, 
       }}
     >
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
