@@ -74,7 +74,7 @@ export default function Navbar() {
             }}
           >
             <img 
-              src="/brand-logo.png" 
+              src="/logo-white.png" 
               alt="Snipshift Logo" 
               className="h-10 w-auto mr-3" 
             />
