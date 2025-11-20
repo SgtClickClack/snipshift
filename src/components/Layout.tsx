@@ -12,28 +12,33 @@ export default function Layout() {
   };
 
   return (
-    <div>
-      <nav style={{ padding: '10px', background: '#f0f0f0', borderBottom: '1px solid #ccc' }}>
-        <Link to="/" style={{ marginRight: '15px' }}>
-          Public Job Board
-        </Link>
-        {isAuthenticated ? (
-          <>
-            <Link to="/business-dashboard" style={{ marginRight: '15px' }}>
-              Business Dashboard
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+      <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="container flex h-14 items-center justify-between max-w-7xl mx-auto px-4">
+          <div className="flex items-center">
+            <Link to="/" className="mr-6 flex items-center space-x-2 font-bold">
+              Public Job Board
             </Link>
-            <button onClick={handleLogout} style={{ marginLeft: '10px' }}>
-              Logout
-            </button>
-          </>
-        ) : (
-          <Link to="/login">Login</Link>
-        )}
+          </div>
+          <div className="flex items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                <Link to="/business-dashboard" className="text-sm font-medium transition-colors hover:text-primary">
+                  Business Dashboard
+                </Link>
+                <button onClick={handleLogout} className="text-sm font-medium text-red-500 hover:text-red-600">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="text-sm font-medium transition-colors hover:text-primary">Login</Link>
+            )}
+          </div>
+        </div>
       </nav>
-      <main style={{ padding: '20px' }}>
+      <main className="container max-w-7xl mx-auto py-8 px-4">
         <Outlet /> {/* Child routes will render here */}
       </main>
     </div>
   );
 }
-

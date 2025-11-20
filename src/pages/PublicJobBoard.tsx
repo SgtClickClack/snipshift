@@ -23,14 +23,18 @@ export default function PublicJobBoard() {
   }
 
   if (!jobs || jobs.length === 0) {
-    return <div data-testid="no-jobs">No jobs available right now.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500" data-testid="no-jobs">
+        No jobs available right now.
+      </div>
+    );
   }
 
   return (
     <div>
-      <h1>Public Job Board</h1>
+      <h1 className="text-3xl font-bold tracking-tight mb-6">Public Job Board</h1>
       {/* This is the test-id the test is looking for */}
-      <div data-testid="public-job-list">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-testid="public-job-list">
         {jobs.map((job) => (
           <PublicJobCard key={job.id} job={job} />
         ))}
