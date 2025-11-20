@@ -142,3 +142,6 @@ build/
 
 # Recursive/Backup folders
 snipshift/
+
+# Vercel
+.vercel
