@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchJobs } from '@/lib/api';
-import { Job } from '@/types'; // Assuming types exist or define inline
+import { Job } from '@shared/firebase-schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,27 +9,8 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { MapPin, Clock, DollarSign, Filter } from 'lucide-react';
 
-// Job type matching API response structure
-interface JobType {
-  id: string;
-  title: string;
-  shopName?: string;
-  rate?: string;
-  payRate?: string; // For backward compatibility
-  date: string;
-  lat?: number;
-  lng?: number;
-  location?: string; // Full location string from API
-  // Additional fields
-  description?: string;
-  startTime?: string;
-  endTime?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  hubId?: string;
-  skillsRequired?: string[];
-}
+// JobType is now imported from shared schema, but we keep a local alias for API normalization
+type JobType = Job;
 
 export default function JobFeedPage() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
