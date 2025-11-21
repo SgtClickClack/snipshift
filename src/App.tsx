@@ -13,6 +13,7 @@ import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import Navbar from '@/components/navbar';
+import { Footer } from '@/components/layout/footer';
 
 // Core pages - load immediately for fast initial render
 import LandingPage from '@/pages/landing';
@@ -22,6 +23,8 @@ import SignupPage from '@/pages/signup';
 import { OAuthCallback } from '@/pages/oauth-callback';
 import RoleSelectionPage from '@/pages/role-selection';
 import OnboardingPage from '@/pages/onboarding';
+import TermsPage from '@/pages/legal/terms';
+import PrivacyPage from '@/pages/legal/privacy';
 import NotFound from '@/pages/not-found';
 
 // Dashboard pages - lazy load to reduce initial bundle
@@ -57,11 +60,13 @@ const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-
 function AppRoutes() {
   const location = useLocation();
   const hideNavbar = location.pathname === '/onboarding';
+  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection'].includes(location.pathname);
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {!hideNavbar && <Navbar />}
-      <Routes>
+      <div className="flex-grow">
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={
           <AuthGuard>
@@ -114,6 +119,19 @@ function AppRoutes() {
 
         <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route path="/__/auth/handler" element={<OAuthCallback />} />
+
+        {/* Legal Pages */}
+        <Route path="/terms" element={
+          <AuthGuard>
+            <TermsPage />
+          </AuthGuard>
+        } />
+
+        <Route path="/privacy" element={
+          <AuthGuard>
+            <PrivacyPage />
+          </AuthGuard>
+        } />
 
         {/* Protected dashboard routes */}
         <Route path="/user-dashboard" element={
@@ -297,7 +315,9 @@ function AppRoutes() {
 
         {/* Catch all - 404 */}
         <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </div>
+      {!hideFooter && <Footer />}
     </div>
   );
 }
