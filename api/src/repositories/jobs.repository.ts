@@ -214,3 +214,36 @@ export async function getJobsWithApplicationCounts(
   return jobList.data.map((job) => ({ ...job, applicationCount: 0 }));
 }
 
+/**
+ * Get total job count
+ */
+export async function getJobCount(): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const [result] = await db
+    .select({ count: count() })
+    .from(jobs);
+
+  return result?.count || 0;
+}
+
+/**
+ * Get active job count (status = 'open')
+ */
+export async function getActiveJobCount(): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const [result] = await db
+    .select({ count: count() })
+    .from(jobs)
+    .where(eq(jobs.status, 'open'));
+
+  return result?.count || 0;
+}
+

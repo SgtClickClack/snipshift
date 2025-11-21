@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Mail } from "lucide-react";
+import { MessageCircle, LogOut, Mail, Shield } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import NotificationBell from "./notifications/notification-bell";
@@ -122,6 +122,20 @@ export default function Navbar() {
                     <Mail className="h-4 w-4" />
                   </Button>
                 </Link>
+
+                {/* Admin Dashboard Link - Only visible to admins */}
+                {(user.roles || []).includes('admin') && (
+                  <Link to="/admin">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-white hover:bg-red-600 relative"
+                      title="Admin Dashboard"
+                    >
+                      <Shield className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
                 
                 {/* Legacy Messages Modal */}
                 <div className="relative">

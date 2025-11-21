@@ -18,10 +18,12 @@ import * as subscriptionsRepo from './repositories/subscriptions.repository';
 import * as paymentsRepo from './repositories/payments.repository';
 import * as conversationsRepo from './repositories/conversations.repository';
 import * as messagesRepo from './repositories/messages.repository';
+import * as reportsRepo from './repositories/reports.repository';
 import { getDatabase } from './db/connection';
 import usersRouter from './routes/users';
 import * as notificationService from './services/notification.service';
 import { stripe } from './lib/stripe';
+import { requireAdmin } from './middleware/auth';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1881,6 +1883,270 @@ app.patch('/api/conversations/:id/read', authenticateUser, asyncHandler(async (r
   await messagesRepo.markMessagesAsRead(id, userId);
 
   res.status(200).json({ success: true });
+}));
+
+// ============================================================================
+// Admin API Endpoints
+// ============================================================================
+
+// Handler for admin stats
+app.get('/api/admin/stats', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const [totalUsers, totalJobs, activeJobs, totalRevenue, mrr] = await Promise.all([
+    usersRepo.getUserCount(),
+    jobsRepo.getJobCount(),
+    jobsRepo.getActiveJobCount(),
+    paymentsRepo.getTotalRevenue(),
+    paymentsRepo.getMRR(),
+  ]);
+
+  res.status(200).json({
+    totalUsers,
+    totalJobs,
+    activeJobs,
+    totalRevenue,
+    mrr, // Monthly Recurring Revenue
+  });
+}));
+
+// Handler for listing all users (admin only)
+app.get('/api/admin/users', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
+  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+
+  const result = await usersRepo.getAllUsers(limit, offset);
+
+  if (!result) {
+    res.status(200).json({ data: [], total: 0, limit, offset });
+    return;
+  }
+
+  // Transform to match frontend expectations
+  const transformed = result.data.map((user) => ({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    createdAt: user.createdAt.toISOString(),
+    averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
+    reviewCount: user.reviewCount ? parseInt(user.reviewCount) : 0,
+  }));
+
+  res.status(200).json({
+    data: transformed,
+    total: result.total,
+    limit: result.limit,
+    offset: result.offset,
+  });
+}));
+
+// Handler for banning/deleting a user (admin only)
+app.delete('/api/admin/users/:id', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+
+  // Prevent self-deletion
+  if (req.user?.id === id) {
+    res.status(400).json({ message: 'Cannot delete your own account' });
+    return;
+  }
+
+  const deleted = await usersRepo.deleteUser(id);
+  if (deleted) {
+    res.status(204).send();
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+}));
+
+// Handler for listing all jobs (admin only)
+app.get('/api/admin/jobs', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
+  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+  const status = req.query.status as 'open' | 'filled' | 'closed' | 'completed' | undefined;
+
+  const result = await jobsRepo.getJobs({
+    limit,
+    offset,
+    status,
+  });
+
+  if (!result) {
+    res.status(200).json({ data: [], total: 0, limit, offset });
+    return;
+  }
+
+  // Transform to match frontend expectations
+  const transformed = result.data.map((job) => {
+    const locationParts = [job.address, job.city, job.state].filter(Boolean);
+    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+
+    return {
+      id: job.id,
+      title: job.title,
+      shopName: job.shopName,
+      payRate: job.payRate,
+      status: job.status,
+      date: job.date,
+      location,
+      businessId: job.businessId,
+      createdAt: job.createdAt.toISOString(),
+    };
+  });
+
+  res.status(200).json({
+    data: transformed,
+    total: result.total,
+    limit: result.limit,
+    offset: result.offset,
+  });
+}));
+
+// ============================================================================
+// Reports API Endpoints
+// ============================================================================
+
+// Handler for creating a report
+app.post('/api/reports', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { reportedId, jobId, reason, description } = req.body;
+
+  // Validate required fields
+  if (!reason || !description) {
+    res.status(400).json({ message: 'Reason and description are required' });
+    return;
+  }
+
+  // Validate reason enum
+  const validReasons = ['no_show', 'payment_issue', 'harassment', 'spam', 'other'];
+  if (!validReasons.includes(reason)) {
+    res.status(400).json({ message: `Reason must be one of: ${validReasons.join(', ')}` });
+    return;
+  }
+
+  // Ensure at least one of reportedId or jobId is provided
+  if (!reportedId && !jobId) {
+    res.status(400).json({ message: 'Either reportedId or jobId must be provided' });
+    return;
+  }
+
+  // Prevent self-reporting
+  if (reportedId === userId) {
+    res.status(400).json({ message: 'Cannot report yourself' });
+    return;
+  }
+
+  // Create report
+  const newReport = await reportsRepo.createReport({
+    reporterId: userId,
+    reportedId: reportedId || undefined,
+    jobId: jobId || undefined,
+    reason,
+    description: description.trim(),
+  });
+
+  if (!newReport) {
+    res.status(500).json({ message: 'Failed to create report' });
+    return;
+  }
+
+  res.status(201).json({
+    id: newReport.id,
+    reporterId: newReport.reporterId,
+    reportedId: newReport.reportedId,
+    jobId: newReport.jobId,
+    reason: newReport.reason,
+    description: newReport.description,
+    status: newReport.status,
+    createdAt: newReport.createdAt.toISOString(),
+  });
+}));
+
+// Handler for fetching all reports (admin only)
+app.get('/api/admin/reports', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
+  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+  const status = req.query.status as 'pending' | 'resolved' | 'dismissed' | undefined;
+
+  const result = await reportsRepo.getAllReports(limit, offset, status);
+
+  if (!result) {
+    res.status(200).json({ data: [], total: 0, limit, offset });
+    return;
+  }
+
+  // Get reporter and reported user details
+  const reportsWithUsers = await Promise.all(
+    result.data.map(async (report) => {
+      const reporter = await usersRepo.getUserById(report.reporterId);
+      const reported = report.reportedId ? await usersRepo.getUserById(report.reportedId) : null;
+      const job = report.jobId ? await jobsRepo.getJobById(report.jobId) : null;
+
+      return {
+        id: report.id,
+        reporterId: report.reporterId,
+        reporter: reporter ? {
+          id: reporter.id,
+          name: reporter.name,
+          email: reporter.email,
+        } : null,
+        reportedId: report.reportedId,
+        reported: reported ? {
+          id: reported.id,
+          name: reported.name,
+          email: reported.email,
+        } : null,
+        jobId: report.jobId,
+        job: job ? {
+          id: job.id,
+          title: job.title,
+        } : null,
+        reason: report.reason,
+        description: report.description,
+        status: report.status,
+        createdAt: report.createdAt.toISOString(),
+        updatedAt: report.updatedAt.toISOString(),
+      };
+    })
+  );
+
+  res.status(200).json({
+    data: reportsWithUsers,
+    total: result.total,
+    limit: result.limit,
+    offset: result.offset,
+  });
+}));
+
+// Handler for updating report status (admin only)
+app.patch('/api/admin/reports/:id/status', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  // Validate status
+  const validStatuses = ['pending', 'resolved', 'dismissed'];
+  if (!status || !validStatuses.includes(status)) {
+    res.status(400).json({ message: `Status must be one of: ${validStatuses.join(', ')}` });
+    return;
+  }
+
+  // Update report status
+  const updatedReport = await reportsRepo.updateReportStatus(id, status);
+
+  if (!updatedReport) {
+    res.status(404).json({ message: 'Report not found' });
+    return;
+  }
+
+  res.status(200).json({
+    id: updatedReport.id,
+    status: updatedReport.status,
+    updatedAt: updatedReport.updatedAt.toISOString(),
+  });
 }));
 
 // Apply error handling middleware (must be last)

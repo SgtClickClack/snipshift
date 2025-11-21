@@ -42,6 +42,7 @@ const ProfilePage = lazy(() => import('@/pages/profile'));
 const CommunityPage = lazy(() => import('@/pages/community'));
 const WalletPage = lazy(() => import('@/pages/wallet'));
 const MessagesPage = lazy(() => import('@/pages/messages'));
+const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
 
 // Complex components - lazy load to reduce bundle size
 const SocialFeed = lazy(() => import('@/components/social/social-feed'));
@@ -235,7 +236,7 @@ function AppRoutes() {
         <Route path="/admin" element={
           <ProtectedRoute requiredRole="admin">
             <Suspense fallback={<PageLoadingFallback />}>
-              <ContentModeration />
+              <AdminDashboard />
             </Suspense>
           </ProtectedRoute>
         } />

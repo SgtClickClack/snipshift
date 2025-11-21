@@ -6,9 +6,10 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Flag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GoogleMapView from '@/components/job-feed/google-map-view';
+import { ReportButton } from '@/components/report/report-button';
 
 export default function JobDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -107,7 +108,15 @@ export default function JobDetailsPage() {
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
               <div className="flex-1">
-                <h1 className="text-3xl md:text-4xl font-bold text-steel-900 mb-2">{job.title}</h1>
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <h1 className="text-3xl md:text-4xl font-bold text-steel-900">{job.title}</h1>
+                  {user && (
+                    <ReportButton jobId={job.id} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50">
+                      <Flag className="h-4 w-4 mr-2" />
+                      Report
+                    </ReportButton>
+                  )}
+                </div>
                 {job.shopName && (
                   <p className="text-xl text-steel-600 mb-4">{job.shopName}</p>
                 )}

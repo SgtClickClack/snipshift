@@ -22,6 +22,36 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
+ * Admin authorization middleware
+ * Checks if user has admin role or is in the admin email list
+ * MUST be used after authenticateUser middleware
+ */
+export function requireAdmin(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized: Authentication required' });
+    return;
+  }
+
+  // Check if user has admin role
+  const isAdminRole = req.user.role === 'admin';
+
+  // Check if user email is in admin email list (from env)
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+  const isAdminEmail = adminEmails.includes(req.user.email);
+
+  if (!isAdminRole && !isAdminEmail) {
+    res.status(403).json({ message: 'Forbidden: Admin access required' });
+    return;
+  }
+
+  next();
+}
+
+/**
  * Authentication middleware that verifies the user via Firebase Auth
  * 
  * @param req - Express request object

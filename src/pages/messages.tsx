@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, Mail, Briefcase } from 'lucide-react';
+import { MessageSquare, Send, Mail, Briefcase, Flag } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
+import { ReportButton } from '@/components/report/report-button';
 
 interface Conversation {
   id: string;
@@ -320,6 +321,17 @@ export default function MessagesPage() {
                         </p>
                       )}
                     </div>
+                    {conversationDetail.otherParticipant && (
+                      <ReportButton
+                        reportedId={conversationDetail.otherParticipant.id}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 border-red-600 hover:bg-red-50"
+                      >
+                        <Flag className="h-4 w-4 mr-2" />
+                        Report
+                      </ReportButton>
+                    )}
                   </div>
                 </div>
 

@@ -4,7 +4,7 @@
  * Encapsulates database queries for users
  */
 
-import { eq } from 'drizzle-orm';
+import { eq, sql, count } from 'drizzle-orm';
 import { users } from '../db/schema';
 import { getDb } from '../db';
 
@@ -135,5 +135,67 @@ export async function updateUserRating(
     .returning();
 
   return updatedUser || null;
+}
+
+/**
+ * Get all users (for admin)
+ */
+export async function getAllUsers(limit: number = 100, offset: number = 0) {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  const result = await db
+    .select()
+    .from(users)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(users.createdAt);
+
+  const [totalResult] = await db
+    .select({ count: count() })
+    .from(users);
+
+  return {
+    data: result,
+    total: totalResult?.count || 0,
+    limit,
+    offset,
+  };
+}
+
+/**
+ * Get total user count
+ */
+export async function getUserCount(): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const [result] = await db
+    .select({ count: count() })
+    .from(users);
+
+  return result?.count || 0;
+}
+
+/**
+ * Delete a user (admin only)
+ */
+export async function deleteUser(id: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) {
+    return false;
+  }
+
+  try {
+    await db.delete(users).where(eq(users.id, id));
+    return true;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return false;
+  }
 }
 

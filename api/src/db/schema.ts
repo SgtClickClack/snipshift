@@ -57,6 +57,26 @@ export const paymentStatusEnum = pgEnum('payment_status', [
 ]);
 
 /**
+ * Report reason enum
+ */
+export const reportReasonEnum = pgEnum('report_reason', [
+  'no_show',
+  'payment_issue',
+  'harassment',
+  'spam',
+  'other',
+]);
+
+/**
+ * Report status enum
+ */
+export const reportStatusEnum = pgEnum('report_status', [
+  'pending',
+  'resolved',
+  'dismissed',
+]);
+
+/**
  * Users table
  * Stores user accounts for authentication and authorization
  */
@@ -385,6 +405,45 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   sender: one(users, {
     fields: [messages.senderId],
     references: [users.id],
+  }),
+}));
+
+/**
+ * Reports table
+ * Stores user reports for jobs or other users
+ */
+export const reports = pgTable('reports', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  reporterId: uuid('reporter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  reportedId: uuid('reported_id').references(() => users.id, { onDelete: 'set null' }), // User being reported (optional)
+  jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }), // Job being reported (optional)
+  reason: reportReasonEnum('reason').notNull(),
+  description: text('description').notNull(),
+  status: reportStatusEnum('status').notNull().default('pending'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  reporterIdIdx: index('reports_reporter_id_idx').on(table.reporterId),
+  reportedIdIdx: index('reports_reported_id_idx').on(table.reportedId),
+  jobIdIdx: index('reports_job_id_idx').on(table.jobId),
+  statusIdx: index('reports_status_idx').on(table.status),
+  createdAtIdx: index('reports_created_at_idx').on(table.createdAt),
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  reporter: one(users, {
+    fields: [reports.reporterId],
+    references: [users.id],
+    relationName: 'reporter',
+  }),
+  reported: one(users, {
+    fields: [reports.reportedId],
+    references: [users.id],
+    relationName: 'reported',
+  }),
+  job: one(jobs, {
+    fields: [reports.jobId],
+    references: [jobs.id],
   }),
 }));
 
