@@ -120,6 +120,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),
       '@shared': path.resolve(__dirname, 'src/shared'),
+      // STRICT ALIASING: Force all React imports to resolve to exact same location
+      react: path.resolve(__dirname, './node_modules/react'),
+      'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom'],
   },
@@ -127,34 +130,40 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // NUCLEAR OPTION: Explicit manual chunks to guarantee React singleton
         manualChunks(id) {
-          // CRITICAL: React and React-DOM MUST be in the main bundle (return undefined)
-          // This prevents "Cannot read properties of undefined (reading 'useLayoutEffect')" errors
-          
           if (id.includes('node_modules')) {
-            // First, check for React-related packages that should be in separate chunks
-            // These packages import React, so they can be chunked separately
-            if (id.includes('react-router')) {
-              return 'router-vendor';
+            // Core React packages - MUST be in vendor chunk (loads first)
+            if (
+              id.includes('node_modules/react/') ||
+              id.includes('node_modules/react-dom/') ||
+              id.includes('node_modules/react-router-dom/') ||
+              id.includes('node_modules/scheduler/')
+            ) {
+              return 'vendor';
             }
+            
+            // UI libraries that depend on React - loaded after vendor chunk
+            if (
+              id.includes('@radix-ui/react-slot') ||
+              id.includes('lucide-react') ||
+              id.includes('clsx') ||
+              id.includes('tailwind-merge')
+            ) {
+              return 'ui';
+            }
+            
+            // Other Radix UI components - also in ui chunk
             if (id.includes('@radix-ui')) {
-              return 'ui-vendor';
+              return 'ui';
             }
+            
+            // Other React-dependent libraries
             if (id.includes('@tanstack/react-query')) {
               return 'query-vendor';
             }
             if (id.includes('react-day-picker') || id.includes('embla-carousel-react')) {
               return 'react-utils-vendor';
-            }
-            
-            // Core React packages - MUST be in main bundle (return undefined)
-            // This must come after checking for React-related packages
-            if (
-              id.includes('node_modules/react/') ||
-              id.includes('node_modules/react-dom/') ||
-              id.includes('node_modules/scheduler/')
-            ) {
-              return undefined; // Inline in main bundle
             }
             
             // Firebase (client-side only)
@@ -166,7 +175,7 @@ export default defineConfig({
               return 'maps-vendor';
             }
             // Other large vendor libraries (non-React)
-            if (id.includes('lucide-react') || id.includes('date-fns') || id.includes('recharts')) {
+            if (id.includes('date-fns') || id.includes('recharts')) {
               return 'utils-vendor';
             }
             // Default vendor chunk for other node_modules
