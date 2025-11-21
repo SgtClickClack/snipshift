@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
@@ -20,6 +20,7 @@ import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
 import { OAuthCallback } from '@/pages/oauth-callback';
 import RoleSelectionPage from '@/pages/role-selection';
+import OnboardingPage from '@/pages/onboarding';
 import NotFound from '@/pages/not-found';
 
 // Dashboard pages - lazy load to reduce initial bundle
@@ -53,9 +54,12 @@ const NotificationDemo = lazy(() => import('@/components/notifications/notificat
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
 
 function AppRoutes() {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/onboarding';
+  
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       <Routes>
         {/* Public routes */}
         <Route path="/" element={
@@ -98,6 +102,12 @@ function AppRoutes() {
         <Route path="/role-selection" element={
           <AuthGuard requireAuth={true}>
             <RoleSelectionPage />
+          </AuthGuard>
+        } />
+
+        <Route path="/onboarding" element={
+          <AuthGuard requireAuth={true}>
+            <OnboardingPage />
           </AuthGuard>
         } />
 

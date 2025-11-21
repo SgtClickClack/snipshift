@@ -16,6 +16,16 @@ const UpdateProfileSchema = z.object({
   avatarUrl: z.string().url().optional(),
 });
 
+// Validation schema for onboarding completion
+const OnboardingCompleteSchema = z.object({
+  role: z.enum(['professional', 'business']),
+  displayName: z.string().min(1).max(255),
+  phone: z.string().max(50),
+  bio: z.string().max(1000).optional(),
+  location: z.string().max(255),
+  avatarUrl: z.string().url().optional(),
+});
+
 // Validation schema for user registration
 const RegisterSchema = z.object({
   email: z.string().email(),
@@ -97,6 +107,7 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     uid: req.user.uid, // Keep the firebase UID from the token/request
     averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
     reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
+    isOnboarded: user.isOnboarded ?? false,
   });
 }));
 
@@ -146,6 +157,60 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     roles: [updatedUser.role],
     currentRole: updatedUser.role,
     uid: req.user.uid
+  });
+}));
+
+// Complete onboarding
+router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = OnboardingCompleteSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+    });
+    return;
+  }
+
+  const { role, displayName, bio, phone, location, avatarUrl } = validationResult.data;
+
+  // Prepare update object
+  const updates: any = {
+    name: displayName,
+    role: role === 'professional' ? 'professional' : 'business',
+    bio: bio || null,
+    phone: phone,
+    location: location,
+    isOnboarded: true,
+  };
+  // Note: avatarUrl might need to be stored in a separate field or handled differently
+  // For now, we'll skip it as it's not in the schema
+
+  // Update user in database
+  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+
+  if (!updatedUser) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Return updated user object
+  res.status(200).json({
+    id: updatedUser.id,
+    email: updatedUser.email,
+    name: updatedUser.name,
+    displayName: updatedUser.name,
+    bio: updatedUser.bio,
+    phone: updatedUser.phone,
+    location: updatedUser.location,
+    roles: [updatedUser.role],
+    currentRole: updatedUser.role,
+    uid: req.user.uid,
+    isOnboarded: updatedUser.isOnboarded ?? false,
   });
 }));
 

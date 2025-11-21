@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "seed:plans": "ts-node src/scripts/seed-plans.ts"
+    "seed:plans": "ts-node src/scripts/seed-plans.ts",
+    "migrate:onboarding": "ts-node src/scripts/migrate-onboarding.ts"
   },
   "dependencies": {
     "@react-email/components": "^1.0.1",

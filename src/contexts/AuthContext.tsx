@@ -16,6 +16,7 @@ export interface User {
   profileImage?: string;
   uid?: string;
   name?: string;
+  isOnboarded?: boolean;
 }
 
 interface AuthContextType {
@@ -28,6 +29,7 @@ interface AuthContextType {
   hasRole: (role: NonNullable<User['currentRole']>) => boolean;
   updateRoles: (roles: User['roles']) => void;
   getToken: () => Promise<string | null>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,7 +62,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
               roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
               // Ensure date strings are Dates
               createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
-              updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date()
+              updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
+              // Ensure isOnboarded is boolean
+              isOnboarded: profile.isOnboarded ?? false
             });
           } else {
             console.warn('User authenticated in Firebase but profile fetch failed', res.status);
@@ -130,6 +134,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return null;
   };
 
+  const refreshUser = async () => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      setUser(null);
+      return;
+    }
+
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch('/api/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (res.ok) {
+        const profile = await res.json();
+        setUser({ 
+          ...profile, 
+          uid: firebaseUser.uid,
+          roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
+          createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
+          updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
+          isOnboarded: profile.isOnboarded ?? false
+        });
+      } else {
+        console.warn('Failed to refresh user profile', res.status);
+      }
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+    }
+  };
+
   const value = {
     user,
     isLoading,
@@ -140,6 +177,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     hasRole,
     updateRoles,
     getToken,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

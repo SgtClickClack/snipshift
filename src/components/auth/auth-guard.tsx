@@ -30,8 +30,24 @@ export function AuthGuard({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // If user is authenticated but not onboarded, redirect to onboarding
+  // Exception: Allow access to onboarding page itself and public routes
+  if (isAuthenticated && user && user.isOnboarded === false) {
+    // Avoid redirect loop when already on onboarding page
+    if (location.pathname !== '/onboarding') {
+      return <Navigate to="/onboarding" replace />;
+    }
+  }
+
+  // If user is already onboarded but tries to access onboarding page, redirect to dashboard
+  if (isAuthenticated && user && user.isOnboarded === true && location.pathname === '/onboarding') {
+    const userDashboard = user.currentRole ? getDashboardRoute(user.currentRole) : '/user-dashboard';
+    return <Navigate to={userDashboard} replace />;
+  }
+
   // If user is authenticated but doesn't have a current role, redirect to role selection
-  if (isAuthenticated && user && (!user.currentRole || user.currentRole === 'client')) {
+  // But only if they're already onboarded (onboarding sets the role)
+  if (isAuthenticated && user && user.isOnboarded !== false && (!user.currentRole || user.currentRole === 'client')) {
     // Avoid redirect loop when already on role selection
     if (location.pathname !== '/role-selection') {
       return <Navigate to="/role-selection" replace />;

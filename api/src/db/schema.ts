@@ -5,7 +5,7 @@
  * with proper constraints, indexes, and foreign keys.
  */
 
-import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, index, unique } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, index, unique, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 /**
@@ -91,6 +91,7 @@ export const users = pgTable('users', {
   location: varchar('location', { length: 255 }),
   averageRating: decimal('average_rating', { precision: 3, scale: 2 }),
   reviewCount: decimal('review_count', { precision: 10, scale: 0 }).default('0'),
+  isOnboarded: boolean('is_onboarded').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
