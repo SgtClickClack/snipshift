@@ -23,7 +23,7 @@ export default function Hero() {
             alt="Snipshift Logo" 
             className="h-40 w-auto lg:h-48 mx-auto mb-6 drop-shadow-2xl"
             style={{
-              filter: 'invert(1) brightness(3) drop-shadow(0 0 10px rgba(255,255,255,0.5))',
+              filter: 'invert(1) brightness(3) contrast(1.5) drop-shadow(0 0 10px rgba(255,255,255,0.5))',
             }}
           />
         </div>
