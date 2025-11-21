@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
 import Navbar from '@/components/navbar';
 
 // Core pages - load immediately for fast initial render
@@ -300,6 +301,7 @@ function App() {
             <AppRoutes />
             <TutorialOverlay />
             <FeedbackWidget />
+            <InstallPrompt />
           </Router>
         </AuthProvider>
       </TooltipProvider>

@@ -2,13 +2,76 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/brand-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="description" content="Connect barbers, stylists, and beauticians with flexible work opportunities" />
     <title>SnipShift</title>
+    <style>
+      /* Splash Screen - Shows while React hydrates */
+      #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.3s ease-out;
+      }
+      #splash-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .splash-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 24px;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      .splash-loader {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+    </style>
   </head>
   <body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+      <img src="/brand-logo.png" alt="Snipshift" class="splash-logo" />
+      <div class="splash-loader"></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
+    <script>
+      // Hide splash screen when React loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const splash = document.getElementById('splash-screen');
+          if (splash) {
+            splash.classList.add('hidden');
+            setTimeout(function() {
+              splash.remove();
+            }, 300);
+          }
+        }, 500);
+      });
+    </script>
   </body>
 </html>
 
