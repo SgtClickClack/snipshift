@@ -36,6 +36,9 @@ export async function getUserByEmail(email: string): Promise<typeof users.$infer
 
 /**
  * Create a new user
+ * 
+ * Note: Email welcome email should be sent after user creation
+ * Call emailService.sendWelcomeEmail() separately after this function
  */
 export async function createUser(
   userData: {

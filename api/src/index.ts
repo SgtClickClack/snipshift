@@ -22,6 +22,7 @@ import * as reportsRepo from './repositories/reports.repository';
 import { getDatabase } from './db/connection';
 import usersRouter from './routes/users';
 import * as notificationService from './services/notification.service';
+import * as emailService from './services/email.service';
 import { stripe } from './lib/stripe';
 import { requireAdmin } from './middleware/auth';
 
@@ -854,6 +855,16 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
       const candidateUserId = application.userId || null;
       const candidateEmail = application.email;
       
+      // Get candidate user info for email
+      let candidateName = 'there';
+      if (candidateUserId) {
+        const candidateUser = await usersRepo.getUserById(candidateUserId);
+        if (candidateUser) {
+          candidateName = candidateUser.name;
+        }
+      }
+      
+      // Send in-app notification
       await notificationService.notifyApplicationStatusChange(
         candidateUserId,
         candidateEmail,
@@ -861,6 +872,18 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
         status,
         job.id
       );
+      
+      // Send email notification
+      if (candidateEmail && (status === 'accepted' || status === 'rejected')) {
+        await emailService.sendApplicationStatusEmail(
+          candidateEmail,
+          candidateName,
+          job.title,
+          job.shopName || undefined,
+          status,
+          application.appliedAt.toISOString()
+        );
+      }
     }
 
     res.status(200).json({
@@ -1862,6 +1885,17 @@ app.post('/api/messages', authenticateUser, asyncHandler(async (req: Authenticat
       message: `New message from ${sender?.name || 'Someone'}`,
       link: `/messages?conversation=${conversationId}`,
     });
+    
+    // Send email notification
+    if (sender && recipient.email) {
+      await emailService.sendNewMessageEmail(
+        recipient.email,
+        recipient.name,
+        sender.name,
+        content.trim(),
+        conversationId
+      );
+    }
   }
 
   // Get job title for notification context
@@ -2165,6 +2199,81 @@ app.patch('/api/admin/reports/:id/status', authenticateUser, requireAdmin, async
     status: updatedReport.status,
     updatedAt: updatedReport.updatedAt.toISOString(),
   });
+}));
+
+// Test email endpoint (Admin only)
+app.post('/api/test-email', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { type, email } = req.body;
+
+  if (!type || !email) {
+    res.status(400).json({ message: 'type and email are required' });
+    return;
+  }
+
+  const validTypes = ['welcome', 'application-status', 'new-message', 'job-alert'];
+  if (!validTypes.includes(type)) {
+    res.status(400).json({ message: `type must be one of: ${validTypes.join(', ')}` });
+    return;
+  }
+
+  try {
+    let success = false;
+
+    switch (type) {
+      case 'welcome':
+        success = await emailService.sendWelcomeEmail(email, 'Test User');
+        break;
+      
+      case 'application-status':
+        success = await emailService.sendApplicationStatusEmail(
+          email,
+          'Test User',
+          'Hair Stylist Position',
+          'Downtown Salon',
+          'accepted',
+          new Date().toISOString()
+        );
+        break;
+      
+      case 'new-message':
+        success = await emailService.sendNewMessageEmail(
+          email,
+          'Test User',
+          'John Doe',
+          'This is a test message preview...',
+          'test-conversation-id'
+        );
+        break;
+      
+      case 'job-alert':
+        success = await emailService.sendJobAlertEmail(
+          email,
+          'Test User',
+          'Barber Needed',
+          'Main Street Barbershop',
+          '35',
+          'New York, NY',
+          new Date().toISOString(),
+          'test-job-id'
+        );
+        break;
+    }
+
+    if (success) {
+      res.status(200).json({ 
+        message: `Test ${type} email sent successfully to ${email}` 
+      });
+    } else {
+      res.status(500).json({ 
+        message: `Failed to send test email. Check server logs and ensure RESEND_API_KEY is configured.` 
+      });
+    }
+  } catch (error: any) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({ 
+      message: 'Error sending test email: ' + (error.message || 'Unknown error') 
+    });
+  }
 }));
 
 // Apply error handling middleware (must be last)

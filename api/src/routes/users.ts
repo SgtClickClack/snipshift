@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import * as usersRepo from '../repositories/users.repository';
+import * as emailService from '../services/email.service';
 import { z } from 'zod';
 
 const router = Router();
@@ -12,7 +13,60 @@ const UpdateProfileSchema = z.object({
   bio: z.string().max(1000).optional(),
   phone: z.string().max(50).optional(),
   location: z.string().max(255).optional(),
+  avatarUrl: z.string().url().optional(),
 });
+
+// Validation schema for user registration
+const RegisterSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(255),
+  password: z.string().min(8).optional(),
+});
+
+// Register new user (creates user and sends welcome email)
+router.post('/register', asyncHandler(async (req, res) => {
+  const validationResult = RegisterSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+    });
+    return;
+  }
+
+  const { email, name } = validationResult.data;
+
+  // Check if user already exists
+  const existingUser = await usersRepo.getUserByEmail(email);
+  if (existingUser) {
+    res.status(409).json({ message: 'User with this email already exists' });
+    return;
+  }
+
+  // Create user
+  const newUser = await usersRepo.createUser({
+    email,
+    name,
+    role: 'professional',
+  });
+
+  if (!newUser) {
+    res.status(500).json({ message: 'Failed to create user' });
+    return;
+  }
+
+  // Send welcome email (non-blocking)
+  emailService.sendWelcomeEmail(email, name).catch(error => {
+    console.error('Failed to send welcome email:', error);
+    // Don't fail the request if email fails
+  });
+
+  res.status(201).json({
+    id: newUser.id,
+    email: newUser.email,
+    name: newUser.name,
+    role: newUser.role,
+  });
+}));
 
 // Get current user profile
 router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
@@ -62,7 +116,7 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     return;
   }
 
-  const { displayName, bio, phone, location } = validationResult.data;
+  const { displayName, bio, phone, location, avatarUrl } = validationResult.data;
 
   // Prepare update object
   const updates: any = {};
@@ -70,6 +124,7 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
   if (bio !== undefined) updates.bio = bio;
   if (phone !== undefined) updates.phone = phone;
   if (location !== undefined) updates.location = location;
+  // Note: avatarUrl might need to be stored in a separate field or handled differently
 
   // Update user in database
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
@@ -95,4 +150,3 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
 }));
 
 export default router;
-
