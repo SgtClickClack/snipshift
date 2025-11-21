@@ -1179,6 +1179,119 @@ app.patch('/api/notifications/read-all', authenticateUser, asyncHandler(async (r
   res.status(200).json({ count });
 }));
 
+// ============================================================================
+// Subscription & Payment API Endpoints
+// ============================================================================
+
+// Handler for fetching subscription plans
+app.get('/api/subscriptions/plans', asyncHandler(async (req, res) => {
+  // TODO: Fetch from subscription_plans table
+  // For now, return mock data
+  const mockPlans = [
+    {
+      id: 'plan_basic',
+      name: 'Basic',
+      description: 'Perfect for getting started',
+      price: 9.99,
+      interval: 'month',
+      features: ['10 job postings per month', 'Basic analytics', 'Email support'],
+    },
+    {
+      id: 'plan_pro',
+      name: 'Professional',
+      description: 'For growing businesses',
+      price: 29.99,
+      interval: 'month',
+      features: ['Unlimited job postings', 'Advanced analytics', 'Priority support', 'Featured listings'],
+    },
+    {
+      id: 'plan_enterprise',
+      name: 'Enterprise',
+      description: 'For large organizations',
+      price: 99.99,
+      interval: 'month',
+      features: ['Unlimited everything', 'Dedicated account manager', 'Custom integrations', 'API access'],
+    },
+  ];
+
+  res.status(200).json(mockPlans);
+}));
+
+// Handler for fetching user's current subscription
+app.get('/api/subscriptions/current', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // TODO: Fetch from subscriptions table
+  // For now, return null (no subscription)
+  res.status(200).json(null);
+}));
+
+// Handler for creating checkout session
+app.post('/api/subscriptions/checkout', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { planId } = req.body;
+
+  if (!planId) {
+    res.status(400).json({ message: 'planId is required' });
+    return;
+  }
+
+  // TODO: Integrate with Stripe Checkout
+  // For now, return mock checkout URL
+  const mockSessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  const mockCheckoutUrl = `https://checkout.stripe.com/pay/${mockSessionId}`;
+
+  res.status(200).json({
+    sessionId: mockSessionId,
+    checkoutUrl: mockCheckoutUrl,
+  });
+}));
+
+// Handler for canceling subscription
+app.post('/api/subscriptions/cancel', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // TODO: Cancel subscription in Stripe and update database
+  res.status(200).json({ message: 'Subscription will be canceled at the end of the billing period' });
+}));
+
+// Handler for fetching payment history
+app.get('/api/payments/history', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // TODO: Fetch from payments table
+  // For now, return empty array
+  res.status(200).json([]);
+}));
+
+// Handler for Stripe webhooks
+app.post('/api/webhooks/stripe', asyncHandler(async (req, res) => {
+  // TODO: Verify webhook signature and handle events
+  // For now, just acknowledge receipt
+  res.status(200).json({ received: true });
+}));
+
 // Apply error handling middleware (must be last)
 app.use(errorHandler);
 

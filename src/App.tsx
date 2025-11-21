@@ -40,6 +40,7 @@ const TrainerDashboard = lazy(() => import('@/pages/trainer-dashboard'));
 const DemoPage = lazy(() => import('@/pages/demo'));
 const ProfilePage = lazy(() => import('@/pages/profile'));
 const CommunityPage = lazy(() => import('@/pages/community'));
+const WalletPage = lazy(() => import('@/pages/wallet'));
 
 // Complex components - lazy load to reduce bundle size
 const SocialFeed = lazy(() => import('@/components/social/social-feed'));
@@ -260,6 +261,14 @@ function AppRoutes() {
               <div className="min-h-screen bg-gray-50">
                 <NotificationDemo />
               </div>
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/wallet" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <WalletPage />
             </Suspense>
           </ProtectedRoute>
         } />

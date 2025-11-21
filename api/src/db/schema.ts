@@ -35,6 +35,27 @@ export const notificationTypeEnum = pgEnum('notification_type', [
 ]);
 
 /**
+ * Subscription status enum
+ */
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'active',
+  'canceled',
+  'past_due',
+  'trialing',
+  'incomplete',
+]);
+
+/**
+ * Payment status enum
+ */
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'succeeded',
+  'failed',
+  'refunded',
+]);
+
+/**
  * Users table
  * Stores user accounts for authentication and authorization
  */
@@ -198,6 +219,99 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   job: one(jobs, {
     fields: [reviews.jobId],
     references: [jobs.id],
+  }),
+}));
+
+/**
+ * Subscription Plans table
+ * Stores available subscription plans
+ */
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  interval: varchar('interval', { length: 50 }).notNull(), // 'month', 'year'
+  stripePriceId: varchar('stripe_price_id', { length: 255 }),
+  features: text('features'), // JSON string of features array
+  isActive: timestamp('is_active').default(null), // NULL means inactive, timestamp means active
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  stripePriceIdIdx: index('subscription_plans_stripe_price_id_idx').on(table.stripePriceId),
+}));
+
+/**
+ * Subscriptions table
+ * Stores user subscriptions
+ */
+export const subscriptions = pgTable('subscriptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  planId: uuid('plan_id').notNull().references(() => subscriptionPlans.id, { onDelete: 'restrict' }),
+  status: subscriptionStatusEnum('status').notNull().default('active'),
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }).unique(),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  cancelAtPeriodEnd: timestamp('cancel_at_period_end').default(null), // NULL means false, timestamp means true
+  canceledAt: timestamp('canceled_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  userIdIdx: index('subscriptions_user_id_idx').on(table.userId),
+  stripeSubscriptionIdIdx: index('subscriptions_stripe_subscription_id_idx').on(table.stripeSubscriptionId),
+  stripeCustomerIdIdx: index('subscriptions_stripe_customer_id_idx').on(table.stripeCustomerId),
+  userIdStatusIdx: index('subscriptions_user_id_status_idx').on(table.userId, table.status),
+}));
+
+/**
+ * Payments table
+ * Stores payment history
+ */
+export const payments = pgTable('payments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  subscriptionId: uuid('subscription_id').references(() => subscriptions.id, { onDelete: 'set null' }),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('usd'),
+  status: paymentStatusEnum('status').notNull().default('pending'),
+  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).unique(),
+  stripeChargeId: varchar('stripe_charge_id', { length: 255 }),
+  description: text('description'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  userIdIdx: index('payments_user_id_idx').on(table.userId),
+  subscriptionIdIdx: index('payments_subscription_id_idx').on(table.subscriptionId),
+  stripePaymentIntentIdIdx: index('payments_stripe_payment_intent_id_idx').on(table.stripePaymentIntentId),
+  userIdCreatedAtIdx: index('payments_user_id_created_at_idx').on(table.userId, table.createdAt),
+}));
+
+export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [subscriptions.planId],
+    references: [subscriptionPlans.id],
+  }),
+  payments: many(payments),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id],
+  }),
+  subscription: one(subscriptions, {
+    fields: [payments.subscriptionId],
+    references: [subscriptions.id],
   }),
 }));
 
