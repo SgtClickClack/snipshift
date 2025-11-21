@@ -1,6 +1,8 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
@@ -25,6 +27,8 @@ import RoleSelectionPage from '@/pages/role-selection';
 import OnboardingPage from '@/pages/onboarding';
 import TermsPage from '@/pages/legal/terms';
 import PrivacyPage from '@/pages/legal/privacy';
+import AboutPage from '@/pages/company/about';
+import ContactPage from '@/pages/company/contact';
 import NotFound from '@/pages/not-found';
 
 // Dashboard pages - lazy load to reduce initial bundle
@@ -130,6 +134,19 @@ function AppRoutes() {
         <Route path="/privacy" element={
           <AuthGuard>
             <PrivacyPage />
+          </AuthGuard>
+        } />
+
+        {/* Company Pages */}
+        <Route path="/about" element={
+          <AuthGuard>
+            <AboutPage />
+          </AuthGuard>
+        } />
+
+        <Route path="/contact" element={
+          <AuthGuard>
+            <ContactPage />
           </AuthGuard>
         } />
 
@@ -334,6 +351,8 @@ function App() {
               <TutorialOverlay />
               <FeedbackWidget />
               <InstallPrompt />
+              <Analytics />
+              <SpeedInsights />
             </Router>
           </AuthProvider>
         </TooltipProvider>
