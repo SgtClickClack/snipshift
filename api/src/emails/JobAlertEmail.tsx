@@ -58,7 +58,7 @@ export const JobAlertEmail = ({
             </Text>
             
             <Section style={jobBox}>
-              <Text style={jobTitle}>{jobTitle}</Text>
+              <Text style={jobTitleStyle}>{jobTitle}</Text>
               {shopName && <Text style={jobDetail}>📍 {shopName}</Text>}
               <Text style={jobDetail}>💰 ${payRate}/hr</Text>
               <Text style={jobDetail}>📍 {location}</Text>
@@ -147,10 +147,10 @@ const jobBox = {
   margin: '24px 0',
 };
 
-const jobTitle = {
+const jobTitleStyle = {
   color: '#0f172a',
   fontSize: '20px',
-  fontWeight: 'bold',
+  fontWeight: 'bold' as const,
   margin: '0 0 12px 0',
 };
 

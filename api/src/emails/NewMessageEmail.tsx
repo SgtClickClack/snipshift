@@ -52,7 +52,7 @@ export const NewMessageEmail = ({
             </Text>
             
             <Section style={messageBox}>
-              <Text style={messagePreview}>{messagePreview}</Text>
+              <Text style={messagePreviewStyle}>{messagePreview}</Text>
             </Section>
             
             <Section style={buttonContainer}>
@@ -129,12 +129,12 @@ const messageBox = {
   margin: '24px 0',
 };
 
-const messagePreview = {
+const messagePreviewStyle = {
   color: '#475569',
   fontSize: '14px',
   lineHeight: '20px',
   margin: '0',
-  fontStyle: 'italic',
+  fontStyle: 'italic' as const,
 };
 
 const buttonContainer = {
