@@ -10,6 +10,7 @@ import { ImageUpload } from '@/components/ui/image-upload';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { ChevronLeft, ChevronRight, Scissors, Building2 } from 'lucide-react';
+import { SEO } from '@/components/seo/SEO';
 
 type OnboardingRole = 'professional' | 'business';
 
@@ -288,7 +289,13 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
+    <>
+      <SEO
+        title="Complete Your Profile"
+        description="Finish setting up your SnipShift profile to start finding work opportunities or hiring talent."
+        url="/onboarding"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         {/* Progress indicator */}
         <div className="mb-8">
@@ -355,6 +362,7 @@ export default function OnboardingPage() {
         </Card>
       </div>
     </div>
+    </>
   );
 }
 

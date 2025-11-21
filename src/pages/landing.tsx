@@ -4,10 +4,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Search, Handshake, Store, UserCheck } from "lucide-react";
 import Hero from "@/components/hero";
 import Pricing from "@/components/pricing";
+import { SEO } from "@/components/seo/SEO";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO
+        title="SnipShift - Connect Barbers, Stylists & Creative Professionals"
+        description="Connect barbers, stylists, and beauticians with flexible work opportunities. Find gigs, post jobs, and build your professional network in the creative industry."
+        url="/"
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <Hero />
 
@@ -133,5 +140,6 @@ export default function LandingPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
