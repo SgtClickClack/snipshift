@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { CreditCard, Wallet, TrendingUp, CheckCircle2, XCircle, Clock, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createCheckoutSession, cancelSubscription } from '@/lib/api';
 
 interface SubscriptionPlan {
   id: string;
@@ -38,7 +40,38 @@ interface Payment {
 export default function WalletPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'plans' | 'subscription' | 'payments'>('plans');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+
+  // Handle checkout success/cancel redirects
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    const sessionId = searchParams.get('session_id');
+
+    if (success === 'true' && sessionId) {
+      toast({
+        title: 'Success!',
+        description: 'Your subscription has been activated.',
+      });
+      // Refresh subscription data
+      queryClient.invalidateQueries({ queryKey: ['/api/subscriptions/current'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/payments/history'] });
+      setActiveTab('subscription');
+      // Clean up URL
+      setSearchParams({});
+    } else if (canceled === 'true') {
+      toast({
+        title: 'Checkout Canceled',
+        description: 'You can try again anytime.',
+      });
+      // Clean up URL
+      setSearchParams({});
+    }
+  }, [searchParams, toast, queryClient, setSearchParams]);
 
   // Fetch subscription plans
   const { data: plans = [], isLoading: isLoadingPlans } = useQuery<SubscriptionPlan[]>({
@@ -59,34 +92,56 @@ export default function WalletPage() {
   });
 
   const handleSubscribe = async (planId: string) => {
+    if (isSubscribing) return;
+
     try {
-      // TODO: Implement checkout flow
-      toast({
-        title: 'Coming Soon',
-        description: 'Subscription checkout will be available soon.',
-      });
-    } catch (error) {
+      setIsSubscribing(true);
+      const { url } = await createCheckoutSession(planId);
+      
+      if (url) {
+        // Redirect to Stripe Checkout
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to initiate subscription.',
+        description: error.message || 'Failed to initiate subscription checkout.',
         variant: 'destructive',
       });
+      setIsSubscribing(false);
     }
   };
 
   const handleCancelSubscription = async () => {
+    if (isCanceling) return;
+
+    if (!confirm('Are you sure you want to cancel your subscription? It will remain active until the end of the billing period.')) {
+      return;
+    }
+
     try {
-      // TODO: Implement cancellation
+      setIsCanceling(true);
+      await cancelSubscription();
+      
       toast({
-        title: 'Coming Soon',
-        description: 'Subscription cancellation will be available soon.',
+        title: 'Subscription Canceled',
+        description: 'Your subscription will remain active until the end of the billing period.',
       });
-    } catch (error) {
+      
+      // Refresh subscription data
+      queryClient.invalidateQueries({ queryKey: ['/api/subscriptions/current'] });
+    } catch (error: any) {
+      console.error('Cancellation error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to cancel subscription.',
+        description: error.message || 'Failed to cancel subscription.',
         variant: 'destructive',
       });
+    } finally {
+      setIsCanceling(false);
     }
   };
 
@@ -207,9 +262,10 @@ export default function WalletPage() {
                           onClick={() => handleSubscribe(plan.id)}
                           className="w-full"
                           size="lg"
+                          disabled={isSubscribing}
                         >
                           <CreditCard className="h-4 w-4 mr-2" />
-                          Subscribe Now
+                          {isSubscribing ? 'Processing...' : 'Subscribe Now'}
                         </Button>
                       </CardContent>
                     </Card>
@@ -262,8 +318,9 @@ export default function WalletPage() {
                         <Button
                           variant="destructive"
                           onClick={handleCancelSubscription}
+                          disabled={isCanceling}
                         >
-                          Cancel Subscription
+                          {isCanceling ? 'Canceling...' : 'Cancel Subscription'}
                         </Button>
                       )}
                     </div>

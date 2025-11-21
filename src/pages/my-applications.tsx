@@ -151,8 +151,30 @@ export default function MyApplicationsPage() {
                         </div>
                       )}
 
-                      {application.status === 'accepted' && application.jobStatus === 'completed' && (
-                        <div className="mt-4 pt-4 border-t border-steel-200">
+                      <div className="mt-4 pt-4 border-t border-steel-200 flex gap-2">
+                        {application.status === 'accepted' && (
+                          <Button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const conversation = await createConversation({
+                                  participant2Id: application.businessId || '',
+                                  jobId: application.jobId,
+                                });
+                                navigate(`/messages?conversation=${conversation.id}`);
+                              } catch (error) {
+                                console.error('Failed to create conversation:', error);
+                              }
+                            }}
+                            className="steel-button"
+                            variant="outline"
+                            size="sm"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Message Employer
+                          </Button>
+                        )}
+                        {application.status === 'accepted' && application.jobStatus === 'completed' && (
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -165,8 +187,8 @@ export default function MyApplicationsPage() {
                             <Star className="h-4 w-4 mr-2" />
                             Leave a Review
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

@@ -14,7 +14,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, DollarSign, Users, Briefcase, CheckCircle2, XCircle, CheckCircle } from 'lucide-react';
+import { Clock, DollarSign, Users, Briefcase, CheckCircle2, XCircle, CheckCircle, MessageSquare } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -334,28 +335,53 @@ export default function ManageJobsPage() {
                         </div>
                       )}
 
-                      {application.status === 'pending' && (
-                        <div className="flex gap-2">
+                      <div className="flex gap-2 mt-3">
+                        {application.status === 'pending' && (
+                          <>
+                            <Button
+                              onClick={() => handleApprove(application.id)}
+                              disabled={updateStatusMutation.isPending}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              size="sm"
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              Approve
+                            </Button>
+                            <Button
+                              onClick={() => handleReject(application.id)}
+                              disabled={updateStatusMutation.isPending}
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                              size="sm"
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {application.userId && (
                           <Button
-                            onClick={() => handleApprove(application.id)}
-                            disabled={updateStatusMutation.isPending}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            onClick={async () => {
+                              try {
+                                const res = await apiRequest('POST', '/api/conversations', {
+                                  participant2Id: application.userId,
+                                  jobId: selectedJobId,
+                                });
+                                const data = await res.json();
+                                navigate(`/messages?conversation=${data.id}`);
+                                setIsDialogOpen(false);
+                              } catch (error) {
+                                console.error('Failed to create conversation:', error);
+                              }
+                            }}
+                            variant="outline"
                             size="sm"
+                            className="steel-button"
                           >
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Approve
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Message Candidate
                           </Button>
-                          <Button
-                            onClick={() => handleReject(application.id)}
-                            disabled={updateStatusMutation.isPending}
-                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                            size="sm"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Reject
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

@@ -41,6 +41,7 @@ const DemoPage = lazy(() => import('@/pages/demo'));
 const ProfilePage = lazy(() => import('@/pages/profile'));
 const CommunityPage = lazy(() => import('@/pages/community'));
 const WalletPage = lazy(() => import('@/pages/wallet'));
+const MessagesPage = lazy(() => import('@/pages/messages'));
 
 // Complex components - lazy load to reduce bundle size
 const SocialFeed = lazy(() => import('@/components/social/social-feed'));
@@ -269,6 +270,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <WalletPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/messages" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <MessagesPage />
             </Suspense>
           </ProtectedRoute>
         } />

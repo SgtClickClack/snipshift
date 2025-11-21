@@ -14,15 +14,26 @@ import * as applicationsRepo from './repositories/applications.repository';
 import * as usersRepo from './repositories/users.repository';
 import * as notificationsRepo from './repositories/notifications.repository';
 import * as reviewsRepo from './repositories/reviews.repository';
+import * as subscriptionsRepo from './repositories/subscriptions.repository';
+import * as paymentsRepo from './repositories/payments.repository';
+import * as conversationsRepo from './repositories/conversations.repository';
+import * as messagesRepo from './repositories/messages.repository';
 import { getDatabase } from './db/connection';
 import usersRouter from './routes/users';
 import * as notificationService from './services/notification.service';
+import { stripe } from './lib/stripe';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
+
+// Stripe webhook route MUST be defined BEFORE express.json() middleware
+// to receive raw body for signature verification
+// This route handler is defined later in the file, but the route registration
+// needs to happen before JSON parsing middleware
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -1185,36 +1196,52 @@ app.patch('/api/notifications/read-all', authenticateUser, asyncHandler(async (r
 
 // Handler for fetching subscription plans
 app.get('/api/subscriptions/plans', asyncHandler(async (req, res) => {
-  // TODO: Fetch from subscription_plans table
-  // For now, return mock data
-  const mockPlans = [
-    {
-      id: 'plan_basic',
-      name: 'Basic',
-      description: 'Perfect for getting started',
-      price: 9.99,
-      interval: 'month',
-      features: ['10 job postings per month', 'Basic analytics', 'Email support'],
-    },
-    {
-      id: 'plan_pro',
-      name: 'Professional',
-      description: 'For growing businesses',
-      price: 29.99,
-      interval: 'month',
-      features: ['Unlimited job postings', 'Advanced analytics', 'Priority support', 'Featured listings'],
-    },
-    {
-      id: 'plan_enterprise',
-      name: 'Enterprise',
-      description: 'For large organizations',
-      price: 99.99,
-      interval: 'month',
-      features: ['Unlimited everything', 'Dedicated account manager', 'Custom integrations', 'API access'],
-    },
-  ];
+  const plans = await subscriptionsRepo.getSubscriptionPlans();
 
-  res.status(200).json(mockPlans);
+  if (!plans) {
+    // Fallback to mock data if database is not available
+    const mockPlans = [
+      {
+        id: 'plan_basic',
+        name: 'Basic',
+        description: 'Perfect for getting started',
+        price: 9.99,
+        interval: 'month',
+        features: ['10 job postings per month', 'Basic analytics', 'Email support'],
+      },
+      {
+        id: 'plan_pro',
+        name: 'Professional',
+        description: 'For growing businesses',
+        price: 29.99,
+        interval: 'month',
+        features: ['Unlimited job postings', 'Advanced analytics', 'Priority support', 'Featured listings'],
+      },
+      {
+        id: 'plan_enterprise',
+        name: 'Enterprise',
+        description: 'For large organizations',
+        price: 99.99,
+        interval: 'month',
+        features: ['Unlimited everything', 'Dedicated account manager', 'Custom integrations', 'API access'],
+      },
+    ];
+    res.status(200).json(mockPlans);
+    return;
+  }
+
+  // Transform database plans to match frontend expectations
+  const transformedPlans = plans.map((plan) => ({
+    id: plan.id,
+    name: plan.name,
+    description: plan.description || '',
+    price: parseFloat(plan.price),
+    interval: plan.interval as 'month' | 'year',
+    features: plan.features ? JSON.parse(plan.features) : [],
+    stripePriceId: plan.stripePriceId,
+  }));
+
+  res.status(200).json(transformedPlans);
 }));
 
 // Handler for fetching user's current subscription
@@ -1226,9 +1253,21 @@ app.get('/api/subscriptions/current', authenticateUser, asyncHandler(async (req:
     return;
   }
 
-  // TODO: Fetch from subscriptions table
-  // For now, return null (no subscription)
-  res.status(200).json(null);
+  const subscription = await subscriptionsRepo.getCurrentSubscription(userId);
+
+  if (!subscription) {
+    res.status(200).json(null);
+    return;
+  }
+
+  // Transform to match frontend expectations
+  res.status(200).json({
+    id: subscription.id,
+    planId: subscription.planId,
+    status: subscription.status,
+    currentPeriodEnd: subscription.currentPeriodEnd?.toISOString(),
+    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd !== null,
+  });
 }));
 
 // Handler for creating checkout session
@@ -1240,6 +1279,11 @@ app.post('/api/subscriptions/checkout', authenticateUser, asyncHandler(async (re
     return;
   }
 
+  if (!stripe) {
+    res.status(500).json({ message: 'Stripe is not configured' });
+    return;
+  }
+
   const { planId } = req.body;
 
   if (!planId) {
@@ -1247,15 +1291,72 @@ app.post('/api/subscriptions/checkout', authenticateUser, asyncHandler(async (re
     return;
   }
 
-  // TODO: Integrate with Stripe Checkout
-  // For now, return mock checkout URL
-  const mockSessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  const mockCheckoutUrl = `https://checkout.stripe.com/pay/${mockSessionId}`;
+  // Get the plan from database
+  const plan = await subscriptionsRepo.getSubscriptionPlanById(planId);
+  if (!plan) {
+    res.status(404).json({ message: 'Subscription plan not found' });
+    return;
+  }
 
-  res.status(200).json({
-    sessionId: mockSessionId,
-    checkoutUrl: mockCheckoutUrl,
-  });
+  // Check if user already has an active subscription
+  const existingSubscription = await subscriptionsRepo.getCurrentSubscription(userId);
+  if (existingSubscription) {
+    res.status(400).json({ message: 'You already have an active subscription' });
+    return;
+  }
+
+  // Get user details for Stripe customer
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Get Stripe Price ID from plan or use planId as fallback
+  const stripePriceId = plan.stripePriceId || planId;
+
+  // Determine frontend URL
+  const frontendUrl = process.env.FRONTEND_URL || process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : 'http://localhost:5173';
+
+  try {
+    // Create Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: stripePriceId,
+          quantity: 1,
+        },
+      ],
+      customer_email: user.email,
+      success_url: `${frontendUrl}/wallet?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${frontendUrl}/wallet?canceled=true`,
+      metadata: {
+        userId: userId,
+        planId: planId,
+      },
+      subscription_data: {
+        metadata: {
+          userId: userId,
+          planId: planId,
+        },
+      },
+    });
+
+    res.status(200).json({
+      sessionId: session.id,
+      url: session.url,
+    });
+  } catch (error: any) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({ 
+      message: 'Failed to create checkout session',
+      error: error.message 
+    });
+  }
 }));
 
 // Handler for canceling subscription
@@ -1267,8 +1368,40 @@ app.post('/api/subscriptions/cancel', authenticateUser, asyncHandler(async (req:
     return;
   }
 
-  // TODO: Cancel subscription in Stripe and update database
-  res.status(200).json({ message: 'Subscription will be canceled at the end of the billing period' });
+  if (!stripe) {
+    res.status(500).json({ message: 'Stripe is not configured' });
+    return;
+  }
+
+  // Get user's current subscription
+  const subscription = await subscriptionsRepo.getCurrentSubscription(userId);
+  if (!subscription) {
+    res.status(404).json({ message: 'No active subscription found' });
+    return;
+  }
+
+  if (!subscription.stripeSubscriptionId) {
+    res.status(400).json({ message: 'Subscription does not have a Stripe ID' });
+    return;
+  }
+
+  try {
+    // Cancel subscription in Stripe (at period end)
+    await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
+
+    // Update database
+    await subscriptionsRepo.cancelSubscription(subscription.id);
+
+    res.status(200).json({ message: 'Subscription will be canceled at the end of the billing period' });
+  } catch (error: any) {
+    console.error('Stripe cancellation error:', error);
+    res.status(500).json({ 
+      message: 'Failed to cancel subscription',
+      error: error.message 
+    });
+  }
 }));
 
 // Handler for fetching payment history
@@ -1280,16 +1413,474 @@ app.get('/api/payments/history', authenticateUser, asyncHandler(async (req: Auth
     return;
   }
 
-  // TODO: Fetch from payments table
-  // For now, return empty array
-  res.status(200).json([]);
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+  const payments = await paymentsRepo.getPaymentHistory(userId, limit);
+
+  if (!payments) {
+    res.status(200).json([]);
+    return;
+  }
+
+  // Transform to match frontend expectations
+  const transformed = payments.map((payment) => ({
+    id: payment.id,
+    amount: parseFloat(payment.amount),
+    currency: payment.currency,
+    status: payment.status,
+    description: payment.description || undefined,
+    createdAt: payment.createdAt.toISOString(),
+  }));
+
+  res.status(200).json(transformed);
 }));
 
 // Handler for Stripe webhooks
-app.post('/api/webhooks/stripe', asyncHandler(async (req, res) => {
-  // TODO: Verify webhook signature and handle events
-  // For now, just acknowledge receipt
-  res.status(200).json({ received: true });
+// This route must use raw body parser, so it's defined separately
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyncHandler(async (req, res) => {
+  if (!stripe) {
+    console.error('Stripe is not configured');
+    res.status(500).json({ error: 'Stripe is not configured' });
+    return;
+  }
+
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!sig || !webhookSecret) {
+    console.error('Missing Stripe signature or webhook secret');
+    res.status(400).json({ error: 'Missing signature or webhook secret' });
+    return;
+  }
+
+  let event;
+
+  try {
+    // Verify webhook signature using raw body
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig as string,
+      webhookSecret
+    );
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message);
+    res.status(400).json({ error: `Webhook Error: ${err.message}` });
+    return;
+  }
+
+  // Handle the event
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as any;
+        
+        // Get metadata
+        const userId = session.metadata?.userId;
+        const planId = session.metadata?.planId;
+
+        if (!userId || !planId) {
+          console.error('Missing userId or planId in checkout session metadata');
+          break;
+        }
+
+        // Retrieve the subscription from Stripe
+        const stripeSubscriptionId = session.subscription;
+        if (!stripeSubscriptionId) {
+          console.error('No subscription ID in checkout session');
+          break;
+        }
+
+        const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const stripeCustomerId = stripeSubscription.customer as string;
+
+        // Get plan from database
+        const plan = await subscriptionsRepo.getSubscriptionPlanById(planId);
+        if (!plan) {
+          console.error(`Plan ${planId} not found in database`);
+          break;
+        }
+
+        // Create subscription in database
+        await subscriptionsRepo.createSubscription({
+          userId,
+          planId,
+          stripeSubscriptionId,
+          stripeCustomerId,
+          status: stripeSubscription.status === 'active' ? 'active' : 
+                  stripeSubscription.status === 'trialing' ? 'trialing' : 'incomplete',
+          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+        });
+
+        // Create payment record
+        const amount = session.amount_total ? session.amount_total / 100 : 0; // Convert from cents
+        await paymentsRepo.createPayment({
+          userId,
+          amount,
+          currency: session.currency || 'usd',
+          status: 'succeeded',
+          stripePaymentIntentId: session.payment_intent,
+          description: `Subscription: ${plan.name}`,
+        });
+
+        console.log(`✅ Subscription created for user ${userId}, plan ${planId}`);
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as any;
+        const stripeSubscriptionId = invoice.subscription;
+
+        if (!stripeSubscriptionId) {
+          break;
+        }
+
+        // Get subscription from database
+        const subscription = await subscriptionsRepo.getSubscriptionByStripeId(stripeSubscriptionId);
+        if (!subscription) {
+          console.error(`Subscription ${stripeSubscriptionId} not found in database`);
+          break;
+        }
+
+        // Retrieve subscription from Stripe to get updated period
+        const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+
+        // Update subscription period
+        await subscriptionsRepo.updateSubscription(subscription.id, {
+          status: 'active',
+          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+        });
+
+        // Create payment record
+        const amount = invoice.amount_paid / 100; // Convert from cents
+        await paymentsRepo.createPayment({
+          userId: subscription.userId,
+          subscriptionId: subscription.id,
+          amount,
+          currency: invoice.currency,
+          status: 'succeeded',
+          stripePaymentIntentId: invoice.payment_intent,
+          stripeChargeId: invoice.charge,
+          description: `Subscription renewal: ${invoice.description || 'Monthly subscription'}`,
+        });
+
+        console.log(`✅ Subscription renewed for subscription ${subscription.id}`);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const stripeSubscription = event.data.object as any;
+        const stripeSubscriptionId = stripeSubscription.id;
+
+        // Get subscription from database
+        const subscription = await subscriptionsRepo.getSubscriptionByStripeId(stripeSubscriptionId);
+        if (!subscription) {
+          console.error(`Subscription ${stripeSubscriptionId} not found in database`);
+          break;
+        }
+
+        // Mark subscription as canceled
+        await subscriptionsRepo.updateSubscription(subscription.id, {
+          status: 'canceled',
+          canceledAt: new Date(),
+        });
+
+        console.log(`✅ Subscription canceled: ${subscription.id}`);
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as any;
+        const stripeSubscriptionId = invoice.subscription;
+
+        if (!stripeSubscriptionId) {
+          break;
+        }
+
+        // Get subscription from database
+        const subscription = await subscriptionsRepo.getSubscriptionByStripeId(stripeSubscriptionId);
+        if (!subscription) {
+          break;
+        }
+
+        // Update subscription status to past_due
+        await subscriptionsRepo.updateSubscription(subscription.id, {
+          status: 'past_due',
+        });
+
+        console.log(`⚠️  Payment failed for subscription ${subscription.id}`);
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (error: any) {
+    console.error('Error processing webhook:', error);
+    res.status(500).json({ error: 'Error processing webhook' });
+  }
+}));
+
+// ============================================================================
+// Messaging API Endpoints
+// ============================================================================
+
+// Handler for fetching user's conversations
+app.get('/api/conversations', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const conversations = await conversationsRepo.getConversationsForUser(userId);
+
+  if (!conversations) {
+    res.status(200).json([]);
+    return;
+  }
+
+  // Transform to match frontend expectations
+  const transformed = conversations.map((conv) => ({
+    id: conv.id,
+    jobId: conv.jobId,
+    otherParticipant: conv.otherParticipant,
+    latestMessage: conv.latestMessage ? {
+      id: conv.latestMessage.id,
+      content: conv.latestMessage.content,
+      senderId: conv.latestMessage.senderId,
+      createdAt: conv.latestMessage.createdAt.toISOString(),
+    } : null,
+    job: conv.job,
+    lastMessageAt: conv.lastMessageAt?.toISOString(),
+    createdAt: conv.createdAt.toISOString(),
+  }));
+
+  res.status(200).json(transformed);
+}));
+
+// Handler for fetching a specific conversation with full message history
+app.get('/api/conversations/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { id } = req.params;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Verify user has access to this conversation
+  const conversation = await conversationsRepo.getConversationById(id, userId);
+  if (!conversation) {
+    res.status(404).json({ message: 'Conversation not found' });
+    return;
+  }
+
+  // Get messages
+  const messageList = await messagesRepo.getMessagesForConversation(id, userId);
+  if (!messageList) {
+    res.status(200).json({ conversation, messages: [] });
+    return;
+  }
+
+  // Get other participant info
+  const otherParticipantId = conversation.participant1Id === userId
+    ? conversation.participant2Id
+    : conversation.participant1Id;
+
+  const otherParticipant = await usersRepo.getUserById(otherParticipantId);
+
+  // Get job info if exists
+  let jobInfo = null;
+  if (conversation.jobId) {
+    jobInfo = await jobsRepo.getJobById(conversation.jobId);
+  }
+
+  // Transform messages
+  const transformedMessages = messageList.map((msg) => ({
+    id: msg.id,
+    conversationId: msg.conversationId,
+    senderId: msg.senderId,
+    content: msg.content,
+    isRead: msg.isRead !== null,
+    createdAt: msg.createdAt.toISOString(),
+    sender: msg.sender,
+  }));
+
+  res.status(200).json({
+    conversation: {
+      id: conversation.id,
+      jobId: conversation.jobId,
+      participant1Id: conversation.participant1Id,
+      participant2Id: conversation.participant2Id,
+      lastMessageAt: conversation.lastMessageAt?.toISOString(),
+      createdAt: conversation.createdAt.toISOString(),
+    },
+    otherParticipant: otherParticipant ? {
+      id: otherParticipant.id,
+      name: otherParticipant.name,
+      email: otherParticipant.email,
+    } : null,
+    job: jobInfo ? {
+      id: jobInfo.id,
+      title: jobInfo.title,
+    } : null,
+    messages: transformedMessages,
+  });
+}));
+
+// Handler for creating a new conversation or getting existing one
+app.post('/api/conversations', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { participant2Id, jobId } = req.body;
+
+  if (!participant2Id) {
+    res.status(400).json({ message: 'participant2Id is required' });
+    return;
+  }
+
+  if (participant2Id === userId) {
+    res.status(400).json({ message: 'Cannot create conversation with yourself' });
+    return;
+  }
+
+  // Check if conversation already exists
+  const existing = await conversationsRepo.findConversation(userId, participant2Id, jobId);
+  if (existing) {
+    res.status(200).json({
+      id: existing.id,
+      existing: true,
+    });
+    return;
+  }
+
+  // Create new conversation
+  const newConversation = await conversationsRepo.createConversation({
+    participant1Id: userId,
+    participant2Id,
+    jobId: jobId || undefined,
+  });
+
+  if (!newConversation) {
+    res.status(500).json({ message: 'Failed to create conversation' });
+    return;
+  }
+
+  res.status(201).json({
+    id: newConversation.id,
+    existing: false,
+  });
+}));
+
+// Handler for sending a message
+app.post('/api/messages', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { conversationId, content } = req.body;
+
+  if (!conversationId || !content) {
+    res.status(400).json({ message: 'conversationId and content are required' });
+    return;
+  }
+
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    res.status(400).json({ message: 'Content cannot be empty' });
+    return;
+  }
+
+  // Verify user has access to this conversation
+  const conversation = await conversationsRepo.getConversationById(conversationId, userId);
+  if (!conversation) {
+    res.status(404).json({ message: 'Conversation not found' });
+    return;
+  }
+
+  // Create message
+  const newMessage = await messagesRepo.createMessage({
+    conversationId,
+    senderId: userId,
+    content: content.trim(),
+  });
+
+  if (!newMessage) {
+    res.status(500).json({ message: 'Failed to create message' });
+    return;
+  }
+
+  // Update conversation's last message timestamp
+  await conversationsRepo.updateConversationLastMessage(conversationId);
+
+  // Get recipient ID
+  const recipientId = conversation.participant1Id === userId
+    ? conversation.participant2Id
+    : conversation.participant1Id;
+
+  // Get sender info for notification
+  const sender = await usersRepo.getUserById(userId);
+  const recipient = await usersRepo.getUserById(recipientId);
+
+  // Create notification for recipient
+  if (recipient) {
+    await notificationService.createNotification({
+      userId: recipientId,
+      type: 'message_received',
+      title: 'New Message',
+      message: `New message from ${sender?.name || 'Someone'}`,
+      link: `/messages?conversation=${conversationId}`,
+    });
+  }
+
+  // Get job title for notification context
+  let jobTitle = null;
+  if (conversation.jobId) {
+    const job = await jobsRepo.getJobById(conversation.jobId);
+    jobTitle = job?.title || null;
+  }
+
+  res.status(201).json({
+    id: newMessage.id,
+    conversationId: newMessage.conversationId,
+    senderId: newMessage.senderId,
+    content: newMessage.content,
+    createdAt: newMessage.createdAt.toISOString(),
+  });
+}));
+
+// Handler for marking messages as read
+app.patch('/api/conversations/:id/read', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { id } = req.params;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Verify user has access
+  const conversation = await conversationsRepo.getConversationById(id, userId);
+  if (!conversation) {
+    res.status(404).json({ message: 'Conversation not found' });
+    return;
+  }
+
+  // Mark messages as read
+  await messagesRepo.markMessagesAsRead(id, userId);
+
+  res.status(200).json({ success: true });
 }));
 
 // Apply error handling middleware (must be last)

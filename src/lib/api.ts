@@ -248,7 +248,57 @@ export async function createReview(data: CreateReviewData): Promise<Review> {
   return res.json();
 }
 
+export interface CheckoutSessionResponse {
+  sessionId: string;
+  url: string;
+}
+
+export async function createCheckoutSession(planId: string): Promise<CheckoutSessionResponse> {
+  const res = await apiRequest('POST', '/api/subscriptions/checkout', { planId });
+  return res.json();
+}
+
+export async function cancelSubscription(): Promise<{ message: string }> {
+  const res = await apiRequest('POST', '/api/subscriptions/cancel', {});
+  return res.json();
+}
+
 export async function fetchUserReviews(userId: string): Promise<Review[]> {
   const res = await apiRequest('GET', `/api/reviews/${userId}`);
+  return res.json();
+}
+
+export interface Conversation {
+  id: string;
+  jobId?: string;
+  otherParticipant: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  latestMessage: {
+    id: string;
+    content: string;
+    senderId: string;
+    createdAt: string;
+  } | null;
+  job: {
+    id: string;
+    title: string;
+  } | null;
+  lastMessageAt?: string;
+  createdAt: string;
+}
+
+export async function fetchConversations(): Promise<Conversation[]> {
+  const res = await apiRequest('GET', '/api/conversations');
+  return res.json();
+}
+
+export async function createConversation(data: {
+  participant2Id: string;
+  jobId?: string;
+}): Promise<{ id: string; existing: boolean }> {
+  const res = await apiRequest('POST', '/api/conversations', data);
   return res.json();
 }

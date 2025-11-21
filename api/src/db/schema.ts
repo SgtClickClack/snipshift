@@ -32,6 +32,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'job_posted',
   'job_updated',
   'job_completed',
+  'message_received',
 ]);
 
 /**
@@ -312,6 +313,78 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   subscription: one(subscriptions, {
     fields: [payments.subscriptionId],
     references: [subscriptions.id],
+  }),
+}));
+
+/**
+ * Conversations table
+ * Stores conversation threads between users (typically employer and candidate)
+ */
+export const conversations = pgTable('conversations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }),
+  participant1Id: uuid('participant1_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  participant2Id: uuid('participant2_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lastMessageAt: timestamp('last_message_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  participant1Idx: index('conversations_participant1_id_idx').on(table.participant1Id),
+  participant2Idx: index('conversations_participant2_id_idx').on(table.participant2Id),
+  jobIdIdx: index('conversations_job_id_idx').on(table.jobId),
+  lastMessageAtIdx: index('conversations_last_message_at_idx').on(table.lastMessageAt),
+  // Ensure unique conversation between two users for a job (or without job)
+  participantsJobUnique: unique('conversations_participants_job_unique').on(
+    table.participant1Id,
+    table.participant2Id,
+    table.jobId
+  ),
+}));
+
+/**
+ * Messages table
+ * Stores individual messages within conversations
+ */
+export const messages = pgTable('messages', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  conversationId: uuid('conversation_id').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+  senderId: uuid('sender_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  isRead: timestamp('is_read').default(null), // NULL means unread, timestamp means read
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  conversationIdIdx: index('messages_conversation_id_idx').on(table.conversationId),
+  senderIdIdx: index('messages_sender_id_idx').on(table.senderId),
+  conversationCreatedAtIdx: index('messages_conversation_created_at_idx').on(table.conversationId, table.createdAt),
+  isReadIdx: index('messages_is_read_idx').on(table.isRead),
+}));
+
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+  job: one(jobs, {
+    fields: [conversations.jobId],
+    references: [jobs.id],
+  }),
+  participant1: one(users, {
+    fields: [conversations.participant1Id],
+    references: [users.id],
+    relationName: 'participant1',
+  }),
+  participant2: one(users, {
+    fields: [conversations.participant2Id],
+    references: [users.id],
+    relationName: 'participant2',
+  }),
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id],
+  }),
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
   }),
 }));
 
