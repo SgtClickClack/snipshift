@@ -288,6 +288,16 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
   const status = req.query.status as 'open' | 'filled' | 'closed' | undefined;
   const city = req.query.city as string | undefined;
   const date = req.query.date as string | undefined;
+  
+  // Advanced filters
+  const search = req.query.search as string | undefined;
+  const minRate = req.query.minRate ? parseFloat(req.query.minRate as string) : undefined;
+  const maxRate = req.query.maxRate ? parseFloat(req.query.maxRate as string) : undefined;
+  const startDate = req.query.startDate as string | undefined;
+  const endDate = req.query.endDate as string | undefined;
+  const radius = req.query.radius ? parseFloat(req.query.radius as string) : undefined;
+  const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
+  const lng = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
 
   // Try to use database first
   const result = await jobsRepo.getJobs({
@@ -297,6 +307,14 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
     offset,
     city,
     date,
+    search,
+    minRate,
+    maxRate,
+    startDate,
+    endDate,
+    radius,
+    lat,
+    lng,
   });
 
   if (result) {

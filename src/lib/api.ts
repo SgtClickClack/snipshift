@@ -13,6 +13,15 @@ export interface JobFilterParams {
   date?: string;
   limit?: number;
   offset?: number;
+  // Advanced filters
+  search?: string;
+  minRate?: number;
+  maxRate?: number;
+  startDate?: string;
+  endDate?: string;
+  radius?: number;
+  lat?: number;
+  lng?: number;
 }
 
 export async function updateUserProfile(data: UpdateProfileData) {
@@ -25,6 +34,14 @@ export async function fetchJobs(params: JobFilterParams = {}) {
   if (params.date) query.append('date', params.date);
   if (params.limit) query.append('limit', params.limit.toString());
   if (params.offset) query.append('offset', params.offset.toString());
+  if (params.search) query.append('search', params.search);
+  if (params.minRate !== undefined) query.append('minRate', params.minRate.toString());
+  if (params.maxRate !== undefined) query.append('maxRate', params.maxRate.toString());
+  if (params.startDate) query.append('startDate', params.startDate);
+  if (params.endDate) query.append('endDate', params.endDate);
+  if (params.radius !== undefined) query.append('radius', params.radius.toString());
+  if (params.lat !== undefined) query.append('lat', params.lat.toString());
+  if (params.lng !== undefined) query.append('lng', params.lng.toString());
   
   const res = await apiRequest('GET', `/api/jobs?${query.toString()}`);
   const data = await res.json();

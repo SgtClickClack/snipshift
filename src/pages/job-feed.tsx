@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { fetchJobs } from '@/lib/api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { fetchJobs, JobFilterParams } from '@/lib/api';
 import { Job } from '@shared/firebase-schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
-import { MapPin, Clock, DollarSign, Filter } from 'lucide-react';
+import { JobFilters } from '@/components/jobs/job-filters';
+import { MapPin, Clock, DollarSign } from 'lucide-react';
 
 // JobType is now imported from shared schema, but we keep a local alias for API normalization
 type JobType = Job;
 
 export default function JobFeedPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
   
@@ -23,9 +25,32 @@ export default function JobFeedPage() {
   const [radius, setRadius] = useState(50);
   const [searchLocation, setSearchLocation] = useState('New York');
 
+  // Build filter params from URL search params
+  const filterParams: JobFilterParams = {};
+  const search = searchParams.get('search');
+  const minRate = searchParams.get('minRate');
+  const maxRate = searchParams.get('maxRate');
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+  const nearbyLat = searchParams.get('lat');
+  const nearbyLng = searchParams.get('lng');
+  const nearbyRadius = searchParams.get('radius');
+
+  if (search) filterParams.search = search;
+  if (minRate) filterParams.minRate = parseFloat(minRate);
+  if (maxRate) filterParams.maxRate = parseFloat(maxRate);
+  if (startDate) filterParams.startDate = startDate;
+  if (endDate) filterParams.endDate = endDate;
+  if (nearbyLat && nearbyLng) {
+    filterParams.lat = parseFloat(nearbyLat);
+    filterParams.lng = parseFloat(nearbyLng);
+    if (nearbyRadius) filterParams.radius = parseFloat(nearbyRadius);
+  }
+
+  // Use search params in query key to trigger refetch when filters change
   const { data: jobs, isLoading, error } = useQuery({
-    queryKey: ['jobs'],
-    queryFn: () => fetchJobs(),
+    queryKey: ['jobs', searchParams.toString()],
+    queryFn: () => fetchJobs(filterParams),
   });
 
   if (isLoading) {
@@ -100,31 +125,40 @@ export default function JobFeedPage() {
           </div>
         </header>
 
-        {/* Search & Filter Bar (Placeholder) */}
-        <div className="bg-white p-4 rounded-lg border border-steel-200 mb-6 flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex-1 relative w-full">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-steel-400 h-4 w-4" />
-            <input 
-              type="text" 
-              placeholder="Search by location (e.g. New York)" 
-              className="w-full pl-10 pr-4 py-2 border border-steel-200 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-              defaultValue="New York"
-            />
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filters Sidebar */}
+          <div className="lg:w-80 flex-shrink-0">
+            <JobFilters />
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filters
-          </Button>
-        </div>
 
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)]">
-          {/* List View */}
-          <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3' : 'w-full'}`}>
-            {jobList.length === 0 ? (
-              <div className="text-center py-12 text-steel-500">
-                No shifts found matching your criteria.
-              </div>
-            ) : (
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)]">
+              {/* List View */}
+              <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3' : 'w-full'}`}>
+                {jobList.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-steel-500 mb-4">
+                      <p className="text-lg font-semibold mb-2">No shifts found</p>
+                      <p className="text-sm">
+                        {searchParams.toString() 
+                          ? "No jobs match your current filters. Try adjusting your search criteria."
+                          : "No shifts available at the moment. Check back later!"}
+                      </p>
+                    </div>
+                    {searchParams.toString() && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSearchParams({}, { replace: true });
+                        }}
+                        className="mt-4"
+                      >
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                ) : (
               jobList.map((job: JobType) => (
                 <Card 
                   key={job.id} 
@@ -175,21 +209,23 @@ export default function JobFeedPage() {
                       </Button>
                     </div>
                   </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+                  </Card>
+                ))
+                )}
+              </div>
 
-          {/* Map View */}
-          <div className={`flex-1 bg-white rounded-lg border border-steel-200 overflow-hidden ${viewMode === 'list' ? 'hidden lg:block' : 'block h-full'}`}>
-            <GoogleMapView
-              jobs={jobList}
-              onJobSelect={setSelectedJob}
-              selectedJob={selectedJob}
-              centerLocation={centerLocation}
-              radius={radius}
-              searchLocation={searchLocation}
-            />
+              {/* Map View */}
+              <div className={`flex-1 bg-white rounded-lg border border-steel-200 overflow-hidden ${viewMode === 'list' ? 'hidden lg:block' : 'block h-full'}`}>
+                <GoogleMapView
+                  jobs={jobList}
+                  onJobSelect={setSelectedJob}
+                  selectedJob={selectedJob}
+                  centerLocation={centerLocation}
+                  radius={radius}
+                  searchLocation={searchLocation}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

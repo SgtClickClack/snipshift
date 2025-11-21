@@ -4,7 +4,7 @@
  * Encapsulates database queries for jobs with pagination and filtering
  */
 
-import { eq, and, desc, sql, count } from 'drizzle-orm';
+import { eq, and, desc, sql, count, gte, lte, or, ilike } from 'drizzle-orm';
 import { jobs } from '../db/schema';
 import { getDb } from '../db';
 
@@ -15,6 +15,15 @@ export interface JobFilters {
   offset?: number;
   city?: string;
   date?: string;
+  // Advanced filters
+  search?: string; // Fuzzy match on title/description
+  minRate?: number;
+  maxRate?: number;
+  startDate?: string; // Date range start
+  endDate?: string; // Date range end
+  radius?: number; // Distance in km
+  lat?: number; // User's latitude for distance filtering
+  lng?: number; // User's longitude for distance filtering
 }
 
 export interface PaginatedJobs {
@@ -22,6 +31,22 @@ export interface PaginatedJobs {
   total: number;
   limit: number;
   offset: number;
+}
+
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ * Returns distance in kilometers
+ */
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 /**
@@ -33,9 +58,26 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
     return null;
   }
 
-  const { businessId, status, limit = 50, offset = 0, city, date } = filters;
+  const { 
+    businessId, 
+    status, 
+    limit = 50, 
+    offset = 0, 
+    city, 
+    date,
+    search,
+    minRate,
+    maxRate,
+    startDate,
+    endDate,
+    radius,
+    lat,
+    lng,
+  } = filters;
 
   const conditions = [];
+  
+  // Basic filters
   if (businessId) {
     conditions.push(eq(jobs.businessId, businessId));
   }
@@ -49,25 +91,64 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
     conditions.push(eq(jobs.date, date));
   }
 
+  // Search filter (fuzzy match on title and description)
+  if (search) {
+    const searchPattern = `%${search}%`;
+    conditions.push(
+      or(
+        ilike(jobs.title, searchPattern),
+        ilike(jobs.description, searchPattern)
+      )!
+    );
+  }
+
+  // Pay rate filters
+  if (minRate !== undefined) {
+    conditions.push(gte(sql`CAST(${jobs.payRate} AS DECIMAL)`, minRate));
+  }
+  if (maxRate !== undefined) {
+    conditions.push(lte(sql`CAST(${jobs.payRate} AS DECIMAL)`, maxRate));
+  }
+
+  // Date range filters
+  if (startDate) {
+    conditions.push(gte(jobs.date, startDate));
+  }
+  if (endDate) {
+    conditions.push(lte(jobs.date, endDate));
+  }
+
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const [data, totalResult] = await Promise.all([
-    db
-      .select()
-      .from(jobs)
-      .where(whereClause)
-      .orderBy(desc(jobs.createdAt))
-      .limit(limit)
-      .offset(offset),
-    db
-      .select({ count: count() })
-      .from(jobs)
-      .where(whereClause),
-  ]);
+  // Get all jobs matching filters (before distance filtering)
+  let allJobs = await db
+    .select()
+    .from(jobs)
+    .where(whereClause)
+    .orderBy(desc(jobs.createdAt));
+
+  // Apply distance filtering if radius and coordinates are provided
+  if (radius !== undefined && lat !== undefined && lng !== undefined) {
+    allJobs = allJobs.filter(job => {
+      if (!job.lat || !job.lng) return false;
+      const jobLat = parseFloat(job.lat);
+      const jobLng = parseFloat(job.lng);
+      if (isNaN(jobLat) || isNaN(jobLng)) return false;
+      
+      const distance = calculateDistance(lat, lng, jobLat, jobLng);
+      return distance <= radius;
+    });
+  }
+
+  // Get total count
+  const total = allJobs.length;
+
+  // Apply pagination
+  const paginatedJobs = allJobs.slice(offset, offset + limit);
 
   return {
-    data,
-    total: totalResult[0]?.count || 0,
+    data: paginatedJobs,
+    total,
     limit,
     offset,
   };
