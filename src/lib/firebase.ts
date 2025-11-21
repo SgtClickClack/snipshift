@@ -65,6 +65,15 @@ googleProvider.addScope('profile');
 // Google sign-in methods
 export const signInWithGoogle = async () => {
   try {
+    // Debug: Log Firebase config API key to verify it matches Firebase Console
+    console.log('🔍 Firebase Config API Key (for verification):', {
+      apiKey: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 10)}...` : 'Missing',
+      authDomain: firebaseConfig.authDomain,
+      projectId: firebaseConfig.projectId,
+      providerScopes: googleProvider.scopes,
+      providerId: googleProvider.providerId,
+    });
+    
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
