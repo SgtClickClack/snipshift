@@ -16,12 +16,23 @@ export const userRoleEnum = pgEnum('user_role', ['professional', 'business', 'ad
 /**
  * Job status enum
  */
-export const jobStatusEnum = pgEnum('job_status', ['open', 'filled', 'closed']);
+export const jobStatusEnum = pgEnum('job_status', ['open', 'filled', 'closed', 'completed']);
 
 /**
  * Application status enum
  */
 export const applicationStatusEnum = pgEnum('application_status', ['pending', 'accepted', 'rejected']);
+
+/**
+ * Notification type enum
+ */
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'application_received',
+  'application_status_change',
+  'job_posted',
+  'job_updated',
+  'job_completed',
+]);
 
 /**
  * Users table
@@ -36,6 +47,8 @@ export const users = pgTable('users', {
   bio: text('bio'),
   phone: varchar('phone', { length: 50 }),
   location: varchar('location', { length: 255 }),
+  averageRating: decimal('average_rating', { precision: 3, scale: 2 }),
+  reviewCount: decimal('review_count', { precision: 10, scale: 0 }).default('0'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
@@ -101,6 +114,8 @@ export const applications = pgTable('applications', {
 export const usersRelations = relations(users, ({ many }) => ({
   jobs: many(jobs),
   applications: many(applications),
+  reviewsGiven: many(reviews, { relationName: 'reviewer' }),
+  reviewsReceived: many(reviews, { relationName: 'reviewee' }),
 }));
 
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
@@ -109,6 +124,7 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
     references: [users.id],
   }),
   applications: many(applications),
+  reviews: many(reviews),
 }));
 
 export const applicationsRelations = relations(applications, ({ one }) => ({
@@ -119,6 +135,69 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
   user: one(users, {
     fields: [applications.userId],
     references: [users.id],
+  }),
+}));
+
+/**
+ * Notifications table
+ * Stores user notifications for various events
+ */
+export const notifications = pgTable('notifications', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: notificationTypeEnum('type').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  link: varchar('link', { length: 512 }),
+  isRead: timestamp('is_read').default(null), // NULL means unread, timestamp means read
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  userIdIdx: index('notifications_user_id_idx').on(table.userId),
+  userIdCreatedAtIdx: index('notifications_user_id_created_at_idx').on(table.userId, table.createdAt),
+  isReadIdx: index('notifications_is_read_idx').on(table.isRead),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+/**
+ * Reviews table
+ * Stores reviews/ratings between users for completed jobs
+ */
+export const reviews = pgTable('reviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  reviewerId: uuid('reviewer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  revieweeId: uuid('reviewee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  jobId: uuid('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
+  rating: decimal('rating', { precision: 1, scale: 0 }).notNull(), // 1-5 integer stored as decimal
+  comment: text('comment'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  reviewerIdIdx: index('reviews_reviewer_id_idx').on(table.reviewerId),
+  revieweeIdIdx: index('reviews_reviewee_id_idx').on(table.revieweeId),
+  jobIdIdx: index('reviews_job_id_idx').on(table.jobId),
+  jobReviewerUnique: unique('reviews_job_reviewer_unique').on(table.jobId, table.reviewerId),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  reviewer: one(users, {
+    fields: [reviews.reviewerId],
+    references: [users.id],
+    relationName: 'reviewer',
+  }),
+  reviewee: one(users, {
+    fields: [reviews.revieweeId],
+    references: [users.id],
+    relationName: 'reviewee',
+  }),
+  job: one(jobs, {
+    fields: [reviews.jobId],
+    references: [jobs.id],
   }),
 }));
 

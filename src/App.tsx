@@ -25,6 +25,12 @@ import NotFound from '@/pages/not-found';
 const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
 const EditProfilePage = lazy(() => import('@/pages/edit-profile'));
 const JobFeedPage = lazy(() => import('@/pages/job-feed'));
+const JobDetailsPage = lazy(() => import('@/pages/job-details'));
+const MyApplicationsPage = lazy(() => import('@/pages/my-applications'));
+const ReviewPage = lazy(() => import('@/pages/review'));
+const PostJobPage = lazy(() => import('@/pages/post-job'));
+const ManageJobsPage = lazy(() => import('@/pages/manage-jobs'));
+const NotificationsPage = lazy(() => import('@/pages/notifications'));
 const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
 const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
@@ -115,6 +121,54 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <JobFeedPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/jobs/:id" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <JobDetailsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/my-applications" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <MyApplicationsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/review" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ReviewPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/post-job" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PostJobPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/manage-jobs" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ManageJobsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/notifications" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <NotificationsPage />
             </Suspense>
           </ProtectedRoute>
         } />

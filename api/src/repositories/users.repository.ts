@@ -111,3 +111,29 @@ export async function getOrCreateMockBusinessUser(): Promise<typeof users.$infer
   });
 }
 
+/**
+ * Update user's rating fields
+ */
+export async function updateUserRating(
+  userId: string,
+  averageRating: number | null,
+  reviewCount: number
+): Promise<typeof users.$inferSelect | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      averageRating: averageRating !== null ? averageRating.toFixed(2) : null,
+      reviewCount: reviewCount.toString(),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning();
+
+  return updatedUser || null;
+}
+

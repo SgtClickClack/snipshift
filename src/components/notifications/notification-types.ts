@@ -1,14 +1,15 @@
 export interface Notification {
   id: string;
-  recipientId: string;
+  recipientId?: string;
   senderId?: string;
   senderName?: string;
   senderAvatar?: string;
-  type: 'new_application' | 'new_message' | 'post_like' | 'new_comment' | 'job_posted' | 'profile_view';
+  type: 'new_application' | 'application_received' | 'application_status_change' | 'new_message' | 'post_like' | 'new_comment' | 'job_posted' | 'job_updated' | 'job_completed' | 'profile_view';
   message: string;
   timestamp: string;
   isRead: boolean;
   actionUrl?: string;
+  link?: string;
   metadata?: {
     postId?: string;
     jobId?: string;
@@ -20,7 +21,10 @@ export interface Notification {
 export const getNotificationIcon = (type: Notification['type']) => {
   switch (type) {
     case 'new_application':
+    case 'application_received':
       return 'briefcase';
+    case 'application_status_change':
+      return 'check-circle';
     case 'new_message':
       return 'message-circle';
     case 'post_like':
@@ -28,7 +32,10 @@ export const getNotificationIcon = (type: Notification['type']) => {
     case 'new_comment':
       return 'message-square';
     case 'job_posted':
+    case 'job_updated':
       return 'plus-circle';
+    case 'job_completed':
+      return 'check-circle';
     case 'profile_view':
       return 'user';
     default:
@@ -48,6 +55,8 @@ export const getNotificationColor = (type: Notification['type']) => {
       return 'text-purple-600 bg-purple-100';
     case 'job_posted':
       return 'text-orange-600 bg-orange-100';
+    case 'job_completed':
+      return 'text-purple-600 bg-purple-100';
     case 'profile_view':
       return 'text-gray-600 bg-gray-100';
     default:

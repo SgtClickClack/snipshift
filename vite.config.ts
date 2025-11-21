@@ -8,7 +8,7 @@ export default defineConfig({
   // VITE_* environment variables are automatically exposed via import.meta.env
   // See src/config/env.ts for centralized access to these variables
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react/jsx-runtime'],
+    include: ['react', 'react-dom', 'react-router-dom', 'react/jsx-runtime'],
     force: true,
   },
   server: {

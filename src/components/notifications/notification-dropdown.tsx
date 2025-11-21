@@ -14,6 +14,7 @@ import {
   User,
   Check,
   CheckCheck,
+  CheckCircle2,
   X,
   Eye
 } from "lucide-react";
@@ -33,6 +34,7 @@ const iconMap = {
   heart: Heart,
   'message-square': MessageSquare,
   'plus-circle': PlusCircle,
+  'check-circle': CheckCircle2,
   user: User,
   bell: Bell
 };
@@ -216,6 +218,11 @@ export default function NotificationDropdown({
                                   {notification.senderName}
                                 </span>
                               </div>
+                            )}
+                            {(notification as any).title && (
+                              <p className={`text-xs font-semibold mb-1 ${notification.isRead ? 'text-gray-500' : 'text-gray-900'}`}>
+                                {(notification as any).title}
+                              </p>
                             )}
                             <p className={`text-sm ${notification.isRead ? 'text-gray-600' : 'text-gray-900 font-medium'}`}>
                               {notification.message}

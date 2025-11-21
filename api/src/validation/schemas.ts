@@ -24,6 +24,13 @@ export const JobSchema = z.object({
   date: z.string().min(1, 'Date is required'),
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().min(1, 'End time is required'),
+  location: z.string().optional(),
+  shopName: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  lat: z.union([z.number(), z.string()]).optional(),
+  lng: z.union([z.number(), z.string()]).optional(),
 });
 
 /**
@@ -58,6 +65,23 @@ export const PurchaseSchema = z.object({
 });
 
 /**
+ * Schema for job status updates
+ */
+export const JobStatusUpdateSchema = z.enum(['open', 'filled', 'closed', 'completed'], {
+  errorMap: () => ({ message: 'Status must be one of: open, filled, closed, completed' }),
+});
+
+/**
+ * Schema for review creation
+ */
+export const ReviewSchema = z.object({
+  revieweeId: z.string().uuid('Invalid reviewee ID'),
+  jobId: z.string().uuid('Invalid job ID'),
+  rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
+  comment: z.string().max(1000, 'Comment must be less than 1000 characters').optional(),
+});
+
+/**
  * Type exports for use in TypeScript code
  */
 export type JobInput = z.infer<typeof JobSchema>;
@@ -65,4 +89,6 @@ export type ApplicationInput = z.infer<typeof ApplicationSchema>;
 export type ApplicationStatus = z.infer<typeof ApplicationStatusSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type PurchaseInput = z.infer<typeof PurchaseSchema>;
+export type JobStatusUpdate = z.infer<typeof JobStatusUpdateSchema>;
+export type ReviewInput = z.infer<typeof ReviewSchema>;
 

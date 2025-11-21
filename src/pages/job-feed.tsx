@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { fetchJobs } from '@/lib/api';
 import { Job } from '@shared/firebase-schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { MapPin, Clock, DollarSign, Filter } from 'lucide-react';
 type JobType = Job;
 
 export default function JobFeedPage() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
   
@@ -161,7 +163,16 @@ export default function JobFeedPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button size="sm" className="w-full steel-button">View Details</Button>
+                      <Button 
+                        size="sm" 
+                        className="w-full steel-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/jobs/${job.id}`);
+                        }}
+                      >
+                        View Details
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

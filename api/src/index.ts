@@ -6,14 +6,17 @@
 
 import express from 'express';
 import cors from 'cors';
-import { JobSchema, ApplicationSchema, LoginSchema, ApplicationStatusSchema, PurchaseSchema } from './validation/schemas';
+import { JobSchema, ApplicationSchema, LoginSchema, ApplicationStatusSchema, PurchaseSchema, JobStatusUpdateSchema, ReviewSchema } from './validation/schemas';
 import { errorHandler, asyncHandler } from './middleware/errorHandler';
 import { authenticateUser, AuthenticatedRequest } from './middleware/auth';
 import * as jobsRepo from './repositories/jobs.repository';
 import * as applicationsRepo from './repositories/applications.repository';
 import * as usersRepo from './repositories/users.repository';
+import * as notificationsRepo from './repositories/notifications.repository';
+import * as reviewsRepo from './repositories/reviews.repository';
 import { getDatabase } from './db/connection';
 import usersRouter from './routes/users';
+import * as notificationService from './services/notification.service';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,7 +31,7 @@ app.use('/api', usersRouter);
 
 // Fallback in-memory store for when DATABASE_URL is not configured (dev only)
 // Mock jobs data for development/testing
-const mockJobs = [
+let mockJobs = [
   {
     id: 'job-1',
     title: 'Hair Stylist Needed',
@@ -130,7 +133,7 @@ app.post('/graphql', (req, res) => {
 });
 
 // Handler for creating a job
-app.post('/api/jobs', asyncHandler(async (req, res) => {
+app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   // Validate request body
   const validationResult = JobSchema.safeParse(req.body);
   if (!validationResult.success) {
@@ -138,46 +141,106 @@ app.post('/api/jobs', asyncHandler(async (req, res) => {
     return;
   }
 
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
   const jobData = validationResult.data;
   const payRate = typeof jobData.payRate === 'string' ? jobData.payRate : jobData.payRate.toString();
 
-  // Get or create mock business user (temporary until auth is implemented)
-  const businessUser = await usersRepo.getOrCreateMockBusinessUser();
-  if (!businessUser) {
-    // Fallback to in-memory storage if database is not available
-    const fallbackJob = {
-      id: `job-${Math.floor(Math.random() * 10000)}`,
-      title: jobData.title,
-      payRate,
-      description: jobData.description!,
-      date: jobData.date!,
-      startTime: jobData.startTime!,
-      endTime: jobData.endTime!,
-    };
-    mockJobs.push(fallbackJob);
-    res.status(201).json(fallbackJob);
-    return;
+  // Parse location string if provided (format: "address, city, state" or just "city, state")
+  let address = jobData.address;
+  let city = jobData.city;
+  let state = jobData.state;
+  let locationString = jobData.location;
+
+  if (jobData.location && !address) {
+    // Try to parse location string
+    const parts = jobData.location.split(',').map(p => p.trim());
+    if (parts.length >= 2) {
+      // Assume last part is state, second to last is city, rest is address
+      state = parts[parts.length - 1];
+      city = parts[parts.length - 2];
+      if (parts.length > 2) {
+        address = parts.slice(0, -2).join(', ');
+      }
+    } else if (parts.length === 1) {
+      // Just city name
+      city = parts[0];
+    }
+    locationString = jobData.location;
+  } else if (address || city || state) {
+    // Construct location string from parts
+    const locationParts = [address, city, state].filter(Boolean);
+    locationString = locationParts.join(', ');
+  }
+
+  // Default coordinates if not provided (use New York as default)
+  let lat = jobData.lat ? (typeof jobData.lat === 'string' ? parseFloat(jobData.lat) : jobData.lat) : undefined;
+  let lng = jobData.lng ? (typeof jobData.lng === 'string' ? parseFloat(jobData.lng) : jobData.lng) : undefined;
+
+  // If city is provided but no coordinates, use default city coordinates
+  if (!lat || !lng) {
+    if (city) {
+      // Simple city mapping (can be expanded later)
+      const cityCoords: Record<string, { lat: number; lng: number }> = {
+        'New York': { lat: 40.7128, lng: -74.0060 },
+        'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+        'Chicago': { lat: 41.8781, lng: -87.6298 },
+        'Houston': { lat: 29.7604, lng: -95.3698 },
+        'Phoenix': { lat: 33.4484, lng: -112.0740 },
+      };
+      const coords = cityCoords[city];
+      if (coords) {
+        lat = coords.lat;
+        lng = coords.lng;
+      } else {
+        // Default to New York
+        lat = 40.7128;
+        lng = -74.0060;
+      }
+    } else {
+      // Default to New York
+      lat = 40.7128;
+      lng = -74.0060;
+    }
   }
 
   // Try to use database first
   const newJob = await jobsRepo.createJob({
-    businessId: businessUser.id,
+    businessId: userId,
     title: jobData.title,
     payRate,
     description: jobData.description!,
     date: jobData.date!,
     startTime: jobData.startTime!,
     endTime: jobData.endTime!,
+    shopName: jobData.shopName,
+    address,
+    city,
+    state,
+    lat: lat?.toString(),
+    lng: lng?.toString(),
   });
 
   if (newJob) {
     // Transform database result to match frontend expectations
+    const locationParts = [newJob.address, newJob.city, newJob.state].filter(Boolean);
+    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+    
     res.status(201).json({
       id: newJob.id,
       title: newJob.title,
+      shopName: newJob.shopName,
+      rate: newJob.payRate,
       payRate: newJob.payRate,
       description: newJob.description,
       date: newJob.date,
+      lat: newJob.lat ? parseFloat(newJob.lat) : undefined,
+      lng: newJob.lng ? parseFloat(newJob.lng) : undefined,
+      location,
       startTime: newJob.startTime,
       endTime: newJob.endTime,
     });
@@ -188,9 +251,14 @@ app.post('/api/jobs', asyncHandler(async (req, res) => {
   const fallbackJob = {
     id: `job-${Math.floor(Math.random() * 10000)}`,
     title: jobData.title,
+    shopName: jobData.shopName || 'TBD',
+    rate: payRate,
     payRate,
     description: jobData.description,
     date: jobData.date,
+    lat: lat || 0,
+    lng: lng || 0,
+    location: locationString || 'Location TBD',
     startTime: jobData.startTime,
     endTime: jobData.endTime,
   };
@@ -267,14 +335,29 @@ app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
   // Try to use database first
   const job = await jobsRepo.getJobById(id);
   if (job) {
+    // Transform database result to match frontend expectations
+    const locationParts = [job.address, job.city, job.state].filter(Boolean);
+    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+    
+    // Get business owner info
+    const businessOwner = await usersRepo.getUserById(job.businessId);
+    
     res.status(200).json({
       id: job.id,
       title: job.title,
+      shopName: job.shopName,
+      rate: job.payRate,
       payRate: job.payRate,
       description: job.description,
       date: job.date,
+      lat: job.lat ? parseFloat(job.lat) : undefined,
+      lng: job.lng ? parseFloat(job.lng) : undefined,
+      location,
       startTime: job.startTime,
       endTime: job.endTime,
+      status: job.status,
+      businessId: job.businessId,
+      businessName: businessOwner?.name || job.shopName || 'Business Owner',
     });
     return;
   }
@@ -313,12 +396,21 @@ app.put('/api/jobs/:id', asyncHandler(async (req, res) => {
   });
 
   if (updatedJob) {
+    // Transform database result to match frontend expectations
+    const locationParts = [updatedJob.address, updatedJob.city, updatedJob.state].filter(Boolean);
+    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+    
     res.status(200).json({
       id: updatedJob.id,
       title: updatedJob.title,
+      shopName: updatedJob.shopName,
+      rate: updatedJob.payRate,
       payRate: updatedJob.payRate,
       description: updatedJob.description,
       date: updatedJob.date,
+      lat: updatedJob.lat ? parseFloat(updatedJob.lat) : undefined,
+      lng: updatedJob.lng ? parseFloat(updatedJob.lng) : undefined,
+      location,
       startTime: updatedJob.startTime,
       endTime: updatedJob.endTime,
     });
@@ -373,7 +465,7 @@ app.delete('/api/jobs/:id', asyncHandler(async (req, res) => {
 }));
 
 // Handler for applying to a job
-app.post('/api/jobs/:id/apply', asyncHandler(async (req, res) => {
+app.post('/api/jobs/:id/apply', asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id: jobId } = req.params;
   
   // Validate request body
@@ -384,6 +476,7 @@ app.post('/api/jobs/:id/apply', asyncHandler(async (req, res) => {
   }
 
   const { name, email, coverLetter } = validationResult.data;
+  const userId = req.user?.id; // Get userId if authenticated
 
   // Check if job exists (database or fallback)
   const job = await jobsRepo.getJobById(jobId);
@@ -394,8 +487,8 @@ app.post('/api/jobs/:id/apply', asyncHandler(async (req, res) => {
     return;
   }
 
-  // Check for duplicate application (by email since we don't have user auth yet)
-  const hasApplied = await applicationsRepo.hasUserAppliedToJob(jobId, undefined, email);
+  // Check for duplicate application (by userId if authenticated, otherwise by email)
+  const hasApplied = await applicationsRepo.hasUserAppliedToJob(jobId, userId, email);
   if (hasApplied) {
     res.status(409).json({ message: 'You have already applied to this job' });
     return;
@@ -404,12 +497,27 @@ app.post('/api/jobs/:id/apply', asyncHandler(async (req, res) => {
   // Create application in database
   const newApplication = await applicationsRepo.createApplication({
     jobId,
+    userId,
     name,
     email,
     coverLetter,
   });
 
   if (newApplication) {
+    // Notify job owner about new application
+    if (job) {
+      // Get job owner ID from job
+      const jobOwnerId = job.businessId;
+      if (jobOwnerId) {
+        await notificationService.notifyApplicationReceived(
+          jobOwnerId,
+          name,
+          job.title,
+          jobId
+        );
+      }
+    }
+
     res.status(201).json({ 
       message: 'Application submitted successfully!',
       id: newApplication.id,
@@ -486,14 +594,161 @@ app.get('/api/applications', asyncHandler(async (req, res) => {
   res.status(200).json([]);
 }));
 
-// Handler for fetching applications for a specific job (for business dashboard)
-app.get('/api/jobs/:id/applications', asyncHandler(async (req, res) => {
-  const { id: jobId } = req.params;
+// Handler for fetching current user's applications
+app.get('/api/me/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
 
-  // Check if job exists
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get applications with job details (JOIN to avoid N+1)
+  const applications = await applicationsRepo.getApplicationsForUser(userId);
+
+  if (applications) {
+    // Transform to match frontend expectations
+    const transformed = applications.map((app) => {
+      const locationParts = [app.job.address, app.job.city, app.job.state].filter(Boolean);
+      const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+
+      return {
+        id: app.id,
+        jobId: app.jobId,
+        jobTitle: app.job.title,
+        shopName: app.job.shopName || undefined,
+        jobPayRate: app.job.payRate,
+        jobLocation: location,
+        jobDescription: app.job.description,
+        jobDate: app.job.date,
+        jobStatus: app.job.status,
+        status: app.status,
+        appliedDate: app.appliedAt.toISOString(),
+        respondedDate: app.respondedAt ? app.respondedAt.toISOString() : null,
+        respondedAt: app.respondedAt ? app.respondedAt.toISOString() : null,
+      };
+    });
+
+    res.status(200).json(transformed);
+    return;
+  }
+
+  // Fallback: return empty array if database is not available
+  // For mock data, return a realistic list of applications
+  const mockApplications = [
+    {
+      id: 'app-1',
+      jobId: 'job-1',
+      jobTitle: 'Hair Stylist Needed',
+      shopName: 'Downtown Salon',
+      jobPayRate: '$25/hour',
+      jobLocation: '123 Main St, New York, NY 10001',
+      jobDescription: 'Looking for an experienced hair stylist',
+      jobDate: '2024-12-20',
+      status: 'pending',
+      appliedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      respondedDate: null,
+      respondedAt: null,
+    },
+    {
+      id: 'app-2',
+      jobId: 'job-2',
+      jobTitle: 'Barber Position Available',
+      shopName: 'Classic Cuts',
+      jobPayRate: '$30/hour',
+      jobLocation: '456 Broadway, New York, NY 10013',
+      jobDescription: 'Barber position with flexible hours',
+      jobDate: '2024-12-21',
+      status: 'accepted',
+      appliedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      respondedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      respondedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'app-3',
+      jobId: 'job-3',
+      jobTitle: 'Part-time Stylist',
+      shopName: 'Beauty Bar',
+      jobPayRate: '$22/hour',
+      jobLocation: '789 5th Ave, New York, NY 10022',
+      jobDescription: 'Part-time position available',
+      jobDate: '2024-12-22',
+      status: 'rejected',
+      appliedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      respondedDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      respondedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  res.status(200).json(mockApplications);
+}));
+
+// Handler for fetching current user's jobs
+app.get('/api/me/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get jobs created by current user
+  const result = await jobsRepo.getJobs({ businessId: userId });
+
+  if (result) {
+    // Get application counts for each job
+    const jobsWithCounts = await Promise.all(
+      result.data.map(async (job) => {
+        const applications = await applicationsRepo.getApplicationsForJob(job.id);
+        const applicationCount = applications?.length || 0;
+        
+        const locationParts = [job.address, job.city, job.state].filter(Boolean);
+        const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+
+        return {
+          id: job.id,
+          title: job.title,
+          shopName: job.shopName,
+          payRate: job.payRate,
+          date: job.date,
+          location,
+          startTime: job.startTime,
+          endTime: job.endTime,
+          status: job.status,
+          applicationCount,
+          createdAt: job.createdAt.toISOString(),
+        };
+      })
+    );
+
+    res.status(200).json(jobsWithCounts);
+    return;
+  }
+
+  // Fallback: return empty array if database is not available
+  res.status(200).json([]);
+}));
+
+// Handler for fetching applications for a specific job (for business dashboard)
+app.get('/api/jobs/:id/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: jobId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Check if job exists and belongs to current user
   const job = await jobsRepo.getJobById(jobId);
   if (!job) {
     res.status(404).json({ message: 'Job not found' });
+    return;
+  }
+
+  // Strict ownership check
+  if (job.businessId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You do not own this job' });
     return;
   }
 
@@ -501,13 +756,16 @@ app.get('/api/jobs/:id/applications', asyncHandler(async (req, res) => {
   const applications = await applicationsRepo.getApplicationsForJob(jobId);
   
   if (applications) {
-    // Transform to match frontend expectations (ApplicationManagementPage)
+    // Transform to match frontend expectations
     const transformed = applications.map((app) => ({
       id: app.id,
       name: app.name,
       email: app.email,
       coverLetter: app.coverLetter,
       status: app.status || 'pending',
+      appliedAt: app.appliedAt.toISOString(),
+      respondedAt: app.respondedAt ? app.respondedAt.toISOString() : null,
+      userId: app.userId || undefined,
     }));
     res.status(200).json(transformed);
     return;
@@ -518,8 +776,14 @@ app.get('/api/jobs/:id/applications', asyncHandler(async (req, res) => {
 }));
 
 // Handler for updating application status
-app.put('/api/applications/:id/status', asyncHandler(async (req, res) => {
+app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
 
   // Validate request body
   const validationResult = ApplicationStatusSchema.safeParse(req.body.status);
@@ -530,10 +794,44 @@ app.put('/api/applications/:id/status', asyncHandler(async (req, res) => {
 
   const status = validationResult.data;
 
+  // Get application to check ownership
+  const application = await applicationsRepo.getApplicationById(id);
+  if (!application) {
+    res.status(404).json({ message: 'Application not found' });
+    return;
+  }
+
+  // Get the job to verify ownership
+  const job = await jobsRepo.getJobById(application.jobId);
+  if (!job) {
+    res.status(404).json({ message: 'Job not found' });
+    return;
+  }
+
+  // Strict ownership check - ensure current user owns the job
+  if (job.businessId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You do not own this job' });
+    return;
+  }
+
   // Update application status
   const updatedApplication = await applicationsRepo.updateApplicationStatus(id, status);
   
   if (updatedApplication) {
+    // Notify candidate about status change
+    if (status === 'accepted' || status === 'rejected') {
+      const candidateUserId = application.userId || null;
+      const candidateEmail = application.email;
+      
+      await notificationService.notifyApplicationStatusChange(
+        candidateUserId,
+        candidateEmail,
+        job.title,
+        status,
+        job.id
+      );
+    }
+
     res.status(200).json({
       id: updatedApplication.id,
       status: updatedApplication.status,
@@ -543,6 +841,201 @@ app.put('/api/applications/:id/status', asyncHandler(async (req, res) => {
   }
 
   res.status(404).json({ message: 'Application not found' });
+}));
+
+// Handler for updating job status
+app.patch('/api/jobs/:id/status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: jobId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = JobStatusUpdateSchema.safeParse(req.body.status);
+  if (!validationResult.success) {
+    res.status(400).json({ message: 'Validation error: Status must be one of: open, filled, closed, completed' });
+    return;
+  }
+
+  const newStatus = validationResult.data;
+
+  // Get job to verify ownership
+  const job = await jobsRepo.getJobById(jobId);
+  if (!job) {
+    res.status(404).json({ message: 'Job not found' });
+    return;
+  }
+
+  // Strict ownership check - ensure current user owns the job
+  if (job.businessId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You do not own this job' });
+    return;
+  }
+
+  // Validate status transition - can only mark 'open' or 'filled' as 'completed'
+  if (newStatus === 'completed' && job.status !== 'open' && job.status !== 'filled') {
+    res.status(400).json({ message: 'Only open or filled jobs can be marked as completed' });
+    return;
+  }
+
+  // Update job status
+  const updatedJob = await jobsRepo.updateJob(jobId, { status: newStatus });
+  
+  if (updatedJob) {
+    // If status changed to completed, notify both parties
+    if (newStatus === 'completed') {
+      // Find the accepted application to get the professional's userId
+      const applications = await applicationsRepo.getApplicationsForJob(jobId);
+      const acceptedApplication = applications?.find(app => app.status === 'accepted');
+      const professionalId = acceptedApplication?.userId || null;
+
+      await notificationService.notifyJobCompleted(
+        jobId,
+        userId,
+        professionalId,
+        job.title
+      );
+    }
+
+    res.status(200).json({
+      id: updatedJob.id,
+      status: updatedJob.status,
+    });
+    return;
+  }
+
+  res.status(404).json({ message: 'Job not found' });
+}));
+
+// Handler for creating a review
+app.post('/api/reviews', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = ReviewSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+    });
+    return;
+  }
+
+  const reviewData = validationResult.data;
+
+  // Verify job exists and is completed
+  const job = await jobsRepo.getJobById(reviewData.jobId);
+  if (!job) {
+    res.status(404).json({ message: 'Job not found' });
+    return;
+  }
+
+  if (job.status !== 'completed') {
+    res.status(400).json({ message: 'Reviews can only be created for completed jobs' });
+    return;
+  }
+
+  // Verify reviewer is either the employer or the professional who worked on this job
+  const isEmployer = job.businessId === userId;
+  const applications = await applicationsRepo.getApplicationsForJob(reviewData.jobId);
+  const acceptedApplication = applications?.find(app => app.status === 'accepted' && app.userId === userId);
+  const isProfessional = !!acceptedApplication;
+
+  if (!isEmployer && !isProfessional) {
+    res.status(403).json({ message: 'You can only review jobs you are involved in' });
+    return;
+  }
+
+  // Verify reviewee is the other party (not self-review)
+  if (reviewData.revieweeId === userId) {
+    res.status(400).json({ message: 'You cannot review yourself' });
+    return;
+  }
+
+  // Verify reviewee is either the employer or the professional
+  const isRevieweeEmployer = job.businessId === reviewData.revieweeId;
+  const isRevieweeProfessional = applications?.some(app => 
+    app.status === 'accepted' && app.userId === reviewData.revieweeId
+  );
+
+  if (!isRevieweeEmployer && !isRevieweeProfessional) {
+    res.status(400).json({ message: 'Invalid reviewee for this job' });
+    return;
+  }
+
+  // Check for duplicate review
+  const hasReviewed = await reviewsRepo.hasUserReviewedJob(reviewData.jobId, userId);
+  if (hasReviewed) {
+    res.status(409).json({ message: 'You have already reviewed this job' });
+    return;
+  }
+
+  // Create review
+  const newReview = await reviewsRepo.createReview({
+    reviewerId: userId,
+    revieweeId: reviewData.revieweeId,
+    jobId: reviewData.jobId,
+    rating: reviewData.rating,
+    comment: reviewData.comment,
+  });
+
+  if (newReview) {
+    // Recalculate and update reviewee's rating
+    await reviewsRepo.updateUserRating(reviewData.revieweeId);
+
+    res.status(201).json({
+      id: newReview.id,
+      reviewerId: newReview.reviewerId,
+      revieweeId: newReview.revieweeId,
+      jobId: newReview.jobId,
+      rating: parseInt(newReview.rating),
+      comment: newReview.comment,
+      createdAt: newReview.createdAt.toISOString(),
+    });
+    return;
+  }
+
+  res.status(500).json({ message: 'Failed to create review' });
+}));
+
+// Handler for fetching reviews for a user
+app.get('/api/reviews/:userId', asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const reviews = await reviewsRepo.getReviewsForUser(userId);
+
+  if (reviews) {
+    const transformed = reviews.map((review) => ({
+      id: review.id,
+      reviewerId: review.reviewerId,
+      revieweeId: review.revieweeId,
+      jobId: review.jobId,
+      rating: parseInt(review.rating),
+      comment: review.comment,
+      createdAt: review.createdAt.toISOString(),
+      reviewer: {
+        id: review.reviewer.id,
+        name: review.reviewer.name,
+        email: review.reviewer.email,
+      },
+      job: {
+        id: review.job.id,
+        title: review.job.title,
+      },
+    }));
+
+    res.status(200).json(transformed);
+    return;
+  }
+
+  res.status(200).json([]);
 }));
 
 // Handler for fetching user's available job posting credits
@@ -609,6 +1102,81 @@ app.post('/api/credits/purchase', authenticateUser, asyncHandler(async (req: Aut
     sessionId: mockSessionId,
     checkoutUrl: mockCheckoutUrl,
   });
+}));
+
+// Handler for fetching notifications
+app.get('/api/notifications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+  const notifications = await notificationsRepo.getNotificationsForUser(userId, limit);
+
+  // Transform to match frontend expectations
+  const transformed = notifications.map((notif) => ({
+    id: notif.id,
+    type: notif.type,
+    title: notif.title,
+    message: notif.message,
+    link: notif.link,
+    isRead: notif.isRead !== null,
+    createdAt: notif.createdAt.toISOString(),
+  }));
+
+  res.status(200).json(transformed);
+}));
+
+// Handler for getting unread notification count (lightweight)
+app.get('/api/notifications/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const count = await notificationsRepo.getUnreadCount(userId);
+  res.status(200).json({ count });
+}));
+
+// Handler for marking a notification as read
+app.patch('/api/notifications/:id/read', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const updated = await notificationsRepo.markNotificationAsRead(id, userId);
+
+  if (updated) {
+    res.status(200).json({
+      id: updated.id,
+      isRead: updated.isRead !== null,
+    });
+    return;
+  }
+
+  res.status(404).json({ message: 'Notification not found' });
+}));
+
+// Handler for marking all notifications as read
+app.patch('/api/notifications/read-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const count = await notificationsRepo.markAllNotificationsAsRead(userId);
+  res.status(200).json({ count });
 }));
 
 // Apply error handling middleware (must be last)

@@ -83,7 +83,7 @@ export default function NotificationBell({
         data-testid="notification-bell"
         aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
       >
-        <Bell className={`w-5 h-5 ${isOpen ? 'text-primary' : 'text-gray-600 hover:text-gray-900'}`} />
+        <Bell className={`w-5 h-5 text-white hover:text-steel-200`} />
         
         {/* Notification Badge */}
         {unreadCount > 0 && (

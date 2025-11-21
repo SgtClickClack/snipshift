@@ -40,7 +40,9 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     location: user.location,
     roles: [user.role],
     currentRole: user.role,
-    uid: req.user.uid // Keep the firebase UID from the token/request
+    uid: req.user.uid, // Keep the firebase UID from the token/request
+    averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
+    reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
   });
 }));
 
