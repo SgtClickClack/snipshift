@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules
+// Allows authenticated users to upload images to their own user folder or job folders
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // User avatars: users/{uid}/avatar.{ext}
+    match /users/{userId}/{fileName} {
+      // Users can read/write their own avatar
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && fileName.matches('avatar\\.(jpg|jpeg|png|gif|webp)')
+                   && request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+    
+    // Job site photos: jobs/{jobId}/{fileName}
+    match /jobs/{jobId}/{fileName} {
+      // Anyone authenticated can read job photos
+      allow read: if request.auth != null;
+      // Only job owner can upload (we'll verify ownership server-side)
+      allow write: if request.auth != null
+                   && fileName.matches('.*\\.(jpg|jpeg|png|gif|webp)')
+                   && request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    // General images folder (fallback)
+    match /images/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}
+

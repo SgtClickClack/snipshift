@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/lib/api';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 export default function EditProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -20,6 +21,7 @@ export default function EditProfilePage() {
     bio: '',
     phone: '',
     location: '',
+    avatarUrl: '',
   });
 
   // Pre-fill form with user data
@@ -30,6 +32,7 @@ export default function EditProfilePage() {
         bio: user.bio || '',
         phone: user.phone || '',
         location: user.location || '',
+        avatarUrl: user.avatarUrl || user.photoURL || '',
       });
     }
   }, [user]);
@@ -85,6 +88,35 @@ export default function EditProfilePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Avatar Upload */}
+              <div className="space-y-2">
+                <Label className="text-steel-700">Profile Picture</Label>
+                {user && (
+                  <ImageUpload
+                    currentImageUrl={formData.avatarUrl}
+                    onUploadComplete={(url) => {
+                      setFormData(prev => ({ ...prev, avatarUrl: url }));
+                      toast({
+                        title: "Image uploaded",
+                        description: "Your profile picture has been updated.",
+                      });
+                    }}
+                    onUploadError={(error) => {
+                      toast({
+                        title: "Upload failed",
+                        description: error.message || "Failed to upload image.",
+                        variant: "destructive",
+                      });
+                    }}
+                    pathPrefix="users"
+                    entityId={user.id}
+                    fileName="avatar"
+                    shape="circle"
+                    maxSize={5 * 1024 * 1024} // 5MB
+                  />
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="displayName" className="text-steel-700">Display Name</Label>
                 <Input

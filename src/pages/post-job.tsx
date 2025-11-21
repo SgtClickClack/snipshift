@@ -9,10 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { ImageUpload } from '@/components/ui/image-upload';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function PostJobPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<CreateJobData>({
@@ -24,7 +27,11 @@ export default function PostJobPage() {
     endTime: '',
     location: '',
     shopName: '',
+    sitePhotoUrl: '',
   });
+  
+  // Generate a temporary job ID for image uploads before job creation
+  const tempJobId = user ? `temp-${user.id}-${Date.now()}` : 'temp';
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -283,6 +290,40 @@ export default function PostJobPage() {
                   <p className="text-red-500 text-sm mt-1">{errors.description}</p>
                 )}
               </div>
+
+              {/* Site Photo Upload */}
+              {user && (
+                <div>
+                  <Label className="text-steel-900">
+                    Site Photo (Optional)
+                  </Label>
+                  <p className="text-xs text-steel-500 mb-2">
+                    Upload a photo of your salon, barbershop, or workspace
+                  </p>
+                  <ImageUpload
+                    currentImageUrl={formData.sitePhotoUrl}
+                    onUploadComplete={(url) => {
+                      setFormData(prev => ({ ...prev, sitePhotoUrl: url }));
+                      toast({
+                        title: "Image uploaded",
+                        description: "Site photo has been added.",
+                      });
+                    }}
+                    onUploadError={(error) => {
+                      toast({
+                        title: "Upload failed",
+                        description: error.message || "Failed to upload image.",
+                        variant: "destructive",
+                      });
+                    }}
+                    pathPrefix="jobs"
+                    entityId={tempJobId}
+                    fileName="site-photo"
+                    shape="rect"
+                    maxSize={10 * 1024 * 1024} // 10MB
+                  />
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="flex gap-4 pt-4">

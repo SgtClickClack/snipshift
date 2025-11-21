@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
+import { getStorage } from "firebase/storage";
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
 const sanitizeEnv = (val: string | undefined, keyName: string): string => {
@@ -55,6 +56,7 @@ console.log('✅ Firebase App Initialized Successfully');
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+export const storage = getStorage(app);
 
 // Configure Google provider
 googleProvider.addScope('email');

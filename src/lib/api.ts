@@ -5,6 +5,7 @@ export interface UpdateProfileData {
   bio?: string;
   phone?: string;
   location?: string;
+  avatarUrl?: string;
 }
 
 export interface JobFilterParams {
@@ -129,6 +130,7 @@ export interface CreateJobData {
   state?: string;
   lat?: number;
   lng?: number;
+  sitePhotoUrl?: string;
 }
 
 export async function createJob(jobData: CreateJobData) {
