@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "ts-node src/index.ts",
+    "build": "tsc",
     "seed:plans": "ts-node src/scripts/seed-plans.ts",
     "migrate:onboarding": "ts-node src/scripts/migrate-onboarding.ts"
   },

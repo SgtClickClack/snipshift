@@ -192,7 +192,7 @@ export const notifications = pgTable('notifications', {
   title: varchar('title', { length: 255 }).notNull(),
   message: text('message').notNull(),
   link: varchar('link', { length: 512 }),
-  isRead: timestamp('is_read').default(null), // NULL means unread, timestamp means read
+  isRead: timestamp('is_read'), // NULL means unread, timestamp means read
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => ({
   userIdIdx: index('notifications_user_id_idx').on(table.userId),
@@ -256,7 +256,7 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   interval: varchar('interval', { length: 50 }).notNull(), // 'month', 'year'
   stripePriceId: varchar('stripe_price_id', { length: 255 }),
   features: text('features'), // JSON string of features array
-  isActive: timestamp('is_active').default(null), // NULL means inactive, timestamp means active
+  isActive: timestamp('is_active'), // NULL means inactive, timestamp means active
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
@@ -276,7 +276,7 @@ export const subscriptions = pgTable('subscriptions', {
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   currentPeriodStart: timestamp('current_period_start'),
   currentPeriodEnd: timestamp('current_period_end'),
-  cancelAtPeriodEnd: timestamp('cancel_at_period_end').default(null), // NULL means false, timestamp means true
+  cancelAtPeriodEnd: timestamp('cancel_at_period_end'), // NULL means false, timestamp means true
   canceledAt: timestamp('canceled_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -371,7 +371,7 @@ export const messages = pgTable('messages', {
   conversationId: uuid('conversation_id').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
   senderId: uuid('sender_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  isRead: timestamp('is_read').default(null), // NULL means unread, timestamp means read
+  isRead: timestamp('is_read'), // NULL means unread, timestamp means read
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => ({
   conversationIdIdx: index('messages_conversation_id_idx').on(table.conversationId),
