@@ -17,17 +17,28 @@ let isInitialized = false;
  * - Lazy initialization: connections created on first use
  * - Fast fail: 3 second timeout for cold starts
  * - Reasonable pool size: max 20, min 2 (not 5 to avoid blocking startup)
+ * - SSL enforcement: Always enabled for cloud databases (Neon, Vercel, etc.)
  */
-const getConnectionConfig = () => ({
-  max: 20,
-  min: 2, // Reduced from 5 to avoid blocking startup
-  idleTimeoutMillis: 20000,
-  connectionTimeoutMillis: 3000, // Fast fail: 3 seconds instead of 10
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
-});
+const getConnectionConfig = (databaseUrl: string) => {
+  // Check if DATABASE_URL indicates a cloud database that requires SSL
+  // Neon Postgres and most cloud providers require SSL
+  const requiresSSL = 
+    process.env.NODE_ENV === 'production' ||
+    databaseUrl.includes('neon.tech') ||
+    databaseUrl.includes('neon') ||
+    databaseUrl.includes('vercel') ||
+    databaseUrl.includes('supabase') ||
+    databaseUrl.includes('railway') ||
+    databaseUrl.includes('render.com');
+
+  return {
+    max: 20,
+    min: 2, // Reduced from 5 to avoid blocking startup
+    idleTimeoutMillis: 20000,
+    connectionTimeoutMillis: 3000, // Fast fail: 3 seconds instead of 10
+    ssl: requiresSSL ? { rejectUnauthorized: false } : false,
+  };
+};
 
 /**
  * Initialize database connection lazily
@@ -52,7 +63,7 @@ export function getDatabase(): Pool | null {
   try {
     pool = new Pool({
       connectionString: databaseUrl,
-      ...getConnectionConfig(),
+      ...getConnectionConfig(databaseUrl),
     });
     isInitialized = true;
     console.log('[DB] Database connection pool initialized');
