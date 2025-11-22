@@ -64,7 +64,8 @@ export function authenticateUser(
   next: NextFunction
 ): void {
   // Check if auth service is available
-  if (!auth) {
+  const firebaseAuth = auth;
+  if (!firebaseAuth) {
     console.error('Firebase auth service is not initialized');
     res.status(500).json({ 
       message: 'Internal Server Error: Auth service unavailable',
@@ -86,7 +87,7 @@ export function authenticateUser(
   // Wrap async logic in Promise to handle errors properly
   Promise.resolve().then(async () => {
     try {
-      const decodedToken = await auth.verifyIdToken(token);
+      const decodedToken = await firebaseAuth.verifyIdToken(token);
       const { uid, email } = decodedToken;
 
       if (!email) {
