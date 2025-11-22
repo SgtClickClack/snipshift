@@ -29,10 +29,18 @@
       }
       .splash-logo {
         width: 150px;
-        height: auto;
+        height: 150px;
         margin-bottom: 24px;
+        object-fit: contain;
         filter: brightness(2.5) contrast(1.8) drop-shadow(0 0 15px rgba(255,255,255,0.5));
         animation: pulse 2s ease-in-out infinite;
+      }
+      .splash-logo-container {
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
       }
       .splash-loader {
         width: 40px;
@@ -41,6 +49,13 @@
         border-top-color: #3b82f6;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+      }
+      .loader-text {
+        color: rgba(255, 255, 255, 0.8);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        margin-top: 16px;
+        letter-spacing: 0.5px;
       }
       @keyframes spin {
         to { transform: rotate(360deg); }
@@ -54,8 +69,19 @@
   <body>
     <!-- Splash Screen -->
     <div id="splash-screen">
-      <img src="/brand-logo.png" alt="Snipshift" class="splash-logo" />
+      <div class="splash-logo-container">
+        <img 
+          src="/brand-logo.png" 
+          alt="Snipshift" 
+          class="splash-logo"
+          width="150"
+          height="150"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+        />
+        <div style="display: none; color: white; font-size: 24px; font-weight: bold;">Snipshift</div>
+      </div>
       <div class="splash-loader"></div>
+      <div class="loader-text">Loading...</div>
     </div>
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
