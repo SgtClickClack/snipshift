@@ -68,11 +68,20 @@ export function getDatabase(): Pool | null {
       connectionString: databaseUrl,
       ...getConnectionConfig(databaseUrl),
     });
+
+    // Add error listener to prevent crashing on idle client errors
+    pool.on('error', (err, client) => {
+      console.error('[DB] Unexpected error on idle client', err);
+      // Don't throw here, just log it
+    });
+
     isInitialized = true;
     console.log('[DB] Database connection pool initialized');
     return pool;
   } catch (error) {
     console.error('[DB] Failed to initialize database connection:', error);
+    // Mark as initialized to prevent retrying immediately on every request if config is bad
+    // But pool remains null
     isInitialized = true;
     return null;
   }

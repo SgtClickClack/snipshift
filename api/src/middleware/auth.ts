@@ -63,6 +63,17 @@ export function authenticateUser(
   res: Response,
   next: NextFunction
 ): void {
+  // Check if auth service is available
+  if (!auth) {
+    console.error('Firebase auth service is not initialized');
+    res.status(500).json({ 
+      message: 'Internal Server Error: Auth service unavailable',
+      error: 'Firebase Admin not initialized',
+      details: 'The server failed to initialize the authentication service. Please check server logs for configuration errors.'
+    });
+    return;
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
