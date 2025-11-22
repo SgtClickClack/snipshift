@@ -20,16 +20,19 @@ let isInitialized = false;
  * - SSL enforcement: Always enabled for cloud databases (Neon, Vercel, etc.)
  */
 const getConnectionConfig = (databaseUrl: string) => {
-  // Check if DATABASE_URL indicates a cloud database that requires SSL
-  // Neon Postgres and most cloud providers require SSL
-  const requiresSSL = 
-    process.env.NODE_ENV === 'production' ||
-    databaseUrl.includes('neon.tech') ||
-    databaseUrl.includes('neon') ||
+  // Strictly enforce SSL for production and cloud databases
+  // Neon Postgres ALWAYS requires SSL - no exceptions
+  const isNeon = databaseUrl.includes('neon.tech') || databaseUrl.includes('neon');
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  const isCloudDatabase = 
+    isNeon ||
     databaseUrl.includes('vercel') ||
     databaseUrl.includes('supabase') ||
     databaseUrl.includes('railway') ||
     databaseUrl.includes('render.com');
+
+  // Always enable SSL for Neon, production, or cloud databases
+  const requiresSSL = isNeon || isProduction || isCloudDatabase;
 
   return {
     max: 20,
