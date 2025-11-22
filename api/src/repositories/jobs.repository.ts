@@ -10,7 +10,7 @@ import { getDb } from '../db';
 
 export interface JobFilters {
   businessId?: string;
-  status?: 'open' | 'filled' | 'closed';
+  status?: 'open' | 'filled' | 'closed' | 'completed';
   limit?: number;
   offset?: number;
   city?: string;
@@ -227,7 +227,7 @@ export async function updateJob(
     date?: string;
     startTime?: string;
     endTime?: string;
-    status?: 'open' | 'filled' | 'closed';
+    status?: 'open' | 'filled' | 'closed' | 'completed';
   }
 ): Promise<typeof jobs.$inferSelect | null> {
   const db = getDb();

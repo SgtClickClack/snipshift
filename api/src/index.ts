@@ -24,6 +24,7 @@ import usersRouter from './routes/users';
 import * as notificationService from './services/notification.service';
 import * as emailService from './services/email.service';
 import { stripe } from './lib/stripe';
+import type Stripe from 'stripe';
 import { requireAdmin } from './middleware/auth';
 
 const app = express();
@@ -1532,7 +1533,8 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
           break;
         }
 
-        const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const stripeSubscriptionResult = await stripe!.subscriptions.retrieve(stripeSubscriptionId);
+        const stripeSubscription = stripeSubscriptionResult as any;
         const stripeCustomerId = stripeSubscription.customer as string;
 
         // Get plan from database
@@ -1585,7 +1587,8 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
         }
 
         // Retrieve subscription from Stripe to get updated period
-        const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const stripeSubscriptionResult = await stripe!.subscriptions.retrieve(stripeSubscriptionId);
+        const stripeSubscription = stripeSubscriptionResult as any;
 
         // Update subscription period
         await subscriptionsRepo.updateSubscription(subscription.id, {

@@ -7,7 +7,7 @@
 import { getDb } from '../db';
 import { notifications } from '../db/schema';
 
-export type NotificationType = 'application_received' | 'application_status_change' | 'job_posted' | 'job_updated' | 'job_completed';
+export type NotificationType = 'application_received' | 'application_status_change' | 'job_posted' | 'job_updated' | 'job_completed' | 'message_received';
 
 export interface CreateNotificationData {
   userId: string;
