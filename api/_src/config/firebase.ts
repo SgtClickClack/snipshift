@@ -6,6 +6,7 @@ import path from 'path';
 dotenv.config();
 // Also try loading from parent dir (for local dev when running from api dir)
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+// forcing rebuild
 
 // LAZY INITIALIZATION: Don't initialize Firebase at module load time
 // This prevents crashes if Firebase can't initialize (e.g., missing env vars)
