@@ -1,58 +1,67 @@
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import * as dotenv from 'dotenv';
+import path from 'path';
 
+// Load env vars
 dotenv.config();
+// Also try loading from parent dir (for local dev when running from api dir)
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 let authInstance: admin.auth.Auth | null = null;
 
 try {
-  if (!admin.apps.length) {
+  // Handle default export interop issue
+  const firebaseAdmin = (admin as any).default || admin;
+  
+  if (!firebaseAdmin.apps.length) {
     // 1. Try parsing FIREBASE_SERVICE_ACCOUNT JSON string
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
+        // Handle potential newline escaping issues (common Vercel gotcha)
+        const cleanedJson = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n');
+        const serviceAccount = JSON.parse(cleanedJson);
+        firebaseAdmin.initializeApp({
+          credential: firebaseAdmin.credential.cert(serviceAccount),
         });
-        console.log('✅ Firebase initialized with FIREBASE_SERVICE_ACCOUNT');
-      } catch (e) {
-        console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:', e);
+        console.log('Firebase Admin Initialized successfully');
+      } catch (e: any) {
+        console.error('Firebase Admin Init Failed:', e);
         // Fallback to standard init attempt if JSON parse fails
         try {
-            admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
+            firebaseAdmin.initializeApp({
+            credential: firebaseAdmin.credential.applicationDefault(),
             });
-            console.log('✅ Firebase initialized with applicationDefault (fallback)');
-        } catch (fallbackErr) {
-             console.error('❌ Firebase applicationDefault fallback failed:', fallbackErr);
+            console.log('Firebase Admin Initialized successfully (fallback)');
+        } catch (fallbackErr: any) {
+             console.error('Firebase Admin Init Failed (fallback):', fallbackErr);
         }
       }
     } 
     // 2. Try individual environment variables
     else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       try {
-        admin.initializeApp({
-            credential: admin.credential.cert({
+        firebaseAdmin.initializeApp({
+            credential: firebaseAdmin.credential.cert({
             projectId: process.env.FIREBASE_PROJECT_ID,
             clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
             privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
             }),
         });
-        console.log('✅ Firebase initialized with individual env vars');
-      } catch (e) {
-          console.error('❌ Firebase individual env vars initialization failed:', e);
+        console.log('Firebase Admin Initialized successfully');
+      } catch (e: any) {
+          console.error('Firebase Admin Init Failed:', e);
       }
     }
     // 3. Fallback to application default credentials
     else {
       try {
-        admin.initializeApp({
-          credential: admin.credential.applicationDefault(),
+        firebaseAdmin.initializeApp({
+          credential: firebaseAdmin.credential.applicationDefault(),
         });
-        console.log('✅ Firebase initialized with applicationDefault');
-      } catch (e) {
-        console.warn('⚠️ Firebase applicationDefault initialization failed. Auth features will be disabled.');
-        console.warn('Detailed error:', e);
+        console.log('Firebase Admin Initialized successfully');
+      } catch (e: any) {
+        console.error('Firebase Admin Init Failed:', e);
+        console.warn('Auth features will be disabled.');
       }
     }
   } else {
@@ -61,11 +70,11 @@ try {
   }
 
   // Only try to get auth if an app was initialized
-  if (admin.apps.length > 0) {
-    authInstance = admin.auth();
+  if (firebaseAdmin.apps.length > 0) {
+    authInstance = firebaseAdmin.auth();
   }
-} catch (error) {
-  console.error('❌ Firebase initialization critical error:', error);
+} catch (error: any) {
+  console.error('Firebase Admin Init Failed:', error);
   // Do not throw, allow server to start without Firebase (auth will fail gracefully)
 }
 

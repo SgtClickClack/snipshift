@@ -20,6 +20,7 @@ import * as conversationsRepo from './repositories/conversations.repository';
 import * as messagesRepo from './repositories/messages.repository';
 import * as reportsRepo from './repositories/reports.repository';
 import { getDatabase } from './db/connection';
+import { auth } from './config/firebase';
 import usersRouter from './routes/users';
 import * as notificationService from './services/notification.service';
 import * as emailService from './services/email.service';
@@ -40,6 +41,41 @@ app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Debug endpoint to diagnose Vercel environment
+app.get('/api/debug', async (req, res) => {
+  // Check if DATABASE_URL exists (return true/false, DO NOT return the value)
+  const databaseUrlExists = !!process.env.DATABASE_URL;
+
+  // Check if FIREBASE_SERVICE_ACCOUNT exists and is valid JSON
+  let firebaseServiceAccountStatus: { exists: boolean; validJson: boolean; error?: string } = {
+    exists: false,
+    validJson: false,
+  };
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    firebaseServiceAccountStatus.exists = true;
+    try {
+      // Handle potential newline escaping issues (common Vercel gotcha)
+      const cleanedJson = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n');
+      JSON.parse(cleanedJson);
+      firebaseServiceAccountStatus.validJson = true;
+    } catch (error: any) {
+      firebaseServiceAccountStatus.validJson = false;
+      firebaseServiceAccountStatus.error = error.message || 'JSON parse failed';
+    }
+  }
+
+  res.status(200).json({
+    status: 'debug',
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      DATABASE_URL: databaseUrlExists,
+      FIREBASE_SERVICE_ACCOUNT: firebaseServiceAccountStatus,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Routes
 app.use('/api', usersRouter);
