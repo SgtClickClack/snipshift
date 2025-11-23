@@ -63,63 +63,81 @@ export function authenticateUser(
   res: Response,
   next: NextFunction
 ): void {
-  // Check if auth service is available
-  const firebaseAuth = auth;
-  if (!firebaseAuth) {
-    console.error('Firebase auth service is not initialized');
-    res.status(500).json({ 
-      message: 'Internal Server Error: Auth service unavailable',
-      error: 'Firebase Admin not initialized',
-      details: 'The server failed to initialize the authentication service. Please check server logs for configuration errors.'
-    });
-    return;
-  }
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ message: 'Unauthorized: No token provided' });
-    return;
-  }
-
-  const token = authHeader.split('Bearer ')[1];
-
-  // Wrap async logic in Promise to handle errors properly
-  Promise.resolve().then(async () => {
-    try {
-      const decodedToken = await firebaseAuth.verifyIdToken(token);
-      const { uid, email } = decodedToken;
-
-      if (!email) {
-         res.status(401).json({ message: 'Unauthorized: No email in token' });
-         return;
-      }
-
-      // Find user in our DB to get role
-      const user = await usersRepo.getUserByEmail(email);
-
-      if (!user) {
-        // For now, we'll fail if they aren't in our DB, to enforce proper signup flow
-        res.status(401).json({ message: 'Unauthorized: User not found in database' });
-        return;
-      }
-
-      // Attach user to request object
-      req.user = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role as 'professional' | 'business' | 'admin' | 'trainer',
-        uid: uid
-      };
-
-      next();
-    } catch (error) {
-      console.error('[AUTH ERROR]', error);
-      res.status(401).json({ message: 'Unauthorized: Invalid token' });
+  try {
+    // Check if auth service is available
+    const firebaseAuth = auth;
+    if (!firebaseAuth) {
+      console.error('[AUTH] Firebase auth service is not initialized');
+      console.error('[AUTH] Check environment variables: FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+      res.status(500).json({ 
+        message: 'Internal Server Error: Auth service unavailable',
+        error: 'Firebase Admin not initialized',
+        details: 'The server failed to initialize the authentication service. Please check server logs for configuration errors.'
+      });
+      return;
     }
-  }).catch((error) => {
-    console.error('[AUTH ERROR]', error);
-    next(error); 
-  });
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ message: 'Unauthorized: No token provided' });
+      return;
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    // Wrap async logic in Promise to handle errors properly
+    Promise.resolve().then(async () => {
+      try {
+        const decodedToken = await firebaseAuth.verifyIdToken(token);
+        const { uid, email } = decodedToken;
+
+        if (!email) {
+           res.status(401).json({ message: 'Unauthorized: No email in token' });
+           return;
+        }
+
+        // Find user in our DB to get role
+        const user = await usersRepo.getUserByEmail(email);
+
+        if (!user) {
+          // For now, we'll fail if they aren't in our DB, to enforce proper signup flow
+          res.status(401).json({ message: 'Unauthorized: User not found in database' });
+          return;
+        }
+
+        // Attach user to request object
+        req.user = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role as 'professional' | 'business' | 'admin' | 'trainer',
+          uid: uid
+        };
+
+        next();
+      } catch (error: any) {
+        console.error('[AUTH ERROR] Token verification failed:', error?.message || error);
+        console.error('[AUTH ERROR] Stack:', error?.stack);
+        res.status(401).json({ 
+          message: 'Unauthorized: Invalid token',
+          error: error?.message || 'Token verification failed'
+        });
+      }
+    }).catch((error: any) => {
+      console.error('[AUTH ERROR] Promise rejection:', error?.message || error);
+      console.error('[AUTH ERROR] Stack:', error?.stack);
+      res.status(500).json({ 
+        message: 'Internal server error during authentication',
+        error: error?.message || 'Unknown error'
+      });
+    });
+  } catch (error: any) {
+    console.error('[AUTH ERROR] Synchronous error:', error?.message || error);
+    console.error('[AUTH ERROR] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error?.message || 'Unknown error'
+    });
+  }
 }

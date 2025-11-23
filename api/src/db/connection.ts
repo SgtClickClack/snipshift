@@ -54,7 +54,7 @@ export function getDatabase(): Pool | null {
     return pool;
   }
 
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
   if (!databaseUrl) {
     console.warn('[DB] DATABASE_URL not configured. Database features will be unavailable.');
@@ -72,14 +72,18 @@ export function getDatabase(): Pool | null {
     // Add error listener to prevent crashing on idle client errors
     pool.on('error', (err, client) => {
       console.error('[DB] Unexpected error on idle client', err);
+      console.error('[DB] Error stack:', err?.stack);
       // Don't throw here, just log it
     });
 
     isInitialized = true;
-    console.log('[DB] Database connection pool initialized');
+    console.log('[DB] Database connection pool initialized successfully');
     return pool;
-  } catch (error) {
-    console.error('[DB] Failed to initialize database connection:', error);
+  } catch (error: any) {
+    console.error('[DB] Failed to initialize database connection:', error?.message || error);
+    console.error('[DB] Error stack:', error?.stack);
+    console.error('[DB] DATABASE_URL exists:', !!databaseUrl);
+    console.error('[DB] DATABASE_URL length:', databaseUrl?.length || 0);
     // Mark as initialized to prevent retrying immediately on every request if config is bad
     // But pool remains null
     isInitialized = true;

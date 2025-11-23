@@ -34,6 +34,29 @@ import { requireAdmin } from './middleware/auth';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Startup validation - log environment status
+(function validateEnvironment() {
+  console.log('[STARTUP] Validating environment...');
+  
+  const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  const hasDatabase = !!databaseUrl;
+  console.log(`[STARTUP] DATABASE_URL: ${hasDatabase ? '✓ configured' : '✗ missing'}`);
+  
+  const hasFirebaseServiceAccount = !!process.env.FIREBASE_SERVICE_ACCOUNT;
+  const hasFirebaseIndividualVars = !!(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY);
+  const hasFirebase = hasFirebaseServiceAccount || hasFirebaseIndividualVars;
+  console.log(`[STARTUP] FIREBASE: ${hasFirebase ? '✓ configured' : '✗ missing'}`);
+  if (hasFirebaseServiceAccount) {
+    console.log('[STARTUP]   Using FIREBASE_SERVICE_ACCOUNT');
+  } else if (hasFirebaseIndividualVars) {
+    console.log('[STARTUP]   Using individual Firebase env vars');
+  }
+  
+  console.log(`[STARTUP] NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+  console.log(`[STARTUP] VERCEL: ${process.env.VERCEL || 'not set'}`);
+  console.log('[STARTUP] Environment validation complete');
+})();
+
 // Middleware
 app.use(cors());
 
@@ -47,37 +70,79 @@ app.use(express.urlencoded({ extended: true }));
 
 // Debug endpoint to diagnose Vercel environment
 app.get('/api/debug', async (req, res) => {
-  // Check if DATABASE_URL exists (return true/false, DO NOT return the value)
-  const databaseUrlExists = !!process.env.DATABASE_URL;
+  try {
+    // Check if DATABASE_URL exists (return true/false, DO NOT return the value)
+    const databaseUrlExists = !!process.env.DATABASE_URL;
+    const postgresUrlExists = !!process.env.POSTGRES_URL;
 
-  // Check if FIREBASE_SERVICE_ACCOUNT exists and is valid JSON
-  let firebaseServiceAccountStatus: { exists: boolean; validJson: boolean; error?: string } = {
-    exists: false,
-    validJson: false,
-  };
+    // Check if FIREBASE_SERVICE_ACCOUNT exists and is valid JSON
+    let firebaseServiceAccountStatus: { exists: boolean; validJson: boolean; error?: string } = {
+      exists: false,
+      validJson: false,
+    };
 
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    firebaseServiceAccountStatus.exists = true;
-    try {
-      // Handle potential newline escaping issues (common Vercel gotcha)
-      const cleanedJson = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n');
-      JSON.parse(cleanedJson);
-      firebaseServiceAccountStatus.validJson = true;
-    } catch (error: any) {
-      firebaseServiceAccountStatus.validJson = false;
-      firebaseServiceAccountStatus.error = error.message || 'JSON parse failed';
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      firebaseServiceAccountStatus.exists = true;
+      try {
+        // Handle potential newline escaping issues (common Vercel gotcha)
+        const cleanedJson = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n');
+        JSON.parse(cleanedJson);
+        firebaseServiceAccountStatus.validJson = true;
+      } catch (error: any) {
+        firebaseServiceAccountStatus.validJson = false;
+        firebaseServiceAccountStatus.error = error.message || 'JSON parse failed';
+      }
     }
-  }
 
-  res.status(200).json({
-    status: 'debug',
-    env: {
-      NODE_ENV: process.env.NODE_ENV,
-      DATABASE_URL: databaseUrlExists,
-      FIREBASE_SERVICE_ACCOUNT: firebaseServiceAccountStatus,
-    },
-    timestamp: new Date().toISOString(),
-  });
+    // Check Firebase individual env vars
+    const firebaseIndividualVars = {
+      FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+      FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
+      FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
+    };
+
+    // Test database connection
+    const db = getDatabase();
+    const dbStatus = db ? 'pool_initialized' : 'not_initialized';
+    let dbTestResult = 'not_tested';
+    if (db) {
+      try {
+        await db.query('SELECT 1');
+        dbTestResult = 'connected';
+      } catch (error: any) {
+        dbTestResult = `error: ${error?.message || 'unknown'}`;
+      }
+    }
+
+    res.status(200).json({
+      status: 'debug',
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        VERCEL: process.env.VERCEL,
+        DATABASE_URL: databaseUrlExists,
+        POSTGRES_URL: postgresUrlExists,
+        FIREBASE_SERVICE_ACCOUNT: firebaseServiceAccountStatus,
+        FIREBASE_INDIVIDUAL_VARS: firebaseIndividualVars,
+      },
+      services: {
+        database: {
+          status: dbStatus,
+          test: dbTestResult,
+        },
+        firebase: {
+          initialized: !!auth,
+        },
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('[DEBUG ERROR]', error);
+    res.status(500).json({
+      status: 'error',
+      error: error?.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    });
+  }
 });
 
 // Routes
@@ -152,30 +217,40 @@ app.get('/health', asyncHandler(async (req, res) => {
 
 // API login endpoint
 app.post('/api/login', asyncHandler(async (req, res) => {
-  // Validate request body
-  const validationResult = LoginSchema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({ message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') });
-    return;
-  }
+  try {
+    // Validate request body
+    const validationResult = LoginSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      res.status(400).json({ message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') });
+      return;
+    }
 
-  const { email, password } = validationResult.data;
+    const { email, password } = validationResult.data;
 
-  // Mock credentials (temporary until proper auth is implemented)
-  if (email === 'business@example.com' && password === 'password123') {
-    // Try to get or create the mock business user in database
-    const dbUser = await usersRepo.getOrCreateMockBusinessUser();
-    
-    const mockUser = {
-      id: dbUser?.id || 'user-1',
-      email: 'business@example.com',
-      name: dbUser?.name || 'Test Business',
-      // In a real app, this would be a JWT
-      token: 'mock-auth-token-12345',
-    };
-    res.status(200).json(mockUser);
-  } else {
-    res.status(401).json({ message: 'Invalid credentials' });
+    // Mock credentials (temporary until proper auth is implemented)
+    if (email === 'business@example.com' && password === 'password123') {
+      // Try to get or create the mock business user in database
+      const dbUser = await usersRepo.getOrCreateMockBusinessUser();
+      
+      const mockUser = {
+        id: dbUser?.id || 'user-1',
+        email: 'business@example.com',
+        name: dbUser?.name || 'Test Business',
+        // In a real app, this would be a JWT
+        token: 'mock-auth-token-12345',
+      };
+      res.status(200).json(mockUser);
+    } else {
+      res.status(401).json({ message: 'Invalid credentials' });
+    }
+  } catch (error: any) {
+    console.error('[LOGIN ERROR]', error);
+    console.error('[LOGIN ERROR] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error?.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
   }
 }));
 

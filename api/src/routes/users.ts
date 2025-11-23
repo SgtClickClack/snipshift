@@ -35,80 +35,100 @@ const RegisterSchema = z.object({
 
 // Register new user (creates user and sends welcome email)
 router.post('/register', asyncHandler(async (req, res) => {
-  const validationResult = RegisterSchema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({ 
-      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+  try {
+    const validationResult = RegisterSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      res.status(400).json({ 
+        message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+      });
+      return;
+    }
+
+    const { email, name } = validationResult.data;
+
+    // Check if user already exists
+    const existingUser = await usersRepo.getUserByEmail(email);
+    if (existingUser) {
+      res.status(409).json({ message: 'User with this email already exists' });
+      return;
+    }
+
+    // Create user
+    const newUser = await usersRepo.createUser({
+      email,
+      name,
+      role: 'professional',
     });
-    return;
+
+    if (!newUser) {
+      res.status(500).json({ message: 'Failed to create user' });
+      return;
+    }
+
+    // Send welcome email (non-blocking)
+    emailService.sendWelcomeEmail(email, name).catch(error => {
+      console.error('Failed to send welcome email:', error);
+      // Don't fail the request if email fails
+    });
+
+    res.status(201).json({
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+      role: newUser.role,
+    });
+  } catch (error: any) {
+    console.error('[REGISTER ERROR]', error);
+    console.error('[REGISTER ERROR] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error?.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
   }
-
-  const { email, name } = validationResult.data;
-
-  // Check if user already exists
-  const existingUser = await usersRepo.getUserByEmail(email);
-  if (existingUser) {
-    res.status(409).json({ message: 'User with this email already exists' });
-    return;
-  }
-
-  // Create user
-  const newUser = await usersRepo.createUser({
-    email,
-    name,
-    role: 'professional',
-  });
-
-  if (!newUser) {
-    res.status(500).json({ message: 'Failed to create user' });
-    return;
-  }
-
-  // Send welcome email (non-blocking)
-  emailService.sendWelcomeEmail(email, name).catch(error => {
-    console.error('Failed to send welcome email:', error);
-    // Don't fail the request if email fails
-  });
-
-  res.status(201).json({
-    id: newUser.id,
-    email: newUser.email,
-    name: newUser.name,
-    role: newUser.role,
-  });
 }));
 
 // Get current user profile
 router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-  
-  // Fetch latest user data from DB to ensure we have bio, phone, etc.
-  const user = await usersRepo.getUserById(req.user.id);
-  
-  if (!user) {
-     res.status(404).json({ message: 'User not found' });
-     return;
-  }
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+    
+    // Fetch latest user data from DB to ensure we have bio, phone, etc.
+    const user = await usersRepo.getUserById(req.user.id);
+    
+    if (!user) {
+       res.status(404).json({ message: 'User not found' });
+       return;
+    }
 
-  // Map DB user to frontend User shape
-  res.status(200).json({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    displayName: user.name, // Map name to displayName for frontend consistency
-    bio: user.bio,
-    phone: user.phone,
-    location: user.location,
-    roles: [user.role],
-    currentRole: user.role,
-    uid: req.user.uid, // Keep the firebase UID from the token/request
-    averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
-    reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
-    isOnboarded: user.isOnboarded ?? false,
-  });
+    // Map DB user to frontend User shape
+    res.status(200).json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      displayName: user.name, // Map name to displayName for frontend consistency
+      bio: user.bio,
+      phone: user.phone,
+      location: user.location,
+      roles: [user.role],
+      currentRole: user.role,
+      uid: req.user.uid, // Keep the firebase UID from the token/request
+      averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
+      reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
+      isOnboarded: user.isOnboarded ?? false,
+    });
+  } catch (error: any) {
+    console.error('[ME ERROR]', error);
+    console.error('[ME ERROR] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error?.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
+  }
 }));
 
 // Update current user profile
