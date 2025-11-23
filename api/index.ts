@@ -8,7 +8,8 @@
 // CRITICAL: Force Node.js runtime (not Edge)
 // This prevents Vercel from using Edge runtime which doesn't support Node.js APIs
 export const config = {
-  runtime: 'nodejs', // Forces Node.js runtime, not Edge
+  runtime: 'nodejs', // Explicitly forces Node.js, overriding Vercel defaults
+  maxDuration: 30,   // Prevents timeouts (matches vercel.json setting)
 };
 
 // Wrap in try-catch to catch any module-level initialization errors
