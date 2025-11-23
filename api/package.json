@@ -2,15 +2,15 @@
   "name": "snipshift-api",
   "version": "1.0.0",
   "private": true,
-  "main": "src/index.ts",
+  "main": "_src/index.ts",
   "engines": {
     "node": "20.x"
   },
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "start": "ts-node _src/index.ts",
     "build": "tsc",
-    "seed:plans": "ts-node src/scripts/seed-plans.ts",
-    "migrate:onboarding": "ts-node src/scripts/migrate-onboarding.ts"
+    "seed:plans": "ts-node _src/scripts/seed-plans.ts",
+    "migrate:onboarding": "ts-node _src/scripts/migrate-onboarding.ts"
   },
   "dependencies": {
     "@react-email/components": "^1.0.1",

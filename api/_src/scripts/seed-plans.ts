@@ -94,7 +94,7 @@ async function seedPlans() {
       console.log('   1. Go to Stripe Dashboard > Products');
       console.log('   2. Create products and prices for each tier');
       console.log('   3. Copy the Price IDs (start with "price_")');
-      console.log('   4. Update api/src/scripts/seed-plans.ts\n');
+      console.log('   4. Update api/_src/scripts/seed-plans.ts\n');
     }
 
     let createdCount = 0;

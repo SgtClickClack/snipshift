@@ -101,3 +101,22 @@
 
 **Next Priority Task**
 - Verify visual appearance in browser.
+
+#### 2025-11-22: Infrastructure Fix - DATABASE_URL Scope
+
+**Core Components**
+- Vercel Environment Configuration
+
+**Key Features**
+- **Environment Variable Fix**: Removed and re-added `DATABASE_URL` to ensure it is scoped to all environments (Production, Preview, Development).
+- **Deployment**: Triggered manual production redeploy to apply changes.
+
+**Integration Points**
+- Vercel CLI
+- Neon DB connection
+
+**File Paths**
+- N/A (Infrastructure change only)
+
+**Next Priority Task**
+- Verify production deployment stability.

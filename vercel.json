@@ -27,9 +27,6 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
-    },
-    "api/src/emails/**": {
-      "runtime": null
     }
   }
 }
