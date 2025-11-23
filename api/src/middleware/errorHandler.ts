@@ -23,13 +23,15 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ): void => {
-  // Log full error details server-side
-  console.error('[ERROR]', {
+  // Log full error details server-side with critical prefix for Vercel logs visibility
+  console.error('🔥 CRITICAL SERVER CRASH [errorHandler]:', {
     message: err.message,
     stack: err.stack,
     path: req.path,
     method: req.method,
     timestamp: new Date().toISOString(),
+    body: req.body,
+    query: req.query,
   });
 
   // Handle Zod validation errors
@@ -63,8 +65,9 @@ export const errorHandler = (
   }
 
   // Generic error response (masks internal errors)
+  // DEBUG: Exposing error message temporarily for debugging Vercel 500s
   const response: ErrorResponse = {
-    message: 'An error occurred processing your request',
+    message: err.message || 'An error occurred processing your request',
     status: 500,
   };
   res.status(500).json(response);
