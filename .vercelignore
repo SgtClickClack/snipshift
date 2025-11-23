@@ -1,0 +1,12 @@
+# Ignore compiled JavaScript files (Vercel builds from TypeScript)
+api/**/*.js
+api/**/*.js.map
+
+# Ignore build artifacts
+api/dist/
+api/node_modules/
+
+# Keep only source files
+!api/_src/**/*.ts
+!api/index.ts
+
