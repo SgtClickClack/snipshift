@@ -25,6 +25,7 @@ import * as reportsRepo from './repositories/reports.repository.js';
 import { getDatabase } from './db/connection.js';
 import { auth } from './config/firebase.js';
 import usersRouter from './routes/users.js';
+import chatsRouter from './routes/chats.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
@@ -147,6 +148,7 @@ app.get('/api/debug', async (req, res) => {
 
 // Routes
 app.use('/api', usersRouter);
+app.use('/api/chats', chatsRouter);
 
 // Fallback in-memory store for when DATABASE_URL is not configured (dev only)
 // Mock jobs data for development/testing

@@ -53,6 +53,12 @@ export class MessagingService {
   async getUserChats(userId: string): Promise<Chat[]> {
     try {
       const response = await fetch(`/api/chats/user/${userId}`);
+      
+      if (!response.ok) {
+        console.error(`Failed to fetch chats: ${response.status} ${response.statusText}`);
+        return [];
+      }
+
       const chats = await response.json();
       return chats;
     } catch (error) {
@@ -65,6 +71,12 @@ export class MessagingService {
   async getChatMessages(chatId: string): Promise<Message[]> {
     try {
       const response = await fetch(`/api/chats/${chatId}/messages`);
+
+      if (!response.ok) {
+        console.error(`Failed to fetch messages: ${response.status} ${response.statusText}`);
+        return [];
+      }
+
       const messages = await response.json();
       return messages;
     } catch (error) {

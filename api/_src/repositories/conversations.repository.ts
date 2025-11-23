@@ -50,6 +50,7 @@ export async function getConversationsForUser(userId: string) {
           id: users.id,
           name: users.name,
           email: users.email,
+          role: users.role,
         })
         .from(users)
         .where(eq(users.id, otherParticipantId))
@@ -62,6 +63,7 @@ export async function getConversationsForUser(userId: string) {
           content: messages.content,
           senderId: messages.senderId,
           createdAt: messages.createdAt,
+          isRead: messages.isRead,
         })
         .from(messages)
         .where(eq(messages.conversationId, conv.id))
