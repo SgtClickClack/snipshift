@@ -40,6 +40,12 @@ function initializeFirebase(): admin.auth.Auth | null {
           if (!serviceAccount) {
             throw new Error('FIREBASE_SERVICE_ACCOUNT parsed to null/undefined');
           }
+
+          console.log('--- DEBUG FIREBASE INIT ---');
+          console.log('Env Var Project ID:', process.env.FIREBASE_PROJECT_ID);
+          console.log('Service Account Project ID:', serviceAccount?.project_id);
+          console.log('Final Init Project ID:', serviceAccount?.project_id || process.env.FIREBASE_PROJECT_ID);
+          console.log('---------------------------');
           
           firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.cert(serviceAccount),
