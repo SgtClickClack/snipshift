@@ -5,6 +5,12 @@
  * Vercel will automatically route /api/* requests to this function.
  */
 
+// CRITICAL: Force Node.js runtime (not Edge)
+// This prevents Vercel from using Edge runtime which doesn't support Node.js APIs
+export const config = {
+  runtime: 'nodejs', // Forces Node.js runtime, not Edge
+};
+
 // Wrap in try-catch to catch any module-level initialization errors
 let app: any;
 try {
