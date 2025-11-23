@@ -5,8 +5,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import * as usersRepo from '../repositories/users.repository';
-import { auth } from '../config/firebase';
+import * as usersRepo from '../repositories/users.repository.js';
+import { auth } from '../config/firebase.js';
 
 /**
  * Express request with user property

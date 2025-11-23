@@ -5,8 +5,8 @@
  */
 
 import { eq, and, desc, sql, isNull } from 'drizzle-orm';
-import { notifications } from '../db/schema';
-import { getDb } from '../db';
+import { notifications } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 /**
  * Get notifications for a user

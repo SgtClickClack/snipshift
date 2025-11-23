@@ -7,7 +7,7 @@
 
 import express from 'express';
 // Import the Express app - Vercel will resolve the path correctly
-import appModule from './src/index';
+import appModule from './src/index.js';
 
 // CRITICAL: Force Node.js runtime (not Edge)
 // This prevents Vercel from using Edge runtime which doesn't support Node.js APIs

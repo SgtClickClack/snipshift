@@ -5,8 +5,8 @@
  */
 
 import { eq, and } from 'drizzle-orm';
-import { subscriptions, subscriptionPlans, payments } from '../db/schema';
-import { getDb } from '../db';
+import { subscriptions, subscriptionPlans, payments } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 /**
  * Get all active subscription plans

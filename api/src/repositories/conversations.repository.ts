@@ -5,8 +5,8 @@
  */
 
 import { eq, or, and, desc } from 'drizzle-orm';
-import { conversations, messages, users, jobs } from '../db/schema';
-import { getDb } from '../db';
+import { conversations, messages, users, jobs } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 /**
  * Get all conversations for a user (with latest message snippet)

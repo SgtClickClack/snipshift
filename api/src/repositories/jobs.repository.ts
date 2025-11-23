@@ -5,8 +5,8 @@
  */
 
 import { eq, and, desc, sql, count, gte, lte, or, ilike } from 'drizzle-orm';
-import { jobs } from '../db/schema';
-import { getDb } from '../db';
+import { jobs } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 export interface JobFilters {
   businessId?: string;

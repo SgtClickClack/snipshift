@@ -11,8 +11,8 @@
  */
 
 import * as dotenv from 'dotenv';
-import { getDb } from '../db';
-import { subscriptionPlans } from '../db/schema';
+import { getDb } from '../db/index.js';
+import { subscriptionPlans } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
 // Load environment variables

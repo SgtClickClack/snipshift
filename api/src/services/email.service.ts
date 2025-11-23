@@ -5,11 +5,11 @@
  */
 
 import { render } from '@react-email/render';
-import { resend, isEmailServiceAvailable } from '../lib/resend';
-import WelcomeEmail from '../emails/WelcomeEmail';
-import ApplicationStatusEmail from '../emails/ApplicationStatusEmail';
-import NewMessageEmail from '../emails/NewMessageEmail';
-import JobAlertEmail from '../emails/JobAlertEmail';
+import { resend, isEmailServiceAvailable } from '../lib/resend.js';
+import WelcomeEmail from '../emails/WelcomeEmail.js';
+import ApplicationStatusEmail from '../emails/ApplicationStatusEmail.js';
+import NewMessageEmail from '../emails/NewMessageEmail.js';
+import JobAlertEmail from '../emails/JobAlertEmail.js';
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Snipshift <noreply@snipshift.com.au>';
 const FROM_NAME = 'Snipshift';

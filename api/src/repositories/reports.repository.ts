@@ -5,8 +5,8 @@
  */
 
 import { eq, desc, and, count } from 'drizzle-orm';
-import { reports } from '../db/schema';
-import { getDb } from '../db';
+import { reports } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 /**
  * Create a new report

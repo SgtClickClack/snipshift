@@ -5,8 +5,27 @@
  */
 
 import { eq, sql, count } from 'drizzle-orm';
-import { users } from '../db/schema';
-import { getDb } from '../db';
+import { users } from '../db/schema.js';
+import { getDb } from '../db/index.js';
+
+// Mock user store for development without DB
+let mockUsers: (typeof users.$inferSelect)[] = [
+  {
+    id: 'user-business-1',
+    email: 'business@example.com',
+    name: 'Test Business',
+    role: 'business',
+    passwordHash: null,
+    bio: 'A test business account',
+    phone: '555-0123',
+    location: 'New York, NY',
+    averageRating: '4.50',
+    reviewCount: '10',
+    isOnboarded: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+];
 
 /**
  * Get a user by ID
@@ -14,7 +33,7 @@ import { getDb } from '../db';
 export async function getUserById(id: string): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
   if (!db) {
-    return null;
+    return mockUsers.find(u => u.id === id) || null;
   }
 
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -27,7 +46,7 @@ export async function getUserById(id: string): Promise<typeof users.$inferSelect
 export async function getUserByEmail(email: string): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
   if (!db) {
-    return null;
+    return mockUsers.find(u => u.email === email) || null;
   }
 
   const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -50,7 +69,24 @@ export async function createUser(
 ): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
   if (!db) {
-    return null;
+    console.log('Creating mock user in memory (DB not configured)');
+    const newUser: typeof users.$inferSelect = {
+      id: `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      email: userData.email,
+      name: userData.name,
+      role: userData.role || 'professional',
+      passwordHash: userData.passwordHash || null,
+      bio: null,
+      phone: null,
+      location: null,
+      averageRating: null,
+      reviewCount: '0',
+      isOnboarded: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    mockUsers.push(newUser);
+    return newUser;
   }
 
   const [newUser] = await db
@@ -75,6 +111,15 @@ export async function updateUser(
 ): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
   if (!db) {
+    const index = mockUsers.findIndex(u => u.id === id);
+    if (index !== -1) {
+      mockUsers[index] = {
+        ...mockUsers[index],
+        ...updates,
+        updatedAt: new Date(),
+      };
+      return mockUsers[index];
+    }
     return null;
   }
 

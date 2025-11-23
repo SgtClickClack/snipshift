@@ -5,8 +5,8 @@
  */
 
 import { eq, and, desc, sql, count } from 'drizzle-orm';
-import { applications, jobs } from '../db/schema';
-import { getDb } from '../db';
+import { applications, jobs } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 export interface ApplicationFilters {
   jobId?: string;

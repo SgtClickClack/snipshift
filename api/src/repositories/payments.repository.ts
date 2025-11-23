@@ -5,8 +5,8 @@
  */
 
 import { eq, desc, sql, sum, and, gte } from 'drizzle-orm';
-import { payments } from '../db/schema';
-import { getDb } from '../db';
+import { payments } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 /**
  * Create a new payment record

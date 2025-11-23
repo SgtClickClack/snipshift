@@ -5,8 +5,8 @@
  */
 
 import { eq, and, or, desc } from 'drizzle-orm';
-import { messages, conversations, users } from '../db/schema';
-import { getDb } from '../db';
+import { messages, conversations, users } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 /**
  * Get all messages for a conversation (with security check)

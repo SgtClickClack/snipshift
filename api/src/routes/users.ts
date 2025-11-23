@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { authenticateUser, AuthenticatedRequest } from '../middleware/auth';
-import { asyncHandler } from '../middleware/errorHandler';
-import * as usersRepo from '../repositories/users.repository';
-import * as emailService from '../services/email.service';
+import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
+import * as usersRepo from '../repositories/users.repository.js';
+import * as emailService from '../services/email.service.js';
 import { z } from 'zod';
 
 const router = Router();

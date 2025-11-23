@@ -5,8 +5,8 @@
  */
 
 import { eq, and, sql } from 'drizzle-orm';
-import { reviews, users, jobs } from '../db/schema';
-import { getDb } from '../db';
+import { reviews, users, jobs } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 /**
  * Create a new review

@@ -7,8 +7,8 @@
  */
 
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { getDatabase } from './connection';
-import * as schema from './schema';
+import { getDatabase } from './connection.js';
+import * as schema from './schema.js';
 
 /**
  * Get Drizzle database instance
@@ -22,6 +22,6 @@ export function getDb() {
   return drizzle(pool, { schema });
 }
 
-export * from './schema';
-export * from './connection';
+export * from './schema.js';
+export * from './connection.js';
 

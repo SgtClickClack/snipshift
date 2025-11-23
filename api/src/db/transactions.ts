@@ -4,7 +4,7 @@
  * Provides utilities for wrapping multi-step database operations in transactions
  */
 
-import { getDb } from './index';
+import { getDb } from './index.js';
 
 /**
  * Execute a function within a database transaction

@@ -4,8 +4,8 @@
  * Handles creation and management of user notifications
  */
 
-import { getDb } from '../db';
-import { notifications } from '../db/schema';
+import { getDb } from '../db/index.js';
+import { notifications } from '../db/schema.js';
 
 export type NotificationType = 'application_received' | 'application_status_change' | 'job_posted' | 'job_updated' | 'job_completed' | 'message_received';
 
