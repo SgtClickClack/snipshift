@@ -11,7 +11,10 @@
     "start": "ts-node _src/index.ts",
     "build": "tsc && node fix-imports.js",
     "seed:plans": "ts-node _src/scripts/seed-plans.ts",
-    "migrate:onboarding": "ts-node _src/scripts/migrate-onboarding.ts"
+    "migrate:onboarding": "ts-node _src/scripts/migrate-onboarding.ts",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@react-email/components": "^1.0.1",
@@ -36,6 +39,7 @@
     "@types/pg": "^8.11.6",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
+    "drizzle-kit": "^0.20.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   }
