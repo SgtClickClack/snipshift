@@ -2,6 +2,9 @@
 api/**/*.js
 api/**/*.js.map
 
+# Keep fix-imports.js - required for postinstall script
+!api/fix-imports.js
+
 # Ignore build artifacts
 api/dist/
 api/node_modules/
