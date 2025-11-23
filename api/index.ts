@@ -5,6 +5,10 @@
  * Vercel will automatically route /api/* requests to this function.
  */
 
+import express from 'express';
+// Import the Express app - Vercel will resolve the path correctly
+import appModule from './src/index';
+
 // CRITICAL: Force Node.js runtime (not Edge)
 // This prevents Vercel from using Edge runtime which doesn't support Node.js APIs
 export const config = {
@@ -14,14 +18,15 @@ export const config = {
 
 // Wrap in try-catch to catch any module-level initialization errors
 let app: any;
+
 try {
-  app = require('./src/index').default;
+  // Static import for ESM - this works in Vercel serverless functions
+  app = appModule;
 } catch (error: any) {
   console.error('🔥 CRITICAL: Failed to load Express app:', error?.message || error);
   console.error('🔥 Stack:', error?.stack);
   
-  // Create a minimal error handler app
-  const express = require('express');
+  // Create a minimal error handler app using ESM import
   const errorApp = express();
   errorApp.use(express.json());
   
