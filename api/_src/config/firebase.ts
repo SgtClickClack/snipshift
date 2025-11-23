@@ -43,7 +43,7 @@ function initializeFirebase(): admin.auth.Auth | null {
           
           firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.cert(serviceAccount),
-            projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id,
+            projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID,
           });
           console.log('[FIREBASE] Admin initialized successfully via FIREBASE_SERVICE_ACCOUNT');
         } catch (e: any) {
