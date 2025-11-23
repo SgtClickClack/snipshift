@@ -50,6 +50,12 @@ router.post('/register', asyncHandler(async (req, res) => {
 
     let { email, name } = validationResult.data;
 
+    // Ensure email is defined (should always be due to schema validation)
+    if (!email) {
+      res.status(400).json({ message: 'Email is required' });
+      return;
+    }
+
     // If name is not provided, try to extract it from Firebase token (OAuth flow)
     if (!name) {
       const authHeader = req.headers.authorization;
@@ -72,6 +78,9 @@ router.post('/register', asyncHandler(async (req, res) => {
       }
     }
 
+    // Ensure name is always a string (fallback to email prefix if somehow still undefined)
+    const finalName = name || email.split('@')[0];
+
     // Check if user already exists
     const existingUser = await usersRepo.getUserByEmail(email);
     if (existingUser) {
@@ -82,7 +91,7 @@ router.post('/register', asyncHandler(async (req, res) => {
     // Create user
     const newUser = await usersRepo.createUser({
       email,
-      name,
+      name: finalName,
       role: 'professional',
     });
 
@@ -92,7 +101,7 @@ router.post('/register', asyncHandler(async (req, res) => {
     }
 
     // Send welcome email (non-blocking)
-    emailService.sendWelcomeEmail(email, name).catch(error => {
+    emailService.sendWelcomeEmail(email, finalName).catch(error => {
       console.error('Failed to send welcome email:', error);
       // Don't fail the request if email fails
     });
