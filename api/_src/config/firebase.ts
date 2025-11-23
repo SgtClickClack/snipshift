@@ -47,6 +47,14 @@ function initializeFirebase(): admin.auth.Auth | null {
           console.log('Final Init Project ID:', serviceAccount?.project_id || process.env.FIREBASE_PROJECT_ID);
           console.log('---------------------------');
 
+          // FORCE OVERRIDE: If FIREBASE_PROJECT_ID env var is present, use it to override 
+          // the project_id from the service account JSON. This fixes issues where the
+          // service account JSON might contain an old/wrong project ID.
+          if (process.env.FIREBASE_PROJECT_ID) {
+            console.log(`[FIREBASE] Forcing project ID to: ${process.env.FIREBASE_PROJECT_ID}`);
+            serviceAccount.project_id = process.env.FIREBASE_PROJECT_ID;
+          }
+
           if (process.env.FIREBASE_PROJECT_ID && serviceAccount.project_id && 
               process.env.FIREBASE_PROJECT_ID !== serviceAccount.project_id) {
              console.warn(`[FIREBASE] WARNING: Project ID mismatch!`);
