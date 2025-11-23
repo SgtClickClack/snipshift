@@ -35,18 +35,28 @@ function initializeFirebase(): admin.auth.Auth | null {
           // Handle potential newline escaping issues (common Vercel gotcha)
           const cleanedJson = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n');
           const serviceAccount = JSON.parse(cleanedJson);
+          
+          if (!serviceAccount) {
+            throw new Error('FIREBASE_SERVICE_ACCOUNT parsed to null/undefined');
+          }
+          
           firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.cert(serviceAccount),
+            projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id,
           });
           console.log('[FIREBASE] Admin initialized successfully via FIREBASE_SERVICE_ACCOUNT');
         } catch (e: any) {
           console.error('[FIREBASE] Init Failed (FIREBASE_SERVICE_ACCOUNT):', e?.message || e);
           console.error('[FIREBASE] Stack:', e?.stack);
+          if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+            console.error('[FIREBASE] ERROR: FIREBASE_SERVICE_ACCOUNT environment variable is missing');
+          }
           initError = e;
           // Fallback to standard init attempt if JSON parse fails
           try {
               firebaseAdmin.initializeApp({
               credential: firebaseAdmin.credential.applicationDefault(),
+              projectId: process.env.FIREBASE_PROJECT_ID,
               });
               console.log('[FIREBASE] Admin initialized successfully (fallback)');
               initError = null;
@@ -66,6 +76,7 @@ function initializeFirebase(): admin.auth.Auth | null {
               clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
               privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
               }),
+              projectId: process.env.FIREBASE_PROJECT_ID,
           });
           console.log('[FIREBASE] Admin initialized successfully via individual env vars');
         } catch (e: any) {
@@ -76,9 +87,15 @@ function initializeFirebase(): admin.auth.Auth | null {
       }
       // 3. Fallback to application default credentials
       else {
+        if (!process.env.FIREBASE_SERVICE_ACCOUNT && !process.env.FIREBASE_PROJECT_ID) {
+          console.error('[FIREBASE] ERROR: Missing required environment variables');
+          console.error('[FIREBASE] - FIREBASE_SERVICE_ACCOUNT (JSON string) OR');
+          console.error('[FIREBASE] - FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+        }
         try {
           firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.applicationDefault(),
+            projectId: process.env.FIREBASE_PROJECT_ID,
           });
           console.log('[FIREBASE] Admin initialized successfully (application default)');
         } catch (e: any) {

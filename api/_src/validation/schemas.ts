@@ -56,7 +56,10 @@ export const ApplicationStatusSchema = z.enum(['pending', 'accepted', 'rejected'
  */
 export const LoginSchema = z.object({
   email: z.string().email('Valid email is required'),
-  password: z.string().min(1, 'Password is required').optional(),
+  password: z.union([
+    z.string().min(1, 'Password is required'),
+    z.literal(''),
+  ]).optional(),
 });
 
 /**

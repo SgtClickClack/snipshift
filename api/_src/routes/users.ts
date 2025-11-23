@@ -34,7 +34,10 @@ const OnboardingCompleteSchema = z.object({
 const RegisterSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(255).optional(),
-  password: z.string().min(8).optional(),
+  password: z.union([
+    z.string().min(8),
+    z.literal(''),
+  ]).optional(),
 });
 
 // Register new user (creates user and sends welcome email)
