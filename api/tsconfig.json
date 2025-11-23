@@ -6,7 +6,6 @@
     "rootDir": ".",
     "baseUrl": ".",
     "sourceMap": true,
-    "outDir": "./dist",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,

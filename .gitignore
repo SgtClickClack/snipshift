@@ -137,6 +137,10 @@ Thumbs.db
 dist/
 build/
 
+# Generated TypeScript compilation output in api/_src
+api/_src/**/*.js
+api/_src/**/*.js.map
+
 # Cursor specific
 .cursor/
 
