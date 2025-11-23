@@ -46,6 +46,14 @@ function initializeFirebase(): admin.auth.Auth | null {
           console.log('Service Account Project ID:', serviceAccount?.project_id);
           console.log('Final Init Project ID:', serviceAccount?.project_id || process.env.FIREBASE_PROJECT_ID);
           console.log('---------------------------');
+
+          if (process.env.FIREBASE_PROJECT_ID && serviceAccount.project_id && 
+              process.env.FIREBASE_PROJECT_ID !== serviceAccount.project_id) {
+             console.warn(`[FIREBASE] WARNING: Project ID mismatch!`);
+             console.warn(`[FIREBASE] Env Var: ${process.env.FIREBASE_PROJECT_ID}`);
+             console.warn(`[FIREBASE] Service Account: ${serviceAccount.project_id}`);
+             console.warn(`[FIREBASE] Using Service Account ID. If this is wrong, update FIREBASE_SERVICE_ACCOUNT JSON.`);
+          }
           
           firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.cert(serviceAccount),
