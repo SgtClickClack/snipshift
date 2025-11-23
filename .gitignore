@@ -141,6 +141,10 @@ build/
 api/_src/**/*.js
 api/_src/**/*.js.map
 
+# Build artifacts in api root
+api/index.js
+api/index.js.map
+
 # Cursor specific
 .cursor/
 

@@ -218,6 +218,66 @@ app.get('/health', asyncHandler(async (req, res) => {
 // API login endpoint
 app.post('/api/login', asyncHandler(async (req, res) => {
   try {
+    // Check if this is an OAuth flow (Firebase token in header)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // OAuth flow: Verify Firebase token
+      const token = authHeader.split('Bearer ')[1];
+      try {
+        if (!auth) {
+          res.status(500).json({ message: 'Firebase auth service is not initialized' });
+          return;
+        }
+
+        const decodedToken = await auth.verifyIdToken(token);
+        const { uid, email } = decodedToken;
+
+        if (!email) {
+          res.status(401).json({ message: 'Unauthorized: No email in token' });
+          return;
+        }
+
+        // Find or create user in database
+        let user = await usersRepo.getUserByEmail(email);
+        
+        if (!user) {
+          // Create user from OAuth token
+          const displayName = decodedToken.name || decodedToken.display_name || email.split('@')[0];
+          user = await usersRepo.createUser({
+            email,
+            name: displayName,
+            role: 'professional',
+          });
+
+          if (!user) {
+            res.status(500).json({ message: 'Failed to create user' });
+            return;
+          }
+
+          // Send welcome email (non-blocking)
+          emailService.sendWelcomeEmail(email, displayName).catch(error => {
+            console.error('Failed to send welcome email:', error);
+          });
+        }
+
+        res.status(200).json({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          token: token, // Return the Firebase token for client to use
+        });
+        return;
+      } catch (tokenError: any) {
+        console.error('[LOGIN ERROR] Token verification failed:', tokenError?.message);
+        res.status(401).json({ 
+          message: 'Unauthorized: Invalid token',
+          error: tokenError?.message || 'Token verification failed'
+        });
+        return;
+      }
+    }
+
+    // Traditional email/password flow
     // Validate request body
     const validationResult = LoginSchema.safeParse(req.body);
     if (!validationResult.success) {
@@ -226,6 +286,12 @@ app.post('/api/login', asyncHandler(async (req, res) => {
     }
 
     const { email, password } = validationResult.data;
+
+    // Password is required for email/password login
+    if (!password) {
+      res.status(400).json({ message: 'Password is required for email/password authentication' });
+      return;
+    }
 
     // Mock credentials (temporary until proper auth is implemented)
     if (email === 'business@example.com' && password === 'password123') {

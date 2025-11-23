@@ -3,6 +3,7 @@ import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as emailService from '../services/email.service.js';
+import { auth } from '../config/firebase.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -27,9 +28,12 @@ const OnboardingCompleteSchema = z.object({
 });
 
 // Validation schema for user registration
+// Name and password are optional to support OAuth flows where:
+// - Name can be extracted from Firebase token (displayName)
+// - Password is not required for OAuth providers
 const RegisterSchema = z.object({
   email: z.string().email(),
-  name: z.string().min(1).max(255),
+  name: z.string().min(1).max(255).optional(),
   password: z.string().min(8).optional(),
 });
 
@@ -44,7 +48,29 @@ router.post('/register', asyncHandler(async (req, res) => {
       return;
     }
 
-    const { email, name } = validationResult.data;
+    let { email, name } = validationResult.data;
+
+    // If name is not provided, try to extract it from Firebase token (OAuth flow)
+    if (!name) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.split('Bearer ')[1];
+          if (auth) {
+            const decodedToken = await auth.verifyIdToken(token);
+            // Extract name from token (displayName or name field)
+            name = decodedToken.name || decodedToken.display_name || decodedToken.email?.split('@')[0] || 'User';
+          }
+        } catch (tokenError: any) {
+          // If token verification fails, we'll use email as fallback
+          console.warn('[REGISTER] Token verification failed, using email as name:', tokenError?.message);
+          name = email.split('@')[0];
+        }
+      } else {
+        // No token and no name provided - use email prefix as fallback
+        name = email.split('@')[0];
+      }
+    }
 
     // Check if user already exists
     const existingUser = await usersRepo.getUserByEmail(email);

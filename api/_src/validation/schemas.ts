@@ -51,10 +51,12 @@ export const ApplicationStatusSchema = z.enum(['pending', 'accepted', 'rejected'
 
 /**
  * Schema for login/authentication payloads
+ * Password is optional to support OAuth flows (Google, etc.) where authentication
+ * is handled via Firebase ID tokens in the Authorization header
  */
 export const LoginSchema = z.object({
   email: z.string().email('Valid email is required'),
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(1, 'Password is required').optional(),
 });
 
 /**

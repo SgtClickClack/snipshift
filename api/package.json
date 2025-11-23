@@ -7,9 +7,9 @@
     "node": "20.x"
   },
   "scripts": {
-    "postinstall": "tsc",
+    "postinstall": "tsc && node fix-imports.js",
     "start": "ts-node _src/index.ts",
-    "build": "tsc",
+    "build": "tsc && node fix-imports.js",
     "seed:plans": "ts-node _src/scripts/seed-plans.ts",
     "migrate:onboarding": "ts-node _src/scripts/migrate-onboarding.ts"
   },
