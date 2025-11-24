@@ -118,7 +118,7 @@ export default function HomePage() {
                   <Store className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-steel-900">Shop Owner</h3>
-                <p className="text-steel-600">Own a barbershop, salon, or creative space? Post shifts and find professionals.</p>
+                <p className="text-steel-600">Own a barbershop or salon? Post shifts and find professionals.</p>
               </CardContent>
             </Card>
 

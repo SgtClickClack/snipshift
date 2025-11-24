@@ -148,7 +148,7 @@ export default function SignupPage() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-steel-900" data-testid="heading-signup">Join Snipshift</CardTitle>
-            <p className="text-steel-600 font-medium">Connect with the creative industry network</p>
+            <p className="text-steel-600 font-medium">Connect with the industry network</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">

@@ -32,9 +32,9 @@ export default function AboutPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-steel-900 mb-3">Our Mission</h2>
                   <p className="text-steel-700 text-lg leading-relaxed">
-                    SnipShift bridges the gap between barbershops, salons, and creative spaces that need flexible staffing, 
+                    SnipShift bridges the gap between barbershops and salons that need flexible staffing, 
                     and talented professionals seeking work opportunities. We believe in empowering the gig economy within 
-                    the creative industry, making it easier for businesses to find qualified talent and for professionals 
+                    the barbering and beauty industry, making it easier for businesses to find qualified talent and for professionals 
                     to build their careers on their own terms.
                   </p>
                 </div>
@@ -48,15 +48,15 @@ export default function AboutPage() {
               <h2 className="text-2xl font-bold text-steel-900 mb-4">Our Story</h2>
               <div className="prose prose-slate max-w-none text-steel-700 space-y-4">
                 <p>
-                  The creative industry has always been built on flexibility and talent. Barbershops need coverage for busy 
+                  The industry has always been built on flexibility and talent. Barbershops need coverage for busy 
                   weekends. Salons need specialists for special events. Professionals want to work when and where they choose. 
                   Yet, finding these connections has been fragmented and inefficient.
                 </p>
                 <p>
-                  SnipShift was born from the recognition that the traditional job board model doesn't work for the creative 
+                  SnipShift was born from the recognition that the traditional job board model doesn't work for the 
                   industry. We're not just matching resumes to job descriptions—we're building a community where professionals 
                   can showcase their skills, businesses can find trusted talent, and everyone benefits from the flexibility 
-                  that makes the creative industry thrive.
+                  that makes the industry thrive.
                 </p>
                 <p>
                   Whether you're a barber looking for weekend shifts, a salon owner needing coverage during peak seasons, 
@@ -112,7 +112,7 @@ export default function AboutPage() {
               <h2 className="text-2xl font-bold text-steel-900 mb-4">Join the Movement</h2>
               <p className="text-steel-700 mb-6 max-w-2xl mx-auto">
                 Whether you're a professional looking for opportunities or a business seeking talent, 
-                SnipShift is here to help you succeed in the creative industry.
+                SnipShift is here to help you succeed in the industry.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a

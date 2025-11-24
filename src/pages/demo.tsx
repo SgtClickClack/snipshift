@@ -204,7 +204,7 @@ export default function DemoPage() {
               Snipshift Platform Demo
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Comprehensive B2B2C marketplace for the barbering and creative industries
+              Comprehensive B2B2C marketplace for the barbering and beauty industries
             </p>
             <div className="flex justify-center gap-4 mb-8">
               <Button 

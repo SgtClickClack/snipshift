@@ -1,36 +1,29 @@
-#### 2025-11-24: Standardize Terminology (Hub -> Shop)
+#### 2025-11-24: Standardize Terminology (Creative -> Industry/Barbering)
 
 **Core Components Implemented:**
-- Terminology updates across multiple pages.
-- UI Text Replacements.
+- Content updates across multiple pages.
 
 **Key Features**
 - **Terminology Update:**
-  - Replaced "Hub Owner" with "Shop Owner".
-  - Replaced "Hub Owners" with "Shop Owners".
-  - Updated subtext and descriptions in Landing Page, Home, and Role Selection.
-- **Consistency:**
-  - Updated Dashboard, Job Application Modal, and Quick Actions to use "Shop Owner" terminology.
-- **Testing:**
-  - Updated E2E tests (`tests/core-flow.spec.ts` moved to `e2e/core-flow.spec.ts`) to verify new terminology.
+  - Removed references to "creative industries" and "creative spaces".
+  - Replaced with "barbering and beauty industry", "industry", "shops", or "salons".
+  - Updated subtext and descriptions in Landing Page, Home, Role Selection, About, Signup, and Demo pages.
 
 **Integration Points**
 - `src/pages/landing.tsx`
 - `src/pages/home.tsx`
 - `src/pages/role-selection.tsx`
-- `src/pages/professional-dashboard.tsx`
-- `src/components/dashboard/quick-actions.tsx`
-- `src/components/job-feed/job-application-modal.tsx`
+- `src/pages/company/about.tsx`
+- `src/pages/signup.tsx`
+- `src/pages/demo.tsx`
 
 **File Paths**
 - `src/pages/landing.tsx`
 - `src/pages/home.tsx`
 - `src/pages/role-selection.tsx`
-- `src/pages/professional-dashboard.tsx`
+- `src/pages/company/about.tsx`
+- `src/pages/signup.tsx`
 - `src/pages/demo.tsx`
-- `src/components/dashboard/quick-actions.tsx`
-- `src/components/job-feed/job-application-modal.tsx`
-- `e2e/core-flow.spec.ts`
 
 **Next Priority Task**
 - Verify in production deployment.

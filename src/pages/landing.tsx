@@ -11,7 +11,7 @@ export default function LandingPage() {
     <>
       <SEO
         title="SnipShift - Connect Barbers, Stylists & Creative Professionals"
-        description="Connect barbers, stylists, and beauticians with flexible work opportunities. Find gigs, post jobs, and build your professional network in the creative industry."
+        description="Connect barbers, stylists, and beauticians with flexible work opportunities. Find gigs, post jobs, and build your professional network in the barbering and beauty industry."
         url="/"
       />
       <div className="min-h-screen">
@@ -23,7 +23,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-steel-900 mb-4">How Snipshift Works</h2>
-            <p className="text-lg text-steel-600 max-w-2xl mx-auto">Simple, efficient, and designed for the barbering and creative industry</p>
+            <p className="text-lg text-steel-600 max-w-2xl mx-auto">Simple, efficient, and designed for the barbering and beauty industry</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -53,7 +53,7 @@ export default function LandingPage() {
                   <Handshake className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-steel-900">Build Community</h3>
-                <p className="text-steel-600">Create lasting professional relationships within the creative industry network</p>
+                <p className="text-steel-600">Create lasting professional relationships within the industry network</p>
               </CardContent>
             </Card>
           </div>
@@ -88,7 +88,7 @@ export default function LandingPage() {
               <CardContent className="pt-6">
                 <Store className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-steel-900">Shop Owners</h3>
-                <p className="text-steel-600 text-sm">Barbershops, salons, and creative spaces looking for flexible staffing</p>
+                <p className="text-steel-600 text-sm">Barbershops and salons looking for flexible staffing</p>
               </CardContent>
             </Card>
             
@@ -129,7 +129,7 @@ export default function LandingPage() {
             Ready to Transform Your Creative Career?
           </h2>
           <p className="text-xl text-chrome-light mb-8 max-w-2xl mx-auto">
-            Join the community that's reshaping how the creative industry works together
+            Join the community that's reshaping how the industry works together
           </p>
           
           <Link to="/signup">
