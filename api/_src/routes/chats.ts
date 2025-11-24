@@ -8,15 +8,22 @@ const router = Router();
 // Get chats for a specific user
 router.get('/user/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { userId } = req.params;
-  const authenticatedUserId = req.user?.id;
-  const currentUser = req.user;
+  // Do NOT compare req.user.uid (Firebase UID) directly to req.params.userId (Postgres UUID)
+  // Instead, verify via the attached user object from the database
+  
+  if (!req.user || !req.user.id) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
 
-  // Security check: Ensure authenticated user matches the requested userId
-  if (authenticatedUserId !== userId) {
+  // req.user.id is the Postgres ID found via email lookup in middleware
+  if (req.user.id !== userId) {
     res.status(403).json({ message: 'Forbidden: You can only access your own chats' });
     return;
   }
 
+  const currentUser = req.user;
+  
   const conversations = await conversationsRepo.getConversationsForUser(userId);
 
   if (!conversations) {

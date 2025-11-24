@@ -52,7 +52,13 @@ export class MessagingService {
   // Get user's chats
   async getUserChats(userId: string): Promise<Chat[]> {
     try {
+      // If userId is missing, don't attempt fetch
+      if (!userId) return [];
+
       const response = await apiRequest('GET', `/api/chats/user/${userId}`);
+      
+      // Graceful handling of 401/404/etc without throwing globally if apiRequest doesn't throw
+      // (apiRequest throws if !res.ok, so we catch it below)
       
       const chats = await response.json();
       
@@ -62,7 +68,11 @@ export class MessagingService {
       }
       
       return chats;
-    } catch (error) {
+    } catch (error: any) {
+      // Silence 401/404 errors to prevent loop spam in console/UI
+      if (error.message?.includes('401') || error.message?.includes('404')) {
+        return [];
+      }
       console.error('Error fetching user chats:', error);
       return [];
     }
