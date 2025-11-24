@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import NotificationBell from "./notifications/notification-bell";
 import { Chat } from "@shared/firebase-schema";
@@ -13,6 +13,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose
+} from "@/components/ui/sheet";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
 import logo from "@/assets/logo-processed.png";
@@ -89,8 +97,9 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                {/* Role Switcher */}
-                <div className="hidden md:block">
+                {/* Desktop Menu Items */}
+                <div className="hidden md:flex items-center space-x-4">
+                  {/* Role Switcher */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button 
@@ -136,18 +145,19 @@ export default function Navbar() {
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
+
+                  {/* Dashboard Link */}
+                  <Link to={(user.currentRole === 'hub' || user.currentRole === 'professional') ? getDashboardRoute(user.currentRole) : '/dashboard'}>
+                    <Button variant="ghost" className="text-white hover:bg-steel-700">Dashboard</Button>
+                  </Link>
+
+                  {/* Find Shifts Link */}
+                  <Link to="/jobs">
+                    <Button variant="ghost" className="text-white hover:bg-steel-700">Find Shifts</Button>
+                  </Link>
                 </div>
 
-                {/* Dashboard Link */}
-                <Link to={(user.currentRole === 'hub' || user.currentRole === 'professional') ? getDashboardRoute(user.currentRole) : '/dashboard'}>
-                  <Button variant="ghost" className="text-white hover:bg-steel-700">Dashboard</Button>
-                </Link>
-
-                {/* Find Shifts Link */}
-                <Link to="/jobs">
-                  <Button variant="ghost" className="text-white hover:bg-steel-700">Find Shifts</Button>
-                </Link>
-
+                {/* Common Items (Visible on Mobile & Desktop) */}
                 {/* Notifications */}
                 <NotificationBell />
                 
@@ -168,25 +178,101 @@ export default function Navbar() {
                   </Button>
                 </Link>
 
-                {/* Admin Dashboard Link - Only visible to admins */}
-                {(user.roles || []).includes('admin') && (
-                  <Link to="/admin">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-white hover:bg-red-600 relative"
-                      title="Admin Dashboard"
-                    >
-                      <Shield className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                )}
-                
-                <span className="text-chrome-light">{user.email}</span>
-                <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
+                {/* Desktop-only User Info & Logout */}
+                <div className="hidden md:flex items-center space-x-4">
+                   {/* Admin Dashboard Link - Only visible to admins */}
+                  {(user.roles || []).includes('admin') && (
+                    <Link to="/admin">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-white hover:bg-red-600 relative"
+                        title="Admin Dashboard"
+                      >
+                        <Shield className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  )}
+                  
+                  <span className="text-chrome-light">{user.email}</span>
+                  <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+
+                {/* Mobile Menu Trigger */}
+                <div className="md:hidden">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700">
+                        <Menu className="h-6 w-6" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="bg-steel-900 text-white border-steel-700">
+                      <SheetHeader>
+                        <SheetTitle className="text-white">Menu</SheetTitle>
+                      </SheetHeader>
+                      <div className="flex flex-col space-y-4 mt-8">
+                        <div className="px-2 pb-4 border-b border-steel-700 mb-4">
+                           <p className="text-sm text-gray-400 mb-1">Signed in as</p>
+                           <p className="font-medium truncate">{user.email}</p>
+                        </div>
+
+                        <SheetClose asChild>
+                          <Link to={(user.currentRole === 'hub' || user.currentRole === 'professional') ? getDashboardRoute(user.currentRole) : '/dashboard'}>
+                            <Button variant="ghost" className="w-full justify-start text-white hover:bg-steel-700">
+                              Dashboard
+                            </Button>
+                          </Link>
+                        </SheetClose>
+
+                        <SheetClose asChild>
+                          <Link to="/jobs">
+                            <Button variant="ghost" className="w-full justify-start text-white hover:bg-steel-700">
+                              Find Shifts
+                            </Button>
+                          </Link>
+                        </SheetClose>
+
+                        {/* Mobile Role Switching Links - Simplified */}
+                         {(user.roles || []).map((r) => (
+                            r !== user.currentRole && (
+                              <SheetClose asChild key={r}>
+                                <Button 
+                                  variant="ghost" 
+                                  onClick={() => handleSwitchRole(r)}
+                                  className="w-full justify-start text-gray-400 hover:text-white hover:bg-steel-700"
+                                >
+                                  Switch to {r === 'hub' ? 'Shop' : (r === 'client' ? 'Shop' : r.charAt(0).toUpperCase() + r.slice(1))}
+                                </Button>
+                              </SheetClose>
+                            )
+                         ))}
+
+                         <div className="border-t border-steel-700 my-2 pt-2">
+                            {(user.roles || []).includes('admin') && (
+                              <SheetClose asChild>
+                                <Link to="/admin">
+                                  <Button variant="ghost" className="w-full justify-start text-white hover:bg-red-600">
+                                    <Shield className="h-4 w-4 mr-2" />
+                                    Admin Dashboard
+                                  </Button>
+                                </Link>
+                              </SheetClose>
+                            )}
+                            
+                            <SheetClose asChild>
+                              <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-white hover:bg-steel-700">
+                                <LogOut className="h-4 w-4 mr-2" />
+                                Logout
+                              </Button>
+                            </SheetClose>
+                         </div>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
               </>
             ) : (
               <>
