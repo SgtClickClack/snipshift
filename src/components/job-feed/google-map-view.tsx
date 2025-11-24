@@ -44,13 +44,6 @@ export default function GoogleMapView({
           center: centerLocation,
           zoom: 10,
           mapId: 'SNIPSHIFT_MAP_ID',
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'off' }]
-            }
-          ],
           mapTypeControl: true,
           streetViewControl: true,
           fullscreenControl: true,
