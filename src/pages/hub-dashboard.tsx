@@ -36,7 +36,7 @@ export default function HubDashboard() {
   });
 
   const { data: jobs = [], isLoading } = useQuery<any[]>({
-    queryKey: ["/api/jobs/hub", user?.id],
+    queryKey: ["/api/me/jobs"],
     enabled: !!user?.id,
   });
 
@@ -62,7 +62,7 @@ export default function HubDashboard() {
         title: "Success",
         description: "Job posted successfully!"
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs/hub"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/me/jobs"] });
       setFormData({
         title: "",
         description: "",
