@@ -52,14 +52,15 @@ export class MessagingService {
   // Get user's chats
   async getUserChats(userId: string): Promise<Chat[]> {
     try {
-      const response = await fetch(`/api/chats/user/${userId}`);
+      const response = await apiRequest('GET', `/api/chats/user/${userId}`);
       
-      if (!response.ok) {
-        console.error(`Failed to fetch chats: ${response.status} ${response.statusText}`);
+      const chats = await response.json();
+      
+      if (!Array.isArray(chats)) {
+        console.error('Invalid chats response format:', chats);
         return [];
       }
-
-      const chats = await response.json();
+      
       return chats;
     } catch (error) {
       console.error('Error fetching user chats:', error);
@@ -70,14 +71,15 @@ export class MessagingService {
   // Get messages for a chat
   async getChatMessages(chatId: string): Promise<Message[]> {
     try {
-      const response = await fetch(`/api/chats/${chatId}/messages`);
-
-      if (!response.ok) {
-        console.error(`Failed to fetch messages: ${response.status} ${response.statusText}`);
-        return [];
-      }
+      const response = await apiRequest('GET', `/api/chats/${chatId}/messages`);
 
       const messages = await response.json();
+      
+      if (!Array.isArray(messages)) {
+        console.error('Invalid messages response format:', messages);
+        return [];
+      }
+      
       return messages;
     } catch (error) {
       console.error('Error fetching messages:', error);
