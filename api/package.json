@@ -14,7 +14,9 @@
     "migrate:onboarding": "ts-node _src/scripts/migrate-onboarding.ts",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@react-email/components": "^1.0.1",
@@ -39,9 +41,13 @@
     "@types/pg": "^8.11.6",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
+    "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "^4.0.13",
     "drizzle-kit": "^0.31.7",
     "esbuild": "^0.27.0",
+    "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^4.0.13"
   }
 }
