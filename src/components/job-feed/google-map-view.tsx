@@ -47,6 +47,7 @@ export default function GoogleMapView({
           streetViewControl: true,
           fullscreenControl: true,
           zoomControl: true,
+          mapId: 'DEMO_MAP_ID', // Required for AdvancedMarkerElement
         });
 
         mapInstanceRef.current = map;
@@ -384,7 +385,7 @@ export default function GoogleMapView({
             )}
             <div 
               ref={mapRef} 
-              style={{ width: '100%', height: '600px' }}
+              className="w-full h-[600px]"
               data-testid="google-map"
             />
           </div>

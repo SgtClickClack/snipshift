@@ -3,9 +3,15 @@ import { Loader } from '@googlemaps/js-api-loader';
 let googleMapsPromise: Promise<any> | null = null;
 
 export const loadGoogleMaps = async (): Promise<any> => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim();
+  
+  if (!apiKey) {
+    throw new Error('Google Maps API key is missing');
+  }
+
   if (!googleMapsPromise) {
     const loader = new Loader({
-      apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+      apiKey: apiKey,
       version: 'beta',
       libraries: ['places', 'geometry', 'marker']
     });
