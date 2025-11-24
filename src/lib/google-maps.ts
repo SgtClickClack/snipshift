@@ -5,7 +5,15 @@ let googleMapsPromise: Promise<any> | null = null;
 export const loadGoogleMaps = async (): Promise<any> => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim();
   
+  console.log('Google Maps Loading - API Key Status:', apiKey ? 'Present' : 'Missing');
+
   if (!apiKey) {
+    console.error('Full Environment State (Sanitized):', {
+      VITE_GOOGLE_MAPS_API_KEY_EXISTS: !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+      VITE_GOOGLE_CLIENT_ID_EXISTS: !!import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      MODE: import.meta.env.MODE,
+      BASE_URL: import.meta.env.BASE_URL,
+    });
     throw new Error('Google Maps API key is missing');
   }
 
