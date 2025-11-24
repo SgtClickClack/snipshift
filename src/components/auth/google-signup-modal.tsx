@@ -43,7 +43,7 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
     },
     {
       value: 'hub',
-      title: 'Hub',
+      title: 'Business',
       description: 'Barbershop, Salon, or Business posting jobs',
       icon: Building,
       color: 'border-purple-200 bg-purple-50/50 hover:bg-purple-50',

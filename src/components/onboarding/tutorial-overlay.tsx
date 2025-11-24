@@ -17,7 +17,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "welcome",
       title: "Welcome to Snipshift!",
-      content: "Let's take a quick tour of your Hub dashboard and key features.",
+      content: "Let's take a quick tour of your Business dashboard and key features.",
       position: "center"
     },
     {
@@ -46,7 +46,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "welcome",
       title: "Welcome Professional!",
-      content: "Discover jobs, connect with Hubs, and showcase your skills.",
+      content: "Discover jobs, connect with Businesses, and showcase your skills.",
       position: "center"
     },
     {
@@ -59,7 +59,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "profile",
       title: "Build Your Profile",
-      content: "Complete your profile to attract the best Hub opportunities.",
+      content: "Complete your profile to attract the best Business opportunities.",
       target: "[data-testid='link-profile']",
       position: "right"
     }

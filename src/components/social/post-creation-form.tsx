@@ -87,7 +87,7 @@ export default function PostCreationForm({
             </p>
             <p className="text-sm text-gray-400">
               {userRole === "professional" && "Professionals can interact with posts and apply to jobs."}
-              {userRole === "hub" && "Hubs can post jobs through the job posting feature."}
+              {userRole === "hub" && "Businesses can post jobs through the job posting feature."}
             </p>
           </div>
         </CardContent>

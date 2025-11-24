@@ -128,7 +128,7 @@ export default function HubDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-steel-900">Hub Dashboard</h1>
+              <h1 className="text-2xl font-bold text-steel-900">Business Dashboard</h1>
               <p className="text-steel-600">{user.displayName || user.email}</p>
             </div>
             <div className="flex gap-2">
