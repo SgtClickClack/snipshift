@@ -138,6 +138,11 @@ export default function Navbar() {
                   </DropdownMenu>
                 </div>
 
+                {/* Dashboard Link */}
+                <Link to={(user.currentRole === 'hub' || user.currentRole === 'professional') ? getDashboardRoute(user.currentRole) : '/dashboard'}>
+                  <Button variant="ghost" className="text-white hover:bg-steel-700">Dashboard</Button>
+                </Link>
+
                 {/* Find Shifts Link */}
                 <Link to="/jobs">
                   <Button variant="ghost" className="text-white hover:bg-steel-700">Find Shifts</Button>
