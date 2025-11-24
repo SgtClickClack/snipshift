@@ -1,13 +1,17 @@
 import React from 'react';
+import logoProcessed from "@/assets/logo-processed.png";
 
 export function LoadingScreen() {
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 transition-opacity duration-300" data-testid="loading-screen">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-steel-900 transition-opacity duration-300" data-testid="loading-screen">
       <div className="flex items-center justify-center mb-6 min-h-[150px]">
         <img 
-          src="/brand-logo.png" 
+          src={logoProcessed} 
           alt="Snipshift" 
           className="w-64 h-auto object-contain animate-pulse"
+          style={{
+            filter: 'brightness(2.5) contrast(1.8) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
+          }}
         />
       </div>
       <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin"></div>
