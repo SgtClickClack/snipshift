@@ -358,7 +358,7 @@ function App() {
               </Router>
             </NotificationProvider>
           </AuthProvider>
-        </TooltipProvider>>
+        </TooltipProvider>
       </QueryClientProvider>
     </HelmetProvider>
   );
