@@ -77,19 +77,25 @@ export function authenticateUser(
       return;
     }
 
+    let token: string | undefined;
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split('Bearer ')[1];
+    } else if (req.query.token && typeof req.query.token === 'string') {
+      // Allow token in query param for SSE/WebSockets where headers are hard to set
+      token = req.query.token;
+    }
+
+    if (!token) {
       res.status(401).json({ message: 'Unauthorized: No token provided' });
       return;
     }
 
-    const token = authHeader.split('Bearer ')[1];
-
     // Wrap async logic in Promise to handle errors properly
     Promise.resolve().then(async () => {
       try {
-        const decodedToken = await firebaseAuth.verifyIdToken(token);
+        const decodedToken = await firebaseAuth.verifyIdToken(token!);
         const { uid, email } = decodedToken;
 
         if (!email) {

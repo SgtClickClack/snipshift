@@ -4,48 +4,84 @@
  * Handles creation and management of user notifications
  */
 
-import { getDb } from '../db/index.js';
-import { notifications } from '../db/schema.js';
+import { EventEmitter } from 'events';
+import * as notificationsRepo from '../repositories/notifications.repository.js';
 
-export type NotificationType = 'application_received' | 'application_status_change' | 'job_posted' | 'job_updated' | 'job_completed' | 'message_received';
+// Event bus for real-time notifications
+export const notificationBus = new EventEmitter();
+
+// Map internal business events to schema types
+export type NotificationEvent = 
+  | 'application_received' 
+  | 'application_status_change' 
+  | 'job_posted' 
+  | 'job_updated' 
+  | 'job_completed' 
+  | 'message_received';
 
 export interface CreateNotificationData {
   userId: string;
-  type: NotificationType;
+  type: NotificationEvent;
   title: string;
   message: string;
   link?: string;
+  metadata?: Record<string, any>;
 }
 
 /**
  * Create a new notification
  */
-export async function createNotification(data: CreateNotificationData): Promise<typeof notifications.$inferSelect | null> {
-  const db = getDb();
-  if (!db) {
-    // In development, log notification instead of failing
-    console.log('[NOTIFICATION]', data);
-    return null;
+export async function createNotification(data: CreateNotificationData) {
+  // Map specific event types to generic database enum types
+  let dbType: 'job_alert' | 'application_update' | 'chat_message' | 'system';
+
+  switch (data.type) {
+    case 'message_received':
+      dbType = 'chat_message';
+      break;
+    case 'application_received':
+    case 'application_status_change':
+      dbType = 'application_update';
+      break;
+    case 'job_posted':
+    case 'job_updated':
+    case 'job_completed':
+      dbType = 'job_alert';
+      break;
+    default:
+      dbType = 'system';
   }
 
-  try {
-    const [newNotification] = await db
-      .insert(notifications)
-      .values({
-        userId: data.userId,
-        type: data.type,
-        title: data.title,
-        message: data.message,
-        link: data.link || null,
-        isRead: null, // Unread by default
-      })
-      .returning();
+  // Persist to database
+  const notification = await notificationsRepo.create({
+    userId: data.userId,
+    type: dbType,
+    title: data.title,
+    message: data.message,
+    data: {
+      ...data.metadata,
+      link: data.link,
+      originalType: data.type
+    }
+  });
 
-    return newNotification || null;
-  } catch (error) {
-    console.error('[NOTIFICATION ERROR]', error);
-    return null;
+  if (notification) {
+    // Emit event for real-time updates (SSE)
+    notificationBus.emit('new_notification', { 
+      userId: data.userId, 
+      notification: {
+        ...notification,
+        // Ensure data structure matches frontend expectations
+        link: (notification.data as any)?.link || null,
+        isRead: !!notification.isRead
+      } 
+    });
+    
+    // TODO: Integrate with Email Service for critical alerts if user is offline
+    // if (isCritical(data.type)) { ... }
   }
+
+  return notification;
 }
 
 /**
@@ -63,6 +99,7 @@ export async function notifyApplicationReceived(
     title: 'New Application Received',
     message: `${applicantName} applied for your job: ${jobTitle}`,
     link: `/manage-jobs`,
+    metadata: { jobId }
   });
 }
 
@@ -77,7 +114,6 @@ export async function notifyApplicationStatusChange(
   jobId: string
 ): Promise<void> {
   // If we have userId, create notification
-  // Otherwise, we could send email (future enhancement)
   if (candidateUserId) {
     const statusText = status === 'accepted' ? 'approved' : 'rejected';
     await createNotification({
@@ -86,6 +122,7 @@ export async function notifyApplicationStatusChange(
       title: status === 'accepted' ? 'Application Approved!' : 'Application Update',
       message: `Your application for "${jobTitle}" has been ${statusText}.`,
       link: `/my-applications`,
+      metadata: { jobId, status }
     });
   }
 }
@@ -106,6 +143,7 @@ export async function notifyJobCompleted(
     title: 'Job Completed',
     message: `Your job "${jobTitle}" has been marked as completed. Please rate your experience.`,
     link: `/review?jobId=${jobId}`,
+    metadata: { jobId }
   });
 
   // Notify professional if we have their userId
@@ -116,7 +154,7 @@ export async function notifyJobCompleted(
       title: 'Job Completed',
       message: `The job "${jobTitle}" has been completed. Please rate your experience.`,
       link: `/review?jobId=${jobId}`,
+      metadata: { jobId }
     });
   }
 }
-

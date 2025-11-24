@@ -28,6 +28,7 @@ import usersRouter from './routes/users.js';
 import chatsRouter from './routes/chats.js';
 import webhooksRouter from './routes/webhooks.js';
 import adminRouter from './routes/admin.js';
+import notificationsRouter from './routes/notifications.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
@@ -150,6 +151,7 @@ app.get('/api/debug', async (req, res) => {
 app.use('/api', usersRouter);
 app.use('/api/chats', chatsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/notifications', notificationsRouter);
 
 // Fallback in-memory store for when DATABASE_URL is not configured (dev only)
 // Mock jobs data for development/testing
@@ -1327,81 +1329,6 @@ app.post('/api/credits/purchase', authenticateUser, asyncHandler(async (req: Aut
     sessionId: mockSessionId,
     checkoutUrl: mockCheckoutUrl,
   });
-}));
-
-// Handler for fetching notifications
-app.get('/api/notifications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
-  const notifications = await notificationsRepo.getNotificationsForUser(userId, limit);
-
-  // Transform to match frontend expectations
-  const transformed = notifications.map((notif) => ({
-    id: notif.id,
-    type: notif.type,
-    title: notif.title,
-    message: notif.message,
-    link: notif.link,
-    isRead: notif.isRead !== null,
-    createdAt: notif.createdAt.toISOString(),
-  }));
-
-  res.status(200).json(transformed);
-}));
-
-// Handler for getting unread notification count (lightweight)
-app.get('/api/notifications/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  const count = await notificationsRepo.getUnreadCount(userId);
-  res.status(200).json({ count });
-}));
-
-// Handler for marking a notification as read
-app.patch('/api/notifications/:id/read', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  const updated = await notificationsRepo.markNotificationAsRead(id, userId);
-
-  if (updated) {
-    res.status(200).json({
-      id: updated.id,
-      isRead: updated.isRead !== null,
-    });
-    return;
-  }
-
-  res.status(404).json({ message: 'Notification not found' });
-}));
-
-// Handler for marking all notifications as read
-app.patch('/api/notifications/read-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  const count = await notificationsRepo.markAllNotificationsAsRead(userId);
-  res.status(200).json({ count });
 }));
 
 // ============================================================================

@@ -5,13 +5,12 @@
  * with proper constraints, indexes, and foreign keys.
  */
 
-import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, index, unique, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, index, unique } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+import { users, userRoleEnum } from './schema/users';
+import { notifications, notificationTypeEnum } from './schema/notifications';
 
-/**
- * User roles enum
- */
-export const userRoleEnum = pgEnum('user_role', ['professional', 'business', 'admin', 'trainer']);
+export { users, userRoleEnum, notifications, notificationTypeEnum };
 
 /**
  * Job status enum
@@ -22,18 +21,6 @@ export const jobStatusEnum = pgEnum('job_status', ['open', 'filled', 'closed', '
  * Application status enum
  */
 export const applicationStatusEnum = pgEnum('application_status', ['pending', 'accepted', 'rejected']);
-
-/**
- * Notification type enum
- */
-export const notificationTypeEnum = pgEnum('notification_type', [
-  'application_received',
-  'application_status_change',
-  'job_posted',
-  'job_updated',
-  'job_completed',
-  'message_received',
-]);
 
 /**
  * Subscription status enum
@@ -75,28 +62,6 @@ export const reportStatusEnum = pgEnum('report_status', [
   'resolved',
   'dismissed',
 ]);
-
-/**
- * Users table
- * Stores user accounts for authentication and authorization
- */
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: varchar('password_hash', { length: 255 }), // Nullable for now, will be required when auth is implemented
-  name: varchar('name', { length: 255 }).notNull(),
-  role: userRoleEnum('role').notNull().default('professional'),
-  bio: text('bio'),
-  phone: varchar('phone', { length: 50 }),
-  location: varchar('location', { length: 255 }),
-  averageRating: decimal('average_rating', { precision: 3, scale: 2 }),
-  reviewCount: decimal('review_count', { precision: 10, scale: 0 }).default('0'),
-  isOnboarded: boolean('is_onboarded').notNull().default(false),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  emailIdx: index('users_email_idx').on(table.email),
-}));
 
 /**
  * Jobs table
@@ -179,25 +144,6 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
     fields: [applications.userId],
     references: [users.id],
   }),
-}));
-
-/**
- * Notifications table
- * Stores user notifications for various events
- */
-export const notifications = pgTable('notifications', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  type: notificationTypeEnum('type').notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  message: text('message').notNull(),
-  link: varchar('link', { length: 512 }),
-  isRead: timestamp('is_read'), // NULL means unread, timestamp means read
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index('notifications_user_id_idx').on(table.userId),
-  userIdCreatedAtIdx: index('notifications_user_id_created_at_idx').on(table.userId, table.createdAt),
-  isReadIdx: index('notifications_is_read_idx').on(table.isRead),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -447,4 +393,3 @@ export const reportsRelations = relations(reports, ({ one }) => ({
     references: [jobs.id],
   }),
 }));
-
