@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardRoute } from '@/lib/roles';
-import { PageLoadingFallback } from '@/components/loading/loading-spinner';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -22,8 +22,9 @@ export function AuthGuard({
 
   // Show loading spinner while checking authentication
   if (isLoading) {
-    return <PageLoadingFallback />;
+    return <LoadingScreen />;
   }
+
 
   // If authentication is required but user is not authenticated
   if (requireAuth && !isAuthenticated) {

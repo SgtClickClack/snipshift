@@ -36,3 +36,26 @@
 
 **Next Priority Task**
 - Verify fixes in browser (Navigation and Profile Edit).
+
+#### 2025-11-24: Splash Screen Styling Update
+
+**Core Components**
+- `index.html`
+- `src/components/ui/loading-screen.tsx`
+- `src/components/auth/auth-guard.tsx`
+
+**Key Features**
+- **Visual Update**:
+  - Changed splash screen background to Charcoal (`#111827`).
+  - Inverted logo color to white and increased size to `w-64` (256px).
+- **Smooth Transition**:
+  - Created `LoadingScreen` component mirroring the `index.html` splash style.
+  - Updated `AuthGuard` to use `LoadingScreen` for initial auth check state, ensuring a seamless visual transition from static HTML to React hydration.
+
+**File Paths**
+- `index.html`
+- `src/components/ui/loading-screen.tsx`
+- `src/components/auth/auth-guard.tsx`
+
+**Next Priority Task**
+- Verify fixes in browser (Splash screen transition).
