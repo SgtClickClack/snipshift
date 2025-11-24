@@ -55,7 +55,7 @@ export default function RoleSelectionPage() {
     {
       id: "professional" as const,
       title: "Professional",
-      description: "Barber, stylist, or creative professional",
+      description: "Barber, stylist, or beauty professional",
       icon: UserCheck,
       color: "border-steel-300 bg-steel-50/80 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     },

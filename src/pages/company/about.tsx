@@ -7,7 +7,7 @@ export default function AboutPage() {
     <>
       <SEO
         title="About Us"
-        description="Learn about SnipShift's mission to connect barbers, stylists, and creative professionals with flexible work opportunities."
+        description="Learn about SnipShift's mission to connect barbers, stylists, and professionals with flexible work opportunities."
         url="/about"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 py-12 px-4">
@@ -18,7 +18,7 @@ export default function AboutPage() {
               About SnipShift
             </h1>
             <p className="text-xl text-steel-600 max-w-2xl mx-auto">
-              Connecting barbers, stylists, and creative professionals with flexible work opportunities
+              Connecting barbers, stylists, and professionals with flexible work opportunities
             </p>
           </div>
 
@@ -60,7 +60,7 @@ export default function AboutPage() {
                 </p>
                 <p>
                   Whether you're a barber looking for weekend shifts, a salon owner needing coverage during peak seasons, 
-                  or a brand looking to connect with creative professionals, SnipShift provides the tools and platform to 
+                  or a brand looking to connect with professionals, SnipShift provides the tools and platform to 
                   make those connections seamless.
                 </p>
               </div>
@@ -88,7 +88,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-xl font-semibold text-steel-900 mb-2">Community First</h3>
                 <p className="text-steel-600 text-sm">
-                  We're building more than a platform—we're fostering a community of creative professionals.
+                  We're building more than a platform—we're fostering a community of professionals.
                 </p>
               </CardContent>
             </Card>

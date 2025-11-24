@@ -96,7 +96,7 @@ export default function LandingPage() {
               <CardContent className="pt-6">
                 <UserCheck className="h-12 w-12 text-green-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-steel-900">Professionals</h3>
-                <p className="text-steel-600 text-sm">Barbers, stylists, and creatives seeking flexible work opportunities</p>
+                <p className="text-steel-600 text-sm">Barbers, stylists, and professionals seeking flexible work opportunities</p>
               </CardContent>
             </Card>
             
@@ -104,7 +104,7 @@ export default function LandingPage() {
               <CardContent className="pt-6">
                 <Store className="h-12 w-12 text-purple-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-steel-900">Brands</h3>
-                <p className="text-steel-600 text-sm">Product companies connecting with the creative professional community</p>
+                <p className="text-steel-600 text-sm">Product companies connecting with the professional community</p>
               </CardContent>
             </Card>
             

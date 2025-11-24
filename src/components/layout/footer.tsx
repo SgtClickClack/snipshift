@@ -16,7 +16,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-gray-400 mb-4">
-              Connect barbers, stylists, and creative professionals with flexible work opportunities.
+              Connect barbers, stylists, and professionals with flexible work opportunities.
             </p>
           </div>
 

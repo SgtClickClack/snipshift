@@ -26,7 +26,7 @@ export default function TermsPage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold text-steel-900 mb-4">2. Description of Service</h2>
                 <p className="text-steel-700 mb-4">
-                  SnipShift is a marketplace platform that connects barbers, stylists, beauticians, and other creative professionals with flexible work opportunities. The Platform facilitates connections between professionals seeking work and businesses offering shifts, gigs, or employment opportunities.
+                  SnipShift is a marketplace platform that connects barbers, stylists, beauticians, and other professionals with flexible work opportunities. The Platform facilitates connections between professionals seeking work and businesses offering shifts, gigs, or employment opportunities.
                 </p>
               </section>
 

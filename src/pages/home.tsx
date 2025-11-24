@@ -131,7 +131,7 @@ export default function HomePage() {
                   <UserCheck className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-steel-900">Professional</h3>
-                <p className="text-steel-600">Barber, stylist, or creative professional? Find flexible work opportunities.</p>
+                <p className="text-steel-600">Barber, stylist, or beauty professional? Find flexible work opportunities.</p>
               </CardContent>
             </Card>
 
@@ -144,7 +144,7 @@ export default function HomePage() {
                   <Award className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-steel-900">Brand</h3>
-                <p className="text-steel-600">Product company or brand representative? Connect with the creative community.</p>
+                <p className="text-steel-600">Product company or brand representative? Connect with the professional community.</p>
               </CardContent>
             </Card>
 
