@@ -41,12 +41,17 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    command: 'cd api && npm run test:db:up && cd .. && npm run dev:all',
     url: 'http://localhost:3002',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
     stdout: 'ignore',
     stderr: 'pipe',
+    env: {
+        DATABASE_URL: 'postgresql://test:test@localhost:5433/snipshift_test',
+        NODE_ENV: 'test',
+    },
   },
+  globalSetup: './e2e/global.setup.ts',
 });
 

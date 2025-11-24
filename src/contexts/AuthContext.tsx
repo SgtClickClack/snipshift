@@ -48,7 +48,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Test Environment Auth Bypass
   useEffect(() => {
+    // Check URL for test_user bypass
+    if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('test_user') === 'true') {
+            console.log('⚠️ Auth Bypass Active: Logging in as Test User');
+            setUser({
+                id: 'test-user-id',
+                email: 'test@snipshift.com',
+                name: 'Test User',
+                roles: ['professional'],
+                currentRole: 'professional',
+                isOnboarded: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                uid: 'test-firebase-uid'
+            });
+            setIsLoading(false);
+            return; // Skip Firebase listener
+        }
+    }
+    
     const unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         try {

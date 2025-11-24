@@ -9,9 +9,29 @@
 const admin = require('firebase-admin');
 const path = require('path');
 const dotenv = require('dotenv');
+const { Client } = require('pg');
+
+const fs = require('fs');
 
 // Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+const envPath = path.resolve(__dirname, '../.env');
+console.log('Loading .env from:', envPath);
+
+if (fs.existsSync(envPath)) {
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    console.log('Keys found in .env:', Object.keys(envConfig));
+    for (const k in envConfig) {
+        process.env[k] = envConfig[k];
+    }
+} else {
+    console.log('.env file not found at', envPath);
+}
+
+// Also try loading from CWD if not found
+if (!process.env.DATABASE_URL) {
+    console.log('Trying to load .env from CWD:', path.resolve(process.cwd(), '.env'));
+    dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
@@ -45,47 +65,104 @@ const TEST_EMAIL = 'test@snipshift.com';
 const TEST_PASSWORD = 'password123';
 
 async function createTestUser() {
+  let client;
   try {
-    // Check if user already exists
+    // 1. Firebase User Creation
     let user;
     try {
       user = await admin.auth().getUserByEmail(TEST_EMAIL);
-      console.log(`ℹ️  User ${TEST_EMAIL} already exists`);
+      console.log(`ℹ️  Firebase User ${TEST_EMAIL} already exists`);
       
       // Update password if needed
       await admin.auth().updateUser(user.uid, {
         password: TEST_PASSWORD,
         emailVerified: true,
       });
-      console.log(`✅ Updated password for ${TEST_EMAIL}`);
+      console.log(`✅ Updated Firebase password for ${TEST_EMAIL}`);
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
         // User doesn't exist, create it
-        user = await admin.auth().createUser({
-          email: TEST_EMAIL,
-          password: TEST_PASSWORD,
-          emailVerified: true,
-          disabled: false,
-        });
-        console.log(`✅ Created test user: ${TEST_EMAIL}`);
+        try {
+            user = await admin.auth().createUser({
+            email: TEST_EMAIL,
+            password: TEST_PASSWORD,
+            emailVerified: true,
+            disabled: false,
+            });
+            console.log(`✅ Created Firebase user: ${TEST_EMAIL}`);
+        } catch(createError) {
+             console.error('⚠️ Could not create Firebase user:', createError.message);
+             console.log('Continuing to Postgres check...');
+        }
       } else {
-        throw error;
+        console.error('⚠️ Error accessing Firebase Auth:', error.message);
+        console.log('Continuing to Postgres check (assuming Firebase user might exist or will be handled manually)...');
       }
+    }
+
+    // 2. Postgres User Creation
+    console.log('Connecting to database...');
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (!dbUrl) {
+        throw new Error('DATABASE_URL and POSTGRES_URL are missing from environment variables.');
+    }
+    console.log('Database URL found (length: ' + dbUrl.length + ')');
+    
+    client = new Client({
+      connectionString: dbUrl,
+      // connectionString usually handles everything, but sometimes ssl is needed
+      ssl: dbUrl.includes('localhost') ? false : { rejectUnauthorized: false }
+    });
+    await client.connect();
+
+    // Check if user exists in DB
+    const res = await client.query('SELECT id FROM users WHERE email = $1', [TEST_EMAIL]);
+    
+    if (res.rows.length > 0) {
+      console.log(`ℹ️  Database User ${TEST_EMAIL} already exists (ID: ${res.rows[0].id})`);
+      // Ensure isOnboarded is true
+      await client.query('UPDATE users SET is_onboarded = true WHERE email = $1', [TEST_EMAIL]);
+      console.log('✅ Ensure is_onboarded = true');
+    } else {
+      // Insert user
+      // Note: We are generating a new UUID for the user in Postgres. 
+      // If the app links via email, this is fine. 
+      // If it links via Firebase UID -> Postgres ID, we'd need to match them, 
+      // but Postgres schema says ID is UUID, and Firebase UID is string (usually 28 chars).
+      // Based on schema, it seems email is the link or they are independent.
+      // We will proceed with standard insert.
+      
+      const insertRes = await client.query(`
+        INSERT INTO users (
+          email, 
+          name, 
+          role, 
+          is_onboarded, 
+          created_at, 
+          updated_at
+        ) VALUES ($1, $2, $3, $4, NOW(), NOW())
+        RETURNING id
+      `, [TEST_EMAIL, 'Test User', 'professional', true]);
+      
+      console.log(`✅ Created Database user: ${TEST_EMAIL} (ID: ${insertRes.rows[0].id})`);
     }
     
     console.log(`\n📋 Test User Credentials:`);
     console.log(`   Email: ${TEST_EMAIL}`);
     console.log(`   Password: ${TEST_PASSWORD}`);
-    console.log(`   UID: ${user.uid}`);
+    console.log(`   Firebase UID: ${user.uid}`);
     console.log(`\n✅ Test user is ready for E2E tests!`);
     
   } catch (error) {
     console.error('❌ Error creating test user:', error.message);
-    console.log('\n💡 Alternative: Create the user manually in Firebase Console:');
-    console.log('   1. Go to https://console.firebase.google.com');
-    console.log('   2. Navigate to Authentication > Users');
-    console.log('   3. Add User with email: test@snipshift.com, password: password123');
+    if (error.code === 'ECONNREFUSED') {
+        console.error('Check your DATABASE_URL and ensure the database is running.');
+    }
     process.exit(1);
+  } finally {
+    if (client) {
+      await client.end();
+    }
   }
 }
 
