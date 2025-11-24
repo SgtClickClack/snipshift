@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu, RefreshCw, Briefcase, User } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import NotificationBell from "./notifications/notification-bell";
 import { Chat } from "@shared/firebase-schema";
@@ -11,7 +11,9 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
 import {
   Sheet,
@@ -69,12 +71,24 @@ export default function Navbar() {
   // console.log('Current User Roles:', user?.roles);
   // console.log('Has Hub Role:', user?.roles?.includes('hub'));
 
+  const getRoleLabel = (role: string) => {
+    if (role === 'hub' || role === 'business') return 'Business';
+    if (role === 'client') return 'Shop'; // Or Client? Instructions said Business/Shop for hub. Client is usually consumer? Let's stick to instruction for hub.
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
+
+  const currentRoleLabel = user?.currentRole ? getRoleLabel(user.currentRole) : 'Select Role';
+  
+  const availableRoles = (user?.roles || []).filter(r => r !== user?.currentRole);
+  // Filter out roles the user already has from the potential missing roles
+  const missingRoles = ['professional', 'hub'].filter(r => !(user?.roles || []).includes(r) && !(user?.roles || []).includes(r === 'hub' ? 'business' : r));
+
   return (
     <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link
-            to={!user ? "/" : ((user.currentRole && user.currentRole !== 'client') ? getDashboardRoute(user.currentRole) : "/role-selection")}
+            to={!user ? "/" : "/dashboard"}
             className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
           >
             <img 
@@ -96,42 +110,60 @@ export default function Navbar() {
                         variant="outline" 
                         className="w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-50 relative"
                       >
-                        {user.currentRole === 'hub' ? 'Shop' : (user.currentRole === 'client' ? 'Shop' : user.currentRole?.charAt(0).toUpperCase() + user.currentRole?.slice(1))}
+                        {currentRoleLabel}
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[200px] bg-steel-800 border-steel-600 text-white z-[9999]" align="end">
-                      {(user.roles || []).map((r) => (
-                        <DropdownMenuItem 
-                          key={r} 
-                          onClick={() => handleSwitchRole(r)}
-                          className="focus:bg-steel-700 focus:text-white cursor-pointer justify-between"
-                        >
-                          {r === 'hub' ? 'Shop' : (r === 'client' ? 'Shop' : r.charAt(0).toUpperCase() + r.slice(1))}
-                          {user.currentRole === r && <Check className="h-4 w-4" />}
-                        </DropdownMenuItem>
-                      ))}
+                    <DropdownMenuContent className="w-[240px] bg-steel-800 border-steel-600 text-white z-[9999]" align="end">
+                      
+                      <DropdownMenuLabel className="text-xs font-normal text-gray-400">Current View</DropdownMenuLabel>
+                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white justify-between font-bold bg-steel-700/50">
+                        {currentRoleLabel}
+                        <Check className="h-4 w-4 text-green-400" />
+                      </DropdownMenuItem>
 
-                      <DropdownMenuSeparator className="bg-steel-600" />
-
-                      {!user.roles?.includes('hub') && (
-                        <DropdownMenuItem 
-                          onClick={() => navigate('/onboarding/hub')}
-                          className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
-                        >
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Create Shop Profile
-                        </DropdownMenuItem>
+                      {availableRoles.length > 0 && (
+                        <>
+                          <DropdownMenuSeparator className="bg-steel-600" />
+                          <DropdownMenuLabel className="text-xs font-normal text-gray-400">Switch View</DropdownMenuLabel>
+                          {availableRoles.map((r) => (
+                            <DropdownMenuItem 
+                              key={r} 
+                              onClick={() => handleSwitchRole(r)}
+                              className="focus:bg-steel-700 focus:text-white cursor-pointer"
+                            >
+                              <RefreshCw className="mr-2 h-4 w-4 text-gray-400" />
+                              Switch to {getRoleLabel(r)}
+                            </DropdownMenuItem>
+                          ))}
+                        </>
                       )}
 
-                      {!user.roles?.includes('professional') && (
-                        <DropdownMenuItem 
-                          onClick={() => navigate('/onboarding/professional')}
-                          className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
-                        >
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Become a Pro
-                        </DropdownMenuItem>
+                      {missingRoles.length > 0 && (
+                        <>
+                          <DropdownMenuSeparator className="bg-steel-600" />
+                          <DropdownMenuLabel className="text-xs font-normal text-gray-400">Grow</DropdownMenuLabel>
+                          
+                          {missingRoles.includes('hub') && (
+                            <DropdownMenuItem 
+                              onClick={() => navigate('/onboarding/hub')}
+                              className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
+                            >
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Create Business Profile
+                            </DropdownMenuItem>
+                          )}
+
+                          {missingRoles.includes('professional') && (
+                            <DropdownMenuItem 
+                              onClick={() => navigate('/onboarding/professional')}
+                              className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
+                            >
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Create Professional Profile
+                            </DropdownMenuItem>
+                          )}
+                        </>
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -207,6 +239,10 @@ export default function Navbar() {
                         <div className="px-2 pb-4 border-b border-steel-700 mb-4">
                            <p className="text-sm text-gray-400 mb-1">Signed in as</p>
                            <p className="font-medium truncate">{user.email}</p>
+                           <div className="mt-2 flex items-center text-sm text-blue-400">
+                             <Check className="mr-2 h-4 w-4" />
+                             Current: {currentRoleLabel}
+                           </div>
                         </div>
 
                         <SheetClose asChild>
@@ -225,20 +261,54 @@ export default function Navbar() {
                           </Link>
                         </SheetClose>
 
-                        {/* Mobile Role Switching Links - Simplified */}
-                         {(user.roles || []).map((r) => (
-                            r !== user.currentRole && (
-                              <SheetClose asChild key={r}>
-                                <Button 
-                                  variant="ghost" 
-                                  onClick={() => handleSwitchRole(r)}
-                                  className="w-full justify-start text-gray-400 hover:text-white hover:bg-steel-700"
-                                >
-                                  Switch to {r === 'hub' ? 'Shop' : (r === 'client' ? 'Shop' : r.charAt(0).toUpperCase() + r.slice(1))}
-                                </Button>
-                              </SheetClose>
-                            )
-                         ))}
+                        {/* Mobile Role Switching Links - Grouped */}
+                         {availableRoles.length > 0 && (
+                           <div className="py-2">
+                             <p className="px-4 text-xs text-gray-500 uppercase mb-2">Switch View</p>
+                             {availableRoles.map((r) => (
+                                <SheetClose asChild key={r}>
+                                  <Button 
+                                    variant="ghost" 
+                                    onClick={() => handleSwitchRole(r)}
+                                    className="w-full justify-start text-gray-400 hover:text-white hover:bg-steel-700"
+                                  >
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Switch to {getRoleLabel(r)}
+                                  </Button>
+                                </SheetClose>
+                             ))}
+                           </div>
+                         )}
+
+                         {missingRoles.length > 0 && (
+                           <div className="py-2">
+                             <p className="px-4 text-xs text-gray-500 uppercase mb-2">Grow</p>
+                             {missingRoles.includes('hub') && (
+                                <SheetClose asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    onClick={() => navigate('/onboarding/hub')}
+                                    className="w-full justify-start text-blue-400 hover:text-blue-300 hover:bg-steel-700"
+                                  >
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Create Business Profile
+                                  </Button>
+                                </SheetClose>
+                             )}
+                             {missingRoles.includes('professional') && (
+                                <SheetClose asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    onClick={() => navigate('/onboarding/professional')}
+                                    className="w-full justify-start text-blue-400 hover:text-blue-300 hover:bg-steel-700"
+                                  >
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Create Professional Profile
+                                  </Button>
+                                </SheetClose>
+                             )}
+                           </div>
+                         )}
 
                          <div className="border-t border-steel-700 my-2 pt-2">
                             {(user.roles || []).includes('admin') && (
