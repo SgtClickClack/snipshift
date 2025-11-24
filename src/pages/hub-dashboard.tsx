@@ -117,7 +117,7 @@ export default function HubDashboard() {
     monthlyHires: 8
   };
 
-  if (!user || user.currentRole !== "hub") {
+  if (!user || (user.currentRole !== "hub" && user.currentRole !== "business")) {
     return <div>Access denied</div>;
   }
 
