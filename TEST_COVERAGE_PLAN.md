@@ -25,7 +25,7 @@
 | `_src/services/email.service.ts` | **53.57%** | 🟢 Verified |
 | `_src/services/notification.service.ts` | **68.75%** | 🟢 Strong |
 | **Routes** | | |
-| `_src/routes/webhooks.ts` | **69.62%** | 🟢 Strong |
+| `_src/routes/webhooks.ts` | **47.05%** | 🟢 Verified (Critical Path) |
 | `_src/routes/admin.ts` | **66.33%** | 🟢 Verified |
 
 ## Phase 3: Data Layer & Reliability

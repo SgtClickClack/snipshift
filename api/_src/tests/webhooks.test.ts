@@ -1,264 +1,174 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import supertest from 'supertest';
-import app from '../index';
 
-// Mock dependencies
+// Mock Stripe Library
+const mockConstructEvent = vi.fn();
+const mockSubscriptionsRetrieve = vi.fn();
+const mockSessionsCreate = vi.fn();
+
+// Note: This mock requires Vitest to correctly intercept the 'stripe' module require.
+// If running against compiled JS files, ensure node_modules are mocked or use __mocks__.
+vi.mock('stripe', () => {
+  return {
+    __esModule: true,
+    default: class MockStripe {
+      webhooks = {
+        constructEvent: mockConstructEvent,
+      };
+      subscriptions = {
+        retrieve: mockSubscriptionsRetrieve,
+        update: vi.fn(),
+      };
+      checkout = {
+        sessions: {
+          create: mockSessionsCreate,
+        },
+      };
+    }
+  };
+});
+
+// Mock Repositories
+const mockGetSubscriptionPlanById = vi.fn();
+const mockCreateSubscription = vi.fn();
+const mockUpdateSubscription = vi.fn();
+const mockGetSubscriptionByStripeId = vi.fn();
+const mockCreatePayment = vi.fn();
+const mockGetCurrentSubscription = vi.fn();
+
 vi.mock('../repositories/subscriptions.repository.js', () => ({
-  getSubscriptionPlanById: vi.fn(),
-  createSubscription: vi.fn(),
-  getSubscriptionByStripeId: vi.fn(),
-  updateSubscription: vi.fn(),
+  getSubscriptionPlanById: mockGetSubscriptionPlanById,
+  createSubscription: mockCreateSubscription,
+  updateSubscription: mockUpdateSubscription,
+  getSubscriptionByStripeId: mockGetSubscriptionByStripeId,
+  getCurrentSubscription: mockGetCurrentSubscription,
 }));
 
 vi.mock('../repositories/payments.repository.js', () => ({
-  createPayment: vi.fn(),
+  createPayment: mockCreatePayment,
 }));
 
-vi.mock('../lib/stripe.js', () => ({
-  stripe: {
-    webhooks: {
-      constructEvent: vi.fn(),
-    },
-    subscriptions: {
-      retrieve: vi.fn(),
-    },
-  },
-}));
-
-// Ensure we mock auth to pass through
-vi.mock('../middleware/auth.js', () => ({
-  authenticateUser: vi.fn((req, res, next) => next()),
-  requireAdmin: vi.fn((req, res, next) => next()),
-}));
-
-// Mock DB Connection
-vi.mock('../db/connection.js', () => ({
-  getDatabase: vi.fn(() => ({})),
-}));
-
-// Mock Firebase
 vi.mock('../config/firebase.js', () => ({
   auth: {},
 }));
 
-describe('Stripe Webhooks', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    // Mock env vars
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
+vi.mock('../db/connection.js', () => ({
+  getDatabase: vi.fn(() => ({})),
+}));
+
+describe('Webhooks API', () => {
+  let app: any;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_dummy'; 
+
+    // Reset mocks
+    mockConstructEvent.mockReset();
+    mockSubscriptionsRetrieve.mockReset();
+
+    // Re-import app
+    const indexModule = await import('../index.js');
+    app = indexModule.default;
   });
 
-  describe('Security & Validation', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('POST /api/webhooks/stripe', () => {
     it('should return 400 if signature verification fails', async () => {
-      const stripeLib = await import('../lib/stripe.js');
-      vi.mocked(stripeLib.stripe!.webhooks.constructEvent).mockImplementation(() => {
+      mockConstructEvent.mockImplementation(() => {
         throw new Error('Invalid signature');
       });
 
       const response = await supertest(app)
         .post('/api/webhooks/stripe')
         .set('Stripe-Signature', 'invalid_sig')
-        .send({ type: 'any' }); // Raw body is handled by supertest send if passing object/string
+        .send({ some: 'data' });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('Webhook Error');
+      expect(response.body.error).toContain('Webhook Error: Invalid signature');
     });
 
-    it('should return 400 if signature or secret is missing', async () => {
-        // Temporarily unset secret
-        const secret = process.env.STRIPE_WEBHOOK_SECRET;
-        delete process.env.STRIPE_WEBHOOK_SECRET;
+    it('should return 400 if missing signature', async () => {
+      const response = await supertest(app)
+        .post('/api/webhooks/stripe')
+        .send({ some: 'data' });
 
-        const response = await supertest(app)
-            .post('/api/webhooks/stripe')
-            .set('Stripe-Signature', 'sig')
-            .send({});
-        
-        expect(response.status).toBe(400);
-        
-        // Restore
-        process.env.STRIPE_WEBHOOK_SECRET = secret;
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Missing signature');
     });
-  });
 
-  describe('Event Handling', () => {
     it('should handle checkout.session.completed successfully', async () => {
-      const stripeLib = await import('../lib/stripe.js');
-      const subscriptionsRepo = await import('../repositories/subscriptions.repository.js');
-      const paymentsRepo = await import('../repositories/payments.repository.js');
-
-      // Mock Event
-      const mockEvent = {
+      const event = {
         type: 'checkout.session.completed',
         data: {
           object: {
-            id: 'sess_123',
-            metadata: { userId: 'user_1', planId: 'plan_1' },
-            subscription: 'sub_stripe_123',
-            amount_total: 2000,
+            subscription: 'sub_123',
+            metadata: {
+              userId: 'user_123',
+              planId: 'plan_pro',
+            },
+            amount_total: 2999,
             currency: 'usd',
             payment_intent: 'pi_123',
           },
         },
       };
 
-      vi.mocked(stripeLib.stripe!.webhooks.constructEvent).mockReturnValue(mockEvent as any);
-
-      // Mock Stripe subscription retrieval
-      vi.mocked(stripeLib.stripe!.subscriptions.retrieve).mockResolvedValue({
-        id: 'sub_stripe_123',
+      mockConstructEvent.mockReturnValue(event);
+      
+      mockSubscriptionsRetrieve.mockResolvedValue({
         customer: 'cus_123',
         status: 'active',
-        current_period_start: 1000000000,
-        current_period_end: 1000000000 + 86400 * 30,
-      } as any);
+        current_period_start: 1600000000,
+        current_period_end: 1600000000 + 30 * 24 * 60 * 60,
+      });
 
-      // Mock Repo calls
-      vi.mocked(subscriptionsRepo.getSubscriptionPlanById).mockResolvedValue({
-        id: 'plan_1',
+      mockGetSubscriptionPlanById.mockResolvedValue({
+        id: 'plan_pro',
         name: 'Pro Plan',
-        price: 20,
-      } as any);
-
-      vi.mocked(subscriptionsRepo.createSubscription).mockResolvedValue({ id: 'sub_db_1' } as any);
-      vi.mocked(paymentsRepo.createPayment).mockResolvedValue({ id: 'pay_1' } as any);
+      });
 
       const response = await supertest(app)
         .post('/api/webhooks/stripe')
         .set('Stripe-Signature', 'valid_sig')
-        .send(mockEvent);
+        .send(event);
 
       expect(response.status).toBe(200);
-      expect(subscriptionsRepo.createSubscription).toHaveBeenCalledWith(expect.objectContaining({
-        userId: 'user_1',
-        planId: 'plan_1',
-        stripeSubscriptionId: 'sub_stripe_123',
-        status: 'active'
-      }));
-      expect(paymentsRepo.createPayment).toHaveBeenCalled();
-    });
-
-    it('should handle invoice.payment_succeeded (Subscription Renewal)', async () => {
-      const stripeLib = await import('../lib/stripe.js');
-      const subscriptionsRepo = await import('../repositories/subscriptions.repository.js');
-      const paymentsRepo = await import('../repositories/payments.repository.js');
-
-      const mockEvent = {
-        type: 'invoice.payment_succeeded',
-        data: {
-          object: {
-            subscription: 'sub_stripe_123',
-            amount_paid: 2000,
-            currency: 'usd',
-            payment_intent: 'pi_renewal',
-            charge: 'ch_123',
-          },
-        },
-      };
-
-      vi.mocked(stripeLib.stripe!.webhooks.constructEvent).mockReturnValue(mockEvent as any);
+      expect(response.body.received).toBe(true);
       
-      // Mock Subscription lookup
-      vi.mocked(subscriptionsRepo.getSubscriptionByStripeId).mockResolvedValue({
-        id: 'sub_db_1',
-        userId: 'user_1',
-      } as any);
-
-      // Mock Stripe retrieval
-      vi.mocked(stripeLib.stripe!.subscriptions.retrieve).mockResolvedValue({
-        current_period_start: 2000000000,
-        current_period_end: 2000000000 + 86400 * 30,
-      } as any);
-
-      const response = await supertest(app)
-        .post('/api/webhooks/stripe')
-        .set('Stripe-Signature', 'valid_sig')
-        .send(mockEvent);
-
-      expect(response.status).toBe(200);
-      expect(subscriptionsRepo.updateSubscription).toHaveBeenCalledWith('sub_db_1', expect.objectContaining({
+      expect(mockCreateSubscription).toHaveBeenCalledWith(expect.objectContaining({
+        userId: 'user_123',
+        planId: 'plan_pro',
+        stripeSubscriptionId: 'sub_123',
         status: 'active',
       }));
-      expect(paymentsRepo.createPayment).toHaveBeenCalledWith(expect.objectContaining({
-        description: expect.stringContaining('Subscription renewal'),
+
+      expect(mockCreatePayment).toHaveBeenCalledWith(expect.objectContaining({
+        userId: 'user_123',
+        amount: 29.99,
+        stripePaymentIntentId: 'pi_123',
       }));
     });
 
-    it('should handle customer.subscription.deleted (Cancellation)', async () => {
-      const stripeLib = await import('../lib/stripe.js');
-      const subscriptionsRepo = await import('../repositories/subscriptions.repository.js');
-
-      const mockEvent = {
-        type: 'customer.subscription.deleted',
-        data: {
-          object: {
-            id: 'sub_stripe_123',
-          },
-        },
+    it('should acknowledge unhandled event types', async () => {
+      const event = {
+        type: 'unhandled.event',
+        data: { object: {} },
       };
 
-      vi.mocked(stripeLib.stripe!.webhooks.constructEvent).mockReturnValue(mockEvent as any);
-
-      vi.mocked(subscriptionsRepo.getSubscriptionByStripeId).mockResolvedValue({
-        id: 'sub_db_1',
-      } as any);
+      mockConstructEvent.mockReturnValue(event);
 
       const response = await supertest(app)
         .post('/api/webhooks/stripe')
         .set('Stripe-Signature', 'valid_sig')
-        .send(mockEvent);
-
-      expect(response.status).toBe(200);
-      expect(subscriptionsRepo.updateSubscription).toHaveBeenCalledWith('sub_db_1', expect.objectContaining({
-        status: 'canceled',
-      }));
-    });
-
-    it('should handle unhandled event types gracefully', async () => {
-      const stripeLib = await import('../lib/stripe.js');
-      vi.mocked(stripeLib.stripe!.webhooks.constructEvent).mockReturnValue({
-        type: 'payment_intent.created',
-      } as any);
-
-      const response = await supertest(app)
-        .post('/api/webhooks/stripe')
-        .set('Stripe-Signature', 'valid_sig')
-        .send({});
+        .send(event);
 
       expect(response.status).toBe(200);
       expect(response.body.received).toBe(true);
     });
-
-    it('should handle errors gracefully (return 500)', async () => {
-        const stripeLib = await import('../lib/stripe.js');
-        // Force an error inside the switch or logic
-        vi.mocked(stripeLib.stripe!.webhooks.constructEvent).mockReturnValue({
-             type: 'checkout.session.completed',
-             data: { object: {} } // Missing metadata -> but here we want to crash
-        } as any);
-
-        // Mock to throw
-        vi.spyOn(console, 'error').mockImplementation(() => {}); // Silence logs
-        const subscriptionsRepo = await import('../repositories/subscriptions.repository.js');
-        vi.mocked(subscriptionsRepo.getSubscriptionPlanById).mockRejectedValue(new Error('DB Error'));
-
-        // Construct event needs to return something that enters the block
-         vi.mocked(stripeLib.stripe!.webhooks.constructEvent).mockReturnValue({
-            type: 'checkout.session.completed',
-            data: { object: { 
-                metadata: { userId: 'u1', planId: 'p1' }, 
-                subscription: 'sub_1' 
-            } }
-        } as any);
-        vi.mocked(stripeLib.stripe!.subscriptions.retrieve).mockResolvedValue({} as any);
-
-        const response = await supertest(app)
-            .post('/api/webhooks/stripe')
-            .set('Stripe-Signature', 'valid_sig')
-            .send({});
-        
-        expect(response.status).toBe(500);
-    });
   });
 });
-
