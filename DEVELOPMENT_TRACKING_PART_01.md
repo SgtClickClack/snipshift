@@ -33,3 +33,46 @@
 - End-to-End Testing of Notification Flow
 
 Expected completion time: Completed
+
+#### 2025-11-24: Navbar Mobile Menu & Dashboard Link
+
+**Core Components Implemented:**
+- `src/components/navbar.tsx`
+
+**Key Features**
+- **Desktop Navbar:** Added "Dashboard" link before "Find Shifts".
+- **Mobile Menu (Hamburger):** Implemented `Sheet` based mobile menu (hidden on desktop).
+- **Responsive Logic:**
+  - "Dashboard" and "Find Shifts" links moved to Mobile Menu on small screens.
+  - "Bell" and "Messages" remain visible on top navbar for quick access.
+  - Mobile Menu includes: User info, Dashboard link, Find Shifts link, Role Switching, Admin Link (if applicable), Logout.
+
+**Integration Points**
+- `src/components/navbar.tsx` (Refactored layout)
+- `src/components/ui/sheet.tsx` (Imported)
+
+**File Paths**
+- `src/components/navbar.tsx`
+
+**Next Priority Task**
+- End-to-End Testing of Notification Flow
+
+#### 2025-11-24: Google Maps API Key Diagnosis
+
+**Core Components Implemented:**
+- Configuration Diagnosis
+
+**Key Features**
+- Identified missing environment variable: `VITE_GOOGLE_MAPS_API_KEY`.
+- Verified variable usage in `src/lib/google-maps.ts`.
+- Instructions provided for Vercel and local `.env` configuration.
+
+**Integration Points**
+- `src/lib/google-maps.ts`
+- Vercel Project Settings
+
+**File Paths**
+- `src/lib/google-maps.ts`
+
+**Next Priority Task**
+- Verify Map Functionality in Production
