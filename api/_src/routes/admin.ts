@@ -130,6 +130,33 @@ router.get('/jobs', asyncHandler(async (req: AuthenticatedRequest, res) => {
   });
 }));
 
+// Handler for updating job status (admin only)
+router.patch('/jobs/:id/status', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  // Validate status
+  const validStatuses = ['open', 'filled', 'closed', 'completed'];
+  if (!status || !validStatuses.includes(status)) {
+    res.status(400).json({ message: `Status must be one of: ${validStatuses.join(', ')}` });
+    return;
+  }
+
+  const updatedJob = await jobsRepo.updateJob(id, { status });
+
+  if (!updatedJob) {
+    res.status(404).json({ message: 'Job not found' });
+    return;
+  }
+
+  res.status(200).json({
+    id: updatedJob.id,
+    title: updatedJob.title,
+    status: updatedJob.status,
+    updatedAt: updatedJob.updatedAt.toISOString(),
+  });
+}));
+
 // Handler for fetching all reports (admin only)
 router.get('/reports', asyncHandler(async (req: AuthenticatedRequest, res) => {
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;

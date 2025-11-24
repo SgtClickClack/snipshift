@@ -4,7 +4,7 @@
  * Encapsulates database queries for messages
  */
 
-import { eq, and, or, desc } from 'drizzle-orm';
+import { eq, and, or, desc, isNull } from 'drizzle-orm';
 import { messages, conversations, users } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
@@ -112,21 +112,6 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
     return null;
   }
 
-  // Mark all unread messages in this conversation that are NOT from the current user
-  const updated = await db
-    .update(messages)
-    .set({
-      isRead: new Date(),
-    })
-    .where(
-      and(
-        eq(messages.conversationId, conversationId),
-        eq(messages.isRead, null as any), // Only unread messages
-        // Only mark messages sent by the other participant
-        // We need to get the other participant ID first
-      )
-    );
-
   // Get conversation to find other participant
   const [conversation] = await db
     .select()
@@ -152,7 +137,7 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
       and(
         eq(messages.conversationId, conversationId),
         eq(messages.senderId, otherParticipantId),
-        eq(messages.isRead, null as any)
+        isNull(messages.isRead)
       )
     )
     .returning();

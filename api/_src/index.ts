@@ -1983,28 +1983,10 @@ app.post('/api/reports', authenticateUser, asyncHandler(async (req: Authenticate
 }));
 
 
-// 🔥 NUCLEAR ERROR HANDLER - Catches ALL errors including unhandled promise rejections
-// This must be BEFORE the standard errorHandler to catch everything
-app.use((err: any, req: any, res: any, next: any) => {
-  // Log with maximum visibility for Vercel logs
-  console.error('🔥 CRITICAL SERVER CRASH:', err);
-  console.error('🔥 Stack:', err.stack);
-  console.error('🔥 Request Path:', req.path);
-  console.error('🔥 Request Method:', req.method);
-  console.error('🔥 Request Body:', JSON.stringify(req.body, null, 2));
-  console.error('🔥 Request Query:', JSON.stringify(req.query, null, 2));
-  console.error('🔥 Request Headers:', JSON.stringify(req.headers, null, 2));
-  console.error('🔥 Error Message:', err.message);
-  console.error('🔥 Error Name:', err.name);
-  console.error('🔥 Timestamp:', new Date().toISOString());
-  
-  // Send response
-  res.status(500).json({ 
-    error: 'Server Crash', 
-    details: err.message,
-    path: req.path,
-    method: req.method
-  });
+// 404 Catch-all
+app.use((req, res, next) => {
+  res.status(404);
+  next(new Error(`Endpoint not found: ${req.method} ${req.path}`));
 });
 
 // Apply error handling middleware (must be last)

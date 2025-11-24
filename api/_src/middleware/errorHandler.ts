@@ -6,15 +6,10 @@ import { ZodError } from 'zod';
  * Logs full error details server-side but returns generic messages to clients
  */
 
-interface ErrorResponse {
-  message: string;
-  status: number;
-}
-
 /**
  * Express error middleware that:
  * - Logs full error details server-side (with stack traces)
- * - Returns generic error messages to clients (no stack traces)
+ * - Returns generic error messages to clients (no stack traces in production)
  * - Handles Zod validation errors gracefully
  */
 export const errorHandler = (
@@ -37,40 +32,37 @@ export const errorHandler = (
   // Handle Zod validation errors
   if (err instanceof ZodError) {
     const validationErrors = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
-    const response: ErrorResponse = {
-      message: `Validation error: ${validationErrors}`,
-      status: 400,
-    };
-    res.status(400).json(response);
+    res.status(400).json({
+      error: `Validation error: ${validationErrors}`,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
     return;
   }
 
   // Handle known error types
   if (err.message.includes('not found')) {
-    const response: ErrorResponse = {
-      message: err.message,
-      status: 404,
-    };
-    res.status(404).json(response);
+    res.status(404).json({
+      error: err.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
     return;
   }
 
   if (err.message.includes('unauthorized') || err.message.includes('Invalid credentials')) {
-    const response: ErrorResponse = {
-      message: err.message,
-      status: 401,
-    };
-    res.status(401).json(response);
+    res.status(401).json({
+      error: err.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
     return;
   }
 
   // Generic error response (masks internal errors)
-  // DEBUG: Exposing error message temporarily for debugging Vercel 500s
-  const response: ErrorResponse = {
-    message: err.message || 'An error occurred processing your request',
-    status: 500,
-  };
-  res.status(500).json(response);
+  const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
+  
+  res.status(statusCode).json({
+    error: err.message || 'An error occurred processing your request',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
 };
 
 /**
@@ -81,4 +73,3 @@ export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunctio
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
-

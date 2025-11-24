@@ -179,6 +179,7 @@ export async function createJob(
     date: string;
     startTime: string;
     endTime: string;
+    status?: 'open' | 'filled' | 'closed' | 'completed';
     shopName?: string;
     address?: string;
     city?: string;
@@ -202,7 +203,7 @@ export async function createJob(
       date: jobData.date,
       startTime: jobData.startTime,
       endTime: jobData.endTime,
-      status: 'open',
+      status: jobData.status || 'open',
       shopName: jobData.shopName,
       address: jobData.address,
       city: jobData.city,
@@ -327,4 +328,3 @@ export async function getActiveJobCount(): Promise<number> {
 
   return result?.count || 0;
 }
-

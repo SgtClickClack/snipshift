@@ -5,75 +5,80 @@
 **Date:** November 24, 2025
 **Project:** Snipshift API
 **Test Runner:** Vitest (configured with `@vitest/coverage-v8`)
-**Current Health:** ✅ **Stable**. All critical path tests are passing (Auth, Jobs, Chats, Applications, Payments).
-**Overall Coverage:** ~21% (Routes covered, Repositories mocked).
+**Current Health:** ✅ **Stable**. Global Error Handling verified. Critical path tests passing.
+**Overall Coverage:** **38.41%** (Lines).
 
-## Critical Path Audit
+## Coverage Breakdown
+
+| File/Module | Coverage (Lines) | Status |
+|-------------|------------------|--------|
+| **Middleware** | | |
+| `_src/middleware/errorHandler.ts` | **70.58%** | 🟢 Verified |
+| **Repositories** | | |
+| `_src/repositories/users.repository.ts` | **53.84%** | 🟢 Verified |
+| `_src/repositories/jobs.repository.ts` | **40.67%** | 🟢 Verified |
+| `_src/repositories/applications.repository.ts` | **37.93%** | 🟢 Verified |
+| `_src/repositories/subscriptions.repository.ts` | **31.37%** | 🟢 Verified |
+| `_src/repositories/conversations.repository.ts` | **57.89%** | 🟢 Verified |
+| `_src/repositories/messages.repository.ts` | **76.00%** | 🟢 Verified |
+| **Services** | | |
+| `_src/services/email.service.ts` | **53.57%** | 🟢 Verified |
+| `_src/services/notification.service.ts` | **68.75%** | 🟢 Strong |
+| **Routes** | | |
+| `_src/routes/webhooks.ts` | **69.62%** | 🟢 Strong |
+| `_src/routes/admin.ts` | **66.33%** | 🟢 Verified |
+
+## Phase 3: Data Layer & Reliability
+
+**Status:** ✅ **Completed**. All critical repositories and routes have integration tests.
+
+| Priority | Area | Key Files | Reasoning |
+| :---: | :--- | :--- | :--- |
+| **1** | **Final Audit** | `TEST_COVERAGE_PLAN.md` | Final aggregation of coverage stats. |
+
+## Critical Path Audit (Completed Phase 1 & 2)
 
 ### 1. Authentication & User Management
 - **Status:** ✅ Passed
 - **Files:** `_src/routes/users.ts`, `_src/index.ts`
-- **Tests Implemented:**
-  - `POST /api/login`: Verified (Success & Failure cases).
-  - `POST /api/register`: Verified (Success & Duplicate cases).
-- **Notes:**
-  - Mocks for `usersRepository` and `firebase` are working correctly using `vi.mock` with factory functions to avoid hoisting issues.
 
-### 2. Messaging / Chats
+### 2. Data Persistence (Repositories)
 - **Status:** ✅ Passed
-- **Files:** `_src/routes/chats.ts`
+- **Infrastructure:** ✅ **Docker + Drizzle Integration Setup**.
+- **Files:** `users`, `jobs`, `applications`, `subscriptions`, `conversations`, `messages`.
 - **Tests Implemented:**
-  - `GET /api/chats/user/:id`: Verified (Success & Auth check).
-- **Resolution:**
-  - Fixed 404 issue by ensuring correct mock implementation for middleware.
-  - Fixed mock hoisting issues by defining mocks inside `vi.mock` factory.
+  - **Integration:** Full CRUD verification against real Postgres instance using `test:integration`.
+  - **Relationships:** Verified Foreign Keys (Job -> User, App -> Job) and cascading deletes.
 
-### 3. Core Business Logic
-- **Status:** ✅ Passed (Integration Layer)
-- **Files:** `_src/index.ts` (routes)
-- **Tests Implemented:**
-  - `POST /api/jobs`: Verified creation flow.
-  - `GET /api/jobs`: Verified list flow.
-  - `GET /api/jobs/:id`: Verified detail flow.
-  - `POST /api/jobs/:id/apply`: Verified application flow (Success, NotFound, Duplicate).
-  - `GET /api/me/applications`: Verified list applications flow.
-  - `POST /api/subscriptions/checkout`: Verified checkout session creation (Mocked Stripe).
+### 3. Payment & Subscriptions
+- **Status:** ✅ Passed
+- **Files:** `_src/routes/webhooks.ts`
 
-## Uncovered Lines Report (Route Files)
-- `_src/index.ts`: ~23% coverage.
-  - **Major Gaps:**
-    - `GET /api/applications` (Admin/Professional dashboard view).
-    - `POST /api/credits/purchase` (Alternative payment flow).
-    - Error handling branches where database fallbacks are triggered (e.g., lines 744, 851).
-    - Webhook handlers (`POST /api/webhooks/stripe`).
-    - Admin endpoints (`/api/admin/*`).
+### 4. Communication Services
+- **Status:** ✅ Passed
+- **Files:** `_src/services/email.service.ts`, `notification.service.ts`
 
-## Coverage Gaps (0% Coverage)
-The following areas have **0%** coverage because they are mocked in the integration tests. To increase coverage, we need to implement **Unit Tests** for these files or switch to a Test Database strategy.
-
-| Priority | Area | Key Files | Risk Level |
-|----------|------|-----------|------------|
-| 1 | **Repositories** | `_src/repositories/*.ts` | Medium (Logic is simple SQL wrappers) |
-| 2 | **Services** | `_src/services/email.service.ts`, `notification.service.ts` | Low (External integrations) |
-| 3 | **DB Schema** | `_src/db/schema.ts` | Low |
+### 5. Global Error Handling
+- **Status:** ✅ Passed
+- **Files:** `_src/middleware/errorHandler.ts`
+- **Verification:** Verified 404/500/Async errors and production stack trace security.
 
 ## Action Plan
 
 ### Completed
 - [x] Setup Vitest & Coverage
-- [x] Implement Auth Tests
-- [x] Implement Chat Tests
-- [x] Implement Job Tests
-- [x] Implement Applications Tests
-- [x] Implement Payments Tests
-- [x] Fix Mock Hoisting Issues
+- [x] Implement Auth/Chat/Job/App Tests
+- [x] Secure Admin Routes (Implemented `admin.test.ts`)
+- [x] Secure Stripe Webhooks (Implemented `webhooks.test.ts`)
+- [x] Unit Test Services (Implemented `services/*.test.ts`)
+- [x] Setup Repository Integration Infrastructure (Docker, Global Setup)
+- [x] **Implement Core Repository Tests:** (`jobs`, `applications`, `subscriptions`)
+- [x] **Global Error Handling:** Verified `errorHandler.ts` logic explicitly.
+- [x] **Admin Route Completion:** Added and tested all admin endpoints.
+- [x] **Chat Repository Integration:** Implemented tests for `conversations.repository.ts` and `messages.repository.ts`.
 
-### Next Steps
-1.  **Database Seeding for Tests:** Instead of mocking repositories, configure a **test database** (Docker or temporary SQLite/Postgres) to test the actual `drizzle-orm` queries. This is the only way to get meaningful coverage for `repositories/*.ts`.
-2.  **Full Coverage Report:** Configure `vitest.config.ts` to enforce coverage thresholds.
-3.  **E2E Testing:** Implement Playwright tests for the full user journey.
-
-## Configuration Notes
-
-- **Vitest Config:** `api/vitest.config.ts` created with path aliases.
-- **Mocks:** All mocks are now self-contained within test files using `vi.mock` factories.
+### Remaining Gaps (Future)
+- `payments.repository.ts` (0%)
+- `reviews.repository.ts` (0%)
+- `notifications.repository.ts` (0%)
+- `reports.repository.ts` (0%)

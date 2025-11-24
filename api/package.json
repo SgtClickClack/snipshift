@@ -16,7 +16,10 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "test:db:up": "docker-compose -f docker-compose.test.yml up -d",
+    "test:db:down": "docker-compose -f docker-compose.test.yml down",
+    "test:integration": "npm run test:db:up && vitest run --config vitest.config.ts && npm run test:db:down"
   },
   "dependencies": {
     "@react-email/components": "^1.0.1",

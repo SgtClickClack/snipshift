@@ -6,10 +6,12 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['_src/tests/**/*.test.ts'],
+    setupFiles: ['./_src/tests/setup.ts'],
+    globalSetup: ['./_src/tests/globalSetup.ts'], // Run migration once
+    testTimeout: 15000, 
+    hookTimeout: 30000, 
     alias: {
-      // Ensure we resolve source files
       '@': path.resolve(__dirname, './_src'),
     },
   },
 });
-
