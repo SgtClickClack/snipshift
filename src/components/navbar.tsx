@@ -73,26 +73,16 @@ export default function Navbar() {
     <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <button
-            type="button"
-            className="flex items-center hover:opacity-80 transition-opacity"
-            onClick={() => {
-              if (!user) {
-                navigate("/");
-                return;
-              }
-              const target = (user.currentRole && user.currentRole !== 'client') 
-                ? getDashboardRoute(user.currentRole) 
-                : "/role-selection";
-              navigate(target);
-            }}
+          <Link
+            to={!user ? "/" : ((user.currentRole && user.currentRole !== 'client') ? getDashboardRoute(user.currentRole) : "/role-selection")}
+            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
           >
             <img 
               src={logo} 
               alt="Snipshift Logo" 
               className="h-10 w-auto" 
             />
-          </button>
+          </Link>
           
           <div className="flex items-center space-x-4">
             {user ? (

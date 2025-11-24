@@ -76,3 +76,26 @@ Expected completion time: Completed
 
 **Next Priority Task**
 - Verify Map Functionality in Production
+
+#### 2025-11-24: Navbar Logo Link Fix
+
+**Core Components Implemented:**
+- `src/components/navbar.tsx`
+
+**Key Features**
+- **Logo Link:**
+  - Wrapped SnipShift logo in a `<Link>` component.
+  - **Logged Out:** Redirects to Landing Page (`/`).
+  - **Logged In:** Redirects to role-specific Dashboard via `getDashboardRoute` or Role Selection if no role active.
+- **UX Improvements:**
+  - Added `cursor-pointer` to logo.
+  - Preserved existing layout and hover effects.
+
+**Integration Points**
+- `src/components/navbar.tsx`
+
+**File Paths**
+- `src/components/navbar.tsx`
+
+**Next Priority Task**
+- Verify functionality in browser.
