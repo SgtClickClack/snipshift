@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Mail, Shield } from "lucide-react";
+import { MessageCircle, LogOut, Shield } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
-import MessagingModal from "@/components/messaging/messaging-modal";
 import NotificationBell from "./notifications/notification-bell";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Chat } from "@shared/firebase-schema";
@@ -16,7 +15,6 @@ import logo from "@/assets/logo-processed.png";
 export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
   const navigate = useNavigate();
-  const [showMessaging, setShowMessaging] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userChats, setUserChats] = useState<Chat[]>([]);
   
@@ -64,13 +62,15 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           <button
             type="button"
-            className="flex items-center"
+            className="flex items-center hover:opacity-80 transition-opacity"
             onClick={() => {
               if (!user) {
                 navigate("/");
                 return;
               }
-              const target = user.currentRole ? getDashboardRoute(user.currentRole) : "/role-selection";
+              const target = (user.currentRole && user.currentRole !== 'client') 
+                ? getDashboardRoute(user.currentRole) 
+                : "/role-selection";
               navigate(target);
             }}
           >
@@ -118,8 +118,14 @@ export default function Navbar() {
                     variant="ghost" 
                     size="sm"
                     className="text-white hover:bg-steel-700 relative"
+                    title="Messages"
                   >
-                    <Mail className="h-4 w-4" />
+                    <MessageCircle className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" data-testid="unread-badge">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </Button>
                 </Link>
 
@@ -137,23 +143,6 @@ export default function Navbar() {
                   </Link>
                 )}
                 
-                {/* Legacy Messages Modal */}
-                <div className="relative">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowMessaging(true)}
-                    data-testid="button-open-messages"
-                    className="text-white hover:bg-steel-700"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" data-testid="unread-badge">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
-                    )}
-                  </Button>
-                </div>
                 <span className="text-chrome-light">{user.email}</span>
                 <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
                   <LogOut className="h-4 w-4 mr-2" />
@@ -173,11 +162,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-      
-      <MessagingModal
-        isOpen={showMessaging}
-        onClose={() => setShowMessaging(false)}
-      />
     </nav>
   );
 }

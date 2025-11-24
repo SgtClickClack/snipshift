@@ -14,6 +14,12 @@ export interface User {
   updatedAt?: Date;
   displayName?: string;
   profileImage?: string;
+  profileImageURL?: string; // Todo: standardize on profileImage
+  avatarUrl?: string;      // Todo: standardize on profileImage
+  photoURL?: string;       // Firebase property
+  bio?: string;
+  phone?: string;
+  location?: string;
   uid?: string;
   name?: string;
   isOnboarded?: boolean;

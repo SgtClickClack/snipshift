@@ -1,0 +1,15 @@
+// api/index.js
+// CONTINGENCY: Use this file if Vercel bypasses dist/ and re-compiles on-the-fly
+// 
+// To activate:
+// 1. Rename api/index.ts to api/server.ts
+// 2. Rename this file from index.js.contingency to index.js
+// 3. Update vercel.json functions to point to "api/index.js"
+// 4. Commit and push
+
+// Vercel will see this as the handler and run it directly.
+// It imports the pre-compiled (and fixed) code from dist.
+import app from './dist/index.js';
+
+export default app;
+
