@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { LocationInput } from '@/components/ui/location-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -114,13 +115,10 @@ export default function HubOnboardingPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="location" className="text-steel-700">Location *</Label>
-                  <Input
-                    id="location"
-                    name="location"
+                  <LocationInput
                     value={formData.location}
-                    onChange={handleChange}
+                    onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
                     placeholder="City, State or Address"
-                    required
                     className="bg-white"
                   />
                   <p className="text-xs text-steel-500">
