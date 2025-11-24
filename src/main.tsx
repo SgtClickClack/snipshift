@@ -3,6 +3,31 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
+// Global error handler for chunk loading failures (common in SPAs after deployment)
+// This automatically reloads the page if a user tries to load a lazy-loaded chunk that no longer exists on the server
+window.addEventListener('error', (e) => {
+  // Check for common chunk load error messages
+  const isChunkError = 
+    /Loading chunk [\d]+ failed/.test(e.message) || 
+    /Failed to fetch dynamically imported module/.test(e.message) ||
+    /Importing a module script failed/.test(e.message);
+
+  if (isChunkError) {
+    console.error('Chunk load error detected, attempting reload:', e.message);
+    
+    // Prevent infinite reload loop
+    const storageKey = 'chunk_load_error_reload';
+    const lastReload = sessionStorage.getItem(storageKey);
+    const now = Date.now();
+
+    // Only reload if we haven't done so in the last 10 seconds
+    if (!lastReload || now - parseInt(lastReload) > 10000) {
+      sessionStorage.setItem(storageKey, now.toString());
+      window.location.reload();
+    }
+  }
+});
+
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

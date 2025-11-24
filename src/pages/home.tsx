@@ -117,7 +117,7 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <Store className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Hub Owner</h3>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Shop Owner</h3>
                 <p className="text-steel-600">Own a barbershop, salon, or creative space? Post shifts and find professionals.</p>
               </CardContent>
             </Card>

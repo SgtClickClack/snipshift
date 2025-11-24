@@ -242,7 +242,7 @@ export default function DemoPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-16">
           {[
-            { role: "hub", label: "Hub Owner", icon: Store, description: "Manage barbershop operations" },
+            { role: "hub", label: "Shop Owner", icon: Store, description: "Manage barbershop operations" },
             { role: "professional", label: "Professional", icon: UserCheck, description: "Find jobs and gigs" },
             { role: "trainer", label: "Trainer", icon: Award, description: "Monetize your expertise" },
             { role: "brand", label: "Brand", icon: Globe, description: "Promote your products" }

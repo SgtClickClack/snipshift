@@ -87,7 +87,7 @@ export default function LandingPage() {
             <Card className="text-center p-6 bg-white shadow-lg border border-steel-200 hover:shadow-xl transition-all duration-300">
               <CardContent className="pt-6">
                 <Store className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-steel-900">Hub Owners</h3>
+                <h3 className="text-lg font-semibold mb-2 text-steel-900">Shop Owners</h3>
                 <p className="text-steel-600 text-sm">Barbershops, salons, and creative spaces looking for flexible staffing</p>
               </CardContent>
             </Card>

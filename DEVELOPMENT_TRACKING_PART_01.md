@@ -99,3 +99,31 @@ Expected completion time: Completed
 
 **Next Priority Task**
 - Verify functionality in browser.
+
+#### 2025-11-24: Fix Production Chunk Loading (PWA & Cache)
+
+**Core Components Implemented:**
+- `vite.config.ts`
+- `src/main.tsx`
+
+**Key Features**
+- **Aggressive PWA Updates:**
+  - Enabled `cleanupOutdatedCaches: true` to remove stale assets.
+  - Enabled `clientsClaim` and `skipWaiting` to ensure new Service Workers take over immediately.
+- **Global Chunk Error Handler:**
+  - Added logic to `src/main.tsx` to catch `Loading chunk failed` errors.
+  - Automatically reloads the page (with 10s throttle) when a chunk is missing (404/MIME type error) due to deployment version skew.
+- **MIME Type Fix:**
+  - The "text/html" error occurs when `index.html` is served for a missing JS chunk. This fix forces a reload to fetch the new `index.html` which references the correct new chunks.
+
+**Integration Points**
+- Service Worker (Workbox)
+- Vite Build Configuration
+- React Entry Point
+
+**File Paths**
+- `vite.config.ts`
+- `src/main.tsx`
+
+**Next Priority Task**
+- Deploy and Verify Production Site

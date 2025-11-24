@@ -309,7 +309,7 @@ export default function ProfessionalDashboard() {
                           <div className="flex gap-2">
                             <StartChatButton
                               otherUserId={job.hubId}
-                              otherUserName="Hub Owner"
+                              otherUserName="Shop Owner"
                               otherUserRole="hub"
                               variant="outline"
                               size="sm"
@@ -529,7 +529,7 @@ export default function ProfessionalDashboard() {
                           <div className="flex gap-2">
                             <StartChatButton
                               otherUserId={job.hubId}
-                              otherUserName="Hub Owner"
+                              otherUserName="Shop Owner"
                               otherUserRole="hub"
                               variant="outline"
                               size="sm"
@@ -597,7 +597,7 @@ export default function ProfessionalDashboard() {
                         </div>
                         <StartChatButton
                           otherUserId={job.hubId}
-                          otherUserName="Hub Owner"
+                          otherUserName="Shop Owner"
                           otherUserRole="hub"
                           variant="outline"
                           size="sm"

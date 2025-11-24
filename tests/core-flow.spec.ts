@@ -57,7 +57,7 @@ test.describe('Critical Path Tests', () => {
       expect(isHomePage || isRoleSelection || isDashboard).toBeTruthy();
       
       // Verify role selection or dashboard content is visible
-      const roleSelectionVisible = await page.locator('text=/Hub Owner|Professional|Brand|Trainer/i').first().isVisible().catch(() => false);
+      const roleSelectionVisible = await page.locator('text=/Shop Owner|Professional|Brand|Trainer/i').first().isVisible().catch(() => false);
       const dashboardVisible = await page.locator('[class*="dashboard"], [class*="Dashboard"]').first().isVisible().catch(() => false);
       
       expect(roleSelectionVisible || dashboardVisible || isDashboard).toBeTruthy();

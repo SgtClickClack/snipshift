@@ -61,7 +61,7 @@ export default function RoleSelectionPage() {
     },
     {
       id: "hub" as const,
-      title: "Hub Owner",
+      title: "Shop Owner",
       description: "Own a barbershop, salon, or creative space",
       icon: Store,
       color: "border-chrome-light bg-chrome-light/20 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"

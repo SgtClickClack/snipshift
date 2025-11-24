@@ -34,7 +34,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
     onSuccess: () => {
       toast({
         title: "Application submitted successfully!",
-        description: "The hub owner has been notified of your interest.",
+        description: "The shop owner has been notified of your interest.",
         variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
@@ -159,7 +159,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
                   Application Already Submitted
                 </h3>
                 <p className="text-green-600">
-                  You have already applied for this position. The hub owner will review your application and contact you if you're selected.
+                  You have already applied for this position. The shop owner will review your application and contact you if you're selected.
                 </p>
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
                   id="coverLetter"
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
-                  placeholder="Tell the hub owner why you're interested in this position and what makes you a good fit. Include your experience, skills, and availability..."
+                  placeholder="Tell the shop owner why you're interested in this position and what makes you a good fit. Include your experience, skills, and availability..."
                   rows={6}
                   data-testid="textarea-cover-letter"
                   className={errors.coverLetter ? "border-red-500" : ""}
