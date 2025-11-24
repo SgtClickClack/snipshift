@@ -229,6 +229,12 @@ export async function updateJob(
     startTime?: string;
     endTime?: string;
     status?: 'open' | 'filled' | 'closed' | 'completed';
+    shopName?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    lat?: string;
+    lng?: string;
   }
 ): Promise<typeof jobs.$inferSelect | null> {
   const db = getDb();
