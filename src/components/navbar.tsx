@@ -2,16 +2,16 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown } from "lucide-react";
+import { MessageCircle, LogOut, Shield } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import NotificationBell from "./notifications/notification-bell";
 import { Chat } from "@shared/firebase-schema";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+// import { 
+//   DropdownMenu, 
+//   DropdownMenuContent, 
+//   DropdownMenuItem, 
+//   DropdownMenuTrigger 
+// } from "@/components/ui/dropdown-menu";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
 import logo from "@/assets/logo-processed.png";
@@ -86,28 +86,17 @@ export default function Navbar() {
               <>
                 {/* Role Switcher */}
                 <div className="hidden md:block">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className="w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-50 relative"
-                      >
-                        {user.currentRole === 'hub' ? 'Shop' : (user.currentRole === 'client' ? 'Shop' : user.currentRole?.charAt(0).toUpperCase() + user.currentRole?.slice(1))}
-                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[200px] bg-steel-800 border-steel-600 text-white z-[9999]">
-                      {(user.roles || []).map((r) => (
-                        <DropdownMenuItem 
-                          key={r} 
-                          onClick={() => handleSwitchRole(r)}
-                          className="focus:bg-steel-700 focus:text-white cursor-pointer"
-                        >
-                          {r === 'hub' ? 'Shop' : (r === 'client' ? 'Shop' : r.charAt(0).toUpperCase() + r.slice(1))}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <select 
+                    className="w-[200px] h-10 bg-steel-800 text-white border border-steel-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-steel-500"
+                    value={user.currentRole || ''}
+                    onChange={(e) => handleSwitchRole(e.target.value)}
+                  >
+                    {(user.roles || []).map((r) => (
+                      <option key={r} value={r}>
+                        {r === 'hub' ? 'Shop' : (r === 'client' ? 'Shop' : r.charAt(0).toUpperCase() + r.slice(1))}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Find Shifts Link */}
