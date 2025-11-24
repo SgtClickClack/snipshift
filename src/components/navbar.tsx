@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown, Plus } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import NotificationBell from "./notifications/notification-bell";
 import { Chat } from "@shared/firebase-schema";
@@ -56,6 +56,10 @@ export default function Navbar() {
       console.error("Failed to switch role", e);
     }
   };
+  
+  // Debug logging for role switcher
+  // console.log('Current User Roles:', user?.roles);
+  // console.log('Has Hub Role:', user?.roles?.includes('hub'));
 
   return (
     <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50">
@@ -97,27 +101,26 @@ export default function Navbar() {
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[200px] bg-steel-800 border-steel-600 text-white z-[9999]">
+                    <DropdownMenuContent className="w-[200px] bg-steel-800 border-steel-600 text-white z-[9999]" align="end">
                       {(user.roles || []).map((r) => (
                         <DropdownMenuItem 
                           key={r} 
                           onClick={() => handleSwitchRole(r)}
-                          className="focus:bg-steel-700 focus:text-white cursor-pointer"
+                          className="focus:bg-steel-700 focus:text-white cursor-pointer justify-between"
                         >
                           {r === 'hub' ? 'Shop' : (r === 'client' ? 'Shop' : r.charAt(0).toUpperCase() + r.slice(1))}
+                          {user.currentRole === r && <Check className="h-4 w-4" />}
                         </DropdownMenuItem>
                       ))}
 
-                      {(!user.roles?.includes('hub') || !user.roles?.includes('professional')) && (
-                        <DropdownMenuSeparator className="bg-steel-600" />
-                      )}
+                      <DropdownMenuSeparator className="bg-steel-600" />
 
                       {!user.roles?.includes('hub') && (
                         <DropdownMenuItem 
                           onClick={() => navigate('/onboarding/hub')}
                           className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
                         >
-                          <Plus className="mr-2 h-4 w-4" />
+                          <PlusCircle className="mr-2 h-4 w-4" />
                           Create Shop Profile
                         </DropdownMenuItem>
                       )}
@@ -127,7 +130,7 @@ export default function Navbar() {
                           onClick={() => navigate('/onboarding/professional')}
                           className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
                         >
-                          <Plus className="mr-2 h-4 w-4" />
+                          <PlusCircle className="mr-2 h-4 w-4" />
                           Become a Pro
                         </DropdownMenuItem>
                       )}
