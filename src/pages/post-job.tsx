@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { LocationInput } from '@/components/ui/location-input';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { ImageUpload } from '@/components/ui/image-upload';
@@ -281,11 +282,9 @@ export default function PostJobPage() {
                 <Label htmlFor="location" className="text-steel-900">
                   Location/Address *
                 </Label>
-                <Input
-                  id="location"
-                  type="text"
+                <LocationInput
                   value={formData.location}
-                  onChange={(e) => handleChange('location', e.target.value)}
+                  onChange={(val) => handleChange('location', val)}
                   placeholder="e.g., 123 Main St, New York, NY 10001"
                   className={errors.location ? 'border-red-500' : ''}
                 />

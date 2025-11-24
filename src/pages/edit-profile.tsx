@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { LocationInput } from '@/components/ui/location-input';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/lib/api';
 import { ImageUpload } from '@/components/ui/image-upload';
@@ -155,11 +156,9 @@ export default function EditProfilePage() {
 
               <div className="space-y-2">
                 <Label htmlFor="location" className="text-steel-700">Location</Label>
-                <Input
-                  id="location"
-                  name="location"
+                <LocationInput
                   value={formData.location}
-                  onChange={handleChange}
+                  onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
                   placeholder="City, State"
                   className="bg-white border-steel-200 focus:border-primary focus:ring-primary"
                 />
