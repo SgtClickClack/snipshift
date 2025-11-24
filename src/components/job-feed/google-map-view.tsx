@@ -43,12 +43,10 @@ export default function GoogleMapView({
         const map = new google.maps.Map(mapRef.current!, {
           center: centerLocation,
           zoom: 10,
-          mapId: 'SNIPSHIFT_MAP_ID',
           mapTypeControl: true,
           streetViewControl: true,
           fullscreenControl: true,
           zoomControl: true,
-          // styles property must NOT be set when mapId is present
         });
 
         mapInstanceRef.current = map;
