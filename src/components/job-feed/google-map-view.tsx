@@ -47,7 +47,8 @@ export default function GoogleMapView({
           mapTypeControl: true,
           streetViewControl: true,
           fullscreenControl: true,
-          zoomControl: true
+          zoomControl: true,
+          // styles property must NOT be set when mapId is present
         });
 
         mapInstanceRef.current = map;
