@@ -137,7 +137,7 @@ export default function Navbar() {
                   </DropdownMenu>
 
                   {/* Dashboard Link */}
-                  <Link to={(user.currentRole === 'hub' || user.currentRole === 'professional') ? getDashboardRoute(user.currentRole) : '/dashboard'}>
+                  <Link to="/dashboard">
                     <Button variant="ghost" className="text-white hover:bg-steel-700">Dashboard</Button>
                   </Link>
 
@@ -210,7 +210,7 @@ export default function Navbar() {
                         </div>
 
                         <SheetClose asChild>
-                          <Link to={(user.currentRole === 'hub' || user.currentRole === 'professional') ? getDashboardRoute(user.currentRole) : '/dashboard'}>
+                          <Link to="/dashboard">
                             <Button variant="ghost" className="w-full justify-start text-white hover:bg-steel-700">
                               Dashboard
                             </Button>
