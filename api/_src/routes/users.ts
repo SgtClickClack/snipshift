@@ -272,4 +272,73 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
   });
 }));
 
+// Validation schema for role update
+const UpdateRoleSchema = z.object({
+  role: z.string(),
+  shopName: z.string().optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+});
+
+// Update user role (e.g. for Shop Onboarding)
+router.post('/role', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = UpdateRoleSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+    });
+    return;
+  }
+
+  const { role, shopName, location, description } = validationResult.data;
+  const updates: any = {};
+
+  if (role === 'hub') {
+    updates.role = 'business'; // Map 'hub' to 'business'
+    if (shopName) updates.name = shopName;
+    if (location) updates.location = location;
+    if (description) updates.bio = description;
+    updates.isOnboarded = true;
+  } else {
+     // Allow other role updates if valid enum
+     const validRoles = ['professional', 'business', 'brand', 'trainer'];
+     if (validRoles.includes(role)) {
+        updates.role = role;
+        if (shopName) updates.name = shopName;
+        if (location) updates.location = location;
+        if (description) updates.bio = description;
+     } else {
+        res.status(400).json({ message: 'Invalid role for this endpoint' });
+        return;
+     }
+  }
+
+  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  
+  if (!updatedUser) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  res.status(200).json({
+    id: updatedUser.id,
+    email: updatedUser.email,
+    name: updatedUser.name,
+    displayName: updatedUser.name,
+    bio: updatedUser.bio,
+    phone: updatedUser.phone,
+    location: updatedUser.location,
+    roles: [updatedUser.role],
+    currentRole: updatedUser.role,
+    uid: req.user.uid,
+    isOnboarded: updatedUser.isOnboarded ?? false,
+  });
+}));
+
 export default router;
