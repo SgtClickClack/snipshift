@@ -161,9 +161,9 @@ function AppRoutes() {
 
         {/* Protected dashboard routes */}
         <Route path="/dashboard" element={
-          <ProtectedRoute>
+          <AuthGuard requireAuth={true}>
             <DashboardRedirect />
-          </ProtectedRoute>
+          </AuthGuard>
         } />
 
         <Route path="/user-dashboard" element={
