@@ -137,10 +137,7 @@ export default function Navbar() {
                   </DropdownMenu>
 
                   {/* Dashboard Link */}
-                  <Link 
-                    to="/dashboard"
-                    onClick={() => console.log('Navbar: Dashboard link clicked, user:', user?.email, 'role:', user?.currentRole)}
-                  >
+                  <Link to="/dashboard">
                     <Button variant="ghost" className="text-white hover:bg-steel-700">Dashboard</Button>
                   </Link>
 
