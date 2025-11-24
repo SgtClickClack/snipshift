@@ -2,19 +2,19 @@ import { Loader } from '@googlemaps/js-api-loader';
 
 let googleMapsPromise: Promise<any> | null = null;
 
-export const loadGoogleMaps = async (): Promise<any> => {
+export const loadGoogleMaps = async (retries = 3): Promise<any> => {
+  // Re-read env var each time to handle potential hydration race conditions
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim();
   
-  console.log('Google Maps Loading - API Key Status:', apiKey ? 'Present' : 'Missing');
+  // Simple retry logic for early boot/Service Worker context
+  if (!apiKey && retries > 0) {
+    await new Promise(r => setTimeout(r, 100));
+    return loadGoogleMaps(retries - 1);
+  }
 
   if (!apiKey) {
-    console.error('Full Environment State (Sanitized):', {
-      VITE_GOOGLE_MAPS_API_KEY_EXISTS: !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-      VITE_GOOGLE_CLIENT_ID_EXISTS: !!import.meta.env.VITE_GOOGLE_CLIENT_ID,
-      MODE: import.meta.env.MODE,
-      BASE_URL: import.meta.env.BASE_URL,
-    });
-    throw new Error('Google Maps API key is missing');
+    console.warn('Google Maps API key missing. Map features will be disabled.');
+    return Promise.reject('Google Maps API key is missing');
   }
 
   if (!googleMapsPromise) {
