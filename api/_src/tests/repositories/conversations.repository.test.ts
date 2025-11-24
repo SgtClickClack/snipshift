@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import * as conversationsRepo from '../../repositories/conversations.repository.js';
 import * as messagesRepo from '../../repositories/messages.repository.js';
-import * as usersRepo from '../../repositories/users.repository.js';
+import { createTestUser } from '../helpers.js';
 import { getDb } from '../../db/index.js';
 import { conversations, messages, users } from '../../db/schema.js';
 
@@ -18,17 +18,8 @@ describe('Conversations & Messages Repository (Integration)', () => {
   });
 
   const createTestUsers = async () => {
-    const userA = await usersRepo.createUser({
-      email: 'userA@test.com',
-      name: 'User A',
-      role: 'professional',
-    });
-
-    const userB = await usersRepo.createUser({
-      email: 'userB@test.com',
-      name: 'User B',
-      role: 'business',
-    });
+    const userA = await createTestUser('professional');
+    const userB = await createTestUser('business');
 
     if (!userA || !userB) throw new Error('Failed to create test users');
     return { userA, userB };
@@ -169,4 +160,3 @@ describe('Conversations & Messages Repository (Integration)', () => {
     });
   });
 });
-

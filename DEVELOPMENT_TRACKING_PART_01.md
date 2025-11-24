@@ -118,3 +118,33 @@ Expected completion time: 30 mins
 - None (Testing Phase Complete)
 
 Expected completion time: Completed
+
+#### 2025-11-24: Fix Test Suite Regressions (Foreign Keys)
+
+**Core Components Implemented:**
+- `api/_src/tests/helpers.ts` (Enhanced Data Factories)
+
+**Key Features**
+- **Foreign Key Compliance:**
+  - Refactored `createTestJob` to strictly enforce User -> Job dependency.
+  - Added `createTestApplication` to strictly enforce User + Job -> Application dependencies.
+- **Regression Fixes:**
+  - Resolved `DrizzleQueryError` (FK constraint violations) across `jobs.test.ts` and `applications.test.ts`.
+  - Fixed `null` businessId violations in job creation tests.
+- **Clean Green Board:**
+  - Achieved 0 failures across all 78 tests.
+  - Removed temporary debug logging.
+
+**Integration Points**
+- Database (PostgreSQL Foreign Keys)
+- `vitest` Test Runner
+
+**File Paths**
+- `api/_src/tests/helpers.ts`
+- `api/_src/repositories/jobs.repository.ts`
+- `api/_src/tests/repositories/jobs.repository.test.ts`
+- `api/_src/tests/repositories/applications.repository.test.ts`
+- `api/_src/tests/repositories/conversations.repository.test.ts`
+
+**Next Priority Task**
+- Await further instructions

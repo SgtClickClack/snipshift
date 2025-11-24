@@ -17,7 +17,7 @@ describe('Applications Repository (Integration)', () => {
 
   it('should create an application', async () => {
     const employer = await createTestUser('business');
-    const job = await createTestJob(employer!.id);
+    const { job } = await createTestJob(employer!.id);
     const applicant = await createTestUser('professional');
 
     const appData = {
@@ -37,7 +37,7 @@ describe('Applications Repository (Integration)', () => {
 
   it('should retrieve applications for a user', async () => {
     const employer = await createTestUser('business');
-    const job = await createTestJob(employer!.id);
+    const { job } = await createTestJob(employer!.id);
     const applicant = await createTestUser('professional');
 
     await applicationsRepo.createApplication({
@@ -55,7 +55,7 @@ describe('Applications Repository (Integration)', () => {
 
   it('should check if user has applied', async () => {
     const employer = await createTestUser('business');
-    const job = await createTestJob(employer!.id);
+    const { job } = await createTestJob(employer!.id);
     const applicant = await createTestUser('professional');
 
     await applicationsRepo.createApplication({
@@ -75,7 +75,7 @@ describe('Applications Repository (Integration)', () => {
 
   it('should update application status', async () => {
       const employer = await createTestUser('business');
-      const job = await createTestJob(employer!.id);
+      const { job } = await createTestJob(employer!.id);
       const applicant = await createTestUser('professional');
 
       const app = await applicationsRepo.createApplication({

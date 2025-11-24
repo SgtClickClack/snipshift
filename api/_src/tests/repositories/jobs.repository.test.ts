@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import * as jobsRepo from '../../repositories/jobs.repository.js';
-import { createTestUser } from '../helpers.js';
+import { createTestUser, createTestJob } from '../helpers.js';
 import { getDb } from '../../db/index.js';
 import { jobs, users, applications } from '../../db/schema.js';
 
@@ -39,26 +39,22 @@ describe('Jobs Repository (Integration)', () => {
   });
 
   it('should find jobs with filters', async () => {
-    const user = await createTestUser('business');
-    const date = new Date().toISOString();
-
-    await jobsRepo.createJob({
-      businessId: user!.id,
-      title: 'Job A',
-      payRate: '40',
-      description: 'Desc A',
-      date,
-      startTime: '09:00',
-      endTime: '17:00',
-      city: 'NY',
+    const { user, job: jobA } = await createTestJob(); // Creates business user and job A
+    
+    // Update Job A to match test criteria
+    await jobsRepo.updateJob(jobA.id, { 
+        title: 'Job A', 
+        payRate: '40',
+        city: 'NY' 
     });
 
+    // Create Job B for same user
     await jobsRepo.createJob({
-      businessId: user!.id,
+      businessId: user.id,
       title: 'Job B',
       payRate: '60',
       description: 'Desc B',
-      date,
+      date: new Date().toISOString(),
       startTime: '09:00',
       endTime: '17:00',
       city: 'LA',
@@ -68,26 +64,17 @@ describe('Jobs Repository (Integration)', () => {
     expect(result?.data).toHaveLength(1);
     expect(result?.data[0].title).toBe('Job A');
 
-    const all = await jobsRepo.getJobs({ businessId: user!.id });
+    const all = await jobsRepo.getJobs({ businessId: user.id });
     expect(all?.data).toHaveLength(2);
   });
 
   it('should update job status', async () => {
-    const user = await createTestUser('business');
-    const job = await jobsRepo.createJob({
-        businessId: user!.id,
-        title: 'Update Test',
-        payRate: '50',
-        description: 'Desc',
-        date: new Date().toISOString(),
-        startTime: '09:00',
-        endTime: '17:00',
-    });
+    const { job } = await createTestJob();
 
-    const updated = await jobsRepo.updateJob(job!.id, { status: 'filled' });
+    const updated = await jobsRepo.updateJob(job.id, { status: 'filled' });
     expect(updated?.status).toBe('filled');
 
-    const retrieved = await jobsRepo.getJobById(job!.id);
+    const retrieved = await jobsRepo.getJobById(job.id);
     expect(retrieved?.status).toBe('filled');
   });
 });
