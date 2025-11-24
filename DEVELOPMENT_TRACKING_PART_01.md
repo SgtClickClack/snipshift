@@ -49,6 +49,7 @@
   - Added `POST /api/users/role` endpoint to handle role updates.
   - Mapped 'hub' frontend role to 'business' backend role.
   - Updates user details (Shop Name -> Name, Location, Description -> Bio) and sets `isOnboarded` to true.
+  - Fixed routing issue where route was mounted at `/api/role` instead of `/api/users/role` by changing route definition to `/users/role`.
 
 **Integration Points**
 - `src/App.tsx` (Route registration)
@@ -64,3 +65,33 @@
 
 **Next Priority Task**
 - Verify in production deployment.
+
+#### 2025-11-24: Google Places Autocomplete
+
+**Core Components Implemented:**
+- `LocationInput` component (`src/components/ui/location-input.tsx`)
+- Integration with `use-places-autocomplete`
+
+**Key Features**
+- **Google Places Autocomplete:**
+  - Created a reusable `LocationInput` component that provides address suggestions using Google Places API.
+  - Uses `Command` and `Popover` components for the suggestion UI.
+  - Handles dynamic loading of the Google Maps API.
+  - Replaced standard location inputs in:
+    - Shop Onboarding (`src/pages/onboarding/hub.tsx`)
+    - Job Posting (`src/pages/post-job.tsx`)
+    - Profile Editing (`src/pages/edit-profile.tsx`)
+
+**Integration Points**
+- Google Maps API (via `@googlemaps/js-api-loader` and `use-places-autocomplete`)
+- Shared UI components (`Command`, `Popover`, `Input`)
+
+**File Paths**
+- `src/components/ui/location-input.tsx`
+- `src/pages/onboarding/hub.tsx`
+- `src/pages/post-job.tsx`
+- `src/pages/edit-profile.tsx`
+- `package.json`
+
+**Next Priority Task**
+- Test the autocomplete functionality with a valid API key.
