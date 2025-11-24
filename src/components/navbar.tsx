@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import NotificationBell from "./notifications/notification-bell";
-import { useNotifications } from "@/hooks/use-notifications";
 import { Chat } from "@shared/firebase-schema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
 import logo from "@/assets/logo-processed.png";
@@ -18,14 +22,8 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [userChats, setUserChats] = useState<Chat[]>([]);
   
-  // Notifications
-  const {
-    notifications,
-    handleNotificationClick,
-    handleMarkAllRead,
-    simulateNewNotification,
-  } = useNotifications();
-
+  // Notifications - removed hook usage here as it's now internal to NotificationBell
+  
   useEffect(() => {
     if (!user) {
       setUnreadCount(0);
@@ -51,8 +49,10 @@ export default function Navbar() {
     try {
       await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role });
       setCurrentRole(role as any);
+      const target = getDashboardRoute(role as any);
+      navigate(target);
     } catch (e) {
-      // ignore for now
+      console.error("Failed to switch role", e);
     }
   };
 
@@ -86,18 +86,28 @@ export default function Navbar() {
               <>
                 {/* Role Switcher */}
                 <div className="hidden md:block">
-                  <Select value={user.currentRole || undefined} onValueChange={handleSwitchRole}>
-                    <SelectTrigger className="w-[200px] bg-steel-800 text-white border-steel-600">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className="w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-50 relative"
+                      >
+                        {user.currentRole === 'hub' ? 'Shop' : (user.currentRole === 'client' ? 'Shop' : user.currentRole?.charAt(0).toUpperCase() + user.currentRole?.slice(1))}
+                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[200px] bg-steel-800 border-steel-600 text-white z-[9999]">
                       {(user.roles || []).map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r.charAt(0).toUpperCase() + r.slice(1)}
-                        </SelectItem>
+                        <DropdownMenuItem 
+                          key={r} 
+                          onClick={() => handleSwitchRole(r)}
+                          className="focus:bg-steel-700 focus:text-white cursor-pointer"
+                        >
+                          {r === 'hub' ? 'Shop' : (r === 'client' ? 'Shop' : r.charAt(0).toUpperCase() + r.slice(1))}
+                        </DropdownMenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 {/* Find Shifts Link */}
@@ -106,11 +116,7 @@ export default function Navbar() {
                 </Link>
 
                 {/* Notifications */}
-                <NotificationBell
-                  notifications={notifications}
-                  onNotificationClick={handleNotificationClick}
-                  onMarkAllRead={handleMarkAllRead}
-                />
+                <NotificationBell />
                 
                 {/* Messages - New In-App Messaging */}
                 <Link to="/messages">

@@ -1,28 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
-import { Notification } from "./notification-types";
 import NotificationDropdown from "./notification-dropdown";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { Notification } from "@/lib/api";
 
 interface NotificationBellProps {
-  notifications: Notification[];
-  onNotificationClick: (notificationId: string) => void;
-  onMarkAllRead: () => void;
   className?: string;
 }
 
 export default function NotificationBell({
-  notifications,
-  onNotificationClick,
-  onMarkAllRead,
   className = ""
 }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   // Handle clicking outside to close dropdown
   useEffect(() => {
@@ -60,11 +55,18 @@ export default function NotificationBell({
   };
 
   const handleNotificationClick = (notificationId: string) => {
-    onNotificationClick(notificationId);
+    markAsRead(notificationId);
+    
+    const notification = notifications.find(n => n.id === notificationId);
+    if (notification?.link) {
+      window.location.href = notification.link;
+    }
+    
+    setIsOpen(false);
   };
 
   const handleMarkAllRead = () => {
-    onMarkAllRead();
+    markAllAsRead();
     setIsOpen(false);
   };
 
@@ -79,7 +81,7 @@ export default function NotificationBell({
         variant="ghost"
         size="sm"
         onClick={handleBellClick}
-        className={`relative p-2 ${hasNewNotifications ? 'animate-bounce' : ''}`}
+        className={`relative p-2 hover:bg-steel-700 ${hasNewNotifications ? 'animate-bounce' : ''}`}
         data-testid="notification-bell"
         aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
       >

@@ -8,6 +8,7 @@ import { queryClient } from './lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
@@ -345,17 +346,19 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
-            <Router>
-              <Toaster />
-              <AppRoutes />
-              <TutorialOverlay />
-              <FeedbackWidget />
-              <InstallPrompt />
-              <Analytics />
-              <SpeedInsights />
-            </Router>
+            <NotificationProvider>
+              <Router>
+                <Toaster />
+                <AppRoutes />
+                <TutorialOverlay />
+                <FeedbackWidget />
+                <InstallPrompt />
+                <Analytics />
+                <SpeedInsights />
+              </Router>
+            </NotificationProvider>
           </AuthProvider>
-        </TooltipProvider>
+        </TooltipProvider>>
       </QueryClientProvider>
     </HelmetProvider>
   );

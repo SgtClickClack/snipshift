@@ -3,20 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchJobs, JobFilterParams } from '@/lib/api';
 import { Job } from '@shared/firebase-schema';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { JobFilters } from '@/components/jobs/job-filters';
-import { MapPin, Clock, DollarSign } from 'lucide-react';
+import { JobCard, JobCardData } from '@/components/job-feed/JobCard';
 
 // JobType is now imported from shared schema, but we keep a local alias for API normalization
 type JobType = Job;
 
 export default function JobFeedPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
   
@@ -67,7 +65,7 @@ export default function JobFeedPage() {
   }
 
   // Normalize jobs to ensure consistent structure
-  const jobList = (jobs || []).map((job: any) => {
+  const jobList: JobCardData[] = (jobs || []).map((job: any) => {
     // Extract city and state from location string if needed
     let locationCity = job.city || 'Unknown';
     let locationState = job.state || '';
@@ -107,18 +105,16 @@ export default function JobFeedPage() {
           
           <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-steel-200">
             <Button 
-              variant={viewMode === 'list' ? 'default' : 'ghost'} 
+              variant={viewMode === 'list' ? 'charcoal' : 'ghost'} 
               size="sm"
               onClick={() => setViewMode('list')}
-              className={viewMode === 'list' ? 'bg-steel-900 text-white' : 'text-steel-600'}
             >
               List View
             </Button>
             <Button 
-              variant={viewMode === 'map' ? 'default' : 'ghost'} 
+              variant={viewMode === 'map' ? 'charcoal' : 'ghost'} 
               size="sm"
               onClick={() => setViewMode('map')}
-              className={viewMode === 'map' ? 'bg-steel-900 text-white' : 'text-steel-600'}
             >
               Map View
             </Button>
@@ -133,7 +129,7 @@ export default function JobFeedPage() {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)]">
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)] min-h-[500px]">
               {/* List View */}
               <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3' : 'w-full'}`}>
                 {jobList.length === 0 ? (
@@ -159,58 +155,18 @@ export default function JobFeedPage() {
                     )}
                   </div>
                 ) : (
-              jobList.map((job: JobType) => (
-                <Card 
-                  key={job.id} 
-                  className={`card-chrome cursor-pointer transition-colors ${selectedJob?.id === job.id ? 'border-primary ring-1 ring-primary' : ''}`}
-                  onClick={() => setSelectedJob(job)}
-                >
-                  <CardContent className="p-5">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-lg text-steel-900">{job.title}</h3>
-                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                        {job.rate || job.payRate || 'Rate TBD'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-steel-600 mb-4">
-                      {job.location && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          <span>{job.location}</span>
-                        </div>
-                      )}
-                      {job.date && (
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            {job.date}
-                            {job.startTime && job.endTime && ` • ${job.startTime} - ${job.endTime}`}
-                          </span>
-                        </div>
-                      )}
-                      {job.shopName && (
-                        <div className="text-steel-500 text-xs">
-                          {job.shopName}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        className="w-full steel-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/jobs/${job.id}`);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </CardContent>
-                  </Card>
-                ))
+                  jobList.map((job) => (
+                    <JobCard 
+                      key={job.id} 
+                      job={job}
+                      isSelected={selectedJob?.id === job.id}
+                      onClick={() => setSelectedJob(job)}
+                      onViewDetails={(e) => {
+                        e.stopPropagation();
+                        navigate(`/jobs/${job.id}`);
+                      }}
+                    />
+                  ))
                 )}
               </div>
 

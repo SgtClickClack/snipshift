@@ -6,7 +6,7 @@
 **Project:** Snipshift API
 **Test Runner:** Vitest (configured with `@vitest/coverage-v8`)
 **Current Health:** ✅ **Stable**. Global Error Handling verified. Critical path tests passing.
-**Overall Coverage:** **38.41%** (Lines).
+**Overall Coverage:** **36.91%** (Lines).
 
 ## Coverage Breakdown
 
@@ -15,7 +15,7 @@
 | **Middleware** | | |
 | `_src/middleware/errorHandler.ts` | **70.58%** | 🟢 Verified |
 | **Repositories** | | |
-| `_src/repositories/users.repository.ts` | **53.84%** | 🟢 Verified |
+| `_src/repositories/users.repository.ts` | **40.38%** | 🟢 Verified |
 | `_src/repositories/jobs.repository.ts` | **40.67%** | 🟢 Verified |
 | `_src/repositories/applications.repository.ts` | **37.93%** | 🟢 Verified |
 | `_src/repositories/subscriptions.repository.ts` | **31.37%** | 🟢 Verified |
@@ -25,8 +25,8 @@
 | `_src/services/email.service.ts` | **53.57%** | 🟢 Verified |
 | `_src/services/notification.service.ts` | **68.75%** | 🟢 Strong |
 | **Routes** | | |
-| `_src/routes/webhooks.ts` | **47.05%** | 🟢 Verified (Critical Path) |
-| `_src/routes/admin.ts` | **66.33%** | 🟢 Verified |
+| `_src/routes/webhooks.ts` | **43.03%** | 🟢 Verified (Critical Path) |
+| `_src/routes/admin.ts` | **66.00%** | 🟢 Verified |
 
 ## Phase 3: Data Layer & Reliability
 
@@ -76,6 +76,7 @@
 - [x] **Global Error Handling:** Verified `errorHandler.ts` logic explicitly.
 - [x] **Admin Route Completion:** Added and tested all admin endpoints.
 - [x] **Chat Repository Integration:** Implemented tests for `conversations.repository.ts` and `messages.repository.ts`.
+- [x] **Final Coverage Scan:** Generated final heat map.
 
 ### Remaining Gaps (Future)
 - `payments.repository.ts` (0%)

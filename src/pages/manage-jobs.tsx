@@ -169,7 +169,7 @@ export default function ManageJobsPage() {
           <CardContent className="p-8 text-center">
             <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading Jobs</h2>
             <p className="text-neutral-600 mb-4">Please try again later.</p>
-            <Button onClick={() => navigate('/post-job')} className="steel-button">
+            <Button onClick={() => navigate('/post-job')} variant="steel">
               Post a Job
             </Button>
           </CardContent>
@@ -189,7 +189,7 @@ export default function ManageJobsPage() {
             <h1 className="text-3xl font-bold text-steel-900">My Listings</h1>
             <p className="text-steel-600 mt-1">Manage your job postings and review applicants</p>
           </div>
-          <Button onClick={() => navigate('/post-job')} className="steel-button">
+          <Button onClick={() => navigate('/post-job')} variant="steel">
             Post a Job
           </Button>
         </header>
@@ -200,7 +200,7 @@ export default function ManageJobsPage() {
               <Briefcase className="h-16 w-16 mx-auto text-steel-400 mb-4" />
               <h2 className="text-xl font-bold text-steel-900 mb-2">No job listings yet</h2>
               <p className="text-steel-600 mb-6">Create your first job posting to start receiving applications.</p>
-              <Button onClick={() => navigate('/post-job')} className="steel-button">
+              <Button onClick={() => navigate('/post-job')} variant="steel">
                 Post a Job
               </Button>
             </CardContent>
@@ -259,7 +259,6 @@ export default function ManageJobsPage() {
                           onClick={() => handleMarkCompleted(job.id)}
                           disabled={completeJobMutation.isPending}
                           className="bg-purple-600 hover:bg-purple-700 text-white"
-                          variant="default"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Mark as Completed
@@ -267,16 +266,14 @@ export default function ManageJobsPage() {
                       )}
                       <Button
                         onClick={() => handleViewApplicants(job.id)}
-                        className="steel-button"
-                        variant="outline"
+                        variant="steel"
                       >
                         View Applicants
                       </Button>
                       {job.status === 'completed' && (
                         <Button
                           onClick={() => navigate(`/review?jobId=${job.id}`)}
-                          className="steel-button"
-                          variant="outline"
+                          variant="steel"
                         >
                           Leave Review
                         </Button>
@@ -341,8 +338,9 @@ export default function ManageJobsPage() {
                             <Button
                               onClick={() => handleApprove(application.id)}
                               disabled={updateStatusMutation.isPending}
-                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              variant="success"
                               size="sm"
+                              className="flex-1"
                             >
                               <CheckCircle2 className="h-4 w-4 mr-2" />
                               Approve
@@ -350,8 +348,9 @@ export default function ManageJobsPage() {
                             <Button
                               onClick={() => handleReject(application.id)}
                               disabled={updateStatusMutation.isPending}
-                              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                              variant="destructive"
                               size="sm"
+                              className="flex-1"
                             >
                               <XCircle className="h-4 w-4 mr-2" />
                               Reject
@@ -375,7 +374,6 @@ export default function ManageJobsPage() {
                             }}
                             variant="outline"
                             size="sm"
-                            className="steel-button"
                           >
                             <MessageSquare className="h-4 w-4 mr-2" />
                             Message Candidate

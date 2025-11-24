@@ -11,12 +11,15 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { useAuth } from '@/contexts/AuthContext';
+import { geocodeAddress } from '@/lib/google-maps';
 
 export default function PostJobPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   const [formData, setFormData] = useState<CreateJobData>({
     title: '',
@@ -97,11 +100,30 @@ export default function PostJobPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
+    }
+
+    setIsGeocoding(true);
+    let lat: number | undefined;
+    let lng: number | undefined;
+
+    try {
+      if (formData.location) {
+        const coords = await geocodeAddress(formData.location);
+        if (coords) {
+          lat = coords.lat;
+          lng = coords.lng;
+        }
+      }
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+      // Continue without coordinates
+    } finally {
+      setIsGeocoding(false);
     }
 
     // Format pay rate
@@ -112,6 +134,8 @@ export default function PostJobPage() {
     createJobMutation.mutate({
       ...formData,
       payRate: payRateValue,
+      lat,
+      lng,
     });
   };
 
@@ -337,10 +361,10 @@ export default function PostJobPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createJobMutation.isPending}
+                  disabled={createJobMutation.isPending || isGeocoding}
                   className="flex-1 steel-button"
                 >
-                  {createJobMutation.isPending ? 'Publishing...' : 'Publish Shift'}
+                  {createJobMutation.isPending || isGeocoding ? 'Publishing...' : 'Publish Shift'}
                 </Button>
               </div>
             </form>
