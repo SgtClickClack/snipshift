@@ -18,30 +18,36 @@ vi.mock('../middleware/auth.js', () => ({
       res.status(401).json({ message: 'Unauthorized' });
     }
   }),
-  requireAdmin: vi.fn((req, res, next) => next()), // Added this
+  requireAdmin: vi.fn((req, res, next) => next()),
   AuthenticatedRequest: {},
 }));
 
-// Mock Repositories
-vi.mock('../repositories/jobs.repository.js', () => {
-  return {
-    createJob: vi.fn(),
-    getJobs: vi.fn(),
-    getJobById: vi.fn(),
-    updateJob: vi.fn(),
-    deleteJob: vi.fn(),
-  };
-});
+// Mock Firebase Admin
+vi.mock('firebase-admin', () => ({
+  auth: () => ({
+    verifyIdToken: vi.fn().mockResolvedValue({ uid: 'test-uid' }),
+  }),
+  initializeApp: vi.fn(),
+  credential: {
+    cert: vi.fn(),
+  },
+}));
 
-vi.mock('../repositories/jobs.repository', () => {
-  return {
-    createJob: vi.fn(),
-    getJobs: vi.fn(),
-    getJobById: vi.fn(),
-    updateJob: vi.fn(),
-    deleteJob: vi.fn(),
-  };
-});
+// Mock Firebase Config
+vi.mock('../config/firebase.js', () => ({
+  auth: {
+    verifyIdToken: vi.fn(),
+  },
+}));
+
+// Mock Repositories
+vi.mock('../repositories/jobs.repository.js', () => ({
+  createJob: vi.fn(),
+  getJobs: vi.fn(),
+  getJobById: vi.fn(),
+  updateJob: vi.fn(),
+  deleteJob: vi.fn(),
+}));
 
 vi.mock('../repositories/users.repository.js', () => ({
   getUserById: vi.fn().mockResolvedValue({ id: 'user-123', name: 'Test User' }),

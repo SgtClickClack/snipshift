@@ -25,6 +25,17 @@ vi.mock('../middleware/auth.js', () => ({
   AuthenticatedRequest: {},
 }));
 
+// Mock Firebase Admin
+vi.mock('firebase-admin', () => ({
+  auth: () => ({
+    verifyIdToken: vi.fn().mockResolvedValue({ uid: 'test-uid' }),
+  }),
+  initializeApp: vi.fn(),
+  credential: {
+    cert: vi.fn(),
+  },
+}));
+
 // Mock Repositories
 vi.mock('../repositories/users.repository.js', () => ({
   getUserCount: vi.fn(),

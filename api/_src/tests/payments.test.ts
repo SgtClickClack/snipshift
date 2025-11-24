@@ -22,6 +22,13 @@ vi.mock('../middleware/auth.js', () => ({
   AuthenticatedRequest: {},
 }));
 
+// Mock Firebase
+vi.mock('../config/firebase.js', () => ({
+  auth: {
+    verifyIdToken: vi.fn(),
+  },
+}));
+
 // Mock Stripe
 vi.mock('../lib/stripe.js', () => ({
   stripe: {
@@ -72,7 +79,7 @@ describe('Payments API', () => {
       vi.mocked(mockSubsRepo.getCurrentSubscription).mockResolvedValue(null);
 
       const mockStripe = await import('../lib/stripe.js');
-      vi.mocked(mockStripe.stripe.checkout.sessions.create).mockResolvedValue(mockSession as any);
+      vi.mocked(mockStripe.stripe!.checkout.sessions.create).mockResolvedValue(mockSession as any);
 
       const response = await supertest(app)
         .post('/api/subscriptions/checkout')
@@ -84,7 +91,7 @@ describe('Payments API', () => {
       expect(response.status).toBe(200);
       expect(response.body.sessionId).toBe('sess_123');
       expect(response.body.url).toBe('https://checkout.stripe.com/pay/sess_123');
-      expect(mockStripe.stripe.checkout.sessions.create).toHaveBeenCalled();
+      expect(mockStripe.stripe!.checkout.sessions.create).toHaveBeenCalled();
     });
 
     it('should return 404 if plan not found', async () => {

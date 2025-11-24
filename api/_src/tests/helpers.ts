@@ -23,7 +23,7 @@ export async function createTestJob(userId: string) {
     title: 'Test Job',
     description: 'A test job description',
     payRate: '50',
-    location: 'New York',
+    city: 'New York',
     date: new Date().toISOString(),
     startTime: '09:00',
     endTime: '17:00',

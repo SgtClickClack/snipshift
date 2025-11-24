@@ -27,7 +27,7 @@ describe('Email Service', () => {
   describe('sendWelcomeEmail', () => {
     it('should send a welcome email successfully', async () => {
       const resendLib = await import('../../lib/resend.js');
-      vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: { id: 'email_123' }, error: null });
+      vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: { id: 'email_123' }, error: null, headers: null });
 
       const result = await emailService.sendWelcomeEmail('test@example.com', 'Test User');
 
@@ -52,7 +52,7 @@ describe('Email Service', () => {
 
     it('should handle send failures gracefully', async () => {
       const resendLib = await import('../../lib/resend.js');
-      vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: null, error: { message: 'Limit reached' } as any });
+      vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: null, error: { message: 'Limit reached' } as any, headers: null });
 
       const result = await emailService.sendWelcomeEmail('test@example.com', 'Test User');
 
@@ -72,7 +72,7 @@ describe('Email Service', () => {
   describe('sendJobAlertEmail', () => {
     it('should send job alert with correct data', async () => {
       const resendLib = await import('../../lib/resend.js');
-      vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: { id: 'email_123' }, error: null });
+      vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: { id: 'email_123' }, error: null, headers: null });
 
       const result = await emailService.sendJobAlertEmail(
         'user@test.com',
@@ -95,7 +95,7 @@ describe('Email Service', () => {
   describe('sendApplicationStatusEmail', () => {
       it('should send acceptance email', async () => {
         const resendLib = await import('../../lib/resend.js');
-        vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: { id: 'email_123' }, error: null });
+        vi.mocked(resendLib.resend!.emails.send).mockResolvedValue({ data: { id: 'email_123' }, error: null, headers: null });
 
         const result = await emailService.sendApplicationStatusEmail(
             'u@test.com',

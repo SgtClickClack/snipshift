@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as notificationService from '../../services/notification.service.js';
+import crypto from 'crypto';
 
 // Mock DB
 const mockDb = {

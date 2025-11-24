@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { eq } from 'drizzle-orm';
 import * as subscriptionsRepo from '../../repositories/subscriptions.repository.js';
 import { createTestUser } from '../helpers.js';
 import { getDb } from '../../db/index.js';
@@ -34,7 +35,7 @@ describe('Subscriptions Repository (Integration)', () => {
     // The foreign key error suggests the user might not be visible yet or transaction issue?
     // In this simple setup, it should be fine. 
     // Let's verify the user exists first.
-    const userCheck = await db!.query.users.findFirst({ where: (users, { eq }) => eq(users.id, user!.id) });
+    const userCheck = await db!.query.users.findFirst({ where: eq(users.id, user!.id) });
     expect(userCheck).toBeDefined();
 
     const sub = await subscriptionsRepo.createSubscription({

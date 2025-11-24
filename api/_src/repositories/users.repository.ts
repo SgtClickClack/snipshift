@@ -1,9 +1,40 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
 import { users } from '../db/schema.js';
 
 // In-memory store for development
 export let mockUsers: typeof users.$inferSelect[] = [];
+
+/**
+ * Get total number of users
+ */
+export async function getUserCount(): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return mockUsers.length;
+  }
+
+  const [result] = await db.select({ count: sql<number>`count(*)` }).from(users);
+  return Number(result.count);
+}
+
+/**
+ * Get all users with pagination
+ */
+export async function getAllUsers(limit: number, offset: number): Promise<{ data: typeof users.$inferSelect[], total: number, limit: number, offset: number } | null> {
+  const db = getDb();
+  if (!db) {
+    const data = mockUsers.slice(offset, offset + limit);
+    return { data, total: mockUsers.length, limit, offset };
+  }
+
+  const [totalResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+  const total = Number(totalResult.count);
+
+  const data = await db.select().from(users).limit(limit).offset(offset);
+
+  return { data, total, limit, offset };
+}
 
 /**
  * Create a new user
