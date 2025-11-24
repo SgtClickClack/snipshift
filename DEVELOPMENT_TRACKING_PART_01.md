@@ -1,62 +1,53 @@
-#### 2025-11-24: Full Project Health Check & Navigation Repair
+#### 2025-11-24: Backend Core Logic Tests Implementation
 
-**Core Components**
-- `src/components/navbar.tsx`
-- `src/contexts/AuthContext.tsx`
-- `src/components/ui/calendar.tsx`
-- `src/components/ui/chart.tsx`
-- `src/components/social/community-feed.tsx`
-- `.eslintrc.cjs` (new)
+**Core Components Implemented:**
+- `api/_src/tests/applications.test.ts`
+- `api/_src/tests/payments.test.ts`
+- `TEST_COVERAGE_PLAN.md`
 
 **Key Features**
-- **Navigation Repair**:
-  - Fixed "Navbar buttons don't work" issue by handling `client` role logic explicitly in logo click handler.
-  - Consolidated Messaging buttons: Removed legacy modal button, kept new `/messages` link with badge.
-  - Fixed `getDashboardRoute` integration in Navbar.
-- **Type System Fixes**:
-  - Fixed Critical `User` interface mismatches: Added `bio`, `phone`, `location`, `avatarUrl`, `photoURL`, `profileImageURL` to `AuthContext` to support profile editing and feed components.
-  - Fixed `react-day-picker` v9 breaking changes in `Calendar.tsx` (removed deprecated `IconLeft`/`IconRight`).
-  - Fixed `Recharts` type errors in `Chart.tsx`.
-  - Fixed `profileImage` property access in `community-feed.tsx`.
-- **Diagnostic Health**:
-  - Created `.eslintrc.cjs` to fix `npm run lint`.
-  - Verified `npm run build` passes successfully.
+- **Applications Testing**:
+  - Implemented integration tests for `POST /api/jobs/:id/apply` (Apply for a job).
+  - Implemented integration tests for `GET /api/me/applications` (List my applications).
+  - Validated success, not found, and duplicate application scenarios.
+- **Payments Testing**:
+  - Implemented integration tests for `POST /api/subscriptions/checkout`.
+  - Mocked Stripe SDK (`stripe.checkout.sessions.create`) to avoid external API calls.
+  - Validated session creation and error handling for invalid plans/existing subscriptions.
+- **Coverage Update**:
+  - Updated `TEST_COVERAGE_PLAN.md` to reflect new tests and coverage status (~21%).
+  - Identified uncovered logic in `index.ts` and route gaps.
 
 **Integration Points**
-- `npm run type-check`, `npm run lint`, `npm run build`
-- User authentication and role-based routing
+- `vitest` test runner
+- `drizzle-orm` (mocked)
+- `stripe` SDK (mocked)
 
 **File Paths**
-- `src/components/navbar.tsx`
-- `src/contexts/AuthContext.tsx`
-- `src/components/ui/calendar.tsx`
-- `src/components/ui/chart.tsx`
-- `src/components/social/community-feed.tsx`
-- `.eslintrc.cjs`
+- `api/_src/tests/applications.test.ts`
+- `api/_src/tests/payments.test.ts`
+- `TEST_COVERAGE_PLAN.md`
 
 **Next Priority Task**
-- Verify fixes in browser (Navigation and Profile Edit).
+- Address uncovered repository logic by implementing database seeding for tests.
 
-#### 2025-11-24: Splash Screen Styling Update
+Expected completion time: N/A
 
-**Core Components**
-- `index.html`
-- `src/components/ui/loading-screen.tsx`
-- `src/components/auth/auth-guard.tsx`
+### 2025-11-24: Refactor Monolithic Index & Extract Routes
 
-**Key Features**
-- **Visual Update**:
-  - Changed splash screen background to Charcoal (`#111827`).
-  - Switched to `logo-white.png` to fix background artifacts from CSS inversion (removed `invert` filter).
-  - Increased logo size to `w-64` (256px).
-- **Smooth Transition**:
-  - Created `LoadingScreen` component mirroring the `index.html` splash style.
-  - Updated `AuthGuard` to use `LoadingScreen` for initial auth check state, ensuring a seamless visual transition from static HTML to React hydration.
+Refactored `api/_src/index.ts` to improve maintainability and testability by extracting inline route handlers into dedicated router modules.
 
-**File Paths**
-- `index.html`
-- `src/components/ui/loading-screen.tsx`
-- `src/components/auth/auth-guard.tsx`
+**Core Components Implemented:**
+- `api/_src/routes/webhooks.ts`: Extracted Stripe webhook handling.
+- `api/_src/routes/admin.ts`: Extracted admin-related endpoints (stats, users, jobs, reports).
+- `api/_src/index.ts`: Cleaned up entry point to mount new routers.
 
-**Next Priority Task**
-- Verify fixes in browser (Splash screen transition).
+**File Paths:**
+- `api/_src/index.ts`
+- `api/_src/routes/webhooks.ts`
+- `api/_src/routes/admin.ts`
+
+**Next Priority Task:**
+- Continue adding tests for the newly extracted routes and remaining coverage gaps.
+
+Expected completion time: 30 mins

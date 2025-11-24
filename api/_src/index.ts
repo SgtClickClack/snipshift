@@ -26,11 +26,12 @@ import { getDatabase } from './db/connection.js';
 import { auth } from './config/firebase.js';
 import usersRouter from './routes/users.js';
 import chatsRouter from './routes/chats.js';
+import webhooksRouter from './routes/webhooks.js';
+import adminRouter from './routes/admin.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
 import type Stripe from 'stripe';
-import { requireAdmin } from './middleware/auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -63,8 +64,7 @@ app.use(cors());
 
 // Stripe webhook route MUST be defined BEFORE express.json() middleware
 // to receive raw body for signature verification
-// This route handler is defined later in the file, but the route registration
-// needs to happen before JSON parsing middleware
+app.use('/api/webhooks', webhooksRouter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -149,6 +149,7 @@ app.get('/api/debug', async (req, res) => {
 // Routes
 app.use('/api', usersRouter);
 app.use('/api/chats', chatsRouter);
+app.use('/api/admin', adminRouter);
 
 // Fallback in-memory store for when DATABASE_URL is not configured (dev only)
 // Mock jobs data for development/testing
@@ -1322,19 +1323,6 @@ app.post('/api/credits/purchase', authenticateUser, asyncHandler(async (req: Aut
   const mockSessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
   const mockCheckoutUrl = `https://checkout.stripe.com/pay/${mockSessionId}`;
 
-  // In production, this would:
-  // 1. Create a Stripe Checkout Session with the planId
-  // 2. Return the session ID and checkout URL
-  // Example:
-  // const session = await stripe.checkout.sessions.create({
-  //   payment_method_types: ['card'],
-  //   line_items: [{ price: planId, quantity: 1 }],
-  //   mode: 'payment',
-  //   success_url: `${process.env.FRONTEND_URL}/credits/success?session_id={CHECKOUT_SESSION_ID}`,
-  //   cancel_url: `${process.env.FRONTEND_URL}/credits/cancel`,
-  // });
-  // return { sessionId: session.id, checkoutUrl: session.url };
-
   res.status(200).json({
     sessionId: mockSessionId,
     checkoutUrl: mockCheckoutUrl,
@@ -1660,197 +1648,6 @@ app.get('/api/payments/history', authenticateUser, asyncHandler(async (req: Auth
   res.status(200).json(transformed);
 }));
 
-// Handler for Stripe webhooks
-// This route must use raw body parser, so it's defined separately
-app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyncHandler(async (req, res) => {
-  if (!stripe) {
-    console.error('Stripe is not configured');
-    res.status(500).json({ error: 'Stripe is not configured' });
-    return;
-  }
-
-  const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!sig || !webhookSecret) {
-    console.error('Missing Stripe signature or webhook secret');
-    res.status(400).json({ error: 'Missing signature or webhook secret' });
-    return;
-  }
-
-  let event;
-
-  try {
-    // Verify webhook signature using raw body
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig as string,
-      webhookSecret
-    );
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
-    res.status(400).json({ error: `Webhook Error: ${err.message}` });
-    return;
-  }
-
-  // Handle the event
-  try {
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as any;
-        
-        // Get metadata
-        const userId = session.metadata?.userId;
-        const planId = session.metadata?.planId;
-
-        if (!userId || !planId) {
-          console.error('Missing userId or planId in checkout session metadata');
-          break;
-        }
-
-        // Retrieve the subscription from Stripe
-        const stripeSubscriptionId = session.subscription;
-        if (!stripeSubscriptionId) {
-          console.error('No subscription ID in checkout session');
-          break;
-        }
-
-        const stripeSubscriptionResult = await stripe!.subscriptions.retrieve(stripeSubscriptionId);
-        const stripeSubscription = stripeSubscriptionResult as any;
-        const stripeCustomerId = stripeSubscription.customer as string;
-
-        // Get plan from database
-        const plan = await subscriptionsRepo.getSubscriptionPlanById(planId);
-        if (!plan) {
-          console.error(`Plan ${planId} not found in database`);
-          break;
-        }
-
-        // Create subscription in database
-        await subscriptionsRepo.createSubscription({
-          userId,
-          planId,
-          stripeSubscriptionId,
-          stripeCustomerId,
-          status: stripeSubscription.status === 'active' ? 'active' : 
-                  stripeSubscription.status === 'trialing' ? 'trialing' : 'incomplete',
-          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-        });
-
-        // Create payment record
-        const amount = session.amount_total ? session.amount_total / 100 : 0; // Convert from cents
-        await paymentsRepo.createPayment({
-          userId,
-          amount,
-          currency: session.currency || 'usd',
-          status: 'succeeded',
-          stripePaymentIntentId: session.payment_intent,
-          description: `Subscription: ${plan.name}`,
-        });
-
-        console.log(`✅ Subscription created for user ${userId}, plan ${planId}`);
-        break;
-      }
-
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as any;
-        const stripeSubscriptionId = invoice.subscription;
-
-        if (!stripeSubscriptionId) {
-          break;
-        }
-
-        // Get subscription from database
-        const subscription = await subscriptionsRepo.getSubscriptionByStripeId(stripeSubscriptionId);
-        if (!subscription) {
-          console.error(`Subscription ${stripeSubscriptionId} not found in database`);
-          break;
-        }
-
-        // Retrieve subscription from Stripe to get updated period
-        const stripeSubscriptionResult = await stripe!.subscriptions.retrieve(stripeSubscriptionId);
-        const stripeSubscription = stripeSubscriptionResult as any;
-
-        // Update subscription period
-        await subscriptionsRepo.updateSubscription(subscription.id, {
-          status: 'active',
-          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-        });
-
-        // Create payment record
-        const amount = invoice.amount_paid / 100; // Convert from cents
-        await paymentsRepo.createPayment({
-          userId: subscription.userId,
-          subscriptionId: subscription.id,
-          amount,
-          currency: invoice.currency,
-          status: 'succeeded',
-          stripePaymentIntentId: invoice.payment_intent,
-          stripeChargeId: invoice.charge,
-          description: `Subscription renewal: ${invoice.description || 'Monthly subscription'}`,
-        });
-
-        console.log(`✅ Subscription renewed for subscription ${subscription.id}`);
-        break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const stripeSubscription = event.data.object as any;
-        const stripeSubscriptionId = stripeSubscription.id;
-
-        // Get subscription from database
-        const subscription = await subscriptionsRepo.getSubscriptionByStripeId(stripeSubscriptionId);
-        if (!subscription) {
-          console.error(`Subscription ${stripeSubscriptionId} not found in database`);
-          break;
-        }
-
-        // Mark subscription as canceled
-        await subscriptionsRepo.updateSubscription(subscription.id, {
-          status: 'canceled',
-          canceledAt: new Date(),
-        });
-
-        console.log(`✅ Subscription canceled: ${subscription.id}`);
-        break;
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object as any;
-        const stripeSubscriptionId = invoice.subscription;
-
-        if (!stripeSubscriptionId) {
-          break;
-        }
-
-        // Get subscription from database
-        const subscription = await subscriptionsRepo.getSubscriptionByStripeId(stripeSubscriptionId);
-        if (!subscription) {
-          break;
-        }
-
-        // Update subscription status to past_due
-        await subscriptionsRepo.updateSubscription(subscription.id, {
-          status: 'past_due',
-        });
-
-        console.log(`⚠️  Payment failed for subscription ${subscription.id}`);
-        break;
-      }
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-    }
-
-    res.status(200).json({ received: true });
-  } catch (error: any) {
-    console.error('Error processing webhook:', error);
-    res.status(500).json({ error: 'Error processing webhook' });
-  }
-}));
-
 // ============================================================================
 // Messaging API Endpoints
 // ============================================================================
@@ -2122,125 +1919,7 @@ app.patch('/api/conversations/:id/read', authenticateUser, asyncHandler(async (r
   res.status(200).json({ success: true });
 }));
 
-// ============================================================================
-// Admin API Endpoints
-// ============================================================================
-
-// Handler for admin stats
-app.get('/api/admin/stats', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const [totalUsers, totalJobs, activeJobs, totalRevenue, mrr] = await Promise.all([
-    usersRepo.getUserCount(),
-    jobsRepo.getJobCount(),
-    jobsRepo.getActiveJobCount(),
-    paymentsRepo.getTotalRevenue(),
-    paymentsRepo.getMRR(),
-  ]);
-
-  res.status(200).json({
-    totalUsers,
-    totalJobs,
-    activeJobs,
-    totalRevenue,
-    mrr, // Monthly Recurring Revenue
-  });
-}));
-
-// Handler for listing all users (admin only)
-app.get('/api/admin/users', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
-  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-
-  const result = await usersRepo.getAllUsers(limit, offset);
-
-  if (!result) {
-    res.status(200).json({ data: [], total: 0, limit, offset });
-    return;
-  }
-
-  // Transform to match frontend expectations
-  const transformed = result.data.map((user) => ({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    createdAt: user.createdAt.toISOString(),
-    averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
-    reviewCount: user.reviewCount ? parseInt(user.reviewCount) : 0,
-  }));
-
-  res.status(200).json({
-    data: transformed,
-    total: result.total,
-    limit: result.limit,
-    offset: result.offset,
-  });
-}));
-
-// Handler for banning/deleting a user (admin only)
-app.delete('/api/admin/users/:id', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
-
-  // Prevent self-deletion
-  if (req.user?.id === id) {
-    res.status(400).json({ message: 'Cannot delete your own account' });
-    return;
-  }
-
-  const deleted = await usersRepo.deleteUser(id);
-  if (deleted) {
-    res.status(204).send();
-  } else {
-    res.status(404).json({ message: 'User not found' });
-  }
-}));
-
-// Handler for listing all jobs (admin only)
-app.get('/api/admin/jobs', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
-  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-  const status = req.query.status as 'open' | 'filled' | 'closed' | 'completed' | undefined;
-
-  const result = await jobsRepo.getJobs({
-    limit,
-    offset,
-    status,
-  });
-
-  if (!result) {
-    res.status(200).json({ data: [], total: 0, limit, offset });
-    return;
-  }
-
-  // Transform to match frontend expectations
-  const transformed = result.data.map((job) => {
-    const locationParts = [job.address, job.city, job.state].filter(Boolean);
-    const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
-
-    return {
-      id: job.id,
-      title: job.title,
-      shopName: job.shopName,
-      payRate: job.payRate,
-      status: job.status,
-      date: job.date,
-      location,
-      businessId: job.businessId,
-      createdAt: job.createdAt.toISOString(),
-    };
-  });
-
-  res.status(200).json({
-    data: transformed,
-    total: result.total,
-    limit: result.limit,
-    offset: result.offset,
-  });
-}));
-
-// ============================================================================
-// Reports API Endpoints
-// ============================================================================
-
+// Report endpoints
 // Handler for creating a report
 app.post('/api/reports', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
@@ -2303,163 +1982,6 @@ app.post('/api/reports', authenticateUser, asyncHandler(async (req: Authenticate
   });
 }));
 
-// Handler for fetching all reports (admin only)
-app.get('/api/admin/reports', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
-  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-  const status = req.query.status as 'pending' | 'resolved' | 'dismissed' | undefined;
-
-  const result = await reportsRepo.getAllReports(limit, offset, status);
-
-  if (!result) {
-    res.status(200).json({ data: [], total: 0, limit, offset });
-    return;
-  }
-
-  // Get reporter and reported user details
-  const reportsWithUsers = await Promise.all(
-    result.data.map(async (report) => {
-      const reporter = await usersRepo.getUserById(report.reporterId);
-      const reported = report.reportedId ? await usersRepo.getUserById(report.reportedId) : null;
-      const job = report.jobId ? await jobsRepo.getJobById(report.jobId) : null;
-
-      return {
-        id: report.id,
-        reporterId: report.reporterId,
-        reporter: reporter ? {
-          id: reporter.id,
-          name: reporter.name,
-          email: reporter.email,
-        } : null,
-        reportedId: report.reportedId,
-        reported: reported ? {
-          id: reported.id,
-          name: reported.name,
-          email: reported.email,
-        } : null,
-        jobId: report.jobId,
-        job: job ? {
-          id: job.id,
-          title: job.title,
-        } : null,
-        reason: report.reason,
-        description: report.description,
-        status: report.status,
-        createdAt: report.createdAt.toISOString(),
-        updatedAt: report.updatedAt.toISOString(),
-      };
-    })
-  );
-
-  res.status(200).json({
-    data: reportsWithUsers,
-    total: result.total,
-    limit: result.limit,
-    offset: result.offset,
-  });
-}));
-
-// Handler for updating report status (admin only)
-app.patch('/api/admin/reports/:id/status', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-
-  // Validate status
-  const validStatuses = ['pending', 'resolved', 'dismissed'];
-  if (!status || !validStatuses.includes(status)) {
-    res.status(400).json({ message: `Status must be one of: ${validStatuses.join(', ')}` });
-    return;
-  }
-
-  // Update report status
-  const updatedReport = await reportsRepo.updateReportStatus(id, status);
-
-  if (!updatedReport) {
-    res.status(404).json({ message: 'Report not found' });
-    return;
-  }
-
-  res.status(200).json({
-    id: updatedReport.id,
-    status: updatedReport.status,
-    updatedAt: updatedReport.updatedAt.toISOString(),
-  });
-}));
-
-// Test email endpoint (Admin only)
-app.post('/api/test-email', authenticateUser, requireAdmin, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { type, email } = req.body;
-
-  if (!type || !email) {
-    res.status(400).json({ message: 'type and email are required' });
-    return;
-  }
-
-  const validTypes = ['welcome', 'application-status', 'new-message', 'job-alert'];
-  if (!validTypes.includes(type)) {
-    res.status(400).json({ message: `type must be one of: ${validTypes.join(', ')}` });
-    return;
-  }
-
-  try {
-    let success = false;
-
-    switch (type) {
-      case 'welcome':
-        success = await emailService.sendWelcomeEmail(email, 'Test User');
-        break;
-      
-      case 'application-status':
-        success = await emailService.sendApplicationStatusEmail(
-          email,
-          'Test User',
-          'Hair Stylist Position',
-          'Downtown Salon',
-          'accepted',
-          new Date().toISOString()
-        );
-        break;
-      
-      case 'new-message':
-        success = await emailService.sendNewMessageEmail(
-          email,
-          'Test User',
-          'John Doe',
-          'This is a test message preview...',
-          'test-conversation-id'
-        );
-        break;
-      
-      case 'job-alert':
-        success = await emailService.sendJobAlertEmail(
-          email,
-          'Test User',
-          'Barber Needed',
-          'Main Street Barbershop',
-          '35',
-          'New York, NY',
-          new Date().toISOString(),
-          'test-job-id'
-        );
-        break;
-    }
-
-    if (success) {
-      res.status(200).json({ 
-        message: `Test ${type} email sent successfully to ${email}` 
-      });
-    } else {
-      res.status(500).json({ 
-        message: `Failed to send test email. Check server logs and ensure RESEND_API_KEY is configured.` 
-      });
-    }
-  } catch (error: any) {
-    console.error('Error sending test email:', error);
-    res.status(500).json({ 
-      message: 'Error sending test email: ' + (error.message || 'Unknown error') 
-    });
-  }
-}));
 
 // 🔥 NUCLEAR ERROR HANDLER - Catches ALL errors including unhandled promise rejections
 // This must be BEFORE the standard errorHandler to catch everything
