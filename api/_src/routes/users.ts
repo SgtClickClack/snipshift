@@ -281,7 +281,7 @@ const UpdateRoleSchema = z.object({
 });
 
 // Update user role (e.g. for Shop Onboarding)
-router.post('/role', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+router.post('/users/role', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
