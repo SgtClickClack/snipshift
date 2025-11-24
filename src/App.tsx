@@ -32,6 +32,7 @@ import PrivacyPage from '@/pages/legal/privacy';
 import AboutPage from '@/pages/company/about';
 import ContactPage from '@/pages/company/contact';
 import NotFound from '@/pages/not-found';
+import DashboardRedirect from '@/pages/dashboard-redirect';
 
 // Dashboard pages - lazy load to reduce initial bundle
 const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
@@ -159,6 +160,12 @@ function AppRoutes() {
         } />
 
         {/* Protected dashboard routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardRedirect />
+          </ProtectedRoute>
+        } />
+
         <Route path="/user-dashboard" element={
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
