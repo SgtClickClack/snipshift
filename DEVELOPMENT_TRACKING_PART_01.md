@@ -274,3 +274,29 @@ Extended the contrast polish to remaining key pages to ensure the "White Card on
 
 **Next Priority Task:**
 - Deployment.
+
+#### 2025-11-25: Mobile Layout Audit (Automated)
+
+**Core Components Implemented:**
+- E2E Test Suite for Mobile Layouts
+
+**Key Features**
+- **Automated Overflow Detection:**
+  - Created `e2e/mobile-layout.spec.ts` to detect horizontal scrolling on mobile viewports.
+  - Implemented `checkNoHorizontalScroll` helper to assert body width matches viewport width.
+- **Route Coverage:**
+  - Audited critical paths: `/professional-dashboard`, `/hub-dashboard`, `/job-feed`, `/messages`.
+  - Validated specific element visibility (buttons) within viewport bounds.
+- **Findings:**
+  - **FAIL:** `/professional-dashboard` on Mobile Chrome (overflow detected).
+  - **PASS:** All routes on Tablet viewports.
+
+**Integration Points**
+- Playwright Test Runner
+- `e2e/mobile-layout.spec.ts`
+
+**File Paths**
+- `e2e/mobile-layout.spec.ts`
+
+**Next Priority Task**
+- Fix the layout overflow on Professional Dashboard (likely caused by "Browse Jobs" button or container width).

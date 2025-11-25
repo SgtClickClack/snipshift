@@ -192,31 +192,33 @@ export default function ProfessionalDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Dashboard Header */}
       <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-0">
             <div>
               <h1 className="text-2xl font-bold text-steel-900">Professional Dashboard</h1>
               <p className="text-steel-600">{user?.displayName || user?.email}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button 
                 onClick={() => setShowMessaging(true)}
-                className="bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                className="flex-1 md:flex-none bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
                 data-testid="button-open-messages"
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
-                Messages
+                <span className="hidden sm:inline">Messages</span>
+                <span className="inline sm:hidden">Chat</span>
               </Button>
               <Button 
                 onClick={() => setActiveView('jobs')}
-                className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="flex-1 md:flex-none bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 data-testid="button-browse-jobs"
               >
                 <Search className="mr-2 h-4 w-4" />
-                Browse Jobs
+                <span className="hidden sm:inline">Browse Jobs</span>
+                <span className="inline sm:hidden">Jobs</span>
               </Button>
               <Button
                 onClick={() => {
@@ -224,16 +226,18 @@ export default function ProfessionalDashboard() {
                   setViewMode('map');
                 }}
                 variant="outline"
+                className="flex-1 md:flex-none"
                 data-testid="button-travel-mode"
               >
                 <Map className="mr-2 h-4 w-4" />
-                Travel Mode
+                <span className="hidden sm:inline">Travel Mode</span>
+                <span className="inline sm:hidden">Map</span>
               </Button>
             </div>
           </div>
           
           {/* Navigation Tabs */}
-          <div className="flex space-x-8 mt-4">
+          <div className="flex overflow-x-auto pb-2 md:pb-0 space-x-8 mt-4 no-scrollbar">
             <button
               onClick={() => setActiveView('overview')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
