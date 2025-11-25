@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@shared/firebase-schema';
@@ -194,19 +196,21 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
         </div>
         <div>
           <Label htmlFor="businessType">Business Type</Label>
-          <select
-            id="businessType"
+          <Select
             value={formData.businessType}
-            onChange={(e) => setFormData({ ...formData, businessType: e.target.value as any })}
+            onValueChange={(value) => setFormData({ ...formData, businessType: value as any })}
             disabled={!isEditing}
-            className="w-full p-2 border rounded-md"
-            data-testid="select-business-type"
           >
-            <option value="barbershop">Barbershop</option>
-            <option value="salon">Hair Salon</option>
-            <option value="spa">Spa</option>
-            <option value="other">Other</option>
-          </select>
+            <SelectTrigger id="businessType" className="w-full" data-testid="select-business-type">
+              <SelectValue placeholder="Select business type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="barbershop">Barbershop</SelectItem>
+              <SelectItem value="salon">Hair Salon</SelectItem>
+              <SelectItem value="spa">Spa</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       
@@ -323,11 +327,10 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           />
         </div>
         <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
+          <Checkbox
             id="isRoamingNomad"
             checked={formData.isRoamingNomad}
-            onChange={(e) => setFormData({ ...formData, isRoamingNomad: e.target.checked })}
+            onCheckedChange={(checked) => setFormData({ ...formData, isRoamingNomad: checked as boolean })}
             disabled={!isEditing}
             data-testid="checkbox-roaming-nomad"
           />

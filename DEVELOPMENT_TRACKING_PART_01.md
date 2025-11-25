@@ -250,3 +250,27 @@ Extended the contrast polish to remaining key pages to ensure the "White Card on
 
 **Next Priority Task:**
 - Deployment and final visual check.
+
+#### 2025-11-25: UI Audit Fixes (Inputs & Z-Index)
+
+**Core Components Implemented:**
+- Profile Form
+- Navigation Bar
+
+**Key Features**
+- **Standardized Inputs:**
+  - Replaced raw HTML `select` in Profile Form with Shadcn `Select`.
+  - Replaced raw HTML `checkbox` in Profile Form with Shadcn `Checkbox`.
+- **Z-Index Cleanup:**
+  - Removed excessive `z-[9999]` values in Navbar dropdowns, replacing them with standard `z-50`.
+
+**Integration Points**
+- `src/components/profile/profile-form.tsx`
+- `src/components/navbar.tsx`
+
+**File Paths:**
+- `src/components/profile/profile-form.tsx`
+- `src/components/navbar.tsx`
+
+**Next Priority Task:**
+- Deployment.

@@ -138,7 +138,7 @@ export default function Navbar() {
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[240px] bg-steel-800 border-steel-600 text-white z-[9999]" align="end">
+                    <DropdownMenuContent className="w-[240px] bg-steel-800 border-steel-600 text-white z-50" align="end">
                       
                       <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Current View</DropdownMenuLabel>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white justify-between font-bold bg-steel-700/50">
@@ -231,7 +231,7 @@ export default function Navbar() {
                       <UserAvatar />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-steel-800 border-steel-600 text-white z-[9999]" align="end">
+                  <DropdownMenuContent className="w-56 bg-steel-800 border-steel-600 text-white z-50" align="end">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
