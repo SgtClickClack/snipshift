@@ -291,7 +291,7 @@ export function JobFilters({ className }: JobFiltersProps) {
   }
 
   return (
-    <Card className={cn("sticky top-4 bg-card text-card-foreground", className)}>
+    <Card className={cn("sticky top-4 bg-white rounded-lg border border-gray-200 shadow-sm text-card-foreground", className)}>
       <CardHeader>
         <CardTitle className="text-lg text-foreground flex items-center justify-between">
           <span>Filters</span>

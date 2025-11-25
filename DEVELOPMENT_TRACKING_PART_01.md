@@ -205,3 +205,22 @@ Polished the UI contrast and card hierarchy to enforce a "Chrome Background" vs 
 
 **Next Priority Task:**
 - Final QA and Deployment.
+
+#### 2025-11-25: Extended UI Polish: Job Details, Hub Dashboard, Profile
+
+Extended the contrast polish to remaining key pages to ensure the "White Card on Chrome" pattern is consistent everywhere.
+
+**Core Components Implemented:**
+- Job Details: Added gray background and standardized white cards.
+- Hub Dashboard: Removed custom background variable and applied standard gray/white hierarchy.
+- Profile: Wrapped public and edit views in standard white cards on gray background.
+- Job Filters: Standardized sticky filter card style.
+
+**File Paths:**
+- `src/pages/job-details.tsx`
+- `src/pages/hub-dashboard.tsx`
+- `src/components/profile/integrated-profile-system.tsx`
+- `src/components/jobs/job-filters.tsx`
+
+**Next Priority Task:**
+- Final QA and Deployment.

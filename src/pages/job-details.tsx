@@ -91,7 +91,7 @@ export default function JobDetailsPage() {
   const hasLocation = job.lat && job.lng;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Button */}
         <Button
@@ -104,7 +104,7 @@ export default function JobDetailsPage() {
         </Button>
 
         {/* Header Section */}
-        <Card className="card-chrome mb-6">
+        <Card className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
               <div className="flex-1">
@@ -152,7 +152,7 @@ export default function JobDetailsPage() {
 
         {/* Description Section */}
         {job.description && (
-          <Card className="card-chrome mb-6">
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-4">Description</h2>
               <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
@@ -162,7 +162,7 @@ export default function JobDetailsPage() {
 
         {/* Requirements Section */}
         {requirements.length > 0 && (
-          <Card className="card-chrome mb-6">
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-4">Requirements</h2>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
@@ -176,7 +176,7 @@ export default function JobDetailsPage() {
 
         {/* Map Section */}
         {hasLocation && (
-          <Card className="card-chrome mb-6">
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-4">Location</h2>
               <div className="h-64 rounded-lg overflow-hidden border border-border">
@@ -194,8 +194,8 @@ export default function JobDetailsPage() {
         )}
 
         {/* Apply Button - Sticky on mobile, prominent on desktop */}
-        <div className="sticky bottom-0 bg-background border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6">
-          <Card className="card-chrome md:shadow-lg">
+        <div className="sticky bottom-0 bg-gray-50 border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6">
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm md:shadow-lg">
             <CardContent className="p-6">
               {applicationState === 'applied' ? (
                 <div className="flex items-center justify-center gap-2 text-success">

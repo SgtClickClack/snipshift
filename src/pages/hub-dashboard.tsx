@@ -123,7 +123,7 @@ export default function HubDashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{backgroundColor: 'var(--bg-hub)'}}>
+    <div className="min-h-screen bg-gray-50">
       {/* Dashboard Header */}
       <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -212,11 +212,11 @@ export default function HubDashboard() {
             
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Quick Actions */}
-              <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50">
-                <CardHeader className="bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
-                  <CardTitle className="text-steel-900">Quick Actions</CardTitle>
+              <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <CardHeader className="bg-white border-b border-gray-100">
+                  <CardTitle className="text-gray-900">Quick Actions</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-6">
                   <div className="space-y-2">
                     <Button 
                       onClick={() => handleQuickAction('post-job')}
@@ -253,11 +253,11 @@ export default function HubDashboard() {
               </Card>
               
               <div className="lg:col-span-2">
-                <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50">
-                  <CardHeader className="bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
-                    <CardTitle className="text-steel-900">Recent Activity</CardTitle>
+                <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <CardHeader className="bg-white border-b border-gray-100">
+                    <CardTitle className="text-gray-900">Recent Activity</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-6">
                     <div className="space-y-4">
                       {jobs.slice(0, 3).map((job) => (
                         <div key={job.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -307,8 +307,8 @@ export default function HubDashboard() {
               {/* Post Job Form */}
               {showForm && (
                 <div className="lg:col-span-1">
-                  <Card>
-                    <CardHeader>
+                  <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <CardHeader className="border-b border-gray-100">
                       <div className="flex justify-between items-center">
                         <CardTitle>Post a New Job</CardTitle>
                         <Button
@@ -429,11 +429,11 @@ export default function HubDashboard() {
 
               {/* Posted Jobs List */}
               <div className={showForm ? "lg:col-span-2" : "lg:col-span-3"}>
-                <Card>
-                  <CardHeader>
+                <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <CardHeader className="border-b border-gray-100">
                     <CardTitle>Your Posted Jobs</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-6">
                     {isLoading ? (
                       <div data-testid="text-loading">Loading jobs...</div>
                     ) : jobs.length === 0 ? (
@@ -517,11 +517,11 @@ export default function HubDashboard() {
         {/* Applications Tab */}
         {activeView === 'applications' && (
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
+            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
                 <CardTitle>Job Applications</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <p className="text-muted-foreground text-center py-4">
                   Applications will be displayed here when available.
                 </p>
@@ -533,11 +533,11 @@ export default function HubDashboard() {
         {/* Profile Tab */}
         {activeView === 'profile' && (
           <div className="max-w-4xl">
-            <Card>
-              <CardHeader>
+            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
                 <CardTitle>Profile Settings</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <p className="text-muted-foreground">
                   Profile management features will be available here.
                 </p>

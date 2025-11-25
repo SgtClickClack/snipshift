@@ -142,22 +142,32 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50 py-8">
       {viewMode === 'view' ? (
-        <div>
-          <PublicProfile 
-            profile={profile}
-            isOwnProfile={isOwnProfile}
-            onEditProfile={isOwnProfile ? () => setViewMode('edit') : undefined}
-          />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <CardContent className="p-0">
+              <PublicProfile 
+                profile={profile}
+                isOwnProfile={isOwnProfile}
+                onEditProfile={isOwnProfile ? () => setViewMode('edit') : undefined}
+              />
+            </CardContent>
+          </Card>
         </div>
       ) : (
-        <ProfileEditForm
-          profile={profile}
-          onSave={handleSaveProfile}
-          onCancel={() => setViewMode('view')}
-          isSaving={updateProfileMutation.isPending}
-        />
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+             <CardContent className="p-6">
+               <ProfileEditForm
+                 profile={profile}
+                 onSave={handleSaveProfile}
+                 onCancel={() => setViewMode('view')}
+                 isSaving={updateProfileMutation.isPending}
+               />
+             </CardContent>
+           </Card>
+        </div>
       )}
     </div>
   );
