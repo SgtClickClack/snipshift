@@ -37,6 +37,18 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+    },
+    {
+      name: 'Tablet',
+      use: { ...devices['iPad Pro 11'] },
+    },
   ],
 
   /* Run your local dev server before starting the tests */
@@ -45,7 +57,7 @@ export default defineConfig({
     url: 'http://localhost:3002',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
-    stdout: 'ignore',
+    stdout: 'pipe',
     stderr: 'pipe',
     env: {
         DATABASE_URL: 'postgresql://test:test@localhost:5433/snipshift_test',

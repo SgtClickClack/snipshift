@@ -35,6 +35,14 @@ async function globalSetup(config: FullConfig) {
   }
 
   try {
+    // 1.5 Reset Schema (Ensure fresh state)
+    console.log('Resetting Test Database Schema...');
+    await client.query('DROP SCHEMA IF EXISTS public CASCADE');
+    await client.query('CREATE SCHEMA public');
+    await client.query('GRANT ALL ON SCHEMA public TO public');
+    await client.query('COMMENT ON SCHEMA public IS \'standard public schema\'');
+    console.log('Schema reset complete.');
+
     // 2. Run Migrations (Drizzle Push)
     console.log('Pushing Schema to Test DB...');
     try {

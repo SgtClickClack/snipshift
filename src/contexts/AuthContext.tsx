@@ -65,8 +65,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     rolesList = rolesParam.split(',') as any;
                 }
                 
+                const onboardedParam = params.get('onboarded');
+                const isOnboarded = onboardedParam === 'false' ? false : true;
+
                 // Persist to session storage to survive redirects/reloads
-                sessionStorage.setItem('snipshift_test_user', JSON.stringify({ roles: rolesList }));
+                sessionStorage.setItem('snipshift_test_user', JSON.stringify({ roles: rolesList, isOnboarded }));
             } else {
                 const stored = sessionStorage.getItem('snipshift_test_user');
                 if (stored) {
@@ -86,6 +89,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (shouldBypass) {
                 const primaryRole = rolesList[0] || 'professional';
                 // console.log('Setting test user with roles:', rolesList, 'currentRole:', primaryRole);
+                
+                // Get isOnboarded from session if available (for the case where we loaded from session)
+                let isOnboarded = true;
+                const stored = sessionStorage.getItem('snipshift_test_user');
+                if (stored) {
+                    try {
+                        const data = JSON.parse(stored);
+                        if (data.isOnboarded !== undefined) {
+                            isOnboarded = data.isOnboarded;
+                        }
+                    } catch (e) {}
+                }
 
                 setUser({
                     id: 'test-user-id',
@@ -93,7 +108,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     name: 'Test User',
                     roles: rolesList as any,
                     currentRole: primaryRole as any,
-                    isOnboarded: true,
+                    isOnboarded: isOnboarded,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     uid: 'test-firebase-uid'
