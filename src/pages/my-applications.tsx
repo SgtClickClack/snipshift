@@ -85,7 +85,7 @@ export default function MyApplicationsPage() {
         </header>
 
         {applicationsList.length === 0 ? (
-          <Card className="card-chrome">
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
             <CardContent className="p-12 text-center">
               <Briefcase className="h-16 w-16 mx-auto text-steel-400 mb-4" />
               <h2 className="text-xl font-bold text-steel-900 mb-2">You haven't applied for any jobs yet</h2>
@@ -96,13 +96,14 @@ export default function MyApplicationsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {applicationsList.map((application) => (
-              <Card
-                key={application.id}
-                className="card-chrome cursor-pointer transition-colors hover:border-primary"
-                onClick={() => navigate(`/jobs/${application.jobId}`)}
-              >
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <div className="space-y-4">
+              {applicationsList.map((application) => (
+                <Card
+                  key={application.id}
+                  className="card-chrome cursor-pointer transition-colors hover:border-primary"
+                  onClick={() => navigate(`/jobs/${application.jobId}`)}
+                >
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
@@ -194,6 +195,7 @@ export default function MyApplicationsPage() {
                 </CardContent>
               </Card>
             ))}
+            </div>
           </div>
         )}
       </div>

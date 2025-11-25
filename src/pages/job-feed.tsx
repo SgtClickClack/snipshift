@@ -96,7 +96,7 @@ export default function JobFeedPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -130,9 +130,10 @@ export default function JobFeedPage() {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)] min-h-[500px]">
-              {/* List View */}
-              <div className={`flex-1 overflow-y-auto pr-2 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3 space-y-4' : 'w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 content-start'}`}>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 h-[calc(100vh-250px)] min-h-[500px]">
+              <div className="flex flex-col lg:flex-row gap-6 h-full">
+                {/* List View */}
+                <div className={`flex-1 overflow-y-auto pr-2 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3 space-y-4' : 'w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 content-start'}`}>
                 {jobList.length === 0 ? (
                   <div className={`text-center py-16 ${viewMode === 'list' ? 'col-span-full' : ''}`}>
                     <div className="flex flex-col items-center justify-center text-muted-foreground mb-6">
@@ -186,6 +187,7 @@ export default function JobFeedPage() {
                 />
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
