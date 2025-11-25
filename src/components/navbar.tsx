@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu, RefreshCw, Briefcase, User } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu, RefreshCw, Briefcase, User, Settings } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
 import NotificationBell from "./notifications/notification-bell";
 import { Chat } from "@shared/firebase-schema";
@@ -15,6 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sheet,
   SheetContent,
@@ -83,8 +84,18 @@ export default function Navbar() {
   // Filter out roles the user already has from the potential missing roles
   const missingRoles = ['professional', 'hub'].filter(r => !(user?.roles || []).includes(r) && !(user?.roles || []).includes(r === 'hub' ? 'business' : r));
 
+  const UserAvatar = () => (
+    <Avatar className="h-8 w-8 cursor-pointer border border-steel-600">
+      <AvatarImage src={user?.photoURL || user?.avatarUrl} alt={user?.displayName || 'User'} />
+      <AvatarFallback className="bg-steel-700 text-white text-xs">
+        {/* Get first two initials from email or name */}
+        {(user?.email?.[0] || 'U').toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+  );
+
   return (
-    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50 pt-safe">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link
@@ -200,28 +211,46 @@ export default function Navbar() {
                   </Button>
                 </Link>
 
-                {/* Desktop-only User Info & Logout */}
-                <div className="hidden md:flex items-center space-x-4">
-                   {/* Admin Dashboard Link - Only visible to admins */}
-                  {(user.roles || []).includes('admin') && (
-                    <Link to="/admin">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-white hover:bg-red-600 relative"
-                        title="Admin Dashboard"
-                      >
-                        <Shield className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  )}
-                  
-                  <span className="text-chrome-light">{user.email}</span>
-                  <Button variant="ghost" onClick={handleLogout} className="text-white hover:bg-steel-700">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
-                </div>
+                {/* User Profile Dropdown - Visible on all screens */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                      <UserAvatar />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-steel-800 border-steel-600 text-white z-[9999]" align="end">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+                        <p className="text-xs leading-none text-gray-400">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-steel-600" />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/profile')}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/settings')}>
+                         <Settings className="mr-2 h-4 w-4" />
+                         <span>Settings</span>
+                      </DropdownMenuItem>
+                      {(user.roles || []).includes('admin') && (
+                        <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
+                          <Link to="/admin">
+                            <Shield className="mr-2 h-4 w-4" />
+                            <span>Admin Dashboard</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator className="bg-steel-600" />
+                    <DropdownMenuItem onClick={handleLogout} className="focus:bg-steel-700 focus:text-white cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* Mobile Menu Trigger */}
                 <div className="md:hidden">
