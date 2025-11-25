@@ -223,7 +223,9 @@ export default function HubDashboard() {
                       className="w-full justify-start"
                       variant="outline"
                     >
-                      <Plus className="mr-2 h-4 w-4" />
+                      <div className="h-8 w-8 rounded-lg bg-red-accent flex items-center justify-center mr-3 text-white shadow-sm">
+                        <Plus className="h-4 w-4" />
+                      </div>
                       Post New Job
                     </Button>
                     <Button 
@@ -231,7 +233,9 @@ export default function HubDashboard() {
                       className="w-full justify-start"
                       variant="outline"
                     >
-                      <Users className="mr-2 h-4 w-4" />
+                      <div className="h-8 w-8 rounded-lg bg-chrome-medium flex items-center justify-center mr-3 text-steel-900 shadow-sm">
+                        <Users className="h-4 w-4" />
+                      </div>
                       View Applications
                     </Button>
                     <Button 
@@ -239,7 +243,9 @@ export default function HubDashboard() {
                       className="w-full justify-start"
                       variant="outline"
                     >
-                      <MessageSquare className="mr-2 h-4 w-4" />
+                      <div className="h-8 w-8 rounded-lg bg-chrome-medium flex items-center justify-center mr-3 text-steel-900 shadow-sm">
+                        <MessageSquare className="h-4 w-4" />
+                      </div>
                       Open Messages
                     </Button>
                   </div>

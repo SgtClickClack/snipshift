@@ -159,11 +159,11 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
   const actionsConfig = getActionsConfig();
 
   return (
-    <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50">
-      <CardHeader className="bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
-        <CardTitle className="text-steel-900">Quick Actions</CardTitle>
+    <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <CardHeader className="border-b border-gray-100">
+        <CardTitle className="text-gray-900">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <div className="grid grid-cols-2 gap-3">
           {actionsConfig.map((action, index) => (
             <Button

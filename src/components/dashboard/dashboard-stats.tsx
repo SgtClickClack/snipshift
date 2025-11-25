@@ -168,26 +168,26 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
         // Map variants to distinct brand-aligned styles
         const getVariantStyles = (variant: string | undefined) => {
           switch (variant) {
-            case 'accent': // Red Action
+            case 'accent': // Red Action - Solid Red
               return {
-                icon: 'text-red-accent',
-                bg: 'bg-red-accent/10 border-red-accent/20'
+                icon: 'text-white',
+                bg: 'bg-red-accent border-red-accent shadow-sm'
               };
-            case 'steel': // Charcoal/Steel Base
+            case 'steel': // Charcoal/Steel Base - Solid Chrome Dark
               return {
-                icon: 'text-steel-900',
-                bg: 'bg-steel-100 border-steel-200'
+                icon: 'text-white',
+                bg: 'bg-chrome-dark border-chrome-dark shadow-sm'
               };
-            case 'accent-secondary': // Red/Charcoal Mix
+            case 'accent-secondary': // Red/Charcoal Mix - Solid Dark Red
               return {
-                icon: 'text-red-accent-dark',
-                bg: 'bg-gradient-to-br from-white to-red-accent/5 border-red-accent/10'
+                icon: 'text-white',
+                bg: 'bg-red-accent-dark border-red-accent-dark shadow-sm'
               };
-            case 'chrome': // Metallic
+            case 'chrome': // Metallic - Solid Chrome Medium
             default:
               return {
-                icon: 'text-steel-700',
-                bg: 'bg-gradient-to-br from-white to-steel-100 border-steel-200'
+                icon: 'text-steel-900',
+                bg: 'bg-chrome-medium border-chrome-medium shadow-sm'
               };
           }
         };

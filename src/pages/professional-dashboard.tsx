@@ -192,7 +192,7 @@ export default function ProfessionalDashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{backgroundColor: 'var(--bg-professional)'}}>
+    <div className="min-h-screen bg-gray-50">
       {/* Dashboard Header */}
       <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -292,11 +292,11 @@ export default function ProfessionalDashboard() {
               <QuickActions role="professional" onAction={handleQuickAction} />
               
               <div className="lg:col-span-2">
-                <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50">
-                  <CardHeader className="bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
-                    <CardTitle className="text-steel-900">Recent Jobs</CardTitle>
+                <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <CardHeader className="bg-white border-b border-gray-100">
+                    <CardTitle className="text-gray-900">Recent Jobs</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-6">
                     <div className="space-y-4">
                       {jobs.slice(0, 3).map((job) => (
                         <div key={job.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -561,11 +561,11 @@ export default function ProfessionalDashboard() {
         
         {/* Applications Tab */}
         {activeView === 'applications' && (
-          <Card>
-            <CardHeader>
+          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <CardHeader className="border-b border-gray-100">
               <CardTitle>My Applications</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {stats.activeApplications === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
