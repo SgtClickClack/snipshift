@@ -48,30 +48,64 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Test Environment Auth Bypass
-  useEffect(() => {
-    // Check URL for test_user bypass
-    if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('test_user') === 'true') {
-            console.log('⚠️ Auth Bypass Active: Logging in as Test User');
-            setUser({
-                id: 'test-user-id',
-                email: 'test@snipshift.com',
-                name: 'Test User',
-                roles: ['professional'],
-                currentRole: 'professional',
-                isOnboarded: true,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                uid: 'test-firebase-uid'
-            });
-            setIsLoading(false);
-            return; // Skip Firebase listener
+    // Test Environment Auth Bypass
+    useEffect(() => {
+        // Check URL for test_user bypass
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            let shouldBypass = false;
+            let rolesList: Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'> = ['professional'];
+
+            if (params.get('test_user') === 'true') {
+                shouldBypass = true;
+                console.log('⚠️ Auth Bypass Active: Logging in as Test User (from URL)');
+                
+                const rolesParam = params.get('roles');
+                if (rolesParam) {
+                    rolesList = rolesParam.split(',') as any;
+                }
+                
+                // Persist to session storage to survive redirects/reloads
+                sessionStorage.setItem('snipshift_test_user', JSON.stringify({ roles: rolesList }));
+            } else {
+                const stored = sessionStorage.getItem('snipshift_test_user');
+                if (stored) {
+                    shouldBypass = true;
+                    console.log('⚠️ Auth Bypass Active: Logging in as Test User (from Session)');
+                    try {
+                        const data = JSON.parse(stored);
+                        if (data.roles) {
+                            rolesList = data.roles;
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse test user session', e);
+                    }
+                }
+            }
+
+            if (shouldBypass) {
+                const primaryRole = rolesList[0] || 'professional';
+                console.log('Setting test user with roles:', rolesList, 'currentRole:', primaryRole);
+
+                setUser({
+                    id: 'test-user-id',
+                    email: 'test@snipshift.com',
+                    name: 'Test User',
+                    roles: rolesList as any,
+                    currentRole: primaryRole as any,
+                    isOnboarded: true,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    uid: 'test-firebase-uid'
+                });
+                setIsLoading(false);
+                return; // Skip Firebase listener
+            }
         }
-    }
     
+    console.log('Initializing Firebase listener');
     const unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
+      console.log('Firebase Auth State Change:', firebaseUser?.uid);
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken();
@@ -125,6 +159,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      sessionStorage.removeItem('snipshift_test_user');
       await signOutUser();
     } catch (e) {
       console.error('Logout error', e);

@@ -95,3 +95,87 @@
 
 **Next Priority Task**
 - Test the autocomplete functionality with a valid API key.
+
+#### 2025-11-25: Multi-Role E2E Tests
+
+**Core Components Implemented:**
+- Auth Context Test Bypass
+- Role-Based E2E Test Suite
+
+**Key Features**
+- **Auth Test Bypass:**
+  - Enhanced `src/contexts/AuthContext.tsx` to accept roles from URL parameters (`?test_user=true&roles=...`).
+  - Added session storage persistence for test user to handle page reloads and redirects during testing.
+- **Role-Based Test Suite:**
+  - Created `e2e/roles.spec.ts` covering:
+    - **Case A:** Professional Role (Verify dashboard & Upsell)
+    - **Case B:** Shop Owner (Hub) Role (Verify dashboard & Navbar)
+    - **Case C:** Multi-Role (Switching between Professional and Business views)
+  - Implemented explicit waits for dashboard loading to ensure test stability.
+
+**Integration Points**
+- `src/contexts/AuthContext.tsx` (Authentication logic)
+- `e2e/roles.spec.ts` (Playwright tests)
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `e2e/roles.spec.ts`
+
+**Next Priority Task**
+- Investigate and resolve chunk load errors in test environment for `ProfessionalDashboard`.
+
+#### 2025-11-25: Professional Onboarding Flow
+
+**Core Components Implemented:**
+- Professional Onboarding Page
+- Route Registration
+
+**Key Features**
+- **Professional Onboarding Page:**
+  - Created `src/pages/onboarding/professional.tsx` with fields for Display Name, Profession, Location, and Bio.
+  - Integrated with `POST /api/users/role` endpoint (role: 'professional').
+  - Includes error handling and success toast.
+  - Redirects to `/professional-dashboard` on success.
+- **Routing:**
+  - Registered protected route `/onboarding/professional` in `src/App.tsx`.
+  - Verified build passes successfully.
+
+**Integration Points**
+- `src/App.tsx`
+- `src/pages/onboarding/professional.tsx`
+- `/api/users/role` endpoint
+
+**File Paths**
+- `src/pages/onboarding/professional.tsx`
+- `src/App.tsx`
+
+**Next Priority Task**
+- Confirm deployment propagation on production environment.
+
+#### 2025-11-25: Fix Stale User State After Onboarding
+
+**Core Components Implemented:**
+- Auth State Refresh Logic
+
+**Key Features**
+- **Stale State Fix:**
+  - Updated `src/pages/onboarding/hub.tsx` and `src/pages/onboarding/professional.tsx` to force token refresh (`getIdToken(true)`) before fetching user profile.
+  - Ensures updated roles/claims are immediately available on the frontend after role creation.
+  - Fixes issue where Navbar dropdown showed "Create Shop Profile" instead of "Switch to Shop" after creating a shop.
+- **Auth Context Enhancement:**
+  - Verified `refreshUser` function availability in `src/contexts/AuthContext.tsx`.
+  - Added `sessionStorage` cleanup for test users in `logout` function.
+  - Improved test user bypass logging and stability in `AuthContext`.
+
+**Integration Points**
+- `src/pages/onboarding/hub.tsx`
+- `src/pages/onboarding/professional.tsx`
+- `src/contexts/AuthContext.tsx`
+
+**File Paths**
+- `src/pages/onboarding/hub.tsx`
+- `src/pages/onboarding/professional.tsx`
+- `src/contexts/AuthContext.tsx`
+
+**Next Priority Task**
+- Deploy and verify fix in production.

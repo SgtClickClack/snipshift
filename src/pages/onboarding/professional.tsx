@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,11 @@ export default function ProfessionalOnboardingPage() {
         description: "Your profile has been successfully updated.",
         variant: "default",
       });
+
+      // Force token refresh to get updated claims/roles
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+      }
 
       if (refreshUser) {
         await refreshUser();
