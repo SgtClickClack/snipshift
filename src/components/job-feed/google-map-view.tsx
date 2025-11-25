@@ -6,6 +6,40 @@ import { MapPin, Clock, DollarSign, X } from 'lucide-react';
 import { loadGoogleMaps, calculateDistance } from '@/lib/google-maps';
 import { Job } from '@shared/firebase-schema';
 
+// Map Theme Configuration referencing Tailwind CSS variables
+const MAP_THEME = {
+  markers: {
+    center: {
+      color: 'var(--steel-600)',
+      bg: 'var(--steel-600)',
+      border: '#ffffff'
+    },
+    job: {
+      color: 'var(--primary)', // Red accent
+      bg: 'var(--primary)',
+      border: '#ffffff'
+    }
+  },
+  radius: {
+    stroke: 'var(--steel-500)',
+    fill: 'var(--steel-500)',
+  },
+  infoWindow: {
+    title: 'var(--foreground)',
+    text: 'var(--muted-foreground)',
+    rate: 'var(--success)',
+    accent: 'var(--primary)',
+  },
+  fallback: {
+    grid: 'var(--border)',
+    gradientStart: 'var(--steel-50)',
+    gradientEnd: 'var(--steel-100)',
+    landStroke: 'var(--steel-300)',
+    center: 'var(--steel-600)',
+    job: 'var(--primary)'
+  }
+};
+
 interface GoogleMapViewProps {
   jobs: Job[];
   onJobSelect: (job: Job | null) => void;
@@ -53,11 +87,11 @@ export default function GoogleMapView({
         mapInstanceRef.current = map;
 
         // Add search radius circle
-        const radiusCircle = new google.maps.Circle({
-          strokeColor: '#3b82f6',
+        new google.maps.Circle({
+          strokeColor: MAP_THEME.radius.stroke,
           strokeOpacity: 0.8,
           strokeWeight: 2,
-          fillColor: '#3b82f6',
+          fillColor: MAP_THEME.radius.fill,
           fillOpacity: 0.15,
           map,
           center: centerLocation,
@@ -65,8 +99,8 @@ export default function GoogleMapView({
         });
 
         // Add center marker using AdvancedMarkerElement
-        const centerMarkerContent = createMarkerElement('#3b82f6', '📍', 'center');
-        const centerMarker = new google.maps.marker.AdvancedMarkerElement({
+        const centerMarkerContent = createMarkerElement(MAP_THEME.markers.center.color, '📍', 'center');
+        new google.maps.marker.AdvancedMarkerElement({
           position: centerLocation,
           map,
           title: searchLocation,
@@ -131,7 +165,7 @@ export default function GoogleMapView({
 
           // Only show jobs within radius
           if (distance <= radius) {
-            const markerElement = createMarkerElement('#b91c1c', '💼', 'job');
+            const markerElement = createMarkerElement(MAP_THEME.markers.job.color, '💼', 'job');
             
             const marker = new google.maps.marker.AdvancedMarkerElement({
               position: jobLocation,
@@ -155,11 +189,11 @@ export default function GoogleMapView({
               
               const infoContent = `
                 <div style="max-width: 300px; padding: 8px;">
-                  <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${job.title}</h3>
-                  ${job.shopName ? `<p style="margin: 0 0 4px 0; color: #6b7280;">${job.shopName}</p>` : ''}
-                  <p style="margin: 0 0 4px 0; color: #6b7280;">${locationDisplay}</p>
-                  <p style="margin: 0 0 8px 0; color: #10b981; font-weight: 600;">${rateDisplay}</p>
-                  <p style="margin: 0; color: #6b7280; font-size: 12px;">${distance.toFixed(1)} km away</p>
+                  <h3 style="margin: 0 0 8px 0; font-weight: bold; color: ${MAP_THEME.infoWindow.title};">${job.title}</h3>
+                  ${job.shopName ? `<p style="margin: 0 0 4px 0; color: ${MAP_THEME.infoWindow.text};">${job.shopName}</p>` : ''}
+                  <p style="margin: 0 0 4px 0; color: ${MAP_THEME.infoWindow.text};">${locationDisplay}</p>
+                  <p style="margin: 0 0 8px 0; color: ${MAP_THEME.infoWindow.rate}; font-weight: 600;">${rateDisplay}</p>
+                  <p style="margin: 0; color: ${MAP_THEME.infoWindow.text}; font-size: 12px;">${distance.toFixed(1)} km away</p>
                 </div>
               `;
               
@@ -207,8 +241,8 @@ export default function GoogleMapView({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-neutral-900">Job Locations</h3>
-            <p className="text-sm text-neutral-600">
+            <h3 className="text-lg font-semibold text-foreground">Job Locations</h3>
+            <p className="text-sm text-muted-foreground">
               Showing {jobs.filter(job => {
                 const jobLocation = getJobCoordinates(job);
                 const distance = calculateDistance(centerLocation, jobLocation);
@@ -220,9 +254,9 @@ export default function GoogleMapView({
 
         <Card className="relative">
           <CardContent className="p-0">
-            <div className="relative bg-gradient-to-br from-blue-50 to-green-50 rounded-lg overflow-hidden">
-              <div className="p-4 bg-yellow-50 border-b border-yellow-200">
-                <div className="flex items-center gap-2 text-yellow-800">
+            <div className="relative bg-gradient-to-br from-steel-50 to-white rounded-lg overflow-hidden">
+              <div className="p-4 bg-steel-50 border-b border-steel-200">
+                <div className="flex items-center gap-2 text-steel-800">
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm font-medium">Demo Map View</span>
                   <span className="text-xs">(Enable Google Maps API for full functionality)</span>
@@ -238,11 +272,11 @@ export default function GoogleMapView({
               >
                 <defs>
                   <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" strokeWidth="1" opacity="0.5"/>
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke={MAP_THEME.fallback.grid} strokeWidth="1" opacity="0.5"/>
                   </pattern>
                   <radialGradient id="mapGradient" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#f0f9ff" />
-                    <stop offset="100%" stopColor="#dbeafe" />
+                    <stop offset="0%" stopColor={MAP_THEME.fallback.gradientStart} />
+                    <stop offset="100%" stopColor={MAP_THEME.fallback.gradientEnd} />
                   </radialGradient>
                 </defs>
                 <rect width="100%" height="100%" fill="url(#mapGradient)" />
@@ -252,7 +286,7 @@ export default function GoogleMapView({
                 <path 
                   d="M150 150 Q200 100 350 120 Q450 130 550 160 Q650 180 700 250 Q720 350 680 450 Q600 500 500 480 Q400 460 300 440 Q200 400 150 300 Z" 
                   fill="none" 
-                  stroke="#94a3b8" 
+                  stroke={MAP_THEME.fallback.landStroke} 
                   strokeWidth="2" 
                   opacity="0.6"
                 />
@@ -262,7 +296,7 @@ export default function GoogleMapView({
                   cx={coordsToSVG(centerLocation.lat, centerLocation.lng, 800, 600).x}
                   cy={coordsToSVG(centerLocation.lat, centerLocation.lng, 800, 600).y}
                   r="8"
-                  fill="#3b82f6"
+                  fill={MAP_THEME.fallback.center}
                   stroke="#ffffff"
                   strokeWidth="3"
                 />
@@ -281,7 +315,7 @@ export default function GoogleMapView({
                       cx={svgCoords.x}
                       cy={svgCoords.y}
                       r="6"
-                      fill="#ef4444"
+                      fill={MAP_THEME.fallback.job}
                       stroke="#ffffff"
                       strokeWidth="2"
                       className="cursor-pointer hover:r-8 transition-all"
@@ -296,19 +330,20 @@ export default function GoogleMapView({
 
         {/* Selected Job Details */}
         {selectedJob && (
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-steel-200 bg-steel-50">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-lg">{selectedJob.title}</CardTitle>
                   {selectedJob.shopName && (
-                    <p className="text-neutral-600">{selectedJob.shopName}</p>
+                    <p className="text-muted-foreground">{selectedJob.shopName}</p>
                   )}
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onJobSelect(null)}
+                  data-testid="button-close-job-details"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -318,18 +353,18 @@ export default function GoogleMapView({
               <div className="flex items-center gap-4 text-sm">
               {selectedJob.location && (
                 <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4 text-neutral-500" />
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span>{typeof selectedJob.location === 'string' ? selectedJob.location : `${selectedJob.location?.city || "Unknown"}, ${selectedJob.location?.state || ""}`}</span>
                 </div>
               )}
               {selectedJob.startTime && selectedJob.endTime && (
                 <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-neutral-500" />
+                  <Clock className="h-4 w-4 text-muted-foreground" />
                   <span>{selectedJob.startTime} - {selectedJob.endTime}</span>
                 </div>
               )}
               <div className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4 text-neutral-500" />
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span>{selectedJob.rate || selectedJob.payRate || 'Rate TBD'}</span>
               </div>
               </div>
@@ -342,11 +377,11 @@ export default function GoogleMapView({
                 ))}
               </div>
 
-              <p className="text-neutral-600 text-sm">{selectedJob.description}</p>
+              <p className="text-muted-foreground text-sm">{selectedJob.description}</p>
               
               <div className="flex gap-2 pt-2">
-                <Button size="sm">Apply Now</Button>
-                <Button variant="outline" size="sm">Save Job</Button>
+                <Button size="sm" data-testid="button-apply-job">Apply Now</Button>
+                <Button variant="outline" size="sm" data-testid="button-save-job">Save Job</Button>
               </div>
             </CardContent>
           </Card>
@@ -360,8 +395,8 @@ export default function GoogleMapView({
       {/* Map Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">Job Locations</h3>
-          <p className="text-sm text-neutral-600">
+          <h3 className="text-lg font-semibold text-foreground">Job Locations</h3>
+          <p className="text-sm text-muted-foreground">
             Showing {jobs.filter(job => {
               const jobLocation = getJobCoordinates(job);
               const distance = calculateDistance(centerLocation, jobLocation);
@@ -374,12 +409,12 @@ export default function GoogleMapView({
       {/* Map Container */}
       <Card className="relative">
         <CardContent className="p-0">
-          <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+          <div className="relative bg-muted rounded-lg overflow-hidden">
             {isLoading && (
               <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                  <p className="text-sm text-gray-600">Loading map...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm text-muted-foreground">Loading map...</p>
                 </div>
               </div>
             )}
@@ -394,13 +429,13 @@ export default function GoogleMapView({
 
       {/* Selected Job Details */}
       {selectedJob && (
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-steel-200 bg-steel-50">
           <CardHeader className="pb-3">
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-lg">{selectedJob.title}</CardTitle>
                 {selectedJob.shopName && (
-                  <p className="text-neutral-600">{selectedJob.shopName}</p>
+                  <p className="text-muted-foreground">{selectedJob.shopName}</p>
                 )}
               </div>
               <Button
@@ -417,18 +452,18 @@ export default function GoogleMapView({
             <div className="flex items-center gap-4 text-sm">
               {selectedJob.location && (
                 <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4 text-neutral-500" />
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span>{typeof selectedJob.location === 'string' ? selectedJob.location : `${selectedJob.location?.city || "Unknown"}, ${selectedJob.location?.state || ""}`}</span>
                 </div>
               )}
               {selectedJob.startTime && selectedJob.endTime && (
                 <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-neutral-500" />
+                  <Clock className="h-4 w-4 text-muted-foreground" />
                   <span>{selectedJob.startTime} - {selectedJob.endTime}</span>
                 </div>
               )}
               <div className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4 text-neutral-500" />
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span>{selectedJob.rate || selectedJob.payRate || 'Rate TBD'}</span>
               </div>
             </div>
@@ -441,7 +476,7 @@ export default function GoogleMapView({
               ))}
             </div>
 
-            <p className="text-neutral-600 text-sm">{selectedJob.description}</p>
+            <p className="text-muted-foreground text-sm">{selectedJob.description}</p>
             
             <div className="flex gap-2 pt-2">
               <Button size="sm" data-testid="button-apply-job">
