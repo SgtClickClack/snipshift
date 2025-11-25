@@ -175,7 +175,7 @@ export default function JobFeedPage() {
               </div>
 
               {/* Map View */}
-              <div className={`flex-1 bg-card rounded-lg border border-border overflow-hidden ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
+              <div className={`flex-1 ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
                 <GoogleMapView
                   jobs={jobList}
                   onJobSelect={setSelectedJob}

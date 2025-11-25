@@ -391,27 +391,28 @@ export default function GoogleMapView({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Map Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">Job Locations</h3>
-          <p className="text-sm text-muted-foreground">
-            Showing {jobs.filter(job => {
-              const jobLocation = getJobCoordinates(job);
-              const distance = calculateDistance(centerLocation, jobLocation);
-              return distance <= radius;
-            }).length} jobs within {radius}km of {searchLocation}
-          </p>
-        </div>
-      </div>
-
-      {/* Map Container */}
-      <Card className="relative">
-        <CardContent className="p-0">
-          <div className="relative bg-muted rounded-lg overflow-hidden">
+    <div className="space-y-4 h-full flex flex-col">
+      {/* Combined Map Card with Header */}
+      <Card className="relative flex-1 overflow-hidden flex flex-col border-border">
+        <CardHeader className="px-4 py-3 border-b bg-muted/10">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Job Locations</h3>
+              <p className="text-sm text-muted-foreground">
+                Showing {jobs.filter(job => {
+                  const jobLocation = getJobCoordinates(job);
+                  const distance = calculateDistance(centerLocation, jobLocation);
+                  return distance <= radius;
+                }).length} jobs within {radius}km of {searchLocation}
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="p-0 flex-1 relative min-h-[500px]">
+          <div className="absolute inset-0 bg-muted">
             {isLoading && (
-              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-sm text-muted-foreground">Loading map...</p>
@@ -420,7 +421,7 @@ export default function GoogleMapView({
             )}
             <div 
               ref={mapRef} 
-              className="w-full h-[600px]"
+              className="w-full h-full"
               data-testid="google-map"
             />
           </div>

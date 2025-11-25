@@ -112,3 +112,25 @@
 
 **Next Priority Task**
 - Complete.
+
+#### 2025-11-25: Map View Container Refactor
+
+**Core Components Implemented:**
+- Job Feed Map View
+
+**Key Features**
+- **UI Refactor:**
+  - Unified the map container and header text into a single Card component for a cleaner look.
+  - Removed redundant double borders and nested containers.
+  - Improved spacing and integration of the "Job Locations" header with the map.
+
+**Integration Points**
+- `src/pages/job-feed.tsx`
+- `src/components/job-feed/google-map-view.tsx`
+
+**File Paths**
+- `src/pages/job-feed.tsx`
+- `src/components/job-feed/google-map-view.tsx`
+
+**Next Priority Task**
+- Complete.
