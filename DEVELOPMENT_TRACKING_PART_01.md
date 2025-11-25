@@ -62,3 +62,26 @@
 
 **Next Priority Task**
 - Continue with CSS Audit Plan: Fix Admin Dashboard hardcoded dark mode.
+
+#### 2025-11-25: Fix Admin Dashboard Dark Mode
+
+**Core Components Implemented:**
+- Semantic Class Implementation
+- Dark Mode Consistency
+
+**Key Features**
+- **Removed Forced Dark Mode:** Updated `src/pages/admin/dashboard.tsx` to remove hardcoded `bg-gray-900 text-white` wrapper.
+- **Semantic Styling:**
+  - Replaced `bg-gray-800` cards with standard `Card` components (which use `bg-card` and `text-card-foreground`).
+  - Replaced `text-gray-300/400` with `text-muted-foreground` and `text-foreground`.
+  - Updated tables to use `border-border` and `hover:bg-muted/50` instead of hardcoded gray values.
+  - Mapped role badges to semantic variants (`default`, `secondary`, `outline`, `destructive`).
+
+**Integration Points**
+- `src/pages/admin/dashboard.tsx`
+
+**File Paths**
+- `src/pages/admin/dashboard.tsx`
+
+**Next Priority Task**
+- Global Search & Replace: Systematically replace `gray-*` and `slate-*` with `steel-*` equivalents.
