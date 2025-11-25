@@ -39,7 +39,7 @@ export default function LandingPage() {
             
             <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-steel-500 to-steel-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Search className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-steel-900">Discover & Connect</h3>
@@ -49,7 +49,7 @@ export default function LandingPage() {
             
             <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-steel-600 to-steel-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Handshake className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-steel-900">Build Community</h3>
