@@ -150,18 +150,21 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {statsConfig.map((stat, index) => {
         return (
-          <Card key={index} className="bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300" data-testid={`stat-card-${index}`}>
+          <Card key={index} className="group relative overflow-hidden bg-white border border-steel-200 shadow-sm hover:shadow-md hover:border-steel-300 transition-all duration-300" data-testid={`stat-card-${index}`}>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-steel-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-steel-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-steel-900 mt-1" data-testid={`stat-value-${index}`}>
-                    {stat.value.toLocaleString()}{stat.suffix || ''}
-                  </p>
-                  <p className="text-xs text-steel-500 mt-1">{stat.description}</p>
+                  <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase">{stat.title}</p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-foreground tracking-tight" data-testid={`stat-value-${index}`}>
+                      {stat.value.toLocaleString()}{stat.suffix || ''}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.description}</p>
                 </div>
-                <div className="rounded-full bg-steel-50 p-3 border border-steel-100">
-                  <stat.icon className="h-6 w-6 text-steel-700" />
+                <div className="rounded-xl bg-steel-50 p-3 border border-steel-100 group-hover:bg-steel-100 transition-colors duration-300">
+                  <stat.icon className="h-5 w-5 text-steel-600 group-hover:text-foreground transition-colors duration-300" />
                 </div>
               </div>
             </CardContent>
