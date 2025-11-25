@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar, text, decimal, boolean, timestamp, pgEnum, index } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 /**
  * User roles enum
@@ -15,6 +16,7 @@ export const users = pgTable('users', {
   passwordHash: varchar('password_hash', { length: 255 }), // Nullable for now, will be required when auth is implemented
   name: varchar('name', { length: 255 }).notNull(),
   role: userRoleEnum('role').notNull().default('professional'),
+  roles: text('roles').array().notNull().default(sql`ARRAY['professional']::text[]`),
   bio: text('bio'),
   phone: varchar('phone', { length: 50 }),
   location: varchar('location', { length: 255 }),

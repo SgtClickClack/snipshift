@@ -80,6 +80,7 @@ export async function createUser(
       name: userData.name,
       passwordHash: userData.passwordHash || null,
       role: userData.role || 'professional',
+      roles: [userData.role || 'professional'],
     })
     .returning();
 

@@ -151,7 +151,7 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       bio: user.bio,
       phone: user.phone,
       location: user.location,
-      roles: [user.role],
+      roles: user.roles || [user.role], // Use roles from DB
       currentRole: user.role,
       uid: req.user.uid, // Keep the firebase UID from the token/request
       averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
@@ -203,19 +203,19 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     return;
   }
 
-  // Return updated user object
-  res.status(200).json({
-    id: updatedUser.id,
-    email: updatedUser.email,
-    name: updatedUser.name,
-    displayName: updatedUser.name,
-    bio: updatedUser.bio,
-    phone: updatedUser.phone,
-    location: updatedUser.location,
-    roles: [updatedUser.role],
-    currentRole: updatedUser.role,
-    uid: req.user.uid
-  });
+    // Return updated user object
+    res.status(200).json({
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      displayName: updatedUser.name,
+      bio: updatedUser.bio,
+      phone: updatedUser.phone,
+      location: updatedUser.location,
+      roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
+      currentRole: updatedUser.role,
+      uid: req.user.uid
+    });
 }));
 
 // Complete onboarding
@@ -256,20 +256,20 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
     return;
   }
 
-  // Return updated user object
-  res.status(200).json({
-    id: updatedUser.id,
-    email: updatedUser.email,
-    name: updatedUser.name,
-    displayName: updatedUser.name,
-    bio: updatedUser.bio,
-    phone: updatedUser.phone,
-    location: updatedUser.location,
-    roles: [updatedUser.role],
-    currentRole: updatedUser.role,
-    uid: req.user.uid,
-    isOnboarded: updatedUser.isOnboarded ?? false,
-  });
+    // Return updated user object
+    res.status(200).json({
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      displayName: updatedUser.name,
+      bio: updatedUser.bio,
+      phone: updatedUser.phone,
+      location: updatedUser.location,
+      roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
+      currentRole: updatedUser.role,
+      uid: req.user.uid,
+      isOnboarded: updatedUser.isOnboarded ?? false,
+    });
 }));
 
 // Validation schema for role update
@@ -323,6 +323,17 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
 
   console.log('[POST /users/role] Update payload:', updates);
 
+  // Fetch current user to get existing roles
+  const currentUser = await usersRepo.getUserById(req.user.id);
+  if (currentUser) {
+    const existingRoles = currentUser.roles || [];
+    const newRole = updates.role;
+    
+    if (newRole && !existingRoles.includes(newRole)) {
+      updates.roles = [...existingRoles, newRole];
+    }
+  }
+
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
   
   if (!updatedUser) {
@@ -341,7 +352,7 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
     bio: updatedUser.bio,
     phone: updatedUser.phone,
     location: updatedUser.location,
-    roles: [updatedUser.role],
+    roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
     currentRole: updatedUser.role,
     uid: req.user.uid,
     isOnboarded: updatedUser.isOnboarded ?? false,
@@ -374,6 +385,7 @@ router.patch('/users/:id/current-role', authenticateUser, asyncHandler(async (re
 
   // Since DB is single-role, "switching" role actually updates the DB role
   // TODO: In the future, this should only toggle the session view if multiple roles are supported in DB
+  // Note: We don't update 'roles' here, as switching views doesn't grant new roles
   const updatedUser = await usersRepo.updateUser(req.user.id, { role });
 
   if (!updatedUser) {
