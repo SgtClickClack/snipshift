@@ -86,7 +86,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="text-center p-6 bg-white shadow-lg border border-steel-200 hover:shadow-xl transition-all duration-300">
               <CardContent className="pt-6">
-                <Store className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <Store className="h-12 w-12 text-steel-800 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-steel-900">Shop Owners</h3>
                 <p className="text-steel-600 text-sm">Barbershops and salons looking for flexible staffing</p>
               </CardContent>
@@ -94,7 +94,7 @@ export default function LandingPage() {
             
             <Card className="text-center p-6 bg-white shadow-lg border border-steel-200 hover:shadow-xl transition-all duration-300">
               <CardContent className="pt-6">
-                <UserCheck className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <UserCheck className="h-12 w-12 text-steel-800 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-steel-900">Professionals</h3>
                 <p className="text-steel-600 text-sm">Barbers, stylists, and professionals seeking flexible work opportunities</p>
               </CardContent>
@@ -102,7 +102,7 @@ export default function LandingPage() {
             
             <Card className="text-center p-6 bg-white shadow-lg border border-steel-200 hover:shadow-xl transition-all duration-300">
               <CardContent className="pt-6">
-                <Store className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+                <Store className="h-12 w-12 text-steel-800 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-steel-900">Brands</h3>
                 <p className="text-steel-600 text-sm">Product companies connecting with the professional community</p>
               </CardContent>
@@ -110,7 +110,7 @@ export default function LandingPage() {
             
             <Card className="text-center p-6 bg-white shadow-lg border border-steel-200 hover:shadow-xl transition-all duration-300">
               <CardContent className="pt-6">
-                <UserCheck className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+                <UserCheck className="h-12 w-12 text-steel-800 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-steel-900">Trainers</h3>
                 <p className="text-steel-600 text-sm">Educators offering courses, workshops, and skill development</p>
               </CardContent>

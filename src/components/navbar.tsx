@@ -118,7 +118,7 @@ export default function Navbar() {
             <img 
               src={logo} 
               alt="Snipshift Logo" 
-              className="h-10 w-auto" 
+              className="h-12 w-auto object-contain" 
             />
           </Link>
           
