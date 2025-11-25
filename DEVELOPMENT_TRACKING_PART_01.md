@@ -27,6 +27,9 @@
   - Replaced raw email text with standard Avatar component (image or initials).
   - Added Avatar Dropdown Menu for Profile, Settings, and Logout.
   - Improved mobile and desktop layout consistency.
+- **Refinements:**
+  - Added `getInitials` helper to robustly handle user names and emails.
+  - Updated mobile menu to show the Avatar and User details in a structured layout.
 
 **Integration Points**
 - Frontend UI: Navbar, Avatar, DropdownMenu
@@ -35,4 +38,4 @@
 - `src/components/navbar.tsx`
 
 **Next Priority Task**
-- Await user feedback on UI changes.
+- Global Search & Replace: Systematically replace `gray-*` and `slate-*` with `steel-*` equivalents.

@@ -84,12 +84,25 @@ export default function Navbar() {
   // Filter out roles the user already has from the potential missing roles
   const missingRoles = ['professional', 'hub'].filter(r => !(user?.roles || []).includes(r) && !(user?.roles || []).includes(r === 'hub' ? 'business' : r));
 
-  const UserAvatar = () => (
-    <Avatar className="h-8 w-8 cursor-pointer border border-steel-600">
+  const getInitials = (name?: string, email?: string) => {
+    if (name) {
+      const parts = name.split(' ').filter(Boolean);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return name.slice(0, 2).toUpperCase();
+    }
+    if (email) {
+      return email.slice(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
+
+  const UserAvatar = ({ className }: { className?: string }) => (
+    <Avatar className={`cursor-pointer border border-steel-600 ${className || 'h-8 w-8'}`}>
       <AvatarImage src={user?.photoURL || user?.avatarUrl} alt={user?.displayName || 'User'} />
-      <AvatarFallback className="bg-steel-700 text-white text-xs">
-        {/* Get first two initials from email or name */}
-        {(user?.email?.[0] || 'U').toUpperCase()}
+      <AvatarFallback className="bg-steel-700 text-white text-xs font-medium">
+        {getInitials(user?.displayName || user?.name, user?.email)}
       </AvatarFallback>
     </Avatar>
   );
@@ -266,9 +279,15 @@ export default function Navbar() {
                       </SheetHeader>
                       <div className="flex flex-col space-y-4 mt-8">
                         <div className="px-2 pb-4 border-b border-steel-700 mb-4">
-                           <p className="text-sm text-gray-400 mb-1">Signed in as</p>
-                           <p className="font-medium truncate">{user.email}</p>
-                           <div className="mt-2 flex items-center text-sm text-blue-400">
+                           <div className="flex items-center gap-3 mb-3">
+                             <UserAvatar className="h-10 w-10" />
+                             <div className="overflow-hidden">
+                               <p className="font-medium truncate text-white">{user.displayName || user.name || 'User'}</p>
+                               <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                             </div>
+                           </div>
+                           
+                           <div className="flex items-center text-sm text-blue-400">
                              <Check className="mr-2 h-4 w-4" />
                              Current: {currentRoleLabel}
                            </div>
