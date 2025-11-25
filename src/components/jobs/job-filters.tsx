@@ -152,7 +152,7 @@ export function JobFilters({ className }: JobFiltersProps) {
             min={0}
             max={200}
             step={5}
-            className="w-full"
+            className="w-full py-4"
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>${minRate}/hr</span>

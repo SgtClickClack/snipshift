@@ -154,7 +154,7 @@ export default function AdvancedJobFilters({
                   min={0}
                   max={500}
                   step={5}
-                  className="w-full"
+                  className="w-full py-4"
                   data-testid="slider-pay-range"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
