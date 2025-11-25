@@ -1,87 +1,38 @@
-#### 2025-11-25: Fix Stale User State After Onboarding
+#### 2025-11-25: Fix TypeScript Build Error in User Repository
 
 **Core Components Implemented:**
-- Auth State Refresh Logic
-- Location Input UI Fix
-- Missing Role Switching Endpoint
-- Multi-Role Backend Support
+- Mock User Generation Fix
 
 **Key Features**
-- **Stale State Fix:**
-  - Updated `src/pages/onboarding/hub.tsx` and `src/pages/onboarding/professional.tsx` to manually update user state using `login()` with the response from the API.
-  - Updated `src/contexts/AuthContext.tsx` to disable caching for `/api/me` requests (`cache: 'no-store'`) and force token refresh.
-- **UI Fixes:**
-  - Updated `src/components/ui/location-input.tsx` to add explicit background color (`bg-white`/`dark:bg-slate-950`) and Z-index to the suggestion dropdown.
-- **Backend Fixes:**
-  - **DB Schema Update:** Added `roles` column (array of enums) to `users` table to correctly store multiple roles per user.
-  - **API Logic:**
-    - Updated `POST /users/role` (Onboarding) to append the new role to the `roles` array instead of overwriting the user's existence.
-    - Updated `GET /me` and `PUT /me` to return the correct `roles` list from the DB.
-    - Implemented `PATCH /api/users/:id/current-role` to allow switching the active view (`currentRole`) without affecting the unlocked roles list.
+- **Build Fix:**
+  - Added missing `roles` property to the mock user object in `api/_src/repositories/users.repository.ts`.
+  - Resolved TypeScript error `TS2741` preventing `npm install` / `postinstall` from completing.
 
 **Integration Points**
-- `src/pages/onboarding/hub.tsx`
-- `src/pages/onboarding/professional.tsx`
-- `src/contexts/AuthContext.tsx`
-- `src/components/ui/location-input.tsx`
-- `api/_src/routes/users.ts`
-- `api/_src/db/schema/users.ts`
 - `api/_src/repositories/users.repository.ts`
 
 **File Paths**
-- `src/pages/onboarding/hub.tsx`
-- `src/pages/onboarding/professional.tsx`
-- `src/contexts/AuthContext.tsx`
-- `src/components/ui/location-input.tsx`
-- `api/_src/routes/users.ts`
-- `api/_src/db/schema/users.ts`
 - `api/_src/repositories/users.repository.ts`
-
-**Next Priority Task**
-- Deploy and verify fix in production.
-
-#### 2025-11-25: Refactor Map View Colors
-
-**Core Components Implemented:**
-- Map Theme Configuration
-- Google Maps Refactoring
-- Design System Consistency
-
-**Key Features**
-- **Map Theme:** Created `MAP_THEME` constant in `src/components/job-feed/google-map-view.tsx` referencing CSS variables (`--steel-*`, `--primary`, etc.).
-- **Refactoring:**
-  - Replaced hardcoded hex colors in Google Maps markers, circles, and fallback SVG.
-  - Updated UI elements to use semantic classes (`text-muted-foreground`, `bg-muted`) instead of `neutral-*`/`gray-*`.
-  - Fixed unused variables in map initialization.
-
-**Integration Points**
-- `src/components/job-feed/google-map-view.tsx`
-
-**File Paths**
-- `src/components/job-feed/google-map-view.tsx`
-
-**Next Priority Task**
-- Continue with CSS Audit Plan: Fix Admin Dashboard hardcoded dark mode.
-
-#### 2025-11-25: Fix Admin Dashboard Dark Mode
-
-**Core Components Implemented:**
-- Semantic Class Implementation
-- Dark Mode Consistency
-
-**Key Features**
-- **Removed Forced Dark Mode:** Updated `src/pages/admin/dashboard.tsx` to remove hardcoded `bg-gray-900 text-white` wrapper.
-- **Semantic Styling:**
-  - Replaced `bg-gray-800` cards with standard `Card` components (which use `bg-card` and `text-card-foreground`).
-  - Replaced `text-gray-300/400` with `text-muted-foreground` and `text-foreground`.
-  - Updated tables to use `border-border` and `hover:bg-muted/50` instead of hardcoded gray values.
-  - Mapped role badges to semantic variants (`default`, `secondary`, `outline`, `destructive`).
-
-**Integration Points**
-- `src/pages/admin/dashboard.tsx`
-
-**File Paths**
-- `src/pages/admin/dashboard.tsx`
 
 **Next Priority Task**
 - Global Search & Replace: Systematically replace `gray-*` and `slate-*` with `steel-*` equivalents.
+
+#### 2025-11-25: Add User Avatar to Navbar
+
+**Core Components Implemented:**
+- Navbar User Interface
+
+**Key Features**
+- **Avatar Integration:**
+  - Replaced raw email text with standard Avatar component (image or initials).
+  - Added Avatar Dropdown Menu for Profile, Settings, and Logout.
+  - Improved mobile and desktop layout consistency.
+
+**Integration Points**
+- Frontend UI: Navbar, Avatar, DropdownMenu
+
+**File Paths**
+- `src/components/navbar.tsx`
+
+**Next Priority Task**
+- Await user feedback on UI changes.
