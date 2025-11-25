@@ -131,9 +131,9 @@ export default function JobFeedPage() {
           <div className="flex-1 min-w-0">
             <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)] min-h-[500px]">
               {/* List View */}
-              <div className={`flex-1 overflow-y-auto pr-2 space-y-4 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3' : 'w-full'}`}>
+              <div className={`flex-1 overflow-y-auto pr-2 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3 space-y-4' : 'w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 align-content-start'}`}>
                 {jobList.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className={`text-center py-12 ${viewMode === 'list' ? 'col-span-full' : ''}`}>
                     <div className="text-steel-500 mb-4">
                       <p className="text-lg font-semibold mb-2">No shifts found</p>
                       <p className="text-sm">
@@ -171,7 +171,7 @@ export default function JobFeedPage() {
               </div>
 
               {/* Map View */}
-              <div className={`flex-1 bg-white rounded-lg border border-steel-200 overflow-hidden ${viewMode === 'list' ? 'hidden lg:block' : 'block h-full'}`}>
+              <div className={`flex-1 bg-white rounded-lg border border-steel-200 overflow-hidden ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
                 <GoogleMapView
                   jobs={jobList}
                   onJobSelect={setSelectedJob}

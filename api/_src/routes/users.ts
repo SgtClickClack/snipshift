@@ -298,6 +298,8 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
 
   const { role, shopName, location, description } = validationResult.data;
   const updates: any = {};
+  
+  console.log('[POST /users/role] Updating role:', { role, shopName, location, description });
 
   if (role === 'hub') {
     updates.role = 'business'; // Map 'hub' to 'business'
@@ -319,12 +321,17 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
      }
   }
 
+  console.log('[POST /users/role] Update payload:', updates);
+
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
   
   if (!updatedUser) {
+    console.error('[POST /users/role] User not found for update');
     res.status(404).json({ message: 'User not found' });
     return;
   }
+
+  console.log('[POST /users/role] Updated user:', updatedUser);
 
   res.status(200).json({
     id: updatedUser.id,
@@ -338,6 +345,46 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
     currentRole: updatedUser.role,
     uid: req.user.uid,
     isOnboarded: updatedUser.isOnboarded ?? false,
+  });
+}));
+
+// Update current role (for role switching)
+router.patch('/users/:id/current-role', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (req.params.id !== req.user.id) {
+    res.status(403).json({ message: 'Forbidden' });
+    return;
+  }
+
+  const schema = z.object({
+    role: z.enum(['professional', 'business', 'admin', 'trainer']),
+  });
+
+  const validationResult = schema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ message: 'Invalid role' });
+    return;
+  }
+
+  const { role } = validationResult.data;
+
+  // Since DB is single-role, "switching" role actually updates the DB role
+  // TODO: In the future, this should only toggle the session view if multiple roles are supported in DB
+  const updatedUser = await usersRepo.updateUser(req.user.id, { role });
+
+  if (!updatedUser) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  res.status(200).json({
+    id: updatedUser.id,
+    role: updatedUser.role,
+    currentRole: updatedUser.role
   });
 }));
 
