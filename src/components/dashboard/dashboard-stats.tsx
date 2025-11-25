@@ -32,24 +32,28 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
             value: stats.openJobs || 0,
             icon: Scissors,
             description: 'Active job postings',
+            variant: 'accent'
           },
           {
             title: 'Applications',
             value: stats.totalApplications || 0,
             icon: FileText,
             description: 'Total applications received',
+            variant: 'steel'
           },
           {
             title: 'Messages',
             value: stats.unreadMessages || 0,
             icon: MessageSquare,
             description: 'Unread messages',
+            variant: 'chrome'
           },
           {
             title: 'This Month',
             value: stats.monthlyHires || 0,
             icon: Handshake,
             description: 'Successful hires',
+            variant: 'accent-secondary'
           }
         ];
       
@@ -60,25 +64,29 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
             value: stats.activeApplications || 0,
             icon: Briefcase,
             description: 'Active job applications',
+            variant: 'accent'
           },
           {
             title: 'Bookings',
             value: stats.upcomingBookings || 0,
             icon: Calendar,
             description: 'Upcoming confirmed jobs',
+            variant: 'steel'
           },
           {
             title: 'Messages',
             value: stats.unreadMessages || 0,
             icon: MessageSquare,
             description: 'Unread messages',
+            variant: 'chrome'
           },
           {
             title: 'Rating',
             value: stats.averageRating || 0,
             icon: Star,
             description: 'Average client rating',
-            suffix: '/5'
+            suffix: '/5',
+            variant: 'accent-secondary'
           }
         ];
       
@@ -89,24 +97,28 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
             value: stats.activePosts || 0,
             icon: TrendingUp,
             description: 'Published product posts',
+            variant: 'accent'
           },
           {
             title: 'Total Views',
             value: stats.totalViews || 0,
             icon: Eye,
             description: 'Views across all posts',
+            variant: 'steel'
           },
           {
             title: 'Likes',
             value: stats.totalLikes || 0,
             icon: Heart,
             description: 'Total likes received',
+            variant: 'accent-secondary'
           },
           {
             title: 'Inquiries',
             value: stats.inquiries || 0,
             icon: MessageSquare,
             description: 'Product inquiries',
+            variant: 'chrome'
           }
         ];
       
@@ -117,25 +129,29 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
             value: stats.activePrograms || 0,
             icon: Award,
             description: 'Active training programs',
+            variant: 'accent'
           },
           {
             title: 'Students',
             value: stats.totalStudents || 0,
             icon: Users,
             description: 'Total enrolled students',
+            variant: 'steel'
           },
           {
             title: 'Workshops',
             value: stats.upcomingWorkshops || 0,
             icon: Calendar,
             description: 'Upcoming workshops',
+            variant: 'chrome'
           },
           {
             title: 'Reviews',
             value: stats.averageRating || 0,
             icon: Star,
             description: 'Average program rating',
-            suffix: '/5'
+            suffix: '/5',
+            variant: 'accent-secondary'
           }
         ];
       
@@ -149,6 +165,35 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {statsConfig.map((stat, index) => {
+        // Map variants to distinct brand-aligned styles
+        const getVariantStyles = (variant: string | undefined) => {
+          switch (variant) {
+            case 'accent': // Red Action
+              return {
+                icon: 'text-red-accent',
+                bg: 'bg-red-accent/10 border-red-accent/20'
+              };
+            case 'steel': // Charcoal/Steel Base
+              return {
+                icon: 'text-steel-900',
+                bg: 'bg-steel-100 border-steel-200'
+              };
+            case 'accent-secondary': // Red/Charcoal Mix
+              return {
+                icon: 'text-red-accent-dark',
+                bg: 'bg-gradient-to-br from-white to-red-accent/5 border-red-accent/10'
+              };
+            case 'chrome': // Metallic
+            default:
+              return {
+                icon: 'text-steel-700',
+                bg: 'bg-gradient-to-br from-white to-steel-100 border-steel-200'
+              };
+          }
+        };
+
+        const styles = getVariantStyles((stat as any).variant);
+
         return (
           <Card key={index} className="group relative overflow-hidden bg-white border border-steel-200 shadow-sm hover:shadow-md hover:border-steel-300 transition-all duration-300" data-testid={`stat-card-${index}`}>
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-steel-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -163,8 +208,8 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.description}</p>
                 </div>
-                <div className="rounded-xl bg-steel-50 p-3 border border-steel-100 group-hover:bg-steel-100 transition-colors duration-300">
-                  <stat.icon className="h-5 w-5 text-steel-600 group-hover:text-foreground transition-colors duration-300" />
+                <div className={`rounded-xl p-3 border transition-colors duration-300 ${styles.bg}`}>
+                  <stat.icon className={`h-5 w-5 transition-colors duration-300 ${styles.icon}`} />
                 </div>
               </div>
             </CardContent>
