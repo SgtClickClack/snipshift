@@ -93,7 +93,7 @@ export function FeedbackWidget() {
       {/* Feedback modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-xl">
+          <Card className="w-full max-w-md bg-white dark:bg-steel-900 shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-lg">Send Feedback</CardTitle>
               <Button

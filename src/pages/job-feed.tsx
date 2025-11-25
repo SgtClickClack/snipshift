@@ -8,6 +8,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { JobFilters } from '@/components/jobs/job-filters';
 import { JobCard, JobCardData } from '@/components/job-feed/JobCard';
+import { SearchX } from 'lucide-react';
 
 // JobType is now imported from shared schema, but we keep a local alias for API normalization
 type JobType = Job;
@@ -58,8 +59,8 @@ export default function JobFeedPage() {
   if (error) {
     return (
       <div className="p-8 text-center">
-        <h2 className="text-xl font-bold text-red-600">Error loading jobs</h2>
-        <p className="text-neutral-600 mt-2">Please try again later.</p>
+        <h2 className="text-xl font-bold text-error">Error loading jobs</h2>
+        <p className="text-muted-foreground mt-2">Please try again later.</p>
       </div>
     );
   }
@@ -95,15 +96,15 @@ export default function JobFeedPage() {
   });
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-steel-900">Find Shifts</h1>
-            <p className="text-steel-600 mt-1">Browse available shifts in your area</p>
+            <h1 className="text-3xl font-bold text-foreground">Find Shifts</h1>
+            <p className="text-muted-foreground mt-1">Browse available shifts in your area</p>
           </div>
           
-          <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-steel-200">
+          <div className="flex items-center gap-2 bg-card p-1 rounded-lg border border-border">
             <Button 
               variant={viewMode === 'list' ? 'charcoal' : 'ghost'} 
               size="sm"
@@ -131,15 +132,18 @@ export default function JobFeedPage() {
           <div className="flex-1 min-w-0">
             <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)] min-h-[500px]">
               {/* List View */}
-              <div className={`flex-1 overflow-y-auto pr-2 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3 space-y-4' : 'w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 align-content-start'}`}>
+              <div className={`flex-1 overflow-y-auto pr-2 ${viewMode === 'map' ? 'hidden lg:block lg:w-1/3 space-y-4' : 'w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 content-start'}`}>
                 {jobList.length === 0 ? (
-                  <div className={`text-center py-12 ${viewMode === 'list' ? 'col-span-full' : ''}`}>
-                    <div className="text-steel-500 mb-4">
-                      <p className="text-lg font-semibold mb-2">No shifts found</p>
-                      <p className="text-sm">
+                  <div className={`text-center py-16 ${viewMode === 'list' ? 'col-span-full' : ''}`}>
+                    <div className="flex flex-col items-center justify-center text-muted-foreground mb-6">
+                      <div className="bg-card p-4 rounded-full shadow-sm border border-border mb-4">
+                        <SearchX className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <p className="text-xl font-bold text-foreground mb-2">No shifts found</p>
+                      <p className="text-muted-foreground max-w-md mx-auto">
                         {searchParams.toString() 
-                          ? "No jobs match your current filters. Try adjusting your search criteria."
-                          : "No shifts available at the moment. Check back later!"}
+                          ? "We couldn't find any jobs matching your filters. Try adjusting your search criteria or increasing the radius."
+                          : "There are no shifts available at the moment. Please check back later!"}
                       </p>
                     </div>
                     {searchParams.toString() && (
@@ -148,9 +152,9 @@ export default function JobFeedPage() {
                         onClick={() => {
                           setSearchParams({}, { replace: true });
                         }}
-                        className="mt-4"
+                        className="mt-2"
                       >
-                        Clear Filters
+                        Clear All Filters
                       </Button>
                     )}
                   </div>
@@ -171,7 +175,7 @@ export default function JobFeedPage() {
               </div>
 
               {/* Map View */}
-              <div className={`flex-1 bg-white rounded-lg border border-steel-200 overflow-hidden ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
+              <div className={`flex-1 bg-card rounded-lg border border-border overflow-hidden ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
                 <GoogleMapView
                   jobs={jobList}
                   onJobSelect={setSelectedJob}

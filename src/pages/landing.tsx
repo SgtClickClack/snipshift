@@ -76,7 +76,7 @@ export default function LandingPage() {
                   localStorage.clear();
                   window.location.reload();
                 }}
-                className="text-xs opacity-50 hover:opacity-100 bg-gray-200 px-3 py-1 rounded"
+                className="text-xs opacity-50 hover:opacity-100 bg-steel-200 px-3 py-1 rounded"
               >
                 Clear Storage (Debug)
               </button>

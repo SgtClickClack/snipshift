@@ -135,9 +135,9 @@ export function ImageUpload({
   };
 
   const containerClass = cn(
-    'relative border-2 border-dashed border-gray-600 bg-gray-800/50 rounded-lg',
+    'relative border-2 border-dashed border-steel-600 bg-steel-800/50 rounded-lg',
     'flex items-center justify-center overflow-hidden',
-    'transition-all hover:border-gray-500 hover:bg-gray-800',
+    'transition-all hover:border-steel-500 hover:bg-steel-800',
     shape === 'circle' && 'aspect-square rounded-full w-32 h-32',
     shape === 'rect' && 'aspect-video min-h-[200px]',
     className
@@ -169,15 +169,15 @@ export function ImageUpload({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center p-6 text-center">
-            <ImageIcon className="h-12 w-12 text-gray-500 mb-2" />
-            <p className="text-sm text-gray-400 mb-2">No image selected</p>
+            <ImageIcon className="h-12 w-12 text-steel-500 mb-2" />
+            <p className="text-sm text-steel-400 mb-2">No image selected</p>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleClick}
               disabled={uploading || !user}
-              className="bg-gray-700 hover:bg-gray-600 border-gray-600"
+              className="bg-steel-700 hover:bg-steel-600 border-steel-600"
             >
               <Upload className="h-4 w-4 mr-2" />
               {uploading ? 'Uploading...' : 'Upload Image'}
@@ -217,7 +217,7 @@ export function ImageUpload({
           size="sm"
           onClick={handleClick}
           disabled={!user}
-          className="w-full bg-gray-700 hover:bg-gray-600 border-gray-600"
+          className="w-full bg-steel-700 hover:bg-steel-600 border-steel-600"
         >
           <Upload className="h-4 w-4 mr-2" />
           Choose Image

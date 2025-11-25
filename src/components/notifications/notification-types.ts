@@ -58,8 +58,8 @@ export const getNotificationColor = (type: Notification['type']) => {
     case 'job_completed':
       return 'text-purple-600 bg-purple-100';
     case 'profile_view':
-      return 'text-gray-600 bg-gray-100';
+      return 'text-steel-600 bg-steel-100';
     default:
-      return 'text-gray-600 bg-gray-100';
+      return 'text-steel-600 bg-steel-100';
   }
 };

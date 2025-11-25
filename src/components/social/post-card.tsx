@@ -61,7 +61,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
       case "trainer":
         return "bg-orange-100 text-orange-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-steel-100 text-steel-800";
     }
   };
 
@@ -100,7 +100,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="font-semibold text-gray-900" data-testid={`post-author-${post.id}`}>
+              <h4 className="font-semibold text-steel-900" data-testid={`post-author-${post.id}`}>
                 {post.authorName}
               </h4>
               <Badge variant="outline" className={getRoleColor(post.authorRole)}>
@@ -108,13 +108,13 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                 {post.postType === "job" ? "Job Post" : post.authorRole}
               </Badge>
               {post.postType === "job" && post.location && (
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-steel-500">
                   <MapPin className="w-3 h-3 mr-1" />
                   {post.location.city}, {post.location.state}
                 </div>
               )}
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-steel-500">
               {format(new Date(post.timestamp), "MMM d, yyyy 'at' h:mm a")}
             </p>
           </div>
@@ -134,7 +134,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
         {/* Post Content */}
         <div className="mb-4">
-          <p className="text-gray-900 whitespace-pre-wrap mb-3" data-testid={`post-content-${post.id}`}>
+          <p className="text-steel-900 whitespace-pre-wrap mb-3" data-testid={`post-content-${post.id}`}>
             {post.content}
           </p>
 
@@ -180,7 +180,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
           {post.images && post.images.length > 0 && (
             <div className="grid grid-cols-2 gap-2 mb-3">
               {post.images.slice(0, 4).map((image, index) => (
-                <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+                <div key={index} className="aspect-square bg-steel-200 rounded-lg overflow-hidden">
                   <img
                     src={image}
                     alt={`Post image ${index + 1}`}
@@ -194,14 +194,14 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
         </div>
 
         {/* Interaction Bar */}
-        <div className="flex items-center justify-between py-2 border-t border-gray-100">
+        <div className="flex items-center justify-between py-2 border-t border-steel-100">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLike}
               className={`${
-                post.isLiked ? 'text-red-600 hover:text-red-700' : 'text-gray-600 hover:text-gray-700'
+                post.isLiked ? 'text-red-600 hover:text-red-700' : 'text-steel-600 hover:text-steel-700'
               }`}
               data-testid={`button-like-${post.id}`}
             >
@@ -213,7 +213,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               variant="ghost"
               size="sm"
               onClick={() => setShowComments(!showComments)}
-              className="text-gray-600 hover:text-gray-700"
+              className="text-steel-600 hover:text-steel-700"
               data-testid={`button-comments-${post.id}`}
             >
               <MessageCircle className="w-4 h-4 mr-1" />
@@ -223,7 +223,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
             <Button
               variant="ghost"
               size="sm"
-              className="text-gray-600 hover:text-gray-700"
+              className="text-steel-600 hover:text-steel-700"
               data-testid={`button-share-${post.id}`}
             >
               <Share className="w-4 h-4 mr-1" />
@@ -244,7 +244,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
         {/* Comments Section */}
         {showComments && (
-          <div className="border-t border-gray-100 pt-4 mt-2">
+          <div className="border-t border-steel-100 pt-4 mt-2">
             {/* Comment Form */}
             <form onSubmit={handleSubmitComment} className="mb-4">
               <div className="flex gap-2">
@@ -276,21 +276,21 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="bg-gray-50 rounded-lg px-3 py-2">
+                    <div className="bg-steel-50 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{comment.author}</span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-steel-500">
                           {format(new Date(comment.timestamp), "MMM d 'at' h:mm a")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-900">{comment.text}</p>
+                      <p className="text-sm text-steel-900">{comment.text}</p>
                     </div>
                   </div>
                 </div>
               ))}
               
               {post.comments.length === 0 && (
-                <p className="text-gray-500 text-sm text-center py-4">
+                <p className="text-steel-500 text-sm text-center py-4">
                   No comments yet. Be the first to comment!
                 </p>
               )}

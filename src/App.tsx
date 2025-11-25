@@ -329,7 +329,7 @@ function AppRoutes() {
         <Route path="/notifications/demo" element={
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
-              <div className="min-h-screen bg-gray-50">
+              <div className="min-h-screen bg-steel-50">
                 <NotificationDemo />
               </div>
             </Suspense>

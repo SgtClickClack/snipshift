@@ -74,15 +74,15 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
   const getRoleColor = (role: string) => {
     switch (role) {
       case "professional":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
       case "hub":
-        return "bg-green-100 text-green-800";
+        return "bg-success/10 text-success";
       case "brand":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
       case "trainer":
-        return "bg-orange-100 text-orange-800";
+        return "bg-warning/10 text-yellow-700 dark:text-yellow-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -95,7 +95,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
     : profile.portfolio;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Banner Section */}
       <div className="relative">
         <div 
@@ -106,11 +106,11 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
         
         {/* Profile Header */}
         <div className="relative -mt-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-              <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+              <Avatar className="w-32 h-32 border-4 border-card shadow-lg">
                 <AvatarImage src={profile.profileImageURL} alt={profile.displayName} />
-                <AvatarFallback className="text-2xl font-bold bg-primary text-white">
+                <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
                   {profile.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -118,10 +118,10 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2" data-testid="profile-name">
+                    <h1 className="text-3xl font-bold text-foreground flex items-center gap-2" data-testid="profile-name">
                       {profile.businessName || profile.displayName}
                       {profile.verified && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        <Badge variant="secondary" className="bg-info/10 text-info hover:bg-info/20">
                           <Award className="w-3 h-3 mr-1" />
                           Verified
                         </Badge>
@@ -132,7 +132,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                         {getRoleDisplay(profile.role)}
                       </Badge>
                       {profile.location && (
-                        <div className="flex items-center text-gray-600 text-sm">
+                        <div className="flex items-center text-muted-foreground text-sm">
                           <MapPin className="w-4 h-4 mr-1" />
                           {profile.location.city}, {profile.location.state}
                         </div>
@@ -145,12 +145,12 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                             <Star
                               key={i}
                               className={`w-4 h-4 ${
-                                i < Math.floor(profile.rating!) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                i < Math.floor(profile.rating!) ? 'text-warning fill-current' : 'text-muted'
                               }`}
                             />
                           ))}
                         </div>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                           {profile.rating} ({profile.reviewCount} reviews)
                         </span>
                       </div>
@@ -190,12 +190,12 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                 <CardTitle>About</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 mb-4" data-testid="profile-bio">
+                <p className="text-muted-foreground mb-4" data-testid="profile-bio">
                   {profile.bio || `${profile.role === 'professional' ? 'Professional' : 'Business'} profile`}
                 </p>
                 
                 {profile.joinedDate && (
-                  <div className="flex items-center text-sm text-gray-500">
+                  <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4 mr-2" />
                     Joined {format(new Date(profile.joinedDate), "MMM yyyy")}
                   </div>
@@ -244,7 +244,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                         </Avatar>
                         <div>
                           <p className="font-medium text-sm">{member.name}</p>
-                          <p className="text-xs text-gray-500">{member.role}</p>
+                          <p className="text-xs text-muted-foreground">{member.role}</p>
                         </div>
                       </div>
                     ))}
@@ -264,7 +264,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                     {Object.entries(profile.operatingHours).map(([day, hours]) => (
                       <div key={day} className="flex justify-between">
                         <span className="font-medium capitalize">{day}</span>
-                        <span className="text-gray-600">
+                        <span className="text-muted-foreground">
                           {hours.open} - {hours.close}
                         </span>
                       </div>
@@ -284,7 +284,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                   <CardTitle>About Our {profile.role === 'hub' ? 'Salon' : 'Business'}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">{profile.businessDescription}</p>
+                  <p className="text-muted-foreground">{profile.businessDescription}</p>
                 </CardContent>
               </Card>
             )}
@@ -324,7 +324,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {filteredPortfolio?.map((item, index) => (
                       <div key={item.id} className="group cursor-pointer" data-testid={`portfolio-item-${index}`}>
-                        <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+                        <div className="aspect-square bg-muted rounded-lg overflow-hidden">
                           <img
                             src={item.imageURL}
                             alt={item.caption}
@@ -332,7 +332,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                           />
                         </div>
                         {item.caption && (
-                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">{item.caption}</p>
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.caption}</p>
                         )}
                         {item.category && (
                           <Badge variant="outline" className="text-xs mt-1">
@@ -356,11 +356,11 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-8">
-                    <Briefcase className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
                       No {profile.role === 'professional' ? 'portfolio' : 'gallery'} items yet
                     </h3>
-                    <p className="text-gray-500">
+                    <p className="text-muted-foreground">
                       {isOwnProfile 
                         ? `Add images to showcase your ${profile.role === 'professional' ? 'work' : 'business'}`
                         : `This ${profile.role} hasn't added any ${profile.role === 'professional' ? 'portfolio' : 'gallery'} items yet`

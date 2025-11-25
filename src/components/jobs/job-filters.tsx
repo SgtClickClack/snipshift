@@ -272,7 +272,7 @@ export function JobFilters({ className }: JobFiltersProps) {
               )}
             </Button>
           </DrawerTrigger>
-          <DrawerContent className="bg-gray-50">
+          <DrawerContent className="bg-steel-50">
             <DrawerHeader>
               <DrawerTitle>Filter Jobs</DrawerTitle>
             </DrawerHeader>

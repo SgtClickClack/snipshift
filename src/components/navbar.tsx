@@ -140,7 +140,7 @@ export default function Navbar() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-[240px] bg-steel-800 border-steel-600 text-white z-[9999]" align="end">
                       
-                      <DropdownMenuLabel className="text-xs font-normal text-gray-400">Current View</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Current View</DropdownMenuLabel>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white justify-between font-bold bg-steel-700/50">
                         {currentRoleLabel}
                         <Check className="h-4 w-4 text-green-400" />
@@ -149,14 +149,14 @@ export default function Navbar() {
                       {availableRoles.length > 0 && (
                         <>
                           <DropdownMenuSeparator className="bg-steel-600" />
-                          <DropdownMenuLabel className="text-xs font-normal text-gray-400">Switch View</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Switch View</DropdownMenuLabel>
                           {availableRoles.map((r) => (
                             <DropdownMenuItem 
                               key={r} 
                               onClick={() => handleSwitchRole(r)}
                               className="focus:bg-steel-700 focus:text-white cursor-pointer"
                             >
-                              <RefreshCw className="mr-2 h-4 w-4 text-gray-400" />
+                              <RefreshCw className="mr-2 h-4 w-4 text-muted-foreground" />
                               Switch to {getRoleLabel(r)}
                             </DropdownMenuItem>
                           ))}
@@ -166,7 +166,7 @@ export default function Navbar() {
                       {missingRoles.length > 0 && (
                         <>
                           <DropdownMenuSeparator className="bg-steel-600" />
-                          <DropdownMenuLabel className="text-xs font-normal text-gray-400">Grow</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Grow</DropdownMenuLabel>
                           
                           {missingRoles.includes('hub') && (
                             <DropdownMenuItem 
@@ -235,7 +235,7 @@ export default function Navbar() {
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
-                        <p className="text-xs leading-none text-gray-400">{user.email}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-steel-600" />
@@ -283,7 +283,7 @@ export default function Navbar() {
                              <UserAvatar className="h-10 w-10" />
                              <div className="overflow-hidden">
                                <p className="font-medium truncate text-white">{user.displayName || user.name || 'User'}</p>
-                               <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                              </div>
                            </div>
                            
@@ -312,13 +312,13 @@ export default function Navbar() {
                         {/* Mobile Role Switching Links - Grouped */}
                          {availableRoles.length > 0 && (
                            <div className="py-2">
-                             <p className="px-4 text-xs text-gray-500 uppercase mb-2">Switch View</p>
+                             <p className="px-4 text-xs text-muted-foreground uppercase mb-2">Switch View</p>
                              {availableRoles.map((r) => (
                                 <SheetClose asChild key={r}>
                                   <Button 
                                     variant="ghost" 
                                     onClick={() => handleSwitchRole(r)}
-                                    className="w-full justify-start text-gray-400 hover:text-white hover:bg-steel-700"
+                                    className="w-full justify-start text-muted-foreground hover:text-white hover:bg-steel-700"
                                   >
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Switch to {getRoleLabel(r)}
@@ -330,7 +330,7 @@ export default function Navbar() {
 
                          {missingRoles.length > 0 && (
                            <div className="py-2">
-                             <p className="px-4 text-xs text-gray-500 uppercase mb-2">Grow</p>
+                             <p className="px-4 text-xs text-muted-foreground uppercase mb-2">Grow</p>
                              {missingRoles.includes('hub') && (
                                 <SheetClose asChild>
                                   <Button 

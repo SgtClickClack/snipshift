@@ -232,11 +232,11 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-primary" />
               Community Feed
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Discover trends, connect with professionals, and stay updated with the latest in barbering
             </p>
           </div>
@@ -254,7 +254,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search posts, users, or content..."
               value={searchQuery}
@@ -295,7 +295,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         </div>
 
         {/* Feed Stats */}
-        <div className="flex items-center gap-6 mt-4 text-sm text-gray-500">
+        <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
           <span>{filteredPosts.length} posts</span>
           <span>{filteredPosts.filter(p => p.postType === "social").length} social posts</span>
           <span>{filteredPosts.filter(p => p.postType === "job").length} job posts</span>
@@ -322,16 +322,16 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
                 <CardContent className="pt-6">
                   <div className="animate-pulse space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                      <div className="w-12 h-12 bg-muted rounded-full"></div>
                       <div>
-                        <div className="w-32 h-4 bg-gray-200 rounded mb-1"></div>
-                        <div className="w-24 h-3 bg-gray-200 rounded"></div>
+                        <div className="w-32 h-4 bg-muted rounded mb-1"></div>
+                        <div className="w-24 h-3 bg-muted rounded"></div>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <div className="w-full h-4 bg-gray-200 rounded"></div>
-                      <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
-                      <div className="w-1/2 h-4 bg-gray-200 rounded"></div>
+                      <div className="w-full h-4 bg-muted rounded"></div>
+                      <div className="w-3/4 h-4 bg-muted rounded"></div>
+                      <div className="w-1/2 h-4 bg-muted rounded"></div>
                     </div>
                   </div>
                 </CardContent>
@@ -355,11 +355,11 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
           <Card>
             <CardContent className="pt-6">
               <div className="text-center py-12">
-                <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   {searchQuery ? "No posts found" : "No posts yet"}
                 </h3>
-                <p className="text-gray-500 mb-4">
+                <p className="text-muted-foreground mb-4">
                   {searchQuery 
                     ? `No posts match "${searchQuery}". Try adjusting your search.`
                     : "Be the first to share something with the community!"

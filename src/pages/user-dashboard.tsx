@@ -21,33 +21,33 @@ export default function UserDashboard() {
   const reviewCount = (user as any)?.reviewCount as number | undefined;
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-steel-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Welcome back, {user?.displayName || user?.name || 'User'}
           </h1>
-          <p className="text-steel-600 mt-2">Manage your profile and settings</p>
+          <p className="text-muted-foreground mt-2">Manage your profile and settings</p>
         </header>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Profile Summary */}
           <Card className="card-chrome">
             <CardHeader>
-              <CardTitle className="text-xl text-steel-900">Profile Overview</CardTitle>
+              <CardTitle className="text-xl text-foreground">Profile Overview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-4 mb-4">
-                <div className="h-16 w-16 rounded-full bg-steel-200 flex items-center justify-center text-2xl font-bold text-steel-600">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold text-muted-foreground">
                   {(user?.displayName || user?.name || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-steel-900">{user?.displayName || user?.name || 'User'}</p>
-                  <p className="text-sm text-steel-500">{user?.email}</p>
+                  <p className="font-semibold text-foreground">{user?.displayName || user?.name || 'User'}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
                   {averageRating !== null && averageRating !== undefined && (
                     <div className="mt-2">
                       <StarRating rating={averageRating} readonly size="sm" />
-                      <p className="text-xs text-steel-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {reviewCount || 0} {reviewCount === 1 ? 'review' : 'reviews'}
                       </p>
                     </div>
@@ -63,21 +63,21 @@ export default function UserDashboard() {
           {/* Recent Activity Placeholder */}
           <Card className="card-chrome">
             <CardHeader>
-              <CardTitle className="text-xl text-steel-900">Recent Activity</CardTitle>
+              <CardTitle className="text-xl text-foreground">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-steel-500 italic">No recent activity found.</p>
+              <p className="text-muted-foreground italic">No recent activity found.</p>
             </CardContent>
           </Card>
 
           {/* Quick Actions */}
           <Card className="card-chrome">
             <CardHeader>
-              <CardTitle className="text-xl text-steel-900">Quick Actions</CardTitle>
+              <CardTitle className="text-xl text-foreground">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Link to="/post-job">
-                <Button variant="outline" className="w-full justify-start steel-button">Post a Job</Button>
+                <Button variant="outline" className="w-full justify-start">Post a Job</Button>
               </Link>
               <Link to="/manage-jobs">
                 <Button variant="outline" className="w-full justify-start">Manage Listings</Button>
@@ -97,7 +97,7 @@ export default function UserDashboard() {
         {user?.id && (
           <Card className="card-chrome mt-6">
             <CardHeader>
-              <CardTitle className="text-xl text-steel-900">Reviews</CardTitle>
+              <CardTitle className="text-xl text-foreground">Reviews</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoadingReviews ? (

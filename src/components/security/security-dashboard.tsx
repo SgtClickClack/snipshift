@@ -66,7 +66,7 @@ export function SecurityDashboard() {
                 <p className="text-sm text-muted-foreground mb-2">
                   {feature.description}
                 </p>
-                <p className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                <p className="text-xs font-mono bg-steel-100 dark:bg-steel-800 p-2 rounded">
                   {feature.details}
                 </p>
               </CardContent>

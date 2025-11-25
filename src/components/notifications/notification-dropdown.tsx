@@ -52,7 +52,7 @@ export default function NotificationDropdown({
       case 'job_completed':
         return 'bg-yellow-100 text-yellow-600';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-steel-100 text-steel-600';
     }
   };
 
@@ -114,9 +114,9 @@ export default function NotificationDropdown({
       <CardContent className="p-0">
         {notifications.length === 0 ? (
           <div className="text-center py-8 px-4">
-            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium mb-1">No notifications yet</p>
-            <p className="text-sm text-gray-400">
+            <Bell className="w-12 h-12 text-steel-300 mx-auto mb-3" />
+            <p className="text-steel-500 font-medium mb-1">No notifications yet</p>
+            <p className="text-sm text-steel-400">
               You'll see updates about jobs, messages, and social activity here
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function NotificationDropdown({
                 return (
                   <div
                     key={notification.id}
-                    className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-gray-50 border ${
+                    className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-steel-50 border ${
                       notification.isRead 
                         ? 'bg-white border-transparent' 
                         : 'bg-blue-50 border-blue-200'
@@ -148,10 +148,10 @@ export default function NotificationDropdown({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className={`text-sm font-semibold mb-1 ${notification.isRead ? 'text-gray-700' : 'text-gray-900'}`}>
+                            <p className={`text-sm font-semibold mb-1 ${notification.isRead ? 'text-steel-700' : 'text-steel-900'}`}>
                               {notification.title}
                             </p>
-                            <p className={`text-sm ${notification.isRead ? 'text-gray-600' : 'text-gray-900 font-medium'}`}>
+                            <p className={`text-sm ${notification.isRead ? 'text-steel-600' : 'text-steel-900 font-medium'}`}>
                               {notification.message}
                             </p>
                           </div>
@@ -162,7 +162,7 @@ export default function NotificationDropdown({
                         </div>
 
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-steel-500">
                             {getTimeDisplay(notification.createdAt)}
                           </span>
                         </div>

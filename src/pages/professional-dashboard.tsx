@@ -239,7 +239,7 @@ export default function ProfessionalDashboard() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'overview'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-overview"
             >
@@ -250,7 +250,7 @@ export default function ProfessionalDashboard() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'jobs'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-jobs"
             >
@@ -261,7 +261,7 @@ export default function ProfessionalDashboard() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'applications'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-applications"
             >
@@ -272,7 +272,7 @@ export default function ProfessionalDashboard() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeView === 'profile'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-profile"
             >

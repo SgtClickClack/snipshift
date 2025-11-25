@@ -28,7 +28,7 @@ export function GoogleAuthDemo() {
           <div className="bg-red-50 border border-red-200 rounded p-3 text-sm">
             <p><strong>Client ID is correct</strong> but still getting OAuth error. This suggests a domain mismatch.</p>
             <p className="mt-2"><strong>Double-check Google Cloud Console:</strong></p>
-            <div className="mt-2 p-2 bg-gray-100 rounded font-mono text-xs break-all">
+            <div className="mt-2 p-2 bg-steel-100 rounded font-mono text-xs break-all">
               https://b9c30b6a-0bb9-491f-8312-4ea2996a1e40-00-1z5x1ywkgc76h.picard.replit.dev
             </div>
             <ul className="list-disc pl-4 mt-2 space-y-1">
@@ -56,7 +56,7 @@ export function GoogleAuthDemo() {
           </div>
         </div>
 
-        <div className="p-4 bg-gray-50 rounded-lg">
+        <div className="p-4 bg-steel-50 rounded-lg">
           <h4 className="font-medium mb-2">Current Status:</h4>
           <div className="flex items-center gap-2">
             {hasGoogleClient ? (

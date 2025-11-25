@@ -124,17 +124,17 @@ export default function MultiStepJobForm({
           {[1, 2, 3].map((step) => (
             <div key={step} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step === currentStep 
+                  step === currentStep 
                   ? 'bg-primary text-white' 
                   : step < currentStep 
                     ? 'bg-green-500 text-white' 
-                    : 'bg-gray-200 text-gray-600'
+                    : 'bg-steel-200 text-steel-600'
               }`}>
                 {step < currentStep ? '✓' : step}
               </div>
               {step < 3 && (
                 <div className={`w-20 h-1 mx-2 ${
-                  step < currentStep ? 'bg-green-500' : 'bg-gray-200'
+                  step < currentStep ? 'bg-green-500' : 'bg-steel-200'
                 }`} />
               )}
             </div>

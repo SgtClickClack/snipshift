@@ -314,7 +314,7 @@ export default function HubDashboard() {
                             </p>
                           </div>
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            job.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            job.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-steel-100 text-steel-800'
                           }`}>
                             {job.status}
                           </span>

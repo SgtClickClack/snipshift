@@ -39,7 +39,7 @@ export default function PostCreationForm({
       case "trainer":
         return "bg-orange-100 text-orange-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-steel-100 text-steel-800";
     }
   };
 
@@ -82,10 +82,10 @@ export default function PostCreationForm({
       <Card className="w-full mb-6">
         <CardContent className="pt-6">
           <div className="text-center py-6">
-            <p className="text-gray-500 mb-2">
+            <p className="text-steel-500 mb-2">
               Social posting is currently available for Brands and Trainers.
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-steel-400">
               {userRole === "professional" && "Professionals can interact with posts and apply to jobs."}
               {userRole === "hub" && "Businesses can post jobs through the job posting feature."}
             </p>
@@ -121,7 +121,7 @@ export default function PostCreationForm({
               placeholder={`What's happening in the ${userRole === 'brand' ? 'brand' : 'training'} world?`}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[100px] resize-none border-0 bg-gray-50 focus:bg-white transition-colors"
+              className="min-h-[100px] resize-none border-0 bg-steel-50 focus:bg-white transition-colors"
               data-testid="textarea-post-content"
             />
 
@@ -130,7 +130,7 @@ export default function PostCreationForm({
               <div className="grid grid-cols-2 gap-2">
                 {images.map((image, index) => (
                   <div key={index} className="relative group">
-                    <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+                    <div className="aspect-square bg-steel-200 rounded-lg overflow-hidden">
                       <img
                         src={image}
                         alt={`Upload ${index + 1}`}
@@ -185,14 +185,14 @@ export default function PostCreationForm({
           </div>
 
           {/* Action Bar */}
-          <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-steel-100">
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowImageInput(!showImageInput)}
-                className="text-gray-600 hover:text-gray-700"
+                className="text-steel-600 hover:text-steel-700"
                 data-testid="button-add-image"
               >
                 <Image className="w-4 h-4 mr-1" />
@@ -204,7 +204,7 @@ export default function PostCreationForm({
                 variant="ghost"
                 size="sm"
                 onClick={simulateImageUpload}
-                className="text-gray-600 hover:text-gray-700"
+                className="text-steel-600 hover:text-steel-700"
                 data-testid="button-upload-image"
               >
                 <Image className="w-4 h-4 mr-1" />
@@ -213,7 +213,7 @@ export default function PostCreationForm({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-steel-400">
                 {content.length}/500
               </span>
               <Button

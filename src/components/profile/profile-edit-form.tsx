@@ -407,7 +407,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {formData.portfolio?.map((item) => (
                 <div key={item.id} className="border rounded-lg p-3" data-testid={`portfolio-item-${item.id}`}>
-                  <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden mb-2">
+                  <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2">
                     <img
                       src={item.imageURL}
                       alt={item.caption}
@@ -481,7 +481,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
                     </Avatar>
                     <div className="flex-1">
                       <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-gray-500">{member.role}</p>
+                      <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
                     <Button
                       type="button"

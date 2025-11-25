@@ -58,6 +58,7 @@ export async function createUser(
       email: userData.email,
       name: userData.name,
       role: userData.role || 'professional',
+      roles: [userData.role || 'professional'],
       passwordHash: userData.passwordHash || null,
       bio: null,
       phone: null,

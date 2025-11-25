@@ -71,14 +71,14 @@ export default function JobDetailsPage() {
     return <PageLoadingFallback />;
   }
 
-  if (error || !job) {
+    if (error || !job) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="card-chrome max-w-md">
           <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Job Not Found</h2>
-            <p className="text-neutral-600 mb-4">The job you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => navigate('/jobs')} className="steel-button">
+            <h2 className="text-xl font-bold text-error mb-2">Job Not Found</h2>
+            <p className="text-muted-foreground mb-4">The job you're looking for doesn't exist or has been removed.</p>
+            <Button onClick={() => navigate('/jobs')}>
               Back to Job Feed
             </Button>
           </CardContent>
@@ -91,13 +91,13 @@ export default function JobDetailsPage() {
   const hasLocation = job.lat && job.lng;
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Button */}
         <Button
           variant="ghost"
           onClick={() => navigate('/jobs')}
-          className="mb-4 text-steel-600 hover:text-steel-900"
+          className="mb-4 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Feed
@@ -109,18 +109,18 @@ export default function JobDetailsPage() {
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-4 mb-2">
-                  <h1 className="text-3xl md:text-4xl font-bold text-steel-900">{job.title}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold text-foreground">{job.title}</h1>
                   {user && (
-                    <ReportButton jobId={job.id} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50">
+                    <ReportButton jobId={job.id} variant="outline" size="sm" className="text-error border-error hover:bg-error/10">
                       <Flag className="h-4 w-4 mr-2" />
                       Report
                     </ReportButton>
                   )}
                 </div>
                 {job.shopName && (
-                  <p className="text-xl text-steel-600 mb-4">{job.shopName}</p>
+                  <p className="text-xl text-muted-foreground mb-4">{job.shopName}</p>
                 )}
-                <div className="flex items-center gap-2 text-lg font-semibold text-emerald-600">
+                <div className="flex items-center gap-2 text-lg font-semibold text-success">
                   <DollarSign className="h-5 w-5" />
                   <span>{job.rate || job.payRate || 'Rate TBD'}</span>
                 </div>
@@ -128,15 +128,15 @@ export default function JobDetailsPage() {
             </div>
 
             {/* Key Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-steel-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
               {job.location && (
-                <div className="flex items-start gap-2 text-steel-600">
+                <div className="flex items-start gap-2 text-muted-foreground">
                   <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <span>{job.location}</span>
                 </div>
               )}
               {(job.date || job.startTime || job.endTime) && (
-                <div className="flex items-start gap-2 text-steel-600">
+                <div className="flex items-start gap-2 text-muted-foreground">
                   <Clock className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <div>
                     {job.date && <div>{job.date}</div>}
@@ -154,8 +154,8 @@ export default function JobDetailsPage() {
         {job.description && (
           <Card className="card-chrome mb-6">
             <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-steel-900 mb-4">Description</h2>
-              <p className="text-steel-700 whitespace-pre-wrap">{job.description}</p>
+              <h2 className="text-xl font-bold text-foreground mb-4">Description</h2>
+              <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
             </CardContent>
           </Card>
         )}
@@ -164,8 +164,8 @@ export default function JobDetailsPage() {
         {requirements.length > 0 && (
           <Card className="card-chrome mb-6">
             <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-steel-900 mb-4">Requirements</h2>
-              <ul className="list-disc list-inside space-y-2 text-steel-700">
+              <h2 className="text-xl font-bold text-foreground mb-4">Requirements</h2>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 {requirements.map((req, index) => (
                   <li key={index}>{req}</li>
                 ))}
@@ -178,8 +178,8 @@ export default function JobDetailsPage() {
         {hasLocation && (
           <Card className="card-chrome mb-6">
             <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-steel-900 mb-4">Location</h2>
-              <div className="h-64 rounded-lg overflow-hidden border border-steel-200">
+              <h2 className="text-xl font-bold text-foreground mb-4">Location</h2>
+              <div className="h-64 rounded-lg overflow-hidden border border-border">
                 <GoogleMapView
                   jobs={[job]}
                   onJobSelect={() => {}}
@@ -194,11 +194,11 @@ export default function JobDetailsPage() {
         )}
 
         {/* Apply Button - Sticky on mobile, prominent on desktop */}
-        <div className="sticky bottom-0 bg-neutral-50 border-t border-steel-200 p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6">
+        <div className="sticky bottom-0 bg-background border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6">
           <Card className="card-chrome md:shadow-lg">
             <CardContent className="p-6">
               {applicationState === 'applied' ? (
-                <div className="flex items-center justify-center gap-2 text-emerald-600">
+                <div className="flex items-center justify-center gap-2 text-success">
                   <CheckCircle2 className="h-5 w-5" />
                   <span className="font-semibold">Application Submitted Successfully!</span>
                 </div>
@@ -206,7 +206,7 @@ export default function JobDetailsPage() {
                 <Button
                   onClick={handleApply}
                   disabled={applicationState === 'applying'}
-                  className="w-full steel-button text-lg py-6"
+                  className="w-full text-lg py-6"
                   size="lg"
                 >
                   {applicationState === 'applying' ? 'Applying...' : 'Apply Now'}

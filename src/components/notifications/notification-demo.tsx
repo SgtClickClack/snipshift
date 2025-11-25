@@ -30,7 +30,7 @@ export default function NotificationDemo() {
     { value: 'post_like', label: 'Post Like', icon: Heart, color: 'bg-red-100 text-red-800' },
     { value: 'new_comment', label: 'New Comment', icon: MessageSquare, color: 'bg-purple-100 text-purple-800' },
     { value: 'job_posted', label: 'Job Posted', icon: Briefcase, color: 'bg-orange-100 text-orange-800' },
-    { value: 'profile_view', label: 'Profile View', icon: Users, color: 'bg-gray-100 text-gray-800' },
+    { value: 'profile_view', label: 'Profile View', icon: Users, color: 'bg-steel-100 text-steel-800' },
   ];
 
   const recentNotifications = notifications.slice(0, 5);
@@ -39,11 +39,11 @@ export default function NotificationDemo() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
+        <h1 className="text-3xl font-bold text-steel-900 mb-2 flex items-center justify-center gap-2">
           <Bell className="w-8 h-8 text-primary" />
           Notification System Demo
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
+        <p className="text-steel-600 max-w-2xl mx-auto">
           Experience Snipshift's real-time notification system that keeps users connected to important 
           platform activities including job applications, messages, and social interactions.
         </p>
@@ -54,19 +54,19 @@ export default function NotificationDemo() {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600 mb-1">{notifications.length}</div>
-            <div className="text-sm text-gray-600">Total Notifications</div>
+            <div className="text-sm text-steel-600">Total Notifications</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-red-600 mb-1">{unreadCount}</div>
-            <div className="text-sm text-gray-600">Unread</div>
+            <div className="text-sm text-steel-600">Unread</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600 mb-1">{readNotifications}</div>
-            <div className="text-sm text-gray-600">Read</div>
+            <div className="text-sm text-steel-600">Read</div>
           </CardContent>
         </Card>
         <Card>
@@ -74,7 +74,7 @@ export default function NotificationDemo() {
             <div className="text-2xl font-bold text-purple-600 mb-1">
               {Math.round((readNotifications / notifications.length) * 100) || 0}%
             </div>
-            <div className="text-sm text-gray-600">Engagement</div>
+            <div className="text-sm text-steel-600">Engagement</div>
           </CardContent>
         </Card>
       </div>
@@ -188,8 +188,8 @@ export default function NotificationDemo() {
           </CardHeader>
           <CardContent>
             {recentNotifications.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <div className="text-center py-8 text-steel-500">
+                <Bell className="w-12 h-12 text-steel-300 mx-auto mb-3" />
                 <p>No notifications yet</p>
                 <p className="text-sm">Click "Simulate Random Notification" to see the system in action</p>
               </div>
@@ -202,7 +202,7 @@ export default function NotificationDemo() {
                   return (
                     <div
                       key={notification.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:bg-gray-50 ${
+                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:bg-steel-50 ${
                         notification.isRead ? 'bg-white' : 'bg-blue-50 border-blue-200'
                       }`}
                       onClick={() => handleNotificationClick(notification.id)}
@@ -221,10 +221,10 @@ export default function NotificationDemo() {
                               <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 line-clamp-2">
+                          <p className="text-sm text-steel-600 line-clamp-2">
                             {notification.message}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-steel-400 mt-1">
                             {new Date(notification.timestamp).toLocaleString()}
                           </p>
                         </div>
@@ -235,10 +235,10 @@ export default function NotificationDemo() {
                 
                 {notifications.length > 5 && (
                   <div className="text-center pt-3 border-t">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-steel-500">
                       +{notifications.length - 5} more notifications
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-steel-400">
                       Click the bell icon in the navbar to view all
                     </p>
                   </div>
@@ -265,7 +265,7 @@ export default function NotificationDemo() {
                   </div>
                   <div>
                     <div className="font-medium text-sm">{type.label}</div>
-                    <div className="text-xs text-gray-500 capitalize">
+                    <div className="text-xs text-steel-500 capitalize">
                       {type.value.replace('_', ' ')}
                     </div>
                   </div>
@@ -284,8 +284,8 @@ export default function NotificationDemo() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Core Features</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <h4 className="font-semibold text-steel-900 mb-3">Core Features</h4>
+              <ul className="space-y-2 text-sm text-steel-600">
                 <li>✓ Real-time notification badge with unread count</li>
                 <li>✓ Interactive dropdown with notification list</li>
                 <li>✓ Mark individual or all notifications as read</li>
@@ -295,8 +295,8 @@ export default function NotificationDemo() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Notification Triggers</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <h4 className="font-semibold text-steel-900 mb-3">Notification Triggers</h4>
+              <ul className="space-y-2 text-sm text-steel-600">
                 <li>→ New job applications received</li>
                 <li>→ Incoming direct messages</li>
                 <li>→ Social post likes and comments</li>

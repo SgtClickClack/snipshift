@@ -215,7 +215,7 @@ export default function MapView({
                     x={marker.x}
                     y={marker.y + 25}
                     textAnchor="middle"
-                    className="text-xs font-medium fill-slate-700 pointer-events-none"
+                    className="text-xs font-medium fill-steel-700 pointer-events-none"
                     opacity={hoveredMarker === marker.id ? 1 : 0.7}
                   >
                     ${marker.job.payRate}
