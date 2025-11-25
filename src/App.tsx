@@ -27,6 +27,7 @@ import { OAuthCallback } from '@/pages/oauth-callback';
 import RoleSelectionPage from '@/pages/role-selection';
 import OnboardingPage from '@/pages/onboarding';
 import HubOnboardingPage from '@/pages/onboarding/hub';
+import ProfessionalOnboardingPage from '@/pages/onboarding/professional';
 import TermsPage from '@/pages/legal/terms';
 import PrivacyPage from '@/pages/legal/privacy';
 import AboutPage from '@/pages/company/about';
@@ -127,6 +128,12 @@ function AppRoutes() {
         <Route path="/onboarding/hub" element={
           <AuthGuard requireAuth={true}>
             <HubOnboardingPage />
+          </AuthGuard>
+        } />
+
+        <Route path="/onboarding/professional" element={
+          <AuthGuard requireAuth={true}>
+            <ProfessionalOnboardingPage />
           </AuthGuard>
         } />
 

@@ -1,0 +1,171 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { LocationInput } from '@/components/ui/location-input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { SEO } from '@/components/seo/SEO';
+import { User } from 'lucide-react';
+
+export default function ProfessionalOnboardingPage() {
+  const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    displayName: user?.displayName || '',
+    location: user?.location || '',
+    profession: 'Barber', // Default profession
+    bio: user?.bio || '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await apiRequest('POST', '/api/users/role', {
+        role: 'professional',
+        shopName: formData.displayName, // Reusing shopName field to pass display name update
+        location: formData.location,
+        description: `${formData.profession}\n\n${formData.bio}`, // Combine profession and bio
+      });
+
+      if (!response.ok) {
+         // Try to parse error
+         try {
+             const error = await response.json();
+             throw new Error(error.message || 'Failed to create professional profile');
+         } catch (e) {
+             if (e instanceof Error) {
+               throw e;
+             }
+             throw new Error('Failed to create professional profile');
+         }
+      }
+
+      toast({
+        title: "Professional Profile Created",
+        description: "Your profile has been successfully updated.",
+        variant: "default",
+      });
+
+      if (refreshUser) {
+        await refreshUser();
+      }
+      
+      // Redirect to professional dashboard
+      navigate('/professional-dashboard');
+
+    } catch (error: any) {
+      console.error('Onboarding error:', error);
+      toast({
+        title: 'Setup Failed',
+        description: error.message || 'Failed to complete setup. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <SEO
+        title="Create Professional Profile"
+        description="Setup your professional profile on SnipShift."
+        url="/onboarding/professional"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-xl">
+          <Card className="card-chrome">
+            <CardHeader className="text-center">
+               <div className="mx-auto w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                  <User className="h-6 w-6 text-white" />
+               </div>
+              <CardTitle className="text-2xl text-steel-900">Create Professional Profile</CardTitle>
+              <CardDescription>
+                Tell us about yourself to start finding work
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="displayName" className="text-steel-700">Display Name *</Label>
+                  <Input
+                    id="displayName"
+                    name="displayName"
+                    value={formData.displayName}
+                    onChange={handleChange}
+                    placeholder="e.g. John Doe"
+                    required
+                    className="bg-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profession" className="text-steel-700">Profession *</Label>
+                  <Input
+                    id="profession"
+                    name="profession"
+                    value={formData.profession}
+                    onChange={handleChange}
+                    placeholder="e.g. Barber, Stylist, etc."
+                    required
+                    className="bg-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-steel-700">Location *</Label>
+                  <LocationInput
+                    value={formData.location}
+                    onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
+                    placeholder="City, State or Address"
+                    className="bg-white"
+                  />
+                  <p className="text-xs text-steel-500">
+                    This helps us show you relevant job opportunities.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bio" className="text-steel-700">Bio / Experience</Label>
+                  <Textarea
+                    id="bio"
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleChange}
+                    placeholder="Tell us about your experience..."
+                    rows={4}
+                    className="bg-white"
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Creating Profile...' : 'Create Professional Profile'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
+
