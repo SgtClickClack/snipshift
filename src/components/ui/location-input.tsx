@@ -52,10 +52,6 @@ const PlacesAutocompleteInternal = ({
 
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    console.log('LocationInput Debug:', { ready, status, dataLength: data.length, inputValue });
-  }, [ready, status, data.length, inputValue]);
-
   // Sync with parent value if it changes externally
   useEffect(() => {
     if (value !== inputValue) {

@@ -202,7 +202,7 @@ export default function MapView({
                     cx={marker.x}
                     cy={marker.y}
                     r={hoveredMarker === marker.id ? "12" : "8"}
-                    fill={selectedJob?.id === marker.id ? "#ef4444" : "#10b981"}
+                    fill={selectedJob?.id === marker.id ? "hsl(var(--destructive))" : "hsl(var(--success))"}
                     stroke="#ffffff"
                     strokeWidth="2"
                     className="cursor-pointer transition-all duration-200"
@@ -312,11 +312,11 @@ export default function MapView({
                   <span>Your Location</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
+                  <div className="w-4 h-4 rounded-full bg-success border-2 border-white"></div>
                   <span>Available Job</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white"></div>
+                  <div className="w-4 h-4 rounded-full bg-destructive border-2 border-white"></div>
                   <span>Selected Job</span>
                 </div>
               </div>

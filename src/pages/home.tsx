@@ -47,7 +47,7 @@ export default function HomePage() {
       };
       
       const targetDashboard = dashboardMap[role];
-      console.log('🎯 Navigating to dashboard:', targetDashboard);
+      // console.log('🎯 Navigating to dashboard:', targetDashboard);
       setTimeout(() => navigate(targetDashboard), 100); // Small delay to ensure state update
       
     } catch (error) {

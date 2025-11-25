@@ -31,7 +31,7 @@ export default function SignupPage() {
     
     // Handle OAuth callback if code is present
     if (code && state) {
-      console.log('🔄 OAuth callback detected on signup page');
+      // console.log('🔄 OAuth callback detected on signup page');
       try {
         // Create mock Google user with client role (universal signup)
         const mockUser = {
@@ -114,7 +114,7 @@ export default function SignupPage() {
         profileImage: userData.profileImage || '',
       };
       
-      console.log('🔧 New user created:', newUser); // Debug log
+      // console.log('🔧 New user created:', newUser); // Debug log
       login(newUser);
       
       toast({

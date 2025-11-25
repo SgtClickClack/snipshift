@@ -70,7 +70,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       eventSource = new EventSource(url);
 
       eventSource.onopen = () => {
-        console.log('SSE Connected');
+        // console.log('SSE Connected');
       };
 
       eventSource.onmessage = (event) => {

@@ -51,7 +51,6 @@ export function FeedbackWidget() {
 
     try {
       // In a real app, this would send to your feedback API
-      console.log("Feedback submitted:", feedbackData);
       
       // Store locally for now (in production, send to server)
       const existingFeedback = JSON.parse(localStorage.getItem("user-feedback") || "[]");

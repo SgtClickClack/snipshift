@@ -165,7 +165,6 @@ export default function NotificationDemo() {
                 <Button
                   onClick={() => {
                     // Create custom notification logic would go here
-                    console.log("Custom notification:", customNotification);
                     simulateNewNotification();
                   }}
                   disabled={!customNotification.senderName || !customNotification.message}

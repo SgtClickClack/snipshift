@@ -77,7 +77,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     
     try {
       // Here you would typically save to your backend
-      console.log('Saving profile data:', formData);
+      // console.log('Saving profile data:', formData);
       
       toast({
         title: "Profile updated",

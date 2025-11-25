@@ -12,7 +12,7 @@ export function OAuthCallback() {
   useEffect(() => {
     const handleOAuthCallback = async () => {
       try {
-        console.log('🔄 Processing OAuth callback');
+        // console.log('🔄 Processing OAuth callback');
         
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
@@ -27,8 +27,8 @@ export function OAuthCallback() {
           throw new Error('No authorization code received');
         }
 
-        console.log('✅ Authorization code received:', code.substring(0, 20) + '...');
-        console.log('✅ State received:', state);
+        // console.log('✅ Authorization code received:', code.substring(0, 20) + '...');
+        // console.log('✅ State received:', state);
         
         // MVP: register (idempotent) and then login to establish a server session
         const googleId = `google_${Date.now()}`;
@@ -50,7 +50,7 @@ export function OAuthCallback() {
         // Login to create session cookie
         const res = await apiRequest('POST', '/api/login', { email, googleId });
         const userData = await res.json();
-        console.log('🔧 Logging in user:', userData);
+        // console.log('🔧 Logging in user:', userData);
         login({
           id: userData.id,
           email: userData.email,
@@ -70,7 +70,7 @@ export function OAuthCallback() {
           description: "Successfully signed in with Google! Choose your role to continue.",
         });
 
-        console.log('🎯 Navigating to role selection');
+        // console.log('🎯 Navigating to role selection');
         navigate('/role-selection');
         
       } catch (error) {
