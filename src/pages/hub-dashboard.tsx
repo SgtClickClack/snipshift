@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, MessageCircle, Calendar, DollarSign, Users } from "lucide-react";
+import { Plus, MessageCircle, Calendar, DollarSign, Users, Scissors, FileText, MessageSquare, Handshake } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import { format } from "date-fns";
 // Remove missing component imports - will implement inline
@@ -211,8 +211,8 @@ export default function HubDashboard() {
               <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50 hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-3 shadow-md">
-                      <Plus className="h-6 w-6 text-white" />
+                    <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-3 shadow-md">
+                      <Scissors className="h-6 w-6 text-white" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Open Jobs</p>
@@ -224,8 +224,8 @@ export default function HubDashboard() {
               <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50 hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-3 shadow-md">
-                      <Users className="h-6 w-6 text-white" />
+                    <div className="rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 p-3 shadow-md">
+                      <FileText className="h-6 w-6 text-white" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Applications</p>
@@ -237,8 +237,8 @@ export default function HubDashboard() {
               <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50 hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 p-3 shadow-md">
-                      <MessageCircle className="h-6 w-6 text-white" />
+                    <div className="rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 p-3 shadow-md">
+                      <MessageSquare className="h-6 w-6 text-white" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Messages</p>
@@ -250,8 +250,8 @@ export default function HubDashboard() {
               <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-steel-300/50 hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="rounded-lg bg-gradient-to-br from-red-accent to-red-accent-hover p-3 shadow-md">
-                      <DollarSign className="h-6 w-6 text-white" />
+                    <div className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-3 shadow-md">
+                      <Handshake className="h-6 w-6 text-white" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-muted-foreground">Monthly Hires</p>
