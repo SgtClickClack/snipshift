@@ -274,12 +274,12 @@ export default function LocationSearch({
                 variant={currentLocation === city ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleLocationSelect(city)}
-                className="justify-between"
+                className="w-full flex items-center gap-2 justify-between px-3 py-2"
                 data-testid={`quick-location-${city.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                {city}
+                <span className="truncate">{city}</span>
                 <Heart
-                  className={`h-3 w-3 ml-1 ${
+                  className={`h-3 w-3 flex-shrink-0 ${
                     isFavorite(city)
                       ? "fill-red-500 text-red-500"
                       : "text-muted-foreground"

@@ -122,7 +122,7 @@ export function JobFilters({ className }: JobFiltersProps) {
     <div className="space-y-6">
       {/* Search Bar */}
       <div className="space-y-2">
-        <Label htmlFor="search" className="text-steel-700 flex items-center gap-2">
+          <Label htmlFor="search" className="text-foreground flex items-center gap-2">
           <Search className="h-4 w-4" />
           Search Jobs
         </Label>
@@ -132,13 +132,13 @@ export function JobFilters({ className }: JobFiltersProps) {
           placeholder="Search by title or description..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-white border-steel-200 focus:border-primary"
+          className="bg-background border-border focus:border-primary"
         />
       </div>
 
       {/* Pay Rate Range */}
       <div className="space-y-3">
-        <Label className="text-steel-700 flex items-center gap-2">
+        <Label className="text-foreground flex items-center gap-2">
           <DollarSign className="h-4 w-4" />
           Pay Rate ($/hr)
         </Label>
@@ -154,7 +154,7 @@ export function JobFilters({ className }: JobFiltersProps) {
             step={5}
             className="w-full"
           />
-          <div className="flex justify-between text-sm text-steel-600">
+          <div className="flex justify-between text-sm text-muted-foreground">
             <span>${minRate}/hr</span>
             <span>${maxRate}/hr</span>
           </div>
@@ -163,7 +163,7 @@ export function JobFilters({ className }: JobFiltersProps) {
 
       {/* Date Range */}
       <div className="space-y-2">
-        <Label className="text-steel-700 flex items-center gap-2">
+        <Label className="text-foreground flex items-center gap-2">
           <CalendarIcon className="h-4 w-4" />
           Date Range
         </Label>
@@ -172,7 +172,7 @@ export function JobFilters({ className }: JobFiltersProps) {
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal bg-white border-steel-200",
+                "w-full justify-start text-left font-normal bg-background border-border",
                 !dateRange.from && "text-muted-foreground"
               )}
             >
@@ -214,7 +214,7 @@ export function JobFilters({ className }: JobFiltersProps) {
           />
           <Label
             htmlFor="nearbyOnly"
-            className="text-steel-700 flex items-center gap-2 cursor-pointer"
+            className="text-foreground flex items-center gap-2 cursor-pointer"
           >
             <MapPin className="h-4 w-4" />
             Nearby Only
@@ -222,7 +222,7 @@ export function JobFilters({ className }: JobFiltersProps) {
         </div>
         {nearbyOnly && (
           <div className="ml-6 space-y-2">
-            <Label className="text-steel-600 text-sm">Radius (km)</Label>
+            <Label className="text-muted-foreground text-sm">Radius (km)</Label>
             <Slider
               value={[radius]}
               onValueChange={([value]) => setRadius(value)}
@@ -231,7 +231,7 @@ export function JobFilters({ className }: JobFiltersProps) {
               step={5}
               className="w-full"
             />
-            <div className="text-sm text-steel-600">{radius} km</div>
+            <div className="text-sm text-muted-foreground">{radius} km</div>
           </div>
         )}
       </div>
@@ -241,7 +241,7 @@ export function JobFilters({ className }: JobFiltersProps) {
         <Button
           variant="outline"
           onClick={clearFilters}
-          className="w-full border-steel-200 text-steel-700 hover:bg-steel-50"
+          className="w-full border-border text-foreground hover:bg-muted"
         >
           <X className="h-4 w-4 mr-2" />
           Clear All Filters
@@ -272,7 +272,7 @@ export function JobFilters({ className }: JobFiltersProps) {
               )}
             </Button>
           </DrawerTrigger>
-          <DrawerContent className="bg-steel-50">
+          <DrawerContent className="bg-background">
             <DrawerHeader>
               <DrawerTitle>Filter Jobs</DrawerTitle>
             </DrawerHeader>
@@ -280,7 +280,7 @@ export function JobFilters({ className }: JobFiltersProps) {
               {filterContent}
             </div>
             <DrawerFooter>
-              <Button onClick={() => setDrawerOpen(false)} className="steel-button">
+              <Button onClick={() => setDrawerOpen(false)} className="w-full">
                 Apply Filters
               </Button>
             </DrawerFooter>
@@ -291,16 +291,16 @@ export function JobFilters({ className }: JobFiltersProps) {
   }
 
   return (
-    <Card className={cn("card-chrome sticky top-4", className)}>
+    <Card className={cn("sticky top-4 bg-card text-card-foreground", className)}>
       <CardHeader>
-        <CardTitle className="text-lg text-steel-900 flex items-center justify-between">
+        <CardTitle className="text-lg text-foreground flex items-center justify-between">
           <span>Filters</span>
           {hasActiveFilters && (
             <Button
               variant="ghost"
               size="sm"
               onClick={clearFilters}
-              className="h-6 w-6 p-0 text-steel-500 hover:text-steel-900"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </Button>
