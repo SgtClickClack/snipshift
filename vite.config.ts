@@ -99,7 +99,7 @@ export default defineConfig({
   // See src/config/env.ts for centralized access to these variables
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'react/jsx-runtime', 'use-places-autocomplete'],
-    force: true,
+    force: true, // Force dependency pre-bundling
   },
   server: {
     port: 3002,

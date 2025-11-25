@@ -102,7 +102,7 @@ const PlacesAutocompleteInternal = ({
         </div>
       </PopoverTrigger>
       <PopoverContent 
-        className="p-0 w-[300px]"
+        className="p-0 w-[300px] bg-white dark:bg-slate-950 border border-border shadow-lg z-[100]"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >

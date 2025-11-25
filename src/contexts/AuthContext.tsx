@@ -205,10 +205,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
-      const token = await firebaseUser.getIdToken();
+      // Force refresh token to ensure we have latest claims/session
+      const token = await firebaseUser.getIdToken(true);
       const res = await fetch('/api/me', {
+        cache: 'no-store',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
         }
       });
       

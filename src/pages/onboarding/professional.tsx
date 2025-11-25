@@ -14,7 +14,7 @@ import { SEO } from '@/components/seo/SEO';
 import { User } from 'lucide-react';
 
 export default function ProfessionalOnboardingPage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,6 +61,17 @@ export default function ProfessionalOnboardingPage() {
         description: "Your profile has been successfully updated.",
         variant: "default",
       });
+
+      const updatedUser = await response.json();
+
+      // Manually update user state with response to ensure immediate UI update
+      if (login && updatedUser) {
+        login({
+          ...updatedUser,
+          createdAt: updatedUser.createdAt ? new Date(updatedUser.createdAt) : new Date(),
+          updatedAt: updatedUser.updatedAt ? new Date(updatedUser.updatedAt) : new Date(),
+        });
+      }
 
       // Force token refresh to get updated claims/roles
       if (auth.currentUser) {
