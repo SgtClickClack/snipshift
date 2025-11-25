@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, MessageCircle, Calendar, DollarSign, Users, Scissors, FileText, MessageSquare, Handshake } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, Scissors, FileText, MessageSquare, Handshake } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import { format } from "date-fns";
 // Remove missing component imports - will implement inline
@@ -138,7 +138,7 @@ export default function HubDashboard() {
                 className="bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
                 data-testid="button-open-messages"
               >
-                <MessageCircle className="mr-2 h-4 w-4" />
+                <MessageSquare className="mr-2 h-4 w-4" />
                 Messages
               </Button>
               <Button 
@@ -291,7 +291,7 @@ export default function HubDashboard() {
                       className="w-full justify-start"
                       variant="outline"
                     >
-                      <MessageCircle className="mr-2 h-4 w-4" />
+                      <MessageSquare className="mr-2 h-4 w-4" />
                       Open Messages
                     </Button>
                   </div>

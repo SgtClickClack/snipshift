@@ -2,14 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Briefcase, 
-  Users, 
-  MessageCircle, 
-  Eye, 
+  Users,
+  Eye,
   Heart, 
   TrendingUp,
   Calendar,
   Award,
-  Star
+  Star,
+  Scissors,
+  FileText,
+  MessageSquare,
+  Handshake
 } from 'lucide-react';
 
 interface DashboardStatsProps {
@@ -27,30 +30,34 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
           {
             title: 'Open Jobs',
             value: stats.openJobs || 0,
-            icon: Briefcase,
+            icon: Scissors,
             description: 'Active job postings',
-            color: 'text-blue-600'
+            color: 'text-blue-600',
+            gradient: 'from-blue-500 to-blue-600'
           },
           {
             title: 'Applications',
             value: stats.totalApplications || 0,
-            icon: Users,
+            icon: FileText,
             description: 'Total applications received',
-            color: 'text-green-600'
+            color: 'text-purple-600',
+            gradient: 'from-purple-500 to-purple-600'
           },
           {
             title: 'Messages',
             value: stats.unreadMessages || 0,
-            icon: MessageCircle,
+            icon: MessageSquare,
             description: 'Unread messages',
-            color: 'text-orange-600'
+            color: 'text-indigo-600',
+            gradient: 'from-indigo-500 to-indigo-600'
           },
           {
             title: 'This Month',
             value: stats.monthlyHires || 0,
-            icon: Award,
+            icon: Handshake,
             description: 'Successful hires',
-            color: 'text-purple-600'
+            color: 'text-green-600',
+            gradient: 'from-green-500 to-green-600'
           }
         ];
       
@@ -73,7 +80,7 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
           {
             title: 'Messages',
             value: stats.unreadMessages || 0,
-            icon: MessageCircle,
+            icon: MessageSquare,
             description: 'Unread messages',
             color: 'text-orange-600'
           },
@@ -113,7 +120,7 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
           {
             title: 'Inquiries',
             value: stats.inquiries || 0,
-            icon: MessageCircle,
+            icon: MessageSquare,
             description: 'Product inquiries',
             color: 'text-orange-600'
           }
@@ -173,7 +180,7 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
           <Card key={index} className="bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300" data-testid={`stat-card-${index}`}>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className={`rounded-lg bg-gradient-to-br ${gradientColors[index]} p-3 shadow-md`}>
+                <div className={`rounded-lg bg-gradient-to-br ${(stat as any).gradient || gradientColors[index % gradientColors.length]} p-3 shadow-md`}>
                   <stat.icon className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
