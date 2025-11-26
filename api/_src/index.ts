@@ -4,6 +4,17 @@
  * RESTful API server with PostgreSQL database integration via Drizzle ORM
  */
 
+// CRITICAL: Load environment variables FIRST before any other imports
+import * as dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env file from current directory (api/.env)
+dotenv.config();
+// Also try loading from parent directory (root .env) if not found
+if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+  dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+}
+
 // Import express-async-errors FIRST to catch async errors automatically
 import 'express-async-errors';
 

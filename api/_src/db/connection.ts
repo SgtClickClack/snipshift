@@ -63,6 +63,16 @@ export function getDatabase(): Pool | null {
     return null;
   }
 
+  // CRITICAL: Force PostgreSQL - reject any non-PostgreSQL URLs
+  if (!databaseUrl.startsWith('postgresql://') && !databaseUrl.startsWith('postgres://')) {
+    console.error('[DB] ❌ CRITICAL ERROR: DATABASE_URL must be a PostgreSQL connection string.');
+    console.error('[DB] ❌ Invalid URL format. Expected: postgresql:// or postgres://');
+    console.error('[DB] ❌ Current URL starts with:', databaseUrl.substring(0, 20));
+    console.error('[DB] ❌ This prevents SQLite fallback. Aborting database initialization.');
+    isInitialized = true;
+    return null;
+  }
+
   try {
     pool = new Pool({
       connectionString: databaseUrl,
