@@ -148,8 +148,8 @@ export function TutorialOverlay() {
   if (!isVisible || !currentStepData) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" data-testid="tutorial-overlay">
-      <div className="absolute inset-0 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm pointer-events-none" data-testid="tutorial-overlay">
+      <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-auto">
         <Card className="w-full max-w-md bg-white dark:bg-steel-900 shadow-xl">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">

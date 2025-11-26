@@ -86,7 +86,8 @@ export function InstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[100] animate-in slide-in-from-bottom-5 bg-steel-900 text-white rounded-lg shadow-xl border border-steel-700 p-4 flex items-center gap-3">
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[100] animate-in slide-in-from-bottom-5 pointer-events-none">
+      <div className="bg-steel-900 text-white rounded-lg shadow-xl border border-steel-700 p-4 flex items-center gap-3 pointer-events-auto">
         <div className="flex-1">
           <p className="font-semibold text-sm mb-1">Install Snipshift</p>
           <p className="text-xs text-steel-300">
@@ -111,6 +112,7 @@ export function InstallPrompt() {
             <X className="h-4 w-4" />
           </Button>
         </div>
+      </div>
     </div>
   );
 }
