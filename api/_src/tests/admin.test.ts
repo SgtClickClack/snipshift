@@ -1,29 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import supertest from 'supertest';
-import app from '../index';
+// app import moved to beforeEach to allow mocks to apply
 
 // Mock Auth Middleware
-vi.mock('../middleware/auth.js', () => ({
-  authenticateUser: vi.fn((req, res, next) => {
-    const role = req.headers['x-role'] || 'professional';
-    req.user = {
-      id: 'user-123',
-      email: 'test@example.com',
-      name: 'Test User',
-      role: role,
-      uid: 'firebase-uid-123',
-    };
+const mockAuthUser = vi.fn((req, res, next) => {
+  const role = req.headers['x-role'] || 'professional';
+  req.user = {
+    id: 'user-123',
+    email: 'test@example.com',
+    name: 'Test User',
+    role: role,
+    uid: 'firebase-uid-123',
+  };
+  next();
+});
+
+const mockRequireAdmin = vi.fn((req, res, next) => {
+  if (req.user?.role === 'admin') {
     next();
-  }),
-  requireAdmin: vi.fn((req, res, next) => {
-    if (req.user?.role === 'admin') {
-      next();
-    } else {
-      res.status(403).json({ message: 'Forbidden' });
-    }
-  }),
+  } else {
+    res.status(403).json({ message: 'Forbidden' });
+  }
+});
+
+const mockAuthMiddleware = {
+  authenticateUser: mockAuthUser,
+  requireAdmin: mockRequireAdmin,
   AuthenticatedRequest: {},
-}));
+};
+
+vi.mock('../middleware/auth.js', () => mockAuthMiddleware);
+vi.mock('../middleware/auth', () => mockAuthMiddleware);
+vi.mock('../middleware/auth.ts', () => mockAuthMiddleware);
 
 // Mock Firebase Admin
 vi.mock('firebase-admin', () => ({
@@ -82,8 +90,13 @@ vi.mock('../config/firebase.js', () => ({
 }));
 
 describe('Admin Routes', () => {
-  beforeEach(() => {
+  let app: any;
+
+  beforeEach(async () => {
+    vi.resetModules();
     vi.clearAllMocks();
+    const index = await import('../index.js');
+    app = index.default;
   });
 
   describe('Security Checks (Red Path)', () => {

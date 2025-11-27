@@ -66,7 +66,11 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]" data-testid="google-signup-modal">
+      <DialogContent 
+        className="sm:max-w-[500px] !bg-white" 
+        style={{ backgroundColor: '#ffffff', opacity: 1 }} 
+        data-testid="google-signup-modal"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             {userData.picture && (

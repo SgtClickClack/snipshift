@@ -2,13 +2,32 @@
 
 ## Status Overview
 
-**Date:** November 24, 2025
+**Date:** November 25, 2025
 **Project:** Snipshift API
 **Test Runner:** Vitest (configured with `@vitest/coverage-v8`)
-**Current Health:** ✅ **Stable**. Global Error Handling verified. Critical path tests passing.
-**Overall Coverage:** **36.91%** (Lines).
+**Current Health:** ⚠️ **Attention Needed**. Core critical paths passed in previous runs, but v1.3.0 updates introduced regression in test stability (mocking issues).
+**Overall Coverage:** **Unknown** (Last valid run: 36.91%). Current runs failing due to ESM mocking constraints.
 
-## Coverage Breakdown
+## v1.3.0 Post-Release Audit (New)
+
+**Goal:** Verify coverage for Real-time Notifications (SSE), Auth Query Params, and Mobile adjustments.
+
+| Feature Area | File(s) | Status | Coverage Gap / Risk |
+| :--- | :--- | :--- | :--- |
+| **Real-time Notifications** | `_src/routes/notifications.ts` | 🔴 Failing | **High**. New route file. Tests implemented but failing due to auth mock issues. No verified coverage. |
+| **Notification Logic** | `_src/services/notification.service.ts` | 🔴 Failing | **Medium**. Existing tests failing due to persistent DB connection attempts (mocking failure). |
+| **Auth Query Params** | `_src/middleware/auth.ts` | ⚠️ Partial | **Low**. `authenticateUser` logic for `req.query.token` is not explicitly unit tested. `admin.test.ts` mocks this middleware, bypassing the logic. |
+| **Notifications Repo** | `_src/repositories/notifications.repository.ts` | ⚠️ Untested | **Medium**. Listed as 0% in previous audit. Still 0% as new tests fail to mock it or integration tests are missing. |
+
+### Findings & Recommendations
+1.  **Mocking Architecture**: The current `vi.mock` strategy with relative ESM imports is fragile. Tests for `notification.service.ts` and `admin.test.ts` are hitting real dependencies (DB/Auth), causing failures.
+    *   *Recommendation*: Refactor to Dependency Injection or use `__mocks__` directory pattern for robust mocking of Repositories and Middleware.
+2.  **Auth Middleware**: New support for `req.query.token` (used by SSE) is crucial but verified only by inspection.
+    *   *Recommendation*: Create `_src/tests/unit/auth.middleware.test.ts` to test `authenticateUser` in isolation.
+3.  **SSE Routes**: `GET /stream` logic involves event emitters.
+    *   *Recommendation*: Ensure `notificationBus` is properly mocked to verify event subscription/unsubscription without leaks.
+
+## Coverage Breakdown (Previous Stable)
 
 | File/Module | Coverage (Lines) | Status |
 |-------------|------------------|--------|
@@ -23,10 +42,10 @@
 | `_src/repositories/messages.repository.ts` | **76.00%** | 🟢 Verified |
 | **Services** | | |
 | `_src/services/email.service.ts` | **53.57%** | 🟢 Verified |
-| `_src/services/notification.service.ts` | **68.75%** | 🟢 Strong |
+| `_src/services/notification.service.ts` | **68.75%** | 🔴 Regression (Failing) |
 | **Routes** | | |
 | `_src/routes/webhooks.ts` | **43.03%** | 🟢 Verified (Critical Path) |
-| `_src/routes/admin.ts` | **66.00%** | 🟢 Verified |
+| `_src/routes/admin.ts` | **66.00%** | 🔴 Regression (Failing) |
 
 ## Phase 3: Data Layer & Reliability
 
@@ -83,3 +102,4 @@
 - `reviews.repository.ts` (0%)
 - `notifications.repository.ts` (0%)
 - `reports.repository.ts` (0%)
+- **Fix ESM Mocking:** Resolve `vi.mock` issues to restore green CI.

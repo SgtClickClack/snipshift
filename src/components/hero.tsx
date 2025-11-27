@@ -21,7 +21,7 @@ export default function Hero() {
           <img 
             src={logoProcessed} 
             alt="Snipshift Logo" 
-            className="h-40 w-auto lg:h-48 mx-auto mb-6 drop-shadow-2xl"
+            className="h-32 md:h-40 w-auto object-contain mx-auto mb-6 drop-shadow-2xl"
             style={{
               filter: 'brightness(2.5) contrast(1.8) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
             }}
@@ -31,7 +31,7 @@ export default function Hero() {
         <h1 className="text-5xl md:text-7xl font-bold mb-6 drop-shadow-lg tracking-tight">
           Connect. Cover. Grow.
         </h1>
-        <p className="text-xl md:text-2xl mb-10 text-gray-100 max-w-3xl mx-auto drop-shadow-md font-medium">
+        <p className="text-xl md:text-2xl mb-10 text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium">
           Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
         </p>
         

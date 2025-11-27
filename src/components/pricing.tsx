@@ -119,11 +119,8 @@ export default function Pricing() {
               </CardContent>
               <CardFooter>
                 <Button
-                  className={`w-full ${
-                    tier.highlighted
-                      ? "red-accent-button"
-                      : "steel-button text-steel-900"
-                  } font-semibold py-6`}
+                  variant={tier.highlighted ? "accent" : "chrome"}
+                  className="w-full font-semibold py-6"
                 >
                   {tier.cta}
                 </Button>
@@ -135,4 +132,3 @@ export default function Pricing() {
     </section>
   );
 }
-

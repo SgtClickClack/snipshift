@@ -22,16 +22,53 @@ export default function RoleSelectionPage() {
   const handleContinue = async () => {
     if (!user || selectedRoles.length === 0) return;
     setIsLoading(true);
+
     try {
       // Add each selected role to the user via API
       for (const role of selectedRoles) {
-        await apiRequest("PATCH", `/api/users/${user.id}/roles`, { action: "add", role });
+        const response = await apiRequest("PATCH", `/api/users/${user.id}/roles`, { action: "add", role });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { message: errorText || `HTTP ${response.status}` };
+          }
+          throw new Error(errorData.message || `Failed to add role: ${role}`);
+        }
       }
-      // update client-side roles so the navbar switcher sees them immediately
+      
+      // Update client-side roles so the navbar switcher sees them immediately
       updateRoles(Array.from(new Set([...(user.roles || []), ...selectedRoles])) as any);
+      
       // Set currentRole to the first selected role
       const primaryRole = selectedRoles[0];
-      await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: primaryRole });
+      
+      // Map frontend roles to database enum values
+      // Note: 'hub' and 'brand' map to 'business' in the database enum
+      const roleMapping: Record<string, 'professional' | 'business' | 'admin' | 'trainer'> = {
+        'hub': 'business',
+        'brand': 'business',
+        'professional': 'professional',
+        'trainer': 'trainer',
+      };
+      const dbRole = roleMapping[primaryRole] || 'professional';
+      
+      const currentRoleResponse = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: dbRole });
+      
+      if (!currentRoleResponse.ok) {
+        const errorText = await currentRoleResponse.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${currentRoleResponse.status}` };
+        }
+        throw new Error(errorData.message || `Failed to set current role`);
+      }
+      
       setCurrentRole(primaryRole);
 
       toast({
@@ -40,10 +77,10 @@ export default function RoleSelectionPage() {
       });
 
       navigate(getDashboardRoute(primaryRole));
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update your roles. Please try again.",
+        description: error?.message || "Failed to create your role. Please try again.",
         variant: "destructive",
       });
     } finally {

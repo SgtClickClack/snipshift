@@ -359,6 +359,111 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
   });
 }));
 
+// Update user roles (add or remove roles from the roles array)
+router.patch('/users/:id/roles', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    console.error('[PATCH /users/:id/roles] Unauthorized - no user in request');
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (req.params.id !== req.user.id) {
+    console.error('[PATCH /users/:id/roles] Forbidden - user ID mismatch', { 
+      requestedId: req.params.id, 
+      userId: req.user.id 
+    });
+    res.status(403).json({ message: 'Forbidden' });
+    return;
+  }
+
+  const schema = z.object({
+    action: z.enum(['add', 'remove']),
+    role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand']),
+  });
+
+  const validationResult = schema.safeParse(req.body);
+  if (!validationResult.success) {
+    console.error('[PATCH /users/:id/roles] Validation error:', validationResult.error.errors);
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+    });
+    return;
+  }
+
+  const { action, role } = validationResult.data;
+  
+  // Map 'hub' to 'business' for database storage
+  const dbRole = role === 'hub' ? 'business' : role;
+
+  console.log('[PATCH /users/:id/roles] Processing role update:', { 
+    userId: req.user.id, 
+    action, 
+    role, 
+    dbRole 
+  });
+
+  // Fetch current user to get existing roles
+  const currentUser = await usersRepo.getUserById(req.user.id);
+  if (!currentUser) {
+    console.error('[PATCH /users/:id/roles] User not found:', req.user.id);
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  const existingRoles = currentUser.roles || [];
+  console.log('[PATCH /users/:id/roles] Current roles:', existingRoles);
+
+  let updatedRoles: string[];
+  
+  if (action === 'add') {
+    // Add role if not already present
+    if (!existingRoles.includes(dbRole)) {
+      updatedRoles = [...existingRoles, dbRole];
+      console.log('[PATCH /users/:id/roles] Adding role. New roles:', updatedRoles);
+    } else {
+      console.log('[PATCH /users/:id/roles] Role already exists, no change needed');
+      updatedRoles = existingRoles;
+    }
+  } else {
+    // Remove role if present
+    updatedRoles = existingRoles.filter(r => r !== dbRole);
+    console.log('[PATCH /users/:id/roles] Removing role. New roles:', updatedRoles);
+    
+    // Ensure user always has at least one role
+    if (updatedRoles.length === 0) {
+      console.error('[PATCH /users/:id/roles] Cannot remove last role');
+      res.status(400).json({ message: 'Cannot remove the last role' });
+      return;
+    }
+  }
+
+  // Update user with new roles array
+  const updates: any = { roles: updatedRoles };
+  
+  // If adding the first role or if this is the primary role, also update the main role field
+  if (action === 'add' && (!currentUser.role || currentUser.role === 'professional')) {
+    updates.role = dbRole;
+  }
+
+  console.log('[PATCH /users/:id/roles] Updating user with:', updates);
+
+  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  
+  if (!updatedUser) {
+    console.error('[PATCH /users/:id/roles] Failed to update user');
+    res.status(500).json({ message: 'Failed to update user roles' });
+    return;
+  }
+
+  console.log('[PATCH /users/:id/roles] Successfully updated user roles:', updatedUser.roles);
+
+  res.status(200).json({
+    id: updatedUser.id,
+    roles: updatedUser.roles || [updatedUser.role],
+    currentRole: updatedUser.role,
+  });
+}));
+
 // Update current role (for role switching)
 router.patch('/users/:id/current-role', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {
