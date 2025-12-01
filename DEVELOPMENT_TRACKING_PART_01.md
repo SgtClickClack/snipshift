@@ -300,3 +300,62 @@ Extended the contrast polish to remaining key pages to ensure the "White Card on
 
 **Next Priority Task**
 - Fix the layout overflow on Professional Dashboard (likely caused by "Browse Jobs" button or container width).
+
+#### 2025-12-01: Systematic Mobile UI Repairs
+
+**Core Components Implemented:**
+- Global Modal System
+- Global Layout Constraints
+- Responsive Input Components
+
+**Key Features**
+- **Global Modal Fixes:**
+  - Updated `DialogContent` and `AlertDialogContent` to enforce `w-[95vw]` on mobile and `max-w-lg` on desktop.
+  - Enforced `z-[51]` for content and `z-[50]` for overlays.
+  - Removed transparency issues by enforcing white/background colors.
+- **Horizontal Overflow Protection:**
+  - Added global `overflow-x: hidden` to body and root elements.
+  - Constrained main App wrapper width to `max-w-full`.
+- **Responsive Components:**
+  - Refactored `LocationInput` popover to be responsive (`max-w-[90vw]`) instead of fixed width.
+
+**Integration Points**
+- `src/index.css`
+- `src/App.tsx`
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/alert-dialog.tsx`
+
+**File Paths**
+- `src/index.css`
+- `src/App.tsx`
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/alert-dialog.tsx`
+- `src/components/ui/location-input.tsx`
+
+**Next Priority Task**
+- Verify mobile layout fixes on device/emulator.
+
+#### 2025-12-01: Login Error Redirect to Signup
+
+**Core Components Implemented:**
+- Login Error Handling
+- Signup Pre-fill
+
+**Key Features**
+- **User Not Found Redirect:**
+  - Updated `src/pages/login.tsx` to detect `auth/user-not-found`, `auth/invalid-credential`, and `auth/invalid-login-credentials` errors.
+  - Implemented automatic redirect to `/signup` with the attempted email as a query parameter.
+  - Added specific toast notification for "Account not found".
+- **Signup Pre-fill:**
+  - Updated `src/pages/signup.tsx` to populate the email field from the URL query parameter (`?email=...`).
+
+**Integration Points**
+- `src/pages/login.tsx`
+- `src/pages/signup.tsx`
+
+**File Paths**
+- `src/pages/login.tsx`
+- `src/pages/signup.tsx`
+
+**Next Priority Task**
+- Payment & Subscription System (Q4 2025 Roadmap Priority)

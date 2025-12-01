@@ -22,6 +22,14 @@ export default function SignupPage() {
     confirmPassword: "",
   });
 
+  // Check for email in query params (e.g. redirect from login)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+    if (emailParam) {
+      setFormData(prev => ({ ...prev, email: emailParam }));
+    }
+  }, []);
 
   // Handle OAuth callback (new universal flow)
   useEffect(() => {

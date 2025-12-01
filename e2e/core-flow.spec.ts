@@ -182,7 +182,7 @@ test.describe('Critical Path Tests', () => {
   });
 
   /**
-   * Additional Test: Verify navigation structure
+   * Test D: Navigation structure - Verify main nav elements are present
    * Check that main navigation elements are present
    */
   test('D: Navigation structure - Verify main nav elements are present', async ({ page }) => {
