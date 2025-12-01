@@ -7,8 +7,8 @@
 
 import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, index, unique } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { users, userRoleEnum } from './schema/users';
-import { notifications, notificationTypeEnum } from './schema/notifications';
+import { users, userRoleEnum } from './schema/users.js';
+import { notifications, notificationTypeEnum } from './schema/notifications.js';
 import { shifts, shiftStatusEnum } from './schema/shifts.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
