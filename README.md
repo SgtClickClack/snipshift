@@ -1,11 +1,11 @@
 # SnipShift
 
-> The Gig Economy Platform for Barbers, Stylists, and Creative Professionals
+> The Gig Economy Platform for Barbers, Stylists, and Industry Professionals
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/SgtClickClack/snipshift)
 [![License](https://img.shields.io/badge/license-Private-red.svg)](LICENSE)
 
-SnipShift is a modern marketplace platform that connects barbershops, salons, and creative spaces with talented professionals seeking flexible work opportunities. Built for the gig economy, SnipShift empowers professionals to work on their own terms while helping businesses find qualified talent quickly and efficiently.
+SnipShift is a modern marketplace platform that connects barbershops, salons, and workspaces with talented professionals seeking flexible work opportunities. Built for the gig economy, SnipShift empowers professionals to work on their own terms while helping businesses find qualified talent quickly and efficiently.
 
 ## ✨ Features
 

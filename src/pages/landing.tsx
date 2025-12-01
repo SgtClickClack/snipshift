@@ -10,7 +10,7 @@ export default function LandingPage() {
   return (
     <>
       <SEO
-        title="SnipShift - Connect Barbers, Stylists & Creative Professionals"
+        title="SnipShift - Connect Barbers, Stylists & Industry Professionals"
         description="Connect barbers, stylists, and beauticians with flexible work opportunities. Find gigs, post jobs, and build your professional network in the barbering and beauty industry."
         url="/"
       />
@@ -126,7 +126,7 @@ export default function LandingPage() {
       <div className="py-20 bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Transform Your Creative Career?
+            Ready to Transform Your Career?
           </h2>
           <p className="text-xl text-chrome-light mb-8 max-w-2xl mx-auto">
             Join the community that's reshaping how the industry works together

@@ -15,6 +15,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
+import { RouteProgressBar } from '@/components/ui/route-progress-bar';
 import Navbar from '@/components/navbar';
 import { Footer } from '@/components/layout/footer';
 
@@ -364,6 +365,7 @@ function App() {
           <AuthProvider>
             <NotificationProvider>
               <Router>
+                <RouteProgressBar />
                 <Toaster />
                 <AppRoutes />
                 <TutorialOverlay />
