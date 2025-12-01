@@ -99,7 +99,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                         if (data.isOnboarded !== undefined) {
                             isOnboarded = data.isOnboarded;
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.warn('Failed to parse test user session', e);
+                    }
                 }
 
                 setUser({

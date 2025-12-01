@@ -63,7 +63,7 @@ export default function ProfessionalDashboard() {
         const searchLower = jobFilters.searchQuery.toLowerCase();
         const matchesSearch = 
           job.title.toLowerCase().includes(searchLower) ||
-          job.description.toLowerCase().includes(searchLower) ||
+          (job.description?.toLowerCase() || '').includes(searchLower) ||
           job.skillsRequired?.some(skill => skill.toLowerCase().includes(searchLower));
         if (!matchesSearch) return false;
       }
@@ -71,14 +71,18 @@ export default function ProfessionalDashboard() {
       // Location filter
       if (jobFilters.location) {
         const locationLower = jobFilters.location.toLowerCase();
+        const jobCity = typeof job.location === 'object' ? job.location.city : (typeof job.location === 'string' ? job.location : '');
+        const jobState = typeof job.location === 'object' ? job.location.state : '';
+        
         const matchesLocation = 
-          job.location.city.toLowerCase().includes(locationLower) ||
-          job.location.state.toLowerCase().includes(locationLower);
+          (jobCity?.toLowerCase() || '').includes(locationLower) ||
+          (jobState?.toLowerCase() || '').includes(locationLower);
         if (!matchesLocation) return false;
       }
 
       // Pay rate filter
-      if (job.payRate < jobFilters.payRateMin || job.payRate > jobFilters.payRateMax) {
+      const rate = typeof job.payRate === 'string' ? parseFloat(job.payRate.replace(/[^0-9.]/g, '')) : job.payRate;
+      if (rate < jobFilters.payRateMin || rate > jobFilters.payRateMax) {
         return false;
       }
 
