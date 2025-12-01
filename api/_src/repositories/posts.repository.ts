@@ -2,6 +2,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { posts, postLikes } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
+
 export interface PostFilters {
   type?: 'community' | 'brand';
   authorId?: string;

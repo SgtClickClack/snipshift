@@ -2,6 +2,7 @@ import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { trainingModules, trainingPurchases } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
+
 export interface TrainingModuleFilters {
   trainerId?: string;
   level?: 'beginner' | 'intermediate' | 'advanced';

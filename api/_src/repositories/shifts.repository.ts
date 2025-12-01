@@ -8,6 +8,7 @@ import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { shifts } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
+
 export interface ShiftFilters {
   employerId?: string;
   status?: 'open' | 'filled' | 'completed';
