@@ -136,11 +136,11 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
         <CardTitle className="text-gray-900">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 relative z-10">
           {actionsConfig.map((action, index) => (
             <Button
               key={index}
-              className={`h-auto p-4 flex flex-col items-start text-left shadow-md hover:shadow-lg transition-all duration-200 ${
+              className={`h-auto p-4 flex flex-col items-start text-left shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 cursor-pointer ${
                 action.variant === 'default' 
                   ? 'bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white'
                   : 'bg-gradient-to-r from-steel-600 to-steel-700 hover:from-steel-700 hover:to-steel-800 text-white'

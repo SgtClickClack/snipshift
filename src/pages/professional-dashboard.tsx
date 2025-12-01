@@ -11,6 +11,7 @@ import { Job } from "@shared/firebase-schema";
 
 import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List } from "lucide-react";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
@@ -24,9 +25,10 @@ import LocationSearch from "@/components/job-feed/location-search";
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeView, setActiveView] = useState<'overview' | 'jobs' | 'applications' | 'profile'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'jobs' | 'applications' | 'profile' | 'calendar'>('overview');
   const [showFilters, setShowFilters] = useState(false);
   const [showMessaging, setShowMessaging] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -108,11 +110,12 @@ export default function ProfessionalDashboard() {
           case "this-week":
             if (!isThisWeek(jobDate)) return false;
             break;
-          case "next-week":
+          case "next-week": {
             const nextWeekStart = startOfWeek(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
             const nextWeekEnd = endOfWeek(nextWeekStart);
             if (jobDate < nextWeekStart || jobDate > nextWeekEnd) return false;
             break;
+          }
           case "this-month":
             if (!isThisMonth(jobDate)) return false;
             break;
@@ -169,7 +172,7 @@ export default function ProfessionalDashboard() {
         setActiveView('applications');
         break;
       case 'view-calendar':
-        // Navigate to calendar view
+        setActiveView('calendar');
         break;
       case 'open-messages':
         setShowMessaging(true);
@@ -270,6 +273,17 @@ export default function ProfessionalDashboard() {
               data-testid="tab-applications"
             >
               Applications ({stats.activeApplications})
+            </button>
+            <button
+              onClick={() => setActiveView('calendar')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'calendar'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-steel-500 hover:text-steel-700'
+              }`}
+              data-testid="tab-calendar"
+            >
+              Calendar
             </button>
             <button
               onClick={() => setActiveView('profile')}
@@ -613,6 +627,99 @@ export default function ProfessionalDashboard() {
               )}
             </CardContent>
           </Card>
+        )}
+        
+        {/* Calendar Tab */}
+        {activeView === 'calendar' && (
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle>Schedule</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 flex justify-center">
+                <CalendarComponent
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  className="rounded-md border"
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle>Upcoming Bookings</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                {stats.upcomingBookings === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">No upcoming bookings</h3>
+                    <p className="text-sm text-muted-foreground">Your scheduled jobs will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Mock bookings for demonstration */}
+                    <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium">Haircut & Styling</h4>
+                          <p className="text-sm text-muted-foreground">The Grooming Lounge</p>
+                        </div>
+                        <Badge>Confirmed</Badge>
+                      </div>
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {format(new Date(), "MMMM d, yyyy")}
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4" />
+                          10:00 AM - 11:00 AM
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="mr-2 h-4 w-4" />
+                          123 Main St, Sydney
+                        </div>
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                        <Button variant="outline" size="sm" className="w-full">Message</Button>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium">Beard Trim</h4>
+                          <p className="text-sm text-muted-foreground">Gentleman's Cuts</p>
+                        </div>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {format(new Date(Date.now() + 86400000), "MMMM d, yyyy")}
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4" />
+                          2:00 PM - 2:30 PM
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="mr-2 h-4 w-4" />
+                          456 George St, Sydney
+                        </div>
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                        <Button variant="outline" size="sm" className="w-full">Message</Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
         
         {/* Profile Tab */}

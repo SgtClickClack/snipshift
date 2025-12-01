@@ -73,7 +73,7 @@ export default function NotificationDropdown({
   };
 
   return (
-    <Card className="absolute top-12 right-0 w-96 max-w-[90vw] shadow-lg border z-50 bg-white">
+    <Card className="fixed left-1/2 top-[72px] w-[95vw] -translate-x-1/2 md:absolute md:top-12 md:right-0 md:left-auto md:w-96 md:translate-x-0 max-w-[90vw] shadow-lg border z-50 bg-white">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -121,7 +121,7 @@ export default function NotificationDropdown({
             </p>
           </div>
         ) : (
-          <ScrollArea className="max-h-96">
+          <ScrollArea className="max-h-[60vh]">
             <div className="space-y-1 p-2">
               {notifications.map((notification) => {
                 const IconComponent = getIcon(notification.type);

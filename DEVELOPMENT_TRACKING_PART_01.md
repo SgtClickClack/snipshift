@@ -359,3 +359,39 @@ Extended the contrast polish to remaining key pages to ensure the "White Card on
 
 **Next Priority Task**
 - Payment & Subscription System (Q4 2025 Roadmap Priority)
+
+#### 2025-12-01: Fix Mobile Dashboard Cards and Global UI Overflow
+
+**Core Components Implemented:**
+- Shop Dashboard
+- Hub Dashboard
+- Card Component
+- Global CSS
+
+**Key Features**
+- **Responsive Dashboard Grids:**
+  - Updated grid layouts in `ShopDashboard` and `HubDashboard` to be responsive (`grid-cols-1` on mobile up to `grid-cols-3` on desktop).
+  - Adjusted gap sizing for mobile devices.
+- **Card Component Fixes:**
+  - Enforced `w-full`, `max-w-full`, and `overflow-hidden` on the base Card component to prevent content blowout.
+- **Global Overflow Prevention:**
+  - Added strict `max-width: 100%` and `overflow-x: hidden` to global CSS to prevent horizontal scrolling.
+- **Modal Visibility:**
+  - Enforced solid backgrounds (`bg-white`) on `Dialog` and `Sheet` components to resolve transparency issues.
+
+**Integration Points**
+- `src/pages/shop-dashboard.tsx`
+- `src/pages/hub-dashboard.tsx`
+- `src/components/ui/card.tsx`
+- `src/index.css`
+
+**File Paths**
+- `src/pages/shop-dashboard.tsx`
+- `src/pages/hub-dashboard.tsx`
+- `src/components/ui/card.tsx`
+- `src/index.css`
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/sheet.tsx`
+
+**Next Priority Task**
+- Verification of mobile layout on physical devices or simulators.

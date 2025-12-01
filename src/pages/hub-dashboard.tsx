@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Calendar, DollarSign, Users, MessageSquare } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
+import QuickActions from "@/components/dashboard/quick-actions";
 import { format } from "date-fns";
 // Remove missing component imports - will implement inline
 
@@ -20,9 +21,6 @@ export default function HubDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<ActiveView>('overview');
-  const [showJobPostingModal, setShowJobPostingModal] = useState(false);
-  const [showMessaging, setShowMessaging] = useState(false);
-  const [editingJob, setEditingJob] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -116,6 +114,9 @@ export default function HubDashboard() {
       case 'open-messages':
         // Messages is a separate page in the app router
         window.location.href = '/messages';
+        break;
+      case 'profile-settings':
+        setActiveView('profile');
         break;
       default:
         break;
@@ -222,47 +223,9 @@ export default function HubDashboard() {
             {/* Dashboard Stats */}
             <DashboardStats role="hub" stats={stats} />
             
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {/* Quick Actions */}
-              <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <CardHeader className="bg-white border-b border-gray-100">
-                  <CardTitle className="text-gray-900">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={() => handleQuickAction('post-job')}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <div className="h-8 w-8 rounded-lg bg-red-accent flex items-center justify-center mr-3 text-white shadow-sm">
-                        <Plus className="h-4 w-4" />
-                      </div>
-                      Post New Job
-                    </Button>
-                    <Button 
-                      onClick={() => handleQuickAction('view-applications')}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <div className="h-8 w-8 rounded-lg bg-chrome-medium flex items-center justify-center mr-3 text-steel-900 shadow-sm">
-                        <Users className="h-4 w-4" />
-                      </div>
-                      View Applications
-                    </Button>
-                    <Button 
-                      onClick={() => handleQuickAction('open-messages')}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <div className="h-8 w-8 rounded-lg bg-chrome-medium flex items-center justify-center mr-3 text-steel-900 shadow-sm">
-                        <MessageSquare className="h-4 w-4" />
-                      </div>
-                      Open Messages
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <QuickActions role="hub" onAction={handleQuickAction} />
               
               <div className="lg:col-span-2">
                 <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -315,7 +278,7 @@ export default function HubDashboard() {
               </div>
             )}
             
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-8">
               {/* Post Job Form */}
               {showForm && (
                 <div className="lg:col-span-1">
