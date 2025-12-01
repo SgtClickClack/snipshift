@@ -88,67 +88,39 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
       case 'brand':
         return [
           {
-            title: 'Create Post',
-            description: 'Share a new product or offer',
-            icon: Plus,
-            action: 'create-post',
-            variant: 'default' as const,
-            className: 'bg-primary hover:bg-primary/90'
-          },
-          {
-            title: 'Analytics',
-            description: 'View post performance',
-            icon: TrendingUp,
-            action: 'view-analytics',
-            variant: 'outline' as const
-          },
-          {
-            title: 'Social Feed',
-            description: 'Browse community posts',
-            icon: Users,
-            action: 'social-feed',
-            variant: 'outline' as const
-          },
-          {
             title: 'Messages',
             description: 'Connect with community',
             icon: MessageCircle,
             action: 'open-messages',
             variant: 'outline' as const
+          },
+          {
+            title: 'Profile',
+            description: 'Manage your brand profile',
+            icon: Settings,
+            action: 'profile-settings',
+            variant: 'outline' as const
           }
+          // Disabled for stability: Create Post, Analytics, Social Feed (no backend implementation)
         ];
       
       case 'trainer':
         return [
           {
-            title: 'Create Training',
-            description: 'Add a new course or workshop',
-            icon: Plus,
-            action: 'create-training',
-            variant: 'default' as const,
-            className: 'bg-primary hover:bg-primary/90'
-          },
-          {
-            title: 'My Students',
-            description: 'Manage enrolled students',
-            icon: Users,
-            action: 'my-students',
-            variant: 'outline' as const
-          },
-          {
-            title: 'Schedule',
-            description: 'View upcoming sessions',
-            icon: Calendar,
-            action: 'view-schedule',
-            variant: 'outline' as const
-          },
-          {
-            title: 'Community',
-            description: 'Connect with other trainers',
+            title: 'Messages',
+            description: 'Connect with professionals',
             icon: MessageCircle,
-            action: 'trainer-community',
+            action: 'open-messages',
+            variant: 'outline' as const
+          },
+          {
+            title: 'Profile',
+            description: 'Manage your trainer profile',
+            icon: Settings,
+            action: 'profile-settings',
             variant: 'outline' as const
           }
+          // Disabled for stability: Create Training, My Students, Schedule, Community (no backend implementation)
         ];
       
       default:

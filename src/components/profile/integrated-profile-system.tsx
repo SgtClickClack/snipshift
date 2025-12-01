@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Eye, Edit } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import PublicProfile from "./public-profile";
 import ProfileEditForm from "./profile-edit-form";
 
@@ -106,7 +105,17 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
 
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: UserProfile) => {
-      const response = await apiRequest("PUT", `/api/profiles/${profileUserId}`, profileData);
+      // Transform profile data to match backend /api/me endpoint expectations
+      const payload = {
+        displayName: profileData.displayName,
+        bio: profileData.bio,
+        location: profileData.location 
+          ? `${profileData.location.city}, ${profileData.location.state}` 
+          : undefined,
+        avatarUrl: profileData.profileImageURL,
+        // Note: phone is not in UserProfile interface, but backend accepts it
+      };
+      const response = await apiRequest("PUT", `/api/me`, payload);
       return response.json();
     },
     onSuccess: () => {

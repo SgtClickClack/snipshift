@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchJobs, JobFilterParams } from '@/lib/api';
-import { Job } from '@shared/firebase-schema';
+import { fetchShifts } from '@/lib/api';
+import { Shift } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
@@ -10,14 +10,14 @@ import { JobFilters } from '@/components/jobs/job-filters';
 import { JobCard, JobCardData } from '@/components/job-feed/JobCard';
 import { SearchX } from 'lucide-react';
 
-// JobType is now imported from shared schema, but we keep a local alias for API normalization
-type JobType = Job;
+// Shift type for the feed
+type ShiftType = Shift;
 
 export default function JobFeedPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
+  const [selectedJob, setSelectedJob] = useState<ShiftType | null>(null);
   
   // Default center (New York - matching mock data)
   const [centerLocation, setCenterLocation] = useState({ lat: 40.7128, lng: -74.0060 });
@@ -25,31 +25,14 @@ export default function JobFeedPage() {
   const [searchLocation, setSearchLocation] = useState('New York');
 
   // Build filter params from URL search params
-  const filterParams: JobFilterParams = {};
-  const search = searchParams.get('search');
-  const minRate = searchParams.get('minRate');
-  const maxRate = searchParams.get('maxRate');
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
-  const nearbyLat = searchParams.get('lat');
-  const nearbyLng = searchParams.get('lng');
-  const nearbyRadius = searchParams.get('radius');
-
-  if (search) filterParams.search = search;
-  if (minRate) filterParams.minRate = parseFloat(minRate);
-  if (maxRate) filterParams.maxRate = parseFloat(maxRate);
-  if (startDate) filterParams.startDate = startDate;
-  if (endDate) filterParams.endDate = endDate;
-  if (nearbyLat && nearbyLng) {
-    filterParams.lat = parseFloat(nearbyLat);
-    filterParams.lng = parseFloat(nearbyLng);
-    if (nearbyRadius) filterParams.radius = parseFloat(nearbyRadius);
-  }
+  const status = (searchParams.get('status') as 'open' | 'filled' | 'completed') || 'open';
+  const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
+  const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : undefined;
 
   // Use search params in query key to trigger refetch when filters change
-  const { data: jobs, isLoading, error } = useQuery({
-    queryKey: ['jobs', searchParams.toString()],
-    queryFn: () => fetchJobs(filterParams),
+  const { data: shifts, isLoading, error } = useQuery({
+    queryKey: ['shifts', searchParams.toString()],
+    queryFn: () => fetchShifts({ status, limit, offset }),
   });
 
   if (isLoading) {
@@ -65,33 +48,45 @@ export default function JobFeedPage() {
     );
   }
 
-  // Normalize jobs to ensure consistent structure
-  const jobList: JobCardData[] = (jobs || []).map((job: any) => {
+  // Normalize shifts to ensure consistent structure for JobCard component
+  const jobList: JobCardData[] = (shifts || []).map((shift: any) => {
     // Extract city and state from location string if needed
-    let locationCity = job.city || 'Unknown';
-    let locationState = job.state || '';
+    let locationCity = 'Unknown';
+    let locationState = '';
     
-    if (job.location && typeof job.location === 'string') {
+    if (shift.location && typeof shift.location === 'string') {
       // Parse location string like "123 Main St, New York, NY 10001"
-      const parts = job.location.split(',').map((p: string) => p.trim());
+      const parts = shift.location.split(',').map((p: string) => p.trim());
       if (parts.length >= 2) {
         locationCity = parts[parts.length - 2] || locationCity;
         locationState = parts[parts.length - 1]?.split(' ')[0] || locationState;
+      } else if (parts.length === 1) {
+        locationCity = parts[0];
       }
     }
     
     return {
-      ...job,
-      // Use rate if available, otherwise payRate
-      rate: job.rate || job.payRate,
-      payRate: job.rate || job.payRate,
+      id: shift.id,
+      title: shift.title,
+      // Use pay if available, otherwise hourlyRate
+      rate: shift.pay || shift.hourlyRate,
+      payRate: shift.pay || shift.hourlyRate,
+      // Use date (which is startTime) for date field
+      date: shift.date || shift.startTime,
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      // Use requirements if available, otherwise description
+      description: shift.requirements || shift.description,
       // Normalize location data
-      location: job.location || (locationCity && locationState ? `${locationCity}, ${locationState}` : undefined),
+      location: shift.location || (locationCity && locationState ? `${locationCity}, ${locationState}` : locationCity),
       locationCity,
       locationState,
-      // Ensure coordinates are numbers
-      lat: job.lat ? Number(job.lat) : undefined,
-      lng: job.lng ? Number(job.lng) : undefined,
+      status: shift.status,
+      // JobCard expects these fields but shifts don't have them, so set defaults
+      lat: undefined,
+      lng: undefined,
+      shopName: undefined,
+      businessId: shift.employerId,
     };
   });
 

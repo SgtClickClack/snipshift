@@ -7,36 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Heart, MessageCircle, Share, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import StartChatButton from "@/components/messaging/start-chat-button";
-
-export interface Post {
-  id: string;
-  authorId: string;
-  authorName: string;
-  authorRole: "professional" | "hub" | "brand" | "trainer";
-  authorAvatar?: string;
-  content: string;
-  images?: string[];
-  postType: "social" | "job";
-  likes: number;
-  comments: Array<{
-    id: string;
-    author: string;
-    authorId: string;
-    text: string;
-    timestamp: string;
-  }>;
-  timestamp: string;
-  isLiked?: boolean;
-  // Job-specific fields
-  location?: {
-    city: string;
-    state: string;
-  };
-  payRate?: number;
-  payType?: string;
-  date?: string;
-  skillsRequired?: string[];
-}
+import { Post } from "@/shared/types";
 
 interface PostCardProps {
   post: Post;
@@ -50,7 +21,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role?: string) => {
     switch (role) {
       case "professional":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
@@ -86,26 +57,30 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
     setIsSubmittingComment(false);
   };
 
+  const authorName = post.authorName || "Unknown User";
+  const comments = post.comments || [];
+  const timestamp = post.timestamp || post.createdAt || new Date().toISOString();
+
   return (
     <Card className="w-full" data-testid={`post-${post.id}`}>
       <CardContent className="pt-6">
         {/* Post Header */}
         <div className="flex items-start gap-3 mb-4">
           <Avatar className="w-12 h-12">
-            <AvatarImage src={post.authorAvatar} alt={post.authorName} />
+            <AvatarImage src={post.authorAvatar} alt={authorName} />
             <AvatarFallback className="font-medium">
-              {post.authorName.split(' ').map(n => n[0]).join('')}
+              {authorName.split(' ').map(n => n[0]).join('')}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="font-semibold text-foreground" data-testid={`post-author-${post.id}`}>
-                {post.authorName}
+                {authorName}
               </h4>
               <Badge variant="outline" className={getRoleColor(post.authorRole)}>
                 {getPostTypeIcon()}
-                {post.postType === "job" ? "Job Post" : post.authorRole}
+                {post.postType === "job" ? "Job Post" : (post.authorRole || "Member")}
               </Badge>
               {post.postType === "job" && post.location && (
                 <div className="flex items-center text-sm text-muted-foreground">
@@ -115,7 +90,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(post.timestamp), "MMM d, yyyy 'at' h:mm a")}
+              {format(new Date(timestamp), "MMM d, yyyy 'at' h:mm a")}
             </p>
           </div>
 
@@ -123,8 +98,8 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
             {post.authorId !== currentUserId && (
               <StartChatButton
                 otherUserId={post.authorId}
-                otherUserName={post.authorName}
-                otherUserRole={post.authorRole}
+                otherUserName={authorName}
+                otherUserRole={post.authorRole as any}
                 variant="ghost"
                 size="sm"
               />
@@ -206,7 +181,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               data-testid={`button-like-${post.id}`}
             >
               <Heart className={`w-4 h-4 mr-1 ${post.isLiked ? 'fill-current' : ''}`} />
-              {post.likes}
+              {post.likes || 0}
             </Button>
             
             <Button
@@ -217,7 +192,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               data-testid={`button-comments-${post.id}`}
             >
               <MessageCircle className="w-4 h-4 mr-1" />
-              {post.comments.length}
+              {comments.length}
             </Button>
             
             <Button
@@ -268,7 +243,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
             {/* Comments List */}
             <div className="space-y-3">
-              {post.comments.map((comment) => (
+              {comments.map((comment) => (
                 <div key={comment.id} className="flex gap-2" data-testid={`comment-${comment.id}`}>
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="text-xs">
@@ -289,7 +264,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                 </div>
               ))}
               
-              {post.comments.length === 0 && (
+              {comments.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-4">
                   No comments yet. Be the first to comment!
                 </p>

@@ -1,33 +1,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Play, DollarSign, Clock, BookOpen, Star, Users, ShoppingCart, CreditCard } from "lucide-react";
-
-interface TrainingContent {
-  id: string;
-  trainerId: string;
-  trainerName?: string;
-  title: string;
-  description: string;
-  videoUrl: string;
-  thumbnailUrl?: string;
-  price: number;
-  duration: string;
-  level: "beginner" | "intermediate" | "advanced";
-  category: string;
-  isPaid: boolean;
-  purchaseCount: number;
-  rating?: number;
-}
+import { Play, Clock, BookOpen, Star, Users, ShoppingCart, CreditCard } from "lucide-react";
+import { TrainingModule } from "@/shared/types";
 
 interface PaymentModalProps {
-  content: TrainingContent | null;
+  content: TrainingModule | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -43,6 +27,7 @@ function PaymentModal({ content, isOpen, onClose, onSuccess }: PaymentModalProps
     setIsProcessing(true);
     
     // Mock Stripe payment - simulate processing time
+    // In real integration, this would call backend to create payment intent
     setTimeout(() => {
       toast({
         title: "Payment successful!",
@@ -139,30 +124,52 @@ export default function TrainingHub() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedContent, setSelectedContent] = useState<TrainingContent | null>(null);
+  const [selectedContent, setSelectedContent] = useState<TrainingModule | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [filter, setFilter] = useState<"all" | "free" | "paid" | "beginner" | "advanced">("all");
   
-  const { data: content = [], isLoading } = useQuery<TrainingContent[]>({
-    queryKey: ["/api/training-content"],
+  // Fetch training content
+  const { data: content = [], isLoading } = useQuery<TrainingModule[]>({
+    queryKey: ["/api/training/content", filter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filter === 'beginner' || filter === 'advanced') {
+        params.append('level', filter);
+      } else if (filter === 'free') {
+        params.append('isPaid', 'false');
+      } else if (filter === 'paid') {
+        params.append('isPaid', 'true');
+      }
+      
+      const response = await fetch(`/api/training/content?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch content");
+      }
+      return response.json();
+    }
   });
 
+  // Fetch user's purchased content
   const { data: purchasedContent = [] } = useQuery<string[]>({
-    queryKey: ["/api/purchased-content", user?.id],
+    queryKey: ["/api/training/purchased", user?.id],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/training/purchased");
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 
   const purchaseMutation = useMutation({
     mutationFn: async (contentId: string) => {
-      const response = await apiRequest("POST", "/api/purchase-content", { contentId });
+      const response = await apiRequest("POST", "/api/training/purchase", { contentId });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/purchased-content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/training/purchased"] });
     },
   });
 
-  const handlePurchase = (content: TrainingContent) => {
+  const handlePurchase = (content: TrainingModule) => {
     if (!user) {
       toast({
         title: "Please log in",
@@ -186,6 +193,8 @@ export default function TrainingHub() {
     return purchasedContent.includes(contentId);
   };
 
+  // Client-side filtering fallback if needed, but API handles most
+  // We re-filter here for 'all' case to ensure consistency if switching tabs quickly
   const filteredContent = content.filter(item => {
     if (filter === "all") return true;
     if (filter === "free") return !item.isPaid;

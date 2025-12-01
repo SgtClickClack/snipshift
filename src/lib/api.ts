@@ -49,6 +49,18 @@ export async function fetchJobs(params: JobFilterParams = {}) {
   return Array.isArray(data) ? data : (data.data || []);
 }
 
+export async function fetchShifts(params: { status?: 'open' | 'filled' | 'completed'; limit?: number; offset?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.status) query.append('status', params.status);
+  if (params.limit) query.append('limit', params.limit.toString());
+  if (params.offset) query.append('offset', params.offset.toString());
+  
+  const res = await apiRequest('GET', `/api/shifts?${query.toString()}`);
+  const data = await res.json();
+  // Handle both array response and paginated response
+  return Array.isArray(data) ? data : (data.data || []);
+}
+
 export interface JobDetails {
   id: string;
   title: string;

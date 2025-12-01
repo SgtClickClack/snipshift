@@ -11,21 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Trash, Eye } from "lucide-react";
-
-interface TrainingContent {
-  id: string;
-  title: string;
-  description: string;
-  videoUrl: string;
-  thumbnailUrl?: string;
-  price: number;
-  duration: string;
-  level: "beginner" | "intermediate" | "advanced";
-  category: string;
-  isPaid: boolean;
-  purchaseCount: number;
-}
+import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Eye } from "lucide-react";
+import { TrainingModule } from "@/shared/types";
 
 interface ContentFormData {
   title: string;
@@ -45,7 +32,7 @@ export default function TrainerDashboard() {
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<'overview' | 'content' | 'profile'>('overview');
   const [showContentModal, setShowContentModal] = useState(false);
-  const [editingContent, setEditingContent] = useState<TrainingContent | null>(null);
+  const [, setEditingContent] = useState<TrainingModule | null>(null);
   
   const [formData, setFormData] = useState<ContentFormData>({
     title: "",
@@ -59,14 +46,21 @@ export default function TrainerDashboard() {
     isPaid: false
   });
 
-  const { data: content = [], isLoading } = useQuery<TrainingContent[]>({
-    queryKey: ["/api/training-content", user?.id],
+  const { data: content = [], isLoading } = useQuery<TrainingModule[]>({
+    queryKey: ["/api/training/content", user?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/training/content?trainerId=${user?.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch content");
+      }
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 
   const createContentMutation = useMutation({
     mutationFn: async (contentData: any) => {
-      const response = await apiRequest("POST", "/api/training-content", contentData);
+      const response = await apiRequest("POST", "/api/training/content", contentData);
       return response.json();
     },
     onSuccess: () => {
@@ -74,7 +68,7 @@ export default function TrainerDashboard() {
         title: "Content uploaded successfully!",
         description: "Your training content is now available.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/training-content"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/training/content"] });
       setShowContentModal(false);
       resetForm();
     },
@@ -116,19 +110,17 @@ export default function TrainerDashboard() {
 
     const contentData = {
       ...formData,
-      trainerId: user?.id,
-      createdAt: new Date().toISOString(),
-      purchaseCount: 0
+      // trainerId is handled by backend from auth token
     };
 
     createContentMutation.mutate(contentData);
   };
 
-  // Mock stats
+  // Mock stats - in a real app, these would come from an analytics endpoint
   const stats = {
     totalContent: content.length,
-    totalPurchases: content.reduce((sum, item) => sum + item.purchaseCount, 0),
-    totalRevenue: content.reduce((sum, item) => sum + (item.price * item.purchaseCount), 0),
+    totalPurchases: content.reduce((sum, item) => sum + (item.purchaseCount || 0), 0),
+    totalRevenue: content.reduce((sum, item) => sum + (item.price * (item.purchaseCount || 0)), 0),
     avgRating: 4.8
   };
 
@@ -355,7 +347,7 @@ export default function TrainerDashboard() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-neutral-600">
-                          {item.purchaseCount} purchases
+                          {item.purchaseCount || 0} purchases
                         </span>
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm">

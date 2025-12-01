@@ -1,0 +1,59 @@
+🔍 Starting database schema verification...
+
+📊 Database Tables Found:
+──────────────────────────────────────────────────
+   ✓ applications
+   ✓ conversations
+   ✓ jobs
+   ✓ messages
+   ✓ notifications
+   ✓ payments
+   ✓ post_likes
+   ✓ posts
+   ✓ reports
+   ✓ reviews
+   ✓ subscription_plans
+   ✓ subscriptions
+   ✓ training_modules
+   ✓ training_purchases
+   ✓ users
+──────────────────────────────────────────────────
+   Total: 15 tables
+
+🔎 Checking Expected Tables:
+──────────────────────────────────────────────────
+   ✓ users 
+   ✓ jobs 
+   ✓ applications 
+   ✓ notifications 
+   ❌ shifts (CRITICAL - MISSING!)
+   🔴 posts (CRITICAL - recently added)
+   ✓ post_likes 
+   🔴 training_modules (CRITICAL - recently added)
+   ✓ training_purchases 
+   ✓ reviews 
+   ✓ subscription_plans 
+   ✓ subscriptions 
+   ✓ payments 
+   ✓ conversations 
+   ✓ messages 
+   ✓ reports 
+──────────────────────────────────────────────────
+
+📋 Verification Summary:
+──────────────────────────────────────────────────
+   Found: 15/16 expected tables
+   Missing: 1 tables
+
+   ❌ CRITICAL: 1 critical table(s) missing:
+      - shifts
+──────────────────────────────────────────────────
+
+❌ Verification FAILED: Critical tables are missing!
+
+💡 Next Steps:
+   1. Check drizzle.config.ts - ensure schema path is correct
+   2. Verify schema files exist in api/_src/db/schema/
+   3. Run: npm run db:generate (to generate migrations)
+   4. Run: npm run db:push (to push schema changes)
+   5. Or manually apply migrations from api/drizzle/ directory

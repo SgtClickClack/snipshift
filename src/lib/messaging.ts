@@ -9,38 +9,27 @@ export class MessagingService {
     return [userId1, userId2].sort().join('_');
   }
 
-  // Get or create a chat between two users
-  async getOrCreateChat(currentUserId: string, otherUserId: string, currentUserName: string, otherUserName: string, currentUserRole: string, otherUserRole: string): Promise<string> {
-    const chatId = this.generateChatId(currentUserId, otherUserId);
-    
+  // Get or create a conversation between two users
+  async getOrCreateChat(currentUserId: string, otherUserId: string, currentUserName: string, otherUserName: string, currentUserRole: string, otherUserRole: string, jobId?: string): Promise<string> {
     try {
-      // Try to create the chat (will work even if it exists)
-      const response = await apiRequest('POST', '/api/chats', {
-        chatId,
-        participants: [currentUserId, otherUserId],
-        participantNames: {
-          [currentUserId]: currentUserName,
-          [otherUserId]: otherUserName
-        },
-        participantRoles: {
-          [currentUserId]: currentUserRole,
-          [otherUserId]: otherUserRole
-        }
+      // Create or get existing conversation
+      const response = await apiRequest('POST', '/api/conversations', {
+        participant2Id: otherUserId,
+        jobId: jobId || undefined
       });
-
-      return chatId;
+      const data = await response.json();
+      return data.id;
     } catch (error) {
-      console.error('Error creating chat:', error);
+      console.error('Error creating conversation:', error);
       throw error;
     }
   }
 
   // Send a message
-  async sendMessage(chatId: string, senderId: string, receiverId: string, content: string): Promise<void> {
+  async sendMessage(conversationId: string, senderId: string, receiverId: string, content: string): Promise<void> {
     try {
-      await apiRequest('POST', `/api/chats/${chatId}/messages`, {
-        senderId,
-        receiverId,
+      await apiRequest('POST', '/api/messages', {
+        conversationId,
         content
       });
     } catch (error) {
@@ -49,48 +38,73 @@ export class MessagingService {
     }
   }
 
-  // Get user's chats
+  // Get user's conversations
   async getUserChats(userId: string): Promise<Chat[]> {
     try {
       // If userId is missing, don't attempt fetch
       if (!userId) return [];
 
-      const response = await apiRequest('GET', `/api/chats/user/${userId}`);
+      const response = await apiRequest('GET', '/api/conversations');
       
       // Graceful handling of 401/404/etc without throwing globally if apiRequest doesn't throw
       // (apiRequest throws if !res.ok, so we catch it below)
       
-      const chats = await response.json();
+      const conversations = await response.json();
       
-      if (!Array.isArray(chats)) {
-        console.error('Invalid chats response format:', chats);
+      if (!Array.isArray(conversations)) {
+        console.error('Invalid conversations response format:', conversations);
         return [];
       }
       
-      return chats;
+      // Transform conversations to Chat format for backward compatibility
+      // Note: This is a temporary adapter - consider updating components to use Conversation type
+      return conversations.map((conv: any) => ({
+        id: conv.id,
+        participants: [conv.otherParticipant?.id || '', userId],
+        lastMessage: conv.latestMessage ? {
+          id: conv.latestMessage.id,
+          chatId: conv.id,
+          senderId: conv.latestMessage.senderId,
+          content: conv.latestMessage.content,
+          timestamp: conv.latestMessage.createdAt,
+          read: false // Default to false, will be updated when conversation is opened
+        } : undefined,
+        lastMessageAt: conv.lastMessageAt,
+        createdAt: conv.createdAt
+      }));
     } catch (error: any) {
       // Silence 401/404 errors to prevent loop spam in console/UI
       if (error.message?.includes('401') || error.message?.includes('404')) {
         return [];
       }
-      console.error('Error fetching user chats:', error);
+      console.error('Error fetching user conversations:', error);
       return [];
     }
   }
 
-  // Get messages for a chat
-  async getChatMessages(chatId: string): Promise<Message[]> {
+  // Get messages for a conversation
+  async getChatMessages(conversationId: string): Promise<Message[]> {
     try {
-      const response = await apiRequest('GET', `/api/chats/${chatId}/messages`);
-
-      const messages = await response.json();
+      const response = await apiRequest('GET', `/api/conversations/${conversationId}`);
+      const data = await response.json();
+      
+      // The response includes both conversation and messages
+      const messages = data.messages || [];
       
       if (!Array.isArray(messages)) {
         console.error('Invalid messages response format:', messages);
         return [];
       }
       
-      return messages;
+      // Transform to Message format (mapping conversation API to Chat schema)
+      return messages.map((msg: any) => ({
+        id: msg.id,
+        chatId: conversationId, // Map conversationId to chatId for backward compatibility
+        senderId: msg.senderId,
+        content: msg.content,
+        timestamp: msg.createdAt, // Map createdAt to timestamp
+        read: msg.isRead !== undefined ? msg.isRead : false // Map isRead to read
+      }));
     } catch (error) {
       console.error('Error fetching messages:', error);
       return [];
@@ -98,9 +112,9 @@ export class MessagingService {
   }
 
   // Mark messages as read
-  async markMessagesAsRead(chatId: string, userId: string): Promise<void> {
+  async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
     try {
-      await apiRequest('PUT', `/api/chats/${chatId}/read/${userId}`, {});
+      await apiRequest('PATCH', `/api/conversations/${conversationId}/read`, {});
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }
@@ -161,14 +175,17 @@ export class MessagingService {
   }
 
   // Get other participant in a chat
+  // Note: This method may need to be updated as Chat interface doesn't include participant names/roles
+  // Consider fetching participant details separately or updating the Chat interface
   getOtherParticipant(chat: Chat, currentUserId: string): { id: string, name: string, role: string } | null {
     const otherUserId = chat.participants.find(id => id !== currentUserId);
     if (!otherUserId) return null;
     
+    // Return basic info - name and role would need to be fetched separately
     return {
       id: otherUserId,
-      name: chat.participantNames[otherUserId] || 'Unknown User',
-      role: chat.participantRoles[otherUserId] || 'user'
+      name: 'Unknown User', // Would need to fetch from user service
+      role: 'user' // Would need to fetch from user service
     };
   }
 }

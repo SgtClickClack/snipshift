@@ -29,5 +29,7 @@ export default {
   dbCredentials: {
     url: databaseUrl,
   },
+  verbose: true,
+  strict: true,
 } satisfies Config;
 

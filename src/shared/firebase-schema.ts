@@ -62,11 +62,17 @@ export interface InsertMessage {
 export interface Shift {
   id: string;
   title: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  date: string; // ISO datetime string (startTime)
+  startTime?: string; // ISO datetime string
+  endTime?: string; // ISO datetime string
   location?: string;
-  rate?: string;
-  status?: string;
+  pay?: string | number; // Hourly rate (alias for hourlyRate)
+  hourlyRate?: string | number;
+  requirements?: string; // Description/requirements (alias for description)
+  description?: string;
+  status?: 'open' | 'filled' | 'completed';
+  employerId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 

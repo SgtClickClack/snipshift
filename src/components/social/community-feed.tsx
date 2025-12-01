@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, Filter, TrendingUp, Users, Sparkles, RefreshCw } from "lucide-react";
-import PostCard, { Post } from "./post-card";
+import { Search, TrendingUp, Users, Sparkles, RefreshCw } from "lucide-react";
+import PostCard from "./post-card";
+import { Post } from "@/shared/types";
 import PostCreationForm from "./post-creation-form";
 
 interface CommunityFeedProps {
@@ -22,132 +22,60 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "social" | "jobs">("all");
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
-  // Mock data for community feed
-  const mockPosts: Post[] = [
-    {
-      id: "post-1",
-      authorId: "brand-1",
-      authorName: "StyleCraft Studios",
-      authorRole: "brand",
-      authorAvatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face",
-      content: "🚀 Excited to announce our new Premium Styling Tools collection! These ergonomic clippers and trimmers are designed specifically for professional barbers who demand precision and comfort. \n\nWhat makes them special:\n✨ Titanium-coated blades for longer life\n🔋 8-hour battery life\n⚡ Fast charging technology\n🎯 Precision cutting guides\n\nWho's ready to elevate their craft? #BarberTools #StyleCraft #ProfessionalBarber",
-      images: [
-        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&h=400&fit=crop"
-      ],
-      postType: "social",
-      likes: 47,
-      comments: [
-        {
-          id: "comment-1",
-          author: "Mike Johnson",
-          authorId: "prof-1",
-          text: "These look amazing! How's the weight balance on the clippers?",
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: "comment-2",
-          author: "Sarah's Salon",
-          authorId: "hub-1",
-          text: "We've been using StyleCraft tools for 3 years - they're incredibly reliable!",
-          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
-        }
-      ],
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "job-post-1",
-      authorId: "hub-2",
-      authorName: "Elite Barbershop Sydney",
-      authorRole: "hub",
-      authorAvatar: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=150&h=150&fit=crop&crop=face",
-      content: "We're looking for an experienced barber to join our team in Sydney CBD! Perfect opportunity for someone passionate about classic cuts and modern styles.\n\nWe offer:\n• Competitive hourly rate + tips\n• Flexible schedule options\n• Professional development opportunities\n• Prime location with high foot traffic",
-      postType: "job",
-      location: {
-        city: "Sydney",
-        state: "NSW"
-      },
-      payRate: 35,
-      payType: "hourly",
-      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      skillsRequired: ["Hair Cutting", "Beard Trimming", "Customer Service", "Modern Styles"],
-      likes: 23,
-      comments: [
-        {
-          id: "comment-3",
-          author: "Alex Chen",
-          authorId: "prof-2",
-          text: "Is this position still available? I have 5 years experience in CBD locations.",
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-        }
-      ],
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "post-2",
-      authorId: "trainer-1",
-      authorName: "Marco Rodriguez",
-      authorRole: "trainer",
-      authorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      content: "Just wrapped up an incredible 2-day masterclass on advanced fade techniques! 🎓\n\nSeeing 25 talented barbers push their boundaries and perfect their craft never gets old. Today we covered:\n\n🔥 Zero-gap clipper techniques\n✂️ Seamless blend transitions  \n🎨 Creative design integration\n💡 Client consultation best practices\n\nThe passion and dedication in the room was absolutely electric! These professionals are going to take their skills to the next level.\n\nNext masterclass is in Melbourne - March 15th. Who's ready to level up? 💪\n\n#BarberEducation #MasterClass #FadeTechniques #BarberTraining",
-      images: [
-        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&h=400&fit=crop"
-      ],
-      postType: "social",
-      likes: 89,
-      comments: [
-        {
-          id: "comment-4",
-          author: "David Kim",
-          authorId: "prof-3",
-          text: "Marco, your techniques revolutionized my fade game! Can't wait for the Melbourne session 🙌",
-          timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString()
-        },
-        {
-          id: "comment-5",
-          author: "The Cutting Room",
-          authorId: "hub-3",
-          text: "We sent two of our junior barbers to your last class. The improvement has been incredible!",
-          timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString()
-        }
-      ],
-      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
+  // Fetch posts from API
+  const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
+    queryKey: ["/api/community/feed", filterType, searchQuery, user?.id],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filterType !== "all") {
+        params.append("type", filterType === "jobs" ? "brand" : "community");
+      }
+      if (user?.id) {
+        params.append("userId", user.id);
+      }
+      
+      const response = await fetch(`/api/community/feed?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      
+      const data = await response.json();
+      
+      // Filter locally for search if needed, or rely on API if implemented
+      // Also map backend fields to frontend Post interface
+      return data.map((item: any) => ({
+        id: item.id,
+        authorId: item.authorId,
+        authorName: item.authorName,
+        authorRole: item.authorRole,
+        authorAvatar: item.authorAvatar,
+        content: item.content,
+        images: item.imageUrl ? [item.imageUrl] : [], // Map single imageUrl to array for frontend compatibility
+        postType: item.type === 'brand' ? 'job' : 'social', // Map backend type to frontend type
+        likes: item.likesCount,
+        comments: [], // Comments not yet implemented in backend
+        timestamp: item.createdAt,
+        isLiked: item.isLiked || false,
+      })).filter((post: Post) => {
+        if (!searchQuery) return true;
+        return post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               post.authorName.toLowerCase().includes(searchQuery.toLowerCase());
+      });
     }
-  ];
-
-  const { data: posts = mockPosts, isLoading, refetch } = useQuery<Post[]>({
-    queryKey: ["/api/community/feed", filterType, searchQuery],
-    initialData: mockPosts
   });
 
   const createPostMutation = useMutation({
     mutationFn: async (postData: { content: string; images: string[] }) => {
-      const newPost: Post = {
-        id: `post-${Date.now()}`,
-        authorId: user?.id || "",
-        authorName: user?.displayName || "Anonymous",
-        authorRole: (user?.currentRole as any) || "professional",
-        authorAvatar: user?.profileImage,
+      const response = await apiRequest("POST", "/api/community", {
         content: postData.content,
-        images: postData.images,
-        postType: "social",
-        likes: 0,
-        comments: [],
-        timestamp: new Date().toISOString(),
-        isLiked: false
-      };
-      
-      // In real app, would make API call
-      return newPost;
+        imageUrl: postData.images[0], // Take first image if multiple
+        type: "community", // Default to community post
+      });
+      return response.json();
     },
     onSuccess: (newPost) => {
-      queryClient.setQueryData(["/api/community/feed", filterType, searchQuery], (oldPosts: Post[] = []) => [
-        newPost,
-        ...oldPosts
-      ]);
+      queryClient.invalidateQueries({ queryKey: ["/api/community/feed"] });
       toast({
         title: "Post created successfully!",
         description: "Your post is now live in the community feed",
@@ -162,69 +90,57 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
     }
   });
 
-  const handleLike = (postId: string) => {
-    const newLikedPosts = new Set(likedPosts);
-    const isCurrentlyLiked = likedPosts.has(postId);
-    
-    if (isCurrentlyLiked) {
-      newLikedPosts.delete(postId);
-    } else {
-      newLikedPosts.add(postId);
+  const likeMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const response = await apiRequest("POST", `/api/community/${postId}/like`);
+      return response.json();
+    },
+    onSuccess: (data, postId) => {
+      // Optimistic update or refetch
+      queryClient.setQueryData(["/api/community/feed", filterType, searchQuery, user?.id], (oldPosts: Post[] = []) =>
+        oldPosts.map(post =>
+          post.id === postId
+            ? {
+                ...post,
+                likes: data.isLiked ? post.likes + 1 : post.likes - 1,
+                isLiked: data.isLiked
+              }
+            : post
+        )
+      );
+    },
+    onError: () => {
+      toast({
+        title: "Failed to like post",
+        description: "Please try again later",
+        variant: "destructive",
+      });
     }
-    
-    setLikedPosts(newLikedPosts);
+  });
 
-    // Update post data
-    queryClient.setQueryData(["/api/community/feed", filterType, searchQuery], (oldPosts: Post[] = []) =>
-      oldPosts.map(post =>
-        post.id === postId
-          ? {
-              ...post,
-              likes: isCurrentlyLiked ? post.likes - 1 : post.likes + 1,
-              isLiked: !isCurrentlyLiked
-            }
-          : post
-      )
-    );
+  const handleLike = (postId: string) => {
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to like posts",
+        variant: "destructive",
+      });
+      return;
+    }
+    likeMutation.mutate(postId);
   };
 
   const handleComment = async (postId: string, commentText: string) => {
-    const newComment = {
-      id: `comment-${Date.now()}`,
-      author: user?.displayName || "Anonymous",
-      authorId: user?.id || "",
-      text: commentText,
-      timestamp: new Date().toISOString()
-    };
-
-    // Update post data
-    queryClient.setQueryData(["/api/community/feed", filterType, searchQuery], (oldPosts: Post[] = []) =>
-      oldPosts.map(post =>
-        post.id === postId
-          ? {
-              ...post,
-              comments: [...post.comments, newComment]
-            }
-          : post
-      )
-    );
+    // TODO: Implement comments backend
+    toast({
+      title: "Comments coming soon",
+      description: "Commenting functionality is not yet implemented in the backend.",
+    });
   };
 
   const handleCreatePost = (postData: { content: string; images: string[] }) => {
     createPostMutation.mutate(postData);
   };
-
-  const filteredPosts = posts.filter(post => {
-    const matchesType = filterType === "all" || 
-                       (filterType === "social" && post.postType === "social") ||
-                       (filterType === "jobs" && post.postType === "job");
-    
-    const matchesSearch = !searchQuery || 
-                         post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.authorName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesType && matchesSearch;
-  });
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -296,9 +212,9 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
 
         {/* Feed Stats */}
         <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-          <span>{filteredPosts.length} posts</span>
-          <span>{filteredPosts.filter(p => p.postType === "social").length} social posts</span>
-          <span>{filteredPosts.filter(p => p.postType === "job").length} job posts</span>
+          <span>{posts.length} posts</span>
+          <span>{posts.filter(p => p.postType === "social").length} social posts</span>
+          <span>{posts.filter(p => p.postType === "job").length} job posts</span>
         </div>
       </div>
 
@@ -306,7 +222,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
       {showCreatePost && user && (
         <PostCreationForm
           userRole={user.currentRole as any}
-          userName={user.displayName || user.email}
+          userName={user.displayName || user.email || "User"}
           userAvatar={user.profileImage}
           onSubmit={handleCreatePost}
           isSubmitting={createPostMutation.isPending}
@@ -338,14 +254,11 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
               </Card>
             ))}
           </div>
-        ) : filteredPosts.length > 0 ? (
-          filteredPosts.map((post) => (
+        ) : posts.length > 0 ? (
+          posts.map((post) => (
             <PostCard
               key={post.id}
-              post={{
-                ...post,
-                isLiked: likedPosts.has(post.id)
-              }}
+              post={post}
               onLike={handleLike}
               onComment={handleComment}
               currentUserId={user?.id}

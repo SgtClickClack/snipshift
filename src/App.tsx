@@ -34,6 +34,7 @@ import AboutPage from '@/pages/company/about';
 import ContactPage from '@/pages/company/contact';
 import NotFound from '@/pages/not-found';
 import DashboardRedirect from '@/pages/dashboard-redirect';
+import ComingSoonPage from '@/pages/coming-soon';
 
 // Dashboard pages - lazy load to reduce initial bundle
 const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
@@ -71,7 +72,7 @@ function AppRoutes() {
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection'].includes(location.pathname);
   
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col max-w-full">
       {!hideNavbar && <Navbar />}
       <div className="flex-grow">
         <Routes>
@@ -277,28 +278,22 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        {/* Protected feature routes */}
+        {/* Protected feature routes - Disabled for stability */}
         <Route path="/community" element={
           <ProtectedRoute>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <CommunityPage />
-            </Suspense>
+            <ComingSoonPage />
           </ProtectedRoute>
         } />
 
         <Route path="/social-feed" element={
           <ProtectedRoute>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <SocialFeed />
-            </Suspense>
+            <ComingSoonPage />
           </ProtectedRoute>
         } />
 
         <Route path="/training-hub" element={
           <ProtectedRoute>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <TrainingHub />
-            </Suspense>
+            <ComingSoonPage />
           </ProtectedRoute>
         } />
 
