@@ -87,6 +87,64 @@ export const ReviewSchema = z.object({
 });
 
 /**
+ * Schema for shift creation payloads
+ * Supports both single date (for frontend compatibility) and separate start/end times
+ */
+export const ShiftSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required').optional(),
+  requirements: z.string().optional(), // Alias for description for frontend compatibility
+  date: z.string().optional(), // Single datetime (frontend format)
+  startTime: z.string().optional(), // ISO datetime string
+  endTime: z.string().optional(), // ISO datetime string
+  hourlyRate: z.union([
+    z.number().positive('Hourly rate must be a positive number'),
+    z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0;
+    }, 'Hourly rate must be a positive number'),
+  ]).optional(),
+  pay: z.union([ // Alias for hourlyRate for frontend compatibility
+    z.number().positive('Pay rate must be a positive number'),
+    z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0;
+    }, 'Pay rate must be a positive number'),
+  ]).optional(),
+  location: z.string().optional(),
+  status: z.enum(['open', 'filled', 'completed']).optional(),
+});
+
+/**
+ * Schema for community post creation
+ */
+export const PostSchema = z.object({
+  content: z.string().min(1, 'Content is required'),
+  imageUrl: z.string().url('Invalid image URL').optional(),
+  type: z.enum(['community', 'brand']).default('community'),
+});
+
+/**
+ * Schema for training module creation
+ */
+export const TrainingModuleSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  videoUrl: z.string().url('Invalid video URL'),
+  thumbnailUrl: z.string().url('Invalid thumbnail URL').optional(),
+  price: z.union([
+    z.number().min(0, 'Price must be non-negative'),
+    z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Price must be non-negative'),
+  ]).default(0),
+  duration: z.string().optional(),
+  level: z.enum(['beginner', 'intermediate', 'advanced']),
+  category: z.string().min(1, 'Category is required'),
+});
+
+/**
  * Type exports for use in TypeScript code
  */
 export type JobInput = z.infer<typeof JobSchema>;
@@ -96,4 +154,6 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 export type PurchaseInput = z.infer<typeof PurchaseSchema>;
 export type JobStatusUpdate = z.infer<typeof JobStatusUpdateSchema>;
 export type ReviewInput = z.infer<typeof ReviewSchema>;
-
+export type ShiftInput = z.infer<typeof ShiftSchema>;
+export type PostInput = z.infer<typeof PostSchema>;
+export type TrainingModuleInput = z.infer<typeof TrainingModuleSchema>;

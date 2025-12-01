@@ -20,7 +20,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   const validationResult = ShiftSchema.safeParse(req.body);
   if (!validationResult.success) {
     res.status(400).json({ 
-      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+      message: 'Validation error: ' + validationResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ') 
     });
     return;
   }

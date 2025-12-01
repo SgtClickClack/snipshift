@@ -1,0 +1,114 @@
+import { Router } from 'express';
+import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
+import { PostSchema } from '../validation/schemas.js';
+import * as postsRepo from '../repositories/posts.repository.js';
+import * as usersRepo from '../repositories/users.repository.js';
+
+const router = Router();
+
+// Create a post (authenticated)
+router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = PostSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+    });
+    return;
+  }
+
+  const postData = validationResult.data;
+
+  // Create post
+  const newPost = await postsRepo.createPost({
+    authorId: userId,
+    content: postData.content,
+    imageUrl: postData.imageUrl,
+    type: postData.type,
+  });
+
+  if (!newPost) {
+    res.status(500).json({ message: 'Failed to create post' });
+    return;
+  }
+
+  // Return with author info for immediate display
+  res.status(201).json({
+    ...newPost,
+    authorName: req.user?.name,
+    authorRole: req.user?.role,
+    authorAvatar: undefined, // profileImage not available in user schema yet
+    isLiked: false,
+  });
+}));
+
+// Get community feed (public read)
+router.get('/feed', asyncHandler(async (req: any, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+  const type = req.query.type as 'community' | 'brand' | undefined;
+  const userId = req.query.userId as string | undefined; // For checking "isLiked" status
+
+  const result = await postsRepo.getPosts({
+    type,
+    limit,
+    offset,
+  });
+
+  if (!result) {
+    res.status(200).json([]);
+    return;
+  }
+
+  // Get liked posts for current user if provided
+  let likedPostIds = new Set<string>();
+  if (userId) {
+    likedPostIds = await postsRepo.getUserLikedPosts(userId);
+  }
+
+  // Enrich posts with author info
+  const enrichedPosts = await Promise.all(result.data.map(async (post) => {
+    const author = await usersRepo.getUserById(post.authorId);
+    
+    return {
+      ...post,
+      authorName: author?.name || 'Unknown User',
+      authorRole: author?.role || 'professional',
+      authorAvatar: undefined, // profileImage not available in user schema yet
+      isLiked: likedPostIds.has(post.id),
+    };
+  }));
+
+  res.status(200).json(enrichedPosts);
+}));
+
+// Toggle like on a post (authenticated)
+router.post('/:postId/like', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { postId } = req.params;
+  
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const isLiked = await postsRepo.likePost(postId, userId);
+
+  res.status(200).json({ 
+    success: true, 
+    isLiked,
+    message: isLiked ? 'Post liked' : 'Post unliked' 
+  });
+}));
+
+export default router;
+
+
