@@ -20,10 +20,21 @@ interface DashboardStatsProps {
   stats: {
     [key: string]: number;
   };
+  onStatClick?: (action: string) => void;
 }
 
-export default function DashboardStats({ role, stats }: DashboardStatsProps) {
-  const getStatsConfig = () => {
+interface StatItem {
+  title: string;
+  value: number;
+  icon: any;
+  description: string;
+  variant?: string;
+  suffix?: string;
+  action?: string;
+}
+
+export default function DashboardStats({ role, stats, onStatClick }: DashboardStatsProps) {
+  const getStatsConfig = (): StatItem[] => {
     switch (role) {
       case 'hub':
         return [
@@ -32,28 +43,32 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
             value: stats.openJobs || 0,
             icon: Scissors,
             description: 'Active job postings',
-            variant: 'accent'
+            variant: 'accent',
+            action: 'jobs'
           },
           {
             title: 'Applications',
             value: stats.totalApplications || 0,
             icon: FileText,
             description: 'Total applications received',
-            variant: 'steel'
+            variant: 'steel',
+            action: 'applications'
           },
           {
             title: 'Messages',
             value: stats.unreadMessages || 0,
             icon: MessageSquare,
             description: 'Unread messages',
-            variant: 'chrome'
+            variant: 'chrome',
+            action: 'messages'
           },
           {
             title: 'This Month',
             value: stats.monthlyHires || 0,
             icon: Handshake,
             description: 'Successful hires',
-            variant: 'accent-secondary'
+            variant: 'accent-secondary',
+            action: 'hires'
           }
         ];
       
@@ -64,21 +79,24 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
             value: stats.activeApplications || 0,
             icon: Briefcase,
             description: 'Active job applications',
-            variant: 'accent'
+            variant: 'accent',
+            action: 'applications'
           },
           {
             title: 'Bookings',
             value: stats.upcomingBookings || 0,
             icon: Calendar,
             description: 'Upcoming confirmed jobs',
-            variant: 'steel'
+            variant: 'steel',
+            action: 'bookings'
           },
           {
             title: 'Messages',
             value: stats.unreadMessages || 0,
             icon: MessageSquare,
             description: 'Unread messages',
-            variant: 'chrome'
+            variant: 'chrome',
+            action: 'messages'
           },
           {
             title: 'Rating',
@@ -86,7 +104,8 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
             icon: Star,
             description: 'Average client rating',
             suffix: '/5',
-            variant: 'accent-secondary'
+            variant: 'accent-secondary',
+            action: 'reviews'
           }
         ];
       
@@ -193,9 +212,19 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
         };
 
         const styles = getVariantStyles((stat as any).variant);
+        const isClickable = !!onStatClick && !!stat.action;
 
         return (
-          <Card key={index} className="group relative overflow-hidden bg-white border border-steel-200 shadow-sm hover:shadow-md hover:border-steel-300 transition-all duration-300" data-testid={`stat-card-${index}`}>
+          <Card 
+            key={index} 
+            className={`group relative overflow-hidden bg-white border border-steel-200 shadow-sm transition-all duration-300 ${
+              isClickable 
+                ? 'cursor-pointer hover:shadow-md hover:border-steel-300 hover:-translate-y-1 active:scale-[0.98]' 
+                : 'hover:shadow-md hover:border-steel-300'
+            }`} 
+            data-testid={`stat-card-${index}`}
+            onClick={() => isClickable && onStatClick(stat.action!)}
+          >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-steel-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between">

@@ -182,6 +182,25 @@ export default function ProfessionalDashboard() {
     }
   };
 
+  const handleStatClick = (action: string) => {
+    switch (action) {
+      case 'applications':
+        setActiveView('applications');
+        break;
+      case 'bookings':
+        setActiveView('calendar');
+        break;
+      case 'messages':
+        setShowMessaging(true);
+        break;
+      case 'reviews':
+        setActiveView('profile');
+        break;
+      default:
+        break;
+    }
+  };
+
   // Mock stats for demonstration
   const stats = {
     activeApplications: jobs.filter(job => job.applicants?.includes(user?.id || '')).length,
@@ -304,7 +323,7 @@ export default function ProfessionalDashboard() {
         {/* Overview Tab */}
         {activeView === 'overview' && (
           <div className="space-y-6">
-            <DashboardStats role="professional" stats={stats} />
+            <DashboardStats role="professional" stats={stats} onStatClick={handleStatClick} />
             
             <div className="grid lg:grid-cols-3 gap-6">
               <QuickActions role="professional" onAction={handleQuickAction} />
