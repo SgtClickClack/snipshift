@@ -40,6 +40,9 @@ import chatsRouter from './routes/chats.js';
 import webhooksRouter from './routes/webhooks.js';
 import adminRouter from './routes/admin.js';
 import notificationsRouter from './routes/notifications.js';
+import shiftsRouter from './routes/shifts.js';
+import communityRouter from './routes/community.js';
+import trainingRouter from './routes/training.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
@@ -163,6 +166,18 @@ app.use('/api', usersRouter);
 app.use('/api/chats', chatsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/shifts', shiftsRouter);
+app.use('/api/community', communityRouter);
+app.use('/api/training', trainingRouter);
+
+// Aliases for backward compatibility
+app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
+app.post('/api/purchase-content', authenticateUser, (req, res, next) => {
+  // Forward to new endpoint structure
+  req.url = '/purchase';
+  // Use trainingRouter to handle it
+  return trainingRouter(req, res, next);
+});
 
 // Fallback in-memory store for when DATABASE_URL is not configured (dev only)
 // Mock jobs data for development/testing
@@ -1686,7 +1701,7 @@ app.get('/api/conversations/:id', authenticateUser, asyncHandler(async (req: Aut
       id: otherParticipant.id,
       name: otherParticipant.name,
       email: otherParticipant.email,
-    } : null,
+      } : null,
     job: jobInfo ? {
       id: jobInfo.id,
       title: jobInfo.title,
@@ -1921,6 +1936,20 @@ app.post('/api/reports', authenticateUser, asyncHandler(async (req: Authenticate
 }));
 
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'SnipShift API is running',
+    version: '1.0.0',
+    documentation: '/api/docs' // Placeholder
+  });
+});
+
+// Favicon handler to prevent 404s
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
 // 404 Catch-all
 app.use((req, res, next) => {
   res.status(404);
@@ -1932,3 +1961,27 @@ app.use(errorHandler);
 
 // Export for Vercel serverless functions
 export default app;
+
+// Start server for local development (not on Vercel)
+// This code runs when the file is executed directly (not imported)
+if (process.env.VERCEL !== '1') {
+  console.log('[SERVER] Starting server...');
+  console.log(`[SERVER] VERCEL env: ${process.env.VERCEL}`);
+  console.log(`[SERVER] PORT: ${PORT}`);
+  
+  const server = app.listen(PORT, () => {
+    console.log(`[SERVER] ✓ API server running on http://localhost:${PORT}`);
+    console.log(`[SERVER] ✓ Health check: http://localhost:${PORT}/health`);
+  });
+  
+  server.on('error', (error: any) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`[SERVER] ✗ Port ${PORT} is already in use`);
+      console.error(`[SERVER] Try: taskkill /F /PID <PID> (find PID with: netstat -ano | findstr ":${PORT}")`);
+      console.error(`[SERVER] Or set a different port: $env:PORT=5001 npm start`);
+    } else {
+      console.error('[SERVER] ✗ Server error:', error);
+    }
+    process.exit(1);
+  });
+}

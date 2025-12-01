@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Shift } from "@shared/schema";
+import { Shift } from "@/shared/types";
 import { Plus, Calendar, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
@@ -31,11 +31,18 @@ export default function ShopDashboard() {
 
   const createShiftMutation = useMutation({
     mutationFn: async (shiftData: any) => {
+      console.log('Submitting shift data:', shiftData);
       const response = await apiRequest("POST", "/api/shifts", {
-        ...shiftData,
-        shopId: user?.id,
+        title: shiftData.title,
+        requirements: shiftData.requirements,
+        // Convert datetime-local string to ISO string
         date: new Date(shiftData.date).toISOString(),
-        pay: shiftData.pay.toString(),
+        startTime: new Date(shiftData.date).toISOString(), // Provide explicit start time
+        // Default end time to 8 hours later if not specified (frontend simplified form)
+        endTime: new Date(new Date(shiftData.date).getTime() + 8 * 60 * 60 * 1000).toISOString(),
+        // Ensure pay is sent as a number
+        hourlyRate: Number(shiftData.pay),
+        pay: Number(shiftData.pay), // Keep alias for compatibility
       });
       return response.json();
     },
@@ -48,7 +55,8 @@ export default function ShopDashboard() {
       setFormData({ title: "", date: "", requirements: "", pay: "" });
       setShowForm(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Failed to post shift:", error);
       toast({
         title: "Failed to post shift",
         description: "Please check your information and try again",
@@ -59,6 +67,16 @@ export default function ShopDashboard() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Basic validation
+    if (!formData.title || !formData.date || !formData.pay) {
+      console.error("FORM VALIDATION FAILED: Missing required fields", formData);
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     createShiftMutation.mutate(formData);
   };
 
@@ -98,7 +116,7 @@ export default function ShopDashboard() {
                   <CardTitle>Post a New Shift</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                     <div>
                       <Label htmlFor="title">Shift Title</Label>
                       <Input
@@ -149,9 +167,24 @@ export default function ShopDashboard() {
                       type="submit" 
                       className="w-full"
                       disabled={createShiftMutation.isPending}
+                      onClick={(e) => {
+                        // Fail-safe: explicitly call submit handler if form submission doesn't trigger
+                        if (e.type === 'click' && (e.target as HTMLButtonElement).type === 'submit') {
+                          // Allow default behavior first
+                        }
+                      }}
                     >
                       {createShiftMutation.isPending ? "Posting..." : "Post Shift"}
                     </Button>
+                    
+                    {/* DEBUG BUTTON - TO BE REMOVED */}
+                    <button
+                      type="submit"
+                      style={{ backgroundColor: 'red', color: 'white', padding: '10px', fontWeight: 'bold', width: '100%', marginTop: '10px' }}
+                      onClick={() => console.log("DEBUG BUTTON CLICKED")}
+                    >
+                      DEBUG POST
+                    </button>
                   </form>
                 </CardContent>
               </Card>

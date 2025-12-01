@@ -43,19 +43,26 @@ export default function HubDashboard() {
 
   const createJobMutation = useMutation({
     mutationFn: async (jobData: any) => {
-      const response = await fetch("/api/jobs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...jobData,
-          hubId: user?.id,
-          status: "open",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        })
-      });
+      console.log("Submitting job data:", jobData);
+      
+      // Transform data for API compatibility
+      const payload = {
+        title: jobData.title,
+        description: jobData.description,
+        payRate: jobData.payRate, // API expects payRate at root for new JobSchema
+        date: jobData.date,
+        startTime: jobData.startTime,
+        // Default endTime to 8 hours after start (simplified form)
+        endTime: (() => {
+          const [hours, minutes] = jobData.startTime.split(':').map(Number);
+          const endHour = (hours + 8) % 24;
+          return `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        })(),
+        city: jobData.location.city,
+        skillsRequired: jobData.skillsRequired.split(',').map((s: string) => s.trim()).filter(Boolean)
+      };
+
+      const response = await apiRequest("POST", "/api/jobs", payload);
       return response.json();
     },
     onSuccess: () => {
@@ -78,6 +85,7 @@ export default function HubDashboard() {
       setShowForm(false);
     },
     onError: (error) => {
+      console.error("Failed to post job:", error);
       toast({
         title: "Error", 
         description: "Failed to post job. Please try again.",
@@ -94,7 +102,10 @@ export default function HubDashboard() {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'post-job':
-        setShowJobPostingModal(true);
+        // Switch to the 'jobs' view first
+        setActiveView('jobs');
+        // Then open the form
+        setShowForm(true);
         break;
       case 'view-applications':
         setActiveView('applications');
@@ -103,7 +114,8 @@ export default function HubDashboard() {
         setActiveView('jobs');
         break;
       case 'open-messages':
-        setShowMessaging(true);
+        // Messages is a separate page in the app router
+        window.location.href = '/messages';
         break;
       default:
         break;
