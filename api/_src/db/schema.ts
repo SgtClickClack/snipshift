@@ -9,8 +9,21 @@ import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, i
 import { relations } from 'drizzle-orm';
 import { users, userRoleEnum } from './schema/users';
 import { notifications, notificationTypeEnum } from './schema/notifications';
+import { shifts, shiftStatusEnum } from './schema/shifts.js';
+import { posts, postTypeEnum } from './schema/posts.js';
+import { postLikes } from './schema/post-likes.js';
+import { trainingModules, trainingLevelEnum } from './schema/training-modules.js';
+import { trainingPurchases } from './schema/training-purchases.js';
 
-export { users, userRoleEnum, notifications, notificationTypeEnum };
+export { 
+  users, userRoleEnum, 
+  notifications, notificationTypeEnum, 
+  shifts, shiftStatusEnum,
+  posts, postTypeEnum,
+  postLikes,
+  trainingModules, trainingLevelEnum,
+  trainingPurchases
+};
 
 /**
  * Job status enum
@@ -124,6 +137,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   applications: many(applications),
   reviewsGiven: many(reviews, { relationName: 'reviewer' }),
   reviewsReceived: many(reviews, { relationName: 'reviewee' }),
+  shifts: many(shifts),
+  posts: many(posts),
+  postLikes: many(postLikes),
+  trainingModules: many(trainingModules),
+  trainingPurchases: many(trainingPurchases),
 }));
 
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
@@ -391,5 +409,50 @@ export const reportsRelations = relations(reports, ({ one }) => ({
   job: one(jobs, {
     fields: [reports.jobId],
     references: [jobs.id],
+  }),
+}));
+
+export const shiftsRelations = relations(shifts, ({ one }) => ({
+  employer: one(users, {
+    fields: [shifts.employerId],
+    references: [users.id],
+  }),
+}));
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  author: one(users, {
+    fields: [posts.authorId],
+    references: [users.id],
+  }),
+  likes: many(postLikes),
+}));
+
+export const postLikesRelations = relations(postLikes, ({ one }) => ({
+  post: one(posts, {
+    fields: [postLikes.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const trainingModulesRelations = relations(trainingModules, ({ one, many }) => ({
+  trainer: one(users, {
+    fields: [trainingModules.trainerId],
+    references: [users.id],
+  }),
+  purchases: many(trainingPurchases),
+}));
+
+export const trainingPurchasesRelations = relations(trainingPurchases, ({ one }) => ({
+  user: one(users, {
+    fields: [trainingPurchases.userId],
+    references: [users.id],
+  }),
+  module: one(trainingModules, {
+    fields: [trainingPurchases.moduleId],
+    references: [trainingModules.id],
   }),
 }));
