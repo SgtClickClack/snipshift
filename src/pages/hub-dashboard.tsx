@@ -123,6 +123,25 @@ export default function HubDashboard() {
     }
   };
 
+  const handleStatClick = (action: string) => {
+    switch (action) {
+      case 'jobs':
+        setActiveView('jobs');
+        break;
+      case 'applications':
+        setActiveView('applications');
+        break;
+      case 'messages':
+        window.location.href = '/messages';
+        break;
+      case 'hires':
+        setActiveView('jobs');
+        break;
+      default:
+        break;
+    }
+  };
+
   // Mock stats for demonstration
   const stats = {
     openJobs: jobs.filter(job => job.status === 'open').length,
@@ -221,7 +240,7 @@ export default function HubDashboard() {
         {activeView === 'overview' && (
           <div className="space-y-6">
             {/* Dashboard Stats */}
-            <DashboardStats role="hub" stats={stats} />
+            <DashboardStats role="hub" stats={stats} onStatClick={handleStatClick} />
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {/* Quick Actions */}
