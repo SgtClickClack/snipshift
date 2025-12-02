@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,17 @@ export default function HubDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeView, setActiveView] = useState<ActiveView>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeView = (searchParams.get('view') as ActiveView) || 'overview';
+  
+  const setActiveView = (view: ActiveView) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('view', view);
+      return newParams;
+    });
+  };
+
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: "",

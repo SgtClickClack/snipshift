@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,17 @@ import LocationSearch from "@/components/job-feed/location-search";
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeView, setActiveView] = useState<'overview' | 'jobs' | 'applications' | 'profile' | 'calendar'>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeView = (searchParams.get('view') as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') || 'overview';
+  
+  const setActiveView = (view: 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('view', view);
+      return newParams;
+    });
+  };
+
   const [showFilters, setShowFilters] = useState(false);
   const [showMessaging, setShowMessaging] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
