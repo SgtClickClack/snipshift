@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shift } from "@/shared/types";
-import { Plus, Calendar, DollarSign, CreditCard, Wallet } from "lucide-react";
+import { Plus, Calendar, DollarSign, CreditCard, Wallet, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ShopDashboard() {
@@ -40,6 +40,12 @@ export default function ShopDashboard() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const res = await apiRequest("PATCH", `/api/shifts/${id}`, { status });
       return res.json();
+    },
+    onMutate: () => {
+      toast({
+        title: "Updating Status...",
+        description: "Please wait while we update the shift status.",
+      });
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/shifts/shop", user?.id] });
@@ -292,15 +298,19 @@ export default function ShopDashboard() {
                             <div className="w-[130px]">
                               <Select
                                 defaultValue={shift.status}
+                                disabled={updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id}
                                 onValueChange={(value) => updateStatusMutation.mutate({ id: shift.id, status: value })}
                               >
                                 <SelectTrigger 
-                                  className={`h-8 text-xs font-medium border-0 ${
+                                  className={`h-8 text-xs font-medium border-0 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     shift.status === 'open' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
                                     shift.status === 'filled' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' :
                                     'bg-red-100 text-red-800 hover:bg-red-200'
                                   }`}
                                 >
+                                  {updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                                  ) : null}
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
