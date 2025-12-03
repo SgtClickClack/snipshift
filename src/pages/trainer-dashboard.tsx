@@ -121,7 +121,7 @@ export default function TrainerDashboard() {
     totalContent: content.length,
     totalPurchases: content.reduce((sum, item) => sum + (item.purchaseCount || 0), 0),
     totalRevenue: content.reduce((sum, item) => sum + (item.price * (item.purchaseCount || 0)), 0),
-    avgRating: 4.8
+    avgRating: 0 // TODO: Connect to rating system
   };
 
   if (!user || user.currentRole !== "trainer") {

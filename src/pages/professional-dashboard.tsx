@@ -233,12 +233,12 @@ export default function ProfessionalDashboard() {
     }
   };
 
-  // Mock stats for demonstration
+  // Mock stats for demonstration - reset to 0 for clean state
   const stats = {
     activeApplications: jobs.filter(job => job.applicants?.includes(user?.id || '')).length,
-    upcomingBookings: 2, // This would come from booking system
-    unreadMessages: 1, // This would come from messaging service
-    averageRating: 4.8
+    upcomingBookings: 0, // TODO: Connect to booking system
+    unreadMessages: 0, // TODO: Connect to messaging service
+    averageRating: 0 // TODO: Connect to rating system
   };
 
   if (!user || user.currentRole !== "professional") {

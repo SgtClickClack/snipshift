@@ -195,8 +195,8 @@ export default function HubDashboard() {
   const stats = {
     openJobs: jobs.filter(job => job.status === 'open').length,
     totalApplications: jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
-    unreadMessages: 3, // This would come from messaging service
-    monthlyHires: 8
+    unreadMessages: 0, // TODO: Connect to messaging service
+    monthlyHires: 0 // TODO: Connect to hiring service
   };
 
   if (!user || (user.currentRole !== "hub" && user.currentRole !== "business")) {
