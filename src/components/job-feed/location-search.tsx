@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Navigation, Heart, X, Search } from "lucide-react";
 import { geocodeAddress } from "@/lib/google-maps";
+import { cn } from "@/lib/utils";
 
 interface LocationSearchProps {
   onLocationChange: (location: string, coordinates: { lat: number; lng: number }) => void;
@@ -269,23 +270,34 @@ export default function LocationSearch({
           <Label className="text-base font-medium mb-3 block">Quick Locations</Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast"].map((city) => (
-              <Button
+              <div
                 key={city}
-                variant={currentLocation === city ? "default" : "outline"}
-                size="sm"
+                className={cn(
+                  buttonVariants({ variant: currentLocation === city ? "default" : "outline", size: "sm" }),
+                  "w-full flex items-center gap-2 justify-between px-3 py-2 cursor-pointer"
+                )}
                 onClick={() => handleLocationSelect(city)}
-                className="w-full flex items-center gap-2 justify-between px-3 py-2"
                 data-testid={`quick-location-${city.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <span className="truncate">{city}</span>
-                <Heart
-                  className={`h-3 w-3 flex-shrink-0 ${
-                    isFavorite(city)
-                      ? "fill-red-500 text-red-500"
-                      : "text-muted-foreground"
-                  }`}
-                />
-              </Button>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="p-1 -mr-1 hover:scale-110 transition-transform pointer-events-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(city);
+                  }}
+                >
+                  <Heart
+                    className={`h-3 w-3 flex-shrink-0 ${
+                      isFavorite(city)
+                        ? "fill-red-500 text-red-500"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </div>

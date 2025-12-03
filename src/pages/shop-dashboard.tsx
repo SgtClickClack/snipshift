@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +34,28 @@ export default function ShopDashboard() {
   const { data: shifts = [], isLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts/shop", user?.id],
     enabled: !!user?.id,
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/shifts/${id}`, { status });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts/shop", user?.id] });
+      toast({
+        title: "Status Updated",
+        description: `Shift status changed to ${data.status === 'completed' ? 'Closed' : data.status}`,
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to update status:", error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update shift status",
+        variant: "destructive",
+      });
+    },
   });
 
   const createShiftMutation = useMutation({
@@ -260,9 +289,27 @@ export default function ShopDashboard() {
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-3">
                             <h4 className="font-semibold text-neutral-900">{shift.title}</h4>
-                            <span className="bg-success text-white px-3 py-1 rounded-full text-sm font-medium">
-                              Active
-                            </span>
+                            <div className="w-[130px]">
+                              <Select
+                                defaultValue={shift.status}
+                                onValueChange={(value) => updateStatusMutation.mutate({ id: shift.id, status: value })}
+                              >
+                                <SelectTrigger 
+                                  className={`h-8 text-xs font-medium border-0 ${
+                                    shift.status === 'open' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                                    shift.status === 'filled' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' :
+                                    'bg-red-100 text-red-800 hover:bg-red-200'
+                                  }`}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="open">Open</SelectItem>
+                                  <SelectItem value="filled">Filled</SelectItem>
+                                  <SelectItem value="completed">Closed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                           <div className="grid sm:grid-cols-2 gap-4 text-sm text-neutral-600 mb-3">
                             <div className="flex items-center">

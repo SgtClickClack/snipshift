@@ -23,6 +23,8 @@ export interface Job {
   businessId?: string;
   status?: 'open' | 'filled' | 'closed';
   createdAt?: string;
+  payType?: string;
+  applicants?: string[];
 }
 
 export interface User {

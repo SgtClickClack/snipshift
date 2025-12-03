@@ -227,7 +227,7 @@ export default function Navbar() {
                 {/* User Profile Dropdown - Visible on all screens */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2" data-testid="button-profile-menu">
                       <UserAvatar />
                     </Button>
                   </DropdownMenuTrigger>
@@ -258,7 +258,7 @@ export default function Navbar() {
                       )}
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator className="bg-steel-600" />
-                    <DropdownMenuItem onClick={handleLogout} className="focus:bg-steel-700 focus:text-white cursor-pointer">
+                    <DropdownMenuItem onClick={handleLogout} className="focus:bg-steel-700 focus:text-white cursor-pointer" data-testid="button-logout">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>

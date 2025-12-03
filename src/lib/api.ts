@@ -145,7 +145,7 @@ export async function fetchJobDetails(jobId: string): Promise<JobDetails> {
   
   return {
     ...data,
-    requirements,
+    requirements: Array.isArray(requirements) ? requirements : [],
     type: 'job'
   };
 }
@@ -344,6 +344,14 @@ export async function updateJobStatus(
   status: 'open' | 'filled' | 'closed' | 'completed'
 ): Promise<{ id: string; status: string }> {
   const res = await apiRequest('PATCH', `/api/jobs/${jobId}/status`, { status });
+  return res.json();
+}
+
+export async function updateShiftStatus(
+  shiftId: string,
+  status: 'open' | 'filled' | 'completed'
+): Promise<{ id: string; status: string }> {
+  const res = await apiRequest('PATCH', `/api/shifts/${shiftId}`, { status });
   return res.json();
 }
 

@@ -104,6 +104,45 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.status(200).json(shift);
 }));
 
+// Update shift status (authenticated, employer only)
+router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const { status } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate status
+  if (!['open', 'filled', 'completed'].includes(status)) {
+    res.status(400).json({ message: 'Invalid status. Must be one of: open, filled, completed' });
+    return;
+  }
+
+  // Get shift to check ownership
+  const existingShift = await shiftsRepo.getShiftById(id);
+  if (!existingShift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (existingShift.employerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You can only update your own shifts' });
+    return;
+  }
+
+  const updatedShift = await shiftsRepo.updateShift(id, { status });
+
+  if (!updatedShift) {
+    res.status(500).json({ message: 'Failed to update shift' });
+    return;
+  }
+
+  res.status(200).json(updatedShift);
+}));
+
 // Get shifts by employer (authenticated, owner only or public?)
 // Currently implementing as authenticated for shop dashboard usage
 router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {

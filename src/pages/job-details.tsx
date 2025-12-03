@@ -6,7 +6,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Flag } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Flag, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { ReportButton } from '@/components/report/report-button';
@@ -18,6 +18,15 @@ export default function JobDetailsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [applicationState, setApplicationState] = useState<'idle' | 'applying' | 'applied'>('idle');
+  const [isSaved, setIsSaved] = useState(false);
+
+  const toggleSave = () => {
+    setIsSaved(!isSaved);
+    toast({
+      title: !isSaved ? "Job Saved" : "Job Removed from Saved",
+      description: !isSaved ? "This job has been added to your saved jobs." : "This job has been removed from your saved jobs.",
+    });
+  };
 
   const { data: job, isLoading, error } = useQuery({
     queryKey: ['job', id],
@@ -73,8 +82,11 @@ export default function JobDetailsPage() {
   }
 
     if (error || !job) {
+    if (error) console.error('Job Details Query Error:', error);
+    if (!job) console.error('Job Details: Job is null/undefined');
+    
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="job-not-found">
         <Card className="card-chrome max-w-md">
           <CardContent className="p-8 text-center">
             <h2 className="text-xl font-bold text-error mb-2">Job Not Found</h2>
@@ -88,11 +100,11 @@ export default function JobDetailsPage() {
     );
   }
 
-  const requirements = job.requirements || [];
-  const hasLocation = job.lat && job.lng;
+  const requirements = Array.isArray(job.requirements) ? job.requirements : [];
+  const hasLocation = typeof job.lat === 'number' && typeof job.lng === 'number';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" data-testid="job-details-page">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Button */}
         <Button
@@ -112,10 +124,23 @@ export default function JobDetailsPage() {
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <h1 className="text-3xl md:text-4xl font-bold text-foreground">{job.title}</h1>
                   {user && (
-                    <ReportButton jobId={job.id} variant="outline" size="sm" className="text-error border-error hover:bg-error/10">
-                      <Flag className="h-4 w-4 mr-2" />
-                      Report
-                    </ReportButton>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full"
+                        onClick={toggleSave}
+                        data-testid="button-save-job"
+                      >
+                        <Heart className={`h-6 w-6 ${isSaved ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
+                      </Button>
+                      <ReportButton 
+                        jobId={job.id} 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-error border-error hover:bg-error/10"
+                      />
+                    </div>
                   )}
                 </div>
                 {job.shopName && (
@@ -195,7 +220,7 @@ export default function JobDetailsPage() {
         )}
 
         {/* Apply Button - Sticky on mobile, prominent on desktop */}
-        <div className="sticky bottom-0 bg-gray-50 border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6">
+        <div className="sticky bottom-0 bg-gray-50 border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6" data-testid="job-apply-container">
           <Card className="bg-white rounded-lg border border-gray-200 shadow-sm md:shadow-lg">
             <CardContent className="p-6">
               {applicationState === 'applied' ? (
@@ -209,6 +234,7 @@ export default function JobDetailsPage() {
                   disabled={applicationState === 'applying'}
                   className="w-full text-lg py-6"
                   size="lg"
+                  data-testid="button-apply"
                 >
                   {applicationState === 'applying' ? 'Applying...' : 'Apply Now'}
                 </Button>

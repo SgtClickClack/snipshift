@@ -8,12 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Calendar, DollarSign, Users, MessageSquare } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
 import { format } from "date-fns";
-import { createShift, fetchShopShifts } from "@/lib/api";
+import { createShift, fetchShopShifts, updateShiftStatus } from "@/lib/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile';
 
@@ -109,6 +115,26 @@ export default function HubDashboard() {
       toast({
         title: "Error", 
         description: "Failed to post shift. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'open' | 'filled' | 'completed' }) => {
+      return updateShiftStatus(id, status);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Status Updated",
+        description: "Shift status has been updated successfully."
+      });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update status.",
         variant: "destructive"
       });
     }
@@ -473,14 +499,33 @@ export default function HubDashboard() {
                                 <h4 className="font-semibold text-neutral-900" data-testid={`text-job-title-${job.id}`}>
                                   {job.title}
                                 </h4>
-                                <span 
-                                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    job.status === 'open' ? 'bg-success text-white' : 'bg-neutral-200 text-neutral-700'
-                                  }`}
-                                  data-testid={`status-job-${job.id}`}
-                                >
-                                  {job.status}
-                                </span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-auto p-0 hover:bg-transparent" data-testid={`status-badge-trigger-${job.id}`}>
+                                      <span 
+                                        className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
+                                          job.status === 'open' ? 'bg-success text-white' : 
+                                          job.status === 'filled' ? 'bg-blue-500 text-white' :
+                                          'bg-neutral-200 text-neutral-700'
+                                        }`}
+                                        data-testid={`status-job-${job.id}`}
+                                      >
+                                        {job.status}
+                                      </span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'open' })}>
+                                      Mark as Open
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'filled' })}>
+                                      Mark as Filled
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'completed' })}>
+                                      Mark as Completed
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                               <div className="grid sm:grid-cols-3 gap-4 text-sm text-neutral-600 mb-3">
                                 <div className="flex items-center">
