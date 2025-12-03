@@ -199,7 +199,7 @@ export default function Navbar() {
 
                   {/* Find Shifts Link */}
                   <Link to="/jobs">
-                    <Button variant="ghost" className="text-white hover:bg-steel-700">Find Shifts</Button>
+                    <Button variant="ghost" className="text-white hover:bg-steel-700" data-testid="link-find-shifts-desktop">Find Shifts</Button>
                   </Link>
                 </div>
 
@@ -269,7 +269,7 @@ export default function Navbar() {
                 <div className="md:hidden">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700">
+                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700" data-testid="button-mobile-menu">
                         <Menu className="h-6 w-6" />
                       </Button>
                     </SheetTrigger>
@@ -303,7 +303,7 @@ export default function Navbar() {
 
                         <SheetClose asChild>
                           <Link to="/jobs">
-                            <Button variant="ghost" className="w-full justify-start text-white hover:bg-steel-700">
+                            <Button variant="ghost" className="w-full justify-start text-white hover:bg-steel-700" data-testid="link-find-shifts-mobile">
                               Find Shifts
                             </Button>
                           </Link>

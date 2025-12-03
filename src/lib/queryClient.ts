@@ -27,7 +27,22 @@ export async function apiRequest(
     } catch (error) {
       console.error("Error getting auth token for request:", error);
     }
-  }
+    } else if (typeof window !== 'undefined' && sessionStorage.getItem('snipshift_test_user')) {
+      // Inject mock token for E2E tests
+      const stored = sessionStorage.getItem('snipshift_test_user');
+      let token = 'mock-test-token';
+      try {
+          if (stored) {
+            const data = JSON.parse(stored);
+            if (data.email && data.email.startsWith('e2e_test_')) {
+                token = `mock-token-${data.email}`;
+            }
+          }
+      } catch (e) {
+          // ignore parse error
+      }
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
   const res = await fetch(url, {
     method,
@@ -55,6 +70,21 @@ export const getQueryFn: <T>(options: {
       } catch (error) {
         console.error("Error getting auth token for query:", error);
       }
+    } else if (typeof window !== 'undefined' && sessionStorage.getItem('snipshift_test_user')) {
+      // Inject mock token for E2E tests
+      const stored = sessionStorage.getItem('snipshift_test_user');
+      let token = 'mock-test-token';
+      try {
+          if (stored) {
+            const data = JSON.parse(stored);
+            if (data.email && data.email.startsWith('e2e_test_')) {
+                token = `mock-token-${data.email}`;
+            }
+          }
+      } catch (e) {
+          // ignore parse error
+      }
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const res = await fetch(queryKey.join("/") as string, {

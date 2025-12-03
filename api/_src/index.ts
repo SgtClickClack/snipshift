@@ -361,6 +361,9 @@ app.post('/graphql', (req, res) => {
 });
 
 // Handler for creating a job
+// [DEPRECATED] This endpoint is deprecated in favor of /api/shifts. 
+// The Hub Dashboard now posts to the Shifts API.
+// This route is maintained for legacy client compatibility only.
 app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   // Validate request body
   const validationResult = JobSchema.safeParse(req.body);
@@ -985,25 +988,43 @@ app.get('/api/me/jobs', authenticateUser, asyncHandler(async (req: Authenticated
     // Get application counts for each job
     const jobsWithCounts = await Promise.all(
       result.data.map(async (job) => {
-        const applications = await applicationsRepo.getApplicationsForJob(job.id);
-        const applicationCount = applications?.length || 0;
-        
-        const locationParts = [job.address, job.city, job.state].filter(Boolean);
-        const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+        try {
+          const applications = await applicationsRepo.getApplicationsForJob(job.id);
+          const applicationCount = applications?.length || 0;
+          
+          const locationParts = [job.address, job.city, job.state].filter(Boolean);
+          const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
 
-        return {
-          id: job.id,
-          title: job.title,
-          shopName: job.shopName,
-          payRate: job.payRate,
-          date: job.date,
-          location,
-          startTime: job.startTime,
-          endTime: job.endTime,
-          status: job.status,
-          applicationCount,
-          createdAt: job.createdAt.toISOString(),
-        };
+          return {
+            id: job.id,
+            title: job.title,
+            shopName: job.shopName,
+            payRate: job.payRate,
+            date: job.date,
+            location,
+            startTime: job.startTime,
+            endTime: job.endTime,
+            status: job.status,
+            applicationCount,
+            createdAt: job.createdAt.toISOString(),
+          };
+        } catch (err) {
+          console.error(`[API ERROR] Failed to process job ${job.id} for /me/jobs listing`, err);
+          // Return job with basic info and 0 application count on error
+          return {
+            id: job.id,
+            title: job.title,
+            shopName: job.shopName,
+            payRate: job.payRate,
+            date: job.date,
+            location: [job.address, job.city, job.state].filter(Boolean).join(', '),
+            startTime: job.startTime,
+            endTime: job.endTime,
+            status: job.status,
+            applicationCount: 0,
+            createdAt: job.createdAt.toISOString(),
+          };
+        }
       })
     );
 
@@ -2027,9 +2048,9 @@ if (process.env.VERCEL !== '1') {
   console.log(`[SERVER] VERCEL env: ${process.env.VERCEL}`);
   console.log(`[SERVER] PORT: ${PORT}`);
   
-  const server = app.listen(PORT, () => {
-    console.log(`[SERVER] ✓ API server running on http://localhost:${PORT}`);
-    console.log(`[SERVER] ✓ Health check: http://localhost:${PORT}/health`);
+  const server = app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`[SERVER] ✓ API server running on http://0.0.0.0:${PORT}`);
+    console.log(`[SERVER] ✓ Health check: http://0.0.0.0:${PORT}/health`);
   });
   
   server.on('error', (error: any) => {

@@ -62,6 +62,7 @@ export default function JobDetailsPage() {
       name: user.displayName || user.name || user.email || '',
       email: user.email || '',
       coverLetter: `I am interested in applying for the ${job?.title} position at ${job?.shopName || 'this location'}.`,
+      type: job?.type || 'shift' // Pass the type to the application function
     };
 
     applyMutation.mutate(applicationData);

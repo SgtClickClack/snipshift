@@ -362,9 +362,9 @@ function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <Router>
+          <Router>
+            <AuthProvider>
+              <NotificationProvider>
                 <RouteProgressBar />
                 <Toaster />
                 <AppRoutes />
@@ -373,9 +373,9 @@ function App() {
                 <InstallPrompt />
                 <Analytics />
                 <SpeedInsights />
-              </Router>
-            </NotificationProvider>
-          </AuthProvider>
+              </NotificationProvider>
+            </AuthProvider>
+          </Router>
         </TooltipProvider>
       </QueryClientProvider>
     </HelmetProvider>

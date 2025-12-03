@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChange, signOutUser, auth } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
+import { useLocation } from 'react-router-dom';
 
 export interface User {
   id: string;
@@ -47,12 +48,13 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
 
     // Test Environment Auth Bypass
     useEffect(() => {
         // Check URL for test_user bypass
         if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(location.search);
             let shouldBypass = false;
             let rolesList: Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'> = ['professional'];
 
@@ -90,8 +92,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 const primaryRole = rolesList[0] || 'professional';
                 // console.log('Setting test user with roles:', rolesList, 'currentRole:', primaryRole);
                 
-                // Get isOnboarded from session if available (for the case where we loaded from session)
+                // Get isOnboarded and ID from session if available
                 let isOnboarded = true;
+                let userId = 'test-user-id';
+                
                 const stored = sessionStorage.getItem('snipshift_test_user');
                 if (stored) {
                     try {
@@ -99,13 +103,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
                         if (data.isOnboarded !== undefined) {
                             isOnboarded = data.isOnboarded;
                         }
+                        if (data.id) {
+                            userId = data.id;
+                        }
                     } catch (e) {
                         console.warn('Failed to parse test user session', e);
                     }
                 }
 
                 setUser({
-                    id: 'test-user-id',
+                    id: userId,
                     email: 'test@snipshift.com',
                     name: 'Test User',
                     roles: rolesList as any,
@@ -145,15 +152,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Ensure isOnboarded is boolean
               isOnboarded: profile.isOnboarded ?? false
             });
+          } else if (res.status === 401) {
+            console.warn('Profile fetch failed (401). Attempting to sync user via /api/login...');
+            try {
+              const loginRes = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+              });
+
+              if (loginRes.ok) {
+                const profile = await loginRes.json();
+                console.log('User synced successfully via /api/login');
+                setUser({ 
+                  ...profile, 
+                  uid: firebaseUser.uid,
+                  roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
+                  createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
+                  updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
+                  isOnboarded: profile.isOnboarded ?? false
+                });
+              } else {
+                console.error('Sync failed via /api/login', loginRes.status);
+                setUser(null);
+              }
+            } catch (loginErr) {
+              console.error('Error calling /api/login', loginErr);
+              setUser(null);
+            }
           } else {
             console.warn('User authenticated in Firebase but profile fetch failed', res.status);
             // Optional: Set a minimal user or redirect to signup completion?
             // For now, we logout if we can't identify the user in our system
             setUser(null);
-            if (res.status === 401) {
-                // Token invalid or user not found
-                // await signOutUser(); 
-            }
           }
         } catch (error) {
           console.error('Error fetching user profile:', error);
@@ -166,7 +200,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [location.search]);
 
   const login = (userData: User) => {
     // With Firebase, login is handled by the auth state change listener.
@@ -211,6 +245,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (auth.currentUser) {
       return auth.currentUser.getIdToken();
     }
+    
+    // Return mock token for E2E tests
+    if (typeof window !== 'undefined') {
+        const stored = sessionStorage.getItem('snipshift_test_user');
+        if (stored) {
+            try {
+                const data = JSON.parse(stored);
+                if (data.email && data.email.startsWith('e2e_test_')) {
+                    return `mock-token-${data.email}`;
+                }
+            } catch (e) {
+                console.warn('Failed to parse test user for token', e);
+            }
+        }
+    }
+    
     return null;
   };
 

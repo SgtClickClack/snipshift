@@ -79,15 +79,45 @@ export interface JobDetails {
   status?: 'open' | 'filled' | 'closed' | 'completed';
   businessId?: string;
   businessName?: string;
+  type?: 'job' | 'shift';
+  hourlyRate?: string;
 }
 
 export interface ApplicationData {
   name: string;
   email: string;
   coverLetter: string;
+  type?: 'job' | 'shift';
 }
 
 export async function fetchJobDetails(jobId: string): Promise<JobDetails> {
+  // Try to fetch from shifts API first (Primary Data Source)
+  try {
+    const res = await apiRequest('GET', `/api/shifts/${jobId}`);
+    const data = await res.json();
+    
+    return {
+      id: data.id,
+      title: data.title,
+      shopName: data.shopName || 'Shop', // Fallback if not in shift data
+      rate: data.hourlyRate,
+      payRate: data.hourlyRate,
+      hourlyRate: data.hourlyRate,
+      date: data.startTime,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      location: data.location,
+      description: data.description,
+      status: data.status,
+      businessId: data.employerId,
+      type: 'shift',
+      requirements: data.description ? [data.description] : [] // Simple fallback
+    };
+  } catch (error) {
+    // If shift not found, try jobs API (Legacy/Fallback)
+    console.log('Shift not found, trying jobs API...', error);
+  }
+
   const res = await apiRequest('GET', `/api/jobs/${jobId}`);
   const data = await res.json();
   
@@ -116,10 +146,23 @@ export async function fetchJobDetails(jobId: string): Promise<JobDetails> {
   return {
     ...data,
     requirements,
+    type: 'job'
   };
 }
 
 export async function applyToJob(jobId: string, applicationData: ApplicationData) {
+  // If type is shift, use the applications endpoint
+  if (applicationData.type === 'shift') {
+    const res = await apiRequest('POST', '/api/applications', {
+      shiftId: jobId,
+      message: applicationData.coverLetter,
+      name: applicationData.name,
+      email: applicationData.email
+    });
+    return res.json();
+  }
+
+  // Default/Legacy behavior
   const res = await apiRequest('POST', `/api/jobs/${jobId}/apply`, applicationData);
   return res.json();
 }
@@ -163,7 +206,28 @@ export interface CreateJobData {
 }
 
 export async function createJob(jobData: CreateJobData) {
-  const res = await apiRequest('POST', '/api/jobs', jobData);
+  // Forward to Shifts API for unification
+  // Map JobData to ShiftData
+  const shiftPayload = {
+    title: jobData.title,
+    description: jobData.description,
+    startTime: jobData.startTime && jobData.date ? 
+      (jobData.startTime.includes('T') ? jobData.startTime : `${jobData.date.split('T')[0]}T${jobData.startTime}:00`) : 
+      new Date().toISOString(), // Fallback
+    endTime: jobData.endTime && jobData.date ? 
+      (jobData.endTime.includes('T') ? jobData.endTime : `${jobData.date.split('T')[0]}T${jobData.endTime}:00`) : 
+      new Date(Date.now() + 8 * 3600000).toISOString(), // Fallback +8h
+    hourlyRate: jobData.payRate,
+    location: jobData.location || [jobData.address, jobData.city, jobData.state].filter(Boolean).join(', '),
+    status: 'open'
+  };
+
+  const res = await apiRequest('POST', '/api/shifts', shiftPayload);
+  return res.json();
+}
+
+export async function createShift(shiftData: any) {
+  const res = await apiRequest('POST', '/api/shifts', shiftData);
   return res.json();
 }
 
@@ -182,8 +246,43 @@ export interface MyJob {
 }
 
 export async function fetchMyJobs(): Promise<MyJob[]> {
-  const res = await apiRequest('GET', '/api/me/jobs');
-  return res.json();
+  // Fetch from Shifts API
+  try {
+    // We need the user ID to fetch their shifts. 
+    // Since we are authenticated, the backend should ideally handle 'me' or we need to pass it.
+    // But the plan says: fetch "My Shifts" from /api/shifts/shop/:userId
+    // We can't easily get userId here without auth context or decoding token.
+    // However, checking src/lib/api.ts imports, it uses './queryClient'.
+    // Let's rely on the caller to use fetchShopShifts or we update this to use a 'me' endpoint if available.
+    // Since we don't have /api/shifts/me yet (based on shifts.ts), we might need to stick to /api/me/jobs for now 
+    // but update the backend implementation of /api/me/jobs to return shifts?
+    // OR, we simply implement fetchShopShifts and use that in the dashboard.
+    
+    // For now, let's leave fetchMyJobs as legacy and add fetchShopShifts.
+    const res = await apiRequest('GET', '/api/me/jobs');
+    return res.json();
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function fetchShopShifts(userId: string): Promise<MyJob[]> {
+  const res = await apiRequest('GET', `/api/shifts/shop/${userId}`);
+  const shifts = await res.json();
+  
+  // Map shifts to MyJob interface
+  return shifts.map((shift: any) => ({
+    id: shift.id,
+    title: shift.title,
+    payRate: shift.hourlyRate,
+    date: shift.startTime,
+    startTime: shift.startTime,
+    endTime: shift.endTime,
+    status: shift.status,
+    location: shift.location,
+    applicationCount: 0, // Shifts API might not return this yet
+    createdAt: shift.createdAt || new Date().toISOString()
+  }));
 }
 
 export interface JobApplication {

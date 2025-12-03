@@ -97,10 +97,33 @@ export default function OnboardingPage() {
 
       // Refresh user data to get updated isOnboarded flag
       if (user) {
+        // Update session storage for E2E tests
+        if (typeof window !== 'undefined') {
+             const stored = sessionStorage.getItem('snipshift_test_user');
+             if (stored) {
+                 try {
+                     const data = JSON.parse(stored);
+                     // Map 'business' to 'hub' if needed, but AuthContext handles strings.
+                     // We need to ensure the role matches what AuthContext expects.
+                     const newRole = formData.role || 'client';
+                     
+                     sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+                         ...data,
+                         isOnboarded: true,
+                         roles: [newRole], // Update the role so we don't get sent to role-selection
+                         currentRole: newRole
+                     }));
+                     console.log('Updated test user session:', { isOnboarded: true, role: newRole });
+                 } catch (e) {
+                     console.error('Failed to update test user session', e);
+                 }
+             }
+        }
+
         // Force a page reload to ensure auth context updates
-        window.location.href = '/user-dashboard';
+        window.location.href = '/dashboard';
       } else {
-        navigate('/user-dashboard');
+        navigate('/dashboard');
       }
     } catch (error: any) {
       console.error('Onboarding error:', error);
@@ -127,6 +150,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => updateFormData({ role: 'professional' })}
+                data-testid="button-select-professional"
                 className={`p-6 rounded-lg border-2 transition-all ${
                   formData.role === 'professional'
                     ? 'border-red-accent bg-red-accent/10 shadow-lg'
@@ -148,6 +172,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => updateFormData({ role: 'business' })}
+                data-testid="button-select-business"
                 className={`p-6 rounded-lg border-2 transition-all ${
                   formData.role === 'business'
                     ? 'border-red-accent bg-red-accent/10 shadow-lg'
@@ -188,6 +213,7 @@ export default function OnboardingPage() {
                   onChange={(e) => updateFormData({ displayName: e.target.value })}
                   placeholder="Enter your display name"
                   className="w-full"
+                  data-testid="input-display-name"
                 />
               </div>
               <div className="space-y-2">
@@ -201,6 +227,7 @@ export default function OnboardingPage() {
                   onChange={(e) => updateFormData({ phone: e.target.value })}
                   placeholder="Enter your phone number"
                   className="w-full"
+                  data-testid="input-phone"
                 />
               </div>
             </div>
@@ -247,6 +274,7 @@ export default function OnboardingPage() {
                   placeholder="Tell us a bit about yourself..."
                   rows={4}
                   className="w-full"
+                  data-testid="input-bio"
                 />
                 <p className="text-xs text-steel-500">
                   {formData.bio.length}/1000 characters
@@ -274,6 +302,7 @@ export default function OnboardingPage() {
                   onChange={(e) => updateFormData({ location: e.target.value })}
                   placeholder="Enter your city or suburb"
                   className="w-full"
+                  data-testid="input-location"
                 />
                 <p className="text-xs text-steel-500">
                   This helps us show you relevant opportunities nearby
@@ -343,6 +372,7 @@ export default function OnboardingPage() {
                   onClick={handleNext}
                   disabled={!canProceed()}
                   variant="accent"
+                  data-testid="button-next"
                 >
                   Next
                   <ChevronRight className="h-4 w-4 ml-2" />
@@ -353,6 +383,7 @@ export default function OnboardingPage() {
                   onClick={handleSubmit}
                   disabled={!canProceed() || isSubmitting}
                   variant="accent"
+                  data-testid="button-complete-setup"
                 >
                   {isSubmitting ? 'Completing Setup...' : 'Complete Setup'}
                 </Button>

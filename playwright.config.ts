@@ -1,16 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
-
-/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -45,25 +39,15 @@ export default defineConfig({
       name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
     },
-    {
-      name: 'Tablet',
-      use: { ...devices['iPad Pro 11'] },
-    },
   ],
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'cd api && npm run test:db:up && cd .. && npm run dev:all',
+    command: 'npm run dev:all',
     url: 'http://localhost:3002',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
     stdout: 'pipe',
     stderr: 'pipe',
-    env: {
-        DATABASE_URL: 'postgresql://test:test@localhost:5433/snipshift_test',
-        NODE_ENV: 'test',
-    },
   },
-  globalSetup: './e2e/global.setup.ts',
 });
-

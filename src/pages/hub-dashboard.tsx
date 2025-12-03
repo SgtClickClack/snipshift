@@ -13,7 +13,7 @@ import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
 import { format } from "date-fns";
-// Remove missing component imports - will implement inline
+import { createShift, fetchShopShifts } from "@/lib/api";
 
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile';
 
@@ -46,40 +46,51 @@ export default function HubDashboard() {
   });
 
   const { data: jobs = [], isLoading } = useQuery<any[]>({
-    queryKey: ["/api/me/jobs"],
+    queryKey: ['shop-shifts', user?.id],
+    queryFn: () => fetchShopShifts(user!.id),
     enabled: !!user?.id,
   });
 
   const createJobMutation = useMutation({
     mutationFn: async (jobData: any) => {
-      console.log("Submitting job data:", jobData);
+      console.log("Submitting shift data:", jobData);
       
-      // Transform data for API compatibility
+      // Transform data for Shift API compatibility
+      // Construct ISO timestamps for start and end
+      const dateStr = jobData.date;
+      const startTimeStr = jobData.startTime;
+      
+      let startTimeISO = new Date().toISOString();
+      let endTimeISO = new Date().toISOString();
+
+      if (dateStr && startTimeStr) {
+        const start = new Date(`${dateStr}T${startTimeStr}`);
+        startTimeISO = start.toISOString();
+        // Default to 8 hour shift
+        const end = new Date(start.getTime() + 8 * 60 * 60 * 1000);
+        endTimeISO = end.toISOString();
+      }
+
       const payload = {
         title: jobData.title,
         description: jobData.description,
-        payRate: jobData.payRate, // API expects payRate at root for new JobSchema
-        date: jobData.date,
-        startTime: jobData.startTime,
-        // Default endTime to 8 hours after start (simplified form)
-        endTime: (() => {
-          const [hours, minutes] = jobData.startTime.split(':').map(Number);
-          const endHour = (hours + 8) % 24;
-          return `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        })(),
-        city: jobData.location.city,
-        skillsRequired: jobData.skillsRequired.split(',').map((s: string) => s.trim()).filter(Boolean)
+        hourlyRate: jobData.payRate,
+        startTime: startTimeISO,
+        endTime: endTimeISO,
+        location: [jobData.location.address, jobData.location.city, jobData.location.state].filter(Boolean).join(', '),
+        status: 'open',
+        // Legacy/Additional fields if needed by backend wrapper, 
+        // but createShift in api.ts handles the raw request
       };
 
-      const response = await apiRequest("POST", "/api/jobs", payload);
-      return response.json();
+      return createShift(payload);
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Job posted successfully!"
+        description: "Shift posted successfully!"
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/me/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
       setFormData({
         title: "",
         description: "",
@@ -94,10 +105,10 @@ export default function HubDashboard() {
       setShowForm(false);
     },
     onError: (error) => {
-      console.error("Failed to post job:", error);
+      console.error("Failed to post shift:", error);
       toast({
         title: "Error", 
-        description: "Failed to post job. Please try again.",
+        description: "Failed to post shift. Please try again.",
         variant: "destructive"
       });
     }
@@ -156,7 +167,7 @@ export default function HubDashboard() {
   // Mock stats for demonstration
   const stats = {
     openJobs: jobs.filter(job => job.status === 'open').length,
-    totalApplications: jobs.reduce((sum, job) => sum + (job.applicants?.length || 0), 0),
+    totalApplications: jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
     unreadMessages: 3, // This would come from messaging service
     monthlyHires: 8
   };
@@ -481,13 +492,13 @@ export default function HubDashboard() {
                                 <div className="flex items-center">
                                   <DollarSign className="mr-2 h-4 w-4 text-primary" />
                                   <span data-testid={`text-job-pay-${job.id}`}>
-                                    ${job.payRate}/{job.payType}
+                                    ${job.payRate}/hr
                                   </span>
                                 </div>
                                 <div className="flex items-center">
                                   <Users className="mr-2 h-4 w-4 text-primary" />
                                   <span data-testid={`text-job-applicants-${job.id}`}>
-                                    {job.applicants?.length || 0} applicants
+                                    {job.applicationCount || 0} applicants
                                   </span>
                                 </div>
                               </div>

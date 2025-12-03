@@ -62,17 +62,17 @@ async function globalSetup(config: FullConfig) {
     // 3. Seed Test User
     console.log('Seeding Test User...');
     const TEST_EMAIL = 'test@snipshift.com';
-    const TEST_PASSWORD = 'password123'; // Note: Hash this if your app expects hashed passwords in DB
+    const TEST_ID = '00000000-0000-0000-0000-000000000001'; // Fixed ID for E2E tests
 
     // Check if user exists
     let userId;
     const res = await client.query('SELECT id FROM users WHERE email = $1', [TEST_EMAIL]);
     if (res.rows.length === 0) {
         const insertRes = await client.query(`
-            INSERT INTO users (email, name, role, is_onboarded, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, NOW(), NOW())
+            INSERT INTO users (id, email, name, role, is_onboarded, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
             RETURNING id
-        `, [TEST_EMAIL, 'Test User', 'professional', true]);
+        `, [TEST_ID, TEST_EMAIL, 'Test User', 'business', true]); // Changed to 'business' role for shift posting
         userId = insertRes.rows[0].id;
         console.log(`Created user: ${TEST_EMAIL} (${userId})`);
     } else {
