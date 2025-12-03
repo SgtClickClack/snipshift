@@ -133,6 +133,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Force cache busting with hash in filenames
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
         // MONOLITHIC VENDOR CHUNK: All node_modules in one file to eliminate dependency resolution errors
         manualChunks(id) {
           if (id.includes('node_modules')) {

@@ -16,6 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "db:check": "ts-node _src/scripts/check-db.ts",
+    "db:clean": "ts-node _src/scripts/seed-clean.ts",
     "db:apply-migration": "ts-node _src/scripts/apply-migration.ts",
     "db:apply-shifts": "ts-node _src/scripts/apply-migration.ts 0003_add_shifts_final.sql",
     "test": "vitest run",

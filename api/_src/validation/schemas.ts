@@ -34,12 +34,27 @@ export const JobSchema = z.object({
 });
 
 /**
- * Schema for application submission payloads
+ * Schema for application submission payloads (URL param context)
  */
 export const ApplicationSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Valid email is required'),
   coverLetter: z.string().min(1, 'Cover letter is required'),
+});
+
+/**
+ * Schema for application creation via POST /applications
+ */
+export const CreateApplicationSchema = z.object({
+  shiftId: z.string().optional(),
+  jobId: z.string().optional(),
+  applicantId: z.string().optional(), // Can be inferred from auth, but supported if passed
+  message: z.string().min(1, 'Message is required'), // Alias for coverLetter
+  name: z.string().optional(), // Optional if user is authenticated
+  email: z.string().email().optional(), // Optional if user is authenticated
+}).refine(data => data.shiftId || data.jobId, {
+  message: "Either shiftId or jobId must be provided",
+  path: ["shiftId"],
 });
 
 /**
