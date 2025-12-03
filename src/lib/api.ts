@@ -118,36 +118,45 @@ export async function fetchJobDetails(jobId: string): Promise<JobDetails> {
     console.log('Shift not found, trying jobs API...', error);
   }
 
+  try {
   const res = await apiRequest('GET', `/api/jobs/${jobId}`);
   const data = await res.json();
   
-  // Parse requirements from description if not provided
-  // Requirements might be in description as bullet points or separated by newlines
-  let requirements: string[] = [];
-  if (data.requirements && Array.isArray(data.requirements)) {
-    requirements = data.requirements;
-  } else if (data.skillsRequired && Array.isArray(data.skillsRequired)) {
-    requirements = data.skillsRequired;
-  } else if (data.description) {
-    // Try to parse bullet points from description
-    const lines = data.description.split('\n').filter((line: string) => line.trim());
-    const bulletPoints = lines
-      .filter((line: string) => line.trim().match(/^[-•*]\s+/))
-      .map((line: string) => line.replace(/^[-•*]\s+/, '').trim());
-    
-    if (bulletPoints.length > 0) {
-      requirements = bulletPoints;
-    } else {
-      // If no bullet points, use the description as a single requirement
-      requirements = [data.description];
-    }
+  if (!data) {
+    throw new Error("Job details not found");
   }
-  
-  return {
-    ...data,
-    requirements: Array.isArray(requirements) ? requirements : [],
-    type: 'job'
-  };
+
+  // Parse requirements from description if not provided
+    // Requirements might be in description as bullet points or separated by newlines
+    let requirements: string[] = [];
+    if (data.requirements && Array.isArray(data.requirements)) {
+      requirements = data.requirements;
+    } else if (data.skillsRequired && Array.isArray(data.skillsRequired)) {
+      requirements = data.skillsRequired;
+    } else if (data.description) {
+      // Try to parse bullet points from description
+      const lines = data.description.split('\n').filter((line: string) => line.trim());
+      const bulletPoints = lines
+        .filter((line: string) => line.trim().match(/^[-•*]\s+/))
+        .map((line: string) => line.replace(/^[-•*]\s+/, '').trim());
+      
+      if (bulletPoints.length > 0) {
+        requirements = bulletPoints;
+      } else {
+        // If no bullet points, use the description as a single requirement
+        requirements = [data.description];
+      }
+    }
+    
+    return {
+      ...data,
+      requirements: Array.isArray(requirements) ? requirements : [],
+      type: 'job'
+    };
+  } catch (error) {
+    console.error(`Failed to fetch job details for ${jobId}:`, error);
+    throw error; // Rethrow to let useQuery handle it, or return null if we change signature
+  }
 }
 
 export async function applyToJob(jobId: string, applicationData: ApplicationData) {

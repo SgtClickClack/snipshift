@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ export default function HubDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeView = (searchParams.get('view') as ActiveView) || 'overview';
   
@@ -302,7 +303,11 @@ export default function HubDashboard() {
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       {jobs.slice(0, 3).map((job) => (
-                        <div key={job.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div 
+                          key={job.id} 
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                          onClick={() => navigate(`/jobs/${job.id}`)}
+                        >
                           <div>
                             <h4 className="font-medium">{job.title}</h4>
                             <p className="text-sm text-muted-foreground">
@@ -496,7 +501,11 @@ export default function HubDashboard() {
                           <Card key={job.id} className="border border-neutral-200" data-testid={`card-job-${job.id}`}>
                             <CardContent className="p-4">
                               <div className="flex justify-between items-start mb-3">
-                                <h4 className="font-semibold text-neutral-900" data-testid={`text-job-title-${job.id}`}>
+                                <h4 
+                                  className="font-semibold text-neutral-900 hover:text-primary cursor-pointer transition-colors" 
+                                  data-testid={`text-job-title-${job.id}`}
+                                  onClick={() => navigate(`/jobs/${job.id}`)}
+                                >
                                   {job.title}
                                 </h4>
                                 <DropdownMenu>

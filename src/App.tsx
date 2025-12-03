@@ -357,10 +357,13 @@ function AppRoutes() {
   );
 }
 
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+
 function App() {
   return (
     <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Router>
             <AuthProvider>
@@ -377,7 +380,8 @@ function App() {
             </AuthProvider>
           </Router>
         </TooltipProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </HelmetProvider>
   );
 }
