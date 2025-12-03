@@ -792,9 +792,9 @@ app.get('/api/applications', asyncHandler(async (req, res) => {
         id: app.id,
         jobId: app.jobId,
         jobTitle: app.job?.title || app.shift?.title || 'Unknown Position',
-        jobPayRate: app.job?.payRate || (app.shift && 'hourlyRate' in app.shift ? app.shift.hourlyRate : 'N/A'),
+        jobPayRate: app.job?.payRate || (app.shift && 'hourlyRate' in app.shift ? (app.shift as any).hourlyRate : 'N/A'),
         jobLocation: '', // Not in schema yet, can be added later
-        jobDescription: app.job?.description || (app.shift && 'description' in app.shift ? app.shift.description : '') || '',
+        jobDescription: app.job?.description || (app.shift && 'description' in app.shift ? (app.shift as any).description : '') || '',
         status: app.status,
         appliedDate: app.appliedAt.toISOString(),
         respondedDate: app.respondedAt ? app.respondedAt.toISOString() : null,
@@ -856,6 +856,7 @@ app.get('/api/me/applications', authenticateUser, asyncHandler(async (req: Authe
     // Transform to match frontend expectations
     const transformed = applications.map((app) => {
       const jobOrShift = app.job || app.shift;
+      
       // Handle potential missing job/shift if data integrity issue
       if (!jobOrShift) {
         return {
@@ -878,7 +879,7 @@ app.get('/api/me/applications', authenticateUser, asyncHandler(async (req: Authe
       let location: string | undefined = undefined;
       if (jobOrShift && 'address' in jobOrShift) {
         // It's a job
-        const j = jobOrShift as typeof jobsRepo.jobs.$inferSelect;
+        const j = jobOrShift as any;
         const locationParts = [j.address, j.city, j.state].filter(Boolean);
         location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
       } else {
@@ -888,16 +889,25 @@ app.get('/api/me/applications', authenticateUser, asyncHandler(async (req: Authe
         // For now, assume undefined or handle if shift has location
       }
 
+      // Helper to safely access properties
+      const getProp = (obj: any, prop: string) => obj ? obj[prop] : undefined;
+      const getTitle = (obj: any) => getProp(obj, 'title') || 'Unknown Position';
+      const getShopName = (obj: any) => getProp(obj, 'shopName');
+      const getPayRate = (obj: any) => getProp(obj, 'payRate') || getProp(obj, 'hourlyRate') || 'N/A';
+      const getDescription = (obj: any) => getProp(obj, 'description') || '';
+      const getDate = (obj: any) => getProp(obj, 'date') || (getProp(obj, 'startTime') ? new Date(getProp(obj, 'startTime')).toISOString() : new Date().toISOString());
+      const getStatus = (obj: any) => getProp(obj, 'status') || 'open';
+
       return {
         id: app.id,
         jobId: app.jobId || app.shiftId,
-        jobTitle: jobOrShift.title,
-        shopName: 'shopName' in jobOrShift ? jobOrShift.shopName : undefined,
-        jobPayRate: 'payRate' in jobOrShift ? jobOrShift.payRate : (jobOrShift as any).hourlyRate,
+        jobTitle: getTitle(jobOrShift),
+        shopName: getShopName(jobOrShift),
+        jobPayRate: getPayRate(jobOrShift),
         jobLocation: location,
-        jobDescription: 'description' in jobOrShift ? jobOrShift.description : '',
-        jobDate: 'date' in jobOrShift ? jobOrShift.date : ('startTime' in jobOrShift ? (jobOrShift as any).startTime.toISOString() : new Date().toISOString()),
-        jobStatus: 'status' in jobOrShift ? jobOrShift.status : 'open',
+        jobDescription: getDescription(jobOrShift),
+        jobDate: getDate(jobOrShift),
+        jobStatus: getStatus(jobOrShift),
         status: app.status,
         appliedDate: app.appliedAt.toISOString(),
         respondedDate: app.respondedAt ? app.respondedAt.toISOString() : null,
@@ -1077,9 +1087,12 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
     return;
   }
 
-  // Get the job to verify ownership
+  // Get the job or shift to verify ownership
+  let job: any = null;
+  let shift: any = null;
+
   if (application.jobId) {
-    const job = await jobsRepo.getJobById(application.jobId);
+    job = await jobsRepo.getJobById(application.jobId);
     if (!job) {
       res.status(404).json({ message: 'Job not found' });
       return;
@@ -1093,9 +1106,7 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
   } else if (application.shiftId) {
     // TODO: Add shift ownership check
     // For now, allow if shiftId exists (assuming admin or shift owner logic elsewhere)
-    // Ideally:
-    // const shift = await shiftsRepo.getShiftById(application.shiftId);
-    // if (!shift || shift.employerId !== userId) ...
+    // ideally we would fetch shift here
   } else {
     // Should not happen for valid application
     res.status(400).json({ message: 'Application is not linked to a valid job or shift' });
@@ -1121,12 +1132,15 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
       }
       
       // Notify in-app notification
+      const jobTitle = job ? job.title : 'Job';
+      const jobIdStr = job ? job.id : '';
+      
       await notificationService.notifyApplicationStatusChange(
         candidateUserId,
         candidateEmail,
-        job.title,
+        jobTitle,
         status,
-        job.id
+        jobIdStr
       );
       
       // Send email notification
@@ -1134,8 +1148,8 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
         await emailService.sendApplicationStatusEmail(
           candidateEmail,
           candidateName,
-          job.title,
-          job.shopName || undefined,
+          jobTitle,
+          job ? job.shopName || undefined : undefined,
           status,
           application.appliedAt.toISOString()
         );
