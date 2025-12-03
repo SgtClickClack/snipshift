@@ -1,18 +1,20 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Heart, MessageCircle, Share, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
+import { Heart, MessageCircle, Share, MapPin, Calendar, DollarSign, Briefcase, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import { Post } from "@/shared/types";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PostCardProps {
   post: Post;
   onLike: (postId: string) => void;
-  onComment?: (postId: string, comment: string) => void;
+  onComment?: (postId: string, comment: string) => Promise<void>;
   currentUserId?: string;
 }
 
@@ -20,6 +22,24 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  // Fetch comments when expanded
+  const { data: fetchedComments = [], isLoading: isLoadingComments, refetch: refetchComments } = useQuery({
+    queryKey: [`/api/community/${post.id}/comments`],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/community/${post.id}/comments`);
+      const data = await res.json();
+      // Map backend comment structure to frontend expectation if needed
+      return data.map((c: any) => ({
+        id: c.id,
+        author: c.authorName || "Unknown",
+        authorAvatar: c.authorAvatar,
+        text: c.content,
+        timestamp: c.createdAt
+      }));
+    },
+    enabled: showComments,
+  });
 
   const getRoleColor = (role?: string) => {
     switch (role) {
@@ -52,13 +72,21 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
     if (!newComment.trim() || !onComment) return;
 
     setIsSubmittingComment(true);
-    await onComment(post.id, newComment.trim());
-    setNewComment("");
-    setIsSubmittingComment(false);
+    try {
+      await onComment(post.id, newComment.trim());
+      setNewComment("");
+      refetchComments(); // Refresh comments after posting
+    } catch (error) {
+      console.error("Failed to post comment:", error);
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   const authorName = post.authorName || "Unknown User";
-  const comments = post.comments || [];
+  // Use fetched comments if available, otherwise fall back to post.comments (which might be empty initially)
+  // If showComments is true, we rely on fetchedComments (or loading state)
+  const comments = showComments ? fetchedComments : (post.comments || []);
   const timestamp = post.timestamp || post.createdAt || new Date().toISOString();
 
   return (
@@ -245,31 +273,41 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
             {/* Comments List */}
             <div className="space-y-3">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-2" data-testid={`comment-${comment.id}`}>
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="text-xs">
-                      {comment.author.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="bg-muted/50 rounded-lg px-3 py-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{comment.author}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(comment.timestamp), "MMM d 'at' h:mm a")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-foreground">{comment.text}</p>
-                    </div>
-                  </div>
+              {isLoadingComments ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2" />
+                  Loading comments...
                 </div>
-              ))}
-              
-              {comments.length === 0 && (
-                <p className="text-muted-foreground text-sm text-center py-4">
-                  No comments yet. Be the first to comment!
-                </p>
+              ) : (
+                <>
+                  {comments.map((comment: any) => (
+                    <div key={comment.id} className="flex gap-2" data-testid={`comment-${comment.id}`}>
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={comment.authorAvatar} />
+                        <AvatarFallback className="text-xs">
+                          {comment.author.split(' ').map((n: string) => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="bg-muted/50 rounded-lg px-3 py-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{comment.author}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(comment.timestamp), "MMM d 'at' h:mm a")}
+                            </span>
+                          </div>
+                          <p className="text-sm text-foreground">{comment.text}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {comments.length === 0 && (
+                    <p className="text-muted-foreground text-sm text-center py-4">
+                      No comments yet. Be the first to comment!
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -242,12 +242,21 @@ export default function ProfessionalDashboard() {
     }
   };
 
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/analytics/dashboard");
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
   // Stats
-  const stats = {
+  const stats = dashboardStats?.summary || {
     activeApplications: jobs.filter(job => job.applicants?.includes(user?.id || '')).length,
     upcomingBookings: bookings.length,
-    unreadMessages: 0, // TODO: Connect to messaging service
-    averageRating: 0 // TODO: Connect to rating system
+    unreadMessages: 0,
+    averageRating: 0
   };
 
   if (!user || user.currentRole !== "professional") {

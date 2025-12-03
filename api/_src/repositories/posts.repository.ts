@@ -1,5 +1,5 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { posts, postLikes } from '../db/schema.js';
+import { posts, postLikes, comments } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
 
@@ -226,6 +226,47 @@ export async function getUserLikedPosts(userId: string): Promise<Set<string>> {
     .where(eq(postLikes.userId, userId));
 
   return new Set(likedPosts.map(lp => lp.postId));
+}
+
+/**
+ * Create a comment on a post
+ */
+export async function createComment(data: {
+  postId: string;
+  authorId: string;
+  content: string;
+}): Promise<typeof comments.$inferSelect | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  const [newComment] = await db
+    .insert(comments)
+    .values({
+      postId: data.postId,
+      authorId: data.authorId,
+      content: data.content,
+    })
+    .returning();
+
+  return newComment || null;
+}
+
+/**
+ * Get comments for a post
+ */
+export async function getCommentsForPost(postId: string): Promise<typeof comments.$inferSelect[]> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  return db
+    .select()
+    .from(comments)
+    .where(eq(comments.postId, postId))
+    .orderBy(desc(comments.createdAt));
 }
 
 

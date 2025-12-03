@@ -5,7 +5,7 @@
  */
 
 import { eq, and, desc, sql, count, gte, lte, or, ilike } from 'drizzle-orm';
-import { jobs } from '../db/schema.js';
+import { jobs, applications } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
 export interface JobFilters {
@@ -279,7 +279,22 @@ export async function getJobsWithApplicationCounts(
     return null;
   }
 
-  const { businessId, status, limit = 50, offset = 0 } = filters;
+  const { 
+    businessId, 
+    status, 
+    limit = 50, 
+    offset = 0,
+    city,
+    date,
+    search,
+    minRate,
+    maxRate,
+    startDate,
+    endDate,
+    radius,
+    lat,
+    lng,
+  } = filters;
 
   const conditions = [];
   if (businessId) {
@@ -288,18 +303,73 @@ export async function getJobsWithApplicationCounts(
   if (status) {
     conditions.push(eq(jobs.status, status));
   }
+  if (city) {
+    conditions.push(eq(jobs.city, city));
+  }
+  if (date) {
+    conditions.push(eq(jobs.date, date));
+  }
+  
+  // Search filter (fuzzy match on title and description)
+  if (search) {
+    const searchPattern = `%${search}%`;
+    conditions.push(
+      or(
+        ilike(jobs.title, searchPattern),
+        ilike(jobs.description, searchPattern)
+      )!
+    );
+  }
+
+  // Pay rate filters
+  if (minRate !== undefined) {
+    conditions.push(gte(sql`CAST(${jobs.payRate} AS DECIMAL)`, minRate));
+  }
+  if (maxRate !== undefined) {
+    conditions.push(lte(sql`CAST(${jobs.payRate} AS DECIMAL)`, maxRate));
+  }
+
+  // Date range filters
+  if (startDate) {
+    conditions.push(gte(jobs.date, startDate));
+  }
+  if (endDate) {
+    conditions.push(lte(jobs.date, endDate));
+  }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  // This would require a more complex query with joins
-  // For now, return jobs without counts - can be optimized later
-  const jobList = await getJobs(filters);
-  if (!jobList) {
-    return null;
+  // Use leftJoin and count aggregation
+  let query = db
+    .select({
+      ...jobs,
+      applicationCount: sql<number>`count(${applications.id})`.mapWith(Number),
+    })
+    .from(jobs)
+    .leftJoin(applications, eq(jobs.id, applications.jobId))
+    .where(whereClause)
+    .groupBy(jobs.id)
+    .orderBy(desc(jobs.createdAt));
+
+  // Apply distance filtering in memory if radius is provided
+  if (radius !== undefined && lat !== undefined && lng !== undefined) {
+    const allJobs = await query;
+    const filteredJobs = allJobs.filter(job => {
+      if (!job.lat || !job.lng) return false;
+      const jobLat = parseFloat(job.lat);
+      const jobLng = parseFloat(job.lng);
+      if (isNaN(jobLat) || isNaN(jobLng)) return false;
+      
+      const distance = calculateDistance(lat, lng, jobLat, jobLng);
+      return distance <= radius;
+    });
+    
+    return filteredJobs.slice(offset, offset + limit);
   }
 
-  // TODO: Add proper JOIN query to get application counts in a single query
-  return jobList.data.map((job) => ({ ...job, applicationCount: 0 }));
+  // Otherwise use SQL limit/offset
+  const paginatedJobs = await query.limit(limit).offset(offset);
+  return paginatedJobs;
 }
 
 /**

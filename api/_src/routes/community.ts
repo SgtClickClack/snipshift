@@ -109,6 +109,63 @@ router.post('/:postId/like', authenticateUser, asyncHandler(async (req: Authenti
   });
 }));
 
+// Create a comment on a post (authenticated)
+router.post('/:postId/comments', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { postId } = req.params;
+  const { content } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    res.status(400).json({ message: 'Content is required' });
+    return;
+  }
+
+  const newComment = await postsRepo.createComment({
+    postId,
+    authorId: userId,
+    content: content.trim(),
+  });
+
+  if (!newComment) {
+    res.status(500).json({ message: 'Failed to create comment' });
+    return;
+  }
+
+  // Return with author info
+  res.status(201).json({
+    ...newComment,
+    authorName: req.user?.name,
+    authorRole: req.user?.role,
+    authorAvatar: undefined,
+  });
+}));
+
+// Get comments for a post (public read)
+router.get('/:postId/comments', asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+
+  const comments = await postsRepo.getCommentsForPost(postId);
+
+  // Enrich comments with author info
+  const enrichedComments = await Promise.all(comments.map(async (comment) => {
+    const author = await usersRepo.getUserById(comment.authorId);
+    
+    return {
+      ...comment,
+      authorName: author?.name || 'Unknown User',
+      authorRole: author?.role || 'professional',
+      authorAvatar: undefined,
+    };
+  }));
+
+  res.status(200).json(enrichedComments);
+}));
+
 export default router;
 
 

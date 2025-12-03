@@ -130,12 +130,36 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
     likeMutation.mutate(postId);
   };
 
+  const commentMutation = useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      const response = await apiRequest("POST", `/api/community/${postId}/comments`, { content });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Comment added",
+        description: "Your comment has been posted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to add comment",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleComment = async (postId: string, commentText: string) => {
-    // TODO: Implement comments backend
-    toast({
-      title: "Comments coming soon",
-      description: "Commenting functionality is not yet implemented in the backend.",
-    });
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to comment",
+        variant: "destructive",
+      });
+      return;
+    }
+    await commentMutation.mutateAsync({ postId, content: commentText });
   };
 
   const handleCreatePost = (postData: { content: string; images: string[] }) => {
@@ -260,8 +284,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
               key={post.id}
               post={post}
               onLike={handleLike}
-              // Comments temporarily disabled until backend implementation
-              // onComment={handleComment} 
+              onComment={handleComment} 
               currentUserId={user?.id}
             />
           ))

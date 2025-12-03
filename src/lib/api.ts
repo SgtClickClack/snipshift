@@ -115,7 +115,7 @@ export async function fetchJobDetails(jobId: string): Promise<JobDetails> {
     };
   } catch (error) {
     // If shift not found, try jobs API (Legacy/Fallback)
-    console.log('Shift not found, trying jobs API...', error);
+    console.debug('Shift not found, trying jobs API...', error);
   }
 
   try {

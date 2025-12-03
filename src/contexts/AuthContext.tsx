@@ -166,7 +166,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
               if (loginRes.ok) {
                 const profile = await loginRes.json();
-                console.log('User synced successfully via /api/login');
                 setUser({ 
                   ...profile, 
                   uid: firebaseUser.uid,

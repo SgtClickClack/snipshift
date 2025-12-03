@@ -236,7 +236,6 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
 
 // Complete onboarding
 router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  console.log('[POST /onboarding/complete] Request received from user:', req.user?.email);
   if (!req.user) {
     console.warn('[POST /onboarding/complete] Unauthorized - no user');
     res.status(401).json({ message: 'Unauthorized' });
@@ -317,8 +316,6 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
   const { role, shopName, location, description } = validationResult.data;
   const updates: any = {};
   
-  console.log('[POST /users/role] Updating role:', { role, shopName, location, description });
-
   if (role === 'hub') {
     updates.role = 'business'; // Map 'hub' to 'business'
     if (shopName) updates.name = shopName;
@@ -339,8 +336,6 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
      }
   }
 
-  console.log('[POST /users/role] Update payload:', updates);
-
   // Fetch current user to get existing roles
   const currentUser = await usersRepo.getUserById(req.user.id);
   if (currentUser) {
@@ -359,8 +354,6 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
     res.status(404).json({ message: 'User not found' });
     return;
   }
-
-  console.log('[POST /users/role] Updated user:', updatedUser);
 
   res.status(200).json({
     id: updatedUser.id,
@@ -413,13 +406,6 @@ router.patch('/users/:id/roles', authenticateUser, asyncHandler(async (req: Auth
   // Map 'hub' to 'business' for database storage
   const dbRole = role === 'hub' ? 'business' : role;
 
-  console.log('[PATCH /users/:id/roles] Processing role update:', { 
-    userId: req.user.id, 
-    action, 
-    role, 
-    dbRole 
-  });
-
   // Fetch current user to get existing roles
   const currentUser = await usersRepo.getUserById(req.user.id);
   if (!currentUser) {
@@ -429,7 +415,6 @@ router.patch('/users/:id/roles', authenticateUser, asyncHandler(async (req: Auth
   }
 
   const existingRoles = currentUser.roles || [];
-  console.log('[PATCH /users/:id/roles] Current roles:', existingRoles);
 
   let updatedRoles: string[];
   
@@ -437,15 +422,12 @@ router.patch('/users/:id/roles', authenticateUser, asyncHandler(async (req: Auth
     // Add role if not already present
     if (!existingRoles.includes(dbRole)) {
       updatedRoles = [...existingRoles, dbRole];
-      console.log('[PATCH /users/:id/roles] Adding role. New roles:', updatedRoles);
     } else {
-      console.log('[PATCH /users/:id/roles] Role already exists, no change needed');
       updatedRoles = existingRoles;
     }
   } else {
     // Remove role if present
     updatedRoles = existingRoles.filter(r => r !== dbRole);
-    console.log('[PATCH /users/:id/roles] Removing role. New roles:', updatedRoles);
     
     // Ensure user always has at least one role
     if (updatedRoles.length === 0) {
@@ -463,8 +445,6 @@ router.patch('/users/:id/roles', authenticateUser, asyncHandler(async (req: Auth
     updates.role = dbRole;
   }
 
-  console.log('[PATCH /users/:id/roles] Updating user with:', updates);
-
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
   
   if (!updatedUser) {
@@ -472,8 +452,6 @@ router.patch('/users/:id/roles', authenticateUser, asyncHandler(async (req: Auth
     res.status(500).json({ message: 'Failed to update user roles' });
     return;
   }
-
-  console.log('[PATCH /users/:id/roles] Successfully updated user roles:', updatedUser.roles);
 
   res.status(200).json({
     id: updatedUser.id,
@@ -520,6 +498,33 @@ router.patch('/users/:id/current-role', authenticateUser, asyncHandler(async (re
     id: updatedUser.id,
     role: updatedUser.role,
     currentRole: updatedUser.role
+  });
+}));
+
+// Get public user profile by ID
+router.get('/users/:id', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const user = await usersRepo.getUserById(id);
+  
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Return public profile data
+  res.status(200).json({
+    id: user.id,
+    name: user.name,
+    displayName: user.name,
+    role: user.role,
+    bio: user.bio,
+    location: user.location,
+    // avatarUrl: user.avatarUrl // TODO: Add to schema
+    averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
+    reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
+    joinedDate: user.createdAt.toISOString(),
+    verified: user.isOnboarded,
   });
 }));
 

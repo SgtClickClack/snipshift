@@ -95,7 +95,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           description: `Subscription: ${plan.name}`,
         });
 
-        console.log(`✅ Subscription created for user ${userId}, plan ${planId}`);
+        console.info(`✅ Subscription created for user ${userId}, plan ${planId}`);
         break;
       }
 
@@ -138,7 +138,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           description: `Subscription renewal: ${invoice.description || 'Monthly subscription'}`,
         });
 
-        console.log(`✅ Subscription renewed for subscription ${subscription.id}`);
+        console.info(`✅ Subscription renewed for subscription ${subscription.id}`);
         break;
       }
 
@@ -159,7 +159,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           canceledAt: new Date(),
         });
 
-        console.log(`✅ Subscription canceled: ${subscription.id}`);
+        console.info(`✅ Subscription canceled: ${subscription.id}`);
         break;
       }
 
@@ -182,12 +182,12 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           status: 'past_due',
         });
 
-        console.log(`⚠️  Payment failed for subscription ${subscription.id}`);
+        console.warn(`⚠️  Payment failed for subscription ${subscription.id}`);
         break;
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.debug(`Unhandled event type: ${event.type}`);
     }
 
     res.status(200).json({ received: true });

@@ -115,8 +115,6 @@ export default function HubDashboard() {
 
   const createJobMutation = useMutation({
     mutationFn: async (jobData: any) => {
-      console.log("Submitting shift data:", jobData);
-      
       // Transform data for Shift API compatibility
       // Construct ISO timestamps for start and end
       const dateStr = jobData.date;
@@ -246,12 +244,21 @@ export default function HubDashboard() {
     }
   };
 
-  // Mock stats for demonstration
-  const stats = {
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/analytics/dashboard");
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  // Use API data for stats
+  const stats = dashboardStats?.summary || {
     openJobs: jobs.filter(job => job.status === 'open').length,
     totalApplications: jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
-    unreadMessages: 0, // TODO: Connect to messaging service
-    monthlyHires: 0 // TODO: Connect to hiring service
+    unreadMessages: 0,
+    monthlyHires: 0
   };
 
   if (!user || (user.currentRole !== "hub" && user.currentRole !== "business")) {

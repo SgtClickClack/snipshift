@@ -98,9 +98,35 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
     verified: true
   };
 
-  const { data: profile = mockProfile, isLoading } = useQuery<UserProfile>({
-    queryKey: ["/api/profiles", profileUserId],
+  const { data: profile, isLoading } = useQuery<UserProfile>({
+    queryKey: ["/api/users", profileUserId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/users/${profileUserId}`);
+      const userData = await res.json();
+      
+      // Transform API user data to UserProfile format
+      return {
+        id: userData.id,
+        displayName: userData.displayName || userData.name,
+        email: userData.email,
+        role: userData.role,
+        bio: userData.bio || "",
+        profileImageURL: userData.avatarUrl || "", // Check if API returns avatarUrl or profileImageURL
+        location: userData.location ? { 
+          city: userData.location.split(',')[0]?.trim() || "", 
+          state: userData.location.split(',')[1]?.trim() || "" 
+        } : undefined,
+        // Mock portfolio/skills for now as they aren't in the main user table yet
+        portfolio: mockProfile.portfolio,
+        skills: mockProfile.skills,
+        rating: userData.averageRating || 0,
+        reviewCount: userData.reviewCount || 0,
+        joinedDate: userData.joinedDate || new Date().toISOString(),
+        verified: userData.verified || false,
+      };
+    },
     enabled: !!profileUserId,
+    initialData: isOwnProfile ? undefined : mockProfile, // Use mock data initially for public view if desired, or undefined
   });
 
   const updateProfileMutation = useMutation({

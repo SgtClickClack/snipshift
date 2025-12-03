@@ -12,6 +12,7 @@ import { notifications, notificationTypeEnum } from './schema/notifications.js';
 import { shifts, shiftStatusEnum } from './schema/shifts.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
+import { comments } from './schema/comments.js';
 import { trainingModules, trainingLevelEnum } from './schema/training-modules.js';
 import { trainingPurchases } from './schema/training-purchases.js';
 
@@ -21,6 +22,7 @@ export {
   shifts, shiftStatusEnum,
   posts, postTypeEnum,
   postLikes,
+  comments,
   trainingModules, trainingLevelEnum,
   trainingPurchases
 };
@@ -144,6 +146,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   shifts: many(shifts),
   posts: many(posts),
   postLikes: many(postLikes),
+  comments: many(comments),
   trainingModules: many(trainingModules),
   trainingPurchases: many(trainingPurchases),
 }));
@@ -434,6 +437,7 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     references: [users.id],
   }),
   likes: many(postLikes),
+  comments: many(comments),
 }));
 
 export const postLikesRelations = relations(postLikes, ({ one }) => ({
@@ -444,6 +448,17 @@ export const postLikesRelations = relations(postLikes, ({ one }) => ({
   user: one(users, {
     fields: [postLikes.userId],
     references: [users.id],
+  }),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [comments.postId],
+    references: [posts.id],
   }),
 }));
 

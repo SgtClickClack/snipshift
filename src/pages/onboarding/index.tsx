@@ -113,7 +113,6 @@ export default function OnboardingPage() {
                          roles: [newRole], // Update the role so we don't get sent to role-selection
                          currentRole: newRole
                      }));
-                     console.log('Updated test user session:', { isOnboarded: true, role: newRole });
                  } catch (e) {
                      console.error('Failed to update test user session', e);
                  }

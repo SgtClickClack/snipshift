@@ -77,8 +77,7 @@ export async function createNotification(data: CreateNotificationData) {
       } 
     });
     
-    // TODO: Integrate with Email Service for critical alerts if user is offline
-    // if (isCritical(data.type)) { ... }
+    // Integration with Email Service is handled by specific notification functions
   }
 
   return notification;

@@ -66,7 +66,6 @@ export default function ShopDashboard() {
 
   const createShiftMutation = useMutation({
     mutationFn: async (shiftData: any) => {
-      console.log('Submitting shift data:', shiftData);
       const response = await apiRequest("POST", "/api/shifts", {
         title: shiftData.title,
         requirements: shiftData.requirements,

@@ -33,6 +33,7 @@ import * as paymentsRepo from './repositories/payments.repository.js';
 import * as conversationsRepo from './repositories/conversations.repository.js';
 import * as messagesRepo from './repositories/messages.repository.js';
 import * as reportsRepo from './repositories/reports.repository.js';
+import * as shiftsRepo from './repositories/shifts.repository.js';
 import { getDatabase } from './db/connection.js';
 import { auth } from './config/firebase.js';
 import usersRouter from './routes/users.js';
@@ -44,6 +45,7 @@ import shiftsRouter from './routes/shifts.js';
 import applicationsRouter from './routes/applications.js';
 import communityRouter from './routes/community.js';
 import trainingRouter from './routes/training.js';
+import analyticsRouter from './routes/analytics.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
@@ -171,6 +173,7 @@ app.use('/api/shifts', shiftsRouter);
 app.use('/api/applications', applicationsRouter);
 app.use('/api/community', communityRouter);
 app.use('/api/training', trainingRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
@@ -1130,9 +1133,17 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
       return;
     }
   } else if (application.shiftId) {
-    // TODO: Add shift ownership check
-    // For now, allow if shiftId exists (assuming admin or shift owner logic elsewhere)
-    // ideally we would fetch shift here
+    // Verify shift ownership
+    const shift = await shiftsRepo.getShiftById(application.shiftId);
+    if (!shift) {
+      res.status(404).json({ message: 'Shift not found' });
+      return;
+    }
+    
+    if (shift.employerId !== userId) {
+      res.status(403).json({ message: 'Forbidden: You do not own this shift' });
+      return;
+    }
   } else {
     // Should not happen for valid application
     res.status(400).json({ message: 'Application is not linked to a valid job or shift' });

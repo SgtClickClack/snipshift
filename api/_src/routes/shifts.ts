@@ -8,7 +8,6 @@ const router = Router();
 
 // Create a shift (authenticated, employer only)
 router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  console.log('Received payload:', req.body);
   const userId = req.user?.id;
   
   if (!userId) {
