@@ -31,6 +31,7 @@ export default function HubDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeView = (searchParams.get('view') as ActiveView) || 'overview';
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'filled' | 'completed'>('all');
   
   const setActiveView = (view: ActiveView) => {
     setSearchParams(prev => {
@@ -204,6 +205,7 @@ export default function HubDashboard() {
       case 'post-job':
         // Switch to the 'jobs' view first
         setActiveView('jobs');
+        setStatusFilter('all');
         // Then open the form
         setShowForm(true);
         break;
@@ -212,6 +214,7 @@ export default function HubDashboard() {
         break;
       case 'manage-jobs':
         setActiveView('jobs');
+        setStatusFilter('all');
         break;
       case 'open-messages':
         // Messages is a separate page in the app router
@@ -229,6 +232,7 @@ export default function HubDashboard() {
     switch (action) {
       case 'jobs':
         setActiveView('jobs');
+        setStatusFilter('open');
         break;
       case 'applications':
         setActiveView('applications');
@@ -253,12 +257,15 @@ export default function HubDashboard() {
     enabled: !!user,
   });
 
-  // Use API data for stats
-  const stats = dashboardStats?.summary || {
-    openJobs: jobs.filter(job => job.status === 'open').length,
-    totalApplications: jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
-    unreadMessages: 0,
-    monthlyHires: 0
+  // Use API data for stats, but prefer local jobs calculation for consistency with the list view
+  const openJobsCount = jobs.filter(job => job.status === 'open').length;
+  
+  const stats = {
+    ...(dashboardStats?.summary || {}),
+    openJobs: openJobsCount, // Override with local calculation
+    totalApplications: dashboardStats?.summary?.totalApplications ?? jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
+    unreadMessages: dashboardStats?.summary?.unreadMessages ?? 0,
+    monthlyHires: dashboardStats?.summary?.monthlyHires ?? 0
   };
 
   if (!user || (user.currentRole !== "hub" && user.currentRole !== "business")) {
@@ -400,7 +407,38 @@ export default function HubDashboard() {
         {activeView === 'jobs' && (
           <div>
             {!showForm && (
-              <div className="mb-6">
+              <div className="mb-6 flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button 
+                    variant={statusFilter === 'all' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('all')}
+                    size="sm"
+                  >
+                    All
+                  </Button>
+                  <Button 
+                    variant={statusFilter === 'open' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('open')}
+                    size="sm"
+                    className={statusFilter === 'open' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  >
+                    Open
+                  </Button>
+                  <Button 
+                    variant={statusFilter === 'filled' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('filled')}
+                    size="sm"
+                  >
+                    Filled
+                  </Button>
+                  <Button 
+                    variant={statusFilter === 'completed' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('completed')}
+                    size="sm"
+                  >
+                    Completed
+                  </Button>
+                </div>
                 <Button 
                   onClick={() => setShowForm(true)}
                   className="bg-primary hover:bg-blue-700"
@@ -540,26 +578,30 @@ export default function HubDashboard() {
               <div className={showForm ? "lg:col-span-2" : "lg:col-span-3"}>
                 <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
                   <CardHeader className="border-b border-gray-100">
-                    <CardTitle>Your Posted Jobs</CardTitle>
+                    <CardTitle>Your Posted Jobs {statusFilter !== 'all' && <span className="text-sm font-normal text-muted-foreground capitalize">({statusFilter})</span>}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     {isLoading ? (
                       <div data-testid="text-loading">Loading jobs...</div>
-                    ) : jobs.length === 0 ? (
+                    ) : jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-neutral-600" data-testid="text-no-jobs">No jobs posted yet.</p>
-                        <Button 
-                          onClick={() => setShowForm(true)}
-                          className="mt-4"
-                          variant="outline"
-                          data-testid="button-post-first-job"
-                        >
-                          Post Your First Job
-                        </Button>
+                        <p className="text-neutral-600" data-testid="text-no-jobs">
+                          {statusFilter === 'all' ? "No jobs posted yet." : `No ${statusFilter} jobs found.`}
+                        </p>
+                        {statusFilter === 'all' && (
+                          <Button 
+                            onClick={() => setShowForm(true)}
+                            className="mt-4"
+                            variant="outline"
+                            data-testid="button-post-first-job"
+                          >
+                            Post Your First Job
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {jobs.map((job) => (
+                        {jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).map((job) => (
                           <Card key={job.id} className="border border-neutral-200" data-testid={`card-job-${job.id}`}>
                             <CardContent className="p-4">
                               <div className="flex justify-between items-start mb-3">

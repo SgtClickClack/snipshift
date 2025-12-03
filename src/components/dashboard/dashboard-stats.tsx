@@ -39,7 +39,7 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
       case 'hub':
         return [
           {
-            title: 'Open Jobs',
+            title: 'Active Shifts',
             value: stats.openJobs || 0,
             icon: Scissors,
             description: 'Active job postings',
