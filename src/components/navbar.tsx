@@ -256,7 +256,7 @@ export default function Navbar() {
                         <User className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/settings')}>
+                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/profile/edit')}>
                          <Settings className="mr-2 h-4 w-4" />
                          <span>Settings</span>
                       </DropdownMenuItem>

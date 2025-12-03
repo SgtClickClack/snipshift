@@ -152,7 +152,7 @@ export default function DemoPage() {
       description: "Admin panel for reviewing and approving content",
       icon: Shield,
       color: "bg-red-100 text-red-800",
-      demo: () => navigate("/content-moderation"),
+      demo: () => navigate("/admin"),
       highlights: [
         "Post approval workflow",
         "Training content review",

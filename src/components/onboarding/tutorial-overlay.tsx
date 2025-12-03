@@ -104,9 +104,10 @@ export function TutorialOverlay() {
 
   useEffect(() => {
     const handleStartTutorial = () => {
-      if (user?.currentRole && tutorialSteps[user.currentRole]) {
-        localStorage.removeItem(`tutorial-seen-${user.currentRole}`);
-        setUserRole(user.currentRole);
+      const role = user?.currentRole === 'business' ? 'hub' : user?.currentRole;
+      if (role && tutorialSteps[role]) {
+        localStorage.removeItem(`tutorial-seen-${role}`);
+        setUserRole(role);
         setCurrentStep(0);
         setIsVisible(true);
       }
@@ -115,13 +116,14 @@ export function TutorialOverlay() {
     window.addEventListener('start-tutorial', handleStartTutorial);
 
     if (user?.currentRole) {
-      setUserRole(user.currentRole);
+      const role = user.currentRole === 'business' ? 'hub' : user.currentRole;
+      setUserRole(role);
       
       // Only show tutorial on dashboard pages, not login/signup
       const isDashboardPage = window.location.pathname.includes('-dashboard');
-      const hasSeenTutorial = localStorage.getItem(`tutorial-seen-${user.currentRole}`);
+      const hasSeenTutorial = localStorage.getItem(`tutorial-seen-${role}`);
       
-      if (!hasSeenTutorial && isDashboardPage && tutorialSteps[user.currentRole]) {
+      if (!hasSeenTutorial && isDashboardPage && tutorialSteps[role]) {
         // Delay to ensure dashboard has fully loaded
         setTimeout(() => setIsVisible(true), 1500);
       }
