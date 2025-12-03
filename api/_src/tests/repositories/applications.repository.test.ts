@@ -50,7 +50,7 @@ describe('Applications Repository (Integration)', () => {
 
     const userApps = await applicationsRepo.getApplicationsForUser(applicant!.id);
     expect(userApps).toHaveLength(1);
-    expect(userApps![0].job.title).toBe('Test Job');
+    expect(userApps![0].job?.title).toBe('Test Job');
   });
 
   it('should check if user has applied', async () => {

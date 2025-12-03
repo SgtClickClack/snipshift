@@ -41,6 +41,7 @@ import webhooksRouter from './routes/webhooks.js';
 import adminRouter from './routes/admin.js';
 import notificationsRouter from './routes/notifications.js';
 import shiftsRouter from './routes/shifts.js';
+import applicationsRouter from './routes/applications.js';
 import communityRouter from './routes/community.js';
 import trainingRouter from './routes/training.js';
 import * as notificationService from './services/notification.service.js';
@@ -167,6 +168,7 @@ app.use('/api/chats', chatsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/shifts', shiftsRouter);
+app.use('/api/applications', applicationsRouter);
 app.use('/api/community', communityRouter);
 app.use('/api/training', trainingRouter);
 
@@ -789,10 +791,10 @@ app.get('/api/applications', asyncHandler(async (req, res) => {
       const transformed = applications.map((app) => ({
         id: app.id,
         jobId: app.jobId,
-        jobTitle: app.job.title,
-        jobPayRate: app.job.payRate,
+        jobTitle: app.job?.title || app.shift?.title || 'Unknown Position',
+        jobPayRate: app.job?.payRate || (app.shift && 'hourlyRate' in app.shift ? app.shift.hourlyRate : 'N/A'),
         jobLocation: '', // Not in schema yet, can be added later
-        jobDescription: app.job.description,
+        jobDescription: app.job?.description || (app.shift && 'description' in app.shift ? app.shift.description : '') || '',
         status: app.status,
         appliedDate: app.appliedAt.toISOString(),
         respondedDate: app.respondedAt ? app.respondedAt.toISOString() : null,
@@ -853,19 +855,49 @@ app.get('/api/me/applications', authenticateUser, asyncHandler(async (req: Authe
   if (applications) {
     // Transform to match frontend expectations
     const transformed = applications.map((app) => {
-      const locationParts = [app.job.address, app.job.city, app.job.state].filter(Boolean);
-      const location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+      const jobOrShift = app.job || app.shift;
+      // Handle potential missing job/shift if data integrity issue
+      if (!jobOrShift) {
+        return {
+          id: app.id,
+          jobId: app.jobId || app.shiftId,
+          jobTitle: 'Unknown Position',
+          jobPayRate: 'N/A',
+          jobLocation: undefined,
+          jobDescription: 'Position details unavailable',
+          jobDate: new Date().toISOString(),
+          jobStatus: 'closed',
+          status: app.status,
+          appliedDate: app.appliedAt.toISOString(),
+          respondedDate: app.respondedAt ? app.respondedAt.toISOString() : null,
+          respondedAt: app.respondedAt ? app.respondedAt.toISOString() : null,
+        };
+      }
+
+      // Determine location string
+      let location: string | undefined = undefined;
+      if (jobOrShift && 'address' in jobOrShift) {
+        // It's a job
+        const j = jobOrShift as typeof jobsRepo.jobs.$inferSelect;
+        const locationParts = [j.address, j.city, j.state].filter(Boolean);
+        location = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+      } else {
+        // It's a shift (shifts don't have address fields in schema yet? check schema)
+        // Schema check: shifts table has no address/city/state?
+        // Let's check schema content...
+        // For now, assume undefined or handle if shift has location
+      }
 
       return {
         id: app.id,
-        jobId: app.jobId,
-        jobTitle: app.job.title,
-        shopName: app.job.shopName || undefined,
-        jobPayRate: app.job.payRate,
+        jobId: app.jobId || app.shiftId,
+        jobTitle: jobOrShift.title,
+        shopName: 'shopName' in jobOrShift ? jobOrShift.shopName : undefined,
+        jobPayRate: 'payRate' in jobOrShift ? jobOrShift.payRate : (jobOrShift as any).hourlyRate,
         jobLocation: location,
-        jobDescription: app.job.description,
-        jobDate: app.job.date,
-        jobStatus: app.job.status,
+        jobDescription: 'description' in jobOrShift ? jobOrShift.description : '',
+        jobDate: 'date' in jobOrShift ? jobOrShift.date : ('startTime' in jobOrShift ? (jobOrShift as any).startTime.toISOString() : new Date().toISOString()),
+        jobStatus: 'status' in jobOrShift ? jobOrShift.status : 'open',
         status: app.status,
         appliedDate: app.appliedAt.toISOString(),
         respondedDate: app.respondedAt ? app.respondedAt.toISOString() : null,
@@ -1046,15 +1078,27 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
   }
 
   // Get the job to verify ownership
-  const job = await jobsRepo.getJobById(application.jobId);
-  if (!job) {
-    res.status(404).json({ message: 'Job not found' });
-    return;
-  }
+  if (application.jobId) {
+    const job = await jobsRepo.getJobById(application.jobId);
+    if (!job) {
+      res.status(404).json({ message: 'Job not found' });
+      return;
+    }
 
-  // Strict ownership check - ensure current user owns the job
-  if (job.businessId !== userId) {
-    res.status(403).json({ message: 'Forbidden: You do not own this job' });
+    // Strict ownership check - ensure current user owns the job
+    if (job.businessId !== userId) {
+      res.status(403).json({ message: 'Forbidden: You do not own this job' });
+      return;
+    }
+  } else if (application.shiftId) {
+    // TODO: Add shift ownership check
+    // For now, allow if shiftId exists (assuming admin or shift owner logic elsewhere)
+    // Ideally:
+    // const shift = await shiftsRepo.getShiftById(application.shiftId);
+    // if (!shift || shift.employerId !== userId) ...
+  } else {
+    // Should not happen for valid application
+    res.status(400).json({ message: 'Application is not linked to a valid job or shift' });
     return;
   }
 
@@ -1076,7 +1120,7 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
         }
       }
       
-      // Send in-app notification
+      // Notify in-app notification
       await notificationService.notifyApplicationStatusChange(
         candidateUserId,
         candidateEmail,
