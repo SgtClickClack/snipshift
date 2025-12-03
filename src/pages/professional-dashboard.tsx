@@ -82,17 +82,34 @@ export default function ProfessionalDashboard() {
       // Location filter
       if (jobFilters.location) {
         const locationLower = jobFilters.location.toLowerCase();
-        const jobCity = typeof job.location === 'object' ? job.location.city : (typeof job.location === 'string' ? job.location : '');
-        const jobState = typeof job.location === 'object' ? job.location.state : '';
+        // Handle potentially null/undefined or object/string location
+        let jobCity = '';
+        let jobState = '';
         
+        if (job.location && typeof job.location === 'object') {
+          jobCity = job.location.city || '';
+          jobState = job.location.state || '';
+        } else if (typeof job.location === 'string') {
+          jobCity = job.location;
+        }
+
         const matchesLocation = 
-          (jobCity?.toLowerCase() || '').includes(locationLower) ||
-          (jobState?.toLowerCase() || '').includes(locationLower);
+          jobCity.toLowerCase().includes(locationLower) ||
+          jobState.toLowerCase().includes(locationLower);
         if (!matchesLocation) return false;
       }
 
       // Pay rate filter
-      const rate = typeof job.payRate === 'string' ? parseFloat(job.payRate.replace(/[^0-9.]/g, '')) : job.payRate;
+      const rawRate = job.payRate;
+      let rate = 0;
+      if (typeof rawRate === 'string') {
+        rate = parseFloat(rawRate.replace(/[^0-9.]/g, ''));
+      } else if (typeof rawRate === 'number') {
+        rate = rawRate;
+      }
+      
+      if (isNaN(rate)) rate = 0;
+
       if (rate < jobFilters.payRateMin || rate > jobFilters.payRateMax) {
         return false;
       }
@@ -355,22 +372,25 @@ export default function ProfessionalDashboard() {
                           <div>
                             <h4 className="font-medium">{job.title}</h4>
                             <p className="text-sm text-muted-foreground">
-                              ${job.payRate}/{job.payType} • {job.location.city}, {job.location.state}
+                              ${job.payRate}/{job.payType} • {
+                                typeof job.location === 'object' && job.location 
+                                  ? `${job.location.city || ''}, ${job.location.state || ''}`
+                                  : (job.location || 'Remote')
+                              }
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <StartChatButton
-                              otherUserId={job.hubId}
-                              otherUserName="Shop Owner"
-                              otherUserRole="hub"
-                              variant="outline"
-                              size="sm"
-                            />
+                            {job.hubId && (
+                              <StartChatButton
+                                otherUserId={job.hubId}
+                                otherUserName="Shop Owner"
+                                otherUserRole="hub"
+                                variant="outline"
+                                size="sm"
+                              />
+                            )}
                             <Button 
-                              onClick={() => {
-                                setSelectedJob(job);
-                                setShowApplicationModal(true);
-                              }} 
+                              onClick={() => handleApplyToJob(job)}
                               size="sm"
                               disabled={job.applicants?.includes(user?.id || "")}
                             >
@@ -525,7 +545,11 @@ export default function ProfessionalDashboard() {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                               <div className="flex items-center">
                                 <MapPin className="mr-1 h-4 w-4" />
-                                <span>{job.location.city}, {job.location.state}</span>
+                                <span>
+                                  {typeof job.location === 'object' && job.location
+                                    ? `${job.location.city || ''}, ${job.location.state || ''}`
+                                    : (job.location || 'Remote')}
+                                </span>
                               </div>
                               <div className="flex items-center">
                                 <Calendar className="mr-1 h-4 w-4" />
@@ -579,13 +603,15 @@ export default function ProfessionalDashboard() {
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <StartChatButton
-                              otherUserId={job.hubId}
-                              otherUserName="Shop Owner"
-                              otherUserRole="hub"
-                              variant="outline"
-                              size="sm"
-                            />
+                            {job.hubId && (
+                              <StartChatButton
+                                otherUserId={job.hubId}
+                                otherUserName="Shop Owner"
+                                otherUserRole="hub"
+                                variant="outline"
+                                size="sm"
+                              />
+                            )}
                             <Button
                               onClick={() => handleApplyToJob(job)}
                               disabled={hasApplied}
@@ -647,13 +673,15 @@ export default function ProfessionalDashboard() {
                           <DollarSign className="mr-2 h-4 w-4" />
                           ${job.payRate}/{job.payType}
                         </div>
-                        <StartChatButton
-                          otherUserId={job.hubId}
-                          otherUserName="Shop Owner"
-                          otherUserRole="hub"
-                          variant="outline"
-                          size="sm"
-                        />
+                        {job.hubId && (
+                          <StartChatButton
+                            otherUserId={job.hubId}
+                            otherUserName="Shop Owner"
+                            otherUserRole="hub"
+                            variant="outline"
+                            size="sm"
+                          />
+                        )}
                       </div>
                     </div>
                   ))}

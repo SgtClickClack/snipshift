@@ -60,7 +60,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
       })).filter((post: Post) => {
         if (!searchQuery) return true;
         return post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               post.authorName.toLowerCase().includes(searchQuery.toLowerCase());
+               (post.authorName && post.authorName.toLowerCase().includes(searchQuery.toLowerCase()));
       });
     }
   });
@@ -102,7 +102,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
           post.id === postId
             ? {
                 ...post,
-                likes: data.isLiked ? post.likes + 1 : post.likes - 1,
+                likes: data.isLiked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 0) - 1),
                 isLiked: data.isLiked
               }
             : post

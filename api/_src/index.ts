@@ -474,6 +474,8 @@ app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRe
       location,
       startTime: newJob.startTime,
       endTime: newJob.endTime,
+      hubId: newJob.businessId,
+      businessId: newJob.businessId,
     });
     return;
   }
@@ -556,6 +558,8 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
         description: job.description,
         startTime: job.startTime,
         endTime: job.endTime,
+        hubId: job.businessId,
+        businessId: job.businessId,
       };
     });
 
@@ -606,6 +610,7 @@ app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
       endTime: job.endTime,
       status: job.status,
       businessId: job.businessId,
+      hubId: job.businessId,
       businessName: businessOwner?.name || job.shopName || 'Business Owner',
     });
     return;

@@ -129,9 +129,21 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
   const displayLocation = typeof job.location === 'object' ? `${job.location.city}, ${job.location.state}` : job.location;
   const displayDesc = job.description || job.requirements;
 
+  // Helper to safe format date
+  const safeFormat = (dateStr: string | number | Date | undefined, fmt: string) => {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "";
+      return format(d, fmt);
+    } catch (e) {
+      return "";
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto !bg-white z-[101]">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-xl font-bold">Apply for Position</CardTitle>
           <Button
@@ -154,7 +166,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
               <div className="flex items-center">
                 <Calendar className="mr-2 h-4 w-4 text-primary" />
                 <span data-testid="text-job-date">
-                  {format(new Date(job.date), "EEE, MMM d, yyyy")}
+                  {safeFormat(job.date, "EEE, MMM d, yyyy")}
                 </span>
               </div>
               <div className="flex items-center">
@@ -175,7 +187,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
                 <div className="flex items-center">
                   <Clock className="mr-2 h-4 w-4 text-primary" />
                   <span data-testid="text-job-time">
-                    {format(new Date(job.startTime), "h:mm a")}
+                    {safeFormat(job.startTime, "h:mm a")}
                   </span>
                 </div>
               )}

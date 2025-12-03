@@ -135,8 +135,8 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto !bg-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-xl font-bold">Post a New Job</CardTitle>
           <Button

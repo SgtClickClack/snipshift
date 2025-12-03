@@ -190,3 +190,9 @@ button:active, a:active, [role="button"]:active {
   border-top-color: hsl(var(--primary)) !important;
   border-left-color: hsl(var(--primary)) !important;
 }
+
+/* Force all dialogs/popovers to be opaque */
+[role="dialog"], [role="alertdialog"], .modal-content, .sheet-content {
+  background-color: white !important;
+  opacity: 1 !important;
+}
