@@ -217,7 +217,7 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
         return (
           <Card 
             key={stat.title} 
-            className={`group relative overflow-hidden bg-white border border-steel-200 shadow-sm transition-all duration-300 ${
+            className={`group relative overflow-hidden bg-card border border-border shadow-sm transition-all duration-300 ${
               isClickable 
                 ? 'cursor-pointer hover:shadow-md hover:border-steel-300 hover:-translate-y-1 active:scale-[0.98]' 
                 : 'hover:shadow-md hover:border-steel-300'

@@ -273,14 +273,14 @@ export default function HubDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Dashboard Header */}
-      <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
+      <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-steel-900">Business Dashboard</h1>
-              <p className="text-steel-600">{user.displayName || user.email}</p>
+              <h1 className="text-2xl font-bold text-foreground">Business Dashboard</h1>
+              <p className="text-muted-foreground">{user.displayName || user.email}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <TutorialTrigger />
@@ -365,9 +365,9 @@ export default function HubDashboard() {
               <QuickActions role="hub" onAction={handleQuickAction} />
               
               <div className="lg:col-span-2">
-                <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                  <CardHeader className="bg-white border-b border-gray-100">
-                    <CardTitle className="text-gray-900">Recent Activity</CardTitle>
+                <Card className="bg-card rounded-lg border border-border shadow-sm">
+                  <CardHeader className="bg-card border-b border-border">
+                    <CardTitle className="text-foreground">Recent Activity</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="space-y-4">
@@ -454,8 +454,8 @@ export default function HubDashboard() {
               {/* Post Job Form */}
               {showForm && (
                 <div className="lg:col-span-1">
-                  <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <CardHeader className="border-b border-gray-100">
+                  <Card className="bg-card rounded-lg border border-border shadow-sm">
+                    <CardHeader className="border-b border-border">
                       <div className="flex justify-between items-center">
                         <CardTitle>Post a New Job</CardTitle>
                         <Button
@@ -576,8 +576,8 @@ export default function HubDashboard() {
 
               {/* Posted Jobs List */}
               <div className={showForm ? "lg:col-span-2" : "lg:col-span-3"}>
-                <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                  <CardHeader className="border-b border-gray-100">
+                <Card className="bg-card rounded-lg border border-border shadow-sm">
+                  <CardHeader className="border-b border-border">
                     <CardTitle>Your Posted Jobs {statusFilter !== 'all' && <span className="text-sm font-normal text-muted-foreground capitalize">({statusFilter})</span>}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -585,7 +585,7 @@ export default function HubDashboard() {
                       <div data-testid="text-loading">Loading jobs...</div>
                     ) : jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-neutral-600" data-testid="text-no-jobs">
+                        <p className="text-muted-foreground" data-testid="text-no-jobs">
                           {statusFilter === 'all' ? "No jobs posted yet." : `No ${statusFilter} jobs found.`}
                         </p>
                         {statusFilter === 'all' && (
@@ -602,11 +602,11 @@ export default function HubDashboard() {
                     ) : (
                       <div className="space-y-4">
                         {jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).map((job) => (
-                          <Card key={job.id} className="border border-neutral-200" data-testid={`card-job-${job.id}`}>
+                          <Card key={job.id} className="border border-border" data-testid={`card-job-${job.id}`}>
                             <CardContent className="p-4">
                               <div className="flex justify-between items-start mb-3">
                                 <h4 
-                                  className="font-semibold text-neutral-900 hover:text-primary cursor-pointer transition-colors" 
+                                  className="font-semibold text-foreground hover:text-primary cursor-pointer transition-colors" 
                                   data-testid={`text-job-title-${job.id}`}
                                   onClick={() => navigate(`/jobs/${job.id}`)}
                                 >
@@ -619,7 +619,7 @@ export default function HubDashboard() {
                                         className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
                                           job.status === 'open' ? 'bg-success text-white' : 
                                           job.status === 'filled' ? 'bg-blue-500 text-white' :
-                                          'bg-neutral-200 text-neutral-700'
+                                          'bg-muted text-muted-foreground'
                                         }`}
                                         data-testid={`status-job-${job.id}`}
                                       >
@@ -640,7 +640,7 @@ export default function HubDashboard() {
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
-                              <div className="grid sm:grid-cols-3 gap-4 text-sm text-neutral-600 mb-3">
+                              <div className="grid sm:grid-cols-3 gap-4 text-sm text-muted-foreground mb-3">
                                 <div className="flex items-center">
                                   <Calendar className="mr-2 h-4 w-4 text-primary" />
                                   <span data-testid={`text-job-date-${job.id}`}>
@@ -660,7 +660,7 @@ export default function HubDashboard() {
                                   </span>
                                 </div>
                               </div>
-                              <p className="text-sm text-neutral-600 mb-2" data-testid={`text-job-description-${job.id}`}>
+                              <p className="text-sm text-muted-foreground mb-2" data-testid={`text-job-description-${job.id}`}>
                                 {job.description}
                               </p>
                               {job.skillsRequired && job.skillsRequired.length > 0 && (
@@ -691,8 +691,8 @@ export default function HubDashboard() {
         {/* Applications Tab */}
         {activeView === 'applications' && (
           <div className="space-y-6">
-            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-              <CardHeader className="border-b border-gray-100">
+            <Card className="bg-card rounded-lg border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Job Applications</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
@@ -700,16 +700,16 @@ export default function HubDashboard() {
                    <div className="text-center py-8 text-muted-foreground">Loading applications...</div>
                 ) : applications.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="mb-4 bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                       <Users className="h-8 w-8 text-gray-400" />
+                    <div className="mb-4 bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                       <Users className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">No applications yet</h3>
+                    <h3 className="text-lg font-medium text-foreground">No applications yet</h3>
                     <p className="text-muted-foreground mt-1">When professionals apply to your jobs, they will appear here.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                      {applications.map((app: any) => (
-                        <div key={app.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div key={app.id} className="border rounded-lg p-4 hover:bg-muted transition-colors">
                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                               <div>
                                  <h3 className="font-medium text-lg">{app.name}</h3>
@@ -722,18 +722,18 @@ export default function HubDashboard() {
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                                   app.status === 'accepted' ? 'bg-green-100 text-green-800' : 
                                   app.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                                  'bg-gray-100 text-gray-800'
+                                  'bg-muted text-foreground'
                                 }`}>
                                    {app.status}
                                 </span>
                               </div>
                            </div>
                            {app.coverLetter && (
-                              <div className="mt-4 text-sm bg-white p-3 rounded border text-gray-700 italic">
+                              <div className="mt-4 text-sm bg-card p-3 rounded border text-muted-foreground italic">
                                  "{app.coverLetter}"
                               </div>
                            )}
-                           <div className="mt-3 pt-3 border-t text-xs text-gray-400 flex justify-between items-center">
+                           <div className="mt-3 pt-3 border-t text-xs text-muted-foreground flex justify-between items-center">
                               <span>Applied on {new Date(app.appliedAt).toLocaleDateString()}</span>
                               {/* Future: Add Accept/Reject buttons here */}
                            </div>
@@ -749,8 +749,8 @@ export default function HubDashboard() {
         {/* Profile Tab */}
         {activeView === 'profile' && (
           <div className="max-w-4xl">
-            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-              <CardHeader className="border-b border-gray-100">
+            <Card className="bg-card rounded-lg border border-border shadow-sm">
+              <CardHeader className="border-b border-border">
                 <CardTitle>Profile Settings</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
