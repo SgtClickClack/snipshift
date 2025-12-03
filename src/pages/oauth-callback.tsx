@@ -42,7 +42,8 @@ export function OAuthCallback() {
           });
         } catch (e: any) {
           // Ignore 400 (already exists)
-          if (!(`${e.message}` || '').startsWith('400')) {
+          const isExistingUserError = e instanceof Error && e.message.includes('400');
+          if (!isExistingUserError) {
             throw e;
           }
         }

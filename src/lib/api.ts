@@ -130,15 +130,16 @@ export async function fetchJobDetails(jobId: string): Promise<JobDetails> {
     // Requirements might be in description as bullet points or separated by newlines
     let requirements: string[] = [];
     if (data.requirements && Array.isArray(data.requirements)) {
-      requirements = data.requirements;
+      requirements = data.requirements.filter((r: string) => r && r.trim().length > 0);
     } else if (data.skillsRequired && Array.isArray(data.skillsRequired)) {
-      requirements = data.skillsRequired;
+      requirements = data.skillsRequired.filter((r: string) => r && r.trim().length > 0);
     } else if (data.description) {
       // Try to parse bullet points from description
       const lines = data.description.split('\n').filter((line: string) => line.trim());
       const bulletPoints = lines
         .filter((line: string) => line.trim().match(/^[-•*]\s+/))
-        .map((line: string) => line.replace(/^[-•*]\s+/, '').trim());
+        .map((line: string) => line.replace(/^[-•*]\s+/, '').trim())
+        .filter((line: string) => line.length > 0);
       
       if (bulletPoints.length > 0) {
         requirements = bulletPoints;

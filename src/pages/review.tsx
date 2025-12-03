@@ -125,7 +125,18 @@ export default function ReviewPage() {
         ) : (
           <Card className="card-chrome">
             <CardContent className="p-8 text-center">
-              <p className="text-steel-600">Loading review form...</p>
+              <p className="text-steel-600">
+                {applications ? "Unable to load review form. The user to review could not be found." : "Loading review form..."}
+              </p>
+              {applications && (
+                <Button 
+                  onClick={() => navigate('/my-applications')} 
+                  variant="outline" 
+                  className="mt-4"
+                >
+                  Back to Applications
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
