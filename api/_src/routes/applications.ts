@@ -87,9 +87,9 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 
   // Create application
   const newApplication = await applicationsRepo.createApplication({
-    jobId: jobId,
-    shiftId: shiftId,
-    userId: finalUserId,
+    jobId: jobId || undefined,
+    shiftId: shiftId || undefined,
+    userId: finalUserId || undefined,
     name: userName,
     email: userEmail,
     coverLetter: message,
