@@ -3,44 +3,39 @@
 @tailwind utilities;
 
 :root {
-  /* Enhanced Steel & Chrome with Improved Contrast Variations */
-  --background: hsl(210, 15%, 94%); /* Light steel background */
-  --foreground: hsl(210, 15%, 12%); /* Deep charcoal text */
-  --muted: hsl(210, 12%, 85%); /* Medium steel for muted areas */
-  --muted-foreground: hsl(210, 8%, 42%); /* Darker steel text */
-  --popover: hsl(0, 0%, 100%); /* White popups */
-  --popover-foreground: hsl(210, 15%, 12%);
-  --card: hsl(0, 0%, 100%); /* White cards */
-  --card-foreground: hsl(210, 15%, 12%);
-  --border: hsl(210, 12%, 65%); /* Steel borders */
-  --input: hsl(210, 15%, 98%); /* Light input backgrounds */
-  
-  /* Primary: Enhanced red accent */
-  --primary: hsl(0, 85%, 35%); /* Deep red accent */
-  --primary-foreground: hsl(0, 0%, 100%);
-  
-  /* Secondary: Enhanced charcoal */
-  --secondary: hsl(210, 15%, 12%); /* Deep charcoal */
-  --secondary-foreground: hsl(0, 0%, 100%);
-  
-  /* Accent: Enhanced red */
-  --accent: hsl(0, 85%, 35%); /* Deep red accent */
-  --accent-foreground: hsl(0, 0%, 100%);
-  
-  --destructive: hsl(0, 75%, 45%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --error: hsl(0, 75%, 45%);
-  --error-foreground: hsl(0, 0%, 100%);
-  --success: hsl(120, 100%, 25%);
-  --success-foreground: hsl(0, 0%, 100%);
-  --warning: hsl(45, 100%, 50%);
-  --warning-foreground: hsl(0, 0%, 100%);
-  --info: hsl(210, 100%, 45%);
-  --info-foreground: hsl(0, 0%, 100%);
-  --ring: hsl(0, 85%, 35%);
+  /* Standard Shadcn Light Theme */
+  --background: 0 0% 100%;       /* White */
+  --foreground: 240 10% 3.9%;    /* Black */
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;       /* Deep Blue/Black */
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;   /* Light Gray */
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
   --radius: 0.5rem;
+
+  /* Additional Status Colors (Converted to space-separated for consistency) */
+  --error: 0 75% 45%;
+  --error-foreground: 0 0% 100%;
+  --success: 120 100% 25%;
+  --success-foreground: 0 0% 100%;
+  --warning: 45 100% 50%;
+  --warning-foreground: 0 0% 100%;
+  --info: 210 100% 45%;
+  --info-foreground: 0 0% 100%;
   
-  /* Enhanced Steel Color Scale with Better Contrast */
+  /* Enhanced Steel Color Scale (Kept as full HSL for direct usage if needed, not used by Tailwind config vars) */
   --steel-50: hsl(210, 20%, 98%);   /* Ultra light steel */
   --steel-100: hsl(210, 18%, 95%);  /* Very light steel */
   --steel-200: hsl(210, 15%, 90%);  /* Light steel */
@@ -65,11 +60,10 @@
   --bg-brand: hsl(210, 10%, 85%);       /* Slightly darker for brand */
   --bg-trainer: hsl(210, 8%, 82%);      /* Darker for trainer */
   
-  /* Container Variations for Better Hierarchy */
+  /* Container Variations */
   --container-elevated: hsl(0, 0%, 100%);     /* White for primary containers */
   --container-secondary: hsl(210, 20%, 97%);  /* Very light steel for secondary */
   --container-accent: hsl(210, 15%, 94%);     /* Light steel for accented areas */
-  --red-accent-light: hsl(0, 85%, 55%);
   
   /* Chrome metallic effects */
   --chrome-light: hsl(210, 8%, 95%);
@@ -80,40 +74,40 @@
 
 .dark {
   /* Dark Mode - Sophisticated Charcoal & Steel */
-  --background: hsl(210, 15%, 8%); /* Deep charcoal background */
-  --foreground: hsl(210, 8%, 92%); /* Light steel text */
-  --muted: hsl(210, 12%, 12%); /* Dark steel muted areas */
-  --muted-foreground: hsl(210, 8%, 65%); /* Medium steel text */
-  --popover: hsl(210, 15%, 10%); /* Dark charcoal popups */
-  --popover-foreground: hsl(210, 8%, 92%);
-  --card: hsl(210, 12%, 10%); /* Dark steel cards */
-  --card-foreground: hsl(210, 8%, 92%);
-  --border: hsl(210, 10%, 22%); /* Dark steel borders */
-  --input: hsl(210, 12%, 14%); /* Dark steel inputs */
+  --background: 210 15% 8%; /* Deep charcoal background */
+  --foreground: 210 8% 92%; /* Light steel text */
+  --muted: 210 12% 12%; /* Dark steel muted areas */
+  --muted-foreground: 210 8% 65%; /* Medium steel text */
+  --popover: 210 15% 10%; /* Dark charcoal popups */
+  --popover-foreground: 210 8% 92%;
+  --card: 210 12% 10%; /* Dark steel cards */
+  --card-foreground: 210 8% 92%;
+  --border: 210 10% 22%; /* Dark steel borders */
+  --input: 210 12% 14%; /* Dark steel inputs */
   
   /* Primary: Bright steel chrome for dark mode */
-  --primary: hsl(210, 10%, 78%); /* Bright steel chrome */
-  --primary-foreground: hsl(210, 15%, 8%); /* Dark text on bright steel */
+  --primary: 210 10% 78%; /* Bright steel chrome */
+  --primary-foreground: 210 15% 8%; /* Dark text on bright steel */
   
   /* Secondary: Light steel for contrast */
-  --secondary: hsl(210, 8%, 88%); /* Light steel */
-  --secondary-foreground: hsl(210, 15%, 8%); /* Dark text on light steel */
+  --secondary: 210 8% 88%; /* Light steel */
+  --secondary-foreground: 210 15% 8%; /* Dark text on light steel */
   
   /* Accent: Vibrant red for dark mode visibility */
-  --accent: hsl(0, 90%, 45%); /* Darker red for consistency */
-  --accent-foreground: hsl(0, 0%, 100%);
+  --accent: 0 90% 45%; /* Darker red for consistency */
+  --accent-foreground: 0 0% 100%;
   
-  --destructive: hsl(0, 75%, 50%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --error: hsl(0, 75%, 50%);
-  --error-foreground: hsl(0, 0%, 100%);
-  --success: hsl(120, 100%, 40%); /* Brighter green for dark mode */
-  --success-foreground: hsl(0, 0%, 100%);
-  --warning: hsl(45, 100%, 60%); /* Brighter gold */
-  --warning-foreground: hsl(0, 0%, 100%);
-  --info: hsl(210, 100%, 60%);
-  --info-foreground: hsl(210, 15%, 8%);
-  --ring: hsl(0, 0%, 85%); /* Bright chrome focus */
+  --destructive: 0 75% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --error: 0 75% 50%;
+  --error-foreground: 0 0% 100%;
+  --success: 120 100% 40%; /* Brighter green for dark mode */
+  --success-foreground: 0 0% 100%;
+  --warning: 45 100% 60%; /* Brighter gold */
+  --warning-foreground: 0 0% 100%;
+  --info: 210 100% 60%;
+  --info-foreground: 210 15% 8%;
+  --ring: 0 0% 85%; /* Bright chrome focus */
 }
 
 @layer utilities {
@@ -162,6 +156,7 @@
   h2 { @apply text-3xl md:text-4xl; }
   h3 { @apply text-2xl md:text-3xl; }
   h4 { @apply text-xl md:text-2xl; }
+  h5 { @apply text-xl; }
 }
 
 @layer components {
