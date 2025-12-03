@@ -12,6 +12,7 @@ import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
+import { SEO } from "@/components/seo/SEO";
 import { format } from "date-fns";
 import { createShift, fetchShopShifts, updateShiftStatus } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
@@ -274,6 +275,7 @@ export default function HubDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Business Dashboard" />
       {/* Dashboard Header */}
       <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

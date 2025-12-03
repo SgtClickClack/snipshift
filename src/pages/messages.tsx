@@ -13,6 +13,7 @@ import { MessageSquare, Send, Mail, Briefcase, Flag } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
 import { ReportButton } from '@/components/report/report-button';
+import { SEO } from '@/components/seo/SEO';
 
 interface Conversation {
   id: string;
@@ -198,6 +199,7 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Messages" />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-6">

@@ -22,6 +22,7 @@ import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/adva
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
 import GoogleMapView from "@/components/job-feed/google-map-view";
 import LocationSearch from "@/components/job-feed/location-search";
+import { SEO } from "@/components/seo/SEO";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -265,6 +266,7 @@ export default function ProfessionalDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <SEO title="Professional Dashboard" />
       {/* Dashboard Header */}
       <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

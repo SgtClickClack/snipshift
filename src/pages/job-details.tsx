@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { ReportButton } from '@/components/report/report-button';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { SEO } from "@/components/seo/SEO";
 
 export default function JobDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -108,6 +109,11 @@ export default function JobDetailsPage() {
 
   return (
     <ErrorBoundary>
+      <SEO 
+        title={job?.title || 'Job Details'} 
+        description={job?.description}
+        type="article"
+      />
       <div className="min-h-screen bg-gray-50" data-testid="job-details-page">
         <div className="max-w-4xl mx-auto px-4 py-6">
           {/* Back Button */}
