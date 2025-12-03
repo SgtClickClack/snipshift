@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2 } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
 import { format } from "date-fns";
 import { createShift, fetchShopShifts, updateShiftStatus } from "@/lib/api";
+import { apiRequest } from "@/lib/queryClient";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +25,7 @@ import {
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile';
 
 export default function HubDashboard() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -51,6 +52,51 @@ export default function HubDashboard() {
     startTime: "",
     skillsRequired: ""
   });
+
+  const [profileData, setProfileData] = useState({
+    displayName: "",
+    bio: "",
+    location: "",
+    avatarUrl: ""
+  });
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        displayName: user.displayName || "",
+        bio: user.bio || "",
+        location: user.location || "",
+        avatarUrl: user.avatarUrl || user.profileImageURL || user.profileImage || ""
+      });
+    }
+  }, [user]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof profileData) => {
+      const res = await apiRequest("PUT", "/api/me", data);
+      return res.json();
+    },
+    onSuccess: async () => {
+      toast({
+        title: "Profile updated successfully",
+        description: "Your shop profile information has been updated."
+      });
+      await refreshUser();
+    },
+    onError: (error) => {
+      console.error("Failed to update profile:", error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update profile information",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate(profileData);
+  };
 
   const { data: jobs = [], isLoading } = useQuery<any[]>({
     queryKey: ['shop-shifts', user?.id],
@@ -608,9 +654,64 @@ export default function HubDashboard() {
                 <CardTitle>Profile Settings</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <p className="text-muted-foreground">
-                  Profile management features will be available here.
-                </p>
+                <form onSubmit={handleProfileSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="businessName">Business Name</Label>
+                      <Input
+                        id="businessName"
+                        value={profileData.displayName}
+                        onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
+                        placeholder="Enter your business name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio / Description</Label>
+                      <Textarea
+                        id="bio"
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                        placeholder="Tell us about your business..."
+                        rows={4}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        value={profileData.location}
+                        onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                        placeholder="e.g., New York, NY"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="avatarUrl">Profile Image URL</Label>
+                      <Input
+                        id="avatarUrl"
+                        value={profileData.avatarUrl}
+                        onChange={(e) => setProfileData({ ...profileData, avatarUrl: e.target.value })}
+                        placeholder="https://..."
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Provide a URL for your business logo or profile image.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <Button 
+                      type="submit" 
+                      disabled={updateProfileMutation.isPending}
+                      className="min-w-[120px]"
+                    >
+                      {updateProfileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Changes
+                    </Button>
+                  </div>
+                </form>
               </CardContent>
             </Card>
           </div>
