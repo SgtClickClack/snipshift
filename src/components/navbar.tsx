@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
+import { ModeToggle } from "@/components/mode-toggle";
 import logo from "@/assets/logo-processed.png";
 
 export default function Navbar() {
@@ -123,6 +124,7 @@ export default function Navbar() {
           </Link>
           
           <div className="flex items-center space-x-4">
+            <ModeToggle />
             {user ? (
               <>
                 {/* Desktop Menu Items */}
