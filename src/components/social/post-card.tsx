@@ -12,7 +12,7 @@ import { Post } from "@/shared/types";
 interface PostCardProps {
   post: Post;
   onLike: (postId: string) => void;
-  onComment: (postId: string, comment: string) => void;
+  onComment?: (postId: string, comment: string) => void;
   currentUserId?: string;
 }
 
@@ -49,7 +49,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !onComment) return;
 
     setIsSubmittingComment(true);
     await onComment(post.id, newComment.trim());
@@ -184,6 +184,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               {post.likes || 0}
             </Button>
             
+            {onComment && (
             <Button
               variant="ghost"
               size="sm"
@@ -194,6 +195,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               <MessageCircle className="w-4 h-4 mr-1" />
               {comments.length}
             </Button>
+            )}
             
             <Button
               variant="ghost"

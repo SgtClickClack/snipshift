@@ -10,6 +10,44 @@ import * as usersRepo from '../repositories/users.repository.js';
 
 const router = Router();
 
+// Get applications (as applicant or employer)
+router.get('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const userId = req.user.id;
+  const role = req.user.role; // 'professional', 'business', 'hub', etc.
+  const { status } = req.query;
+  
+  let applications;
+
+  if (role === 'professional') {
+    // Fetch applications made BY this user
+    applications = await applicationsRepo.getApplicationsForUser(userId, {
+      status: status as 'pending' | 'accepted' | 'rejected' | undefined
+    });
+  } else if (role === 'business' || role === 'hub') {
+    // Fetch applications received FOR this business's jobs
+    applications = await applicationsRepo.getApplicationsForBusiness(userId, {
+      status: status as 'pending' | 'accepted' | 'rejected' | undefined
+    });
+  } else {
+    // Default to empty or user's applications? Let's default to user's applications for other roles
+    applications = await applicationsRepo.getApplicationsForUser(userId, {
+      status: status as 'pending' | 'accepted' | 'rejected' | undefined
+    });
+  }
+
+  if (!applications) {
+    res.status(200).json([]);
+    return;
+  }
+
+  res.status(200).json(applications);
+}));
+
 // Create an application (for Shift or Job)
 router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;

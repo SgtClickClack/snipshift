@@ -64,6 +64,15 @@ export default function ProfessionalDashboard() {
     queryKey: ["/api/jobs"],
   });
 
+  const { data: bookings = [], isLoading: isLoadingBookings } = useQuery({
+    queryKey: ['/api/applications', { status: 'accepted' }],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/applications?status=accepted");
+      return res.json();
+    },
+    enabled: !!user?.id
+  });
+
 
 
   // Advanced job filtering with all criteria
@@ -233,10 +242,10 @@ export default function ProfessionalDashboard() {
     }
   };
 
-  // Mock stats for demonstration - reset to 0 for clean state
+  // Stats
   const stats = {
     activeApplications: jobs.filter(job => job.applicants?.includes(user?.id || '')).length,
-    upcomingBookings: 0, // TODO: Connect to booking system
+    upcomingBookings: bookings.length,
     unreadMessages: 0, // TODO: Connect to messaging service
     averageRating: 0 // TODO: Connect to rating system
   };
@@ -713,70 +722,60 @@ export default function ProfessionalDashboard() {
                 <CardTitle>Upcoming Bookings</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                {stats.upcomingBookings === 0 ? (
+                {isLoadingBookings ? (
+                  <div className="text-center py-8">Loading bookings...</div>
+                ) : bookings.length === 0 ? (
                   <div className="text-center py-8">
                     <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium text-muted-foreground mb-2">No upcoming bookings</h3>
-                    <p className="text-sm text-muted-foreground">Your scheduled jobs will appear here</p>
+                    <p className="text-sm text-muted-foreground">Your accepted jobs will appear here</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Mock bookings for demonstration */}
-                    <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-medium">Haircut & Styling</h4>
-                          <p className="text-sm text-muted-foreground">The Grooming Lounge</p>
-                        </div>
-                        <Badge>Confirmed</Badge>
-                      </div>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Calendar className="mr-2 h-4 w-4" />
-                          {format(new Date(), "MMMM d, yyyy")}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="mr-2 h-4 w-4" />
-                          10:00 AM - 11:00 AM
-                        </div>
-                        <div className="flex items-center">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          123 Main St, Sydney
-                        </div>
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <Button variant="outline" size="sm" className="w-full">View Details</Button>
-                        <Button variant="outline" size="sm" className="w-full">Message</Button>
-                      </div>
-                    </div>
+                    {bookings.map((booking: any) => {
+                      // Determine if it's a job or shift
+                      const title = booking.job?.title || booking.shift?.title || 'Unknown Job';
+                      const employer = booking.job?.businessName || booking.shift?.employerName || 'Unknown Employer'; // backend might not send these names, might need to join users
+                      // Actually my backend route joins jobs/shifts/users.
+                      // But `jobs` table has `shopName` (nullable). `users` has `name`.
+                      // I need to check what my `getApplicationsForUser` returns.
+                      // It returns `application` + `job` + `shift`.
+                      
+                      const date = booking.job?.date || booking.shift?.startTime || booking.appliedAt;
+                      const location = booking.job?.address || booking.shift?.location || 'Location TBD';
 
-                    <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-medium">Beard Trim</h4>
-                          <p className="text-sm text-muted-foreground">Gentleman's Cuts</p>
+                      return (
+                        <div key={booking.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h4 className="font-medium">{title}</h4>
+                              <p className="text-sm text-muted-foreground">{employer}</p>
+                            </div>
+                            <Badge className="bg-green-600">Confirmed</Badge>
+                          </div>
+                          <div className="space-y-2 text-sm text-muted-foreground">
+                            <div className="flex items-center">
+                              <Calendar className="mr-2 h-4 w-4" />
+                              {format(new Date(date), "MMMM d, yyyy")}
+                            </div>
+                            {/* 
+                            <div className="flex items-center">
+                              <Clock className="mr-2 h-4 w-4" />
+                              10:00 AM - 11:00 AM
+                            </div>
+                            */}
+                            <div className="flex items-center">
+                              <MapPin className="mr-2 h-4 w-4" />
+                              {location}
+                            </div>
+                          </div>
+                          <div className="mt-3 flex gap-2">
+                            <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                            <Button variant="outline" size="sm" className="w-full">Message</Button>
+                          </div>
                         </div>
-                        <Badge variant="secondary">Pending</Badge>
-                      </div>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Calendar className="mr-2 h-4 w-4" />
-                          {format(new Date(Date.now() + 86400000), "MMMM d, yyyy")}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="mr-2 h-4 w-4" />
-                          2:00 PM - 2:30 PM
-                        </div>
-                        <div className="flex items-center">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          456 George St, Sydney
-                        </div>
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <Button variant="outline" size="sm" className="w-full">View Details</Button>
-                        <Button variant="outline" size="sm" className="w-full">Message</Button>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

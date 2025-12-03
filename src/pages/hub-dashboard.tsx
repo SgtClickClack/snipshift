@@ -98,6 +98,15 @@ export default function HubDashboard() {
     updateProfileMutation.mutate(profileData);
   };
 
+  const { data: applications = [], isLoading: isLoadingApplications } = useQuery({
+    queryKey: ['/api/applications'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/applications");
+      return res.json();
+    },
+    enabled: activeView === 'applications'
+  });
+
   const { data: jobs = [], isLoading } = useQuery<any[]>({
     queryKey: ['shop-shifts', user?.id],
     queryFn: () => fetchShopShifts(user!.id),
@@ -638,9 +647,51 @@ export default function HubDashboard() {
                 <CardTitle>Job Applications</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <p className="text-muted-foreground text-center py-4">
-                  Applications will be displayed here when available.
-                </p>
+                {isLoadingApplications ? (
+                   <div className="text-center py-8 text-muted-foreground">Loading applications...</div>
+                ) : applications.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mb-4 bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                       <Users className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900">No applications yet</h3>
+                    <p className="text-muted-foreground mt-1">When professionals apply to your jobs, they will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                     {applications.map((app: any) => (
+                        <div key={app.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                              <div>
+                                 <h3 className="font-medium text-lg">{app.name}</h3>
+                                 <p className="text-sm text-muted-foreground">{app.email}</p>
+                                 <div className="mt-2 text-sm text-muted-foreground">
+                                    Applying for: <span className="font-medium text-foreground">{app.job?.title || app.shift?.title || 'Unknown Position'}</span>
+                                 </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                                  app.status === 'accepted' ? 'bg-green-100 text-green-800' : 
+                                  app.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                   {app.status}
+                                </span>
+                              </div>
+                           </div>
+                           {app.coverLetter && (
+                              <div className="mt-4 text-sm bg-white p-3 rounded border text-gray-700 italic">
+                                 "{app.coverLetter}"
+                              </div>
+                           )}
+                           <div className="mt-3 pt-3 border-t text-xs text-gray-400 flex justify-between items-center">
+                              <span>Applied on {new Date(app.appliedAt).toLocaleDateString()}</span>
+                              {/* Future: Add Accept/Reject buttons here */}
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

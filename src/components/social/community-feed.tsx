@@ -260,7 +260,8 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
               key={post.id}
               post={post}
               onLike={handleLike}
-              onComment={handleComment}
+              // Comments temporarily disabled until backend implementation
+              // onComment={handleComment} 
               currentUserId={user?.id}
             />
           ))

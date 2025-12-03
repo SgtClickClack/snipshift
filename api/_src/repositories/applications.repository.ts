@@ -5,7 +5,7 @@
  */
 
 import { eq, and, desc, sql, count, or, isNotNull } from 'drizzle-orm';
-import { applications, jobs, shifts } from '../db/schema.js';
+import { applications, jobs, shifts, users } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
 export interface ApplicationFilters {
@@ -166,6 +166,58 @@ export async function getApplicationsForUser(
     ...row.application,
     job: row.job,
     shift: row.shift,
+  })) as any;
+}
+
+/**
+ * Get applications for a business (employer) across all their jobs and shifts
+ */
+export async function getApplicationsForBusiness(
+  businessId: string,
+  filters: { status?: 'pending' | 'accepted' | 'rejected' } = {}
+): Promise<Array<typeof applications.$inferSelect & { 
+  job: typeof jobs.$inferSelect | null, 
+  shift: typeof shifts.$inferSelect | null,
+  user: typeof users.$inferSelect | null 
+}> | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  const conditions = [
+    or(
+      eq(jobs.businessId, businessId),
+      eq(shifts.employerId, businessId)
+    )
+  ];
+
+  if (filters.status) {
+    conditions.push(eq(applications.status, filters.status));
+  }
+
+  const whereClause = and(...conditions);
+
+  const result = await db
+    .select({
+      application: applications,
+      job: jobs,
+      shift: shifts,
+      // We might want user details too if we are showing applicants
+      user: users
+    })
+    .from(applications)
+    .leftJoin(jobs, eq(applications.jobId, jobs.id))
+    .leftJoin(shifts, eq(applications.shiftId, shifts.id))
+    .leftJoin(users, eq(applications.userId, users.id))
+    .where(whereClause)
+    .orderBy(desc(applications.appliedAt));
+
+  return result.map((row) => ({
+    ...row.application,
+    job: row.job,
+    shift: row.shift,
+    user: row.user
   })) as any;
 }
 
