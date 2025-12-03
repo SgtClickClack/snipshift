@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu, RefreshCw, Briefcase, User, Settings } from "lucide-react";
 import { messagingService } from "@/lib/messaging";
@@ -31,6 +32,7 @@ import logo from "@/assets/logo-processed.png";
 
 export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [userChats, setUserChats] = useState<Chat[]>([]);
@@ -66,6 +68,11 @@ export default function Navbar() {
       navigate(target);
     } catch (e) {
       console.error("Failed to switch role", e);
+      toast({
+        title: "Error",
+        description: "Failed to switch role. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   

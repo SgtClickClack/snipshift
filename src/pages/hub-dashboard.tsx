@@ -667,7 +667,7 @@ export default function HubDashboard() {
                                 <div className="flex flex-wrap gap-1 mb-2">
                                   {job.skillsRequired.map((skill: any, index: number) => (
                                     <span 
-                                      key={index}
+                                      key={`${skill}-${index}`}
                                       className="bg-primary/10 text-primary px-2 py-1 rounded text-xs"
                                       data-testid={`tag-skill-${job.id}-${index}`}
                                     >

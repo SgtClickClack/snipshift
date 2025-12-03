@@ -599,7 +599,7 @@ export default function ProfessionalDashboard() {
                             <div className="flex flex-wrap gap-1">
                               {job.skillsRequired.map((skill, index) => (
                                 <Badge 
-                                  key={index}
+                                  key={`${skill}-${index}`}
                                   variant="secondary"
                                   className="text-xs"
                                   data-testid={`skill-${skill.toLowerCase().replace(/\s+/g, '-')}`}

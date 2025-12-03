@@ -268,7 +268,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
         <Label>Skills & Expertise</Label>
         <div className="flex flex-wrap gap-2 mt-2 mb-2">
           {formData.skills.map((skill, index) => (
-            <Badge key={index} variant="secondary" className="flex items-center gap-1" data-testid={`skill-${index}`}>
+            <Badge key={`${skill}-${index}`} variant="secondary" className="flex items-center gap-1" data-testid={`skill-${index}`}>
               {skill}
               {isEditing && (
                 <button

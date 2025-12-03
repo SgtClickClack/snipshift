@@ -164,7 +164,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                   <p className="text-xs font-medium text-blue-600 mb-1">Skills Required:</p>
                   <div className="flex flex-wrap gap-1">
                     {post.skillsRequired.slice(0, 5).map((skill, index) => (
-                      <Badge key={index} variant="outline" className="text-xs bg-white">
+                      <Badge key={`${skill}-${index}`} variant="outline" className="text-xs bg-white">
                         {skill}
                       </Badge>
                     ))}
@@ -183,7 +183,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
           {post.images && post.images.length > 0 && (
             <div className="grid grid-cols-2 gap-2 mb-3">
               {post.images.slice(0, 4).map((image, index) => (
-                <div key={index} className="aspect-square bg-muted rounded-lg overflow-hidden">
+                <div key={`${image}-${index}`} className="aspect-square bg-muted rounded-lg overflow-hidden">
                   <img
                     src={image}
                     alt={`Post image ${index + 1}`}

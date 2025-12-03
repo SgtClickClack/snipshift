@@ -137,7 +137,14 @@ export default function MessagesPage() {
   // Mark messages as read when conversation is opened
   useEffect(() => {
     if (selectedConversationId && conversationDetail) {
-      markAsRead(selectedConversationId).catch(console.error);
+      markAsRead(selectedConversationId).catch((error) => {
+        console.error("Failed to mark as read", error);
+        toast({
+          title: "Error",
+          description: "Failed to mark messages as read",
+          variant: "destructive",
+        });
+      });
     }
   }, [selectedConversationId, conversationDetail]);
 

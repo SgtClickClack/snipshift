@@ -203,7 +203,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
                 <div className="flex flex-wrap gap-1">
                   {job.skillsRequired.map((skill, index) => (
                     <Badge 
-                      key={index}
+                      key={`${skill}-${index}`}
                       variant="secondary" 
                       className="text-xs"
                       data-testid={`skill-${skill.toLowerCase().replace(/\s+/g, '-')}`}

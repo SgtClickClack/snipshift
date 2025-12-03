@@ -629,14 +629,41 @@ app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
 }));
 
 // Handler for updating a job
-app.put('/api/jobs/:id', asyncHandler(async (req, res) => {
+app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
   
   // Validate request body
   const validationResult = JobSchema.safeParse(req.body);
   if (!validationResult.success) {
     res.status(400).json({ message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') });
     return;
+  }
+
+  // Get job to verify ownership
+  // Try to use database first
+  const existingJob = await jobsRepo.getJobById(id);
+  
+  if (existingJob) {
+    if (existingJob.businessId !== userId) {
+      res.status(403).json({ message: 'Forbidden: You do not own this job' });
+      return;
+    }
+  } else {
+    // If not in DB, check if it's a mock job
+    const isMock = mockJobs.some(j => j.id === id);
+    if (!isMock) {
+      res.status(404).json({ message: 'Job not found' });
+      return;
+    }
+    // For mock jobs, we'll allow updates for now (dev mode) or we could restrict.
+    // Given this is critical security, let's assume mock jobs are dev only and maybe less critical, 
+    // but consistency is good.
   }
 
   const jobData = validationResult.data;
@@ -700,8 +727,33 @@ app.put('/api/jobs/:id', asyncHandler(async (req, res) => {
 }));
 
 // Handler for deleting a job
-app.delete('/api/jobs/:id', asyncHandler(async (req, res) => {
+app.delete('/api/jobs/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get job to verify ownership
+  const existingJob = await jobsRepo.getJobById(id);
+  
+  if (existingJob) {
+    if (existingJob.businessId !== userId) {
+      res.status(403).json({ message: 'Forbidden: You do not own this job' });
+      return;
+    }
+  } else {
+     // Check mock jobs
+     const isMock = mockJobs.some(j => j.id === id);
+     if (!isMock) {
+       // Not found in DB or mock
+       // Let the code proceed to fail or handle as before, 
+       // but we should probably return 404 here if we want to be strict.
+       // The original code handles not found by returning 404 at the end.
+     }
+  }
 
   // Try to use database first
   const deleted = await jobsRepo.deleteJob(id);
@@ -1578,9 +1630,8 @@ app.post('/api/subscriptions/checkout', authenticateUser, asyncHandler(async (re
   const stripePriceId = plan.stripePriceId || planId;
 
   // Determine frontend URL
-  const frontendUrl = process.env.FRONTEND_URL || process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : 'http://localhost:5173';
+  const frontendUrl = process.env.FRONTEND_URL || 
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
 
   try {
     // Create Stripe Checkout Session

@@ -258,7 +258,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <Card key={i} className="w-full">
+              <Card key={`skeleton-post-${i}`} className="w-full">
                 <CardContent className="pt-6">
                   <div className="animate-pulse space-y-4">
                     <div className="flex items-center gap-3">

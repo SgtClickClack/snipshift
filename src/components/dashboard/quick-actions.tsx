@@ -173,7 +173,7 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
             if (route) {
               return (
                 <Link
-                  key={index}
+                  key={action.action}
                   to={route}
                   className={buttonClasses}
                   data-testid={`quick-action-link-${action.action}`}
@@ -186,7 +186,7 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
 
             return (
               <Button
-                key={index}
+                key={action.action}
                 className={buttonClasses}
                 onClick={() => onAction(action.action)}
                 data-testid={`quick-action-${action.action}`}

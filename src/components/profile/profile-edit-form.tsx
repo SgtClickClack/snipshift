@@ -346,7 +346,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
             
             <div className="flex flex-wrap gap-2">
               {(formData.role === 'professional' ? formData.skills : formData.services)?.map((item, index) => (
-                <Badge key={index} variant="secondary" className="cursor-pointer" data-testid={`skill-badge-${index}`}>
+                <Badge key={`${item}-${index}`} variant="secondary" className="cursor-pointer" data-testid={`skill-badge-${index}`}>
                   {item}
                   <X 
                     className="w-3 h-3 ml-1" 
@@ -472,7 +472,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
               {/* Team Members List */}
               <div className="space-y-3">
                 {formData.teamMembers?.map((member, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div key={`${member.name}-${index}`} className="flex items-center gap-3 p-3 border rounded-lg">
                     <Avatar className="w-10 h-10">
                       <AvatarImage src={member.imageURL} alt={member.name} />
                       <AvatarFallback className="text-sm">

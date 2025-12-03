@@ -216,7 +216,7 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
 
         return (
           <Card 
-            key={index} 
+            key={stat.title} 
             className={`group relative overflow-hidden bg-white border border-steel-200 shadow-sm transition-all duration-300 ${
               isClickable 
                 ? 'cursor-pointer hover:shadow-md hover:border-steel-300 hover:-translate-y-1 active:scale-[0.98]' 
