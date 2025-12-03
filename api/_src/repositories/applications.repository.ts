@@ -4,12 +4,13 @@
  * Encapsulates database queries for applications with pagination and filtering
  */
 
-import { eq, and, desc, sql, count } from 'drizzle-orm';
-import { applications, jobs } from '../db/schema.js';
+import { eq, and, desc, sql, count, or, isNotNull } from 'drizzle-orm';
+import { applications, jobs, shifts } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
 export interface ApplicationFilters {
   jobId?: string;
+  shiftId?: string;
   userId?: string;
   status?: 'pending' | 'accepted' | 'rejected';
   limit?: number;
@@ -34,11 +35,14 @@ export async function getApplications(
     return null;
   }
 
-  const { jobId, userId, status, limit = 50, offset = 0 } = filters;
+  const { jobId, shiftId, userId, status, limit = 50, offset = 0 } = filters;
 
   const conditions = [];
   if (jobId) {
     conditions.push(eq(applications.jobId, jobId));
+  }
+  if (shiftId) {
+    conditions.push(eq(applications.shiftId, shiftId));
   }
   if (userId) {
     conditions.push(eq(applications.userId, userId));
@@ -100,12 +104,39 @@ export async function getApplicationsForJob(
 }
 
 /**
- * Get applications for a user with job details (JOIN to avoid N+1)
+ * Get applications for a shift with shift details
+ */
+export async function getApplicationsForShift(
+  shiftId: string
+): Promise<Array<typeof applications.$inferSelect & { shift: typeof shifts.$inferSelect }> | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  const result = await db
+    .select({
+      application: applications,
+      shift: shifts,
+    })
+    .from(applications)
+    .innerJoin(shifts, eq(applications.shiftId, shifts.id))
+    .where(eq(applications.shiftId, shiftId))
+    .orderBy(desc(applications.appliedAt));
+
+  return result.map((row) => ({
+    ...row.application,
+    shift: row.shift,
+  })) as any;
+}
+
+/**
+ * Get applications for a user with job/shift details (JOIN to avoid N+1)
  */
 export async function getApplicationsForUser(
   userId: string,
   filters: { status?: 'pending' | 'accepted' | 'rejected' } = {}
-): Promise<Array<typeof applications.$inferSelect & { job: typeof jobs.$inferSelect }> | null> {
+): Promise<Array<typeof applications.$inferSelect & { job: typeof jobs.$inferSelect | null, shift: typeof shifts.$inferSelect | null }> | null> {
   const db = getDb();
   if (!db) {
     return null;
@@ -118,20 +149,23 @@ export async function getApplicationsForUser(
 
   const whereClause = and(...conditions);
 
-  // Use JOIN to get job details in a single query
+  // Use leftJoin to get job OR shift details
   const result = await db
     .select({
       application: applications,
       job: jobs,
+      shift: shifts,
     })
     .from(applications)
-    .innerJoin(jobs, eq(applications.jobId, jobs.id))
+    .leftJoin(jobs, eq(applications.jobId, jobs.id))
+    .leftJoin(shifts, eq(applications.shiftId, shifts.id))
     .where(whereClause)
     .orderBy(desc(applications.appliedAt));
 
   return result.map((row) => ({
     ...row.application,
     job: row.job,
+    shift: row.shift,
   })) as any;
 }
 
@@ -155,7 +189,8 @@ export async function getApplicationById(
  */
 export async function createApplication(
   applicationData: {
-    jobId: string;
+    jobId?: string;
+    shiftId?: string;
     userId?: string;
     name: string;
     email: string;
@@ -167,10 +202,15 @@ export async function createApplication(
     return null;
   }
 
+  if (!applicationData.jobId && !applicationData.shiftId) {
+    return null; // Must provide either jobId or shiftId
+  }
+
   const [newApplication] = await db
     .insert(applications)
     .values({
-      jobId: applicationData.jobId,
+      jobId: applicationData.jobId || null,
+      shiftId: applicationData.shiftId || null,
       userId: applicationData.userId || null,
       name: applicationData.name,
       email: applicationData.email,
@@ -183,10 +223,11 @@ export async function createApplication(
 }
 
 /**
- * Check if a user has already applied to a job
+ * Check if a user has already applied to a job or shift
  */
-export async function hasUserAppliedToJob(
-  jobId: string,
+export async function hasUserApplied(
+  targetId: string, // jobId or shiftId
+  type: 'job' | 'shift',
   userId?: string,
   email?: string
 ): Promise<boolean> {
@@ -195,7 +236,13 @@ export async function hasUserAppliedToJob(
     return false;
   }
 
-  const conditions = [eq(applications.jobId, jobId)];
+  const conditions = [];
+  if (type === 'job') {
+    conditions.push(eq(applications.jobId, targetId));
+  } else {
+    conditions.push(eq(applications.shiftId, targetId));
+  }
+
   if (userId) {
     conditions.push(eq(applications.userId, userId));
   } else if (email) {
@@ -211,6 +258,17 @@ export async function hasUserAppliedToJob(
     .limit(1);
 
   return (result[0]?.count || 0) > 0;
+}
+
+/**
+ * Deprecated: Use hasUserApplied instead
+ */
+export async function hasUserAppliedToJob(
+  jobId: string,
+  userId?: string,
+  email?: string
+): Promise<boolean> {
+  return hasUserApplied(jobId, 'job', userId, email);
 }
 
 /**
@@ -249,4 +307,3 @@ export async function deleteApplication(id: string): Promise<boolean> {
   const result = await db.delete(applications).where(eq(applications.id, id)).returning();
   return result.length > 0;
 }
-

@@ -112,7 +112,8 @@ export const jobs = pgTable('jobs', {
  */
 export const applications = pgTable('applications', {
   id: uuid('id').defaultRandom().primaryKey(),
-  jobId: uuid('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
+  jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'cascade' }), // Made nullable
+  shiftId: uuid('shift_id').references(() => shifts.id, { onDelete: 'cascade' }), // Added shift support
   userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // Nullable for now since we don't have user auth yet
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
@@ -122,11 +123,14 @@ export const applications = pgTable('applications', {
   respondedAt: timestamp('responded_at'),
 }, (table) => ({
   jobIdStatusIdx: index('applications_job_id_status_idx').on(table.jobId, table.status),
+  shiftIdStatusIdx: index('applications_shift_id_status_idx').on(table.shiftId, table.status),
   userIdStatusAppliedAtIdx: index('applications_user_id_status_applied_at_idx').on(table.userId, table.status, table.appliedAt),
   jobIdIdx: index('applications_job_id_idx').on(table.jobId),
+  shiftIdIdx: index('applications_shift_id_idx').on(table.shiftId),
   userIdIdx: index('applications_user_id_idx').on(table.userId),
   // Unique constraint to prevent duplicate applications
   jobUserUnique: unique('applications_job_user_unique').on(table.jobId, table.userId),
+  shiftUserUnique: unique('applications_shift_user_unique').on(table.shiftId, table.userId),
 }));
 
 /**
@@ -157,6 +161,10 @@ export const applicationsRelations = relations(applications, ({ one }) => ({
   job: one(jobs, {
     fields: [applications.jobId],
     references: [jobs.id],
+  }),
+  shift: one(shifts, {
+    fields: [applications.shiftId],
+    references: [shifts.id],
   }),
   user: one(users, {
     fields: [applications.userId],
@@ -412,11 +420,12 @@ export const reportsRelations = relations(reports, ({ one }) => ({
   }),
 }));
 
-export const shiftsRelations = relations(shifts, ({ one }) => ({
+export const shiftsRelations = relations(shifts, ({ one, many }) => ({
   employer: one(users, {
     fields: [shifts.employerId],
     references: [users.id],
   }),
+  applications: many(applications),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({

@@ -8,17 +8,32 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Job } from "@shared/firebase-schema";
+import { Job, Shift } from "@shared/firebase-schema";
 import { X, Calendar, DollarSign, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
+
+// Combined type for flexibility
+type JobOrShift = (Job | Shift) & {
+  payRate?: string | number;
+  payType?: string;
+  skillsRequired?: string[];
+  applicants?: string[];
+  hourlyRate?: string | number;
+  pay?: string | number;
+  requirements?: string;
+  // Frontend compat helpers
+  isJob?: boolean;
+  isShift?: boolean;
+};
 
 interface JobApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  job: Job | null;
+  onSuccess?: () => void;
+  job: JobOrShift | null;
 }
 
-export default function JobApplicationModal({ isOpen, onClose, job }: JobApplicationModalProps) {
+export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }: JobApplicationModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -28,16 +43,22 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
 
   const applyJobMutation = useMutation({
     mutationFn: async (applicationData: any) => {
-      const response = await apiRequest("POST", `/api/jobs/${job?.id}/apply`, applicationData);
+      // New unified endpoint
+      const response = await apiRequest("POST", "/api/applications", applicationData);
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Application submitted successfully!",
+        title: "Application Sent!",
         description: "The shop owner has been notified of your interest.",
         variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      // Invalidate shifts too if applicable
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      if (onSuccess) {
+        onSuccess();
+      }
       onClose();
       setCoverLetter("");
       setErrors({});
@@ -69,10 +90,31 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
     
     if (!validateForm() || !job || !user) return;
 
-    const applicationData = {
-      professionalId: user.id,
+    // Detect if it's a shift or job based on properties or explicit flags
+    // We assume if it has hourlyRate/requirements it might be a Shift, but let's rely on ID presence
+    // For now, the caller should ensure IDs are correct.
+    // Ideally we'd know the type. 
+    // Let's try to infer: jobs typically don't have 'hourlyRate' as a property name in schema but 'payRate' string.
+    // Shifts have 'hourlyRate' string.
+    
+    // Simplification: Check if we can pass both or assume shiftId if job.id looks like a shift (not reliable).
+    // Better: Check keys.
+    
+    const isShift = 'employerId' in job || 'hourlyRate' in job; 
+    
+    const applicationData: any = {
+      applicantId: user.id, // Updated to use generic applicantId
       message: coverLetter.trim(),
+      // Add user details if needed by backend (it might infer from auth)
+      email: user.email,
+      name: user.displayName || user.email?.split('@')[0] || 'Applicant',
     };
+
+    if (isShift) {
+      applicationData.shiftId = job.id;
+    } else {
+      applicationData.jobId = job.id;
+    }
 
     applyJobMutation.mutate(applicationData);
   };
@@ -80,6 +122,12 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
   if (!isOpen || !job) return null;
 
   const hasAlreadyApplied = job.applicants?.includes(user?.id || "");
+
+  // Helper to normalize display data
+  const displayPay = job.payRate || job.pay || job.hourlyRate;
+  const displayPayType = job.payType || (job.hourlyRate || job.pay ? "hour" : "");
+  const displayLocation = typeof job.location === 'object' ? `${job.location.city}, ${job.location.state}` : job.location;
+  const displayDesc = job.description || job.requirements;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -97,7 +145,7 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
         </CardHeader>
         
         <CardContent>
-          {/* Job Summary */}
+          {/* Job/Shift Summary */}
           <div className="mb-6 p-4 bg-muted/50 rounded-lg">
             <h3 className="font-semibold text-lg mb-2" data-testid="text-job-title">
               {job.title}
@@ -112,25 +160,29 @@ export default function JobApplicationModal({ isOpen, onClose, job }: JobApplica
               <div className="flex items-center">
                 <DollarSign className="mr-2 h-4 w-4 text-primary" />
                 <span data-testid="text-job-pay">
-                  ${job.payRate}/{job.payType}
+                  ${displayPay} {displayPayType && `/${displayPayType}`}
                 </span>
               </div>
-              <div className="flex items-center">
-                <MapPin className="mr-2 h-4 w-4 text-primary" />
-                <span data-testid="text-job-location">
-                  {job.location.city}, {job.location.state}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="mr-2 h-4 w-4 text-primary" />
-                <span data-testid="text-job-time">
-                  {format(new Date(job.date), "h:mm a")}
-                </span>
-              </div>
+              {displayLocation && (
+                <div className="flex items-center">
+                  <MapPin className="mr-2 h-4 w-4 text-primary" />
+                  <span data-testid="text-job-location">
+                    {displayLocation}
+                  </span>
+                </div>
+              )}
+              {job.startTime && (
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-4 w-4 text-primary" />
+                  <span data-testid="text-job-time">
+                    {format(new Date(job.startTime), "h:mm a")}
+                  </span>
+                </div>
+              )}
             </div>
             
             <p className="text-sm mb-3" data-testid="text-job-description">
-              {job.description}
+              {displayDesc}
             </p>
             
             {job.skillsRequired && job.skillsRequired.length > 0 && (

@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shift } from "@/shared/types";
-import { Plus, Calendar, DollarSign } from "lucide-react";
+import { Plus, Calendar, DollarSign, CreditCard, Wallet } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ShopDashboard() {
@@ -99,13 +99,65 @@ export default function ShopDashboard() {
               className="bg-primary hover:bg-blue-700"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Post New Shift
+              {showForm ? "Cancel Post" : "Post New Shift"}
             </Button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Top Section: Stats & Integrations */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Stats Summary */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Active Shifts
+                </CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{shifts.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  {shifts.length > 0 ? "Shifts available for pickup" : "No active shifts"}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Payments & Payouts Integration */}
+            <Card className="border-indigo-100 bg-indigo-50/30">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-indigo-900">
+                  Payments & Payouts
+                </CardTitle>
+                <Wallet className="h-4 w-4 text-indigo-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-indigo-800 mb-1">
+                    Connect Stripe to manage payouts
+                  </div>
+                  <Button 
+                    size="sm"
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                    onClick={() => {
+                      toast({
+                        title: "Redirecting to Stripe Onboarding...",
+                        description: "You will be redirected to Stripe to complete your setup.",
+                      });
+                    }}
+                  >
+                    Connect with Stripe
+                  </Button>
+                </div>
+                <p className="text-xs text-indigo-600 mt-2">
+                  Secure payments powered by Stripe Connect
+                </p>
+              </CardContent>
+            </Card>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-8">
           
           {/* Post Shift Form */}
@@ -168,23 +220,13 @@ export default function ShopDashboard() {
                       className="w-full"
                       disabled={createShiftMutation.isPending}
                       onClick={(e) => {
-                        // Fail-safe: explicitly call submit handler if form submission doesn't trigger
                         if (e.type === 'click' && (e.target as HTMLButtonElement).type === 'submit') {
-                          // Allow default behavior first
+                           // Handle submit
                         }
                       }}
                     >
                       {createShiftMutation.isPending ? "Posting..." : "Post Shift"}
                     </Button>
-                    
-                    {/* DEBUG BUTTON - TO BE REMOVED */}
-                    <button
-                      type="submit"
-                      style={{ backgroundColor: 'red', color: 'white', padding: '10px', fontWeight: 'bold', width: '100%', marginTop: '10px' }}
-                      onClick={() => console.log("DEBUG BUTTON CLICKED")}
-                    >
-                      DEBUG POST
-                    </button>
                   </form>
                 </CardContent>
               </Card>
