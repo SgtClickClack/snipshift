@@ -16,7 +16,7 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     email: string;
     name: string;
-    role: 'professional' | 'business' | 'admin' | 'trainer';
+    role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub';
     uid: string; // Firebase UID
   };
 }
@@ -104,16 +104,16 @@ export function authenticateUser(
     // Bypass for E2E Testing - Allow specific E2E test users to be auto-authenticated
     if (token && token.startsWith('mock-token-e2e_test_')) {
         const email = token.replace('mock-token-', '');
-        console.log('[AUTH E2E] Attempting auth for email:', email);
+        console.debug('[AUTH E2E] Attempting auth for email:', email);
         
         usersRepo.getUserByEmail(email).then(user => {
             if (user) {
-                console.log('[AUTH E2E] User found:', user.id);
+                console.debug('[AUTH E2E] User found:', user.id);
                 req.user = {
                     id: user.id,
                     email: user.email,
                     name: user.name,
-                    role: user.role as 'professional' | 'business' | 'admin' | 'trainer',
+                    role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub',
                     uid: `mock-uid-${user.id}`
                 };
                 next();

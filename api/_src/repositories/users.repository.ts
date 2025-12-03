@@ -47,12 +47,12 @@ export async function createUser(
     email: string;
     name: string;
     passwordHash?: string;
-    role?: 'professional' | 'business' | 'admin' | 'trainer';
+    role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub';
   }
 ): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
   if (!db) {
-    console.log('Creating mock user in memory (DB not configured)');
+    console.warn('Creating mock user in memory (DB not configured)');
     const newUser: typeof users.$inferSelect = {
       id: `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       email: userData.email,

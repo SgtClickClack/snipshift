@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm';
 /**
  * User roles enum
  */
-export const userRoleEnum = pgEnum('user_role', ['professional', 'business', 'admin', 'trainer']);
+export const userRoleEnum = pgEnum('user_role', ['professional', 'business', 'admin', 'trainer', 'hub']);
 
 /**
  * Users table
