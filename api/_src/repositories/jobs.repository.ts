@@ -4,7 +4,7 @@
  * Encapsulates database queries for jobs with pagination and filtering
  */
 
-import { eq, and, desc, sql, count, gte, lte, or, ilike } from 'drizzle-orm';
+import { eq, and, desc, sql, count, gte, lte, or, ilike, getTableColumns } from 'drizzle-orm';
 import { jobs, applications } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
@@ -342,7 +342,7 @@ export async function getJobsWithApplicationCounts(
   // Use leftJoin and count aggregation
   let query = db
     .select({
-      ...jobs,
+      ...getTableColumns(jobs),
       applicationCount: sql<number>`count(${applications.id})`.mapWith(Number),
     })
     .from(jobs)
@@ -353,11 +353,11 @@ export async function getJobsWithApplicationCounts(
 
   // Apply distance filtering in memory if radius is provided
   if (radius !== undefined && lat !== undefined && lng !== undefined) {
-    const allJobs = await query;
+    const allJobs = await query as unknown as (typeof jobs.$inferSelect & { applicationCount: number })[];
     const filteredJobs = allJobs.filter(job => {
       if (!job.lat || !job.lng) return false;
-      const jobLat = parseFloat(job.lat);
-      const jobLng = parseFloat(job.lng);
+      const jobLat = parseFloat(job.lat as string);
+      const jobLng = parseFloat(job.lng as string);
       if (isNaN(jobLat) || isNaN(jobLng)) return false;
       
       const distance = calculateDistance(lat, lng, jobLat, jobLng);
@@ -368,7 +368,7 @@ export async function getJobsWithApplicationCounts(
   }
 
   // Otherwise use SQL limit/offset
-  const paginatedJobs = await query.limit(limit).offset(offset);
+  const paginatedJobs = await query.limit(limit).offset(offset) as unknown as (typeof jobs.$inferSelect & { applicationCount: number })[];
   return paginatedJobs;
 }
 

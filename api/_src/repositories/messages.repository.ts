@@ -4,7 +4,7 @@
  * Encapsulates database queries for messages
  */
 
-import { eq, and, or, desc, isNull } from 'drizzle-orm';
+import { eq, and, or, desc, isNull, sql } from 'drizzle-orm';
 import { messages, conversations, users } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 

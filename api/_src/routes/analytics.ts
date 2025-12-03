@@ -14,7 +14,7 @@ const router = Router();
 // Get dashboard statistics
 router.get('/dashboard', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const role = req.user?.role;
+  const role = req.user?.role as string;
 
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
