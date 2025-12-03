@@ -103,6 +103,17 @@ export function TutorialOverlay() {
   const { user } = useAuth();
 
   useEffect(() => {
+    const handleStartTutorial = () => {
+      if (user?.currentRole && tutorialSteps[user.currentRole]) {
+        localStorage.removeItem(`tutorial-seen-${user.currentRole}`);
+        setUserRole(user.currentRole);
+        setCurrentStep(0);
+        setIsVisible(true);
+      }
+    };
+
+    window.addEventListener('start-tutorial', handleStartTutorial);
+
     if (user?.currentRole) {
       setUserRole(user.currentRole);
       
@@ -115,6 +126,10 @@ export function TutorialOverlay() {
         setTimeout(() => setIsVisible(true), 1500);
       }
     }
+
+    return () => {
+      window.removeEventListener('start-tutorial', handleStartTutorial);
+    };
   }, [user]);
 
   const steps = tutorialSteps[userRole] || [];
@@ -219,13 +234,11 @@ export function TutorialOverlay() {
 
 // Manual tutorial trigger component
 export function TutorialTrigger() {
-  const [isVisible, setIsVisible] = useState(false);
   const { user } = useAuth();
 
   const restartTutorial = () => {
     if (user?.currentRole) {
-      localStorage.removeItem(`tutorial-seen-${user.currentRole}`);
-      window.location.reload(); // Reload to show tutorial
+      window.dispatchEvent(new CustomEvent('start-tutorial'));
     }
   };
 
