@@ -28,6 +28,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
 import { ModeToggle } from "@/components/mode-toggle";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import logo from "@/assets/logo-processed.png";
 
 export default function Navbar() {
@@ -131,7 +132,9 @@ export default function Navbar() {
           </Link>
           
           <div className="flex items-center space-x-4">
-            <ModeToggle />
+            <ErrorBoundary fallback={<div className="w-9 h-9" />}>
+              <ModeToggle />
+            </ErrorBoundary>
             {user ? (
               <>
                 {/* Desktop Menu Items */}
