@@ -138,10 +138,18 @@ export default defineConfig({
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         // Split vendor chunks for better caching and performance
+        // CRITICAL: Keep React core in main bundle to prevent "useContext undefined" errors
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'react-vendor';
+            // Keep react and react-dom in main bundle for synchronous loading
+            // Only split react-router-dom into separate chunk
+            if (id.includes('react-router-dom')) {
+              return 'react-router-vendor';
+            }
+            // Keep react and react-dom in main bundle - don't split them
+            if (id.includes('react') && !id.includes('react-router')) {
+              // Return undefined to keep in main bundle
+              return;
             }
             if (id.includes('@radix-ui') || id.includes('lucide-react') || id.includes('cmdk') || id.includes('vaul')) {
               return 'ui-vendor';
