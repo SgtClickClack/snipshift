@@ -43,13 +43,17 @@ export function ThemeProvider({
     root.classList.add(activeTheme)
     
     // Update meta theme-color for mobile status bars
-    const metaThemeColor = document.querySelector("meta[name='theme-color']")
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute(
-        "content", 
-        activeTheme === "dark" ? "#111418" : "#ffffff"
-      )
+    let metaThemeColor = document.querySelector("meta[name='theme-color']")
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement("meta")
+      metaThemeColor.setAttribute("name", "theme-color")
+      document.head.appendChild(metaThemeColor)
     }
+    
+    metaThemeColor.setAttribute(
+      "content", 
+      activeTheme === "dark" ? "#111418" : "#ffffff"
+    )
   }, [theme])
 
   const value = {
