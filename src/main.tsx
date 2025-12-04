@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { StartupErrorBoundary } from "./components/startup-error-boundary";
 
 // Global error handler for chunk loading failures (common in SPAs after deployment)
 // This automatically reloads the page if a user tries to load a lazy-loaded chunk that no longer exists on the server
@@ -30,6 +31,8 @@ window.addEventListener('error', (e) => {
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <StartupErrorBoundary>
+      <App />
+    </StartupErrorBoundary>
   </React.StrictMode>
 );

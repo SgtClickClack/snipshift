@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
@@ -8,11 +8,12 @@ import { queryClient } from './lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
@@ -70,8 +71,14 @@ const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-
 
 function AppRoutes() {
   const location = useLocation();
+  const { isLoading } = useAuth();
   const hideNavbar = location.pathname === '/onboarding';
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection'].includes(location.pathname);
+  
+  // Show loading screen while auth is initializing to prevent errors
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
   
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col max-w-full overflow-x-hidden">
@@ -361,6 +368,18 @@ function AppRoutes() {
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 function App() {
+  // Remove splash screen after React successfully mounts
+  useEffect(() => {
+    // Call removeSplash after a brief delay to ensure React has fully rendered
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined' && window.removeSplash) {
+        window.removeSplash();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <HelmetProvider>
       <ErrorBoundary>
