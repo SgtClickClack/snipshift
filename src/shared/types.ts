@@ -39,6 +39,7 @@ export interface Post {
   likes?: number;
   timestamp?: string;
   comments?: Comment[];
+  commentsCount?: number;
   
   // Job-specific fields (used when postType is 'job')
   location?: {

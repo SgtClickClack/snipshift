@@ -87,6 +87,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
   // Use fetched comments if available, otherwise fall back to post.comments (which might be empty initially)
   // If showComments is true, we rely on fetchedComments (or loading state)
   const comments = showComments ? fetchedComments : (post.comments || []);
+  const commentCountDisplay = showComments ? fetchedComments.length : (post.commentsCount !== undefined ? post.commentsCount : (post.comments?.length || 0));
   const timestamp = post.timestamp || post.createdAt || new Date().toISOString();
 
   return (
@@ -221,7 +222,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               data-testid={`button-comments-${post.id}`}
             >
               <MessageCircle className="w-4 h-4 mr-1" />
-              {comments.length}
+              {commentCountDisplay}
             </Button>
             )}
             

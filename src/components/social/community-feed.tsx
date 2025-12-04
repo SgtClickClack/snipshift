@@ -54,7 +54,8 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         images: item.imageUrl ? [item.imageUrl] : [], // Map single imageUrl to array for frontend compatibility
         postType: item.type === 'brand' ? 'job' : 'social', // Map backend type to frontend type
         likes: item.likesCount,
-        comments: [], // Comments not yet implemented in backend
+        comments: [], // Comments fetched on demand
+        commentsCount: item.commentsCount || 0,
         timestamp: item.createdAt,
         isLiked: item.isLiked || false,
       })).filter((post: Post) => {
@@ -140,6 +141,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         title: "Comment added",
         description: "Your comment has been posted.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/community/feed"] });
     },
     onError: () => {
       toast({
