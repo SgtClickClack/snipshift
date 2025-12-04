@@ -26,20 +26,30 @@
           var theme = localStorage.getItem(storageKey);
           var supportDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
           var root = document.documentElement;
+          var body = document.body; // Might not be available yet, but let's try or rely on CSS
           
+          // Function to apply theme
+          function applyTheme(isDark) {
+            if (isDark) {
+              root.classList.add("dark");
+              root.style.backgroundColor = "#111418";
+              root.style.colorScheme = "dark";
+              var meta = document.querySelector("meta[name='theme-color']");
+              if (meta) meta.setAttribute("content", "#111418");
+            } else {
+              root.classList.remove("dark");
+              root.classList.add("light");
+              root.style.backgroundColor = "#ffffff";
+              root.style.colorScheme = "light";
+              var meta = document.querySelector("meta[name='theme-color']");
+              if (meta) meta.setAttribute("content", "#ffffff");
+            }
+          }
+
           if (theme === "dark" || (!theme && supportDarkMode)) {
-            root.classList.add("dark");
-            root.style.backgroundColor = "#111418";
-            root.style.colorScheme = "dark";
-            var meta = document.querySelector("meta[name='theme-color']");
-            if (meta) meta.setAttribute("content", "#111418");
+            applyTheme(true);
           } else {
-            root.classList.remove("dark");
-            root.classList.add("light");
-            root.style.backgroundColor = "#ffffff";
-            root.style.colorScheme = "light";
-            var meta = document.querySelector("meta[name='theme-color']");
-            if (meta) meta.setAttribute("content", "#ffffff");
+            applyTheme(false);
           }
         } catch (e) {
           console.error("Theme pre-load error:", e);
@@ -47,6 +57,44 @@
       })();
     </script>
     <style>
+      /* Critical CSS for Immediate Rendering */
+      html {
+        height: 100%;
+        width: 100%;
+        background-color: #ffffff; /* Default to white */
+        color-scheme: light;
+        -webkit-text-size-adjust: 100%;
+        overflow-x: hidden;
+      }
+      
+      body {
+        margin: 0;
+        min-height: 100%;
+        width: 100%;
+        background-color: #ffffff; /* Default to white */
+        color-scheme: light;
+        overscroll-behavior-y: none; /* Prevent pulling down to see browser bg */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      #root {
+        min-height: 100%;
+        width: 100%;
+        isolation: isolate;
+      }
+
+      /* Dark Mode Overrides */
+      html.dark {
+        background-color: #111418 !important;
+        color-scheme: dark;
+      }
+      
+      html.dark body {
+        background-color: #111418 !important;
+        color-scheme: dark;
+      }
+
       /* Splash Screen - Shows while React hydrates */
       :root {
         --splash-bg: #ffffff;
