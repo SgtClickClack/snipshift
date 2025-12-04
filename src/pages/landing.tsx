@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Handshake, Store, UserCheck } from "lucide-react";
+import { Plus, Search, Handshake, Store, UserCheck, UserPlus, FileText, CheckCircle } from "lucide-react";
 import Hero from "@/components/hero";
 import Pricing from "@/components/pricing";
 import { SEO } from "@/components/seo/SEO";
@@ -26,34 +26,56 @@ export default function LandingPage() {
             <p className="text-lg text-steel-600 max-w-2xl mx-auto">Simple, efficient, and designed for the barbering and beauty industry</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300">
+          <div className="grid md:grid-cols-4 gap-6 mb-12">
+            <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300 relative">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Plus className="text-white h-8 w-8" />
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg">
+                  1
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Post Opportunities</h3>
-                <p className="text-steel-600">Shop owners post available shifts, brands share products, trainers offer courses</p>
+                <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg mt-2">
+                  <UserPlus className="text-white h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Create Your Profile</h3>
+                <p className="text-steel-600 text-sm">Sign up and build your professional profile. Choose your role: shop owner, professional, brand, or trainer.</p>
               </CardContent>
             </Card>
             
-            <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300">
+            <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300 relative">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-steel-500 to-steel-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Search className="text-white h-8 w-8" />
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg">
+                  2
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Discover & Connect</h3>
-                <p className="text-steel-600">Professionals find work, discover products, and access training that matches their goals</p>
+                <div className="w-16 h-16 bg-gradient-to-br from-steel-500 to-steel-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg mt-2">
+                  <FileText className="text-white h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Post or Browse</h3>
+                <p className="text-steel-600 text-sm">Shop owners post shifts, brands share products, trainers list courses. Professionals browse opportunities that match their skills.</p>
               </CardContent>
             </Card>
             
-            <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300">
+            <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300 relative">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-steel-600 to-steel-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg">
+                  3
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-steel-600 to-steel-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg mt-2">
                   <Handshake className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Build Community</h3>
-                <p className="text-steel-600">Create lasting professional relationships within the industry network</p>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Connect & Apply</h3>
+                <p className="text-steel-600 text-sm">Professionals apply to shifts or opportunities. Shop owners review applications and connect with the right talent.</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="text-center p-6 bg-white/95 backdrop-blur-sm shadow-xl border-2 border-steel-300/50 hover:shadow-2xl transition-all duration-300 relative">
+              <CardContent className="pt-6">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg">
+                  4
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-steel-700 to-steel-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg mt-2">
+                  <CheckCircle className="text-white h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Work Together</h3>
+                <p className="text-steel-600 text-sm">Complete the opportunity, build your network, and grow your reputation within the industry community.</p>
               </CardContent>
             </Card>
           </div>

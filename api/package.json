@@ -9,7 +9,7 @@
   },
   "scripts": {
     "postinstall": "tsc && node fix-imports.js",
-    "start": "tsx _src/index.ts",
+    "start": "tsx _src/server.ts",
     "build": "tsc && node fix-imports.js",
     "seed:plans": "ts-node _src/scripts/seed-plans.ts",
     "migrate:onboarding": "ts-node _src/scripts/migrate-onboarding.ts",

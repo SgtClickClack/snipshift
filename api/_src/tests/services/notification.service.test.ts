@@ -7,13 +7,7 @@ const mockRepo = {
   create: mockCreate,
 };
 
-// Mock the absolute path to ensure it hits
-const repoPath = path.resolve(__dirname, '../../repositories/notifications.repository.js');
-vi.mock(repoPath, () => mockRepo);
-
-// Also mock the relative path as seen from the service file if possible, 
-// but vitest mocks by module ID.
-// We will also mock the likely relative paths just in case.
+// Mock the relative path as seen from the service file
 vi.mock('../../repositories/notifications.repository.js', () => mockRepo);
 
 describe('Notification Service', () => {

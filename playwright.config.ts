@@ -49,5 +49,8 @@ export default defineConfig({
     timeout: 120 * 1000,
     stdout: 'pipe',
     stderr: 'pipe',
+    env: {
+      VITE_E2E: '1', // Disable tutorial overlay during E2E tests
+    },
   },
 });
