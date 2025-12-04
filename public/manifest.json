@@ -4,8 +4,8 @@
   "description": "Connect barbers, stylists, and beauticians with flexible work opportunities",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "/brand-logo.png",

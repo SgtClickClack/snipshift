@@ -23,21 +23,21 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "post-job",
       title: "Post Your First Job",
-      content: "Click here to post jobs and attract talented professionals to your barbershop.",
+      content: "Tap the + button to post a shift and attract talented professionals to your barbershop.",
       target: "[data-testid='button-post-job']",
       position: "bottom"
     },
     {
       id: "manage-team",
       title: "Manage Your Team",
-      content: "View and manage your professional team members and their schedules.",
+      content: "Tap the Menu icon to access your Team management and schedules.",
       target: "[data-testid='card-team-overview']",
       position: "top"
     },
     {
       id: "social-feed",
       title: "Community Connection",
-      content: "Stay connected with the barbering community through our social feed.",
+      content: "Tap the Menu icon to find the Community feed and stay connected.",
       target: "[data-testid='link-social-feed']",
       position: "left"
     }
@@ -52,14 +52,14 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "job-search",
       title: "Find Your Next Opportunity",
-      content: "Browse available jobs near you using our interactive map and filters.",
+      content: "Tap 'Find Work' to browse available jobs near you using our interactive map.",
       target: "[data-testid='button-browse-jobs']",
       position: "bottom"
     },
     {
       id: "profile",
       title: "Build Your Profile",
-      content: "Complete your profile to attract the best Business opportunities.",
+      content: "Tap the Menu icon to access your Profile and attract the best Business opportunities.",
       target: "[data-testid='link-profile']",
       position: "right"
     }
@@ -74,7 +74,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "create-promotion",
       title: "Create Promotions",
-      content: "Share your latest products and offers with our professional community.",
+      content: "Tap the + button to share your latest products and offers with our professional community.",
       target: "[data-testid='button-create-promotion']",
       position: "bottom"
     }
@@ -89,7 +89,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "upload-content",
       title: "Upload Training Content",
-      content: "Create and upload your training videos to build your education business.",
+      content: "Tap the + button to create and upload your training videos.",
       target: "[data-testid='button-upload-content']",
       position: "bottom"
     }
