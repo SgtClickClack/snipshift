@@ -48,8 +48,8 @@ export default function LandingPage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-steel-500 to-steel-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg mt-2">
                   <FileText className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Post or Browse</h3>
-                <p className="text-steel-600 text-sm">Shop owners post shifts, brands share products, trainers list courses. Professionals browse opportunities that match their skills.</p>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Post or Browse Opportunities</h3>
+                <p className="text-steel-600 text-sm">Shop owners create job posts with shift details, pay rates, and requirements. Brands share product launches and collaborations. Trainers list courses and workshops. Professionals browse the feed, filter by location and skills, and apply directly to opportunities that interest them.</p>
               </CardContent>
             </Card>
             

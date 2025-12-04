@@ -134,6 +134,8 @@ export function ImageUpload({
     fileInputRef.current?.click();
   };
 
+  const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+
   const containerClass = cn(
     'relative border-2 border-dashed border-steel-600 bg-steel-800/50 rounded-lg',
     'flex items-center justify-center overflow-hidden',
@@ -145,6 +147,13 @@ export function ImageUpload({
 
   return (
     <div className="space-y-2">
+      {/* Show file size limit before upload */}
+      {!previewUrl && !uploading && (
+        <p className="text-xs text-steel-500">
+          Maximum file size: {maxSizeMB}MB (JPEG, PNG, GIF, or WebP)
+        </p>
+      )}
+      
       <div className={containerClass}>
         {previewUrl ? (
           <>
@@ -177,10 +186,10 @@ export function ImageUpload({
               size="sm"
               onClick={handleClick}
               disabled={uploading || !user}
-              className="bg-steel-700 hover:bg-steel-600 border-steel-600"
+              className="bg-steel-700 hover:bg-steel-600 border-steel-600 whitespace-nowrap"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? 'Uploading...' : 'Upload Image'}
+              <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">{uploading ? 'Uploading...' : 'Upload Image'}</span>
             </Button>
           </div>
         )}
@@ -217,10 +226,10 @@ export function ImageUpload({
           size="sm"
           onClick={handleClick}
           disabled={!user}
-          className="w-full bg-steel-700 hover:bg-steel-600 border-steel-600"
+          className="w-full bg-steel-700 hover:bg-steel-600 border-steel-600 whitespace-nowrap"
         >
-          <Upload className="h-4 w-4 mr-2" />
-          Choose Image
+          <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="truncate">Choose Image</span>
         </Button>
       )}
     </div>
