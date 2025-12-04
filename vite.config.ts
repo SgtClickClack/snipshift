@@ -138,19 +138,22 @@ export default defineConfig({
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         // Split vendor chunks for better caching and performance
-        // CRITICAL: Keep React, React-DOM, and React-Router-DOM together to prevent load order issues
+        // CRITICAL: Keep ALL React-dependent libraries in the same chunk to prevent load order issues
         manualChunks(id) {
-          // CRITICAL: All React core libraries MUST be in the same chunk
-          // This prevents "Cannot read properties of undefined (reading 'createContext')" errors
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
-            return 'vendor';
-          }
-          // UI libraries can be split separately
-          if (id.includes('node_modules/@radix-ui') || id.includes('node_modules/lucide-react')) {
-            return 'ui';
-          }
-          // All other node_modules go to vendor chunk
+          // CRITICAL: All React core libraries and React-dependent libraries MUST be in the same chunk
+          // This prevents "Cannot read properties of undefined (reading 'createContext'/'forwardRef')" errors
           if (id.includes('node_modules')) {
+            // Put all React-related and React-dependent libraries in vendor chunk
+            if (
+              id.includes('node_modules/react') ||
+              id.includes('node_modules/react-dom') ||
+              id.includes('node_modules/react-router-dom') ||
+              id.includes('node_modules/@radix-ui') ||
+              id.includes('node_modules/lucide-react')
+            ) {
+              return 'vendor';
+            }
+            // All other node_modules go to vendor chunk as well for simplicity
             return 'vendor';
           }
         },
