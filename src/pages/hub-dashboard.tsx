@@ -86,7 +86,7 @@ export default function HubDashboard() {
       await refreshUser();
     },
     onError: (error) => {
-      console.error("Failed to update profile:", error);
+      // console.error("Failed to update profile:", error);
       toast({
         title: "Update Failed",
         description: "Could not update profile information",
@@ -167,7 +167,7 @@ export default function HubDashboard() {
       setShowForm(false);
     },
     onError: (error) => {
-      console.error("Failed to post shift:", error);
+      // console.error("Failed to post shift:", error);
       toast({
         title: "Error", 
         description: "Failed to post shift. Please try again.",

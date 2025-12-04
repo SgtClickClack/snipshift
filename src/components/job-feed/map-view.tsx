@@ -197,7 +197,21 @@ export default function MapView({
 
               {/* Job markers */}
               {markers.map((marker) => (
-                <g key={marker.id}>
+                <g 
+                  key={marker.id}
+                  onClick={() => handleMarkerClick(marker)}
+                  onMouseEnter={() => setHoveredMarker(marker.id)}
+                  onMouseLeave={() => setHoveredMarker(null)}
+                  className="cursor-pointer"
+                >
+                  {/* Expanded touch target */}
+                  <circle
+                    cx={marker.x}
+                    cy={marker.y}
+                    r="20"
+                    fill="transparent"
+                  />
+                  {/* Visual marker */}
                   <circle
                     cx={marker.x}
                     cy={marker.y}
@@ -205,10 +219,7 @@ export default function MapView({
                     fill={selectedJob?.id === marker.id ? "hsl(var(--destructive))" : "hsl(var(--success))"}
                     stroke="#ffffff"
                     strokeWidth="2"
-                    className="cursor-pointer transition-all duration-200"
-                    onClick={() => handleMarkerClick(marker)}
-                    onMouseEnter={() => setHoveredMarker(marker.id)}
-                    onMouseLeave={() => setHoveredMarker(null)}
+                    className="transition-all duration-200"
                     data-testid={`job-marker-${marker.id}`}
                   />
                   <text

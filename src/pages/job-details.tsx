@@ -86,8 +86,7 @@ export default function JobDetailsPage() {
 
   // Guard clause: check if ID is missing or job fetch failed
   if (!id || error || !job) {
-    if (error) console.error('Job Details Query Error:', error);
-    if (!job && !error) console.error('Job Details: Job is null/undefined');
+    // Silent error handling for production
     
     return (
       <div className="min-h-screen bg-background flex items-center justify-center" data-testid="job-not-found">

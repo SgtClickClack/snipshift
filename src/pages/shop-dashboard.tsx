@@ -55,7 +55,7 @@ export default function ShopDashboard() {
       });
     },
     onError: (error) => {
-      console.error("Failed to update status:", error);
+      // console.error("Failed to update status:", error);
       toast({
         title: "Update Failed",
         description: "Could not update shift status",
@@ -90,7 +90,7 @@ export default function ShopDashboard() {
       setShowForm(false);
     },
     onError: (error) => {
-      console.error("Failed to post shift:", error);
+      // console.error("Failed to post shift:", error);
       toast({
         title: "Failed to post shift",
         description: "Please check your information and try again",
@@ -103,7 +103,7 @@ export default function ShopDashboard() {
     e.preventDefault();
     // Basic validation
     if (!formData.title || !formData.date || !formData.pay) {
-      console.error("FORM VALIDATION FAILED: Missing required fields", formData);
+      // console.error("FORM VALIDATION FAILED: Missing required fields", formData);
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",

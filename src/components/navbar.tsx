@@ -239,7 +239,7 @@ export default function Navbar() {
                 {/* User Profile Dropdown - Visible on all screens */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2" data-testid="button-profile-menu">
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2" data-testid="button-profile-menu" aria-label="User menu">
                       <UserAvatar />
                     </Button>
                   </DropdownMenuTrigger>
@@ -281,7 +281,7 @@ export default function Navbar() {
                 <div className="md:hidden">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700" data-testid="button-mobile-menu">
+                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700" data-testid="button-mobile-menu" aria-label="Open menu">
                         <Menu className="h-6 w-6" />
                       </Button>
                     </SheetTrigger>
