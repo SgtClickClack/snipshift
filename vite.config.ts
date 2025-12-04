@@ -137,15 +137,24 @@ export default defineConfig({
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
-        // MONOLITHIC VENDOR CHUNK: All node_modules in one file to eliminate dependency resolution errors
+        // Split vendor chunks for better caching and performance
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            return 'vendor'; // The Monolith
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('@radix-ui') || id.includes('lucide-react') || id.includes('cmdk') || id.includes('vaul')) {
+              return 'ui-vendor';
+            }
+            if (id.includes('@tanstack') || id.includes('zod') || id.includes('date-fns')) {
+              return 'data-vendor';
+            }
+            return 'vendor';
           }
         },
       },
     },
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 1000,
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,

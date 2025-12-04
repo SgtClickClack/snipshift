@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, boolean, timestamp, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
-import { users } from './users';
+import { users } from './users.js';
 
 /**
  * Notification type enum

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
-import app from '../index';
-import * as jobsRepo from '../repositories/jobs.repository';
+import app from '../index.js';
+import * as jobsRepo from '../repositories/jobs.repository.js';
 
 describe('Global Error Handling', () => {
   // Reset mocks after each test

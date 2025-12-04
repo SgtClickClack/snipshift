@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import supertest from 'supertest';
 // Import without extension to prefer TS source if configured, or let resolver handle it
-import app from '../index'; 
+import app from '../index.js'; 
 
 // Mock Middleware to bypass Firebase/DB Auth checks for protected routes
 vi.mock('../middleware/auth.js', () => ({
@@ -33,18 +33,7 @@ vi.mock('../repositories/users.repository.js', () => ({
   updateUser: vi.fn(),
 }));
 
-vi.mock('../repositories/users.repository', () => ({
-  getUserByEmail: vi.fn(),
-  createUser: vi.fn(),
-  getUserById: vi.fn(),
-  getOrCreateMockBusinessUser: vi.fn(),
-  updateUser: vi.fn(),
-}));
-
 vi.mock('../repositories/conversations.repository.js', () => ({
-  getConversationsForUser: vi.fn(),
-}));
-vi.mock('../repositories/conversations.repository', () => ({
   getConversationsForUser: vi.fn(),
 }));
 
