@@ -173,6 +173,26 @@
         50% { opacity: 0.7; }
       }
     </style>
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        var e = document.createElement('div');
+        e.style.position = 'fixed';
+        e.style.top = '0';
+        e.style.left = '0';
+        e.style.width = '100%';
+        e.style.height = '100%';
+        e.style.backgroundColor = 'white';
+        e.style.color = 'red';
+        e.style.zIndex = '999999';
+        e.style.padding = '20px';
+        e.style.overflow = 'scroll';
+        e.innerText = 'CRITICAL ERROR:\n' + msg + '\n\n' + url + ':' + line;
+        document.body.appendChild(e);
+        // Hide splash if it exists
+        var s = document.getElementById('splash-screen');
+        if (s) s.style.display = 'none';
+      };
+    </script>
   </head>
   <body class="bg-background">
     <!-- Splash Screen -->

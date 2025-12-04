@@ -4,6 +4,15 @@ import App from "./App";
 import "./index.css";
 import { StartupErrorBoundary } from "./components/startup-error-boundary";
 
+// Hard reset service workers for debugging session
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    for(let registration of registrations) {
+      registration.unregister();
+    }
+  });
+}
+
 // Version indicator for debugging deployment issues
 console.log('Snipshift v1.1.0');
 
