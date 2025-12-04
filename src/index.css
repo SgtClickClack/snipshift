@@ -4,6 +4,7 @@
 
 :root {
   /* Standard Shadcn Light Theme */
+  background-color: white;
   --background: 0 0% 100%;       /* White */
   --foreground: 240 10% 3.9%;    /* Black */
   --card: 0 0% 100%;
@@ -74,6 +75,7 @@
 
 .dark {
   /* Dark Mode - Sophisticated Charcoal & Steel */
+  background-color: hsl(210, 15%, 8%);
   --background: 210 15% 8%; /* Deep charcoal background */
   --foreground: 210 8% 92%; /* Light steel text */
   --muted: 210 12% 12%; /* Dark steel muted areas */

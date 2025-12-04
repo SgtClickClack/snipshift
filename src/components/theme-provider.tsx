@@ -31,20 +31,25 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement
-
     root.classList.remove("light", "dark")
 
+    let activeTheme = theme
     if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
+      activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light"
-
-      root.classList.add(systemTheme)
-      return
     }
 
-    root.classList.add(theme)
+    root.classList.add(activeTheme)
+    
+    // Update meta theme-color for mobile status bars
+    const metaThemeColor = document.querySelector("meta[name='theme-color']")
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute(
+        "content", 
+        activeTheme === "dark" ? "#111418" : "#ffffff"
+      )
+    }
   }, [theme])
 
   const value = {
