@@ -74,7 +74,7 @@ function AppRoutes() {
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection'].includes(location.pathname);
   
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-full">
+    <div className="min-h-[100dvh] bg-background flex flex-col max-w-full overflow-x-hidden">
       {!hideNavbar && <Navbar />}
       <div className="flex-grow">
         <Routes>

@@ -32,6 +32,10 @@ export function ThemeProvider({
   useEffect(() => {
     const root = window.document.documentElement
     root.classList.remove("light", "dark")
+    
+    // Force clean state
+    root.style.backgroundColor = ""
+    root.style.colorScheme = ""
 
     let activeTheme = theme
     if (theme === "system") {
@@ -41,6 +45,15 @@ export function ThemeProvider({
     }
 
     root.classList.add(activeTheme)
+    
+    // Enforce background colors directly on the root element
+    if (activeTheme === "light") {
+      root.style.backgroundColor = "#ffffff"
+      root.style.colorScheme = "light"
+    } else {
+      root.style.backgroundColor = "#111418"
+      root.style.colorScheme = "dark"
+    }
     
     // Update meta theme-color for mobile status bars
     let metaThemeColor = document.querySelector("meta[name='theme-color']")
