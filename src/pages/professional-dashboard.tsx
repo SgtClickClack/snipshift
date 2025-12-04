@@ -265,15 +265,15 @@ export default function ProfessionalDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Professional Dashboard" />
       {/* Dashboard Header */}
-      <div className="bg-white/95 backdrop-blur-sm shadow-lg border-b-2 border-steel-300/50">
+      <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-0">
             <div>
-              <h1 className="text-2xl font-bold text-steel-900">Professional Dashboard</h1>
-              <p className="text-steel-600">{user?.displayName || user?.email}</p>
+              <h1 className="text-2xl font-bold text-foreground">Professional Dashboard</h1>
+              <p className="text-muted-foreground">{user?.displayName || user?.email}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button 
@@ -381,9 +381,9 @@ export default function ProfessionalDashboard() {
               <QuickActions role="professional" onAction={handleQuickAction} />
               
               <div className="lg:col-span-2">
-                <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                  <CardHeader className="bg-white border-b border-gray-100">
-                    <CardTitle className="text-gray-900">Recent Jobs</CardTitle>
+                <Card className="rounded-lg border shadow-sm">
+                  <CardHeader className="border-b">
+                    <CardTitle>Recent Jobs</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="space-y-4">
@@ -659,8 +659,8 @@ export default function ProfessionalDashboard() {
         
         {/* Applications Tab */}
         {activeView === 'applications' && (
-          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <CardHeader className="border-b border-gray-100">
+          <Card className="rounded-lg border shadow-sm">
+            <CardHeader className="border-b">
               <CardTitle>My Applications</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -714,8 +714,8 @@ export default function ProfessionalDashboard() {
         {/* Calendar Tab */}
         {activeView === 'calendar' && (
           <div className="grid md:grid-cols-2 gap-6">
-            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-              <CardHeader className="border-b border-gray-100">
+            <Card className="rounded-lg border shadow-sm">
+              <CardHeader className="border-b">
                 <CardTitle>Schedule</CardTitle>
               </CardHeader>
               <CardContent className="p-6 flex justify-center">
@@ -728,8 +728,8 @@ export default function ProfessionalDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-              <CardHeader className="border-b border-gray-100">
+            <Card className="rounded-lg border shadow-sm">
+              <CardHeader className="border-b">
                 <CardTitle>Upcoming Bookings</CardTitle>
               </CardHeader>
               <CardContent className="p-6">

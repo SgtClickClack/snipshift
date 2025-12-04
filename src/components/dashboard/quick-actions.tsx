@@ -146,9 +146,9 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
   const actionsConfig = getActionsConfig();
 
   return (
-    <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-      <CardHeader className="border-b border-gray-100">
-        <CardTitle className="text-gray-900">Quick Actions</CardTitle>
+    <Card className="rounded-lg border shadow-sm">
+      <CardHeader className="border-b">
+        <CardTitle>Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         <div className="grid grid-cols-2 gap-3 relative z-10">
