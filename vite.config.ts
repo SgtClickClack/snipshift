@@ -138,25 +138,19 @@ export default defineConfig({
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         // Split vendor chunks for better caching and performance
-        // CRITICAL: Keep React core in main bundle to prevent "useContext undefined" errors
+        // CRITICAL: Keep React, React-DOM, and React-Router-DOM together to prevent load order issues
         manualChunks(id) {
+          // CRITICAL: All React core libraries MUST be in the same chunk
+          // This prevents "Cannot read properties of undefined (reading 'createContext')" errors
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
+            return 'vendor';
+          }
+          // UI libraries can be split separately
+          if (id.includes('node_modules/@radix-ui') || id.includes('node_modules/lucide-react')) {
+            return 'ui';
+          }
+          // All other node_modules go to vendor chunk
           if (id.includes('node_modules')) {
-            // Keep react and react-dom in main bundle for synchronous loading
-            // Only split react-router-dom into separate chunk
-            if (id.includes('react-router-dom')) {
-              return 'react-router-vendor';
-            }
-            // Keep react and react-dom in main bundle - don't split them
-            if (id.includes('react') && !id.includes('react-router')) {
-              // Return undefined to keep in main bundle
-              return;
-            }
-            if (id.includes('@radix-ui') || id.includes('lucide-react') || id.includes('cmdk') || id.includes('vaul')) {
-              return 'ui-vendor';
-            }
-            if (id.includes('@tanstack') || id.includes('zod') || id.includes('date-fns')) {
-              return 'data-vendor';
-            }
             return 'vendor';
           }
         },
