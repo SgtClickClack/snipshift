@@ -221,7 +221,7 @@ export default function Navbar() {
                   <InstallButton 
                     variant="outline" 
                     size="sm"
-                    className="text-white border-steel-600 hover:bg-steel-700"
+                    className="!text-white border-steel-600 hover:bg-steel-700 hover:!text-white bg-transparent"
                   />
                 </div>
 
@@ -387,7 +387,7 @@ export default function Navbar() {
                            <InstallButton 
                              variant="ghost" 
                              size="sm"
-                             className="w-full justify-start text-white hover:bg-steel-700"
+                             className="w-full justify-start !text-white hover:bg-steel-700 hover:!text-white"
                            />
                          </div>
 

@@ -32,8 +32,8 @@ export function InstallButton({
       onClick={promptInstall}
       className={className}
     >
-      <Download className="h-4 w-4 mr-2" />
-      Install App
+      <Download className="h-4 w-4 mr-2 text-current" />
+      <span>Install App</span>
     </Button>
   );
 }
