@@ -206,11 +206,16 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
 
       // Convert date and times to ISO strings
       // job.date is a Date object or string, job.startTime/endTime are time strings (HH:MM:SS)
-      const dateStr = typeof job.date === 'string' 
-        ? job.date 
-        : (job.date instanceof Date 
-          ? job.date.toISOString().split('T')[0] 
-          : String(job.date).split('T')[0]);
+      let dateStr: string;
+      if (typeof job.date === 'string') {
+        dateStr = job.date;
+      } else if (job.date && typeof job.date === 'object' && 'toISOString' in job.date) {
+        // Handle Date object or Date-like object
+        dateStr = (job.date as Date).toISOString().split('T')[0];
+      } else {
+        // Fallback: convert to string and extract date portion
+        dateStr = String(job.date).split('T')[0];
+      }
       
       // Extract time portion (time type returns as "HH:MM:SS" string)
       const startTimeStr = typeof job.startTime === 'string' 
