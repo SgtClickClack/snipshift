@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@shared/firebase-schema';
 import { Save, Plus, X, MapPin, Phone, Globe, Award, Star, Camera, Loader2 } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 
 interface ProfileFormProps {
@@ -132,32 +132,73 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     setIsUploadingProfile(true);
 
     try {
-      const userId = user.id || user.uid;
+      // Use Firebase auth UID for storage path (matches storage rules)
+      const userId = user.uid || user.id;
+      if (!userId) {
+        throw new Error("User ID not found. Please ensure you're logged in.");
+      }
+
       const fileExtension = file.name.split('.').pop() || 'jpg';
       // Use the same path pattern as ImageUpload component: users/{userId}/avatar.{ext}
       // This matches the Firebase Storage security rules in storage.rules
+      // IMPORTANT: userId must match request.auth.uid for the rules to allow upload
       const storagePath = `users/${userId}/avatar.${fileExtension}`;
       const storageRef = ref(storage, storagePath);
 
-      // Upload the file
-      await uploadBytes(storageRef, file);
+      console.log("Starting upload to:", storagePath);
 
-      // Get the download URL
-      const downloadURL = await getDownloadURL(storageRef);
+      // Upload the file using uploadBytesResumable for better error handling
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-      // Update state with the new URL
-      setProfileImageURL(downloadURL);
-      setFormData(prev => ({ ...prev, avatarUrl: downloadURL }));
+      // Wait for upload to complete with promise-based approach
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log('Upload progress:', progress + '%');
+          },
+          (error) => {
+            console.error("Upload error:", error);
+            reject(error);
+          },
+          async () => {
+            try {
+              // Upload complete, get download URL
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              console.log("Upload successful, download URL:", downloadURL);
 
-      toast({
-        title: "Profile picture updated",
-        description: "Your profile picture has been successfully uploaded.",
+              // Update state with the new URL
+              setProfileImageURL(downloadURL);
+              setFormData(prev => ({ ...prev, avatarUrl: downloadURL }));
+
+              toast({
+                title: "Profile picture updated",
+                description: "Your profile picture has been successfully uploaded.",
+              });
+              resolve();
+            } catch (error) {
+              console.error("Error getting download URL:", error);
+              reject(error);
+            }
+          }
+        );
       });
     } catch (error) {
       console.error("Error uploading profile picture:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload profile picture. Please try again.";
+      
+      // Provide more specific error messages
+      let userFriendlyMessage = errorMessage;
+      if (errorMessage.includes('permission') || errorMessage.includes('unauthorized')) {
+        userFriendlyMessage = "Permission denied. Please ensure you're logged in and have permission to upload.";
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        userFriendlyMessage = "Network error. Please check your connection and try again.";
+      }
+
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload profile picture. Please try again.",
+        description: userFriendlyMessage,
         variant: "destructive",
       });
     } finally {
