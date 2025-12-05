@@ -32,7 +32,7 @@ export function InstallButton({
       onClick={promptInstall}
       className={className}
     >
-      <Download className="h-4 w-4" />
+      <Download className="h-4 w-4 mr-2" />
       Install App
     </Button>
   );

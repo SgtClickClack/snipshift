@@ -23,6 +23,7 @@ export function useInstallPrompt() {
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('Install Prompt Captured');
       // Prevent the mini-infobar from appearing
       e.preventDefault();
       // Store the event for later use

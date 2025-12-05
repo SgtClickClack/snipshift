@@ -385,9 +385,9 @@ export default function Navbar() {
                          {/* Install App Button */}
                          <div className="px-2 py-2">
                            <InstallButton 
-                             variant="outline" 
+                             variant="ghost" 
                              size="sm"
-                             className="w-full justify-start text-white border-steel-600 hover:bg-steel-700"
+                             className="w-full justify-start text-white hover:bg-steel-700"
                            />
                          </div>
 
