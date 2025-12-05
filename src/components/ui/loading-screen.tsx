@@ -8,10 +8,15 @@ export function LoadingScreen() {
         <img 
           src={logoProcessed} 
           alt="Snipshift" 
-          className="w-64 h-auto object-contain animate-pulse"
+          className="w-64 h-auto object-contain animate-pulse logo-sharp"
           style={{
+            imageRendering: '-webkit-optimize-contrast',
+            imageRendering: 'crisp-edges',
             filter: 'brightness(2.5) contrast(1.8) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
           }}
+          loading="eager"
+          width={256}
+          height={256}
         />
       </div>
       <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin"></div>

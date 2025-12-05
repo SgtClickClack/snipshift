@@ -21,10 +21,15 @@ export default function Hero() {
           <img 
             src={logoProcessed} 
             alt="Snipshift Logo" 
-            className="h-32 md:h-40 w-auto object-contain mx-auto mb-6 drop-shadow-2xl"
+            className="h-32 md:h-40 w-auto object-contain mx-auto mb-6 drop-shadow-2xl logo-sharp"
             style={{
+              imageRendering: '-webkit-optimize-contrast',
+              imageRendering: 'crisp-edges',
               filter: 'brightness(2.5) contrast(1.8) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
             }}
+            loading="eager"
+            width={160}
+            height={160}
           />
         </div>
         
