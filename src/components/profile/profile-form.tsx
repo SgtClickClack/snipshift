@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@shared/firebase-schema';
 import { Save, Plus, X, MapPin, Phone, Globe, Award, Star, Camera, Loader2 } from 'lucide-react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
+import { storage, auth } from '@/lib/firebase';
 
 interface ProfileFormProps {
   onSave?: (profileData: any) => void;
@@ -132,12 +132,14 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     setIsUploadingProfile(true);
 
     try {
-      // Use Firebase auth UID for storage path (matches storage rules)
-      const userId = user.uid || user.id;
-      if (!userId) {
-        throw new Error("User ID not found. Please ensure you're logged in.");
+      // CRITICAL: Use Firebase auth currentUser.uid directly (not user.uid from context)
+      // Storage rules check request.auth.uid == userId, so we must use the Firebase auth UID
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        throw new Error("Not authenticated. Please log in to upload images.");
       }
 
+      const userId = firebaseUser.uid;
       const fileExtension = file.name.split('.').pop() || 'jpg';
       // Use the same path pattern as ImageUpload component: users/{userId}/avatar.{ext}
       // This matches the Firebase Storage security rules in storage.rules
@@ -146,6 +148,8 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       const storageRef = ref(storage, storagePath);
 
       console.log("Starting upload to:", storagePath);
+      console.log("Firebase auth UID:", userId);
+      console.log("User from context:", { id: user?.id, uid: user?.uid });
 
       // Upload the file using uploadBytesResumable for better error handling
       const uploadTask = uploadBytesResumable(storageRef, file);
