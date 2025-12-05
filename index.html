@@ -7,7 +7,6 @@
     <meta http-equiv="Expires" content="0" />
     <link rel="icon" type="image/png" href="/brand-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
-    <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="description" content="Connect barbers, stylists, and beauticians with flexible work opportunities" />
@@ -26,34 +25,27 @@
       (function() {
         try {
           var storageKey = "vite-ui-theme";
-          var theme = localStorage.getItem(storageKey);
-          var supportDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var theme = localStorage.getItem(storageKey) || "system";
           var root = document.documentElement;
-          var body = document.body; // Might not be available yet, but let's try or rely on CSS
           
-          // Function to apply theme
-          function applyTheme(isDark) {
-            if (isDark) {
-              root.classList.add("dark");
-              root.style.backgroundColor = "#111418";
-              root.style.colorScheme = "dark";
-              var meta = document.querySelector("meta[name='theme-color']");
-              if (meta) meta.setAttribute("content", "#111418");
-            } else {
-              root.classList.remove("dark");
-              root.classList.add("light");
-              root.style.backgroundColor = "#ffffff";
-              root.style.colorScheme = "light";
-              var meta = document.querySelector("meta[name='theme-color']");
-              if (meta) meta.setAttribute("content", "#ffffff");
-            }
+          var systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          var activeTheme = theme === "system" ? systemTheme : theme;
+          
+          root.classList.remove("light", "dark");
+          root.classList.add(activeTheme);
+          root.style.colorScheme = activeTheme;
+          
+          // Create or update meta theme-color for mobile status bars
+          var metaThemeColor = document.querySelector("meta[name='theme-color']");
+          if (!metaThemeColor) {
+            metaThemeColor = document.createElement("meta");
+            metaThemeColor.setAttribute("name", "theme-color");
+            document.head.appendChild(metaThemeColor);
           }
-
-          if (theme === "dark" || (!theme && supportDarkMode)) {
-            applyTheme(true);
-          } else {
-            applyTheme(false);
-          }
+          var backgroundColor = activeTheme === "dark" 
+            ? "hsl(240, 10%, 3.9%)" 
+            : "hsl(0, 0%, 100%)";
+          metaThemeColor.setAttribute("content", backgroundColor);
         } catch (e) {
           console.error("Theme pre-load error:", e);
         }
@@ -64,8 +56,6 @@
       html {
         height: 100%;
         width: 100%;
-        background-color: #ffffff; /* Default to white */
-        color-scheme: light;
         -webkit-text-size-adjust: 100%;
         overflow-x: hidden;
       }
@@ -74,9 +64,7 @@
         margin: 0;
         min-height: 100%;
         width: 100%;
-        background-color: #ffffff; /* Default to white */
-        color-scheme: light;
-        overscroll-behavior-y: none; /* Prevent pulling down to see browser bg */
+        overscroll-behavior-y: none;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
@@ -85,17 +73,6 @@
         min-height: 100%;
         width: 100%;
         isolation: isolate;
-      }
-
-      /* Dark Mode Overrides */
-      html.dark {
-        background-color: #111418 !important;
-        color-scheme: dark;
-      }
-      
-      html.dark body {
-        background-color: #111418 !important;
-        color-scheme: dark;
       }
 
       /* Splash Screen - Shows while React hydrates */

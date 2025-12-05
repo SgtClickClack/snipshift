@@ -25,61 +25,64 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem(storageKey) as Theme) || defaultTheme
+    }
+    return defaultTheme
+  })
 
   useEffect(() => {
     const root = window.document.documentElement
 
-    const applyTheme = (currentTheme: Theme) => {
-      root.classList.remove("light", "dark")
-      
-      // Force clean state
-      root.style.backgroundColor = ""
-      root.style.colorScheme = ""
+    root.classList.remove("light", "dark")
 
-      let activeTheme = currentTheme
-      if (currentTheme === "system") {
-        activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-      }
-
-      root.classList.add(activeTheme)
-      
-      // Enforce background colors directly on the root element
-      if (activeTheme === "light") {
-        root.style.backgroundColor = "#ffffff"
-        root.style.colorScheme = "light"
-      } else {
-        root.style.backgroundColor = "#111418"
-        root.style.colorScheme = "dark"
-      }
-      
-      // Update meta theme-color for mobile status bars
-      let metaThemeColor = document.querySelector("meta[name='theme-color']")
-      if (!metaThemeColor) {
-        metaThemeColor = document.createElement("meta")
-        metaThemeColor.setAttribute("name", "theme-color")
-        document.head.appendChild(metaThemeColor)
-      }
-      
-      metaThemeColor.setAttribute(
-        "content", 
-        activeTheme === "dark" ? "#111418" : "#ffffff"
-      )
-    }
-
-    applyTheme(theme)
-
+    let systemTheme: "light" | "dark" = "light"
     if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-      const handleChange = () => applyTheme("system")
-      
-      mediaQuery.addEventListener("change", handleChange)
-      return () => mediaQuery.removeEventListener("change", handleChange)
+      systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
     }
+
+    const activeTheme = theme === "system" ? systemTheme : theme
+
+    root.classList.add(activeTheme)
+    root.style.colorScheme = activeTheme
+
+    // Update meta theme-color for mobile status bars
+    const metaThemeColor = document.querySelector("meta[name='theme-color']")
+    if (metaThemeColor) {
+      const backgroundColor = activeTheme === "dark" 
+        ? "hsl(240, 10%, 3.9%)" 
+        : "hsl(0, 0%, 100%)"
+      metaThemeColor.setAttribute("content", backgroundColor)
+    }
+  }, [theme])
+
+  useEffect(() => {
+    if (theme !== "system") return
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      const root = window.document.documentElement
+      root.classList.remove("light", "dark")
+      const systemTheme = e.matches ? "dark" : "light"
+      root.classList.add(systemTheme)
+      root.style.colorScheme = systemTheme
+
+      // Update meta theme-color for mobile status bars
+      const metaThemeColor = document.querySelector("meta[name='theme-color']")
+      if (metaThemeColor) {
+        const backgroundColor = systemTheme === "dark" 
+          ? "hsl(240, 10%, 3.9%)" 
+          : "hsl(0, 0%, 100%)"
+        metaThemeColor.setAttribute("content", backgroundColor)
+      }
+    }
+
+    mediaQuery.addEventListener("change", handleChange)
+    return () => mediaQuery.removeEventListener("change", handleChange)
   }, [theme])
 
   const value = {

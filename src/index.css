@@ -2,112 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Standard Shadcn Light Theme */
-  --background: 0 0% 100%;       /* White */
-  --foreground: 240 10% 3.9%;    /* Black */
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;       /* Deep Blue/Black */
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;   /* Light Gray */
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-  --radius: 0.5rem;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+    --error: 0 75% 45%;
+    --error-foreground: 0 0% 100%;
+    --success: 120 100% 25%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 210 100% 45%;
+    --info-foreground: 0 0% 100%;
+  }
 
-  /* Additional Status Colors (Converted to space-separated for consistency) */
-  --error: 0 75% 45%;
-  --error-foreground: 0 0% 100%;
-  --success: 120 100% 25%;
-  --success-foreground: 0 0% 100%;
-  --warning: 45 100% 50%;
-  --warning-foreground: 0 0% 100%;
-  --info: 210 100% 45%;
-  --info-foreground: 0 0% 100%;
-  
-  /* Enhanced Steel Color Scale (Kept as full HSL for direct usage if needed, not used by Tailwind config vars) */
-  --steel-50: hsl(210, 20%, 98%);   /* Ultra light steel */
-  --steel-100: hsl(210, 18%, 95%);  /* Very light steel */
-  --steel-200: hsl(210, 15%, 90%);  /* Light steel */
-  --steel-300: hsl(210, 12%, 82%);  /* Medium light steel */
-  --steel-400: hsl(210, 10%, 68%);  /* Medium steel */
-  --steel-500: hsl(210, 8%, 52%);   /* Base steel */
-  --steel-600: hsl(210, 10%, 38%);  /* Dark steel */
-  --steel-700: hsl(210, 15%, 28%);  /* Darker steel */
-  --steel-800: hsl(210, 18%, 18%);  /* Very dark steel */
-  --steel-900: hsl(210, 20%, 12%);  /* Ultra dark steel */
-  
-  /* Enhanced Red Accent Scale */
-  --red-accent: hsl(0, 85%, 35%);        /* Base red */
-  --red-accent-light: hsl(0, 85%, 45%);  /* Lighter red */
-  --red-accent-hover: hsl(0, 88%, 40%);  /* Hover red */
-  --red-accent-dark: hsl(0, 85%, 30%);   /* Darker red */
-  
-  /* Page-Specific Background Variations */
-  --bg-signup: hsl(210, 20%, 96%);      /* Lightest steel for signup */
-  --bg-hub: hsl(210, 15%, 92%);         /* Medium light for hub */
-  --bg-professional: hsl(210, 12%, 88%); /* Medium for professional */
-  --bg-brand: hsl(210, 10%, 85%);       /* Slightly darker for brand */
-  --bg-trainer: hsl(210, 8%, 82%);      /* Darker for trainer */
-  
-  /* Container Variations */
-  --container-elevated: hsl(0, 0%, 100%);     /* White for primary containers */
-  --container-secondary: hsl(210, 20%, 97%);  /* Very light steel for secondary */
-  --container-accent: hsl(210, 15%, 94%);     /* Light steel for accented areas */
-  
-  /* Chrome metallic effects */
-  --chrome-light: hsl(210, 8%, 95%);
-  --chrome-medium: hsl(210, 8%, 68%);
-  --chrome-dark: hsl(210, 12%, 45%);
-  --chrome-accent: hsl(210, 15%, 85%);
-}
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --error: 0 75% 50%;
+    --error-foreground: 0 0% 100%;
+    --success: 120 100% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 60%;
+    --warning-foreground: 0 0% 100%;
+    --info: 210 100% 60%;
+    --info-foreground: 0 0% 100%;
+  }
 
-.dark {
-  /* Dark Mode - Sophisticated Charcoal & Steel */
-  --background: 210 15% 8%; /* Deep charcoal background */
-  --foreground: 210 8% 92%; /* Light steel text */
-  --muted: 210 12% 12%; /* Dark steel muted areas */
-  --muted-foreground: 210 8% 65%; /* Medium steel text */
-  --popover: 210 15% 10%; /* Dark charcoal popups */
-  --popover-foreground: 210 8% 92%;
-  --card: 210 12% 10%; /* Dark steel cards */
-  --card-foreground: 210 8% 92%;
-  --border: 210 10% 22%; /* Dark steel borders */
-  --input: 210 12% 14%; /* Dark steel inputs */
-  
-  /* Primary: Bright steel chrome for dark mode */
-  --primary: 210 10% 78%; /* Bright steel chrome */
-  --primary-foreground: 210 15% 8%; /* Dark text on bright steel */
-  
-  /* Secondary: Light steel for contrast */
-  --secondary: 210 8% 88%; /* Light steel */
-  --secondary-foreground: 210 15% 8%; /* Dark text on light steel */
-  
-  /* Accent: Vibrant red for dark mode visibility */
-  --accent: 0 90% 45%; /* Darker red for consistency */
-  --accent-foreground: 0 0% 100%;
-  
-  --destructive: 0 75% 50%;
-  --destructive-foreground: 0 0% 100%;
-  --error: 0 75% 50%;
-  --error-foreground: 0 0% 100%;
-  --success: 120 100% 40%; /* Brighter green for dark mode */
-  --success-foreground: 0 0% 100%;
-  --warning: 45 100% 60%; /* Brighter gold */
-  --warning-foreground: 0 0% 100%;
-  --info: 210 100% 60%;
-  --info-foreground: 210 15% 8%;
-  --ring: 0 0% 85%; /* Bright chrome focus */
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
 @layer utilities {
@@ -122,74 +86,6 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  html {
-    background-color: #ffffff; /* Hardcoded White */
-    color-scheme: light;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  html.light {
-    background-color: #ffffff;
-    color-scheme: light;
-  }
-
-  html.dark {
-    background-color: #111418; /* Hardcoded Dark */
-    color-scheme: dark;
-  }
-
-  html, body {
-    @apply h-full w-full overflow-x-hidden;
-    max-width: 100%;
-  }
-
-  body, #root {
-    overflow-x: hidden;
-    width: 100%;
-    position: relative;
-  }
-  
-  #root {
-    min-height: 100%;
-    background-color: inherit; /* Inherit from body */
-  }
-
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
-    background-color: #ffffff !important; /* Force White in Light Mode */
-    color: hsl(var(--foreground)) !important;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-
-  .dark body {
-    background-color: #111418 !important; /* Force Dark in Dark Mode */
-  }
-
-  /* Black & Chrome typography - Clean and professional */
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
-    color: hsl(var(--foreground));
-    font-weight: 700;
-  }
-
-  h1 { @apply text-4xl md:text-5xl lg:text-6xl; }
-  h2 { @apply text-3xl md:text-4xl; }
-  h3 { @apply text-2xl md:text-3xl; }
-  h4 { @apply text-xl md:text-2xl; }
-  h5 { @apply text-xl; }
-}
-
-@layer components {
-  .card-chrome {
-    @apply bg-gradient-to-br from-white to-steel-50 border border-steel-200 shadow-sm hover:shadow-md transition-all duration-200;
-  }
-}
-
 /* Immediate Touch Feedback */
 button:active, a:active, [role="button"]:active {
   transform: scale(0.97);
@@ -198,21 +94,15 @@ button:active, a:active, [role="button"]:active {
 
 /* NProgress Customization */
 #nprogress .bar {
-  background: hsl(var(--primary)) !important;
-  height: 3px !important;
+  background: hsl(var(--primary));
+  height: 3px;
 }
 
 #nprogress .peg {
-  box-shadow: 0 0 10px hsl(var(--primary)), 0 0 5px hsl(var(--primary)) !important;
+  box-shadow: 0 0 10px hsl(var(--primary)), 0 0 5px hsl(var(--primary));
 }
 
 #nprogress .spinner-icon {
-  border-top-color: hsl(var(--primary)) !important;
-  border-left-color: hsl(var(--primary)) !important;
-}
-
-/* Force all dialogs/popovers to be opaque */
-[role="dialog"], [role="alertdialog"], .modal-content, .sheet-content {
-  background-color: white !important;
-  opacity: 1 !important;
+  border-top-color: hsl(var(--primary));
+  border-left-color: hsl(var(--primary));
 }
