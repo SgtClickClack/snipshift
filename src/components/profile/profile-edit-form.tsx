@@ -154,6 +154,12 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
       // Upload the file using uploadBytesResumable for better error handling
       const uploadTask = uploadBytesResumable(storageRef, file);
 
+      // Add timeout to catch CORS/network errors that might not trigger the error handler
+      const timeoutId = setTimeout(() => {
+        uploadTask.cancel();
+        reject(new Error('Upload timeout - this may indicate a CORS or network issue'));
+      }, 30000); // 30 second timeout
+
       // Wait for upload to complete with promise-based approach
       await new Promise<void>((resolve, reject) => {
         uploadTask.on(
@@ -161,8 +167,13 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             console.log('Upload progress:', progress + '%');
+            // Clear timeout on progress (upload is working)
+            if (progress > 0) {
+              clearTimeout(timeoutId);
+            }
           },
           (error: any) => {
+            clearTimeout(timeoutId);
             // Verbose error logging for debugging
             console.error("Upload failed details:", {
               code: error.code,
@@ -171,9 +182,22 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
               stack: error.stack
             });
             console.error("Upload error:", error);
+            
+            // Check for CORS-related errors
+            if (!error.code && error.message && (
+              error.message.includes('CORS') || 
+              error.message.includes('network') ||
+              error.message.includes('Failed to fetch') ||
+              error.message.includes('ERR_FAILED')
+            )) {
+              error.code = 'storage/cors-error';
+              error.message = 'CORS error: Firebase Storage may not be configured for your domain. Check Firebase Console > Storage > CORS settings.';
+            }
+            
             reject(error);
           },
           async () => {
+            clearTimeout(timeoutId);
             try {
               // Upload complete, get download URL
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -210,7 +234,9 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
       
       // Provide more specific error messages based on Firebase Storage error codes
       let userFriendlyMessage = `Upload failed: ${errorCode}`;
-      if (errorCode === 'storage/unauthorized' || errorCode === 'storage/permission-denied') {
+      if (errorCode === 'storage/cors-error' || errorMessage.includes('CORS') || errorMessage.includes('ERR_FAILED')) {
+        userFriendlyMessage = "Upload failed: CORS error. Firebase Storage may not be configured for your domain (snipshift.com.au). Please check Firebase Console > Storage > CORS settings or contact support.";
+      } else if (errorCode === 'storage/unauthorized' || errorCode === 'storage/permission-denied') {
         userFriendlyMessage = "Upload failed: Permission denied. Please ensure you're logged in and have permission to upload.";
       } else if (errorCode === 'storage/object-not-found') {
         userFriendlyMessage = `Upload failed: ${errorCode} - Storage path or permissions issue.`;
@@ -218,8 +244,8 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
         userFriendlyMessage = "Upload failed: Storage quota exceeded. Please contact support.";
       } else if (errorCode === 'storage/unauthenticated') {
         userFriendlyMessage = "Upload failed: Not authenticated. Please log in and try again.";
-      } else if (errorCode.includes('network') || errorCode.includes('fetch') || errorMessage.includes('network')) {
-        userFriendlyMessage = "Upload failed: Network error. Please check your connection and try again.";
+      } else if (errorCode.includes('network') || errorCode.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('timeout')) {
+        userFriendlyMessage = "Upload failed: Network error or timeout. Please check your connection and try again.";
       } else if (errorCode !== 'unknown') {
         userFriendlyMessage = `Upload failed: ${errorCode} - ${errorMessage}`;
       } else {
