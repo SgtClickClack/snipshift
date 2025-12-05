@@ -61,13 +61,15 @@ export default function GoogleMapView({
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any>(null);
+  const circleRef = useRef<any>(null);
+  const centerMarkerRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [usesFallback, setUsesFallback] = useState(false);
 
-  // Initialize Google Map with proper API
+  // Initialize Google Map with proper API (only once)
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || mapInstanceRef.current) return; // Don't reinitialize if map already exists
 
     const initializeMap = async () => {
       try {
@@ -87,7 +89,7 @@ export default function GoogleMapView({
         mapInstanceRef.current = map;
 
         // Add search radius circle
-        new google.maps.Circle({
+        circleRef.current = new google.maps.Circle({
           strokeColor: MAP_THEME.radius.stroke,
           strokeOpacity: 0.8,
           strokeWeight: 2,
@@ -100,7 +102,7 @@ export default function GoogleMapView({
 
         // Add center marker using AdvancedMarkerElement
         const centerMarkerContent = createMarkerElement(MAP_THEME.markers.center.color, '📍', 'center');
-        new google.maps.marker.AdvancedMarkerElement({
+        centerMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
           position: centerLocation,
           map,
           title: searchLocation,
@@ -119,7 +121,39 @@ export default function GoogleMapView({
     };
 
     initializeMap();
-  }, [centerLocation, radius, searchLocation]);
+  }, []); // Only run once on mount
+
+  // Sync map center and radius circle when centerLocation or radius changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || usesFallback) return;
+
+    const updateMapCenter = async () => {
+      try {
+        const map = mapInstanceRef.current;
+        
+        if (map) {
+          // Pan to new center location
+          map.panTo(centerLocation);
+          
+          // Update radius circle if it exists
+          if (circleRef.current) {
+            circleRef.current.setCenter(centerLocation);
+            circleRef.current.setRadius(radius * 1000); // Convert km to meters
+          }
+          
+          // Update center marker position if it exists
+          if (centerMarkerRef.current) {
+            centerMarkerRef.current.position = centerLocation;
+            centerMarkerRef.current.title = searchLocation;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update map center:', error);
+      }
+    };
+
+    updateMapCenter();
+  }, [centerLocation, radius, searchLocation, usesFallback]);
 
   // Helper function to create marker elements
   const createMarkerElement = (color: string, emoji: string, type: 'job' | 'center') => {
@@ -141,7 +175,7 @@ export default function GoogleMapView({
     return markerDiv;
   };
 
-  // Update job markers
+  // Update job markers and fit bounds
   useEffect(() => {
     if (!mapInstanceRef.current || usesFallback) return;
 
@@ -158,6 +192,9 @@ export default function GoogleMapView({
           infoWindowRef.current = new google.maps.InfoWindow();
         }
 
+        const bounds = new google.maps.LatLngBounds();
+        let hasValidMarkers = false;
+
         // Add job markers using AdvancedMarkerElement
         jobs.forEach((job) => {
           const jobLocation = getJobCoordinates(job);
@@ -173,6 +210,10 @@ export default function GoogleMapView({
               title: job.title,
               content: markerElement
             });
+
+            // Extend bounds to include this marker
+            bounds.extend(jobLocation);
+            hasValidMarkers = true;
 
             // Add click listener for marker
             markerElement.addEventListener('click', () => {
@@ -204,6 +245,15 @@ export default function GoogleMapView({
             markersRef.current.push(marker);
           }
         });
+
+        // Fit bounds to show all markers if we have any
+        if (hasValidMarkers && markersRef.current.length > 0) {
+          // Also include center location in bounds
+          bounds.extend(centerLocation);
+          mapInstanceRef.current.fitBounds(bounds, {
+            padding: 50 // Add padding around markers
+          });
+        }
       } catch (error) {
         console.error('Failed to update markers:', error);
       }

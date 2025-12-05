@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,8 @@ export default function ProfessionalDashboard() {
   
   // Location and travel state
   const [searchLocation, setSearchLocation] = useState("Current Location");
-  const [locationCoordinates, setLocationCoordinates] = useState({ lat: -33.8688, lng: 151.2093 }); // Default to Sydney
+  const [locationCoordinates, setLocationCoordinates] = useState<{ lat: number; lng: number } | null>(null); // Start as null until geolocation completes
+  const [isLocating, setIsLocating] = useState(true);
   const [searchRadius, setSearchRadius] = useState(20);
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>(["Sydney", "Melbourne"]);
   
@@ -74,7 +75,61 @@ export default function ProfessionalDashboard() {
     enabled: !!user?.id
   });
 
+  // Get user's current location on mount
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      // Fallback to Sydney if geolocation not supported
+      setLocationCoordinates({ lat: -33.8688, lng: 151.2093 });
+      setIsLocating(false);
+      return;
+    }
 
+    setIsLocating(true);
+    let timeoutId: NodeJS.Timeout;
+
+    const geolocationOptions = {
+      enableHighAccuracy: true,
+      timeout: 3000, // 3 second timeout
+      maximumAge: 0 // Don't use cached position
+    };
+
+    const successCallback = (position: GeolocationPosition) => {
+      clearTimeout(timeoutId);
+      const coords = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      setLocationCoordinates(coords);
+      setSearchLocation("Current Location");
+      setIsLocating(false);
+    };
+
+    const errorCallback = () => {
+      clearTimeout(timeoutId);
+      // Fallback to Sydney if geolocation fails
+      setLocationCoordinates({ lat: -33.8688, lng: 151.2093 });
+      setSearchLocation("Sydney");
+      setIsLocating(false);
+    };
+
+    // Set timeout fallback
+    timeoutId = setTimeout(() => {
+      // Fallback to Sydney after 3 seconds
+      setLocationCoordinates({ lat: -33.8688, lng: 151.2093 });
+      setSearchLocation("Sydney");
+      setIsLocating(false);
+    }, 3000);
+
+    navigator.geolocation.getCurrentPosition(
+      successCallback,
+      errorCallback,
+      geolocationOptions
+    );
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   // Advanced job filtering with all criteria
   const filteredJobs = useMemo(() => {
@@ -503,14 +558,26 @@ export default function ProfessionalDashboard() {
 
                 {/* Map View */}
                 {viewMode === 'map' && (
-                  <GoogleMapView
-                    jobs={filteredJobs}
-                    onJobSelect={setSelectedJob}
-                    selectedJob={selectedJob}
-                    centerLocation={locationCoordinates}
-                    radius={searchRadius}
-                    searchLocation={searchLocation}
-                  />
+                  <>
+                    {isLocating && (
+                      <Card className="mb-4">
+                        <CardContent className="p-4 flex items-center justify-center gap-3">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                          <span className="text-sm text-muted-foreground">Locating your position...</span>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {locationCoordinates && (
+                      <GoogleMapView
+                        jobs={filteredJobs}
+                        onJobSelect={setSelectedJob}
+                        selectedJob={selectedJob}
+                        centerLocation={locationCoordinates}
+                        radius={searchRadius}
+                        searchLocation={searchLocation}
+                      />
+                    )}
+                  </>
                 )}
 
                 {/* List View */}
