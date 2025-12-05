@@ -89,8 +89,8 @@ export function InstallPrompt() {
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[100] animate-in slide-in-from-bottom-5 pointer-events-none">
       <div className="bg-steel-900 text-white rounded-lg shadow-xl border border-steel-700 p-4 flex items-center gap-3 pointer-events-auto">
         <div className="flex-1">
-          <p className="font-semibold text-sm mb-1">Install Snipshift</p>
-          <p className="text-xs text-steel-300">
+          <p className="font-semibold text-sm mb-1 text-white">Install Snipshift</p>
+          <p className="text-xs text-steel-200">
             Add to your home screen for quick access
           </p>
         </div>
@@ -98,7 +98,7 @@ export function InstallPrompt() {
           <Button
             size="sm"
             onClick={handleInstallClick}
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold"
           >
             <Download className="h-4 w-4 mr-1" />
             Install
