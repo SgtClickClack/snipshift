@@ -3,6 +3,8 @@ import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { ShiftSchema } from '../validation/schemas.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
+import * as jobsRepo from '../repositories/jobs.repository.js';
+import * as applicationsRepo from '../repositories/applications.repository.js';
 
 const router = Router();
 
@@ -144,6 +146,7 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
 
 // Get shifts by employer (authenticated, owner only or public?)
 // Currently implementing as authenticated for shop dashboard usage
+// FIXED: Now also fetches legacy jobs to ensure all listings are visible
 router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { userId } = req.params;
   const currentUserId = req.user?.id;
@@ -151,9 +154,125 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
   // Allow users to see their own shifts, or potentially public profile shifts
   // For Shop Dashboard, we typically want to see all statuses
   
-  const shifts = await shiftsRepo.getShiftsByEmployer(userId);
+  // Fetch both shifts and legacy jobs for this user
+  const [shifts, jobsResult] = await Promise.all([
+    shiftsRepo.getShiftsByEmployer(userId),
+    jobsRepo.getJobs({ businessId: userId })
+  ]);
 
-  res.status(200).json(shifts);
+  const jobs = jobsResult?.data || [];
+
+  // Normalize shifts to unified format
+  const normalizedShifts = await Promise.all(
+    shifts.map(async (shift) => {
+      // Get application count for shift
+      const shiftApplications = await applicationsRepo.getApplications({ shiftId: shift.id });
+      const applicationCount = shiftApplications?.total || 0;
+
+      // Build location string
+      const location = shift.location || null;
+
+      // Convert startTime to date string for compatibility
+      const startTimeDate = new Date(shift.startTime);
+      const dateStr = startTimeDate.toISOString().split('T')[0];
+
+      return {
+        id: shift.id,
+        title: shift.title,
+        payRate: shift.hourlyRate,
+        date: dateStr,
+        startTime: shift.startTime.toISOString(),
+        endTime: shift.endTime.toISOString(),
+        status: shift.status,
+        location,
+        applicationCount,
+        createdAt: shift.createdAt.toISOString(),
+        // Add type indicator for debugging (optional)
+        _type: 'shift'
+      };
+    })
+  );
+
+  // Normalize jobs to unified format
+  const normalizedJobs = await Promise.all(
+    jobs.map(async (job) => {
+      // Get application count for job
+      const jobApplications = await applicationsRepo.getApplications({ jobId: job.id });
+      const applicationCount = jobApplications?.total || 0;
+
+      // Build location string
+      const locationParts = [job.address, job.city, job.state].filter(Boolean);
+      const location = locationParts.length > 0 ? locationParts.join(', ') : null;
+
+      // Convert date and times to ISO strings
+      // job.date is a Date object or string, job.startTime/endTime are time strings (HH:MM:SS)
+      const dateStr = typeof job.date === 'string' 
+        ? job.date 
+        : (job.date instanceof Date 
+          ? job.date.toISOString().split('T')[0] 
+          : String(job.date).split('T')[0]);
+      
+      // Extract time portion (time type returns as "HH:MM:SS" string)
+      const startTimeStr = typeof job.startTime === 'string' 
+        ? job.startTime 
+        : String(job.startTime);
+      const endTimeStr = typeof job.endTime === 'string' 
+        ? job.endTime 
+        : String(job.endTime);
+      
+      // Create full datetime strings (combining date with time)
+      // Handle both "HH:MM:SS" and "HH:MM:SS.mmm" formats
+      let startDateTime: Date;
+      let endDateTime: Date;
+      
+      try {
+        startDateTime = new Date(`${dateStr}T${startTimeStr}`);
+        endDateTime = new Date(`${dateStr}T${endTimeStr}`);
+        
+        // Validate dates
+        if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+          // Fallback: use date with default times if parsing fails
+          startDateTime = new Date(`${dateStr}T00:00:00`);
+          endDateTime = new Date(`${dateStr}T23:59:59`);
+        }
+      } catch (error) {
+        // Fallback: use date with default times if parsing fails
+        startDateTime = new Date(`${dateStr}T00:00:00`);
+        endDateTime = new Date(`${dateStr}T23:59:59`);
+      }
+
+      // Map job status to shift status format (closed -> completed)
+      let status = job.status;
+      if (status === 'closed') {
+        status = 'completed';
+      }
+
+      return {
+        id: job.id,
+        title: job.title,
+        shopName: job.shopName || undefined,
+        payRate: job.payRate,
+        date: dateStr,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        status,
+        location,
+        applicationCount,
+        createdAt: job.createdAt.toISOString(),
+        // Add type indicator for debugging (optional)
+        _type: 'job'
+      };
+    })
+  );
+
+  // Combine and sort by createdAt (newest first)
+  const allListings = [...normalizedShifts, ...normalizedJobs].sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA; // Descending order
+  });
+
+  res.status(200).json(allListings);
 }));
 
 export default router;

@@ -275,20 +275,22 @@ export async function fetchMyJobs(): Promise<MyJob[]> {
 
 export async function fetchShopShifts(userId: string): Promise<MyJob[]> {
   const res = await apiRequest('GET', `/api/shifts/shop/${userId}`);
-  const shifts = await res.json();
+  const listings = await res.json();
   
-  // Map shifts to MyJob interface
-  return shifts.map((shift: any) => ({
-    id: shift.id,
-    title: shift.title,
-    payRate: shift.hourlyRate,
-    date: shift.startTime,
-    startTime: shift.startTime,
-    endTime: shift.endTime,
-    status: shift.status,
-    location: shift.location,
-    applicationCount: 0, // Shifts API might not return this yet
-    createdAt: shift.createdAt || new Date().toISOString()
+  // Backend now returns normalized format (both jobs and shifts)
+  // Map to MyJob interface - data is already normalized
+  return listings.map((item: any) => ({
+    id: item.id,
+    title: item.title,
+    shopName: item.shopName,
+    payRate: item.payRate,
+    date: item.date,
+    startTime: item.startTime,
+    endTime: item.endTime,
+    status: item.status,
+    location: item.location,
+    applicationCount: item.applicationCount || 0,
+    createdAt: item.createdAt || new Date().toISOString()
   }));
 }
 
