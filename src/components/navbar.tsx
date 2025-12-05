@@ -29,6 +29,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
 import { ModeToggle } from "@/components/mode-toggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { InstallButton } from "@/components/pwa/install-button";
 import logo from "@/assets/logo-processed.png";
 
 export default function Navbar() {
@@ -215,6 +216,13 @@ export default function Navbar() {
                   <Link to="/jobs">
                     <Button variant="ghost" className="text-white hover:bg-steel-700" data-testid="link-find-shifts-desktop">Find Shifts</Button>
                   </Link>
+
+                  {/* Install App Button */}
+                  <InstallButton 
+                    variant="outline" 
+                    size="sm"
+                    className="text-white border-steel-600 hover:bg-steel-700"
+                  />
                 </div>
 
                 {/* Common Items (Visible on Mobile & Desktop) */}
@@ -373,6 +381,15 @@ export default function Navbar() {
                              )}
                            </div>
                          )}
+
+                         {/* Install App Button */}
+                         <div className="px-2 py-2">
+                           <InstallButton 
+                             variant="outline" 
+                             size="sm"
+                             className="w-full justify-start text-white border-steel-600 hover:bg-steel-700"
+                           />
+                         </div>
 
                          <div className="border-t border-steel-700 my-2 pt-2">
                             {(user.roles || []).includes('admin') && (
