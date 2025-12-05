@@ -4,6 +4,8 @@
 
 @layer base {
   :root {
+    /* Force browser to render in light mode */
+    color-scheme: light;
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -35,6 +37,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -68,7 +71,9 @@
     @apply border-border;
   }
 
+  /* The Nuclear Option for Mobile Browsers - Force pure white in light mode */
   html {
+    background-color: hsl(var(--background)) !important;
     overflow-x: hidden;
     width: 100%;
     position: relative;
@@ -76,6 +81,8 @@
 
   body {
     @apply bg-background text-foreground;
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
     font-feature-settings: "rlig" 1, "calt" 1;
     overflow-x: hidden;
     width: 100%;

@@ -53,8 +53,8 @@ export function ThemeProvider({
     const metaThemeColor = document.querySelector("meta[name='theme-color']")
     if (metaThemeColor) {
       const backgroundColor = activeTheme === "dark" 
-        ? "hsl(240, 10%, 3.9%)" 
-        : "hsl(0, 0%, 100%)"
+        ? "#1a1a1a" 
+        : "#ffffff"
       metaThemeColor.setAttribute("content", backgroundColor)
     }
   }, [theme])
@@ -75,8 +75,8 @@ export function ThemeProvider({
       const metaThemeColor = document.querySelector("meta[name='theme-color']")
       if (metaThemeColor) {
         const backgroundColor = systemTheme === "dark" 
-          ? "hsl(240, 10%, 3.9%)" 
-          : "hsl(0, 0%, 100%)"
+          ? "#1a1a1a" 
+          : "#ffffff"
         metaThemeColor.setAttribute("content", backgroundColor)
       }
     }
