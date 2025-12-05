@@ -297,6 +297,7 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
         location,
         applicationCount,
         createdAt: job.createdAt.toISOString(),
+        businessId: job.businessId,
         // Add type indicator for debugging (optional)
         _type: 'job'
       };

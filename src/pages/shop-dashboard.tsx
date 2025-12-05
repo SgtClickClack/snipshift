@@ -110,23 +110,28 @@ export default function ShopDashboard() {
     },
   });
 
-  const deleteShiftMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiRequest("DELETE", `/api/shifts/${id}`);
+  const deleteItemMutation = useMutation({
+    mutationFn: async ({ id, type }: { id: string; type: 'shift' | 'job' }) => {
+      const endpoint = type === 'shift' ? `/api/shifts/${id}` : `/api/jobs/${id}`;
+      const res = await apiRequest("DELETE", endpoint);
+      // Jobs endpoint returns 204 No Content, shifts returns JSON
+      if (res.status === 204) {
+        return { success: true };
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shifts/shop", user?.id] });
       toast({
-        title: "Shift deleted",
-        description: "The shift has been removed and all applications have been cancelled.",
+        title: "Deleted",
+        description: "The item has been removed and all applications have been cancelled.",
       });
     },
     onError: (error) => {
-      // console.error("Failed to delete shift:", error);
+      // console.error("Failed to delete item:", error);
       toast({
         title: "Delete Failed",
-        description: "Could not delete shift. Please try again.",
+        description: "Could not delete item. Please try again.",
         variant: "destructive",
       });
     },
@@ -323,7 +328,12 @@ export default function ShopDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {shifts.map((shift) => {
-                      const isOwner = shift.employerId === user?.id && (shift as any)._type === 'shift';
+                      const itemType = (shift as any)._type || 'job';
+                      const isShift = itemType === 'shift';
+                      // Check ownership: shifts use employerId, jobs use businessId
+                      const isOwner = isShift 
+                        ? shift.employerId === user?.id
+                        : (shift as any).businessId === user?.id;
                       return (
                         <Card key={shift.id} className="border border-neutral-200">
                           <CardContent className="p-4">
@@ -362,9 +372,9 @@ export default function ShopDashboard() {
                                         variant="destructive"
                                         size="sm"
                                         className="h-8 w-8 p-0"
-                                        disabled={deleteShiftMutation.isPending && deleteShiftMutation.variables === shift.id}
+                                        disabled={deleteItemMutation.isPending && deleteItemMutation.variables?.id === shift.id}
                                       >
-                                        {deleteShiftMutation.isPending && deleteShiftMutation.variables === shift.id ? (
+                                        {deleteItemMutation.isPending && deleteItemMutation.variables?.id === shift.id ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
                                           <Trash2 className="h-4 w-4" />
@@ -375,13 +385,13 @@ export default function ShopDashboard() {
                                       <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          This will remove the shift and cancel all applications. This action cannot be undone.
+                                          This will remove the {isShift ? 'shift' : 'job'} and cancel all applications. This action cannot be undone.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction
-                                          onClick={() => deleteShiftMutation.mutate(shift.id)}
+                                          onClick={() => deleteItemMutation.mutate({ id: shift.id, type: itemType as 'shift' | 'job' })}
                                           className="bg-red-600 hover:bg-red-700"
                                         >
                                           Delete
