@@ -27,7 +27,13 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem(storageKey) as Theme) || defaultTheme
+      try {
+        return (localStorage.getItem(storageKey) as Theme) || defaultTheme
+      } catch (e) {
+        // Samsung Internet Secret Mode or other privacy modes may block localStorage
+        console.warn("localStorage access blocked, using default theme:", e)
+        return defaultTheme
+      }
     }
     return defaultTheme
   })
@@ -88,7 +94,12 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
+      try {
+        localStorage.setItem(storageKey, theme)
+      } catch (e) {
+        // Samsung Internet Secret Mode or other privacy modes may block localStorage
+        console.warn("localStorage write blocked, theme change will not persist:", e)
+      }
       setTheme(theme)
     },
   }

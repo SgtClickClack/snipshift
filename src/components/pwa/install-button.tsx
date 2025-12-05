@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Smartphone } from 'lucide-react';
 import { useInstallPrompt } from '@/hooks/use-install-prompt';
 
 interface InstallButtonProps {
@@ -11,7 +11,7 @@ interface InstallButtonProps {
 /**
  * PWA Install Button Component
  * Displays a button to install the PWA when available
- * Hidden if the app is already installed or not supported
+ * Hidden if the app is already installed
  */
 export function InstallButton({ 
   variant = 'outline', 
@@ -25,19 +25,22 @@ export function InstallButton({
     console.log('InstallButton render:', { canInstall, hasDeferredPrompt: !!deferredPrompt, isInstalled });
   }
 
-  // Don't render if install is not available or app is already installed
-  if (!canInstall) {
+  // Don't render if app is already installed
+  if (isInstalled) {
     return null;
   }
 
+  // Always render the button, but disable it if install prompt isn't available yet
   return (
     <Button
       variant={variant}
       size={size}
-      onClick={promptInstall}
+      onClick={canInstall ? promptInstall : undefined}
+      disabled={!canInstall}
       className={className}
+      title={canInstall ? 'Install Snipshift app' : 'Install prompt will appear soon'}
     >
-      <Download className="h-4 w-4 mr-2 text-current" />
+      <Smartphone className="h-4 w-4 mr-2 text-current" />
       <span>Install App</span>
     </Button>
   );
