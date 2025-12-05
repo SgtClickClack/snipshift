@@ -7,13 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@shared/firebase-schema';
-import { Save, Plus, X, MapPin, Phone, Globe, Award, Star, Camera, Loader2 } from 'lucide-react';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage, auth } from '@/lib/firebase';
+import { Save, Plus, X, MapPin, Phone, Globe, Award, Star } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import ProfileHeader from './profile-header';
 
 interface ProfileFormProps {
   onSave?: (profileData: any) => void;
@@ -24,9 +23,6 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
-  const [profileImageURL, setProfileImageURL] = useState<string>('');
-  const profileFileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     displayName: user?.displayName || '',
@@ -35,6 +31,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     website: '',
     bio: '',
     avatarUrl: '',
+    bannerUrl: '',
     // Hub-specific fields
     businessName: '',
     address: {
@@ -78,202 +75,30 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     trainingLocation: ''
   });
 
-  // Initialize profile picture from user data
+  // Initialize profile picture and banner from user data
   useEffect(() => {
     if (user) {
       const avatarUrl = user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || '';
-      setProfileImageURL(avatarUrl);
-      setFormData(prev => ({ ...prev, avatarUrl }));
+      const bannerUrl = user.bannerUrl || '';
+      setFormData(prev => ({ ...prev, avatarUrl, bannerUrl }));
     }
   }, [user]);
 
-  /**
-   * Handles profile picture file upload to Firebase Storage.
-   * 
-   * Note: Firebase Storage is initialized in @/lib/firebase.ts.
-   * If Storage were not available, we could fall back to:
-   * - Data URI (Base64) for small files (< 1MB)
-   * - Or keep a URL input field as a backup option
-   */
-  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!user?.id && !user?.uid) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to upload images.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUploadingProfile(true);
-
-    try {
-      // CRITICAL: Use Firebase auth currentUser.uid directly (not user.uid from context)
-      // Storage rules check request.auth.uid == userId, so we must use the Firebase auth UID
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser) {
-        throw new Error("Not authenticated. Please log in to upload images.");
-      }
-
-      const userId = firebaseUser.uid;
-      const fileExtension = file.name.split('.').pop() || 'jpg';
-      // Use the same path pattern as ImageUpload component: users/{userId}/avatar.{ext}
-      // This matches the Firebase Storage security rules in storage.rules
-      // IMPORTANT: userId must match request.auth.uid for the rules to allow upload
-      const storagePath = `users/${userId}/avatar.${fileExtension}`;
-      const storageRef = ref(storage, storagePath);
-
-      console.log("Starting upload to:", storagePath);
-      console.log("Firebase auth UID:", userId);
-      console.log("User from context:", { id: user?.id, uid: user?.uid });
-
-      // Upload the file using uploadBytesResumable for better error handling
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      // Add timeout to catch CORS/network errors that might not trigger the error handler
-      const timeoutId = setTimeout(() => {
-        uploadTask.cancel();
-        reject(new Error('Upload timeout - this may indicate a CORS or network issue'));
-      }, 30000); // 30 second timeout
-
-      // Wait for upload to complete with promise-based approach
-      await new Promise<void>((resolve, reject) => {
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Upload progress:', progress + '%');
-            // Clear timeout on progress (upload is working)
-            if (progress > 0) {
-              clearTimeout(timeoutId);
-            }
-          },
-          (error: any) => {
-            clearTimeout(timeoutId);
-            // Verbose error logging for debugging
-            console.error("Upload failed details:", {
-              code: error.code,
-              message: error.message,
-              serverResponse: error.serverResponse,
-              stack: error.stack
-            });
-            console.error("Upload error:", error);
-            
-            // Check for CORS-related errors
-            if (!error.code && error.message && (
-              error.message.includes('CORS') || 
-              error.message.includes('network') ||
-              error.message.includes('Failed to fetch') ||
-              error.message.includes('ERR_FAILED')
-            )) {
-              error.code = 'storage/cors-error';
-              error.message = 'CORS error: Firebase Storage may not be configured for your domain. Check Firebase Console > Storage > CORS settings.';
-            }
-            
-            reject(error);
-          },
-          async () => {
-            clearTimeout(timeoutId);
-            try {
-              // Upload complete, get download URL
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log("Upload successful, download URL:", downloadURL);
-
-              // Update state with the new URL
-              setProfileImageURL(downloadURL);
-              setFormData(prev => ({ ...prev, avatarUrl: downloadURL }));
-
-              toast({
-                title: "Profile picture updated",
-                description: "Your profile picture has been successfully uploaded.",
-              });
-              resolve();
-            } catch (error) {
-              console.error("Error getting download URL:", error);
-              reject(error);
-            }
-          }
-        );
-      });
-    } catch (error: any) {
-      // Verbose error logging for debugging
-      console.error("Error uploading profile picture:", error);
-      console.error("Upload failed details:", {
-        code: error.code,
-        message: error.message,
-        serverResponse: error.serverResponse,
-        stack: error.stack
-      });
-      
-      // Extract error code and message
-      const errorCode = error.code || 'unknown';
-      const errorMessage = error.message || "Failed to upload profile picture. Please try again.";
-      
-      // Provide more specific error messages based on Firebase Storage error codes
-      let userFriendlyMessage = `Upload failed: ${errorCode}`;
-      if (errorCode === 'storage/cors-error' || errorMessage.includes('CORS') || errorMessage.includes('ERR_FAILED')) {
-        userFriendlyMessage = "Upload failed: CORS error. Firebase Storage may not be configured for your domain (snipshift.com.au). Please check Firebase Console > Storage > CORS settings or contact support.";
-      } else if (errorCode === 'storage/unauthorized' || errorCode === 'storage/permission-denied') {
-        userFriendlyMessage = "Upload failed: Permission denied. Please ensure you're logged in and have permission to upload.";
-      } else if (errorCode === 'storage/object-not-found') {
-        userFriendlyMessage = `Upload failed: ${errorCode} - Storage path or permissions issue.`;
-      } else if (errorCode === 'storage/quota-exceeded') {
-        userFriendlyMessage = "Upload failed: Storage quota exceeded. Please contact support.";
-      } else if (errorCode === 'storage/unauthenticated') {
-        userFriendlyMessage = "Upload failed: Not authenticated. Please log in and try again.";
-      } else if (errorCode.includes('network') || errorCode.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('timeout')) {
-        userFriendlyMessage = "Upload failed: Network error or timeout. Please check your connection and try again.";
-      } else if (errorCode !== 'unknown') {
-        userFriendlyMessage = `Upload failed: ${errorCode} - ${errorMessage}`;
-      } else {
-        userFriendlyMessage = `Upload failed: ${errorMessage}`;
-      }
-
-      toast({
-        title: "Upload failed",
-        description: userFriendlyMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploadingProfile(false);
-      // Reset the input so the same file can be selected again
-      if (profileFileInputRef.current) {
-        profileFileInputRef.current.value = '';
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // Here you would typically save to your backend
-      // console.log('Saving profile data:', formData);
+      // Update profile via API
+      await apiRequest('PUT', '/api/me', {
+        displayName: formData.displayName,
+        bio: formData.bio,
+        phone: formData.phone,
+        location: formData.homeLocation.city ? `${formData.homeLocation.city}, ${formData.homeLocation.state}` : undefined,
+        avatarUrl: formData.avatarUrl,
+        bannerUrl: formData.bannerUrl,
+      });
       
       toast({
         title: "Profile updated",
@@ -312,67 +137,6 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
 
   const renderBasicFields = () => (
     <>
-      {/* Profile Picture Upload */}
-      <div>
-        <Label>Profile Picture</Label>
-        <div className="mt-2 flex items-center gap-4">
-          <label
-            htmlFor="profile-picture-input"
-            className="relative cursor-pointer group"
-            data-testid="profile-avatar-upload"
-          >
-            <Avatar className="w-20 h-20">
-              <AvatarImage src={profileImageURL} alt="Profile" />
-              <AvatarFallback className="text-lg">
-                {formData.displayName?.split(' ').map(n => n[0]).join('') || user?.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            {/* Hover overlay with camera icon - only show when editing */}
-            {isEditing && (
-              <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                {isUploadingProfile ? (
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
-                ) : (
-                  <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                )}
-              </div>
-            )}
-            {/* Hidden file input */}
-            <input
-              id="profile-picture-input"
-              ref={profileFileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleProfilePictureUpload}
-              className="hidden"
-              disabled={isUploadingProfile || !isEditing}
-              data-testid="input-profile-picture"
-            />
-          </label>
-          {isEditing && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => profileFileInputRef.current?.click()}
-              disabled={isUploadingProfile}
-              data-testid="button-upload-profile-image"
-            >
-              {isUploadingProfile ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Camera className="w-4 h-4 mr-2" />
-                  Upload Photo
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="displayName">Display Name</Label>
@@ -687,6 +451,43 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Profile Header with Banner and Avatar */}
+          {isEditing && (
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative">
+                  <ProfileHeader
+                    bannerUrl={formData.bannerUrl}
+                    avatarUrl={formData.avatarUrl}
+                    displayName={formData.displayName || user?.displayName || 'User'}
+                    editable={isEditing}
+                    onBannerUpload={(url) => setFormData(prev => ({ ...prev, bannerUrl: url }))}
+                    onAvatarUpload={(url) => setFormData(prev => ({ ...prev, avatarUrl: url }))}
+                  />
+                  {/* Spacer for overlapping avatar */}
+                  <div className="h-16 md:h-20" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {!isEditing && (
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative">
+                  <ProfileHeader
+                    bannerUrl={formData.bannerUrl}
+                    avatarUrl={formData.avatarUrl}
+                    displayName={formData.displayName || user?.displayName || 'User'}
+                    editable={false}
+                  />
+                  {/* Spacer for overlapping avatar */}
+                  <div className="h-16 md:h-20" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           {renderBasicFields()}
           
           {user.currentRole === 'hub' && renderHubFields()}
