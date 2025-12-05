@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2 } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2 } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
@@ -22,6 +22,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile';
 
@@ -194,6 +205,27 @@ export default function HubDashboard() {
         variant: "destructive"
       });
     }
+  });
+
+  const deleteShiftMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/shifts/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+      toast({
+        title: "Shift deleted",
+        description: "The shift has been removed and all applications have been cancelled.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: "Could not delete shift. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -603,7 +635,10 @@ export default function HubDashboard() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).map((job) => (
+                        {jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).map((job) => {
+                          const isShift = (job as any)._type === 'shift';
+                          const isOwner = isShift && (job as any).employerId === user?.id;
+                          return (
                           <Card key={job.id} className="border border-border" data-testid={`card-job-${job.id}`}>
                             <CardContent className="p-4">
                               <div className="flex justify-between items-start mb-3">
@@ -614,33 +649,70 @@ export default function HubDashboard() {
                                 >
                                   {job.title}
                                 </h4>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-auto p-0 hover:bg-transparent" data-testid={`status-badge-trigger-${job.id}`}>
-                                      <span 
-                                        className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
-                                          job.status === 'open' ? 'bg-success text-white' : 
-                                          job.status === 'filled' ? 'bg-blue-500 text-white' :
-                                          'bg-muted text-muted-foreground'
-                                        }`}
-                                        data-testid={`status-job-${job.id}`}
-                                      >
-                                        {job.status}
-                                      </span>
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'open' })}>
-                                      Mark as Open
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'filled' })}>
-                                      Mark as Filled
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'completed' })}>
-                                      Mark as Completed
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <div className="flex items-center gap-2">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" className="h-auto p-0 hover:bg-transparent" data-testid={`status-badge-trigger-${job.id}`}>
+                                        <span 
+                                          className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
+                                            job.status === 'open' ? 'bg-success text-white' : 
+                                            job.status === 'filled' ? 'bg-blue-500 text-white' :
+                                            'bg-muted text-muted-foreground'
+                                          }`}
+                                          data-testid={`status-job-${job.id}`}
+                                        >
+                                          {job.status}
+                                        </span>
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'open' })}>
+                                        Mark as Open
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'filled' })}>
+                                        Mark as Filled
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'completed' })}>
+                                        Mark as Completed
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  {isOwner && (
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="destructive"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                          disabled={deleteShiftMutation.isPending && deleteShiftMutation.variables === job.id}
+                                        >
+                                          {deleteShiftMutation.isPending && deleteShiftMutation.variables === job.id ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This will remove the shift and cancel all applications. This action cannot be undone.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => deleteShiftMutation.mutate(job.id)}
+                                            className="bg-red-600 hover:bg-red-700"
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+                                </div>
                               </div>
                               <div className="grid sm:grid-cols-3 gap-4 text-sm text-muted-foreground mb-3">
                                 <div className="flex items-center">
@@ -680,7 +752,8 @@ export default function HubDashboard() {
                               )}
                             </CardContent>
                           </Card>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </CardContent>
