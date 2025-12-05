@@ -20,6 +20,8 @@ export const users = pgTable('users', {
   bio: text('bio'),
   phone: varchar('phone', { length: 50 }),
   location: varchar('location', { length: 255 }),
+  avatarUrl: text('avatar_url'),
+  bannerUrl: text('banner_url'),
   averageRating: decimal('average_rating', { precision: 3, scale: 2 }),
   reviewCount: decimal('review_count', { precision: 10, scale: 0 }).default('0'),
   isOnboarded: boolean('is_onboarded').notNull().default(false),

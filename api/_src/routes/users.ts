@@ -15,6 +15,7 @@ const UpdateProfileSchema = z.object({
   phone: z.string().max(50).optional(),
   location: z.string().max(255).optional(),
   avatarUrl: z.string().url().optional(),
+  bannerUrl: z.string().url().optional(),
 });
 
 // Validation schema for onboarding completion
@@ -167,6 +168,8 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       bio: user.bio,
       phone: user.phone,
       location: user.location,
+      avatarUrl: user.avatarUrl || null,
+      bannerUrl: user.bannerUrl || null,
       roles: user.roles || [user.role], // Use roles from DB
       currentRole: user.role,
       uid: req.user.uid, // Keep the firebase UID from the token/request
@@ -201,7 +204,7 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     return;
   }
 
-  const { displayName, bio, phone, location, avatarUrl } = validationResult.data;
+  const { displayName, bio, phone, location, avatarUrl, bannerUrl } = validationResult.data;
 
   // Prepare update object
   const updates: any = {};
@@ -209,7 +212,8 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
   if (bio !== undefined) updates.bio = bio;
   if (phone !== undefined) updates.phone = phone;
   if (location !== undefined) updates.location = location;
-  // Note: avatarUrl might need to be stored in a separate field or handled differently
+  if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
+  if (bannerUrl !== undefined) updates.bannerUrl = bannerUrl;
 
   // Update user in database
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
@@ -228,6 +232,8 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       bio: updatedUser.bio,
       phone: updatedUser.phone,
       location: updatedUser.location,
+      avatarUrl: updatedUser.avatarUrl || null,
+      bannerUrl: updatedUser.bannerUrl || null,
       roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
       currentRole: updatedUser.role,
       uid: req.user.uid
@@ -262,8 +268,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
     location: location,
     isOnboarded: true,
   };
-  // Note: avatarUrl might need to be stored in a separate field or handled differently
-  // For now, we'll skip it as it's not in the schema
+  if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
 
   // Update user in database
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
@@ -282,6 +287,8 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
       bio: updatedUser.bio,
       phone: updatedUser.phone,
       location: updatedUser.location,
+      avatarUrl: updatedUser.avatarUrl || null,
+      bannerUrl: updatedUser.bannerUrl || null,
       roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
       currentRole: updatedUser.role,
       uid: req.user.uid,
@@ -520,7 +527,8 @@ router.get('/users/:id', asyncHandler(async (req, res) => {
     role: user.role,
     bio: user.bio,
     location: user.location,
-    // avatarUrl: user.avatarUrl // TODO: Add to schema
+    avatarUrl: user.avatarUrl || null,
+    bannerUrl: user.bannerUrl || null,
     averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
     reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
     joinedDate: user.createdAt.toISOString(),

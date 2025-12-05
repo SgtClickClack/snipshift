@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, MapPin, Calendar, Star, MessageCircle, Briefcase, Award, Users } from "lucide-react";
 import { format } from "date-fns";
 import StartChatButton from "@/components/messaging/start-chat-button";
+import ProfileHeader from "./profile-header";
 
 interface PortfolioItem {
   id: string;
@@ -96,24 +97,21 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Banner Section */}
+      {/* Profile Header with Banner and Avatar */}
       <div className="relative">
-        <div 
-          className="h-64 bg-gradient-to-r from-blue-500 to-purple-600 bg-cover bg-center"
-          style={profile.bannerImageURL ? { backgroundImage: `url(${profile.bannerImageURL})` } : {}}
-          data-testid="profile-banner"
+        <ProfileHeader
+          bannerUrl={profile.bannerImageURL}
+          avatarUrl={profile.profileImageURL}
+          displayName={profile.displayName}
+          editable={false}
         />
         
-        {/* Profile Header */}
+        {/* Profile Info Card */}
         <div className="relative -mt-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-              <Avatar className="w-32 h-32 border-4 border-card shadow-lg">
-                <AvatarImage src={profile.profileImageURL} alt={profile.displayName} />
-                <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
-                  {profile.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
-                </AvatarFallback>
-              </Avatar>
+              {/* Avatar is now in ProfileHeader, so we add spacing */}
+              <div className="w-32 h-32" />
               
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

@@ -63,6 +63,8 @@ export async function createUser(
       bio: null,
       phone: null,
       location: null,
+      avatarUrl: null,
+      bannerUrl: null,
       averageRating: null,
       reviewCount: '0',
       isOnboarded: false,

@@ -112,6 +112,7 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
         role: userData.role,
         bio: userData.bio || "",
         profileImageURL: userData.avatarUrl || "", // Check if API returns avatarUrl or profileImageURL
+        bannerImageURL: userData.bannerUrl || "", // Include bannerUrl from API
         location: userData.location ? { 
           city: userData.location.split(',')[0]?.trim() || "", 
           state: userData.location.split(',')[1]?.trim() || "" 
@@ -139,6 +140,7 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
           ? `${profileData.location.city}, ${profileData.location.state}` 
           : undefined,
         avatarUrl: profileData.profileImageURL,
+        bannerUrl: profileData.bannerImageURL,
         // Note: phone is not in UserProfile interface, but backend accepts it
       };
       const response = await apiRequest("PUT", `/api/me`, payload);

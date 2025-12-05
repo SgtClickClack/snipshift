@@ -6,12 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload, X, Plus, Save, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import ProfileHeader from "./profile-header";
 
 interface PortfolioItem {
   id: string;
@@ -80,203 +80,11 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
     role: "",
     imageURL: ""
   });
-  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
-  const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   const updateFormData = (updates: Partial<UserProfile>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
-  /**
-   * Handles profile picture file upload to Firebase Storage.
-   * 
-   * Note: Firebase Storage is initialized in @/lib/firebase.ts.
-   * If Storage were not available, we could fall back to:
-   * - Data URI (Base64) for small files (< 1MB)
-   * - Or keep a URL input field as a backup option
-   */
-  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!user?.id && !user?.uid) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to upload images.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUploadingProfile(true);
-
-    try {
-      // CRITICAL: Use Firebase auth currentUser.uid directly (not user.uid from context)
-      // Storage rules check request.auth.uid == userId, so we must use the Firebase auth UID
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser) {
-        throw new Error("Not authenticated. Please log in to upload images.");
-      }
-
-      const userId = firebaseUser.uid;
-      const fileExtension = file.name.split('.').pop() || 'jpg';
-      // Use the same path pattern as ImageUpload component: users/{userId}/avatar.{ext}
-      // This matches the Firebase Storage security rules in storage.rules
-      // IMPORTANT: userId must match request.auth.uid for the rules to allow upload
-      const storagePath = `users/${userId}/avatar.${fileExtension}`;
-      const storageRef = ref(storage, storagePath);
-
-      console.log("Starting upload to:", storagePath);
-      console.log("Firebase auth UID:", userId);
-      console.log("User from context:", { id: user?.id, uid: user?.uid });
-
-      // Upload the file using uploadBytesResumable for better error handling
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      // Add timeout to catch CORS/network errors that might not trigger the error handler
-      const timeoutId = setTimeout(() => {
-        uploadTask.cancel();
-        reject(new Error('Upload timeout - this may indicate a CORS or network issue'));
-      }, 30000); // 30 second timeout
-
-      // Wait for upload to complete with promise-based approach
-      await new Promise<void>((resolve, reject) => {
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Upload progress:', progress + '%');
-            // Clear timeout on progress (upload is working)
-            if (progress > 0) {
-              clearTimeout(timeoutId);
-            }
-          },
-          (error: any) => {
-            clearTimeout(timeoutId);
-            // Verbose error logging for debugging
-            console.error("Upload failed details:", {
-              code: error.code,
-              message: error.message,
-              serverResponse: error.serverResponse,
-              stack: error.stack
-            });
-            console.error("Upload error:", error);
-            
-            // Check for CORS-related errors
-            if (!error.code && error.message && (
-              error.message.includes('CORS') || 
-              error.message.includes('network') ||
-              error.message.includes('Failed to fetch') ||
-              error.message.includes('ERR_FAILED')
-            )) {
-              error.code = 'storage/cors-error';
-              error.message = 'CORS error: Firebase Storage may not be configured for your domain. Check Firebase Console > Storage > CORS settings.';
-            }
-            
-            reject(error);
-          },
-          async () => {
-            clearTimeout(timeoutId);
-            try {
-              // Upload complete, get download URL
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log("Upload successful, download URL:", downloadURL);
-
-              // Update form data with the new URL automatically
-              updateFormData({ profileImageURL: downloadURL });
-
-              toast({
-                title: "Profile picture updated",
-                description: "Your profile picture has been successfully uploaded.",
-              });
-              resolve();
-            } catch (error) {
-              console.error("Error getting download URL:", error);
-              reject(error);
-            }
-          }
-        );
-      });
-    } catch (error: any) {
-      // Verbose error logging for debugging
-      console.error("Error uploading profile picture:", error);
-      console.error("Upload failed details:", {
-        code: error.code,
-        message: error.message,
-        serverResponse: error.serverResponse,
-        stack: error.stack
-      });
-      
-      // Extract error code and message
-      const errorCode = error.code || 'unknown';
-      const errorMessage = error.message || "Failed to upload profile picture. Please try again.";
-      
-      // Provide more specific error messages based on Firebase Storage error codes
-      let userFriendlyMessage = `Upload failed: ${errorCode}`;
-      if (errorCode === 'storage/cors-error' || errorMessage.includes('CORS') || errorMessage.includes('ERR_FAILED')) {
-        userFriendlyMessage = "Upload failed: CORS error. Firebase Storage may not be configured for your domain (snipshift.com.au). Please check Firebase Console > Storage > CORS settings or contact support.";
-      } else if (errorCode === 'storage/unauthorized' || errorCode === 'storage/permission-denied') {
-        userFriendlyMessage = "Upload failed: Permission denied. Please ensure you're logged in and have permission to upload.";
-      } else if (errorCode === 'storage/object-not-found') {
-        userFriendlyMessage = `Upload failed: ${errorCode} - Storage path or permissions issue.`;
-      } else if (errorCode === 'storage/quota-exceeded') {
-        userFriendlyMessage = "Upload failed: Storage quota exceeded. Please contact support.";
-      } else if (errorCode === 'storage/unauthenticated') {
-        userFriendlyMessage = "Upload failed: Not authenticated. Please log in and try again.";
-      } else if (errorCode.includes('network') || errorCode.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('timeout')) {
-        userFriendlyMessage = "Upload failed: Network error or timeout. Please check your connection and try again.";
-      } else if (errorCode !== 'unknown') {
-        userFriendlyMessage = `Upload failed: ${errorCode} - ${errorMessage}`;
-      } else {
-        userFriendlyMessage = `Upload failed: ${errorMessage}`;
-      }
-
-      toast({
-        title: "Upload failed",
-        description: userFriendlyMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploadingProfile(false);
-      // Reset the input so the same file can be selected again
-      if (profileFileInputRef.current) {
-        profileFileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const handleImageUpload = (type: 'profile' | 'banner') => {
-    // For profile, trigger file input
-    if (type === 'profile') {
-      profileFileInputRef.current?.click();
-      return;
-    }
-    
-    // For banner, keep the existing mock behavior (can be updated later)
-    const mockImageURL = `https://images.unsplash.com/photo-${Date.now()}?w=400&h=400&fit=crop`;
-    updateFormData({ bannerImageURL: mockImageURL });
-  };
 
   const addSkillOrService = () => {
     if (!newSkill.trim()) return;
@@ -371,87 +179,20 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Banner and Profile Image */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Images</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Banner Image */}
-            <div>
-              <Label>Banner Image</Label>
-              <div className="mt-2">
-                <div 
-                  className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg bg-cover bg-center relative cursor-pointer hover:opacity-90 transition-opacity"
-                  style={formData.bannerImageURL ? { backgroundImage: `url(${formData.bannerImageURL})` } : {}}
-                  onClick={() => handleImageUpload('banner')}
-                  data-testid="banner-upload-area"
-                >
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                    <div className="text-white text-center">
-                      <Upload className="w-8 h-8 mx-auto mb-2" />
-                      <p className="text-sm">Click to upload banner</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Image */}
-            <div>
-              <Label>Profile Picture</Label>
-              <div className="mt-2 flex items-center gap-4">
-                <label
-                  htmlFor="profile-picture-input"
-                  className="relative cursor-pointer group"
-                  data-testid="profile-avatar-upload"
-                >
-                  <Avatar className="w-20 h-20">
-                    <AvatarImage src={formData.profileImageURL} alt="Profile" />
-                    <AvatarFallback className="text-lg">
-                      {formData.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  {/* Hover overlay with camera icon */}
-                  <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                    {isUploadingProfile ? (
-                      <Loader2 className="w-6 h-6 text-white animate-spin" />
-                    ) : (
-                      <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                    )}
-                  </div>
-                  {/* Hidden file input */}
-                  <input
-                    id="profile-picture-input"
-                    ref={profileFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePictureUpload}
-                    className="hidden"
-                    disabled={isUploadingProfile}
-                    data-testid="input-profile-picture"
-                  />
-                </label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleImageUpload('profile')}
-                  disabled={isUploadingProfile}
-                  data-testid="button-upload-profile-image"
-                >
-                  {isUploadingProfile ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Photo
-                    </>
-                  )}
-                </Button>
-              </div>
+        {/* Profile Header with Banner and Avatar */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="relative">
+              <ProfileHeader
+                bannerUrl={formData.bannerImageURL}
+                avatarUrl={formData.profileImageURL}
+                displayName={formData.displayName}
+                editable={true}
+                onBannerUpload={(url) => updateFormData({ bannerImageURL: url })}
+                onAvatarUpload={(url) => updateFormData({ profileImageURL: url })}
+              />
+              {/* Spacer for overlapping avatar */}
+              <div className="h-16 md:h-20" />
             </div>
           </CardContent>
         </Card>
