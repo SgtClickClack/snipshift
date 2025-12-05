@@ -279,6 +279,7 @@ export async function fetchShopShifts(userId: string): Promise<MyJob[]> {
   
   // Backend now returns normalized format (both jobs and shifts)
   // Map to MyJob interface - data is already normalized
+  // Preserve _type and employerId for delete button logic
   return listings.map((item: any) => ({
     id: item.id,
     title: item.title,
@@ -290,7 +291,12 @@ export async function fetchShopShifts(userId: string): Promise<MyJob[]> {
     status: item.status,
     location: item.location,
     applicationCount: item.applicationCount || 0,
-    createdAt: item.createdAt || new Date().toISOString()
+    createdAt: item.createdAt || new Date().toISOString(),
+    // Preserve backend fields needed for delete functionality
+    _type: item._type,
+    employerId: item.employerId,
+    description: item.description || item.requirements,
+    skillsRequired: item.skillsRequired || []
   }));
 }
 
