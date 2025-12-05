@@ -6,7 +6,10 @@ import path from 'path';
 export default defineConfig({
   root: '.',
   plugins: [
-    react(),
+    react({
+      // Ensure React is properly transformed and available
+      jsxRuntime: 'automatic',
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['brand-logo.png', 'logo.png', 'logo-white.png'],
@@ -137,13 +140,36 @@ export default defineConfig({
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
+        // Manual chunk splitting strategy
+        // Keep React in vendor chunk with other dependencies to ensure it's available
+        manualChunks: (id) => {
+          // Group all vendor dependencies together to ensure React is available when needed
+          // Vite will handle proper loading order based on import dependencies
+          if (id.includes('node_modules')) {
+            // Check if it's a React-related package
+            if (id.includes('react') || id.includes('react-dom') || 
+                id.includes('react-router') || id.includes('react-helmet') ||
+                id.includes('@tanstack/react-query') || id.includes('@radix-ui')) {
+              // Put React and React-related libs in vendor chunk together
+              // This ensures React is available when other React libs need it
+              return 'vendor';
+            }
+            // All other node_modules also go to vendor
+            return 'vendor';
+          }
+        },
       },
+      // Ensure external dependencies are properly resolved
+      external: [],
     },
     chunkSizeWarningLimit: 1000,
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,
     },
+    // Ensure proper module resolution
+    target: 'esnext',
+    minify: 'esbuild',
   },
 });
 
