@@ -82,9 +82,9 @@ function AppRoutes() {
   }
   
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col max-w-full overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-background flex flex-col w-full max-w-full overflow-x-hidden">
       {!hideNavbar && <Navbar />}
-      <div className="flex-grow">
+      <div className="flex-grow w-full max-w-full overflow-x-hidden">
         <Routes>
         {/* Public routes */}
         <Route path="/" element={

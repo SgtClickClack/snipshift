@@ -117,23 +117,25 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50 pt-safe">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50 pt-safe overflow-x-hidden w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex justify-between items-center h-16 min-w-0">
           <Link
             to={!user ? "/" : "/dashboard"}
-            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0"
+            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 min-w-0"
           >
             <img 
               src={logo} 
               alt="Snipshift Logo" 
-              className="h-10 w-auto object-contain" 
+              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none" 
             />
           </Link>
           
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 min-w-0">
-            <ErrorBoundary fallback={<div className="w-9 h-9" />}>
-              <ModeToggle />
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 flex-shrink-0 min-w-0">
+            <ErrorBoundary fallback={<div className="w-9 h-9 flex-shrink-0" />}>
+              <div className="flex-shrink-0">
+                <ModeToggle />
+              </div>
             </ErrorBoundary>
             {user ? (
               <>
@@ -217,14 +219,16 @@ export default function Navbar() {
 
                 {/* Common Items (Visible on Mobile & Desktop) */}
                 {/* Notifications */}
-                <NotificationBell />
+                <div className="flex-shrink-0">
+                  <NotificationBell />
+                </div>
                 
                 {/* Messages - New In-App Messaging */}
-                <Link to="/messages">
+                <Link to="/messages" className="flex-shrink-0">
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-white hover:bg-steel-700 relative"
+                    className="text-white hover:bg-steel-700 relative flex-shrink-0"
                     title="Messages"
                   >
                     <MessageCircle className="h-4 w-4" />
@@ -278,10 +282,10 @@ export default function Navbar() {
                 </DropdownMenu>
 
                 {/* Mobile Menu Trigger */}
-                <div className="md:hidden">
+                <div className="md:hidden flex-shrink-0">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700" data-testid="button-mobile-menu" aria-label="Open menu">
+                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700 flex-shrink-0" data-testid="button-mobile-menu" aria-label="Open menu">
                         <Menu className="h-6 w-6" />
                       </Button>
                     </SheetTrigger>
