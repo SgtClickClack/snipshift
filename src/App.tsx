@@ -17,6 +17,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
+import { PwaUpdateHandler } from '@/components/pwa/pwa-update-handler';
 import { RouteProgressBar } from '@/components/ui/route-progress-bar';
 import Navbar from '@/components/navbar';
 import { Footer } from '@/components/layout/footer';
@@ -395,6 +396,7 @@ function App() {
                 <TutorialOverlay />
                 <FeedbackWidget />
                 <InstallPrompt />
+                <PwaUpdateHandler />
                 <Analytics />
                 <SpeedInsights />
               </NotificationProvider>
