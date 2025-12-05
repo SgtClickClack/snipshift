@@ -12,11 +12,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shift } from "@/shared/types";
-import { Plus, Calendar, DollarSign, CreditCard, Wallet, Loader2 } from "lucide-react";
+import { Plus, Calendar, DollarSign, CreditCard, Wallet, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ShopDashboard() {
@@ -94,6 +105,28 @@ export default function ShopDashboard() {
       toast({
         title: "Failed to post shift",
         description: "Please check your information and try again",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteShiftMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/shifts/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts/shop", user?.id] });
+      toast({
+        title: "Shift deleted",
+        description: "The shift has been removed and all applications have been cancelled.",
+      });
+    },
+    onError: (error) => {
+      // console.error("Failed to delete shift:", error);
+      toast({
+        title: "Delete Failed",
+        description: "Could not delete shift. Please try again.",
         variant: "destructive",
       });
     },
@@ -289,51 +322,91 @@ export default function ShopDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {shifts.map((shift) => (
-                      <Card key={shift.id} className="border border-neutral-200">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="font-semibold text-neutral-900">{shift.title}</h4>
-                            <div className="w-[130px]">
-                              <Select
-                                defaultValue={shift.status}
-                                disabled={updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id}
-                                onValueChange={(value) => updateStatusMutation.mutate({ id: shift.id, status: value })}
-                              >
-                                <SelectTrigger 
-                                  className={`h-8 text-xs font-medium border-0 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                    shift.status === 'open' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                                    shift.status === 'filled' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' :
-                                    'bg-red-100 text-red-800 hover:bg-red-200'
-                                  }`}
-                                >
-                                  {updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                                  ) : null}
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="open">Open</SelectItem>
-                                  <SelectItem value="filled">Filled</SelectItem>
-                                  <SelectItem value="completed">Closed</SelectItem>
-                                </SelectContent>
-                              </Select>
+                    {shifts.map((shift) => {
+                      const isOwner = shift.employerId === user?.id && (shift as any)._type === 'shift';
+                      return (
+                        <Card key={shift.id} className="border border-neutral-200">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-3">
+                              <h4 className="font-semibold text-neutral-900">{shift.title}</h4>
+                              <div className="flex items-center gap-2">
+                                <div className="w-[130px]">
+                                  <Select
+                                    defaultValue={shift.status}
+                                    disabled={updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id}
+                                    onValueChange={(value) => updateStatusMutation.mutate({ id: shift.id, status: value })}
+                                  >
+                                    <SelectTrigger 
+                                      className={`h-8 text-xs font-medium border-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        shift.status === 'open' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                                        shift.status === 'filled' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' :
+                                        'bg-red-100 text-red-800 hover:bg-red-200'
+                                      }`}
+                                    >
+                                      {updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id ? (
+                                        <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                                      ) : null}
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="open">Open</SelectItem>
+                                      <SelectItem value="filled">Filled</SelectItem>
+                                      <SelectItem value="completed">Closed</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                {isOwner && (
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        disabled={deleteShiftMutation.isPending && deleteShiftMutation.variables === shift.id}
+                                      >
+                                        {deleteShiftMutation.isPending && deleteShiftMutation.variables === shift.id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will remove the shift and cancel all applications. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteShiftMutation.mutate(shift.id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <div className="grid sm:grid-cols-2 gap-4 text-sm text-neutral-600 mb-3">
-                            <div className="flex items-center">
-                              <Calendar className="mr-2 h-4 w-4 text-primary" />
-                              <span>{format(new Date(shift.date), "EEE, MMM d, yyyy - h:mm a")}</span>
+                            <div className="grid sm:grid-cols-2 gap-4 text-sm text-neutral-600 mb-3">
+                              <div className="flex items-center">
+                                <Calendar className="mr-2 h-4 w-4 text-primary" />
+                                <span>{format(new Date(shift.date), "EEE, MMM d, yyyy - h:mm a")}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <DollarSign className="mr-2 h-4 w-4 text-primary" />
+                                <span>${shift.pay}/hour</span>
+                              </div>
                             </div>
-                            <div className="flex items-center">
-                              <DollarSign className="mr-2 h-4 w-4 text-primary" />
-                              <span>${shift.pay}/hour</span>
-                            </div>
-                          </div>
-                          <p className="text-sm text-neutral-600">{shift.requirements}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            <p className="text-sm text-neutral-600">{shift.requirements}</p>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

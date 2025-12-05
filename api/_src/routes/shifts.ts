@@ -144,6 +144,38 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
   res.status(200).json(updatedShift);
 }));
 
+// Delete shift (authenticated, employer only)
+router.delete('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get shift to check ownership
+  const existingShift = await shiftsRepo.getShiftById(id);
+  if (!existingShift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (existingShift.employerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You can only delete your own shifts' });
+    return;
+  }
+
+  const deleted = await shiftsRepo.deleteShift(id);
+
+  if (!deleted) {
+    res.status(500).json({ message: 'Failed to delete shift' });
+    return;
+  }
+
+  res.status(200).json({ message: 'Shift deleted successfully' });
+}));
+
 // Get shifts by employer (authenticated, owner only or public?)
 // Currently implementing as authenticated for shop dashboard usage
 // FIXED: Now also fetches legacy jobs to ensure all listings are visible
@@ -187,6 +219,7 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
         location,
         applicationCount,
         createdAt: shift.createdAt.toISOString(),
+        employerId: shift.employerId,
         // Add type indicator for debugging (optional)
         _type: 'shift'
       };
