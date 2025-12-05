@@ -122,7 +122,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           <Link
             to={!user ? "/" : "/dashboard"}
-            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
+            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0"
           >
             <img 
               src={logo} 
@@ -131,7 +131,7 @@ export default function Navbar() {
             />
           </Link>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 min-w-0">
             <ErrorBoundary fallback={<div className="w-9 h-9" />}>
               <ModeToggle />
             </ErrorBoundary>
@@ -239,7 +239,7 @@ export default function Navbar() {
                 {/* User Profile Dropdown - Visible on all screens */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2" data-testid="button-profile-menu" aria-label="User menu">
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-shrink-0" data-testid="button-profile-menu" aria-label="User menu">
                       <UserAvatar />
                     </Button>
                   </DropdownMenuTrigger>

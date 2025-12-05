@@ -311,7 +311,7 @@ export default function HubDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Business Dashboard" />
       {/* Dashboard Header */}
       <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
@@ -343,10 +343,10 @@ export default function HubDashboard() {
           </div>
           
           {/* Navigation Tabs */}
-          <div className="flex space-x-8 mt-4">
+          <div className="flex overflow-x-auto pb-2 md:pb-0 space-x-8 mt-4 no-scrollbar">
             <button
               onClick={() => setActiveView('overview')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeView === 'overview'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
@@ -357,7 +357,7 @@ export default function HubDashboard() {
             </button>
             <button
               onClick={() => setActiveView('jobs')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeView === 'jobs'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
@@ -368,7 +368,7 @@ export default function HubDashboard() {
             </button>
             <button
               onClick={() => setActiveView('applications')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeView === 'applications'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
@@ -379,7 +379,7 @@ export default function HubDashboard() {
             </button>
             <button
               onClick={() => setActiveView('profile')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeView === 'profile'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
