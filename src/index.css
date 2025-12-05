@@ -72,8 +72,16 @@
   }
 
   /* The Nuclear Option for Mobile Browsers - Force pure white in light mode */
-  html {
-    background-color: hsl(var(--background)) !important;
+  /* Samsung Internet Dark Mode Override Prevention */
+  html, body {
+    /* Tell browser to stop auto-adjusting colors */
+    forced-color-adjust: none !important;
+    -webkit-print-color-adjust: exact !important;
+    
+    /* The Gradient Trick: Samsung often skips inverting gradients */
+    background-image: linear-gradient(white, white) !important;
+    background-color: white !important;
+    
     overflow-x: hidden;
     width: 100%;
     position: relative;
@@ -81,17 +89,13 @@
 
   body {
     @apply bg-background text-foreground;
-    background-color: white; /* Fallback for older Samsung engines */
-    background-color: hsl(var(--background)) !important;
     color: hsl(var(--foreground)) !important;
     font-feature-settings: "rlig" 1, "calt" 1;
-    overflow-x: hidden;
-    width: 100%;
-    position: relative;
   }
 
-  .dark body {
-    background-color: black; /* Fallback for older Samsung engines */
+  /* Reset gradient trick for dark mode */
+  .dark html, .dark body {
+    background-image: none !important;
     background-color: hsl(var(--background)) !important;
   }
 
