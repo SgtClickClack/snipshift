@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Download, Smartphone } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useInstallPrompt } from '@/hooks/use-install-prompt';
 
 interface InstallButtonProps {
@@ -25,22 +25,26 @@ export function InstallButton({
     console.log('InstallButton render:', { canInstall, hasDeferredPrompt: !!deferredPrompt, isInstalled });
   }
 
-  // Don't render if app is already installed
-  if (isInstalled) {
-    return null;
-  }
-
-  // Always render the button, but disable it if install prompt isn't available yet
+  // Always render the button for now to debug visibility
+  // Disable it if app is already installed or prompt isn't available
+  const isDisabled = isInstalled || !canInstall;
+  
   return (
     <Button
       variant={variant}
       size={size}
-      onClick={canInstall ? promptInstall : undefined}
-      disabled={!canInstall}
+      onClick={canInstall && !isInstalled ? promptInstall : undefined}
+      disabled={isDisabled}
       className={className}
-      title={canInstall ? 'Install Snipshift app' : 'Install prompt will appear soon'}
+      title={
+        isInstalled 
+          ? 'App already installed' 
+          : canInstall 
+            ? 'Install Snipshift app' 
+            : 'Install prompt will appear soon'
+      }
     >
-      <Smartphone className="h-4 w-4 mr-2 text-current" />
+      <Download className="h-4 w-4 mr-2 text-current" />
       <span>Install App</span>
     </Button>
   );
