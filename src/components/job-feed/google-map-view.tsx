@@ -64,6 +64,7 @@ export default function GoogleMapView({
   const circleRef = useRef<any>(null);
   const centerMarkerRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usesFallback, setUsesFallback] = useState(false);
 
@@ -129,6 +130,7 @@ export default function GoogleMapView({
 
     const updateMapCenter = async () => {
       try {
+        setIsSearching(true);
         const map = mapInstanceRef.current;
         
         if (map) {
@@ -147,8 +149,14 @@ export default function GoogleMapView({
             centerMarkerRef.current.title = searchLocation;
           }
         }
+        
+        // Clear searching state after a brief delay to show feedback
+        setTimeout(() => {
+          setIsSearching(false);
+        }, 500);
       } catch (error) {
         console.error('Failed to update map center:', error);
+        setIsSearching(false);
       }
     };
 
@@ -466,6 +474,14 @@ export default function GoogleMapView({
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-sm text-muted-foreground">Loading map...</p>
+                </div>
+              </div>
+            )}
+            {isSearching && !isLoading && (
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10 pointer-events-none">
+                <div className="text-center bg-white/90 rounded-lg px-4 py-3 shadow-lg border">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm font-medium text-foreground">Searching area...</p>
                 </div>
               </div>
             )}

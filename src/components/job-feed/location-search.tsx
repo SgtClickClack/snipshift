@@ -81,6 +81,37 @@ export default function LocationSearch({
     }
   };
 
+  const handleSearchLocation = async () => {
+    if (!searchQuery.trim()) return;
+
+    // First, try to find an exact match in the cities list
+    const exactMatch = AUSTRALIAN_CITIES.find(
+      c => c.name.toLowerCase() === searchQuery.trim().toLowerCase()
+    );
+
+    if (exactMatch) {
+      handleLocationSelect(exactMatch.name);
+      return;
+    }
+
+    // If no exact match, try geocoding the search query
+    try {
+      const coordinates = await geocodeAddress(searchQuery.trim());
+      if (coordinates) {
+        onLocationChange(searchQuery.trim(), coordinates);
+        setSearchQuery("");
+        setShowSuggestions(false);
+      } else {
+        // If geocoding fails, show suggestions
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      // On error, show suggestions as fallback
+      setShowSuggestions(true);
+    }
+  };
+
   const handleCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -146,19 +177,34 @@ export default function LocationSearch({
         {/* Location Search */}
         <div className="relative">
           <Label htmlFor="locationSearch">Search Location</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="locationSearch"
-              type="text"
-              placeholder="Search for a city or postcode..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              className="pl-10"
-              data-testid="input-location-search"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="locationSearch"
+                type="text"
+                placeholder="Search for a city or postcode..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    handleSearchLocation();
+                  }
+                }}
+                className="pl-10"
+                data-testid="input-location-search"
+              />
+            </div>
+            <Button
+              onClick={handleSearchLocation}
+              disabled={!searchQuery.trim()}
+              data-testid="button-search-location"
+              className="shrink-0"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Location Suggestions */}
