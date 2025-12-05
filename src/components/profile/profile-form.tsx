@@ -162,7 +162,14 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             console.log('Upload progress:', progress + '%');
           },
-          (error) => {
+          (error: any) => {
+            // Verbose error logging for debugging
+            console.error("Upload failed details:", {
+              code: error.code,
+              message: error.message,
+              serverResponse: error.serverResponse,
+              stack: error.stack
+            });
             console.error("Upload error:", error);
             reject(error);
           },
@@ -188,16 +195,36 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           }
         );
       });
-    } catch (error) {
+    } catch (error: any) {
+      // Verbose error logging for debugging
       console.error("Error uploading profile picture:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to upload profile picture. Please try again.";
+      console.error("Upload failed details:", {
+        code: error.code,
+        message: error.message,
+        serverResponse: error.serverResponse,
+        stack: error.stack
+      });
       
-      // Provide more specific error messages
-      let userFriendlyMessage = errorMessage;
-      if (errorMessage.includes('permission') || errorMessage.includes('unauthorized')) {
-        userFriendlyMessage = "Permission denied. Please ensure you're logged in and have permission to upload.";
-      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-        userFriendlyMessage = "Network error. Please check your connection and try again.";
+      // Extract error code and message
+      const errorCode = error.code || 'unknown';
+      const errorMessage = error.message || "Failed to upload profile picture. Please try again.";
+      
+      // Provide more specific error messages based on Firebase Storage error codes
+      let userFriendlyMessage = `Upload failed: ${errorCode}`;
+      if (errorCode === 'storage/unauthorized' || errorCode === 'storage/permission-denied') {
+        userFriendlyMessage = "Upload failed: Permission denied. Please ensure you're logged in and have permission to upload.";
+      } else if (errorCode === 'storage/object-not-found') {
+        userFriendlyMessage = `Upload failed: ${errorCode} - Storage path or permissions issue.`;
+      } else if (errorCode === 'storage/quota-exceeded') {
+        userFriendlyMessage = "Upload failed: Storage quota exceeded. Please contact support.";
+      } else if (errorCode === 'storage/unauthenticated') {
+        userFriendlyMessage = "Upload failed: Not authenticated. Please log in and try again.";
+      } else if (errorCode.includes('network') || errorCode.includes('fetch') || errorMessage.includes('network')) {
+        userFriendlyMessage = "Upload failed: Network error. Please check your connection and try again.";
+      } else if (errorCode !== 'unknown') {
+        userFriendlyMessage = `Upload failed: ${errorCode} - ${errorMessage}`;
+      } else {
+        userFriendlyMessage = `Upload failed: ${errorMessage}`;
       }
 
       toast({
