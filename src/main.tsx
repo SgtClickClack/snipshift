@@ -5,7 +5,7 @@ import "./index.css";
 import { StartupErrorBoundary } from "./components/startup-error-boundary";
 
 // Version indicator for debugging deployment issues
-console.log('Snipshift v1.1.0');
+console.log('Snipshift v1.1.1 Loaded');
 
 // Global error handler for chunk loading failures (common in SPAs after deployment)
 // This automatically reloads the page if a user tries to load a lazy-loaded chunk that no longer exists on the server
