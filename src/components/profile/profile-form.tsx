@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,10 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@shared/firebase-schema';
-import { Save, Plus, X, MapPin, Phone, Globe, Award, Star } from 'lucide-react';
+import { Save, Plus, X, MapPin, Phone, Globe, Award, Star, Camera, Loader2 } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
 
 interface ProfileFormProps {
   onSave?: (profileData: any) => void;
@@ -21,6 +24,9 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
+  const [profileImageURL, setProfileImageURL] = useState<string>('');
+  const profileFileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     displayName: user?.displayName || '',
@@ -28,6 +34,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     phone: '',
     website: '',
     bio: '',
+    avatarUrl: '',
     // Hub-specific fields
     businessName: '',
     address: {
@@ -70,6 +77,97 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     yearsExperience: 0,
     trainingLocation: ''
   });
+
+  // Initialize profile picture from user data
+  useEffect(() => {
+    if (user) {
+      const avatarUrl = user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || '';
+      setProfileImageURL(avatarUrl);
+      setFormData(prev => ({ ...prev, avatarUrl }));
+    }
+  }, [user]);
+
+  /**
+   * Handles profile picture file upload to Firebase Storage.
+   * 
+   * Note: Firebase Storage is initialized in @/lib/firebase.ts.
+   * If Storage were not available, we could fall back to:
+   * - Data URI (Base64) for small files (< 1MB)
+   * - Or keep a URL input field as a backup option
+   */
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user?.id && !user?.uid) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload images.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingProfile(true);
+
+    try {
+      const userId = user.id || user.uid;
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      // Use the same path pattern as ImageUpload component: users/{userId}/avatar.{ext}
+      // This matches the Firebase Storage security rules in storage.rules
+      const storagePath = `users/${userId}/avatar.${fileExtension}`;
+      const storageRef = ref(storage, storagePath);
+
+      // Upload the file
+      await uploadBytes(storageRef, file);
+
+      // Get the download URL
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Update state with the new URL
+      setProfileImageURL(downloadURL);
+      setFormData(prev => ({ ...prev, avatarUrl: downloadURL }));
+
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been successfully uploaded.",
+      });
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload profile picture. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingProfile(false);
+      // Reset the input so the same file can be selected again
+      if (profileFileInputRef.current) {
+        profileFileInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +214,67 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
 
   const renderBasicFields = () => (
     <>
+      {/* Profile Picture Upload */}
+      <div>
+        <Label>Profile Picture</Label>
+        <div className="mt-2 flex items-center gap-4">
+          <label
+            htmlFor="profile-picture-input"
+            className="relative cursor-pointer group"
+            data-testid="profile-avatar-upload"
+          >
+            <Avatar className="w-20 h-20">
+              <AvatarImage src={profileImageURL} alt="Profile" />
+              <AvatarFallback className="text-lg">
+                {formData.displayName?.split(' ').map(n => n[0]).join('') || user?.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            {/* Hover overlay with camera icon - only show when editing */}
+            {isEditing && (
+              <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+                {isUploadingProfile ? (
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                )}
+              </div>
+            )}
+            {/* Hidden file input */}
+            <input
+              id="profile-picture-input"
+              ref={profileFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureUpload}
+              className="hidden"
+              disabled={isUploadingProfile || !isEditing}
+              data-testid="input-profile-picture"
+            />
+          </label>
+          {isEditing && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => profileFileInputRef.current?.click()}
+              disabled={isUploadingProfile}
+              data-testid="button-upload-profile-image"
+            >
+              {isUploadingProfile ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Camera className="w-4 h-4 mr-2" />
+                  Upload Photo
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="displayName">Display Name</Label>
