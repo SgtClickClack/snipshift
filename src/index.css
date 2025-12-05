@@ -131,12 +131,16 @@
   .logo-sharp {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: auto;
-    filter: contrast(1.15) brightness(1.05) saturate(1.1);
+    /* Enhanced sharpening: higher contrast + brightness boost + saturation */
+    filter: contrast(1.3) brightness(1.08) saturate(1.15);
     transform: translateZ(0);
     will-change: transform;
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Force subpixel rendering for sharper edges */
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
   }
 }
 

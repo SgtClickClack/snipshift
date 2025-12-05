@@ -135,6 +135,7 @@ export default function Navbar() {
               style={{
                 imageRendering: 'auto',
                 WebkitFontSmoothing: 'antialiased',
+                filter: 'contrast(1.3) brightness(1.08) saturate(1.15)',
               }}
             />
           </Link>
