@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2 } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
@@ -343,50 +343,56 @@ export default function HubDashboard() {
           </div>
           
           {/* Navigation Tabs */}
-          <div className="flex overflow-x-auto pb-2 md:pb-0 space-x-8 mt-4 no-scrollbar">
+          <div className="flex justify-between md:justify-start md:space-x-8 pb-2 md:pb-0 mt-4 overflow-x-hidden">
             <button
               onClick={() => setActiveView('overview')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'overview'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
               data-testid="tab-overview"
             >
-              Overview
+              <LayoutDashboard className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Overview</span>
             </button>
             <button
               onClick={() => setActiveView('jobs')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'jobs'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
               data-testid="tab-jobs"
             >
-              Jobs ({jobs.length})
+              <Briefcase className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Jobs</span>
+              <span className="hidden md:inline text-muted-foreground">({jobs.length})</span>
             </button>
             <button
               onClick={() => setActiveView('applications')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'applications'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
               data-testid="tab-applications"
             >
-              Applications ({stats.totalApplications})
+              <Users className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Applications</span>
+              <span className="hidden md:inline text-muted-foreground">({stats.totalApplications})</span>
             </button>
             <button
               onClick={() => setActiveView('profile')}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'profile'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
               data-testid="tab-profile"
             >
-              Profile
+              <User className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Profile</span>
             </button>
           </div>
         </div>

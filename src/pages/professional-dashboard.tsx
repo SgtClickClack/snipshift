@@ -10,7 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
-import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List } from "lucide-react";
+import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users } from "lucide-react";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import StartChatButton from "@/components/messaging/start-chat-button";
@@ -311,61 +311,67 @@ export default function ProfessionalDashboard() {
           </div>
           
           {/* Navigation Tabs */}
-          <div className="flex overflow-x-auto pb-2 md:pb-0 space-x-8 mt-4 no-scrollbar">
+          <div className="flex justify-between md:justify-start md:space-x-8 pb-2 md:pb-0 mt-4 overflow-x-hidden">
             <button
               onClick={() => setActiveView('overview')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'overview'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-overview"
             >
-              Overview
+              <LayoutDashboard className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Overview</span>
             </button>
             <button
               onClick={() => setActiveView('jobs')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'jobs'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-jobs"
             >
-              Job Feed
+              <Briefcase className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Job Feed</span>
             </button>
             <button
               onClick={() => setActiveView('applications')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'applications'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-applications"
             >
-              Applications ({stats.activeApplications})
+              <Users className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Applications</span>
+              <span className="hidden md:inline text-muted-foreground">({stats.activeApplications})</span>
             </button>
             <button
               onClick={() => setActiveView('calendar')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'calendar'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-calendar"
             >
-              Calendar
+              <Calendar className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Calendar</span>
             </button>
             <button
               onClick={() => setActiveView('profile')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'profile'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-steel-500 hover:text-steel-700'
               }`}
               data-testid="tab-profile"
             >
-              Profile
+              <User className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Profile</span>
             </button>
           </div>
         </div>
