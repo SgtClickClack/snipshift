@@ -186,22 +186,22 @@ export default function SignupPage() {
 
 
   return (
-    <div className="min-h-screen py-12" style={{backgroundColor: 'var(--bg-signup)'}}>
+    <div className="min-h-screen bg-background py-12">
       <div className="max-w-md mx-auto px-4">
-        <Card className="shadow-xl border-2 border-steel-300/50 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="text-center bg-gradient-to-b from-steel-50 to-white rounded-t-lg border-b border-steel-200/50">
+        <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="text-center bg-gradient-to-b from-muted/50 to-card rounded-t-lg border-b border-border/50">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full shadow-lg">
                 <Scissors className="h-8 w-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-steel-900" data-testid="heading-signup">Join Snipshift</CardTitle>
-            <p className="text-steel-600 font-medium">Connect with the industry network</p>
+            <CardTitle className="text-2xl font-bold text-card-foreground" data-testid="heading-signup">Join Snipshift</CardTitle>
+            <p className="text-muted-foreground font-medium">Connect with the industry network</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="email" className="text-sm font-medium text-steel-700">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   Email Address
                 </Label>
                 <Input
@@ -217,7 +217,7 @@ export default function SignupPage() {
               </div>
               
               <div>
-                <Label htmlFor="password" className="text-sm font-medium text-steel-700">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Password
                 </Label>
                 <div className="relative mt-2">
@@ -234,7 +234,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-steel-500 hover:text-steel-700 focus:outline-none touch-manipulation z-10"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground focus:outline-none touch-manipulation z-10"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -247,7 +247,7 @@ export default function SignupPage() {
               </div>
               
               <div>
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-steel-700">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                   Confirm Password
                 </Label>
                 <div className="relative mt-2">
@@ -264,7 +264,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-steel-500 hover:text-steel-700 focus:outline-none touch-manipulation z-10"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground focus:outline-none touch-manipulation z-10"
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
                     {showConfirmPassword ? (
@@ -289,10 +289,10 @@ export default function SignupPage() {
             <div className="my-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-steel-300" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-4 text-steel-500">Or continue with</span>
+                  <span className="bg-card px-4 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
             </div>
@@ -300,9 +300,9 @@ export default function SignupPage() {
             <GoogleAuthButton mode="signup" />
             
             <div className="text-center mt-6">
-              <p className="text-steel-600">
+              <p className="text-muted-foreground">
                 Already have an account?{" "}
-                <Link to="/login" className="text-steel-700 hover:text-steel-900 hover:underline font-medium">
+                <Link to="/login" className="text-primary hover:underline font-medium">
                   Sign in here
                 </Link>
               </p>

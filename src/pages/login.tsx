@@ -109,18 +109,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 py-12">
+    <div className="min-h-screen bg-background py-12">
       <div className="max-w-md mx-auto px-4">
         <Card className="shadow-sm">
           <CardHeader className="text-center">
             <Scissors className="text-primary text-3xl mx-auto mb-4" />
-            <CardTitle className="text-2xl font-bold text-neutral-900">Welcome Back</CardTitle>
-            <p className="text-neutral-600">Sign in to your account</p>
+            <CardTitle className="text-2xl font-bold text-card-foreground">Welcome Back</CardTitle>
+            <p className="text-muted-foreground">Sign in to your account</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="email" className="text-sm font-medium text-neutral-700">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   Email Address
                 </Label>
                 <Input
@@ -136,7 +136,7 @@ export default function LoginPage() {
               </div>
               
               <div>
-                <Label htmlFor="password" className="text-sm font-medium text-neutral-700">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Password
                 </Label>
                 <div className="relative mt-2">
@@ -153,7 +153,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-neutral-500 hover:text-neutral-700 focus:outline-none touch-manipulation z-10"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground focus:outline-none touch-manipulation z-10"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -167,7 +167,7 @@ export default function LoginPage() {
               
               <Button 
                 type="submit" 
-                className="w-full bg-primary hover:bg-blue-700"
+                className="w-full bg-primary hover:bg-primary/90"
                 disabled={isLoading}
                 data-testid="button-signin"
               >
@@ -178,10 +178,10 @@ export default function LoginPage() {
             <div className="my-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-neutral-200" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-4 text-neutral-500">Or continue with</span>
+                  <span className="bg-card px-4 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
             </div>
@@ -189,7 +189,7 @@ export default function LoginPage() {
             <GoogleAuthButton mode="signin" />
             
             <div className="text-center mt-6">
-              <p className="text-neutral-600">
+              <p className="text-muted-foreground">
                 Don't have an account?{" "}
                 <Link to="/signup" className="text-primary hover:underline font-medium">
                   Sign up here
