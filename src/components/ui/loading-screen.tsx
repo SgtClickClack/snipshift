@@ -10,9 +10,9 @@ export function LoadingScreen() {
           alt="Snipshift" 
           className="w-64 h-auto object-contain animate-pulse logo-sharp"
           style={{
-            imageRendering: '-webkit-optimize-contrast',
-            imageRendering: 'crisp-edges',
-            filter: 'brightness(2.5) contrast(1.8) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
+            imageRendering: 'auto',
+            filter: 'brightness(2.5) contrast(1.8) saturate(1.1) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
+            WebkitFontSmoothing: 'antialiased',
           }}
           loading="eager"
           width={256}

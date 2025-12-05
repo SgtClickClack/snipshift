@@ -120,15 +120,19 @@
         margin-bottom: 24px;
         object-fit: contain;
         animation: pulse 2s ease-in-out infinite;
-        image-rendering: -webkit-optimize-contrast;
-        image-rendering: crisp-edges;
+        image-rendering: auto;
+        transform: translateZ(0);
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       /* Adjust logo for dark/light modes */
       html.dark .splash-logo {
-        filter: brightness(2.5) contrast(1.8) drop-shadow(0 0 15px rgba(255,255,255,0.5));
+        filter: brightness(2.5) contrast(1.8) saturate(1.1) drop-shadow(0 0 15px rgba(255,255,255,0.5));
       }
       html:not(.dark) .splash-logo {
-        filter: contrast(1.1) brightness(0) saturate(100%) drop-shadow(0 1px 2px rgba(0,0,0,0.1)); /* Force black/dark logo for light mode with sharpening */
+        filter: contrast(1.15) brightness(1.05) brightness(0) saturate(100%) drop-shadow(0 1px 2px rgba(0,0,0,0.1)); /* Force black/dark logo for light mode with sharpening */
       }
 
       .splash-logo-container {

@@ -12,10 +12,14 @@ export function Footer() {
               <img 
                 src={logo} 
                 alt="SnipShift Logo" 
-                className="h-8 w-auto logo-sharp drop-shadow-sm"
+                className="h-8 w-auto logo-sharp"
                 loading="eager"
                 width={96}
                 height={32}
+                style={{
+                  imageRendering: 'auto',
+                  WebkitFontSmoothing: 'antialiased',
+                }}
               />
             </Link>
             <p className="text-sm text-steel-400 mb-4">
