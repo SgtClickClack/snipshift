@@ -146,13 +146,13 @@ export default function Navbar() {
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-50 relative"
+                        className="w-full max-w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-50 relative"
                       >
                         {currentRoleLabel}
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[240px] bg-steel-800 border-steel-600 text-white z-50" align="end">
+                    <DropdownMenuContent className="w-[240px] max-w-[calc(100vw-2rem)] bg-steel-800 border-steel-600 text-white z-50" align="end">
                       
                       <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Current View</DropdownMenuLabel>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white justify-between font-bold bg-steel-700/50">

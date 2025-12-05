@@ -60,7 +60,7 @@ export function ReviewList({ reviews, emptyMessage = 'No reviews yet' }: ReviewL
             </div>
 
             {review.comment && (
-              <p className="text-sm text-steel-700 whitespace-pre-wrap bg-steel-50 p-3 rounded border border-steel-200">
+              <p className="text-sm text-steel-700 whitespace-pre-wrap break-words overflow-hidden bg-steel-50 p-3 rounded border border-steel-200">
                 {review.comment}
               </p>
             )}

@@ -130,8 +130,8 @@ export default function JobDetailsPage() {
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                 <div className="flex-1">
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <h1 className="text-3xl md:text-4xl font-bold text-foreground">{job?.title}</h1>
+                  <div className="flex items-start justify-between gap-4 mb-2 min-w-0">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground break-words overflow-hidden flex-1 min-w-0">{job?.title}</h1>
                     {user && (
                       <div className="flex items-center gap-2">
                         <Button
@@ -153,7 +153,7 @@ export default function JobDetailsPage() {
                     )}
                   </div>
                   {job?.shopName && (
-                    <p className="text-xl text-muted-foreground mb-4">{job.shopName}</p>
+                    <p className="text-xl text-muted-foreground mb-4 break-words overflow-hidden">{job.shopName}</p>
                   )}
                   <div className="flex items-center gap-2 text-lg font-semibold text-success">
                     <DollarSign className="h-5 w-5" />
@@ -165,15 +165,15 @@ export default function JobDetailsPage() {
               {/* Key Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
                 {job?.location && (
-                  <div className="flex items-start gap-2 text-muted-foreground">
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0">
                     <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <span>{job.location}</span>
+                    <span className="break-words overflow-hidden">{job.location}</span>
                   </div>
                 )}
                 {(job?.date || job?.startTime || job?.endTime) && (
-                  <div className="flex items-start gap-2 text-muted-foreground">
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0">
                     <Clock className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <div>
+                    <div className="break-words overflow-hidden">
                       {job.date && <div>{job.date}</div>}
                       {job.startTime && job.endTime && (
                         <div className="text-sm">{job.startTime} - {job.endTime}</div>
@@ -190,7 +190,7 @@ export default function JobDetailsPage() {
             <Card className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-foreground mb-4">Description</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
+                <p className="text-muted-foreground whitespace-pre-wrap break-words overflow-hidden">{job.description}</p>
               </CardContent>
             </Card>
           )}

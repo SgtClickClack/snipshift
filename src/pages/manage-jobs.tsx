@@ -325,8 +325,8 @@ export default function ManageJobsPage() {
                       </div>
 
                       {application.coverLetter && (
-                        <div className="mb-4">
-                          <p className="text-sm text-steel-700 whitespace-pre-wrap bg-steel-50 p-3 rounded border border-steel-200">
+                        <div className="mb-4 overflow-hidden">
+                          <p className="text-sm text-steel-700 whitespace-pre-wrap break-words bg-steel-50 p-3 rounded border border-steel-200">
                             {application.coverLetter}
                           </p>
                         </div>

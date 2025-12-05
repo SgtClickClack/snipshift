@@ -46,9 +46,9 @@ export function JobCard({ job, isSelected, onClick, onViewDetails }: JobCardProp
             </div>
           )}
           {job.date && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Clock className="h-4 w-4 shrink-0 text-steel-400" />
-              <span>
+              <span className="truncate">
                 {job.date}
                 {job.startTime && job.endTime && ` • ${job.startTime} - ${job.endTime}`}
               </span>

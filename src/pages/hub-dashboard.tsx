@@ -795,11 +795,11 @@ export default function HubDashboard() {
                      {applications.map((app: any) => (
                         <div key={app.id} className="border rounded-lg p-4 hover:bg-muted transition-colors">
                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                              <div>
-                                 <h3 className="font-medium text-lg">{app.name}</h3>
-                                 <p className="text-sm text-muted-foreground">{app.email}</p>
+                              <div className="flex-1 min-w-0">
+                                 <h3 className="font-medium text-lg break-words overflow-hidden">{app.name}</h3>
+                                 <p className="text-sm text-muted-foreground break-all">{app.email}</p>
                                  <div className="mt-2 text-sm text-muted-foreground">
-                                    Applying for: <span className="font-medium text-foreground">{app.job?.title || app.shift?.title || 'Unknown Position'}</span>
+                                    Applying for: <span className="font-medium text-foreground break-words">{app.job?.title || app.shift?.title || 'Unknown Position'}</span>
                                  </div>
                               </div>
                               <div className="flex items-center gap-2">
@@ -813,7 +813,7 @@ export default function HubDashboard() {
                               </div>
                            </div>
                            {app.coverLetter && (
-                              <div className="mt-4 text-sm bg-card p-3 rounded border text-muted-foreground italic">
+                              <div className="mt-4 text-sm bg-card p-3 rounded border text-muted-foreground italic break-words overflow-hidden">
                                  "{app.coverLetter}"
                               </div>
                            )}

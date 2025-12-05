@@ -137,8 +137,8 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
         </div>
 
         {/* Post Content */}
-        <div className="mb-4">
-          <p className="text-foreground whitespace-pre-wrap mb-3" data-testid={`post-content-${post.id}`}>
+        <div className="mb-4 overflow-hidden">
+          <p className="text-foreground whitespace-pre-wrap break-words mb-3" data-testid={`post-content-${post.id}`}>
             {post.content}
           </p>
 

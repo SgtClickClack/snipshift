@@ -377,7 +377,7 @@ export default function GoogleMapView({
                 ))}
               </div>
 
-              <p className="text-muted-foreground text-sm">{selectedJob.description}</p>
+              <p className="text-muted-foreground text-sm break-words overflow-hidden">{selectedJob.description}</p>
               
               <div className="flex gap-2 pt-2">
                 <Button size="sm" data-testid="button-apply-job">Apply Now</Button>

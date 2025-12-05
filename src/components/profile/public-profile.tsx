@@ -190,7 +190,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                 <CardTitle>About</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-4" data-testid="profile-bio">
+                <p className="text-muted-foreground mb-4 break-words overflow-hidden" data-testid="profile-bio">
                   {profile.bio || `${profile.role === 'professional' ? 'Professional' : 'Business'} profile`}
                 </p>
                 
@@ -284,7 +284,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                   <CardTitle>About Our {profile.role === 'hub' ? 'Salon' : 'Business'}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{profile.businessDescription}</p>
+                  <p className="text-muted-foreground break-words overflow-hidden">{profile.businessDescription}</p>
                 </CardContent>
               </Card>
             )}

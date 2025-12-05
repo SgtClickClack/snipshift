@@ -360,7 +360,7 @@ export default function MessagesPage() {
                           className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                            className={`max-w-[70%] min-w-0 rounded-lg px-4 py-2 ${
                               isMe
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted text-foreground'
