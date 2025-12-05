@@ -382,7 +382,7 @@ function App() {
   }, []);
 
   return (
-    <div className="relative w-full max-w-[100vw] overflow-x-hidden min-h-screen">
+    <div className="relative w-full overflow-x-hidden min-h-screen">
       <HelmetProvider>
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
