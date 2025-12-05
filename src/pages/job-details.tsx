@@ -113,8 +113,8 @@ export default function JobDetailsPage() {
         description={job?.description}
         type="article"
       />
-      <div className="min-h-screen bg-gray-50" data-testid="job-details-page">
-        <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="min-h-screen bg-gray-50 overflow-x-hidden" data-testid="job-details-page">
+        <div className="max-w-4xl mx-auto px-4 py-6 w-full max-w-full">
           {/* Back Button */}
           <Button
             variant="ghost"
@@ -231,7 +231,7 @@ export default function JobDetailsPage() {
           )}
 
           {/* Apply Button - Sticky on mobile, prominent on desktop */}
-          <div className="sticky bottom-0 bg-gray-50 border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6" data-testid="job-apply-container">
+          <div className="sticky bottom-0 bg-gray-50 border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6 overflow-x-hidden" data-testid="job-apply-container">
             <Card className="bg-white rounded-lg border border-gray-200 shadow-sm md:shadow-lg">
               <CardContent className="p-6">
                 {applicationState === 'applied' ? (

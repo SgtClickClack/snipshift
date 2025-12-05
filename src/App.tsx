@@ -382,31 +382,33 @@ function App() {
   }, []);
 
   return (
-    <HelmetProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="dark" storageKey="snipshift-ui-theme">
-        <TooltipProvider>
-          <Router>
-            <AuthProvider>
-              <NotificationProvider>
-                <RouteProgressBar />
-                <Toaster />
-                <AppRoutes />
-                <TutorialOverlay />
-                <FeedbackWidget />
-                <InstallPrompt />
-                <PwaUpdateHandler />
-                <Analytics />
-                <SpeedInsights />
-              </NotificationProvider>
-            </AuthProvider>
-          </Router>
-        </TooltipProvider>
-        </ThemeProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </HelmetProvider>
+    <div className="relative w-full max-w-[100vw] overflow-x-hidden min-h-screen">
+      <HelmetProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+          <ThemeProvider defaultTheme="dark" storageKey="snipshift-ui-theme">
+          <TooltipProvider>
+            <Router>
+              <AuthProvider>
+                <NotificationProvider>
+                  <RouteProgressBar />
+                  <Toaster />
+                  <AppRoutes />
+                  <TutorialOverlay />
+                  <FeedbackWidget />
+                  <InstallPrompt />
+                  <PwaUpdateHandler />
+                  <Analytics />
+                  <SpeedInsights />
+                </NotificationProvider>
+              </AuthProvider>
+            </Router>
+          </TooltipProvider>
+          </ThemeProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </HelmetProvider>
+    </div>
   );
 }
 
