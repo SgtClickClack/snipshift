@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, X, Plus, Save, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Plus, Save, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface PortfolioItem {
   id: string;
@@ -62,6 +66,8 @@ const PORTFOLIO_CATEGORIES = {
 };
 
 export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = false }: ProfileEditFormProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [newSkill, setNewSkill] = useState("");
   const [newPortfolioItem, setNewPortfolioItem] = useState({
@@ -74,20 +80,104 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
     role: "",
     imageURL: ""
   });
+  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
+  const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   const updateFormData = (updates: Partial<UserProfile>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
-  const handleImageUpload = (type: 'profile' | 'banner') => {
-    // Simulate image upload - in real app would use file upload service
-    const mockImageURL = `https://images.unsplash.com/photo-${Date.now()}?w=400&h=400&fit=crop`;
-    
-    if (type === 'profile') {
-      updateFormData({ profileImageURL: mockImageURL });
-    } else {
-      updateFormData({ bannerImageURL: mockImageURL });
+  /**
+   * Handles profile picture file upload to Firebase Storage.
+   * 
+   * Note: Firebase Storage is initialized in @/lib/firebase.ts.
+   * If Storage were not available, we could fall back to:
+   * - Data URI (Base64) for small files (< 1MB)
+   * - Or keep a URL input field as a backup option
+   */
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
+        variant: "destructive",
+      });
+      return;
     }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user?.id && !user?.uid) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload images.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingProfile(true);
+
+    try {
+      const userId = user.id || user.uid;
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      // Use the same path pattern as ImageUpload component: users/{userId}/avatar.{ext}
+      // This matches the Firebase Storage security rules in storage.rules
+      const storagePath = `users/${userId}/avatar.${fileExtension}`;
+      const storageRef = ref(storage, storagePath);
+
+      // Upload the file
+      await uploadBytes(storageRef, file);
+
+      // Get the download URL
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Update form data with the new URL automatically
+      updateFormData({ profileImageURL: downloadURL });
+
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been successfully uploaded.",
+      });
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload profile picture. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingProfile(false);
+      // Reset the input so the same file can be selected again
+      if (profileFileInputRef.current) {
+        profileFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleImageUpload = (type: 'profile' | 'banner') => {
+    // For profile, trigger file input
+    if (type === 'profile') {
+      profileFileInputRef.current?.click();
+      return;
+    }
+    
+    // For banner, keep the existing mock behavior (can be updated later)
+    const mockImageURL = `https://images.unsplash.com/photo-${Date.now()}?w=400&h=400&fit=crop`;
+    updateFormData({ bannerImageURL: mockImageURL });
   };
 
   const addSkillOrService = () => {
@@ -213,20 +303,55 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
             <div>
               <Label>Profile Picture</Label>
               <div className="mt-2 flex items-center gap-4">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage src={formData.profileImageURL} alt="Profile" />
-                  <AvatarFallback className="text-lg">
-                    {formData.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+                <label
+                  htmlFor="profile-picture-input"
+                  className="relative cursor-pointer group"
+                  data-testid="profile-avatar-upload"
+                >
+                  <Avatar className="w-20 h-20">
+                    <AvatarImage src={formData.profileImageURL} alt="Profile" />
+                    <AvatarFallback className="text-lg">
+                      {formData.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Hover overlay with camera icon */}
+                  <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+                    {isUploadingProfile ? (
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    )}
+                  </div>
+                  {/* Hidden file input */}
+                  <input
+                    id="profile-picture-input"
+                    ref={profileFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePictureUpload}
+                    className="hidden"
+                    disabled={isUploadingProfile}
+                    data-testid="input-profile-picture"
+                  />
+                </label>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => handleImageUpload('profile')}
+                  disabled={isUploadingProfile}
                   data-testid="button-upload-profile-image"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Photo
+                  {isUploadingProfile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Photo
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
