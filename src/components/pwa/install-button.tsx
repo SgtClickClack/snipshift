@@ -18,7 +18,12 @@ export function InstallButton({
   size = 'default',
   className 
 }: InstallButtonProps) {
-  const { canInstall, promptInstall } = useInstallPrompt();
+  const { canInstall, promptInstall, deferredPrompt, isInstalled } = useInstallPrompt();
+
+  // Debug logging
+  if (import.meta.env.DEV) {
+    console.log('InstallButton render:', { canInstall, hasDeferredPrompt: !!deferredPrompt, isInstalled });
+  }
 
   // Don't render if install is not available or app is already installed
   if (!canInstall) {

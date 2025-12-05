@@ -219,9 +219,9 @@ export default function Navbar() {
 
                   {/* Install App Button */}
                   <InstallButton 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm"
-                    className="!text-white border-steel-600 hover:bg-steel-700 hover:!text-white bg-transparent"
+                    className="text-white hover:bg-steel-700"
                   />
                 </div>
 
@@ -387,7 +387,7 @@ export default function Navbar() {
                            <InstallButton 
                              variant="ghost" 
                              size="sm"
-                             className="w-full justify-start !text-white hover:bg-steel-700 hover:!text-white"
+                             className="w-full justify-start text-white hover:bg-steel-700 hover:text-white"
                            />
                          </div>
 

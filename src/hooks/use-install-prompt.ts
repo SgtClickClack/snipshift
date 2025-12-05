@@ -67,11 +67,23 @@ export function useInstallPrompt() {
     setDeferredPrompt(null);
   };
 
+  const canInstall = deferredPrompt !== null && !isInstalled;
+
+  // Debug logging
+  if (import.meta.env.DEV) {
+    console.log('useInstallPrompt:', { 
+      canInstall, 
+      hasDeferredPrompt: !!deferredPrompt, 
+      isInstalled,
+      isStandalone: window.matchMedia('(display-mode: standalone)').matches
+    });
+  }
+
   return {
     deferredPrompt,
     isInstalled,
     promptInstall,
-    canInstall: deferredPrompt !== null && !isInstalled,
+    canInstall,
   };
 }
 
