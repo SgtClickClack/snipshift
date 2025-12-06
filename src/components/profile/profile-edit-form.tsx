@@ -197,8 +197,8 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
           </CardContent>
         </Card>
 
-        {/* Basic Information */}
-        <Card>
+        {/* Basic Information - with top margin to account for overlapping avatar */}
+        <Card className="mt-16 md:mt-20">
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>

@@ -452,43 +452,27 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       <CardContent className="space-y-4 pb-12">
         <form onSubmit={handleSubmit} className="space-y-4 pb-4">
           {/* Profile Header with Banner and Avatar */}
-          {isEditing && (
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative">
-                  <ProfileHeader
-                    bannerUrl={formData.bannerUrl}
-                    avatarUrl={formData.avatarUrl}
-                    displayName={formData.displayName || user?.displayName || 'User'}
-                    editable={isEditing}
-                    onBannerUpload={(url) => setFormData(prev => ({ ...prev, bannerUrl: url }))}
-                    onAvatarUpload={(url) => setFormData(prev => ({ ...prev, avatarUrl: url }))}
-                  />
-                  {/* Spacer for overlapping avatar (avatar is 96px/128px, overlaps by 48px, so need ~80px/96px + padding) */}
-                  <div className="h-20 md:h-24" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="relative">
+                <ProfileHeader
+                  bannerUrl={formData.bannerUrl}
+                  avatarUrl={formData.avatarUrl}
+                  displayName={formData.displayName || user?.displayName || 'User'}
+                  editable={isEditing}
+                  onBannerUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, bannerUrl: url })) : undefined}
+                  onAvatarUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, avatarUrl: url })) : undefined}
+                />
+                {/* Spacer for overlapping avatar (avatar is 96px/128px, overlaps by 48px, so need ~80px/96px + padding) */}
+                <div className="h-20 md:h-24" />
+              </div>
+            </CardContent>
+          </Card>
           
-          {!isEditing && (
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative">
-                  <ProfileHeader
-                    bannerUrl={formData.bannerUrl}
-                    avatarUrl={formData.avatarUrl}
-                    displayName={formData.displayName || user?.displayName || 'User'}
-                    editable={false}
-                  />
-                  {/* Spacer for overlapping avatar (avatar is 96px/128px, overlaps by 48px, so need ~80px/96px + padding) */}
-                  <div className="h-20 md:h-24" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          
-          {renderBasicFields()}
+          {/* Form fields with top margin to account for overlapping avatar */}
+          <div className="mt-16 md:mt-20">
+            {renderBasicFields()}
+          </div>
           
           {user.currentRole === 'hub' && renderHubFields()}
           {user.currentRole === 'professional' && renderProfessionalFields()}
