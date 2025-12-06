@@ -869,7 +869,7 @@ export default function ProfessionalDashboard() {
         
         {/* Profile Tab */}
         {activeView === 'profile' && (
-          <div className="max-w-4xl">
+          <div className="max-w-4xl pb-12">
             <ProfileForm onSave={(data) => {}} />
           </div>
         )}

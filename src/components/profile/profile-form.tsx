@@ -449,8 +449,8 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 pb-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <CardContent className="space-y-4 pb-12">
+        <form onSubmit={handleSubmit} className="space-y-4 pb-4">
           {/* Profile Header with Banner and Avatar */}
           {isEditing && (
             <Card className="overflow-hidden">
