@@ -449,7 +449,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pb-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Profile Header with Banner and Avatar */}
           {isEditing && (
@@ -464,8 +464,8 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
                     onBannerUpload={(url) => setFormData(prev => ({ ...prev, bannerUrl: url }))}
                     onAvatarUpload={(url) => setFormData(prev => ({ ...prev, avatarUrl: url }))}
                   />
-                  {/* Spacer for overlapping avatar */}
-                  <div className="h-16 md:h-20" />
+                  {/* Spacer for overlapping avatar (avatar is 96px/128px, overlaps by 48px, so need ~80px/96px + padding) */}
+                  <div className="h-20 md:h-24" />
                 </div>
               </CardContent>
             </Card>
@@ -481,8 +481,8 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
                     displayName={formData.displayName || user?.displayName || 'User'}
                     editable={false}
                   />
-                  {/* Spacer for overlapping avatar */}
-                  <div className="h-16 md:h-20" />
+                  {/* Spacer for overlapping avatar (avatar is 96px/128px, overlaps by 48px, so need ~80px/96px + padding) */}
+                  <div className="h-20 md:h-24" />
                 </div>
               </CardContent>
             </Card>

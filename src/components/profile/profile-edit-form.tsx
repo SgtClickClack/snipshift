@@ -191,8 +191,8 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
                 onBannerUpload={(url) => updateFormData({ bannerImageURL: url })}
                 onAvatarUpload={(url) => updateFormData({ profileImageURL: url })}
               />
-              {/* Spacer for overlapping avatar */}
-              <div className="h-16 md:h-20" />
+              {/* Spacer for overlapping avatar (avatar is 96px/128px, overlaps by 48px, so need ~80px/96px + padding) */}
+              <div className="h-20 md:h-24" />
             </div>
           </CardContent>
         </Card>
