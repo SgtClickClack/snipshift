@@ -239,6 +239,11 @@ export default function JobDetailsPage() {
                     <CheckCircle2 className="h-5 w-5" />
                     <span className="font-semibold">Application Submitted Successfully!</span>
                   </div>
+                ) : (user && (job?.businessId === user.id || job?.hubId === user.id)) ? (
+                  <div className="text-center text-muted-foreground">
+                    <p className="font-medium">This is your job listing</p>
+                    <p className="text-sm mt-1">View applications in your dashboard</p>
+                  </div>
                 ) : (
                   <Button
                     onClick={handleApply}

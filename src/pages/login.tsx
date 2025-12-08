@@ -163,6 +163,9 @@ export default function LoginPage() {
                     )}
                   </button>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Created account with Google? Click 'Sign in with Google' below.
+                </p>
               </div>
               
               <Button 

@@ -502,6 +502,41 @@ app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   res.status(201).json(fallbackJob);
 }));
 
+/**
+ * Geocode a city name to coordinates using OpenStreetMap Nominatim
+ * Returns coordinates or null if geocoding fails
+ */
+async function geocodeCity(cityName: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    // Use OpenStreetMap Nominatim API (free, no API key required)
+    const encodedCity = encodeURIComponent(cityName);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodedCity}&format=json&limit=1&addressdetails=1`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'SnipShift/1.0' // Required by Nominatim
+      }
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
+}
+
 // Handler for fetching jobs
 app.get('/api/jobs', asyncHandler(async (req, res) => {
   // Parse query parameters for pagination and filtering
@@ -509,7 +544,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
   const businessId = req.query.businessId as string | undefined;
   const status = req.query.status as 'open' | 'filled' | 'closed' | undefined;
-  const city = req.query.city as string | undefined;
+  let city = req.query.city as string | undefined;
   const date = req.query.date as string | undefined;
   
   // Advanced filters
@@ -518,9 +553,25 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
   const maxRate = req.query.maxRate ? parseFloat(req.query.maxRate as string) : undefined;
   const startDate = req.query.startDate as string | undefined;
   const endDate = req.query.endDate as string | undefined;
-  const radius = req.query.radius ? parseFloat(req.query.radius as string) : undefined;
-  const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
-  const lng = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
+  let radius = req.query.radius ? parseFloat(req.query.radius as string) : undefined;
+  let lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
+  let lng = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
+
+  // If city is provided but lat/lng are not, geocode the city name
+  if (city && !lat && !lng) {
+    const coords = await geocodeCity(city);
+    if (coords) {
+      lat = coords.lat;
+      lng = coords.lng;
+      // Default to 50km radius if not specified
+      if (!radius) {
+        radius = 50;
+      }
+      // Clear city filter since we're using radius-based search
+      city = undefined;
+    }
+    // If geocoding fails, we'll still use exact city name matching (city remains set)
+  }
 
   // Try to use database first
   const result = await jobsRepo.getJobs({
@@ -528,7 +579,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
     status,
     limit,
     offset,
-    city,
+    city, // Use city only if geocoding failed or wasn't attempted
     date,
     search,
     minRate,

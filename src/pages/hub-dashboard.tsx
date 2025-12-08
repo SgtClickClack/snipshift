@@ -11,7 +11,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User } from "lucide-react";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
-import QuickActions from "@/components/dashboard/quick-actions";
 import { SEO } from "@/components/seo/SEO";
 import { format } from "date-fns";
 import { createShift, fetchShopShifts, updateShiftStatus } from "@/lib/api";
@@ -405,46 +404,39 @@ export default function HubDashboard() {
             {/* Dashboard Stats */}
             <DashboardStats role="hub" stats={stats} onStatClick={handleStatClick} />
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              {/* Quick Actions */}
-              <QuickActions role="hub" onAction={handleQuickAction} />
-              
-              <div className="lg:col-span-2">
-                <Card className="bg-card rounded-lg border border-border shadow-sm">
-                  <CardHeader className="bg-card border-b border-border">
-                    <CardTitle className="text-foreground">Recent Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {jobs.slice(0, 3).map((job) => (
-                        <div 
-                          key={job.id} 
-                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                          onClick={() => navigate(`/jobs/${job.id}`)}
-                        >
-                          <div>
-                            <h4 className="font-medium">{job.title}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {job.applicants?.length || 0} applications • Posted {format(new Date(job.createdAt), "MMM d")}
-                            </p>
-                          </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            job.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-steel-100 text-steel-800'
-                          }`}>
-                            {job.status}
-                          </span>
-                        </div>
-                      ))}
-                      {jobs.length === 0 && (
-                        <p className="text-muted-foreground text-center py-4">
-                          No recent activity. Post your first job to get started!
+            <Card className="bg-card rounded-lg border border-border shadow-sm">
+              <CardHeader className="bg-card border-b border-border">
+                <CardTitle className="text-foreground">Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {jobs.slice(0, 3).map((job) => (
+                    <div 
+                      key={job.id} 
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                      onClick={() => navigate(`/jobs/${job.id}`)}
+                    >
+                      <div>
+                        <h4 className="font-medium">{job.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {job.applicants?.length || 0} applications • Posted {format(new Date(job.createdAt), "MMM d")}
                         </p>
-                      )}
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        job.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-steel-100 text-steel-800'
+                      }`}>
+                        {job.status}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                  ))}
+                  {jobs.length === 0 && (
+                    <p className="text-muted-foreground text-center py-4">
+                      No recent activity. Post your first job to get started!
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
         
