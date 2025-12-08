@@ -85,7 +85,6 @@ export default function ProfessionalDashboard() {
     }
 
     setIsLocating(true);
-    let timeoutId: NodeJS.Timeout;
 
     const geolocationOptions = {
       enableHighAccuracy: true,
@@ -113,7 +112,7 @@ export default function ProfessionalDashboard() {
     };
 
     // Set timeout fallback
-    timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       // Fallback to Sydney after 3 seconds
       setLocationCoordinates({ lat: -33.8688, lng: 151.2093 });
       setSearchLocation("Sydney");
@@ -791,12 +790,12 @@ export default function ProfessionalDashboard() {
               <CardHeader className="border-b">
                 <CardTitle>Schedule</CardTitle>
               </CardHeader>
-              <CardContent className="p-6 flex justify-center">
+              <CardContent className="p-3 md:p-6 flex justify-center overflow-x-auto">
                 <CalendarComponent
                   mode="single"
                   selected={date}
                   onSelect={setDate}
-                  className="rounded-md border"
+                  className="rounded-md border w-full"
                 />
               </CardContent>
             </Card>

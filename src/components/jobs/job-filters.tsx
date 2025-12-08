@@ -191,14 +191,14 @@ export function JobFilters({ className }: JobFiltersProps) {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
             <Calendar
               initialFocus
               mode="range"
               defaultMonth={dateRange.from}
               selected={{ from: dateRange.from, to: dateRange.to }}
               onSelect={(range) => setDateRange(range || {})}
-              numberOfMonths={2}
+              numberOfMonths={isMobile ? 1 : 2}
             />
           </PopoverContent>
         </Popover>
