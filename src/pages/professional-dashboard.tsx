@@ -22,6 +22,7 @@ import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/adva
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
 import GoogleMapView from "@/components/job-feed/google-map-view";
 import LocationSearch from "@/components/job-feed/location-search";
+import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import { SEO } from "@/components/seo/SEO";
 
 export default function ProfessionalDashboard() {
@@ -840,95 +841,11 @@ export default function ProfessionalDashboard() {
         
         {/* Calendar Tab */}
         {activeView === 'calendar' && (
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="rounded-lg border shadow-sm">
-              <CardHeader className="border-b">
-                <CardTitle>Schedule</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="flex flex-col items-center">
-                  <CalendarComponent
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    bookedDays={bookedDates}
-                    className="w-full"
-                  />
-                  <div className="mt-4 text-sm text-muted-foreground text-center">
-                    {date ? (
-                      <span>Selected: <span className="font-medium text-foreground">{format(date, "PPP")}</span></span>
-                    ) : (
-                      <span>Select a date to view shifts</span>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-lg border shadow-sm">
-              <CardHeader className="border-b">
-                <CardTitle>Upcoming Bookings</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {isLoadingBookings ? (
-                  <div className="text-center py-8">Loading bookings...</div>
-                ) : bookings.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium text-muted-foreground mb-2">No upcoming bookings</h3>
-                    <p className="text-sm text-muted-foreground">Your accepted jobs will appear here</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {bookings.map((booking: any) => {
-                      // Determine if it's a job or shift
-                      const title = booking.job?.title || booking.shift?.title || 'Unknown Job';
-                      const employer = booking.job?.businessName || booking.shift?.employerName || 'Unknown Employer'; // backend might not send these names, might need to join users
-                      // Actually my backend route joins jobs/shifts/users.
-                      // But `jobs` table has `shopName` (nullable). `users` has `name`.
-                      // I need to check what my `getApplicationsForUser` returns.
-                      // It returns `application` + `job` + `shift`.
-                      
-                      const date = booking.job?.date || booking.shift?.startTime || booking.appliedAt;
-                      const location = booking.job?.address || booking.shift?.location || 'Location TBD';
-
-                      return (
-                        <div key={booking.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h4 className="font-medium">{title}</h4>
-                              <p className="text-sm text-muted-foreground">{employer}</p>
-                            </div>
-                            <Badge className="bg-green-600">Confirmed</Badge>
-                          </div>
-                          <div className="space-y-2 text-sm text-muted-foreground">
-                            <div className="flex items-center">
-                              <Calendar className="mr-2 h-4 w-4" />
-                              {format(new Date(date), "MMMM d, yyyy")}
-                            </div>
-                            {/* 
-                            <div className="flex items-center">
-                              <Clock className="mr-2 h-4 w-4" />
-                              10:00 AM - 11:00 AM
-                            </div>
-                            */}
-                            <div className="flex items-center">
-                              <MapPin className="mr-2 h-4 w-4" />
-                              {location}
-                            </div>
-                          </div>
-                          <div className="mt-3 flex gap-2">
-                            <Button variant="outline" size="sm" className="w-full">View Details</Button>
-                            <Button variant="outline" size="sm" className="w-full">Message</Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <ProfessionalCalendar
+            bookings={bookings}
+            isLoading={isLoadingBookings}
+            onDateSelect={setDate}
+          />
         )}
         
         {/* Profile Tab */}

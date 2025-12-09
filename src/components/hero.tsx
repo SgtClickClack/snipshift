@@ -12,20 +12,22 @@ export default function Hero() {
         backgroundBlendMode: 'overlay'
       }}
     >
-      {/* Background Logo Image */}
-      <img 
-        src="/og-image.png" 
-        alt="Snipshift Logo Background" 
-        className="absolute inset-0 w-full h-full object-cover z-0"
-        loading="eager"
-      />
+      {/* Background Logo Image - positioned in upper center, reduced opacity */}
+      <div className="absolute inset-0 z-0 flex items-start justify-center pt-20 md:pt-32">
+        <img 
+          src="/og-image.png" 
+          alt="Snipshift Logo Background" 
+          className="w-auto h-[40vh] md:h-[50vh] max-w-[90%] object-contain opacity-20 md:opacity-25"
+          loading="eager"
+        />
+      </div>
 
       {/* Dark Overlay for contrast */}
       <div className="absolute inset-0 bg-black/60 z-[1]" />
 
-      {/* Content Wrapper */}
+      {/* Content Wrapper - positioned lower to avoid logo overlap */}
       <div className="relative z-10 w-full h-full flex flex-col justify-end pb-32 md:pb-40 px-4 items-center text-center">
-        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8 mb-8">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8 mb-8 mt-auto">
           <p className="text-xl md:text-2xl text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium">
             Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
           </p>
