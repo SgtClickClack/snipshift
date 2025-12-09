@@ -75,6 +75,32 @@ export default function ProfessionalDashboard() {
     enabled: !!user?.id
   });
 
+  // Extract booked dates from bookings for calendar indicators
+  const bookedDates = useMemo(() => {
+    if (!bookings || bookings.length === 0) return []
+    return bookings
+      .map((booking: any) => {
+        // Extract date from booking (job date, shift startTime, or appliedAt)
+        const dateStr = booking.job?.date || booking.shift?.startTime || booking.appliedAt
+        if (!dateStr) return null
+        
+        // Handle different date formats
+        const bookingDate = typeof dateStr === 'string' 
+          ? new Date(dateStr) 
+          : dateStr instanceof Date 
+          ? dateStr 
+          : null
+        
+        if (!bookingDate || isNaN(bookingDate.getTime())) return null
+        
+        // Normalize to start of day
+        const normalized = new Date(bookingDate)
+        normalized.setHours(0, 0, 0, 0)
+        return normalized
+      })
+      .filter((d): d is Date => d !== null)
+  }, [bookings]);
+
   // Get user's current location on mount
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -790,13 +816,23 @@ export default function ProfessionalDashboard() {
               <CardHeader className="border-b">
                 <CardTitle>Schedule</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 flex justify-center">
-                <CalendarComponent
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  className="w-full"
-                />
+              <CardContent className="p-4">
+                <div className="flex flex-col items-center">
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    bookedDays={bookedDates}
+                    className="w-full"
+                  />
+                  <div className="mt-4 text-sm text-muted-foreground text-center">
+                    {date ? (
+                      <span>Selected: <span className="font-medium text-foreground">{format(date, "PPP")}</span></span>
+                    ) : (
+                      <span>Select a date to view shifts</span>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
