@@ -669,14 +669,36 @@ export default function ProfessionalDashboard() {
                                     : (job.location || 'Remote')}
                                 </span>
                               </div>
-                              <div className="flex items-center">
-                                <Calendar className="mr-1 h-4 w-4" />
-                                <span>{format(new Date(job.date), "MMM d, yyyy")}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <Clock className="mr-1 h-4 w-4" />
-                                <span>{format(new Date(job.date), "h:mm a")}</span>
-                              </div>
+                              {job.date && (
+                                <>
+                                  <div className="flex items-center">
+                                    <Calendar className="mr-1 h-4 w-4" />
+                                    <span>
+                                      {(() => {
+                                        try {
+                                          const date = new Date(job.date);
+                                          return isNaN(date.getTime()) ? 'Date TBD' : format(date, "MMM d, yyyy");
+                                        } catch {
+                                          return 'Date TBD';
+                                        }
+                                      })()}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Clock className="mr-1 h-4 w-4" />
+                                    <span>
+                                      {(() => {
+                                        try {
+                                          const date = new Date(job.date);
+                                          return isNaN(date.getTime()) ? 'Time TBD' : format(date, "h:mm a");
+                                        } catch {
+                                          return 'Time TBD';
+                                        }
+                                      })()}
+                                    </span>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                           <div className="text-right">
@@ -785,7 +807,14 @@ export default function ProfessionalDashboard() {
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center text-muted-foreground">
                           <Calendar className="mr-2 h-4 w-4" />
-                          {format(new Date(job.date), "MMM d")}
+                          {job.date ? (() => {
+                            try {
+                              const date = new Date(job.date);
+                              return isNaN(date.getTime()) ? 'Date TBD' : format(date, "MMM d");
+                            } catch {
+                              return 'Date TBD';
+                            }
+                          })() : 'Date TBD'}
                         </div>
                         <div className="flex items-center text-muted-foreground">
                           <DollarSign className="mr-2 h-4 w-4" />

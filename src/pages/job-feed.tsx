@@ -67,14 +67,25 @@ export default function JobFeedPage() {
     const rateValue = shift.pay || shift.hourlyRate;
     const rateString = rateValue !== undefined ? String(rateValue) : undefined;
     
+    // Safely handle date - ensure it's a valid string
+    let dateValue: string | undefined = undefined;
+    const rawDate = shift.date || shift.startTime;
+    if (rawDate && typeof rawDate === 'string') {
+      // Validate string date
+      const testDate = new Date(rawDate);
+      if (!isNaN(testDate.getTime())) {
+        dateValue = rawDate;
+      }
+    }
+    
     return {
       id: shift.id,
       title: shift.title,
       // Use pay if available, otherwise hourlyRate, converted to string
       rate: rateString,
       payRate: rateString,
-      // Use date (which is startTime) for date field
-      date: shift.date || shift.startTime,
+      // Use validated date
+      date: dateValue,
       startTime: shift.startTime,
       endTime: shift.endTime,
       // Use requirements if available, otherwise description

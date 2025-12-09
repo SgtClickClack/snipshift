@@ -740,7 +740,14 @@ export default function HubDashboard() {
                                 <div className="flex items-center">
                                   <Calendar className="mr-2 h-4 w-4 text-primary" />
                                   <span data-testid={`text-job-date-${job.id}`}>
-                                    {format(new Date(job.date), "EEE, MMM d, yyyy")}
+                                    {job.date ? (() => {
+                                      try {
+                                        const date = new Date(job.date);
+                                        return isNaN(date.getTime()) ? 'Date TBD' : format(date, "EEE, MMM d, yyyy");
+                                      } catch {
+                                        return 'Date TBD';
+                                      }
+                                    })() : 'Date TBD'}
                                   </span>
                                 </div>
                                 <div className="flex items-center">

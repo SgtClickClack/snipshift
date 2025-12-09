@@ -36,6 +36,10 @@ function Calendar({
   // Custom day component to show booked indicator
   const Day = (props: any) => {
     const { date } = props
+    // Guard against undefined date
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      return null
+    }
     const booked = isBooked(date)
     
     return (
