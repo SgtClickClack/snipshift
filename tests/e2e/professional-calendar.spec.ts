@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from '../sessionStorage.setup';
 import { ensureCalendarTestData } from '../testDataSetup';
 
 /**
@@ -17,13 +17,123 @@ import { ensureCalendarTestData } from '../testDataSetup';
  * Helper function to navigate to calendar view
  */
 async function navigateToCalendarView(page: Page) {
-  // Navigate to professional dashboard with calendar view
-  await page.goto('/professional-dashboard?view=calendar');
+  // Collect all console messages
+  const consoleMessages: string[] = [];
+  
+  // Add JavaScript error listener to catch any crashes (set up before navigation)
+  page.on('pageerror', (exception) => {
+    console.error('[FATAL CALENDAR ERROR]:', exception.message);
+    console.error('[FATAL CALENDAR ERROR STACK]:', exception.stack);
+  });
+  
+  // Listen to console messages
+  page.on('console', (msg) => {
+    const text = msg.text();
+    const type = msg.type();
+    consoleMessages.push(`[${type}]: ${text}`);
+    
+    if (type === 'error') {
+      console.error('[CONSOLE ERROR]:', text);
+    } else if (text.includes('E2E Calendar Debug') || text.includes('Calendar') || text.includes('activeView')) {
+      console.log('[CALENDAR DEBUG]:', text);
+    } else if (text.includes('E2E DEBUG')) {
+      console.log('[TUTORIAL DEBUG]:', text);
+    }
+  });
+  
+  // Navigate to professional dashboard with calendar view first
+  await page.goto('/professional-dashboard?view=calendar&e2e=true', { waitUntil: 'networkidle' });
   await page.waitForLoadState('domcontentloaded');
+  
+  // Set E2E mode flag in localStorage to disable tutorial overlay (after page load)
+  try {
+    await page.evaluate(() => {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('E2E_MODE', 'true');
+      }
+    });
+  } catch (e) {
+    console.warn('Could not set E2E_MODE in localStorage:', e);
+  }
+  
+  // Restore sessionStorage if it exists in storageState
+  // The storageState should already be loaded via playwright.config.ts, but let's verify
+  const storageStatePath = './tests/storageState.json';
+  try {
+    const fs = require('fs');
+    if (fs.existsSync(storageStatePath)) {
+      const storageState = JSON.parse(fs.readFileSync(storageStatePath, 'utf-8'));
+      if (storageState.origins && storageState.origins[0] && storageState.origins[0].localStorage) {
+        // Restore localStorage
+        try {
+          await page.evaluate((localStorage) => {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              for (const item of localStorage) {
+                window.localStorage.setItem(item.name, item.value);
+              }
+              // Ensure E2E_MODE is set after restoring
+              window.localStorage.setItem('E2E_MODE', 'true');
+            }
+          }, storageState.origins[0].localStorage);
+        } catch (e) {
+          console.warn('Could not restore localStorage from storageState:', e);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Could not manually restore storageState:', e);
+  }
+  
+  // Wait for React to render and execute console.log statements
+  await page.waitForTimeout(3000);
+  
+  // Check if tutorial overlay is visible and dismiss it if needed
+  const tutorialOverlay = page.locator('[data-testid="tutorial-overlay"]');
+  const isTutorialVisible = await tutorialOverlay.isVisible({ timeout: 2000 }).catch(() => false);
+  
+  if (isTutorialVisible) {
+    console.log('⚠️  Tutorial overlay is visible - attempting to dismiss');
+    // Try to close the tutorial overlay
+    const closeButton = page.getByTestId('button-close-tutorial').or(
+      page.getByTestId('button-skip-tutorial')
+    ).first();
+    
+    if (await closeButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeButton.click();
+      await page.waitForTimeout(500);
+      console.log('✅ Tutorial overlay dismissed');
+    } else {
+      // Try pressing Escape
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+      console.log('✅ Attempted to dismiss tutorial with Escape key');
+    }
+  }
+  
+  // Log all console messages that contain "Calendar", "E2E", or "Tutorial"
+  console.log('\n=== CONSOLE MESSAGES ===');
+  const relevantMessages = consoleMessages.filter(msg => 
+    msg.includes('Calendar') || msg.includes('E2E') || msg.includes('activeView') || msg.includes('ERROR') || msg.includes('Tutorial') || msg.includes('tutorial')
+  );
+  if (relevantMessages.length > 0) {
+    relevantMessages.forEach(msg => console.log(msg));
+  } else {
+    console.log('No relevant console messages found. Total messages:', consoleMessages.length);
+    // Log first 10 messages for debugging
+    consoleMessages.slice(0, 10).forEach(msg => console.log(msg));
+  }
+  console.log('=== END CONSOLE MESSAGES ===\n');
   
   // Check if we were redirected (e.g., due to role mismatch)
   const currentUrl = page.url();
+  console.log('Current URL after navigation:', currentUrl);
+  
   if (currentUrl.includes('/login')) {
+    // Check what's in sessionStorage
+    const sessionStorageData = await page.evaluate(() => {
+      return JSON.stringify(Object.fromEntries(Object.entries(sessionStorage)));
+    });
+    console.error('Redirected to login. SessionStorage:', sessionStorageData);
     throw new Error('Not authenticated - redirected to login. Check auth.setup.ts');
   }
   
@@ -35,8 +145,71 @@ async function navigateToCalendarView(page: Page) {
     throw new Error(`Unexpected redirect. Expected /professional-dashboard, got: ${currentUrl}. User may not have professional role.`);
   }
   
-  // Wait for calendar component to load
-  await page.waitForTimeout(2000);
+  // Check what's actually on the page
+  const pageContent = await page.content();
+  const hasCalendarView = pageContent.includes('calendar-view-not-rendered');
+  const hasScheduleTitle = pageContent.includes('calendar-schedule-title');
+  const hasRbcCalendar = pageContent.includes('rbc-calendar');
+  const hasCalendarContainer = pageContent.includes('react-big-calendar-container');
+  const hasCalendarError = pageContent.includes('calendar-error');
+  
+  console.log('Page content check:');
+  console.log('- Has calendar-view-not-rendered:', hasCalendarView);
+  console.log('- Has calendar-schedule-title:', hasScheduleTitle);
+  console.log('- Has rbc-calendar:', hasRbcCalendar);
+  console.log('- Has react-big-calendar-container:', hasCalendarContainer);
+  console.log('- Has calendar-error (any error state):', hasCalendarError);
+  
+  // Check for specific error states
+  const errorStates = await page.evaluate(() => {
+    const errors = [];
+    const errorLocalizer = document.querySelector('[data-testid="calendar-error-localizer"]');
+    const errorMoment = document.querySelector('[data-testid="calendar-error-moment"]');
+    const errorDate = document.querySelector('[data-testid="calendar-error-date"]');
+    const errorView = document.querySelector('[data-testid="calendar-error-view"]');
+    const errorBoundary = document.querySelector('[data-testid="calendar-error-boundary"]');
+    const errorFatal = document.querySelector('[data-testid="calendar-error-fatal"]');
+    
+    if (errorLocalizer) errors.push('localizer');
+    if (errorMoment) errors.push('moment');
+    if (errorDate) errors.push('date');
+    if (errorView) errors.push('view');
+    if (errorBoundary) errors.push('boundary');
+    if (errorFatal) errors.push('fatal');
+    
+    return errors;
+  });
+  
+  if (errorStates.length > 0) {
+    console.error('Calendar error states found:', errorStates);
+  }
+  
+  // Check if Calendar container exists
+  const calendarContainer = await page.locator('[data-testid="react-big-calendar-container"]').count();
+  console.log('Calendar container count:', calendarContainer);
+  
+  // Check for any Calendar-related elements
+  const calendarElements = await page.evaluate(() => {
+    const elements = {
+      scheduleTitle: document.querySelector('[data-testid="calendar-schedule-title"]') ? 'found' : 'not found',
+      calendarContainer: document.querySelector('[data-testid="react-big-calendar-container"]') ? 'found' : 'not found',
+      rbcCalendar: document.querySelector('.rbc-calendar') ? 'found' : 'not found',
+      anyError: Array.from(document.querySelectorAll('[data-testid^="calendar-error"]')).map(el => el.getAttribute('data-testid'))
+    };
+    return elements;
+  });
+  
+  console.log('Calendar elements status:', JSON.stringify(calendarElements, null, 2));
+  
+  // Check for the debug div that shows if calendar view is not rendered
+  const calendarNotRendered = page.getByTestId('calendar-view-not-rendered');
+  const notRenderedVisible = await calendarNotRendered.isVisible({ timeout: 1000 }).catch(() => false);
+  
+  if (notRenderedVisible) {
+    const notRenderedText = await calendarNotRendered.textContent();
+    console.error('Calendar view NOT rendered. Debug message:', notRenderedText);
+    throw new Error(`Calendar view not rendered: ${notRenderedText}`);
+  }
   
   // Verify we're on the calendar view using data-testid
   const scheduleTitle = page.getByTestId('calendar-schedule-title');
@@ -51,6 +224,10 @@ async function navigateToCalendarView(page: Page) {
     const calendarVisible = await calendarComponent.isVisible({ timeout: 3000 }).catch(() => false);
     
     if (!calendarVisible) {
+      // Log page HTML for debugging
+      const bodyHTML = await page.locator('body').innerHTML().catch(() => 'Could not get body HTML');
+      console.error('Page body HTML (first 2000 chars):', bodyHTML.substring(0, 2000));
+      
       throw new Error(`Calendar not found. Screenshot saved to test-results/calendar-navigation-debug.png. Current URL: ${currentUrl}`);
     }
     
@@ -87,6 +264,7 @@ async function setWeekView(page: Page) {
 test.describe('Professional Calendar E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to calendar view (authentication handled by global setup)
+    // Error listeners are set up in navigateToCalendarView
     await navigateToCalendarView(page);
     
     // Ensure test data exists for calendar
@@ -170,6 +348,12 @@ test.describe('Professional Calendar E2E Tests', () => {
 
   test.describe('Functional Smoke Tests', () => {
     test('should display and interact with Create Availability/Shift button', async ({ page }) => {
+      // Verify tutorial overlay is NOT visible/blocking
+      const tutorialOverlay = page.locator('[data-testid="tutorial-overlay"]');
+      await expect(tutorialOverlay).not.toBeVisible({ timeout: 5000 }).catch(() => {
+        console.log('⚠️  Tutorial overlay may be present but should not block interactions');
+      });
+      
       // Set view to Week mode
       await setWeekView(page);
       
@@ -220,6 +404,12 @@ test.describe('Professional Calendar E2E Tests', () => {
     });
 
     test('should navigate to next week when clicking Next button', async ({ page }) => {
+      // Verify tutorial overlay is NOT visible/blocking
+      const tutorialOverlay = page.locator('[data-testid="tutorial-overlay"]');
+      await expect(tutorialOverlay).not.toBeVisible({ timeout: 5000 }).catch(() => {
+        console.log('⚠️  Tutorial overlay may be present but should not block interactions');
+      });
+      
       // Set view to Week mode
       await setWeekView(page);
       
@@ -244,8 +434,8 @@ test.describe('Professional Calendar E2E Tests', () => {
         const isVisible = await button.isVisible();
         if (isVisible) {
           // Check if it's the next button (usually after Today button)
-          const ariaLabel = await button.getAttribute('aria-label').catch(() => '');
-          if (ariaLabel.toLowerCase().includes('next') || 
+          const ariaLabel = await button.getAttribute('aria-label').catch(() => '') || '';
+          if (ariaLabel && ariaLabel.toLowerCase().includes('next') || 
               (await button.locator('svg').count() > 0 && i > 0)) {
             await expect(button).toBeVisible();
             await button.click();

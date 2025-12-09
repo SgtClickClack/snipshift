@@ -162,7 +162,30 @@ export function TutorialOverlay() {
 
   // Early return: Disable overlay during e2e to avoid interference
   // This check prevents any rendering in E2E test environments
-  if (import.meta.env.VITE_E2E === '1') return null;
+  // Check multiple ways to detect E2E mode:
+  // 1. Environment variable (set in playwright.config.ts webServer.env)
+  // 2. Query parameter (?e2e=true)
+  // 3. localStorage flag (set by tests if needed)
+  const isE2EMode = 
+    import.meta.env.VITE_E2E === '1' ||
+    import.meta.env.MODE === 'test' ||
+    (typeof window !== 'undefined' && (
+      new URLSearchParams(window.location.search).get('e2e') === 'true' ||
+      localStorage.getItem('E2E_MODE') === 'true'
+    ));
+  
+  // E2E DEBUG: Log environment variable and visibility state
+  console.log('E2E DEBUG: VITE_E2E value:', import.meta.env.VITE_E2E);
+  console.log('E2E DEBUG: MODE value:', import.meta.env.MODE);
+  console.log('E2E DEBUG: isE2EMode:', isE2EMode);
+  console.log('E2E DEBUG: isVisible state:', isVisible);
+  console.log('E2E DEBUG: currentStepData:', currentStepData);
+  console.log('E2E DEBUG: userRole:', userRole);
+  
+  if (isE2EMode) {
+    console.log('E2E DEBUG: Returning null due to E2E mode detection');
+    return null;
+  }
 
   // Early return: Do not render if tutorial is not visible or no step data
   // This prevents any DOM element from being created that could block pointer events

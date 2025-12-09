@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
 import { Calendar, momentLocalizer, View, Event } from "react-big-calendar";
 import moment from "moment";
 import { format, isPast, isToday, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
@@ -38,7 +38,23 @@ import StartChatButton from "@/components/messaging/start-chat-button";
 // Import react-big-calendar CSS
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
-const localizer = momentLocalizer(moment);
+// Initialize localizer with error handling
+let localizer: ReturnType<typeof momentLocalizer> | null = null;
+try {
+  if (moment && typeof moment === 'function') {
+    localizer = momentLocalizer(moment);
+    console.log('[CALENDAR INIT] Localizer initialized successfully');
+  } else {
+    console.error('[CALENDAR INIT] Moment.js is not available');
+  }
+} catch (error) {
+  console.error('[CALENDAR INIT] Failed to initialize localizer:', error);
+}
+
+// Validate localizer at module load time
+if (!localizer) {
+  console.error('[CALENDAR INIT] Localizer is null - Calendar will not render');
+}
 
 // Extend Event type to include our custom properties
 interface CalendarEvent extends Event {
@@ -60,6 +76,49 @@ interface ProfessionalCalendarProps {
 }
 
 type JobStatus = "all" | "pending" | "confirmed" | "completed";
+
+// Error Boundary for Calendar Component
+interface CalendarErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class CalendarErrorBoundary extends Component<
+  { children: ReactNode },
+  CalendarErrorBoundaryState
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): CalendarErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[CALENDAR ERROR BOUNDARY] Caught error:', error);
+    console.error('[CALENDAR ERROR BOUNDARY] Error info:', errorInfo);
+    console.error('[CALENDAR ERROR BOUNDARY] Error stack:', error.stack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div 
+          className="flex items-center justify-center h-full min-h-[600px]" 
+          data-testid="calendar-error-boundary"
+        >
+          <div className="text-muted-foreground">
+            Calendar render error: {this.state.error?.message || 'Unknown error'}
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Current Time Indicator Component
 function CurrentTimeIndicator({
@@ -121,6 +180,14 @@ export default function ProfessionalCalendar({
   isLoading = false,
   onDateSelect,
 }: ProfessionalCalendarProps) {
+  // Log component mount
+  console.log('[CALENDAR COMPONENT] ProfessionalCalendar component mounted');
+  console.log('[CALENDAR COMPONENT] Props:', { 
+    bookingsCount: Array.isArray(bookings) ? bookings.length : 'not array',
+    isLoading,
+    hasOnDateSelect: !!onDateSelect
+  });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -327,16 +394,34 @@ export default function ProfessionalCalendar({
 
   // Handle date change from mini calendar
   const handleMiniCalendarSelect = useCallback((date: Date | undefined) => {
-    if (date) {
+    if (date && !isNaN(date.getTime())) {
       setCurrentDate(date);
       setSelectedDate(date);
     }
   }, []);
 
-  // Navigate calendar
+  // Handle navigation from react-big-calendar (receives Date object)
+  const handleNavigate = useCallback((newDate: Date) => {
+    if (newDate && newDate instanceof Date && !isNaN(newDate.getTime())) {
+      setCurrentDate(newDate);
+    }
+  }, []);
+
+  // Handle view change from react-big-calendar
+  const handleViewChange = useCallback((newView: View) => {
+    if (newView && ['month', 'week', 'day', 'agenda'].includes(newView)) {
+      setView(newView);
+      // When switching views, ensure currentDate is valid for the new view
+      // The calendar component will handle view-specific date adjustments
+    }
+  }, []);
+
+  // Navigate calendar (for custom buttons)
   const navigate = useCallback((action: "PREV" | "NEXT" | "TODAY") => {
     if (action === "TODAY") {
-      setCurrentDate(new Date());
+      const today = new Date();
+      setCurrentDate(today);
+      setSelectedDate(today);
       return;
     }
 
@@ -350,7 +435,11 @@ export default function ProfessionalCalendar({
     } else if (view === "day") {
       newDate.setDate(action === "PREV" ? newDate.getDate() - 1 : newDate.getDate() + 1);
     }
-    setCurrentDate(newDate);
+    
+    // Validate the new date before setting
+    if (!isNaN(newDate.getTime())) {
+      setCurrentDate(newDate);
+    }
   }, [currentDate, view]);
 
   // Get week range for date range display
@@ -566,21 +655,24 @@ export default function ProfessionalCalendar({
                   <Button
                     variant={view === "month" ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => setView("month")}
+                    onClick={() => handleViewChange("month")}
+                    data-testid="button-view-month"
                   >
                     Month
                   </Button>
                   <Button
                     variant={view === "week" ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => setView("week")}
+                    onClick={() => handleViewChange("week")}
+                    data-testid="button-view-week"
                   >
                     Week
                   </Button>
                   <Button
                     variant={view === "day" ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => setView("day")}
+                    onClick={() => handleViewChange("day")}
+                    data-testid="button-view-day"
                   >
                     Day
                   </Button>
@@ -592,6 +684,8 @@ export default function ProfessionalCalendar({
                     variant="outline"
                     size="sm"
                     onClick={() => navigate("PREV")}
+                    data-testid="button-nav-prev"
+                    aria-label="Previous"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -599,6 +693,7 @@ export default function ProfessionalCalendar({
                     variant="outline"
                     size="sm"
                     onClick={() => navigate("TODAY")}
+                    data-testid="button-nav-today"
                   >
                     Today
                   </Button>
@@ -606,6 +701,8 @@ export default function ProfessionalCalendar({
                     variant="outline"
                     size="sm"
                     onClick={() => navigate("NEXT")}
+                    data-testid="button-nav-next"
+                    aria-label="Next"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -613,13 +710,13 @@ export default function ProfessionalCalendar({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 p-4 overflow-hidden">
+          <CardContent className="flex-1 p-4 overflow-hidden" style={{ minHeight: '650px', height: '100%' }}>
             {isLoading ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center h-full min-h-[600px]">
                 <div className="text-muted-foreground">Loading calendar...</div>
               </div>
             ) : (
-              <div className="h-full min-h-[600px] relative" ref={calendarRef}>
+              <div className="relative" ref={calendarRef} style={{ minHeight: '600px', height: '600px', width: '100%' }}>
                 {/* Date Range Display */}
                 {weekRange && (
                   <div className="mb-2 text-sm font-medium text-muted-foreground">
@@ -629,47 +726,139 @@ export default function ProfessionalCalendar({
                 {/* Calendar component - filteredEvents is always an array due to defensive coding */}
                 {/* Ensure events is always a valid array for react-big-calendar */}
                 {(() => {
+                  console.log('[CALENDAR RENDER] Starting Calendar render function');
+                  console.log('[CALENDAR RENDER] isLoading:', isLoading);
+                  console.log('[CALENDAR RENDER] filteredEvents count:', Array.isArray(filteredEvents) ? filteredEvents.length : 'not array');
                   try {
+                    // Comprehensive prop validation
                     const safeEvents = Array.isArray(filteredEvents) ? filteredEvents : [];
+                    
+                    // Validate localizer
+                    if (!localizer) {
+                      console.error('[CALENDAR ERROR] Localizer not initialized - Calendar cannot render');
+                      return (
+                        <div className="flex items-center justify-center h-full min-h-[600px]" data-testid="calendar-error-localizer">
+                          <div className="text-muted-foreground">Calendar initialization error: Localizer not initialized. Check console for details.</div>
+                        </div>
+                      );
+                    }
+                    
+                    // Validate moment.js
+                    if (!moment || typeof moment !== 'function') {
+                      console.error('[CALENDAR ERROR] Moment.js not available:', typeof moment);
+                      return (
+                        <div className="flex items-center justify-center h-full min-h-[600px]" data-testid="calendar-error-moment">
+                          <div className="text-muted-foreground">Calendar initialization error: Moment.js not available</div>
+                        </div>
+                      );
+                    }
+                    
+                    // Validate currentDate
+                    if (!currentDate || !(currentDate instanceof Date) || isNaN(currentDate.getTime())) {
+                      console.error('[CALENDAR ERROR] Invalid currentDate:', currentDate);
+                      return (
+                        <div className="flex items-center justify-center h-full min-h-[600px]" data-testid="calendar-error-date">
+                          <div className="text-muted-foreground">Calendar initialization error: Invalid date</div>
+                        </div>
+                      );
+                    }
+                    
+                    // Validate view
+                    const validViews: View[] = ['month', 'week', 'day', 'agenda'];
+                    if (!validViews.includes(view)) {
+                      console.error('[CALENDAR ERROR] Invalid view:', view);
+                      return (
+                        <div className="flex items-center justify-center h-full min-h-[600px]" data-testid="calendar-error-view">
+                          <div className="text-muted-foreground">Calendar initialization error: Invalid view</div>
+                        </div>
+                      );
+                    }
+                    
+                    // Validate events structure
+                    const invalidEvents = safeEvents.filter((event: any) => {
+                      return !event || 
+                             !(event.start instanceof Date) || 
+                             !(event.end instanceof Date) ||
+                             isNaN(event.start.getTime()) ||
+                             isNaN(event.end.getTime());
+                    });
+                    
+                    if (invalidEvents.length > 0) {
+                      console.warn('[CALENDAR WARNING] Found invalid events:', invalidEvents.length);
+                    }
+                    
+                    // Log prop validation success
+                    console.log('[CALENDAR DEBUG] Props validated:', {
+                      eventsCount: safeEvents.length,
+                      localizerType: typeof localizer,
+                      momentType: typeof moment,
+                      currentDate: currentDate.toISOString(),
+                      view: view
+                    });
+                    
+                    // Render Calendar with error boundary
                     return (
-                      <Calendar
-                        localizer={localizer}
-                        events={safeEvents}
-                        startAccessor="start"
-                        endAccessor="end"
-                        style={{ height: "100%" }}
-                        view={view}
-                        onView={setView}
-                        date={currentDate}
-                        onNavigate={setCurrentDate}
-                        onSelectEvent={handleSelectEvent}
-                        onSelectSlot={handleSelectSlot}
-                        selectable
-                        eventPropGetter={eventStyleGetter}
-                        components={{
-                          toolbar: customToolbar,
-                          header: customHeader,
-                        }}
-                        formats={{
-                          dayFormat: "EEE",
-                          dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
-                            // This is used for week view column headers
-                            return format(date, "EEE M/d");
-                          },
-                          dayRangeHeaderFormat: ({ start, end }) =>
-                            `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`,
-                          monthHeaderFormat: "MMMM yyyy",
-                          timeGutterFormat: "h:mm a",
-                          eventTimeRangeFormat: ({ start, end }) =>
-                            `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`,
-                        }}
-                      />
+                      <div data-testid="react-big-calendar-container" style={{ height: '600px', width: '100%' }}>
+                        <CalendarErrorBoundary>
+                          <Calendar
+                            localizer={localizer}
+                            events={safeEvents}
+                            startAccessor="start"
+                            endAccessor="end"
+                            style={{ height: '600px', minHeight: '600px' }}
+                            view={view}
+                            onView={handleViewChange}
+                            date={currentDate}
+                            onNavigate={handleNavigate}
+                            onSelectEvent={handleSelectEvent}
+                            onSelectSlot={handleSelectSlot}
+                            selectable
+                            eventPropGetter={eventStyleGetter}
+                            components={{
+                              toolbar: customToolbar,
+                              header: customHeader,
+                            }}
+                            formats={{
+                              dayFormat: "EEE",
+                              dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
+                                try {
+                                  return format(date, "EEE M/d");
+                                } catch (e) {
+                                  console.error('[CALENDAR ERROR] dayHeaderFormat error:', e);
+                                  return date.toLocaleDateString();
+                                }
+                              },
+                              dayRangeHeaderFormat: ({ start, end }) => {
+                                try {
+                                  return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
+                                } catch (e) {
+                                  console.error('[CALENDAR ERROR] dayRangeHeaderFormat error:', e);
+                                  return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+                                }
+                              },
+                              monthHeaderFormat: "MMMM yyyy",
+                              timeGutterFormat: "h:mm a",
+                              eventTimeRangeFormat: ({ start, end }) => {
+                                try {
+                                  return `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`;
+                                } catch (e) {
+                                  console.error('[CALENDAR ERROR] eventTimeRangeFormat error:', e);
+                                  return `${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}`;
+                                }
+                              },
+                            }}
+                          />
+                        </CalendarErrorBoundary>
+                      </div>
                     );
                   } catch (error) {
-                    console.error('Error rendering Calendar component:', error);
+                    console.error('[CALENDAR ERROR] Fatal error rendering Calendar component:', error);
+                    console.error('[CALENDAR ERROR] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
                     return (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-muted-foreground">Error loading calendar. Please refresh the page.</div>
+                      <div className="flex items-center justify-center h-full min-h-[600px]" data-testid="calendar-error-fatal">
+                        <div className="text-muted-foreground">
+                          Error loading calendar: {error instanceof Error ? error.message : String(error)}
+                        </div>
                       </div>
                     );
                   }

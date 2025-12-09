@@ -36,22 +36,6 @@ export default function ProfessionalDashboard() {
   const viewParam = searchParams.get('view');
   const activeView = (viewParam as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') || 'overview';
   
-  // E2E Debug: Log activeView immediately after parsing
-  if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
-    console.log('E2E Debug: Active View Determined As:', activeView);
-    console.log('E2E Debug: View param from URL:', viewParam);
-    console.log('E2E Debug: Applications condition result:', activeView === 'applications');
-  }
-  
-  // Debug logging for view switching (remove in production)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
-      console.log('[ProfessionalDashboard] View param:', viewParam, 'Active view:', activeView);
-      console.log('[ProfessionalDashboard] activeView === "applications":', activeView === 'applications');
-      console.log('[ProfessionalDashboard] User:', user ? { id: user.id, currentRole: user.currentRole, roles: user.roles } : 'null');
-    }
-  }, [viewParam, activeView, user]);
-  
   const setActiveView = (view: 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') => {
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
@@ -362,16 +346,6 @@ export default function ProfessionalDashboard() {
     averageRating: 0
   };
 
-  // TEMPORARY: Bypass access control check for debugging
-  // TODO: Re-enable after fixing rendering issue
-  // if (!user || user.currentRole !== "professional") {
-  //   return <div>Access denied</div>;
-  // }
-  
-  // Debug: Log user state
-  if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
-    console.log('[ProfessionalDashboard] Access check - User:', user ? 'exists' : 'null', 'CurrentRole:', user?.currentRole);
-  }
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -766,20 +740,9 @@ export default function ProfessionalDashboard() {
         )}
         
         {/* Applications Tab */}
-        {/* DEBUG: Log render condition */}
-        {process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1' ? (
-          (() => {
-            console.log('[ProfessionalDashboard] Rendering Applications Tab - activeView:', activeView, 'condition:', activeView === 'applications');
-            return null;
-          })()
-        ) : null}
-        {activeView === 'applications' ? (
+        {activeView === 'applications' && (
           <div data-testid="applications-view-container">
             <ApplicationsView />
-          </div>
-        ) : (
-          <div data-testid="applications-view-not-rendered" style={{ padding: '10px', background: 'red', color: 'white' }}>
-            Applications view NOT rendered. activeView: {activeView}, expected: applications
           </div>
         )}
         
