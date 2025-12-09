@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export default function Hero() {
   return (
     <div 
-      className="relative text-white min-h-screen flex items-center justify-center overflow-hidden bg-steel-900"
+      className="relative text-white min-h-screen flex items-end justify-center overflow-hidden bg-steel-900"
       style={{
         backgroundImage: `url('/hero-background.png'), linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
         backgroundSize: 'cover',
@@ -16,10 +16,11 @@ export default function Hero() {
       <img 
         src="/og-image.png" 
         alt="Snipshift Logo Background" 
-        className="absolute inset-0 w-full h-full object-cover z-0"
+        className="absolute inset-0 w-full h-full object-cover"
         style={{
           objectFit: 'cover',
           objectPosition: 'center',
+          zIndex: -1,
         }}
         loading="eager"
       />
@@ -27,7 +28,7 @@ export default function Hero() {
       {/* Dark Overlay for contrast */}
       <div className="absolute inset-0 bg-black/60 z-[1]" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10 flex flex-col items-center justify-center gap-8 py-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10 flex flex-col items-center gap-8 pb-24 pt-8">
         <p className="text-xl md:text-2xl text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium relative z-10">
           Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
         </p>
