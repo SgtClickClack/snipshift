@@ -338,7 +338,7 @@ function AppRoutes() {
         } />
 
         <Route path="/admin" element={
-          <ProtectedRoute requiredRole="admin">
+          <ProtectedRoute allowedRoles={['admin']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <AdminDashboard />
             </Suspense>
