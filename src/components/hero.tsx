@@ -22,9 +22,10 @@ export default function Hero() {
       <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center px-4">
         {/* Large Bright Logo - dominant visual element */}
         <div 
-          className="w-[70%] max-w-[800px] mb-8"
+          className="w-[70%] max-w-[800px] mb-8 overflow-hidden"
           style={{
-            background: 'transparent'
+            background: 'transparent',
+            clipPath: 'inset(0 0 20% 0)'
           }}
         >
           <img 
@@ -35,7 +36,9 @@ export default function Hero() {
               filter: 'brightness(1.3) contrast(1.1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.6))',
               opacity: 1,
               background: 'transparent',
-              mixBlendMode: 'normal'
+              mixBlendMode: 'normal',
+              objectPosition: 'center top',
+              display: 'block'
             }}
             loading="eager"
           />
