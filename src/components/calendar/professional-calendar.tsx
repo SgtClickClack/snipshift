@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Calendar, momentLocalizer, View, Event } from "react-big-calendar";
 import moment from "moment";
-import { format, isPast, isToday } from "date-fns";
+import { format, isPast, isToday, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,61 @@ interface ProfessionalCalendarProps {
 
 type JobStatus = "all" | "pending" | "confirmed" | "completed";
 
+// Current Time Indicator Component
+function CurrentTimeIndicator({
+  currentTime,
+  view,
+  currentDate,
+}: {
+  currentTime: Date;
+  view: View;
+  currentDate: Date;
+}) {
+  const isToday = isSameDay(currentTime, currentDate);
+  const isInCurrentWeek =
+    view === "week" &&
+    currentTime >= startOfWeek(currentDate, { weekStartsOn: 0 }) &&
+    currentTime <= endOfWeek(currentDate, { weekStartsOn: 0 });
+
+  if ((view === "week" && !isInCurrentWeek) || (view === "day" && !isToday)) {
+    return null;
+  }
+
+  const hours = currentTime.getHours();
+  const minutes = currentTime.getMinutes();
+  const totalMinutes = hours * 60 + minutes;
+  // Calculate position: calendar typically shows 6 AM to 11 PM (17 hours = 1020 minutes)
+  // Starting from 6 AM (360 minutes)
+  const startHour = 6;
+  const endHour = 23;
+  const startMinutes = startHour * 60;
+  const endMinutes = endHour * 60;
+  const totalRange = endMinutes - startMinutes;
+  const positionFromStart = totalMinutes - startMinutes;
+  const topPosition = Math.max(0, Math.min(100, (positionFromStart / totalRange) * 100));
+
+  return (
+    <div
+      className="absolute left-0 right-0 z-20 pointer-events-none"
+      style={{
+        top: `${topPosition}%`,
+        marginTop: "-1px",
+      }}
+    >
+      <div className="flex items-center h-0.5">
+        <div className="w-14 text-xs text-primary font-medium pr-2 text-right bg-background/80">
+          {format(currentTime, "h:mm a")}
+        </div>
+        <div className="flex-1 relative">
+          <div className="h-0.5 bg-primary relative">
+            <div className="absolute -left-1.5 -top-1.5 w-3 h-3 bg-primary rounded-full border-2 border-background"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfessionalCalendar({
   bookings,
   isLoading = false,
@@ -75,6 +130,17 @@ export default function ProfessionalCalendar({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [statusFilter, setStatusFilter] = useState<JobStatus>("all");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const timeIndicatorRef = useRef<HTMLDivElement>(null);
+
+  // Update current time every minute for time indicator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
 
   // Convert bookings to calendar events
   const events: CalendarEvent[] = useMemo(() => {
@@ -228,6 +294,43 @@ export default function ProfessionalCalendar({
     setCurrentDate(newDate);
   }, [currentDate, view]);
 
+  // Get week range for date range display
+  const weekRange = useMemo(() => {
+    if (view === "week") {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+      return { start: weekStart, end: weekEnd };
+    }
+    return null;
+  }, [currentDate, view]);
+
+  // Custom toolbar component (returns null to hide default toolbar)
+  const customToolbar = useCallback(() => null, []);
+  
+  // Custom header component to add current day styling
+  const customHeader = useCallback(
+    ({ date, localizer, label }: { date: Date; localizer: any; label: string }) => {
+      const isCurrentDay = isSameDay(date, new Date());
+      // Split the label (format: "EEE M/d" like "Mon 9/12")
+      const parts = label.split(" ");
+      return (
+        <div
+          className={`rbc-header ${isCurrentDay ? "rbc-header-today" : ""}`}
+        >
+          {parts.length > 1 ? (
+            <>
+              <div className="font-semibold">{parts[0]}</div>
+              <div className="text-sm text-muted-foreground">{parts.slice(1).join(" ")}</div>
+            </>
+          ) : (
+            label
+          )}
+        </div>
+      );
+    },
+    []
+  );
+
   // Create availability mutation (placeholder - adjust based on your API)
   const createAvailabilityMutation = useMutation({
     mutationFn: async (data: { date: Date; startTime: string; endTime: string }) => {
@@ -278,7 +381,7 @@ export default function ProfessionalCalendar({
         {/* Mini Calendar */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Quick Navigation</CardTitle>
+            <CardTitle className="text-lg" data-testid="quick-navigation-title">Quick Navigation</CardTitle>
           </CardHeader>
           <CardContent>
             <CalendarComponent
@@ -286,7 +389,41 @@ export default function ProfessionalCalendar({
               selected={selectedDate}
               onSelect={handleMiniCalendarSelect}
               className="w-full"
+              modifiersClassNames={{
+                today: "font-semibold bg-accent",
+              }}
             />
+            {/* Quick Day Navigation */}
+            <div className="mt-4 pt-4 border-t">
+              <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day, idx) => (
+                  <div key={day} className="text-muted-foreground font-medium py-1">
+                    {day}
+                  </div>
+                ))}
+                {eachDayOfInterval({
+                  start: startOfWeek(new Date(), { weekStartsOn: 0 }),
+                  end: endOfWeek(new Date(), { weekStartsOn: 0 }),
+                }).map((day, idx) => {
+                  const isSelected = selectedDate && isSameDay(day, selectedDate);
+                  const isCurrentDay = isSameDay(day, new Date());
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleMiniCalendarSelect(day)}
+                      className={`
+                        aspect-square rounded-md text-xs font-medium transition-colors
+                        ${isSelected ? "bg-primary text-primary-foreground" : ""}
+                        ${isCurrentDay && !isSelected ? "bg-accent text-accent-foreground border border-primary/20" : ""}
+                        ${!isSelected && !isCurrentDay ? "hover:bg-accent" : ""}
+                      `}
+                    >
+                      {format(day, "d")}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -300,6 +437,7 @@ export default function ProfessionalCalendar({
               }}
               className="w-full"
               size="lg"
+              data-testid="button-create-availability"
             >
               <Plus className="mr-2 h-4 w-4" />
               Create Availability/Shift
@@ -358,11 +496,11 @@ export default function ProfessionalCalendar({
       </div>
 
       {/* Main Calendar Area - 75% */}
-      <div className="flex-1 lg:w-3/4">
+      <div className="flex-1 lg:w-3/4" data-testid="calendar-main-area">
         <Card className="h-full flex flex-col">
           <CardHeader className="border-b">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-xl">Schedule</CardTitle>
+              <CardTitle className="text-xl" data-testid="calendar-schedule-title">Schedule</CardTitle>
               <div className="flex items-center gap-2">
                 {/* View Switcher */}
                 <div className="flex gap-1 border rounded-md p-1">
@@ -422,7 +560,13 @@ export default function ProfessionalCalendar({
                 <div className="text-muted-foreground">Loading calendar...</div>
               </div>
             ) : (
-              <div className="h-full min-h-[600px]">
+              <div className="h-full min-h-[600px] relative" ref={calendarRef}>
+                {/* Date Range Display */}
+                {weekRange && (
+                  <div className="mb-2 text-sm font-medium text-muted-foreground">
+                    {format(weekRange.start, "MMM d")} - {format(weekRange.end, "MMM d, yyyy")}
+                  </div>
+                )}
                 <Calendar
                   localizer={localizer}
                   events={filteredEvents}
@@ -437,9 +581,16 @@ export default function ProfessionalCalendar({
                   onSelectSlot={handleSelectSlot}
                   selectable
                   eventPropGetter={eventStyleGetter}
+                  components={{
+                    toolbar: customToolbar,
+                    header: customHeader,
+                  }}
                   formats={{
                     dayFormat: "EEE",
-                    dayHeaderFormat: "EEEE, MMMM d",
+                    dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
+                      // This is used for week view column headers
+                      return format(date, "EEE M/d");
+                    },
                     dayRangeHeaderFormat: ({ start, end }) =>
                       `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`,
                     monthHeaderFormat: "MMMM yyyy",
@@ -448,6 +599,14 @@ export default function ProfessionalCalendar({
                       `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`,
                   }}
                 />
+                {/* Current Time Indicator - only show in week/day view */}
+                {view === "week" || view === "day" ? (
+                  <CurrentTimeIndicator
+                    currentTime={currentTime}
+                    view={view}
+                    currentDate={currentDate}
+                  />
+                ) : null}
               </div>
             )}
           </CardContent>

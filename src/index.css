@@ -173,27 +173,71 @@ button:active, a:active, [role="button"]:active {
 .rbc-header {
   padding: 0.75rem 0.5rem;
   font-weight: 600;
-  border-bottom: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rbc-header-today {
+  background-color: hsl(var(--accent) / 0.2) !important;
+  border-left: 3px solid hsl(var(--primary)) !important;
+  font-weight: 700;
+}
+
+/* Current day column styling in week/day view */
+.rbc-time-view .rbc-day-slot.rbc-today {
+  background-color: hsl(var(--accent) / 0.1) !important;
+}
+
+.rbc-time-view .rbc-day-slot.rbc-today .rbc-time-slot {
+  border-top-color: hsl(var(--border) / 0.3);
+}
+
+.rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
+  border-left: 2px solid hsl(var(--primary) / 0.5) !important;
 }
 
 .rbc-day-bg {
-  border-color: hsl(var(--border));
+  border-color: hsl(var(--border) / 0.4);
 }
 
 .rbc-time-slot {
-  border-top-color: hsl(var(--border));
+  border-top-color: hsl(var(--border) / 0.3);
 }
 
 .rbc-time-header-content {
-  border-left-color: hsl(var(--border));
+  border-left-color: hsl(var(--border) / 0.4);
+}
+
+.rbc-time-content {
+  border-top-color: hsl(var(--border) / 0.3);
+}
+
+.rbc-time-view {
+  border-color: hsl(var(--border) / 0.4);
+}
+
+.rbc-time-header-gutter {
+  border-right-color: hsl(var(--border) / 0.4);
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top-color: hsl(var(--border) / 0.3);
 }
 
 .rbc-today {
-  background-color: hsl(var(--accent) / 0.3);
+  background-color: hsl(var(--accent) / 0.15) !important;
+}
+
+.rbc-today .rbc-day-bg {
+  background-color: hsl(var(--accent) / 0.1) !important;
+  border-left: 2px solid hsl(var(--primary) / 0.5) !important;
 }
 
 .rbc-off-range-bg {
-  background-color: hsl(var(--muted) / 0.5);
+  background-color: hsl(var(--muted) / 0.3);
 }
 
 .rbc-event {
@@ -205,8 +249,9 @@ button:active, a:active, [role="button"]:active {
   font-size: 0.875rem;
 }
 
+/* Hide default toolbar */
 .rbc-toolbar {
-  margin-bottom: 1rem;
+  display: none !important;
 }
 
 .rbc-toolbar button {
@@ -223,4 +268,26 @@ button:active, a:active, [role="button"]:active {
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   border-color: hsl(var(--primary));
+}
+
+/* Grid line improvements */
+.rbc-month-view,
+.rbc-time-view {
+  border-color: hsl(var(--border) / 0.4);
+}
+
+.rbc-month-row {
+  border-color: hsl(var(--border) / 0.4);
+}
+
+.rbc-day-bg + .rbc-day-bg {
+  border-left-color: hsl(var(--border) / 0.4);
+}
+
+.rbc-row {
+  border-color: hsl(var(--border) / 0.3);
+}
+
+.rbc-row-segment {
+  border-color: hsl(var(--border) / 0.3);
 }
