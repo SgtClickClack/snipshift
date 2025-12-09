@@ -241,16 +241,16 @@ export default function ProfileHeader({
     .slice(0, 2) || 'U';
 
   return (
-    <div className={cn("relative w-full h-48 md:h-64 rounded-t-lg", className)}>
+    <div className={cn("relative w-full h-48 md:h-64 rounded-lg", className)}>
       {/* Banner Image or Gradient Fallback */}
       {bannerUrl ? (
         <img
           src={bannerUrl}
           alt="Banner"
-          className="w-full h-full object-cover rounded-t-lg"
+          className="w-full h-full object-cover rounded-lg"
         />
       ) : (
-        <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-t-lg" />
+        <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg" />
       )}
 
       {/* Banner Edit Button (top-right) */}

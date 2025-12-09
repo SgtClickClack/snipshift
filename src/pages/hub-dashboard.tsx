@@ -887,7 +887,7 @@ export default function HubDashboard() {
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 hidden">
                       <Label htmlFor="avatarUrl">Profile Image URL</Label>
                       <Input
                         id="avatarUrl"
