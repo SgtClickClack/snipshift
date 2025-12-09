@@ -453,7 +453,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       <CardContent className="space-y-4 pb-12">
         <form onSubmit={handleSubmit} className="space-y-4 pb-4">
           {/* Profile Header with Banner and Avatar */}
-          <Card>
+          <Card className="overflow-visible">
             <CardContent className="p-0">
               <div className="relative">
                 <ProfileHeader
