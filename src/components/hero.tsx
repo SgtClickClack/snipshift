@@ -31,9 +31,8 @@ export default function Hero() {
           <img 
             src="/logoblackback.png" 
             alt="Snipshift Logo" 
-            className="w-full h-auto object-contain dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]"
+            className="w-full h-auto object-contain dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] invert dark:invert-0 dark:brightness-[1.3] dark:contrast-[1.1]"
             style={{
-              filter: 'brightness(1.3) contrast(1.1)',
               opacity: 1,
               background: 'transparent',
               mixBlendMode: 'normal',

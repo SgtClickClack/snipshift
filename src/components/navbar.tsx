@@ -124,14 +124,13 @@ export default function Navbar() {
             <img 
               src={logo} 
               alt="Snipshift Logo" 
-              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp" 
+              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp invert dark:invert-0 dark:contrast-[1.3] dark:brightness-[1.08] dark:saturate-[1.15]" 
               loading="eager"
               width={120}
               height={40}
               style={{
                 imageRendering: 'auto',
                 WebkitFontSmoothing: 'antialiased',
-                filter: 'contrast(1.3) brightness(1.08) saturate(1.15)',
               }}
             />
           </Link>

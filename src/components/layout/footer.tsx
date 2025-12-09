@@ -12,14 +12,13 @@ export function Footer() {
               <img 
                 src={logo} 
                 alt="SnipShift Logo" 
-                className="h-8 w-auto logo-sharp"
+                className="h-8 w-auto logo-sharp invert dark:invert-0 dark:contrast-[1.3] dark:brightness-[1.08] dark:saturate-[1.15]"
                 loading="eager"
                 width={96}
                 height={32}
                 style={{
                   imageRendering: 'auto',
                   WebkitFontSmoothing: 'antialiased',
-                  filter: 'contrast(1.3) brightness(1.08) saturate(1.15)',
                 }}
               />
             </Link>
