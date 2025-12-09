@@ -54,7 +54,7 @@ interface CalendarEvent extends Event {
 }
 
 interface ProfessionalCalendarProps {
-  bookings: any[];
+  bookings?: any[] | null;
   isLoading?: boolean;
   onDateSelect?: (date: Date) => void;
 }
@@ -117,7 +117,7 @@ function CurrentTimeIndicator({
 }
 
 export default function ProfessionalCalendar({
-  bookings,
+  bookings = [],
   isLoading = false,
   onDateSelect,
 }: ProfessionalCalendarProps) {
@@ -144,74 +144,129 @@ export default function ProfessionalCalendar({
 
   // Convert bookings to calendar events
   const events: CalendarEvent[] = useMemo(() => {
-    if (!bookings || bookings.length === 0) return [];
+    // Defensive check: ensure bookings is always an array
+    if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
+      return [];
+    }
 
-    return bookings
-      .map((booking: any) => {
-        const job = booking.job || booking.shift;
-        if (!job) return null;
+    try {
+      return bookings
+        .map((booking: any) => {
+          // Skip invalid bookings
+          if (!booking || typeof booking !== 'object') return null;
 
-        // Determine date from job/shift
-        const dateStr = job.date || job.startTime || booking.appliedAt;
-        if (!dateStr) return null;
+          try {
+            const job = booking.job || booking.shift;
+            if (!job) return null;
 
-        const startDate = new Date(dateStr);
-        if (isNaN(startDate.getTime())) return null;
+            // Determine date from job/shift
+            const dateStr = job.date || job.startTime || booking.appliedAt;
+            if (!dateStr) return null;
 
-        // Determine end date (default to 8 hours later if not specified)
-        let endDate: Date;
-        if (job.endTime) {
-          endDate = new Date(job.endTime);
-        } else {
-          endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000);
-        }
+            const startDate = new Date(dateStr);
+            if (isNaN(startDate.getTime())) return null;
 
-        // Determine status
-        let status: "confirmed" | "pending" | "completed" | "past";
-        if (isPast(endDate) && !isToday(endDate)) {
-          status = "past";
-        } else if (booking.status === "accepted" || booking.status === "confirmed") {
-          status = "confirmed";
-        } else if (booking.status === "completed") {
-          status = "completed";
-        } else {
-          status = "pending";
-        }
+            // Determine end date (default to 8 hours later if not specified)
+            let endDate: Date;
+            if (job.endTime) {
+              endDate = new Date(job.endTime);
+              // Validate endDate
+              if (isNaN(endDate.getTime())) {
+                endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000);
+              }
+            } else {
+              endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000);
+            }
 
-        return {
-          id: booking.id || job.id,
-          title: job.title || "Untitled Job",
-          start: startDate,
-          end: endDate,
-          resource: {
-            booking,
-            status,
-            type: booking.job ? "job" : "shift",
-          },
-        } as CalendarEvent;
-      })
-      .filter((event): event is CalendarEvent => event !== null);
+            // Ensure endDate is after startDate
+            if (endDate <= startDate) {
+              endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000);
+            }
+
+            // Determine status
+            let status: "confirmed" | "pending" | "completed" | "past";
+            if (isPast(endDate) && !isToday(endDate)) {
+              status = "past";
+            } else if (booking.status === "accepted" || booking.status === "confirmed") {
+              status = "confirmed";
+            } else if (booking.status === "completed") {
+              status = "completed";
+            } else {
+              status = "pending";
+            }
+
+            return {
+              id: booking.id || job.id || `event-${Date.now()}-${Math.random()}`,
+              title: job.title || "Untitled Job",
+              start: startDate,
+              end: endDate,
+              resource: {
+                booking,
+                status,
+                type: booking.job ? "job" : "shift",
+              },
+            } as CalendarEvent;
+          } catch (error) {
+            // Log error but don't crash - skip this booking
+            console.warn('Error processing booking:', error, booking);
+            return null;
+          }
+        })
+        .filter((event): event is CalendarEvent => event !== null);
+    } catch (error) {
+      // If entire conversion fails, return empty array to prevent crash
+      console.error('Error converting bookings to events:', error);
+      return [];
+    }
   }, [bookings]);
 
   // Filter events based on status
   const filteredEvents = useMemo(() => {
+    // Defensive check: ensure events is always an array
+    if (!events || !Array.isArray(events)) {
+      return [];
+    }
+    
     if (statusFilter === "all") return events;
-    return events.filter((event) => {
-      if (statusFilter === "pending") return event.resource.status === "pending";
-      if (statusFilter === "confirmed") return event.resource.status === "confirmed";
-      if (statusFilter === "completed") return event.resource.status === "completed";
-      return true;
-    });
+    
+    try {
+      return events.filter((event) => {
+        if (!event || !event.resource) return false;
+        if (statusFilter === "pending") return event.resource.status === "pending";
+        if (statusFilter === "confirmed") return event.resource.status === "confirmed";
+        if (statusFilter === "completed") return event.resource.status === "completed";
+        return true;
+      });
+    } catch (error) {
+      // If filtering fails, return empty array to prevent crash
+      console.error('Error filtering events:', error);
+      return [];
+    }
   }, [events, statusFilter]);
 
   // Event style getter
   const eventStyleGetter = useCallback(
     (event: CalendarEvent) => {
+      // Defensive check: ensure event and resource exist
+      if (!event || !event.resource) {
+        return {
+          style: {
+            backgroundColor: "#6b7280",
+            borderColor: "#4b5563",
+            color: "#fff",
+            borderRadius: "4px",
+            border: "1px solid #4b5563",
+            padding: "2px 4px",
+          },
+        };
+      }
+
       let backgroundColor = "";
       let borderColor = "";
       let color = "#fff";
 
-      switch (event.resource.status) {
+      const status = event.resource.status || "pending";
+      switch (status) {
         case "confirmed":
           backgroundColor = "#22c55e"; // green-500
           borderColor = "#16a34a"; // green-600
@@ -250,6 +305,8 @@ export default function ProfessionalCalendar({
 
   // Handle event click
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
+    // Defensive check: ensure event exists
+    if (!event) return;
     setSelectedEvent(event);
     setShowEventDetails(true);
   }, []);
@@ -257,6 +314,8 @@ export default function ProfessionalCalendar({
   // Handle slot click (for adding availability)
   const handleSelectSlot = useCallback(
     ({ start, end }: { start: Date; end: Date }) => {
+      // Defensive check: ensure start date is valid
+      if (!start || isNaN(start.getTime())) return;
       setSelectedDate(start);
       setShowCreateModal(true);
       if (onDateSelect) {
@@ -567,38 +626,45 @@ export default function ProfessionalCalendar({
                     {format(weekRange.start, "MMM d")} - {format(weekRange.end, "MMM d, yyyy")}
                   </div>
                 )}
-                <Calendar
-                  localizer={localizer}
-                  events={filteredEvents}
-                  startAccessor="start"
-                  endAccessor="end"
-                  style={{ height: "100%" }}
-                  view={view}
-                  onView={setView}
-                  date={currentDate}
-                  onNavigate={setCurrentDate}
-                  onSelectEvent={handleSelectEvent}
-                  onSelectSlot={handleSelectSlot}
-                  selectable
-                  eventPropGetter={eventStyleGetter}
-                  components={{
-                    toolbar: customToolbar,
-                    header: customHeader,
-                  }}
-                  formats={{
-                    dayFormat: "EEE",
-                    dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
-                      // This is used for week view column headers
-                      return format(date, "EEE M/d");
-                    },
-                    dayRangeHeaderFormat: ({ start, end }) =>
-                      `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`,
-                    monthHeaderFormat: "MMMM yyyy",
-                    timeGutterFormat: "h:mm a",
-                    eventTimeRangeFormat: ({ start, end }) =>
-                      `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`,
-                  }}
-                />
+                {/* Ensure filteredEvents is always an array before passing to Calendar */}
+                {Array.isArray(filteredEvents) ? (
+                  <Calendar
+                    localizer={localizer}
+                    events={filteredEvents || []}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: "100%" }}
+                    view={view}
+                    onView={setView}
+                    date={currentDate}
+                    onNavigate={setCurrentDate}
+                    onSelectEvent={handleSelectEvent}
+                    onSelectSlot={handleSelectSlot}
+                    selectable
+                    eventPropGetter={eventStyleGetter}
+                    components={{
+                      toolbar: customToolbar,
+                      header: customHeader,
+                    }}
+                    formats={{
+                      dayFormat: "EEE",
+                      dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
+                        // This is used for week view column headers
+                        return format(date, "EEE M/d");
+                      },
+                      dayRangeHeaderFormat: ({ start, end }) =>
+                        `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`,
+                      monthHeaderFormat: "MMMM yyyy",
+                      timeGutterFormat: "h:mm a",
+                      eventTimeRangeFormat: ({ start, end }) =>
+                        `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`,
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-muted-foreground">Calendar is loading...</div>
+                  </div>
+                )}
                 {/* Current Time Indicator - only show in week/day view */}
                 {view === "week" || view === "day" ? (
                   <CurrentTimeIndicator
