@@ -27,7 +27,9 @@ export default function Hero() {
           className="w-[70%] max-w-[800px] h-auto object-contain mb-8"
           style={{
             filter: 'brightness(1.3) contrast(1.1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.6))',
-            opacity: 1
+            opacity: 1,
+            backgroundColor: 'transparent',
+            mixBlendMode: 'normal'
           }}
           loading="eager"
         />
