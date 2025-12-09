@@ -122,6 +122,8 @@ export default function ManageJobsPage() {
       // Refresh applications and jobs list
       queryClient.invalidateQueries({ queryKey: ['job-applications', selectedJobId] });
       queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
+      // Also invalidate my-applications so candidates see updated status immediately
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] });
     },
     onError: (error: any) => {
       toast({

@@ -49,7 +49,7 @@ interface IntegratedProfileSystemProps {
 }
 
 export default function IntegratedProfileSystem({ userId }: IntegratedProfileSystemProps) {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<'view' | 'edit'>('view');
@@ -146,8 +146,14 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
       const response = await apiRequest("PUT", `/api/me`, payload);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Invalidate profile queries
       queryClient.invalidateQueries({ queryKey: ["/api/profiles", profileUserId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", profileUserId] });
+      // Refresh user in AuthContext to update navbar immediately
+      if (isOwnProfile) {
+        await refreshUser();
+      }
       toast({
         title: "Profile updated successfully",
         description: "Your changes have been saved",

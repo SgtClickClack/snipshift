@@ -53,9 +53,15 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
         description: "The shop owner has been notified of your interest.",
         variant: "default",
       });
+      // Invalidate job/shift lists
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      // Invalidate shifts too if applicable
       queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      // Invalidate specific job/shift details if we have the ID
+      if (job?.id) {
+        queryClient.invalidateQueries({ queryKey: ['job', job.id] });
+      }
+      // Invalidate my applications list to show new application immediately
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] });
       if (onSuccess) {
         onSuccess();
       }

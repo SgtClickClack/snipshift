@@ -23,6 +23,11 @@ export default function JobDetailsPage() {
   const [applicationState, setApplicationState] = useState<'idle' | 'applying' | 'applied'>('idle');
   const [isSaved, setIsSaved] = useState(false);
 
+  // TODO: Saved jobs feature - Currently using local state only
+  // When backend API is implemented, this should:
+  // 1. Call API to save/unsave job
+  // 2. Use useMutation with invalidateQueries for ['saved-jobs'] query key
+  // 3. Load initial saved state from API/query
   const toggleSave = () => {
     setIsSaved(!isSaved);
     toast({
@@ -46,7 +51,10 @@ export default function JobDetailsPage() {
         title: 'Application submitted!',
         description: 'Your application has been sent successfully.',
       });
+      // Invalidate job details to update button state
       queryClient.invalidateQueries({ queryKey: ['job', id] });
+      // Invalidate my applications list to show new application immediately
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] });
     },
     onError: (error: any) => {
       toast({

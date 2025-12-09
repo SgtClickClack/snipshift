@@ -162,7 +162,12 @@ export default function HubDashboard() {
         title: "Success",
         description: "Shift posted successfully!"
       });
+      // Invalidate shop shifts for this user
       queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+      // Also invalidate general jobs lists to refresh the feed
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       setFormData({
         title: "",
         description: "",
@@ -212,12 +217,19 @@ export default function HubDashboard() {
       const res = await apiRequest("DELETE", endpoint);
       // Jobs endpoint returns 204 No Content, shifts returns JSON
       if (res.status === 204) {
-        return { success: true };
+        return { success: true, type };
       }
-      return res.json();
+      return { ...res.json(), type };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Always invalidate shop shifts
       queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+      // If deleting a job, also invalidate jobs lists
+      if (data?.type === 'job') {
+        queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
+      }
       toast({
         title: "Deleted",
         description: "The item has been removed and all applications have been cancelled.",
