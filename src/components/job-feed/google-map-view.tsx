@@ -470,7 +470,7 @@ export default function GoogleMapView({
         <CardContent className="p-0 flex-1 relative min-h-[500px]">
           <div className="absolute inset-0 bg-muted">
             {isLoading && (
-              <div className="absolute inset-0 bg-white/80 dark:bg-steel-900/80 backdrop-blur-sm flex items-center justify-center z-10">
+              <div className="absolute inset-0 bg-white/80 dark:bg-steel-900/80 backdrop-blur-sm flex items-center justify-center z-elevated">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-sm text-muted-foreground">Loading map...</p>
@@ -478,7 +478,7 @@ export default function GoogleMapView({
               </div>
             )}
             {isSearching && !isLoading && (
-              <div className="absolute inset-0 bg-white/60 dark:bg-steel-900/60 backdrop-blur-sm flex items-center justify-center z-10 pointer-events-none">
+              <div className="absolute inset-0 bg-white/60 dark:bg-steel-900/60 backdrop-blur-sm flex items-center justify-center z-elevated pointer-events-none">
                 <div className="text-center bg-white/90 dark:bg-steel-900/90 rounded-lg px-4 py-3 shadow-lg border">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-sm font-medium text-foreground">Searching area...</p>

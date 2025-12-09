@@ -114,7 +114,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-50 pt-safe overflow-x-hidden w-full">
+    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-16 min-w-0">
           <Link
@@ -151,13 +151,13 @@ export default function Navbar() {
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="w-full max-w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-50 relative"
+                        className="w-full max-w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-floating relative"
                       >
                         {currentRoleLabel}
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[240px] max-w-[calc(100vw-2rem)] bg-steel-800 border-steel-600 text-white z-50" align="end">
+                    <DropdownMenuContent className="w-[240px] max-w-[calc(100vw-2rem)] bg-steel-800 border-steel-600 text-white z-floating" align="end">
                       
                       <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Current View</DropdownMenuLabel>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white justify-between font-bold bg-steel-700/50">
@@ -259,7 +259,7 @@ export default function Navbar() {
                       <UserAvatar />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-steel-800 border-steel-600 text-white z-50" align="end">
+                  <DropdownMenuContent className="w-56 bg-steel-800 border-steel-600 text-white z-floating" align="end">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>

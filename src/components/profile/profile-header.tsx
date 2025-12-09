@@ -325,7 +325,7 @@ export default function ProfileHeader({
       )}
 
       {/* Avatar Container (overlapping bottom-left) */}
-      <div className="absolute -bottom-12 left-4 z-10">
+      <div className="absolute -bottom-12 left-4 z-elevated">
         <div className="relative">
           <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-white shadow-lg">
             <AvatarImage src={avatarUrl || undefined} alt={displayName} />

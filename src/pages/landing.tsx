@@ -27,8 +27,9 @@ export default function LandingPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative">
-              <div className="relative -mt-12 mx-auto w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg mb-4 z-10">
+            {/* Keep overflow-visible to prevent badge clipping */}
+            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
                 1
               </div>
               <CardContent className="pt-0">
@@ -40,8 +41,9 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             
-            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative">
-              <div className="relative -mt-12 mx-auto w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg mb-4 z-10">
+            {/* Keep overflow-visible to prevent badge clipping */}
+            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-50">
                 2
               </div>
               <CardContent className="pt-0">
@@ -53,8 +55,9 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             
-            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative">
-              <div className="relative -mt-12 mx-auto w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg mb-4 z-10">
+            {/* Keep overflow-visible to prevent badge clipping */}
+            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-50">
                 3
               </div>
               <CardContent className="pt-0">
@@ -66,8 +69,9 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             
-            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative">
-              <div className="relative -mt-12 mx-auto w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg mb-4 z-10">
+            {/* Keep overflow-visible to prevent badge clipping */}
+            <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-50">
                 4
               </div>
               <CardContent className="pt-0">

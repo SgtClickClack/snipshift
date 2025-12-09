@@ -101,7 +101,7 @@ export function EnhancedJobFilters({ className, onFiltersChange }: EnhancedJobFi
     jobType !== 'all';
 
   return (
-    <Card className={cn("sticky top-4 bg-card rounded-lg border shadow-sm", className)}>
+    <Card className={cn("sticky top-4 z-sticky bg-card rounded-lg border shadow-sm", className)}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Filters</span>

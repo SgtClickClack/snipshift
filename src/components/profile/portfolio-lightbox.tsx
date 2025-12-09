@@ -67,7 +67,7 @@ export default function PortfolioLightbox({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
+            className="absolute top-4 right-4 z-floating text-white hover:bg-white/20"
             onClick={onClose}
           >
             <X className="h-6 w-6" />
@@ -78,7 +78,7 @@ export default function PortfolioLightbox({
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-4 z-50 text-white hover:bg-white/20"
+              className="absolute left-4 z-floating text-white hover:bg-white/20"
               onClick={handlePrevious}
             >
               <ChevronLeft className="h-8 w-8" />
@@ -109,7 +109,7 @@ export default function PortfolioLightbox({
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-4 z-50 text-white hover:bg-white/20"
+              className="absolute right-4 z-floating text-white hover:bg-white/20"
               onClick={handleNext}
             >
               <ChevronRight className="h-8 w-8" />

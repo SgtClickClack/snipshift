@@ -237,7 +237,7 @@ export default function MapView({
 
             {/* Job details popup */}
             {selectedJob && (
-              <div className="absolute top-4 right-4 w-80 z-10">
+              <div className="absolute top-4 right-4 w-80 z-elevated">
                 <Card className="shadow-lg border-2 border-primary">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">

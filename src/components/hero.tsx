@@ -13,13 +13,13 @@ export default function Hero() {
       }}
     >
       {/* Dark Overlay to hide background and make logo pop */}
-      <div className="absolute inset-0 bg-black/60 z-[1]" />
+      <div className="absolute inset-0 bg-black/60 z-base" />
 
       {/* Bottom Gradient Overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-[2]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-elevated" />
 
       {/* Content Wrapper - flex column with logo first, then content */}
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center px-4">
+      <div className="relative z-elevated w-full h-full flex flex-col items-center justify-center text-center px-4">
         {/* Large Bright Logo - dominant visual element */}
         <div 
           className="w-[70%] max-w-[800px] mb-8 overflow-hidden"

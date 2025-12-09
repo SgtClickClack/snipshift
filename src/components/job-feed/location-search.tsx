@@ -209,7 +209,7 @@ export default function LocationSearch({
 
           {/* Location Suggestions */}
           {showSuggestions && filteredCities.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-popover text-popover-foreground border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 z-floating mt-1 bg-popover text-popover-foreground border rounded-lg shadow-lg max-h-60 overflow-y-auto">
               {filteredCities.slice(0, 8).map((city) => (
                 <div
                   key={city.name}

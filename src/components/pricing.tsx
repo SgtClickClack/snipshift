@@ -83,16 +83,18 @@ export default function Pricing() {
 
         <div className="grid md:grid-cols-3 gap-8">
           {tiers.map((tier) => (
-            <Card
-              key={tier.name}
-              className={`relative flex flex-col ${
+            <>
+              {/* Keep overflow-visible to prevent badge clipping */}
+              <Card
+                key={tier.name}
+                className={`relative flex flex-col overflow-visible ${
                 tier.highlighted
-                  ? "border-2 border-red-accent/50 shadow-2xl shadow-red-accent/20 scale-105 z-10 bg-slate-900/80"
+                  ? "border-2 border-red-accent/50 shadow-2xl shadow-red-accent/20 scale-105 z-elevated bg-slate-900/80"
                   : "border border-white/10 hover:shadow-lg hover:border-white/20 bg-slate-900"
               } transition-all duration-300`}
             >
               {tier.badge && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-badge">
                   <span className="bg-red-accent text-white text-sm font-bold px-4 py-1 rounded-full shadow-md">
                     {tier.badge}
                   </span>
@@ -170,6 +172,7 @@ export default function Pricing() {
                 )}
               </CardFooter>
             </Card>
+            </>
           ))}
         </div>
       </div>

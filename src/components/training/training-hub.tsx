@@ -265,7 +265,8 @@ export default function TrainingHub() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredContent.map((item) => (
-            <Card key={item.id} className="overflow-hidden group" data-testid={`content-${item.id}`}>
+            {/* Keep overflow-visible on Card to prevent badge clipping if badges extend outside */}
+            <Card key={item.id} className="overflow-visible group" data-testid={`content-${item.id}`}>
               {/* Video Thumbnail */}
               <div className="aspect-video bg-neutral-100 relative overflow-hidden">
                 {item.thumbnailUrl ? (

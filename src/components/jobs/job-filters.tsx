@@ -317,7 +317,7 @@ export function JobFilters({ className }: JobFiltersProps) {
   }
 
   return (
-    <Card className={cn("sticky top-4 bg-white dark:bg-steel-900 rounded-lg border border-gray-200 dark:border-steel-700 shadow-sm text-card-foreground", className)}>
+    <Card className={cn("sticky top-4 z-sticky bg-white dark:bg-steel-900 rounded-lg border border-gray-200 dark:border-steel-700 shadow-sm text-card-foreground", className)}>
       <CardHeader>
         <CardTitle className="text-lg text-foreground flex items-center justify-between">
           <span>Filters</span>

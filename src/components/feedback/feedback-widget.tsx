@@ -82,7 +82,7 @@ export function FeedbackWidget() {
       {/* Floating feedback button */}
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 rounded-full h-12 w-12 p-0 shadow-lg"
+        className="fixed bottom-6 right-6 z-floating rounded-full h-12 w-12 p-0 shadow-lg"
         data-testid="button-open-feedback"
       >
         <MessageSquare className="h-5 w-5" />
@@ -91,7 +91,7 @@ export function FeedbackWidget() {
 
       {/* Feedback modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-overlay bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <Card className="w-full max-w-md !bg-white dark:!bg-steel-900 shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-lg">Send Feedback</CardTitle>

@@ -108,6 +108,14 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       zIndex: {
+        // Semantic z-index scale for consistent layering
+        base: "0",
+        elevated: "10",
+        badge: "20",
+        sticky: "40",
+        floating: "50",
+        overlay: "100",
+        // Numeric values kept for backward compatibility
         0: "0",
         10: "10",
         20: "20",

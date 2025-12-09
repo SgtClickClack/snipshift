@@ -97,7 +97,7 @@ export function InstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-[100] animate-in slide-in-from-bottom-5 pointer-events-none">
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-overlay animate-in slide-in-from-bottom-5 pointer-events-none">
       <div className="bg-steel-900 text-white rounded-lg shadow-xl border border-steel-700 p-3 flex items-center gap-2 pointer-events-auto">
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-xs mb-0.5 text-white truncate">Install Snipshift</p>
