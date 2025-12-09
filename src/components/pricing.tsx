@@ -84,7 +84,7 @@ export default function Pricing() {
                 tier.highlighted
                   ? "border-red-accent shadow-xl scale-105 z-10"
                   : "border-steel-200 hover:shadow-lg hover:border-steel-300"
-              } transition-all duration-300 bg-white`}
+              } transition-all duration-300 bg-white dark:bg-steel-900`}
             >
               {tier.highlighted && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">

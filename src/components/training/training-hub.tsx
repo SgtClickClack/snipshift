@@ -282,7 +282,7 @@ export default function TrainingHub() {
                 
                 {/* Play Button Overlay */}
                 <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="bg-white bg-opacity-90 rounded-full p-3">
+                  <div className="bg-white dark:bg-steel-900 bg-opacity-90 dark:bg-opacity-90 rounded-full p-3">
                     <Play className="h-8 w-8 text-neutral-800" />
                   </div>
                 </div>

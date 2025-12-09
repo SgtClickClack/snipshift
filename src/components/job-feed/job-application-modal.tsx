@@ -143,7 +143,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto !bg-white z-[101]">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto !bg-white dark:!bg-steel-900 z-[101]">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-xl font-bold">Apply for Position</CardTitle>
           <Button

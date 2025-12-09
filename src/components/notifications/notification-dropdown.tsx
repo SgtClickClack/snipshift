@@ -73,7 +73,7 @@ export default function NotificationDropdown({
   };
 
   return (
-    <Card className="fixed left-1/2 top-[72px] w-[95vw] max-w-[calc(100vw-1rem)] -translate-x-1/2 md:absolute md:top-12 md:right-0 md:left-auto md:w-96 md:translate-x-0 shadow-lg border z-[100] !bg-white">
+    <Card className="fixed left-1/2 top-[72px] w-[95vw] max-w-[calc(100vw-1rem)] -translate-x-1/2 md:absolute md:top-12 md:right-0 md:left-auto md:w-96 md:translate-x-0 shadow-lg border z-[100] !bg-white dark:!bg-steel-900">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -130,10 +130,10 @@ export default function NotificationDropdown({
                 return (
                   <div
                     key={notification.id}
-                    className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-steel-50 border ${
+                    className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-steel-50 dark:hover:bg-steel-800 border ${
                       notification.isRead 
-                        ? 'bg-white border-transparent' 
-                        : 'bg-blue-50 border-blue-200'
+                        ? 'bg-white dark:bg-steel-900 border-transparent' 
+                        : 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800'
                     }`}
                     onClick={() => onNotificationClick(notification.id)}
                     data-testid={`notification-${notification.id}`}

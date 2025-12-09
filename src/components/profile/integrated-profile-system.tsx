@@ -179,10 +179,10 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-steel-950 py-8">
       {viewMode === 'view' ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <Card className="bg-white dark:bg-steel-900 rounded-lg border border-gray-200 dark:border-steel-700 shadow-sm">
             <CardContent className="p-0">
               <PublicProfile 
                 profile={profile}
@@ -194,7 +194,7 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
         </div>
       ) : (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <Card className="bg-white dark:bg-steel-900 rounded-lg border border-gray-200 dark:border-steel-700 shadow-sm">
              <CardContent className="p-6">
                <ProfileEditForm
                  profile={profile}
