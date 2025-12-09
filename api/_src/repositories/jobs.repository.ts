@@ -15,6 +15,7 @@ export interface JobFilters {
   offset?: number;
   city?: string;
   date?: string;
+  role?: 'barber' | 'hairdresser' | 'stylist' | 'other'; // Job role filter
   // Advanced filters
   search?: string; // Fuzzy match on title/description
   minRate?: number;
@@ -24,6 +25,7 @@ export interface JobFilters {
   radius?: number; // Distance in km
   lat?: number; // User's latitude for distance filtering
   lng?: number; // User's longitude for distance filtering
+  excludeExpired?: boolean; // Exclude jobs where endTime is in the past (default: true)
 }
 
 export interface PaginatedJobs {
@@ -65,6 +67,7 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
     offset = 0, 
     city, 
     date,
+    role,
     search,
     minRate,
     maxRate,
@@ -73,6 +76,7 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
     radius,
     lat,
     lng,
+    excludeExpired = true, // Default to excluding expired jobs
   } = filters;
 
   const conditions = [];
@@ -89,6 +93,9 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
   }
   if (date) {
     conditions.push(eq(jobs.date, date));
+  }
+  if (role) {
+    conditions.push(eq(jobs.role, role));
   }
 
   // Search filter (fuzzy match on title and description)
@@ -116,6 +123,15 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs |
   }
   if (endDate) {
     conditions.push(lte(jobs.date, endDate));
+  }
+
+  // Exclude expired jobs (where date + endTime is in the past)
+  if (excludeExpired) {
+    // Combine date and endTime to create a full timestamp, then compare with NOW()
+    // PostgreSQL: (date + endTime) > NOW()
+    conditions.push(
+      sql`(${jobs.date}::date + ${jobs.endTime}::time) > NOW()`
+    );
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -180,6 +196,7 @@ export async function createJob(
     startTime: string;
     endTime: string;
     status?: 'open' | 'filled' | 'closed' | 'completed';
+    role?: 'barber' | 'hairdresser' | 'stylist' | 'other';
     shopName?: string;
     address?: string;
     city?: string;
@@ -204,6 +221,7 @@ export async function createJob(
       startTime: jobData.startTime,
       endTime: jobData.endTime,
       status: jobData.status || 'open',
+      role: jobData.role || 'barber',
       shopName: jobData.shopName,
       address: jobData.address,
       city: jobData.city,
@@ -229,6 +247,7 @@ export async function updateJob(
     startTime?: string;
     endTime?: string;
     status?: 'open' | 'filled' | 'closed' | 'completed';
+    role?: 'barber' | 'hairdresser' | 'stylist' | 'other';
     shopName?: string;
     address?: string;
     city?: string;
@@ -286,6 +305,7 @@ export async function getJobsWithApplicationCounts(
     offset = 0,
     city,
     date,
+    role,
     search,
     minRate,
     maxRate,
@@ -294,6 +314,7 @@ export async function getJobsWithApplicationCounts(
     radius,
     lat,
     lng,
+    excludeExpired = true, // Default to excluding expired jobs
   } = filters;
 
   const conditions = [];
@@ -308,6 +329,9 @@ export async function getJobsWithApplicationCounts(
   }
   if (date) {
     conditions.push(eq(jobs.date, date));
+  }
+  if (role) {
+    conditions.push(eq(jobs.role, role));
   }
   
   // Search filter (fuzzy match on title and description)
@@ -335,6 +359,15 @@ export async function getJobsWithApplicationCounts(
   }
   if (endDate) {
     conditions.push(lte(jobs.date, endDate));
+  }
+
+  // Exclude expired jobs (where date + endTime is in the past)
+  if (excludeExpired) {
+    // Combine date and endTime to create a full timestamp, then compare with NOW()
+    // PostgreSQL: (date + endTime) > NOW()
+    conditions.push(
+      sql`(${jobs.date}::date + ${jobs.endTime}::time) > NOW()`
+    );
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

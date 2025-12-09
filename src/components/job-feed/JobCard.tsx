@@ -51,6 +51,7 @@ export function JobCard({ job, isSelected, onClick, onViewDetails }: JobCardProp
               <span className="truncate">
                 {job.date}
                 {job.startTime && job.endTime && ` • ${job.startTime} - ${job.endTime}`}
+                <span className="text-xs text-steel-500 ml-1">(Job Location Time)</span>
               </span>
             </div>
           )}

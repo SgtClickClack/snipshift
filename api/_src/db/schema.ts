@@ -24,13 +24,19 @@ export {
   postLikes,
   comments,
   trainingModules, trainingLevelEnum,
-  trainingPurchases
+  trainingPurchases,
+  jobRoleEnum
 };
 
 /**
  * Job status enum
  */
 export const jobStatusEnum = pgEnum('job_status', ['open', 'filled', 'closed', 'completed']);
+
+/**
+ * Job role enum
+ */
+export const jobRoleEnum = pgEnum('job_role', ['barber', 'hairdresser', 'stylist', 'other']);
 
 /**
  * Application status enum
@@ -92,6 +98,7 @@ export const jobs = pgTable('jobs', {
   startTime: time('start_time').notNull(),
   endTime: time('end_time').notNull(),
   status: jobStatusEnum('status').notNull().default('open'),
+  role: jobRoleEnum('role').notNull().default('barber'),
   shopName: varchar('shop_name', { length: 255 }),
   address: varchar('address', { length: 512 }),
   city: varchar('city', { length: 100 }),
@@ -106,6 +113,7 @@ export const jobs = pgTable('jobs', {
   businessIdIdx: index('jobs_business_id_idx').on(table.businessId),
   cityIdx: index('jobs_city_idx').on(table.city),
   latLngIdx: index('jobs_lat_lng_idx').on(table.lat, table.lng),
+  roleIdx: index('jobs_role_idx').on(table.role),
 }));
 
 /**

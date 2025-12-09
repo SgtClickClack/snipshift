@@ -31,6 +31,9 @@ export function JobFilters({ className }: JobFiltersProps) {
   
   // Filter state from URL params
   const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [role, setRole] = useState<'barber' | 'hairdresser' | 'stylist' | 'other' | ''>(
+    (searchParams.get('role') as 'barber' | 'hairdresser' | 'stylist' | 'other') || ''
+  );
   const [minRate, setMinRate] = useState<number>(
     searchParams.get('minRate') ? parseFloat(searchParams.get('minRate')!) : 0
   );
@@ -85,6 +88,7 @@ export function JobFilters({ className }: JobFiltersProps) {
     const params = new URLSearchParams();
     
     if (debouncedSearch) params.set('search', debouncedSearch);
+    if (role) params.set('role', role);
     if (minRate > 0) params.set('minRate', minRate.toString());
     if (maxRate < 200) params.set('maxRate', maxRate.toString());
     if (dateRange.from) params.set('startDate', format(dateRange.from, 'yyyy-MM-dd'));
@@ -97,10 +101,11 @@ export function JobFilters({ className }: JobFiltersProps) {
     }
     
     setSearchParams(params, { replace: true });
-  }, [debouncedSearch, minRate, maxRate, dateRange, nearbyOnly, userLocation, radius, setSearchParams]);
+  }, [debouncedSearch, role, minRate, maxRate, dateRange, nearbyOnly, userLocation, radius, setSearchParams]);
 
   const clearFilters = () => {
     setSearch('');
+    setRole('');
     setMinRate(0);
     setMaxRate(200);
     setDateRange({});
@@ -112,6 +117,7 @@ export function JobFilters({ className }: JobFiltersProps) {
 
   const hasActiveFilters = 
     debouncedSearch || 
+    role ||
     minRate > 0 || 
     maxRate < 200 || 
     dateRange.from || 
@@ -134,6 +140,25 @@ export function JobFilters({ className }: JobFiltersProps) {
           onChange={(e) => setSearch(e.target.value)}
           className="bg-background border-border focus:border-primary"
         />
+      </div>
+
+      {/* Role Filter */}
+      <div className="space-y-2">
+        <Label htmlFor="role" className="text-foreground">
+          Role Type
+        </Label>
+        <select
+          id="role"
+          value={role}
+          onChange={(e) => setRole(e.target.value as 'barber' | 'hairdresser' | 'stylist' | 'other' | '')}
+          className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        >
+          <option value="">All Roles</option>
+          <option value="barber">Barber</option>
+          <option value="hairdresser">Hairdresser</option>
+          <option value="stylist">Stylist</option>
+          <option value="other">Other</option>
+        </select>
       </div>
 
       {/* Pay Rate Range */}
@@ -262,6 +287,7 @@ export function JobFilters({ className }: JobFiltersProps) {
                 <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-white rounded-full">
                   {[
                     debouncedSearch && 1,
+                    role && 1,
                     minRate > 0 && 1,
                     maxRate < 200 && 1,
                     dateRange.from && 1,

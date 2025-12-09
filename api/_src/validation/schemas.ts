@@ -24,6 +24,7 @@ export const JobSchema = z.object({
   date: z.string().min(1, 'Date is required'),
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().min(1, 'End time is required'),
+  role: z.enum(['barber', 'hairdresser', 'stylist', 'other']).optional(),
   location: z.string().optional(),
   shopName: z.string().optional(),
   address: z.string().optional(),

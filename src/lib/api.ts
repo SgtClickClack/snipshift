@@ -15,6 +15,7 @@ export interface JobFilterParams {
   offset?: number;
   // Advanced filters
   search?: string;
+  role?: 'barber' | 'hairdresser' | 'stylist' | 'other';
   minRate?: number;
   maxRate?: number;
   startDate?: string;
@@ -35,6 +36,7 @@ export async function fetchJobs(params: JobFilterParams = {}) {
   if (params.limit) query.append('limit', params.limit.toString());
   if (params.offset) query.append('offset', params.offset.toString());
   if (params.search) query.append('search', params.search);
+  if (params.role) query.append('role', params.role);
   if (params.minRate !== undefined) query.append('minRate', params.minRate.toString());
   if (params.maxRate !== undefined) query.append('maxRate', params.maxRate.toString());
   if (params.startDate) query.append('startDate', params.startDate);

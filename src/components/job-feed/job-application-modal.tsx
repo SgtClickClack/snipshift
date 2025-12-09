@@ -194,6 +194,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
                   <Clock className="mr-2 h-4 w-4 text-primary" />
                   <span data-testid="text-job-time">
                     {safeFormat(job.startTime, "h:mm a")}
+                    <span className="text-xs text-muted-foreground ml-1">(Job Location Time)</span>
                   </span>
                 </div>
               )}

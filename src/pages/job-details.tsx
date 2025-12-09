@@ -365,7 +365,10 @@ export default function JobDetailsPage() {
                     <div className="break-words overflow-hidden">
                       {job.date && <div>{job.date}</div>}
                       {job.startTime && job.endTime && (
-                        <div className="text-sm">{job.startTime} - {job.endTime}</div>
+                        <div className="text-sm">
+                          {job.startTime} - {job.endTime}
+                          <span className="text-xs ml-1">(Job Location Time)</span>
+                        </div>
                       )}
                     </div>
                   </div>

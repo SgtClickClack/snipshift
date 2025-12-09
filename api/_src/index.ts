@@ -451,6 +451,7 @@ app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     date: jobData.date!,
     startTime: jobData.startTime!,
     endTime: jobData.endTime!,
+    role: jobData.role || 'barber',
     shopName: jobData.shopName,
     address,
     city,
@@ -477,6 +478,7 @@ app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRe
       location,
       startTime: newJob.startTime,
       endTime: newJob.endTime,
+      role: newJob.role,
       hubId: newJob.businessId,
       businessId: newJob.businessId,
     });
@@ -549,6 +551,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
   
   // Advanced filters
   const search = req.query.search as string | undefined;
+  const role = req.query.role as 'barber' | 'hairdresser' | 'stylist' | 'other' | undefined;
   const minRate = req.query.minRate ? parseFloat(req.query.minRate as string) : undefined;
   const maxRate = req.query.maxRate ? parseFloat(req.query.maxRate as string) : undefined;
   const startDate = req.query.startDate as string | undefined;
@@ -581,6 +584,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
     offset,
     city, // Use city only if geocoding failed or wasn't attempted
     date,
+    role,
     search,
     minRate,
     maxRate,
@@ -589,6 +593,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
     radius,
     lat,
     lng,
+    excludeExpired: true, // Always exclude expired jobs by default
   });
 
   if (result) {
@@ -612,6 +617,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
         description: job.description,
         startTime: job.startTime,
         endTime: job.endTime,
+        role: job.role,
         hubId: job.businessId,
         businessId: job.businessId,
       };
@@ -662,6 +668,7 @@ app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
       location,
       startTime: job.startTime,
       endTime: job.endTime,
+      role: job.role,
       status: job.status,
       businessId: job.businessId,
       hubId: job.businessId,
@@ -728,6 +735,7 @@ app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authenticate
     date: jobData.date!,
     startTime: jobData.startTime!,
     endTime: jobData.endTime!,
+    role: jobData.role,
   });
 
   if (updatedJob) {
@@ -748,6 +756,7 @@ app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authenticate
       location,
       startTime: updatedJob.startTime,
       endTime: updatedJob.endTime,
+      role: updatedJob.role,
     });
     return;
   }
