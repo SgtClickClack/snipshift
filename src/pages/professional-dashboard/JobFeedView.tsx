@@ -133,11 +133,12 @@ export default function JobFeedView() {
             </Card>
           ) : (
             // Job List
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="job-list">
               {jobs.map((job) => (
                 <JobCard
                   key={job.id}
                   job={job}
+                  data-testid={`job-card-${job.id}`}
                   onViewDetails={() => {
                     // TODO: Implement navigation to job details
                     console.log('View details for job:', job.id);
