@@ -21,23 +21,16 @@ export default function Hero() {
       {/* Content Wrapper - flex column with logo first, then content */}
       <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center px-4">
         {/* Large Bright Logo - dominant visual element */}
-        <div 
-          className="w-[70%] max-w-[800px] mb-8"
+        <img 
+          src="/og-image.png" 
+          alt="Snipshift Logo" 
+          className="w-[70%] max-w-[800px] h-auto object-contain mb-8"
           style={{
-            mixBlendMode: 'multiply'
+            filter: 'brightness(1.3) contrast(1.1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.6))',
+            opacity: 1
           }}
-        >
-          <img 
-            src="/og-image.png" 
-            alt="Snipshift Logo" 
-            className="w-full h-auto object-contain"
-            style={{
-              filter: 'brightness(1.3) contrast(1.1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.6))',
-              opacity: 1
-            }}
-            loading="eager"
-          />
-        </div>
+          loading="eager"
+        />
         
         {/* Text and buttons below logo */}
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
