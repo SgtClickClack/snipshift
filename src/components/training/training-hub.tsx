@@ -352,7 +352,17 @@ export default function TrainingHub() {
                   {/* Action Button */}
                   <div className="pt-2">
                     {isContentPurchased(item.id) ? (
-                      <Button className="w-full" data-testid={`watch-button-${item.id}`}>
+                      <Button 
+                        className="w-full" 
+                        onClick={() => {
+                          // TODO: Implement video player modal/page
+                          toast({
+                            title: "Opening video",
+                            description: `Starting "${item.title}"...`,
+                          });
+                        }}
+                        data-testid={`watch-button-${item.id}`}
+                      >
                         <Play className="mr-2 h-4 w-4" />
                         Watch Now
                       </Button>
@@ -366,7 +376,18 @@ export default function TrainingHub() {
                         Purchase ${item.price}
                       </Button>
                     ) : (
-                      <Button className="w-full" variant="outline" data-testid={`watch-free-button-${item.id}`}>
+                      <Button 
+                        className="w-full" 
+                        variant="outline" 
+                        onClick={() => {
+                          // TODO: Implement video player modal/page
+                          toast({
+                            title: "Opening video",
+                            description: `Starting "${item.title}"...`,
+                          });
+                        }}
+                        data-testid={`watch-free-button-${item.id}`}
+                      >
                         <Play className="mr-2 h-4 w-4" />
                         Watch Free
                       </Button>

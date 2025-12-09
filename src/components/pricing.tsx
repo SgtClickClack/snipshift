@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,8 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Pricing() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const tiers = [
     {
       name: "Professional",
@@ -132,12 +136,38 @@ export default function Pricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button
-                  variant={tier.buttonVariant}
-                  className="w-full font-semibold py-6"
-                >
-                  {tier.cta}
-                </Button>
+                {tier.cta === "Join as Pro" ? (
+                  <Link to="/signup" className="w-full">
+                    <Button
+                      variant={tier.buttonVariant}
+                      className="w-full font-semibold py-6"
+                    >
+                      {tier.cta}
+                    </Button>
+                  </Link>
+                ) : tier.cta === "Post a Job" ? (
+                  <Link to="/post-job" className="w-full">
+                    <Button
+                      variant={tier.buttonVariant}
+                      className="w-full font-semibold py-6"
+                    >
+                      {tier.cta}
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    variant={tier.buttonVariant}
+                    className="w-full font-semibold py-6"
+                    onClick={() => {
+                      toast({
+                        title: "Coming soon!",
+                        description: "Free trial signup will be available soon.",
+                      });
+                    }}
+                  >
+                    {tier.cta}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}
