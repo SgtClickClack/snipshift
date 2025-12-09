@@ -12,54 +12,55 @@ import {
 export default function Pricing() {
   const tiers = [
     {
-      name: "Freelancer",
-      description: "For individual barbers & stylists",
+      name: "Professional",
+      description: "For barbers & stylists seeking freedom.",
       price: "Free",
-      duration: "forever",
+      duration: "Forever",
+      subPrice: null,
       features: [
-        "Create professional profile",
-        "Browse available shifts",
-        "Apply to top-rated shops",
-        "Verified professional badge",
-        "Basic portfolio showcase",
-        "Community access",
+        "Keep 100% of your hourly rate",
+        "Instant payouts available",
+        "Build your digital reputation",
+        "Access to premium shifts",
       ],
-      cta: "Start Working",
+      cta: "Join as Pro",
+      buttonVariant: "secondary" as const,
       highlighted: false,
+      badge: null,
     },
     {
-      name: "Shop Owner",
-      description: "For managing a single location",
+      name: "Salon Starter",
+      description: "Perfect for occasional cover and emergencies.",
+      price: "$0",
+      duration: "month",
+      subPrice: "+ $20 Booking Fee per shift",
+      features: [
+        "No monthly subscription",
+        "Pay only when you book",
+        "Access to all vetted staff",
+        "Standard Support",
+      ],
+      cta: "Post a Job",
+      buttonVariant: "outline" as const,
+      highlighted: false,
+      badge: null,
+    },
+    {
+      name: "Salon Unlimited",
+      description: "For shops that need regular reliable cover.",
       price: "$49",
-      duration: "/month",
+      duration: "month",
+      subPrice: "$0 Booking Fees",
       features: [
-        "Post unlimited shifts",
-        "Access verified professionals",
-        "Seamless workforce flexibility",
-        "Shift management dashboard",
-        "Rating & review system",
-        "Direct messaging",
-        "Priority support",
+        "Unlimited Booking Fees waived",
+        "Priority matching algorithm",
+        "Dedicated Account Manager",
+        "Save ~30% after 3 shifts",
       ],
-      cta: "Start Hiring",
+      cta: "Start Free Trial",
+      buttonVariant: "accent" as const,
       highlighted: true,
-    },
-    {
-      name: "Enterprise",
-      description: "For multiple locations & brands",
-      price: "Custom",
-      duration: "",
-      features: [
-        "Multi-location management",
-        "Advanced analytics dashboard",
-        "Dedicated account manager",
-        "Custom onboarding",
-        "API access",
-        "White-label options",
-        "Bulk shift posting",
-      ],
-      cta: "Contact Sales",
-      highlighted: false,
+      badge: "Most Popular",
     },
   ];
 
@@ -82,14 +83,14 @@ export default function Pricing() {
               key={tier.name}
               className={`relative flex flex-col ${
                 tier.highlighted
-                  ? "border-red-accent shadow-xl scale-105 z-10"
-                  : "border-white/10 hover:shadow-lg hover:border-white/20"
-              } transition-all duration-300 bg-slate-900`}
+                  ? "border-2 border-red-accent/50 shadow-2xl shadow-red-accent/20 scale-105 z-10 bg-slate-900/80"
+                  : "border border-white/10 hover:shadow-lg hover:border-white/20 bg-slate-900"
+              } transition-all duration-300`}
             >
-              {tier.highlighted && (
+              {tier.badge && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="bg-red-accent text-white text-sm font-bold px-4 py-1 rounded-full shadow-md">
-                    Most Popular
+                    {tier.badge}
                   </span>
                 </div>
               )}
@@ -97,21 +98,34 @@ export default function Pricing() {
                 <CardTitle className="text-2xl font-bold text-white">
                   {tier.name}
                 </CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardDescription className="text-gray-300">
                   {tier.description}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">
-                    {tier.price}
-                  </span>
-                  <span className="text-gray-400 ml-1">{tier.duration}</span>
+                <div className="mb-4">
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-bold text-white">
+                      {tier.price}
+                    </span>
+                    {tier.duration && (
+                      <span className="text-gray-400 ml-2 text-lg">
+                        / {tier.duration}
+                      </span>
+                    )}
+                  </div>
+                  {tier.subPrice && (
+                    <div className="mt-2">
+                      <span className="text-sm text-gray-300 font-medium">
+                        {tier.subPrice}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <ul className="space-y-3">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start">
-                      <Check className="h-5 w-5 text-red-accent mr-2 flex-shrink-0" />
+                      <Check className="h-5 w-5 text-red-accent mr-2 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-300 text-sm">{feature}</span>
                     </li>
                   ))}
@@ -119,7 +133,7 @@ export default function Pricing() {
               </CardContent>
               <CardFooter>
                 <Button
-                  variant={tier.highlighted ? "accent" : "chrome"}
+                  variant={tier.buttonVariant}
                   className="w-full font-semibold py-6"
                 >
                   {tier.cta}
