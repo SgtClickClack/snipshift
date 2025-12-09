@@ -34,10 +34,21 @@ test.describe('Professional Applications E2E Tests', () => {
       console.error('🚨 [REQUEST FAILED]:', request.url(), request.failure()?.errorText);
     });
     
-    // Ensure user's currentRole is set to professional before navigating
-    // This prevents redirects to hub-dashboard if user has multiple roles
-    await page.goto('/professional-dashboard');
+    // Navigate directly to applications view with E2E mode flag
+    // This avoids race conditions from multiple navigation calls
+    await page.goto('/professional-dashboard?view=applications&e2e=true');
     await page.waitForLoadState('domcontentloaded');
+    
+    // Set E2E mode flag in localStorage to disable tutorial overlay
+    try {
+      await page.evaluate(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('E2E_MODE', 'true');
+        }
+      });
+    } catch (e) {
+      console.warn('Could not set E2E_MODE in localStorage:', e);
+    }
     
     // Check if we were redirected (e.g., due to auth or role issues)
     const currentUrl = page.url();
@@ -49,8 +60,8 @@ test.describe('Professional Applications E2E Tests', () => {
     // Try to set it via the role selection or navigate directly with the view param
     if (currentUrl.includes('/hub-dashboard')) {
       // User might have multiple roles - try to switch to professional role
-      // Or navigate directly to professional dashboard with view param
-      await page.goto('/professional-dashboard?view=applications');
+      // Navigate directly to professional dashboard with view param
+      await page.goto('/professional-dashboard?view=applications&e2e=true');
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(2000);
       
@@ -59,10 +70,6 @@ test.describe('Professional Applications E2E Tests', () => {
       if (newUrl.includes('/hub-dashboard') || newUrl.includes('/login')) {
         throw new Error(`Unable to access professional dashboard. Current URL: ${newUrl}. User may need currentRole set to 'professional'.`);
       }
-    } else {
-      // Navigate to applications view if we're already on professional dashboard
-      await page.goto('/professional-dashboard?view=applications');
-      await page.waitForLoadState('domcontentloaded');
     }
     
     // Wait for page to fully load (use domcontentloaded to avoid redirect loops)
