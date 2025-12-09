@@ -102,8 +102,8 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
             title: 'Rating',
             value: stats.averageRating || 0,
             icon: Star,
-            description: 'Average client rating',
-            suffix: '/5',
+            description: stats.averageRating > 0 ? 'Average client rating' : 'No ratings yet',
+            suffix: stats.averageRating > 0 ? '/5' : '',
             variant: 'accent-secondary',
             action: 'reviews'
           }
@@ -168,8 +168,8 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
             title: 'Reviews',
             value: stats.averageRating || 0,
             icon: Star,
-            description: 'Average program rating',
-            suffix: '/5',
+            description: stats.averageRating > 0 ? 'Average program rating' : 'No ratings yet',
+            suffix: stats.averageRating > 0 ? '/5' : '',
             variant: 'accent-secondary'
           }
         ];
@@ -232,7 +232,7 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
                   <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase">{stat.title}</p>
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-3xl font-bold text-foreground tracking-tight" data-testid={`stat-value-${index}`}>
-                      {stat.value.toLocaleString()}{stat.suffix || ''}
+                      {stat.title === 'Rating' && stat.value === 0 ? 'New' : `${stat.value.toLocaleString()}${stat.suffix || ''}`}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.description}</p>
