@@ -69,7 +69,7 @@ export default function Pricing() {
   ];
 
   return (
-    <section className="py-20 bg-slate-950 border-t border-white/10" id="pricing">
+    <section className="py-20 bg-slate-950 border-t border-white/10 overflow-x-hidden" id="pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -81,7 +81,8 @@ export default function Pricing() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        {/* Add top padding to accommodate badges that extend above cards, especially on mobile */}
+        <div className="grid md:grid-cols-3 gap-8 pt-6 md:pt-4">
           {tiers.map((tier) => (
             <>
               {/* Keep overflow-visible to prevent badge clipping */}
@@ -89,7 +90,7 @@ export default function Pricing() {
                 key={tier.name}
                 className={`relative flex flex-col overflow-visible ${
                 tier.highlighted
-                  ? "border-2 border-red-accent/50 shadow-2xl shadow-red-accent/20 scale-105 z-elevated bg-slate-900/80"
+                  ? "border-2 border-red-accent/50 shadow-2xl shadow-red-accent/20 md:scale-105 z-elevated bg-slate-900/80"
                   : "border border-white/10 hover:shadow-lg hover:border-white/20 bg-slate-900"
               } transition-all duration-300`}
             >

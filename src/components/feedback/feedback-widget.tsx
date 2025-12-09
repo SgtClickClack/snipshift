@@ -79,10 +79,10 @@ export function FeedbackWidget() {
 
   return (
     <>
-      {/* Floating feedback button */}
+      {/* Floating feedback button - Adjust position on mobile to avoid overlapping form buttons */}
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-floating rounded-full h-12 w-12 p-0 shadow-lg"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-floating rounded-full h-12 w-12 p-0 shadow-lg"
         data-testid="button-open-feedback"
       >
         <MessageSquare className="h-5 w-5" />

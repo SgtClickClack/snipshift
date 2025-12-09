@@ -19,14 +19,15 @@ export default function LandingPage() {
       <Hero />
 
       {/* How It Works Section */}
-      <div className="py-20 bg-slate-950 border-t border-white/10">
+      <div className="py-20 bg-slate-950 border-t border-white/10 overflow-x-hidden">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">How Snipshift Works</h2>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto">Simple, efficient, and designed for the barbering and beauty industry</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Add top padding to accommodate badges that extend above cards, especially on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8 md:pt-6">
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
@@ -43,7 +44,7 @@ export default function LandingPage() {
             
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-50">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
                 2
               </div>
               <CardContent className="pt-0">
@@ -57,7 +58,7 @@ export default function LandingPage() {
             
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-50">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
                 3
               </div>
               <CardContent className="pt-0">
@@ -71,7 +72,7 @@ export default function LandingPage() {
             
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-50">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
                 4
               </div>
               <CardContent className="pt-0">

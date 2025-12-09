@@ -332,7 +332,7 @@ export default function OnboardingPage() {
         description="Finish setting up your SnipShift profile to start finding work opportunities or hiring talent."
         url="/onboarding"
       />
-      <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4 pb-24 md:pb-4">
       <div className="w-full max-w-2xl">
         {/* Progress indicator */}
         <div className="mb-8">

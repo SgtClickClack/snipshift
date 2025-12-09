@@ -373,8 +373,8 @@ export default function MultiStepJobForm({
           </div>
         )}
 
-        {/* Form Actions */}
-        <div className="flex justify-between items-center pt-6 border-t">
+        {/* Form Actions - Add bottom padding on mobile to prevent feedback widget overlap */}
+        <div className="flex justify-between items-center pt-6 pb-4 md:pb-0 border-t">
           <div>
             {currentStep > 1 && (
               <Button variant="outline" onClick={handlePrevious} data-testid="button-previous-step">
