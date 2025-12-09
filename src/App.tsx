@@ -69,6 +69,7 @@ const WalletPage = lazy(() => import('@/pages/wallet'));
 const EarningsPage = lazy(() => import('@/pages/earnings'));
 const MessagesPage = lazy(() => import('@/pages/messages'));
 const ProfessionalMessagesPage = lazy(() => import('@/pages/professional-messages'));
+const SalonCreateJobPage = lazy(() => import('@/pages/salon-create-job'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
 
@@ -287,6 +288,14 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['hub', 'business']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <HubDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/salon/create-job" element={
+          <ProtectedRoute allowedRoles={['hub', 'business']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <SalonCreateJobPage />
             </Suspense>
           </ProtectedRoute>
         } />
