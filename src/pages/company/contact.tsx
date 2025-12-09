@@ -30,7 +30,7 @@ export default function ContactPage() {
     // console.log('Contact Form Submission:', formData);
 
     // Create mailto link
-    const mailtoLink = `mailto:support@snipshift.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(`From: ${formData.email}\n\n${formData.message}`)}`;
+    const mailtoLink = `mailto:support@snipshift.com.au?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(`From: ${formData.email}\n\n${formData.message}`)}`;
     
     // Open email client
     window.location.href = mailtoLink;
@@ -39,7 +39,7 @@ export default function ContactPage() {
     setTimeout(() => {
       toast({
         title: 'Message Prepared',
-        description: 'Your email client should open with your message. If not, please email us at support@snipshift.com',
+        description: 'Your email client should open with your message. If not, please email us at support@snipshift.com.au',
       });
       setIsSubmitting(false);
       setFormData({ email: '', subject: '', message: '' });
@@ -79,10 +79,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-steel-900 mb-1">Email</h3>
                     <a 
-                      href="mailto:support@snipshift.com" 
+                      href="mailto:support@snipshift.com.au" 
                       className="text-steel-600 hover:text-red-accent transition-colors"
                     >
-                      support@snipshift.com
+                      support@snipshift.com.au
                     </a>
                   </div>
                 </div>
