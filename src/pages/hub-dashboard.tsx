@@ -619,7 +619,10 @@ export default function HubDashboard() {
                   </CardHeader>
                   <CardContent className="p-6">
                     {isLoading ? (
-                      <div data-testid="text-loading">Loading jobs...</div>
+                      <div className="flex items-center justify-center py-8" data-testid="text-loading">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+                        <span className="text-muted-foreground">Loading jobs...</span>
+                      </div>
                     ) : jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).length === 0 ? (
                       <div className="text-center py-8">
                         <p className="text-muted-foreground" data-testid="text-no-jobs">

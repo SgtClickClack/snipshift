@@ -231,6 +231,8 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                   <Label htmlFor="zipCode">Zip Code</Label>
                   <Input
                     id="zipCode"
+                    type="text"
+                    inputMode="numeric"
                     value={formData.location.zipCode}
                     onChange={(e) => setFormData({ 
                       ...formData, 

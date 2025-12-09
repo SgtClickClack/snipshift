@@ -166,6 +166,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"
+            type="tel"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             disabled={!isEditing}

@@ -257,7 +257,7 @@ function AppRoutes() {
         } />
 
         <Route path="/hub-dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['hub', 'business']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <HubDashboard />
             </Suspense>

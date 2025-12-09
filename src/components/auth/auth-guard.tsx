@@ -7,7 +7,8 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  requiredRole?: 'hub' | 'professional' | 'brand' | 'trainer' | 'admin';
+  requiredRole?: 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business';
+  allowedRoles?: Array<'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business'>;
   redirectTo?: string;
 }
 
@@ -15,6 +16,7 @@ export function AuthGuard({
   children, 
   requireAuth = false, 
   requiredRole, 
+  allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -57,6 +59,12 @@ export function AuthGuard({
 
   // If specific role is required but user's currentRole doesn't match
   if (requiredRole && user && user.currentRole !== requiredRole) {
+    const userDashboard = getDashboardRoute(user.currentRole);
+    return <Navigate to={userDashboard} replace />;
+  }
+
+  // If multiple roles are allowed, check if user's role is in the allowed list
+  if (allowedRoles && user && !allowedRoles.includes(user.currentRole as any)) {
     const userDashboard = getDashboardRoute(user.currentRole);
     return <Navigate to={userDashboard} replace />;
   }

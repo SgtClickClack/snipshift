@@ -147,6 +147,7 @@ export default function EditProfilePage() {
                 <Input
                   id="phone"
                   name="phone"
+                  type="tel"
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+1 (555) 000-0000"
