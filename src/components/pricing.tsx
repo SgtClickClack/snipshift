@@ -88,7 +88,7 @@ export default function Pricing() {
               } transition-all duration-300`}
             >
               {tier.badge && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                   <span className="bg-red-accent text-white text-sm font-bold px-4 py-1 rounded-full shadow-md">
                     {tier.badge}
                   </span>
