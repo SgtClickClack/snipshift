@@ -24,8 +24,7 @@ export default function Hero() {
         <div 
           className="w-[70%] max-w-[800px] mb-8"
           style={{
-            mixBlendMode: 'screen',
-            isolation: 'isolate'
+            background: 'transparent'
           }}
         >
           <img 
@@ -34,7 +33,9 @@ export default function Hero() {
             className="w-full h-auto object-contain"
             style={{
               filter: 'brightness(1.3) contrast(1.1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.6))',
-              opacity: 1
+              opacity: 1,
+              background: 'transparent',
+              mixBlendMode: 'normal'
             }}
             loading="eager"
           />
