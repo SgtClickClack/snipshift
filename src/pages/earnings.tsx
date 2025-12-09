@@ -38,9 +38,34 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { getWalletData, mockWalletData, type WalletData } from '@/lib/mock-wallet-data';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { SEO } from '@/components/seo/SEO';
+
+export interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  status: 'completed' | 'pending' | 'failed';
+  amount: number;
+  type: 'earning' | 'withdrawal';
+  invoiceUrl?: string;
+}
+
+export interface MonthlyEarnings {
+  month: string;
+  year: number;
+  earnings: number;
+}
+
+export interface WalletData {
+  currentBalance: number;
+  pending: number;
+  totalEarnings: number;
+  bankAccountConnected: boolean;
+  bankAccountLast4?: string;
+  transactions: Transaction[];
+  monthlyEarnings: MonthlyEarnings[];
+}
 
 export default function EarningsPage() {
   const { user } = useAuth();
@@ -48,9 +73,20 @@ export default function EarningsPage() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   // Fetch wallet data
+  // TODO: Replace with actual API call when wallet API is implemented
   const { data: walletData, isLoading } = useQuery<WalletData>({
     queryKey: ['wallet-data'],
-    queryFn: getWalletData,
+    queryFn: async () => {
+      // Placeholder - replace with actual API call
+      return {
+        currentBalance: 0,
+        pending: 0,
+        totalEarnings: 0,
+        bankAccountConnected: false,
+        transactions: [],
+        monthlyEarnings: [],
+      };
+    },
     enabled: !!user,
   });
 
@@ -147,7 +183,14 @@ export default function EarningsPage() {
     return <PageLoadingFallback />;
   }
 
-  const data = walletData || mockWalletData;
+  const data = walletData || {
+    currentBalance: 0,
+    pending: 0,
+    totalEarnings: 0,
+    bankAccountConnected: false,
+    transactions: [],
+    monthlyEarnings: [],
+  };
 
   return (
     <div className="min-h-screen bg-background">

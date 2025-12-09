@@ -25,6 +25,8 @@ export interface User {
   uid?: string;
   name?: string;
   isOnboarded?: boolean;
+  averageRating?: number | null;
+  reviewCount?: number;
 }
 
 interface AuthContextType {

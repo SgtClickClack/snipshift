@@ -912,7 +912,7 @@ export default function HubDashboard() {
                     <Button 
                       type="submit" 
                       disabled={updateProfileMutation.isPending}
-                      className="min-w-[120px]"
+                      className="w-full sm:min-w-[120px]"
                     >
                       {updateProfileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Save Changes

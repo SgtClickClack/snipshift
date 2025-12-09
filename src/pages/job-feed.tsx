@@ -11,16 +11,12 @@ import { EnhancedJobCard } from '@/components/job-feed/enhanced-job-card';
 import { JobCardData } from '@/components/job-feed/JobCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { List, Map, SearchX, ArrowUpDown } from 'lucide-react';
-import { generateMockJobs, MockJobData } from '@/lib/mock-job-data';
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { calculateDistance } from '@/lib/google-maps';
 
 type SortOption = 'highest-rate' | 'closest' | 'soonest';
 type ViewMode = 'list' | 'map';
-
-// Use mock data for demonstration (set to false to use real API data)
-const USE_MOCK_DATA = true;
 
 export default function JobFeedPage() {
   const navigate = useNavigate();
@@ -65,15 +61,10 @@ export default function JobFeedPage() {
   const { data: shifts, isLoading, error } = useQuery({
     queryKey: ['shifts', searchParams.toString()],
     queryFn: () => fetchShifts({ status, limit, offset }),
-    enabled: !USE_MOCK_DATA,
   });
 
-  // Generate or normalize job data
+  // Normalize job data
   const jobList = useMemo(() => {
-    if (USE_MOCK_DATA) {
-      return generateMockJobs(10, userLocation || centerLocation);
-    }
-
     if (!shifts) return [];
 
     return shifts.map((shift: Shift) => {
@@ -158,7 +149,7 @@ export default function JobFeedPage() {
         estimatedTotalPay,
       } as JobCardData & { distance?: number; hours?: number; estimatedTotalPay?: number };
     });
-  }, [shifts, userLocation, centerLocation]);
+  }, [shifts, userLocation]);
 
   // Apply filters and sorting
   const filteredAndSortedJobs = useMemo(() => {
@@ -194,10 +185,10 @@ export default function JobFeedPage() {
     }
 
     if (jobType && jobType !== 'all') {
-      filtered = filtered.filter((job) => {
-        const mockJob = job as MockJobData;
-        return mockJob.jobType === jobType;
-      });
+      // Filter by job type if the job data includes this field
+      // This will need to be implemented based on your actual API data structure
+      // TODO: Implement job type filtering based on actual API data structure
+      // For now, we keep all jobs when a job type filter is selected
     }
 
     // Apply sorting
@@ -236,11 +227,11 @@ export default function JobFeedPage() {
   };
 
   // Show loading state if query is loading or data is not yet available
-  if (!USE_MOCK_DATA && (isLoading || shifts === undefined)) {
+  if (isLoading || shifts === undefined) {
     return <PageLoadingFallback />;
   }
 
-  if (!USE_MOCK_DATA && error) {
+  if (error) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold text-error">Error loading jobs</h2>
@@ -264,7 +255,7 @@ export default function JobFeedPage() {
             <div className="flex items-center gap-2">
               <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -340,7 +331,7 @@ export default function JobFeedPage() {
                       {filteredAndSortedJobs.map((job) => (
                         <EnhancedJobCard
                           key={job.id}
-                          job={job as JobCardData & { salonName?: string; salonLogo?: string; distance?: number; estimatedTotalPay?: number; hours?: number }}
+                          job={job as JobCardData & { distance?: number; estimatedTotalPay?: number; hours?: number }}
                           onQuickApply={handleQuickApply}
                           onViewDetails={(e) => {
                             e.stopPropagation();

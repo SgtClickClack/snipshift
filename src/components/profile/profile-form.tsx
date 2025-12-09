@@ -85,7 +85,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       let homeLocation = { city: '', state: '', country: 'United States' };
       if (user.location) {
         if (typeof user.location === 'string') {
-          const parts = user.location.split(',').map(s => s.trim());
+          const parts = user.location?.split(',').map(s => s.trim()) || [];
           homeLocation.city = parts[0] || '';
           homeLocation.state = parts[1] || '';
         }

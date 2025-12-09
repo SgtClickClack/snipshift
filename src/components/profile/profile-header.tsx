@@ -6,6 +6,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ImageCropper } from "@/components/ui/image-cropper";
 
 interface ProfileHeaderProps {
   /** Banner image URL */
@@ -36,10 +37,12 @@ export default function ProfileHeader({
   const { toast } = useToast();
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showBannerCropper, setShowBannerCropper] = useState(false);
+  const [bannerImageSrc, setBannerImageSrc] = useState<string | null>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBannerFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -64,6 +67,21 @@ export default function ProfileHeader({
       return;
     }
 
+    // Create object URL for the cropper
+    const imageUrl = URL.createObjectURL(file);
+    setBannerImageSrc(imageUrl);
+    setShowBannerCropper(true);
+  };
+
+  const handleBannerCropComplete = async (croppedImageBlob: Blob) => {
+    setShowBannerCropper(false);
+    
+    // Clean up the object URL
+    if (bannerImageSrc) {
+      URL.revokeObjectURL(bannerImageSrc);
+      setBannerImageSrc(null);
+    }
+
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) {
       toast({
@@ -78,11 +96,10 @@ export default function ProfileHeader({
 
     try {
       const userId = firebaseUser.uid;
-      const fileExtension = file.name.split('.').pop() || 'jpg';
-      const storagePath = `users/${userId}/banner.${fileExtension}`;
+      const storagePath = `users/${userId}/banner.jpg`;
       const storageRef = ref(storage, storagePath);
 
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const uploadTask = uploadBytesResumable(storageRef, croppedImageBlob);
 
       await new Promise<void>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -133,6 +150,17 @@ export default function ProfileHeader({
       if (bannerFileInputRef.current) {
         bannerFileInputRef.current.value = '';
       }
+    }
+  };
+
+  const handleBannerCropCancel = () => {
+    setShowBannerCropper(false);
+    if (bannerImageSrc) {
+      URL.revokeObjectURL(bannerImageSrc);
+      setBannerImageSrc(null);
+    }
+    if (bannerFileInputRef.current) {
+      bannerFileInputRef.current.value = '';
     }
   };
 
@@ -280,10 +308,19 @@ export default function ProfileHeader({
             ref={bannerFileInputRef}
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-            onChange={handleBannerUpload}
+            onChange={handleBannerFileSelect}
             className="hidden"
             disabled={isUploadingBanner}
           />
+          {bannerImageSrc && (
+            <ImageCropper
+              imageSrc={bannerImageSrc}
+              aspectRatio={16 / 9}
+              onCropComplete={handleBannerCropComplete}
+              onCancel={handleBannerCropCancel}
+              open={showBannerCropper}
+            />
+          )}
         </>
       )}
 

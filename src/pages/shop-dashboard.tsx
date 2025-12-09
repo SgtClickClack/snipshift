@@ -347,7 +347,7 @@ export default function ShopDashboard() {
                             <div className="flex justify-between items-start mb-3">
                               <h4 className="font-semibold text-neutral-900">{shift.title}</h4>
                               <div className="flex items-center gap-2">
-                                <div className="w-[130px]">
+                                <div className="w-full sm:w-[130px]">
                                   <Select
                                     defaultValue={shift.status}
                                     disabled={updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id}

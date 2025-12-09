@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchMyApplications, createConversation } from '@/lib/api';
-import { getMockApplications, MockApplication, ApplicationStatus } from '@/lib/mock-applications';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,8 +11,33 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MapPin, Clock, DollarSign, Briefcase, MessageSquare, Eye, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Use mock data for demonstration (set to false to use real API data)
-const USE_MOCK_DATA = true;
+export type ApplicationStatus = 
+  | 'pending' 
+  | 'shortlisted' 
+  | 'interviewing' 
+  | 'rejected' 
+  | 'withdrawn' 
+  | 'expired';
+
+export interface Application {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  shopName: string;
+  shopAvatar?: string;
+  jobPayRate: string;
+  jobLocation?: string;
+  jobDescription?: string;
+  jobDate?: string;
+  jobStartTime?: string;
+  jobEndTime?: string;
+  jobHours?: number;
+  jobStatus?: 'open' | 'filled' | 'closed' | 'completed';
+  status: ApplicationStatus;
+  appliedDate: string;
+  respondedDate?: string | null;
+  businessId?: string;
+}
 
 function getStatusBadge(status: ApplicationStatus) {
   switch (status) {
@@ -103,21 +127,21 @@ export default function MyApplicationsPage() {
 
   const { data: applications, isLoading, error } = useQuery({
     queryKey: ['my-applications'],
-    queryFn: USE_MOCK_DATA ? getMockApplications : fetchMyApplications,
+    queryFn: fetchMyApplications,
   });
 
   // Separate applications into active and past
   const { activeApplications, pastApplications } = useMemo(() => {
     if (!applications) return { activeApplications: [], pastApplications: [] };
 
-    const active: MockApplication[] = [];
-    const past: MockApplication[] = [];
+    const active: Application[] = [];
+    const past: Application[] = [];
 
     applications.forEach((app) => {
       if (app.status === 'pending' || app.status === 'shortlisted' || app.status === 'interviewing') {
-        active.push(app as MockApplication);
+        active.push(app as Application);
       } else {
-        past.push(app as MockApplication);
+        past.push(app as Application);
       }
     });
 
@@ -133,7 +157,7 @@ export default function MyApplicationsPage() {
     });
   };
 
-  const handleMessageSalon = async (application: MockApplication, e: React.MouseEvent) => {
+  const handleMessageSalon = async (application: Application, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!application.businessId) {
       toast({
@@ -275,9 +299,9 @@ export default function MyApplicationsPage() {
 }
 
 interface ApplicationCardProps {
-  application: MockApplication;
+  application: Application;
   onViewDetails: (jobId: string, e: React.MouseEvent) => void;
-  onMessageSalon: (application: MockApplication, e: React.MouseEvent) => void;
+  onMessageSalon: (application: Application, e: React.MouseEvent) => void;
   onWithdraw: (applicationId: string, e: React.MouseEvent) => void;
 }
 

@@ -17,8 +17,8 @@ export default function UserDashboard() {
     enabled: !!user?.id,
   });
 
-  const averageRating = (user as any)?.averageRating as number | null | undefined;
-  const reviewCount = (user as any)?.reviewCount as number | undefined;
+  const averageRating = user?.averageRating;
+  const reviewCount = user?.reviewCount;
 
   return (
     <div className="min-h-screen bg-background p-8">

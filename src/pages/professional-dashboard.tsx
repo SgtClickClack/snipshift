@@ -83,7 +83,7 @@ export default function ProfessionalDashboard() {
   const bookedDates = useMemo(() => {
     if (!bookings || bookings.length === 0) return []
     return bookings
-      .map((booking: any) => {
+      .map((booking) => {
         // Extract date from booking (job date, shift startTime, or appliedAt)
         const dateStr = booking.job?.date || booking.shift?.startTime || booking.appliedAt
         if (!dateStr) return null

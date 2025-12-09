@@ -346,7 +346,7 @@ export default function AdminDashboard() {
                             <td className="p-3">{getRoleBadge(user.role)}</td>
                             <td className="p-3">
                               {user.averageRating ? (
-                                <span>{user.averageRating.toFixed(1)} ({user.reviewCount})</span>
+                                <span>{user.averageRating?.toFixed(1) ?? 'N/A'} ({user.reviewCount ?? 0})</span>
                               ) : (
                                 <span className="text-muted-foreground">No ratings</span>
                               )}

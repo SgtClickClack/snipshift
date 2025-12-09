@@ -5,14 +5,36 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageCircle, Search, Send, Paperclip, ArrowLeft, Circle } from 'lucide-react';
-import { mockConversations, Conversation, ChatMessage } from '@/lib/mock-chat-data';
 import { format, isToday, isYesterday } from 'date-fns';
 import { SEO } from '@/components/seo/SEO';
+
+export interface ChatMessage {
+  id: string;
+  type: 'user' | 'salon' | 'system';
+  content: string;
+  timestamp: string;
+  senderId?: string;
+  senderName?: string;
+}
+
+export interface Conversation {
+  id: string;
+  salonId: string;
+  salonName: string;
+  salonAvatar?: string;
+  isOnline: boolean;
+  jobId?: string;
+  jobTitle?: string;
+  lastMessage: string;
+  lastMessageTimestamp: string;
+  unreadCount: number;
+  messages: ChatMessage[];
+}
 
 export default function ProfessionalMessagesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [conversations] = useState<Conversation[]>(mockConversations);
+  const [conversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');

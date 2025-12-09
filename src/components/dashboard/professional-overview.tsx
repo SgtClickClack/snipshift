@@ -22,9 +22,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useNavigate } from "react-router-dom";
 import { Job } from "@shared/firebase-schema";
+import { MyApplication } from "@/lib/api";
+
+interface Booking extends MyApplication {
+  job?: Job;
+  shift?: Job;
+  status: 'pending' | 'accepted' | 'rejected' | 'confirmed';
+}
 
 interface ProfessionalOverviewProps {
-  bookings: any[];
+  bookings: Booking[];
   jobs: Job[];
   onViewChange?: (view: string) => void;
 }
@@ -92,11 +99,11 @@ export default function ProfessionalOverview({
     if (!bookings || bookings.length === 0) return 0;
 
     return bookings
-      .filter((booking: any) => {
+      .filter((booking) => {
         const status = booking.status;
         return status === "accepted" || status === "confirmed";
       })
-      .reduce((total: number, booking: any) => {
+      .reduce((total: number, booking) => {
         const job = booking.job || booking.shift;
         if (!job) return total;
 
@@ -125,11 +132,11 @@ export default function ProfessionalOverview({
     if (!bookings || bookings.length === 0) return null;
 
     const confirmedBookings = bookings
-      .filter((booking: any) => {
+      .filter((booking) => {
         const status = booking.status;
         return status === "accepted" || status === "confirmed";
       })
-      .map((booking: any) => {
+      .map((booking) => {
         const job = booking.job || booking.shift;
         if (!job) return null;
 
@@ -149,7 +156,7 @@ export default function ProfessionalOverview({
           return null;
         }
       })
-      .filter((item): item is { booking: any; job: any; date: Date } => item !== null)
+      .filter((item): item is { booking: Booking; job: Job; date: Date } => item !== null)
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
     return confirmedBookings.length > 0 ? confirmedBookings[0] : null;
@@ -160,11 +167,11 @@ export default function ProfessionalOverview({
     if (!bookings || bookings.length === 0) return [];
 
     return bookings
-      .filter((booking: any) => {
+      .filter((booking) => {
         const status = booking.status;
         return status === "accepted" || status === "confirmed";
       })
-      .map((booking: any) => {
+      .map((booking) => {
         const job = booking.job || booking.shift;
         if (!job) return null;
 
@@ -184,17 +191,17 @@ export default function ProfessionalOverview({
           return null;
         }
       })
-      .filter((item): item is { booking: any; job: any; date: Date } => item !== null)
+      .filter((item): item is { booking: Booking; job: Job; date: Date } => item !== null)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(0, 3);
   }, [bookings]);
 
   // Get action items
   const actionItems = useMemo(() => {
-    const items: Array<{ id: string; title: string; description: string; icon: any; action: () => void; priority: 'high' | 'medium' | 'low' }> = [];
+    const items: Array<{ id: string; title: string; description: string; icon: React.ComponentType<{ className?: string }>; action: () => void; priority: 'high' | 'medium' | 'low' }> = [];
 
     // Check for shifts that need rating (completed shifts without rating)
-    const completedBookings = bookings.filter((booking: any) => {
+    const completedBookings = bookings.filter((booking) => {
       const status = booking.status;
       const job = booking.job || booking.shift;
       if (!job) return false;
@@ -266,7 +273,7 @@ export default function ProfessionalOverview({
 
     const userJobIds = new Set(
       bookings
-        .map((booking: any) => booking.jobId || booking.shiftId)
+        .map((booking) => booking.jobId || booking.shiftId)
         .filter(Boolean)
     );
 

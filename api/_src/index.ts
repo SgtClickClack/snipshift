@@ -184,60 +184,6 @@ app.post('/api/purchase-content', authenticateUser, (req, res, next) => {
   return trainingRouter(req, res, next);
 });
 
-// Fallback in-memory store for when DATABASE_URL is not configured (dev only)
-// Mock jobs data for development/testing
-let mockJobs = [
-  {
-    id: 'job-1',
-    title: 'Hair Stylist Needed',
-    shopName: 'Downtown Salon',
-    rate: '$25/hour',
-    date: '2024-12-20',
-    lat: 40.7128,
-    lng: -74.0060,
-    location: '123 Main St, New York, NY 10001',
-  },
-  {
-    id: 'job-2',
-    title: 'Barber Position Available',
-    shopName: 'Classic Cuts',
-    rate: '$30/hour',
-    date: '2024-12-21',
-    lat: 40.7589,
-    lng: -73.9851,
-    location: '456 Broadway, New York, NY 10013',
-  },
-  {
-    id: 'job-3',
-    title: 'Part-time Stylist',
-    shopName: 'Beauty Bar',
-    rate: '$22/hour',
-    date: '2024-12-22',
-    lat: 40.7505,
-    lng: -73.9934,
-    location: '789 5th Ave, New York, NY 10022',
-  },
-  {
-    id: 'job-4',
-    title: 'Senior Hair Stylist',
-    shopName: 'Elite Hair Studio',
-    rate: '$35/hour',
-    date: '2024-12-23',
-    lat: 40.7282,
-    lng: -73.9942,
-    location: '321 Greenwich St, New York, NY 10013',
-  },
-  {
-    id: 'job-5',
-    title: 'Color Specialist Wanted',
-    shopName: 'Color Me Beautiful',
-    rate: '$28/hour',
-    date: '2024-12-24',
-    lat: 40.7614,
-    lng: -73.9776,
-    location: '654 Park Ave, New York, NY 10021',
-  },
-];
 
 // Health check endpoint
 app.get('/health', asyncHandler(async (req, res) => {
@@ -500,8 +446,8 @@ app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     startTime: jobData.startTime,
     endTime: jobData.endTime,
   };
-  mockJobs.push(fallbackJob);
-  res.status(201).json(fallbackJob);
+  // Database is required for creating jobs
+  res.status(503).json({ message: 'Database not available. Cannot create job.' });
 }));
 
 /**
@@ -637,8 +583,8 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
     return;
   }
 
-  // Fallback to mock data when database is not available
-  res.status(200).json(mockJobs);
+  // Fallback: return empty array if database is not available
+  res.status(200).json([]);
 }));
 
 // Handler for fetching a single job by ID
@@ -677,13 +623,8 @@ app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
     return;
   }
 
-  // Fallback to in-memory storage if database is not available
-  const fallbackJob = mockJobs.find(j => j.id === id);
-  if (fallbackJob) {
-    res.status(200).json(fallbackJob);
-  } else {
-    res.status(404).json({ message: 'Job not found' });
-  }
+  // Fallback: return 404 if database is not available
+  res.status(404).json({ message: 'Job not found' });
 }));
 
 // Handler for updating a job
@@ -713,15 +654,9 @@ app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authenticate
       return;
     }
   } else {
-    // If not in DB, check if it's a mock job
-    const isMock = mockJobs.some(j => j.id === id);
-    if (!isMock) {
-      res.status(404).json({ message: 'Job not found' });
-      return;
-    }
-    // For mock jobs, we'll allow updates for now (dev mode) or we could restrict.
-    // Given this is critical security, let's assume mock jobs are dev only and maybe less critical, 
-    // but consistency is good.
+    // If not in DB, job doesn't exist
+    res.status(404).json({ message: 'Job not found' });
+    return;
   }
 
   const jobData = validationResult.data;
@@ -761,29 +696,8 @@ app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authenticate
     return;
   }
 
-  // Fallback to in-memory storage if database is not available
-  let found = false;
-  mockJobs = mockJobs.map(job => {
-    if (job.id === id) {
-      found = true;
-      return {
-        ...job,
-        title: jobData.title,
-        payRate,
-        description: jobData.description,
-        date: jobData.date,
-        startTime: jobData.startTime,
-        endTime: jobData.endTime,
-      };
-    }
-    return job;
-  });
-
-  if (found) {
-    res.status(200).json(mockJobs.find(j => j.id === id));
-  } else {
-    res.status(404).json({ message: 'Job not found' });
-  }
+  // Fallback: return 404 if database is not available
+  res.status(404).json({ message: 'Job not found' });
 }));
 
 // Handler for deleting a job
@@ -805,14 +719,9 @@ app.delete('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authentic
       return;
     }
   } else {
-     // Check mock jobs
-     const isMock = mockJobs.some(j => j.id === id);
-     if (!isMock) {
-       // Not found in DB or mock
-       // Let the code proceed to fail or handle as before, 
-       // but we should probably return 404 here if we want to be strict.
-       // The original code handles not found by returning 404 at the end.
-     }
+    // If not in DB, job doesn't exist
+    res.status(404).json({ message: 'Job not found' });
+    return;
   }
 
   // Try to use database first
@@ -822,15 +731,8 @@ app.delete('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authentic
     return;
   }
 
-  // Fallback to in-memory storage if database is not available
-  const initialLength = mockJobs.length;
-  mockJobs = mockJobs.filter(job => job.id !== id);
-
-  if (mockJobs.length < initialLength) {
-    res.status(204).send();
-  } else {
-    res.status(404).json({ message: 'Job not found' });
-  }
+  // Fallback: return 404 if database is not available
+  res.status(404).json({ message: 'Job not found' });
 }));
 
 // Handler for applying to a job
@@ -847,11 +749,10 @@ app.post('/api/jobs/:id/apply', asyncHandler(async (req: AuthenticatedRequest, r
   const { name, email, coverLetter } = validationResult.data;
   const userId = req.user?.id; // Get userId if authenticated
 
-  // Check if job exists (database or fallback)
+  // Check if job exists
   const job = await jobsRepo.getJobById(jobId);
-  const fallbackJob = mockJobs.find(j => j.id === jobId);
   
-  if (!job && !fallbackJob) {
+  if (!job) {
     res.status(404).json({ message: 'Job not found' });
     return;
   }
@@ -1043,53 +944,7 @@ app.get('/api/me/applications', authenticateUser, asyncHandler(async (req: Authe
   }
 
   // Fallback: return empty array if database is not available
-  // For mock data, return a realistic list of applications
-  const mockApplications = [
-    {
-      id: 'app-1',
-      jobId: 'job-1',
-      jobTitle: 'Hair Stylist Needed',
-      shopName: 'Downtown Salon',
-      jobPayRate: '$25/hour',
-      jobLocation: '123 Main St, New York, NY 10001',
-      jobDescription: 'Looking for an experienced hair stylist',
-      jobDate: '2024-12-20',
-      status: 'pending',
-      appliedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      respondedDate: null,
-      respondedAt: null,
-    },
-    {
-      id: 'app-2',
-      jobId: 'job-2',
-      jobTitle: 'Barber Position Available',
-      shopName: 'Classic Cuts',
-      jobPayRate: '$30/hour',
-      jobLocation: '456 Broadway, New York, NY 10013',
-      jobDescription: 'Barber position with flexible hours',
-      jobDate: '2024-12-21',
-      status: 'accepted',
-      appliedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      respondedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      respondedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'app-3',
-      jobId: 'job-3',
-      jobTitle: 'Part-time Stylist',
-      shopName: 'Beauty Bar',
-      jobPayRate: '$22/hour',
-      jobLocation: '789 5th Ave, New York, NY 10022',
-      jobDescription: 'Part-time position available',
-      jobDate: '2024-12-22',
-      status: 'rejected',
-      appliedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      respondedDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      respondedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
-
-  res.status(200).json(mockApplications);
+  res.status(200).json([]);
 }));
 
 // Handler for fetching current user's jobs
