@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export default function Hero() {
   return (
     <div 
-      className="relative w-full h-screen text-white overflow-hidden bg-steel-900"
+      className="relative w-full h-screen text-white overflow-hidden bg-steel-900 border-b border-white/10"
       style={{
         backgroundImage: `url('/hero-background.png'), linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
         backgroundSize: 'cover',

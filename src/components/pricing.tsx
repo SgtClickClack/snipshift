@@ -64,13 +64,13 @@ export default function Pricing() {
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-steel-50" id="pricing">
+    <section className="py-20 bg-slate-950 border-t border-white/10" id="pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-steel-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-lg text-steel-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
             Choose the plan that fits your needs. No hidden fees, just verified
             professionals and seamless connections.
           </p>
@@ -83,8 +83,8 @@ export default function Pricing() {
               className={`relative flex flex-col ${
                 tier.highlighted
                   ? "border-red-accent shadow-xl scale-105 z-10"
-                  : "border-steel-200 hover:shadow-lg hover:border-steel-300"
-              } transition-all duration-300 bg-white dark:bg-steel-900`}
+                  : "border-white/10 hover:shadow-lg hover:border-white/20"
+              } transition-all duration-300 bg-slate-900`}
             >
               {tier.highlighted && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -94,25 +94,25 @@ export default function Pricing() {
                 </div>
               )}
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-steel-900">
+                <CardTitle className="text-2xl font-bold text-white">
                   {tier.name}
                 </CardTitle>
-                <CardDescription className="text-steel-500">
+                <CardDescription className="text-gray-400">
                   {tier.description}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-steel-900">
+                  <span className="text-4xl font-bold text-white">
                     {tier.price}
                   </span>
-                  <span className="text-steel-500 ml-1">{tier.duration}</span>
+                  <span className="text-gray-400 ml-1">{tier.duration}</span>
                 </div>
                 <ul className="space-y-3">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start">
                       <Check className="h-5 w-5 text-red-accent mr-2 flex-shrink-0" />
-                      <span className="text-steel-600 text-sm">{feature}</span>
+                      <span className="text-gray-300 text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
