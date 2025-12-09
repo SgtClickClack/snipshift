@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -190,12 +192,24 @@ export default function ProfessionalCalendar({
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(() => {
+    const date = new Date();
+    // Ensure date is valid
+    if (isNaN(date.getTime())) {
+      return new Date();
+    }
+    return date;
+  });
   const [view, setView] = useState<View>("month");
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+    const date = new Date();
+    return isNaN(date.getTime()) ? undefined : date;
+  });
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
+  const [newEventTitle, setNewEventTitle] = useState("");
   const [statusFilter, setStatusFilter] = useState<JobStatus>("all");
   const [currentTime, setCurrentTime] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -378,13 +392,23 @@ export default function ProfessionalCalendar({
     setShowEventDetails(true);
   }, []);
 
-  // Handle slot click (for adding availability)
+  // Handle slot click (for quick event creation)
   const handleSelectSlot = useCallback(
     ({ start, end }: { start: Date; end: Date }) => {
-      // Defensive check: ensure start date is valid
-      if (!start || isNaN(start.getTime())) return;
+      // Validate dates
+      if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+        console.warn('[CALENDAR] Invalid slot selection - dates are invalid');
+        return;
+      }
+      
+      // Ensure end is after start
+      const validEnd = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000); // Default to 1 hour if invalid
+      
+      setSelectedSlot({ start, end: validEnd });
       setSelectedDate(start);
+      setNewEventTitle(""); // Reset title
       setShowCreateModal(true);
+      
       if (onDateSelect) {
         onDateSelect(start);
       }
@@ -401,53 +425,141 @@ export default function ProfessionalCalendar({
   }, []);
 
   // Handle navigation from react-big-calendar (receives Date object)
-  const handleNavigate = useCallback((newDate: Date) => {
-    if (newDate && newDate instanceof Date && !isNaN(newDate.getTime())) {
-      setCurrentDate(newDate);
+  const handleNavigate = useCallback((newDate: Date | string) => {
+    try {
+      // Handle both Date objects and date strings
+      const date = newDate instanceof Date ? newDate : new Date(newDate);
+      
+      // Validate date
+      if (!date || isNaN(date.getTime())) {
+        console.warn('[CALENDAR] Invalid date in handleNavigate:', newDate);
+        return;
+      }
+      
+      // Ensure date is within reasonable bounds (not too far in past/future)
+      const minDate = new Date(1900, 0, 1);
+      const maxDate = new Date(2100, 11, 31);
+      
+      if (date < minDate || date > maxDate) {
+        console.warn('[CALENDAR] Date out of bounds in handleNavigate:', date);
+        return;
+      }
+      
+      setCurrentDate(date);
+      
+      // Update selected date if it's not set or if navigating to a different day
+      if (!selectedDate || !isSameDay(date, selectedDate)) {
+        setSelectedDate(date);
+      }
+    } catch (error) {
+      console.error('[CALENDAR] Error in handleNavigate:', error);
     }
-  }, []);
+  }, [selectedDate]);
 
   // Handle view change from react-big-calendar
-  const handleViewChange = useCallback((newView: View) => {
-    if (newView && ['month', 'week', 'day', 'agenda'].includes(newView)) {
-      setView(newView);
+  const handleViewChange = useCallback((newView: View | string) => {
+    try {
+      // Validate view
+      const validViews: View[] = ['month', 'week', 'day', 'agenda'];
+      if (!newView || !validViews.includes(newView as View)) {
+        console.warn('[CALENDAR] Invalid view in handleViewChange:', newView);
+        return;
+      }
+      
+      const viewToSet = newView as View;
+      
       // When switching views, ensure currentDate is valid for the new view
-      // The calendar component will handle view-specific date adjustments
+      // Adjust date if necessary (e.g., when switching to week view, ensure we're at start of week)
+      let adjustedDate = currentDate;
+      
+      if (viewToSet === 'week') {
+        // Adjust to start of week
+        adjustedDate = startOfWeek(currentDate, { weekStartsOn: 0 });
+      } else if (viewToSet === 'day') {
+        // For day view, just use the current date
+        adjustedDate = currentDate;
+      } else if (viewToSet === 'month') {
+        // For month view, ensure we're at the start of the month
+        adjustedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      }
+      
+      // Validate adjusted date
+      if (adjustedDate && !isNaN(adjustedDate.getTime())) {
+        setCurrentDate(adjustedDate);
+        if (!selectedDate || !isSameDay(adjustedDate, selectedDate)) {
+          setSelectedDate(adjustedDate);
+        }
+      }
+      
+      setView(viewToSet);
+    } catch (error) {
+      console.error('[CALENDAR] Error in handleViewChange:', error);
     }
-  }, []);
+  }, [currentDate, selectedDate]);
 
   // Navigate calendar (for custom buttons)
   const navigate = useCallback((action: "PREV" | "NEXT" | "TODAY") => {
-    if (action === "TODAY") {
-      const today = new Date();
-      setCurrentDate(today);
-      setSelectedDate(today);
-      return;
-    }
+    try {
+      if (action === "TODAY") {
+        const today = new Date();
+        if (!isNaN(today.getTime())) {
+          setCurrentDate(today);
+          setSelectedDate(today);
+        }
+        return;
+      }
 
-    const newDate = new Date(currentDate);
-    if (view === "month") {
-      newDate.setMonth(
-        action === "PREV" ? newDate.getMonth() - 1 : newDate.getMonth() + 1
-      );
-    } else if (view === "week") {
-      newDate.setDate(action === "PREV" ? newDate.getDate() - 7 : newDate.getDate() + 7);
-    } else if (view === "day") {
-      newDate.setDate(action === "PREV" ? newDate.getDate() - 1 : newDate.getDate() + 1);
+      const newDate = new Date(currentDate);
+      
+      // Validate current date first
+      if (isNaN(newDate.getTime())) {
+        console.warn('[CALENDAR] Invalid currentDate in navigate, resetting to today');
+        const today = new Date();
+        setCurrentDate(today);
+        setSelectedDate(today);
+        return;
+      }
+      
+      // Navigate based on current view
+      if (view === "month") {
+        newDate.setMonth(
+          action === "PREV" ? newDate.getMonth() - 1 : newDate.getMonth() + 1
+        );
+      } else if (view === "week") {
+        // Navigate by weeks, maintaining day of week
+        newDate.setDate(action === "PREV" ? newDate.getDate() - 7 : newDate.getDate() + 7);
+      } else if (view === "day") {
+        // Navigate by days
+        newDate.setDate(action === "PREV" ? newDate.getDate() - 1 : newDate.getDate() + 1);
+      }
+      
+      // Validate the new date before setting
+      if (!isNaN(newDate.getTime())) {
+        setCurrentDate(newDate);
+        // Update selected date if navigating to a different day
+        if (!selectedDate || !isSameDay(newDate, selectedDate)) {
+          setSelectedDate(newDate);
+        }
+      } else {
+        console.warn('[CALENDAR] Invalid newDate after navigation calculation');
+      }
+    } catch (error) {
+      console.error('[CALENDAR] Error in navigate:', error);
     }
-    
-    // Validate the new date before setting
-    if (!isNaN(newDate.getTime())) {
-      setCurrentDate(newDate);
-    }
-  }, [currentDate, view]);
+  }, [currentDate, view, selectedDate]);
 
-  // Get week range for date range display
-  const weekRange = useMemo(() => {
+  // Get date range for display based on current view
+  const dateRange = useMemo(() => {
     if (view === "week") {
       const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
       const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
       return { start: weekStart, end: weekEnd };
+    } else if (view === "day") {
+      return { start: currentDate, end: currentDate };
+    } else if (view === "month") {
+      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      return { start: monthStart, end: monthEnd };
     }
     return null;
   }, [currentDate, view]);
@@ -479,46 +591,67 @@ export default function ProfessionalCalendar({
     []
   );
 
-  // Create availability mutation (placeholder - adjust based on your API)
-  const createAvailabilityMutation = useMutation({
-    mutationFn: async (data: { date: Date; startTime: string; endTime: string }) => {
+  // Create event/availability mutation (placeholder - adjust based on your API)
+  const createEventMutation = useMutation({
+    mutationFn: async (data: { title: string; start: Date; end: Date }) => {
       // This is a placeholder - adjust based on your actual API endpoint
       const response = await apiRequest("POST", "/api/availability", {
-        date: data.date.toISOString(),
-        startTime: data.startTime,
-        endTime: data.endTime,
+        title: data.title,
+        start: data.start.toISOString(),
+        end: data.end.toISOString(),
       });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
       toast({
-        title: "Availability created",
-        description: "Your availability has been added successfully",
+        title: "Event created",
+        description: "Your event has been created successfully",
       });
       setShowCreateModal(false);
+      setSelectedSlot(null);
+      setNewEventTitle("");
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: "Failed to create availability",
-        description: "Please try again later",
+        title: "Failed to create event",
+        description: error?.message || "Please try again later",
         variant: "destructive",
       });
     },
   });
 
-  const handleCreateAvailability = () => {
-    if (!selectedDate) return;
-    // For now, create a default 8-hour availability window
-    const startTime = new Date(selectedDate);
-    startTime.setHours(9, 0, 0, 0);
-    const endTime = new Date(selectedDate);
-    endTime.setHours(17, 0, 0, 0);
+  const handleCreateEvent = () => {
+    if (!selectedSlot) {
+      // Fallback: use selectedDate if no slot selected
+      if (!selectedDate) return;
+      const startTime = new Date(selectedDate);
+      startTime.setHours(9, 0, 0, 0);
+      const endTime = new Date(selectedDate);
+      endTime.setHours(17, 0, 0, 0);
+      
+      createEventMutation.mutate({
+        title: newEventTitle || "New Event",
+        start: startTime,
+        end: endTime,
+      });
+      return;
+    }
 
-    createAvailabilityMutation.mutate({
-      date: selectedDate,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
+    // Validate slot dates
+    if (isNaN(selectedSlot.start.getTime()) || isNaN(selectedSlot.end.getTime())) {
+      toast({
+        title: "Invalid time slot",
+        description: "Please select a valid time slot",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createEventMutation.mutate({
+      title: newEventTitle || "New Event",
+      start: selectedSlot.start,
+      end: selectedSlot.end,
     });
   };
 
@@ -580,7 +713,10 @@ export default function ProfessionalCalendar({
           <CardContent className="pt-6">
             <Button
               onClick={() => {
-                setSelectedDate(new Date());
+                const today = new Date();
+                setSelectedDate(today);
+                setSelectedSlot(null); // Clear slot selection for manual creation
+                setNewEventTitle("");
                 setShowCreateModal(true);
               }}
               className="w-full"
@@ -716,11 +852,25 @@ export default function ProfessionalCalendar({
                 <div className="text-muted-foreground">Loading calendar...</div>
               </div>
             ) : (
-              <div className="relative" ref={calendarRef} style={{ minHeight: '600px', height: '600px', width: '100%' }}>
+              <div 
+                className="relative" 
+                ref={calendarRef} 
+                style={{ 
+                  minHeight: view === 'month' ? '600px' : view === 'week' ? '700px' : '600px',
+                  height: view === 'month' ? '600px' : view === 'week' ? '700px' : '600px',
+                  width: '100%'
+                }}
+              >
                 {/* Date Range Display */}
-                {weekRange && (
+                {dateRange && (
                   <div className="mb-2 text-sm font-medium text-muted-foreground">
-                    {format(weekRange.start, "MMM d")} - {format(weekRange.end, "MMM d, yyyy")}
+                    {view === "day" ? (
+                      format(dateRange.start, "EEEE, MMMM d, yyyy")
+                    ) : view === "week" ? (
+                      `${format(dateRange.start, "MMM d")} - ${format(dateRange.end, "MMM d, yyyy")}`
+                    ) : view === "month" ? (
+                      format(currentDate, "MMMM yyyy")
+                    ) : null}
                   </div>
                 )}
                 {/* Calendar component - filteredEvents is always an array due to defensive coding */}
@@ -796,16 +946,30 @@ export default function ProfessionalCalendar({
                       view: view
                     });
                     
+                    // Calculate height based on view for stable rendering
+                    const calendarHeight = view === 'month' ? 600 : view === 'week' ? 700 : 600;
+                    
                     // Render Calendar with error boundary
                     return (
-                      <div data-testid="react-big-calendar-container" style={{ height: '600px', width: '100%' }}>
+                      <div 
+                        data-testid="react-big-calendar-container" 
+                        style={{ 
+                          height: `${calendarHeight}px`, 
+                          minHeight: `${calendarHeight}px`,
+                          width: '100%' 
+                        }}
+                      >
                         <CalendarErrorBoundary>
                           <Calendar
                             localizer={localizer}
                             events={safeEvents}
                             startAccessor="start"
                             endAccessor="end"
-                            style={{ height: '600px', minHeight: '600px' }}
+                            style={{ 
+                              height: `${calendarHeight}px`, 
+                              minHeight: `${calendarHeight}px`,
+                              width: '100%'
+                            }}
                             view={view}
                             onView={handleViewChange}
                             date={currentDate}
@@ -814,6 +978,8 @@ export default function ProfessionalCalendar({
                             onSelectSlot={handleSelectSlot}
                             selectable
                             eventPropGetter={eventStyleGetter}
+                            min={new Date(2020, 0, 1, 0, 0, 0)}
+                            max={new Date(2030, 11, 31, 23, 59, 59)}
                             components={{
                               toolbar: customToolbar,
                               header: customHeader,
@@ -962,29 +1128,87 @@ export default function ProfessionalCalendar({
         </SheetContent>
       </Sheet>
 
-      {/* Create Availability Modal */}
-      <Sheet open={showCreateModal} onOpenChange={setShowCreateModal}>
+      {/* Quick Event Creation Modal */}
+      <Sheet open={showCreateModal} onOpenChange={(open) => {
+        setShowCreateModal(open);
+        if (!open) {
+          // Reset form when closing
+          setSelectedSlot(null);
+          setNewEventTitle("");
+        }
+      }}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Create Availability</SheetTitle>
+            <SheetTitle>Create New Event</SheetTitle>
             <SheetDescription>
-              Set your availability for {selectedDate && format(selectedDate, "MMMM d, yyyy")}
+              {selectedSlot ? (
+                <>
+                  Create an event from {format(selectedSlot.start, "MMM d, h:mm a")} to {format(selectedSlot.end, "h:mm a")}
+                </>
+              ) : selectedDate ? (
+                <>Create an event for {format(selectedDate, "MMMM d, yyyy")}</>
+              ) : (
+                "Create a new event"
+              )}
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              This feature allows you to mark when you're available for shifts. Employers can
-              see your availability and offer you shifts during those times.
-            </p>
-            <Button
-              onClick={handleCreateAvailability}
-              disabled={createAvailabilityMutation.isPending}
-              className="w-full"
-            >
-              {createAvailabilityMutation.isPending
-                ? "Creating..."
-                : "Create Availability"}
-            </Button>
+            <div className="space-y-2">
+              <Label htmlFor="event-title">Event Title</Label>
+              <Input
+                id="event-title"
+                placeholder="Enter event title"
+                value={newEventTitle}
+                onChange={(e) => setNewEventTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleCreateEvent();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            
+            {selectedSlot && (
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    {format(selectedSlot.start, "EEEE, MMMM d, yyyy")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setSelectedSlot(null);
+                  setNewEventTitle("");
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateEvent}
+                disabled={createEventMutation.isPending}
+                className="flex-1"
+              >
+                {createEventMutation.isPending
+                  ? "Creating..."
+                  : "Create Event"}
+              </Button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
