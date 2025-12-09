@@ -94,7 +94,6 @@ export default function ProfileHeader({
           'state_changed',
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Banner upload progress:', progress + '%');
             if (progress > 0) {
               clearTimeout(timeoutId);
             }
@@ -108,7 +107,6 @@ export default function ProfileHeader({
             clearTimeout(timeoutId);
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log("Banner upload successful, download URL:", downloadURL);
               onBannerUpload?.(downloadURL);
               toast({
                 title: "Banner updated",
@@ -193,7 +191,6 @@ export default function ProfileHeader({
           'state_changed',
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Avatar upload progress:', progress + '%');
             if (progress > 0) {
               clearTimeout(timeoutId);
             }
@@ -207,7 +204,6 @@ export default function ProfileHeader({
             clearTimeout(timeoutId);
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log("Avatar upload successful, download URL:", downloadURL);
               onAvatarUpload?.(downloadURL);
               toast({
                 title: "Profile picture updated",

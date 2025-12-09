@@ -22,15 +22,12 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     setIsLoading(true);
     
     try {
-      // console.log('🔧 Starting Google OAuth with Firebase');
       const firebaseUser = await signInWithGoogle();
       
       if (!firebaseUser) {
         setIsLoading(false);
         return; // Popup closed or redirect happened
       }
-
-      // console.log('✅ Firebase Auth Success:', firebaseUser.email);
       
       const email = firebaseUser.email;
       const googleId = firebaseUser.uid;
@@ -53,14 +50,12 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         // Ignore 400 (already exists)
         // We can't easily distinguish 400 from other errors without parsing message, 
         // but typically duplicate email is the cause here.
-        // console.log('Registration check:', e);
       }
 
       // 2. Login to establish server session
       const res = await apiRequest('POST', '/api/login', { email, googleId });
       const userData = await res.json();
       
-      // console.log('🔧 Logging in user:', userData);
       login({
         id: userData.id,
         email: userData.email,

@@ -61,7 +61,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
             if (params.get('test_user') === 'true') {
                 shouldBypass = true;
-                // console.log('⚠️ Auth Bypass Active: Logging in as Test User (from URL)');
                 
                 const rolesParam = params.get('roles');
                 if (rolesParam) {
@@ -77,7 +76,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 const stored = sessionStorage.getItem('snipshift_test_user');
                 if (stored) {
                     shouldBypass = true;
-                    // console.log('⚠️ Auth Bypass Active: Logging in as Test User (from Session)');
                     try {
                         const data = JSON.parse(stored);
                         if (data.roles) {
@@ -91,7 +89,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
             if (shouldBypass) {
                 const primaryRole = rolesList[0] || 'professional';
-                // console.log('Setting test user with roles:', rolesList, 'currentRole:', primaryRole);
                 
                 // Get isOnboarded and ID from session if available
                 let isOnboarded = true;
@@ -128,9 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
         }
     
-    // console.log('Initializing Firebase listener');
     const unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
-      // console.log('Firebase Auth State Change:', firebaseUser?.uid);
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken();

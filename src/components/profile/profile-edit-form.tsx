@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload, X, Plus, Save, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";

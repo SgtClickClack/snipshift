@@ -1,7 +1,7 @@
 {
   "name": "Snipshift",
   "short_name": "Snipshift",
-  "description": "Connect barbers, stylists, and beauticians with flexible work opportunities",
+  "description": "Snipshift connects barbershops with verified professionals for seamless workforce flexibility. Find shifts or fill chairs today.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

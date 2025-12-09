@@ -9,14 +9,10 @@ export class GoogleOAuthDirect {
     // Default to /oauth/callback which is registered in routing
     const defaultRedirect = `${window.location.origin}/oauth/callback`;
     this.redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || defaultRedirect;
-    if (import.meta.env.MODE !== 'production') {
-      console.log('OAuth setup', { clientId: this.clientId, redirectUri: this.redirectUri });
-    }
   }
 
   public signIn(): void {
     const authUrl = this.buildAuthUrl();
-    if (import.meta.env.MODE !== 'production') console.log('🔧 Redirecting to Google OAuth:', authUrl);
     window.location.href = authUrl;
   }
 

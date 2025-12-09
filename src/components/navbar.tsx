@@ -77,10 +77,6 @@ export default function Navbar() {
       });
     }
   };
-  
-  // Debug logging for role switcher
-  // console.log('Current User Roles:', user?.roles);
-  // console.log('Has Hub Role:', user?.roles?.includes('hub'));
 
   const getRoleLabel = (role: string) => {
     if (role === 'hub' || role === 'business') return 'Business';

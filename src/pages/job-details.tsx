@@ -140,6 +140,7 @@ export default function JobDetailsPage() {
                           className="rounded-full"
                           onClick={toggleSave}
                           data-testid="button-save-job"
+                          aria-label={isSaved ? "Unsave job" : "Save job"}
                         >
                           <Heart className={`h-6 w-6 ${isSaved ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
                         </Button>

@@ -23,7 +23,6 @@ export function useInstallPrompt() {
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('Install Prompt Captured');
       // Prevent the mini-infobar from appearing
       e.preventDefault();
       // Store the event for later use
@@ -68,16 +67,6 @@ export function useInstallPrompt() {
   };
 
   const canInstall = deferredPrompt !== null && !isInstalled;
-
-  // Debug logging
-  if (import.meta.env.DEV) {
-    console.log('useInstallPrompt:', { 
-      canInstall, 
-      hasDeferredPrompt: !!deferredPrompt, 
-      isInstalled,
-      isStandalone: window.matchMedia('(display-mode: standalone)').matches
-    });
-  }
 
   return {
     deferredPrompt,

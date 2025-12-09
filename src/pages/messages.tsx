@@ -404,6 +404,7 @@ export default function MessagesPage() {
                       onClick={handleSendMessage}
                       disabled={!messageContent.trim() || sendMessageMutation.isPending}
                       size="icon"
+                      aria-label="Send message"
                     >
                       <Send className="h-4 w-4" />
                     </Button>

@@ -13,8 +13,6 @@ export function GoogleOAuthFallback({ mode, onSuccess }: GoogleOAuthFallbackProp
   const navigate = useNavigate();
 
   const handleGoogleAuth = () => {
-    if (import.meta.env.MODE !== 'production') console.log('🚀 Starting Google OAuth redirect flow');
-    
     // Get role from URL if available
     const urlParams = new URLSearchParams(window.location.search);
     const roleFromUrl = urlParams.get('role') || 'professional';
@@ -33,12 +31,6 @@ export function GoogleOAuthFallback({ mode, onSuccess }: GoogleOAuthFallbackProp
       `response_type=${responseType}&` +
       `scope=${encodeURIComponent(scope)}&` +
       `state=${encodeURIComponent(state)}`;
-    
-    if (import.meta.env.MODE !== 'production') console.log('🚀 Starting Google OAuth redirect flow');
-    if (import.meta.env.MODE !== 'production') {
-      console.log('🔗 Auth URL:', authUrl.substring(0, 100) + '...');
-      console.log('📍 Redirect URI:', redirectUri);
-    }
     
     window.location.href = authUrl;
   };

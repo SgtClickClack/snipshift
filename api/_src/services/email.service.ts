@@ -41,7 +41,6 @@ export async function sendWelcomeEmail(
       return false;
     }
 
-    console.log(`✅ Welcome email sent to ${userEmail}`);
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
@@ -92,7 +91,6 @@ export async function sendApplicationStatusEmail(
       return false;
     }
 
-    console.log(`✅ Application status email sent to ${userEmail}`);
     return true;
   } catch (error) {
     console.error('Error sending application status email:', error);
@@ -142,7 +140,6 @@ export async function sendNewMessageEmail(
       return false;
     }
 
-    console.log(`✅ New message email sent to ${recipientEmail}`);
     return true;
   } catch (error) {
     console.error('Error sending new message email:', error);
@@ -193,7 +190,6 @@ export async function sendJobAlertEmail(
       return false;
     }
 
-    console.log(`✅ Job alert email sent to ${userEmail}`);
     return true;
   } catch (error) {
     console.error('Error sending job alert email:', error);

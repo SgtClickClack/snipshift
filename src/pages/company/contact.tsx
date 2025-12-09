@@ -26,9 +26,6 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Log to console for MVP
-    // console.log('Contact Form Submission:', formData);
-
     // Create mailto link
     const mailtoLink = `mailto:support@snipshift.com.au?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(`From: ${formData.email}\n\n${formData.message}`)}`;
     

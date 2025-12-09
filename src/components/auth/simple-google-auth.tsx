@@ -38,7 +38,6 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      if (import.meta.env.MODE !== 'production') console.log('Google Identity Services script loaded');
       initializeGoogleAuth();
     };
     script.onerror = () => {
@@ -67,7 +66,6 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
         });
         
         setIsGoogleLoaded(true);
-        if (import.meta.env.MODE !== 'production') console.log('Google Auth initialized successfully');
       } catch (error) {
         console.error('Google Auth initialization error:', error);
         toast({
@@ -81,8 +79,6 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
 
   const handleCredentialResponse = (response: any) => {
     try {
-      if (import.meta.env.MODE !== 'production') console.log('Google credential response received');
-      
       if (!response.credential) {
         throw new Error('No credential received from Google');
       }
@@ -90,8 +86,6 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
       // Decode JWT manually (simple base64 decode for demo)
       const parts = response.credential.split('.');
       const payload = JSON.parse(atob(parts[1]));
-      
-      if (import.meta.env.MODE !== 'production') console.log('JWT payload decoded:', { email: payload.email, name: payload.name });
       
       // Get role from URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -121,7 +115,6 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
 
       // Navigate to appropriate dashboard
       const targetDashboard = getDashboardRoute(validRole as any);
-      if (import.meta.env.MODE !== 'production') console.log('Navigating to dashboard:', targetDashboard);
       navigate(targetDashboard);
       onSuccess?.();
       
@@ -146,7 +139,6 @@ export function SimpleGoogleAuth({ mode, onSuccess }: SimpleGoogleAuthProps) {
     }
 
     try {
-      if (import.meta.env.MODE !== 'production') console.log('Starting Google sign-in process');
       window.google.accounts.id.prompt();
     } catch (error) {
       console.error('Error starting Google sign-in:', error);

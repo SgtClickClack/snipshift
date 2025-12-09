@@ -146,6 +146,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       targetTitle,
       targetId
     );
+    // TODO: Send email notification here
+    // Example: await emailService.sendApplicationReceivedEmail(ownerEmail, userName, targetTitle);
   }
 
   res.status(201).json({
