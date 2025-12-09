@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,21 +32,43 @@ import { cn } from '@/lib/utils';
 import { SEO } from '@/components/seo/SEO';
 
 type JobTitle = 'Barber' | 'Senior Stylist' | 'Colorist' | 'Apprentice';
-type JobType = 'Shift Coverage' | 'Sick Leave' | 'Busy Period';
+type JobType = 'Coverage' | 'Busy' | 'Sick';
 
-interface FormData {
-  jobTitle: JobTitle | '';
-  jobTypes: JobType[];
-  date: Date | undefined;
-  startTime: string;
-  endTime: string;
-  hourlyRate: string;
-  requirements: string[];
-  notes: string;
-}
+// Zod validation schema
+const jobPostSchema = z.object({
+  jobTitle: z.enum(['Barber', 'Senior Stylist', 'Colorist', 'Apprentice'], {
+    required_error: 'Job title is required',
+  }),
+  jobTypes: z.array(z.enum(['Coverage', 'Busy', 'Sick'])).default([]),
+  date: z.date({
+    required_error: 'Date is required',
+  }),
+  startTime: z.string().min(1, 'Start time is required'),
+  endTime: z.string().min(1, 'End time is required'),
+  hourlyRate: z.string().refine(
+    (val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0;
+    },
+    { message: 'Hourly rate must be a positive number' }
+  ),
+  requirements: z.array(z.string()).default([]),
+  notes: z.string().optional(),
+}).refine(
+  (data) => {
+    if (!data.startTime || !data.endTime) return true;
+    return data.endTime > data.startTime;
+  },
+  {
+    message: 'End time must be after start time',
+    path: ['endTime'],
+  }
+);
+
+type FormData = z.infer<typeof jobPostSchema>;
 
 const JOB_TITLES: JobTitle[] = ['Barber', 'Senior Stylist', 'Colorist', 'Apprentice'];
-const JOB_TYPES: JobType[] = ['Shift Coverage', 'Sick Leave', 'Busy Period'];
+const JOB_TYPES: JobType[] = ['Coverage', 'Busy', 'Sick'];
 const REQUIREMENTS_OPTIONS = [
   'Must be proficient in fading',
   'Bring own scissors',
@@ -57,7 +80,6 @@ const REQUIREMENTS_OPTIONS = [
 
 export default function SalonCreateJobPage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const {
@@ -67,8 +89,9 @@ export default function SalonCreateJobPage() {
     setValue,
     formState: { errors },
   } = useForm<FormData>({
+    resolver: zodResolver(jobPostSchema),
     defaultValues: {
-      jobTitle: '',
+      jobTitle: undefined,
       jobTypes: [],
       date: undefined,
       startTime: '',
@@ -166,21 +189,26 @@ export default function SalonCreateJobPage() {
   }, [watchedValues, totalHours, estimatedTotalPay, user]);
 
   const onSubmit = async (data: FormData) => {
-    if (!data.jobTitle || !data.date || !data.startTime || !data.endTime || !data.hourlyRate) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    // Build the payload
+    const dateStr = format(data.date, 'yyyy-MM-dd');
+    const startTimeStr = `${dateStr}T${data.startTime}:00`;
+    const endTimeStr = `${dateStr}T${data.endTime}:00`;
 
-    // In a real app, this would call an API
-    toast({
-      title: 'Job Posted!',
-      description: 'Your job listing has been posted successfully.',
-    });
-    navigate('/hub-dashboard');
+    const payload = {
+      title: data.jobTitle,
+      jobTypes: data.jobTypes,
+      date: dateStr,
+      startTime: startTimeStr,
+      endTime: endTimeStr,
+      hourlyRate: parseFloat(data.hourlyRate),
+      requirements: data.requirements,
+      notes: data.notes || '',
+      totalHours: totalHours,
+      estimatedTotalPay: estimatedTotalPay,
+    };
+
+    // Console log the payload as requested
+    console.log('Job Post Payload:', payload);
   };
 
   const onSaveDraft = () => {
@@ -221,16 +249,16 @@ export default function SalonCreateJobPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Role Details */}
+                  {/* Section 1: Role */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Role Details</h3>
+                    <h3 className="text-lg font-semibold">Role</h3>
 
                     {/* Job Title */}
                     <div>
                       <Label htmlFor="jobTitle">Job Title *</Label>
                       <Select
-                        value={watchedValues.jobTitle}
-                        onValueChange={(value) => setValue('jobTitle', value as JobTitle)}
+                        value={watchedValues.jobTitle || ''}
+                        onValueChange={(value) => setValue('jobTitle', value as JobTitle, { shouldValidate: true })}
                       >
                         <SelectTrigger id="jobTitle" className={errors.jobTitle ? 'border-red-500' : ''}>
                           <SelectValue placeholder="Select a job title" />
@@ -275,7 +303,7 @@ export default function SalonCreateJobPage() {
                     </div>
                   </div>
 
-                  {/* Schedule */}
+                  {/* Section 2: Schedule */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Schedule</h3>
 
@@ -287,6 +315,7 @@ export default function SalonCreateJobPage() {
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
+                              type="button"
                               className={cn(
                                 'w-full justify-start text-left font-normal',
                                 !watchedValues.date && 'text-muted-foreground',
@@ -305,7 +334,7 @@ export default function SalonCreateJobPage() {
                             <Calendar
                               mode="single"
                               selected={watchedValues.date}
-                              onSelect={(date) => setValue('date', date)}
+                              onSelect={(date) => setValue('date', date, { shouldValidate: true })}
                               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                               initialFocus
                             />
@@ -322,7 +351,7 @@ export default function SalonCreateJobPage() {
                         <Input
                           id="startTime"
                           type="time"
-                          {...register('startTime', { required: 'Start time is required' })}
+                          {...register('startTime')}
                           className={errors.startTime ? 'border-red-500' : ''}
                         />
                         {errors.startTime && (
@@ -336,15 +365,7 @@ export default function SalonCreateJobPage() {
                         <Input
                           id="endTime"
                           type="time"
-                          {...register('endTime', {
-                            required: 'End time is required',
-                            validate: (value) => {
-                              if (watchedValues.startTime && value <= watchedValues.startTime) {
-                                return 'End time must be after start time';
-                              }
-                              return true;
-                            },
-                          })}
+                          {...register('endTime')}
                           className={errors.endTime ? 'border-red-500' : ''}
                         />
                         {errors.endTime && (
@@ -363,9 +384,9 @@ export default function SalonCreateJobPage() {
                     )}
                   </div>
 
-                  {/* Compensation */}
+                  {/* Section 3: Pay */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Compensation</h3>
+                    <h3 className="text-lg font-semibold">Pay</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Hourly Rate */}
@@ -377,10 +398,7 @@ export default function SalonCreateJobPage() {
                           step="0.01"
                           min="0"
                           placeholder="e.g., 50"
-                          {...register('hourlyRate', {
-                            required: 'Hourly rate is required',
-                            min: { value: 0.01, message: 'Rate must be greater than 0' },
-                          })}
+                          {...register('hourlyRate')}
                           className={errors.hourlyRate ? 'border-red-500' : ''}
                         />
                         {errors.hourlyRate && (
@@ -405,9 +423,9 @@ export default function SalonCreateJobPage() {
                     </div>
                   </div>
 
-                  {/* Description */}
+                  {/* Section 4: Details */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Description</h3>
+                    <h3 className="text-lg font-semibold">Details</h3>
 
                     {/* Requirements */}
                     <div>
