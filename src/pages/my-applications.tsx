@@ -1,31 +1,56 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyApplications, createConversation, MyApplication } from '@/lib/api';
+import { fetchMyApplications, createConversation } from '@/lib/api';
+import { getMockApplications, MockApplication, ApplicationStatus } from '@/lib/mock-applications';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, DollarSign, Briefcase, Star } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { MapPin, Clock, DollarSign, Briefcase, MessageSquare, Eye, X, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-function getStatusBadge(status: MyApplication['status']) {
+// Use mock data for demonstration (set to false to use real API data)
+const USE_MOCK_DATA = true;
+
+function getStatusBadge(status: ApplicationStatus) {
   switch (status) {
     case 'pending':
       return (
         <Badge className="bg-amber-50 text-amber-700 border-amber-200">
-          Pending
+          Waiting for review
         </Badge>
       );
-    case 'accepted':
+    case 'shortlisted':
       return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
-          Approved
+        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+          Salon is interested
+        </Badge>
+      );
+    case 'interviewing':
+      return (
+        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+          Interviewing
         </Badge>
       );
     case 'rejected':
       return (
-        <Badge className="bg-red-50 text-red-700 border-red-200">
-          Rejected
+        <Badge className="bg-gray-50 text-gray-700 border-gray-200">
+          Application unsuccessful
+        </Badge>
+      );
+    case 'withdrawn':
+      return (
+        <Badge className="bg-gray-50 text-gray-700 border-gray-200">
+          Withdrawn
+        </Badge>
+      );
+    case 'expired':
+      return (
+        <Badge className="bg-gray-50 text-gray-700 border-gray-200">
+          Expired
         </Badge>
       );
     default:
@@ -37,22 +62,108 @@ function getStatusBadge(status: MyApplication['status']) {
   }
 }
 
-function formatDate(dateString: string): string {
+function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays === 1) return '1 day ago';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+  }
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return `${months} month${months > 1 ? 's' : ''} ago`;
+  }
+  const years = Math.floor(diffDays / 365);
+  return `${years} year${years > 1 ? 's' : ''} ago`;
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export default function MyApplicationsPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
 
   const { data: applications, isLoading, error } = useQuery({
     queryKey: ['my-applications'],
-    queryFn: fetchMyApplications,
+    queryFn: USE_MOCK_DATA ? getMockApplications : fetchMyApplications,
   });
+
+  // Separate applications into active and past
+  const { activeApplications, pastApplications } = useMemo(() => {
+    if (!applications) return { activeApplications: [], pastApplications: [] };
+
+    const active: MockApplication[] = [];
+    const past: MockApplication[] = [];
+
+    applications.forEach((app) => {
+      if (app.status === 'pending' || app.status === 'shortlisted' || app.status === 'interviewing') {
+        active.push(app as MockApplication);
+      } else {
+        past.push(app as MockApplication);
+      }
+    });
+
+    return { activeApplications: active, pastApplications: past };
+  }, [applications]);
+
+  const handleWithdraw = async (applicationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // TODO: Implement withdraw API call
+    toast({
+      title: 'Application Withdrawn',
+      description: 'Your application has been withdrawn successfully.',
+    });
+  };
+
+  const handleMessageSalon = async (application: MockApplication, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!application.businessId) {
+      toast({
+        title: 'Error',
+        description: 'Unable to message salon. Business information not available.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const conversation = await createConversation({
+        participant2Id: application.businessId,
+        jobId: application.jobId,
+      });
+      navigate(`/messages?conversation=${conversation.id}`);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to start conversation. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewDetails = (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/jobs/${jobId}`);
+  };
 
   if (isLoading) {
     return <PageLoadingFallback />;
@@ -60,12 +171,12 @@ export default function MyApplicationsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <Card className="card-chrome max-w-md">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading Applications</h2>
-            <p className="text-neutral-600 mb-4">Please try again later.</p>
-            <Button onClick={() => navigate('/jobs')} className="steel-button">
+            <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Applications</h2>
+            <p className="text-muted-foreground mb-4">Please try again later.</p>
+            <Button onClick={() => navigate('/job-feed')}>
               Find Shifts
             </Button>
           </CardContent>
@@ -74,142 +185,195 @@ export default function MyApplicationsPage() {
     );
   }
 
-  const applicationsList = applications || [];
+  const currentApplications = activeTab === 'active' ? activeApplications : pastApplications;
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header className="mb-6">
-          <h1 className="text-3xl font-bold text-steel-900">My Applications</h1>
-          <p className="text-steel-600 mt-1">Track the status of your job applications</p>
+          <h1 className="text-3xl font-bold text-foreground">My Applications</h1>
+          <p className="text-muted-foreground mt-1">Track the status of your job applications</p>
         </header>
 
-        {applicationsList.length === 0 ? (
-          <Card className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <CardContent className="p-12 text-center">
-              <Briefcase className="h-16 w-16 mx-auto text-steel-400 mb-4" />
-              <h2 className="text-xl font-bold text-steel-900 mb-2">You haven't applied for any jobs yet</h2>
-              <p className="text-steel-600 mb-6">Start browsing available shifts and apply to find your next opportunity.</p>
-              <Button onClick={() => navigate('/jobs')} className="steel-button">
-                Find Shifts
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-            <div className="space-y-4">
-              {applicationsList.map((application) => (
-                <Card
-                  key={application.id}
-                  className="card-chrome cursor-pointer transition-colors hover:border-primary"
-                  onClick={() => {
-                    if (application.jobId) {
-                      navigate(`/jobs/${application.jobId}`);
-                    } else {
-                      // Handle orphaned application (job was deleted but application wasn't)
-                      console.warn('Application has no jobId:', application.id);
-                    }
-                  }}
-                >
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-steel-900 mb-1">
-                            {application.jobTitle || 'Unknown Position'}
-                          </h3>
-                          {application.shopName && (
-                            <p className="text-steel-600 mb-3">{application.shopName}</p>
-                          )}
-                          {!application.jobId && (
-                            <p className="text-xs text-amber-600 mt-1">⚠️ Original job may have been deleted</p>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          {getStatusBadge(application.status)}
-                        </div>
-                      </div>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'active' | 'past')} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="active">
+              Active ({activeApplications.length})
+            </TabsTrigger>
+            <TabsTrigger value="past">
+              Past ({pastApplications.length})
+            </TabsTrigger>
+          </TabsList>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-steel-600 mb-4">
-                        {application.jobLocation && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 flex-shrink-0" />
-                            <span>{application.jobLocation}</span>
-                          </div>
-                        )}
-                        {application.jobPayRate && (
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 flex-shrink-0" />
-                            <span className="font-semibold text-emerald-600">{application.jobPayRate}</span>
-                          </div>
-                        )}
-                        {application.jobDate && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 flex-shrink-0" />
-                            <span>{formatDate(application.jobDate)}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 flex-shrink-0" />
-                          <span>Applied {formatDate(application.appliedDate)}</span>
-                        </div>
-                      </div>
-
-                      {application.respondedDate && (
-                        <div className="text-xs text-steel-500 mt-2">
-                          Response received: {formatDate(application.respondedDate)}
-                        </div>
-                      )}
-
-                      <div className="mt-4 pt-4 border-t border-steel-200 flex gap-2">
-                        {application.status === 'accepted' && (
-                          <Button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              try {
-                                const conversation = await createConversation({
-                                  participant2Id: application.businessId || '',
-                                  jobId: application.jobId,
-                                });
-                                navigate(`/messages?conversation=${conversation.id}`);
-                              } catch (error) {
-                                console.error('Failed to create conversation:', error);
-                              }
-                            }}
-                            className="steel-button"
-                            variant="outline"
-                            size="sm"
-                          >
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Message Employer
-                          </Button>
-                        )}
-                        {application.status === 'accepted' && application.jobStatus === 'completed' && (
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/review?jobId=${application.jobId}`);
-                            }}
-                            className="steel-button"
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Star className="h-4 w-4 mr-2" />
-                            Leave a Review
-                          </Button>
-                        )}
-                      </div>
+          <TabsContent value="active" className="mt-0">
+            {activeApplications.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <div className="flex flex-col items-center justify-center text-muted-foreground mb-6">
+                    <div className="bg-card p-4 rounded-full shadow-sm border border-border mb-4">
+                      <Briefcase className="h-8 w-8 text-muted-foreground" />
                     </div>
+                    <p className="text-xl font-bold text-foreground mb-2">No active applications</p>
+                    <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                      You haven't applied for any jobs yet. Start browsing available shifts and apply to find your next opportunity.
+                    </p>
+                  </div>
+                  <Button onClick={() => navigate('/job-feed')} size="lg">
+                    <Search className="h-4 w-4 mr-2" />
+                    Find Shifts
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {activeApplications.map((application) => (
+                  <ApplicationCard
+                    key={application.id}
+                    application={application}
+                    onViewDetails={handleViewDetails}
+                    onMessageSalon={handleMessageSalon}
+                    onWithdraw={handleWithdraw}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="past" className="mt-0">
+            {pastApplications.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <div className="bg-card p-4 rounded-full shadow-sm border border-border mb-4">
+                      <Briefcase className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-xl font-bold text-foreground mb-2">No past applications</p>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      Your past applications will appear here.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-            </div>
-          </div>
-        )}
+            ) : (
+              <div className="space-y-4">
+                {pastApplications.map((application) => (
+                  <ApplicationCard
+                    key={application.id}
+                    application={application}
+                    onViewDetails={handleViewDetails}
+                    onMessageSalon={handleMessageSalon}
+                    onWithdraw={handleWithdraw}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 }
 
+interface ApplicationCardProps {
+  application: MockApplication;
+  onViewDetails: (jobId: string, e: React.MouseEvent) => void;
+  onMessageSalon: (application: MockApplication, e: React.MouseEvent) => void;
+  onWithdraw: (applicationId: string, e: React.MouseEvent) => void;
+}
+
+function ApplicationCard({ application, onViewDetails, onMessageSalon, onWithdraw }: ApplicationCardProps) {
+  const isActive = application.status === 'pending' || application.status === 'shortlisted' || application.status === 'interviewing';
+  const canWithdraw = application.status === 'pending';
+  const canMessage = application.status === 'shortlisted' || application.status === 'interviewing';
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Salon Avatar */}
+          <div className="flex-shrink-0">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={application.shopAvatar} alt={application.shopName} />
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {getInitials(application.shopName)}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+
+          {/* Application Details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-foreground mb-1 truncate">
+                  {application.jobTitle}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-2">{application.shopName}</p>
+                <p className="text-xs text-muted-foreground">
+                  Applied {formatRelativeDate(application.appliedDate)}
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                {getStatusBadge(application.status)}
+              </div>
+            </div>
+
+            {/* Rate & Hours */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
+              {application.jobPayRate && (
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="h-4 w-4 flex-shrink-0" />
+                  <span className="font-semibold text-foreground">{application.jobPayRate}</span>
+                </div>
+              )}
+              {application.jobHours && (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span>{application.jobHours} hours</span>
+                </div>
+              )}
+              {application.jobLocation && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{application.jobLocation}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => onViewDetails(application.jobId, e)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </Button>
+              {canMessage && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={(e) => onMessageSalon(application, e)}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Message Salon
+                </Button>
+              )}
+              {canWithdraw && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => onWithdraw(application.id, e)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Withdraw
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
