@@ -790,12 +790,12 @@ export default function ProfessionalDashboard() {
               <CardHeader className="border-b">
                 <CardTitle>Schedule</CardTitle>
               </CardHeader>
-              <CardContent className="p-3 md:p-6 flex justify-center overflow-x-auto">
+              <CardContent className="p-4 flex justify-center">
                 <CalendarComponent
                   mode="single"
                   selected={date}
                   onSelect={setDate}
-                  className="rounded-md border w-full"
+                  className="w-full"
                 />
               </CardContent>
             </Card>
