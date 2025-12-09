@@ -24,8 +24,7 @@ export {
   postLikes,
   comments,
   trainingModules, trainingLevelEnum,
-  trainingPurchases,
-  jobRoleEnum
+  trainingPurchases
 };
 
 /**
