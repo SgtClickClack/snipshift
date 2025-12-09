@@ -122,7 +122,7 @@ export default function ProfessionalDigitalResume({
   // Default profile data
   const defaultProfile: ProfessionalProfile = {
     displayName: user?.displayName || '',
-    professionalTitle: 'Professional Stylist',
+    professionalTitle: '',
     avatarUrl: user?.avatarUrl || user?.photoURL || '',
     bannerUrl: '',
     bio: '',
@@ -144,9 +144,9 @@ export default function ProfessionalDigitalResume({
     },
     isIdVerified: false,
     isLicenseVerified: false,
-    jobSuccessScore: 98,
-    totalShiftsCompleted: 127,
-    onTimeRate: 95,
+    jobSuccessScore: undefined,
+    totalShiftsCompleted: undefined,
+    onTimeRate: undefined,
   };
 
   const [profile, setProfile] = useState<ProfessionalProfile>({
@@ -593,9 +593,10 @@ export default function ProfessionalDigitalResume({
                             value={profile.displayName}
                             onChange={(e) => setProfile(prev => ({ ...prev, displayName: e.target.value }))}
                             className="text-3xl font-bold h-auto p-0 border-0 focus-visible:ring-0"
+                            placeholder="[Your Name]"
                           />
                         ) : (
-                          profile.displayName
+                          profile.displayName || '[Your Name]'
                         )}
                       </h1>
                     </div>
@@ -677,7 +678,11 @@ export default function ProfessionalDigitalResume({
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Job Success Score</p>
-                      <p className="text-2xl font-bold">{profile.jobSuccessScore}%</p>
+                      <p className="text-2xl font-bold">
+                        {profile.jobSuccessScore != null && profile.jobSuccessScore > 0 
+                          ? `${profile.jobSuccessScore}%` 
+                          : '—'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -686,7 +691,11 @@ export default function ProfessionalDigitalResume({
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Shifts Completed</p>
-                      <p className="text-2xl font-bold">{profile.totalShiftsCompleted}</p>
+                      <p className="text-2xl font-bold">
+                        {profile.totalShiftsCompleted != null && profile.totalShiftsCompleted > 0 
+                          ? profile.totalShiftsCompleted 
+                          : '0'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -695,7 +704,11 @@ export default function ProfessionalDigitalResume({
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">On-Time Rate</p>
-                      <p className="text-2xl font-bold">{profile.onTimeRate}%</p>
+                      <p className="text-2xl font-bold">
+                        {profile.onTimeRate != null && profile.onTimeRate > 0 
+                          ? `${profile.onTimeRate}%` 
+                          : '—'}
+                      </p>
                     </div>
                   </div>
                 </div>
