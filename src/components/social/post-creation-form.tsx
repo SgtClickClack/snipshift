@@ -121,7 +121,7 @@ export default function PostCreationForm({
               placeholder={`What's happening in the ${userRole === 'brand' ? 'brand' : 'training'} world?`}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[100px] resize-none border-0 bg-steel-50 dark:bg-steel-900/50 focus:bg-white dark:focus:bg-steel-800 transition-colors"
+              className="min-h-[100px] resize-none border-0 bg-muted focus:bg-card transition-colors"
               data-testid="textarea-post-content"
             />
 

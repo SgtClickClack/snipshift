@@ -202,7 +202,7 @@ export default function NotificationDemo() {
                     <div
                       key={notification.id}
                       className={`p-3 rounded-lg border cursor-pointer transition-all hover:bg-steel-50 dark:hover:bg-steel-800 ${
-                        notification.isRead ? 'bg-white dark:bg-steel-900' : 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800'
+                        notification.isRead ? 'bg-card' : 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800'
                       }`}
                       onClick={() => handleNotificationClick(notification.id)}
                       data-testid={`demo-notification-${notification.id}`}

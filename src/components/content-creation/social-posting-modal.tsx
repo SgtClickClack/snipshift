@@ -126,7 +126,7 @@ export default function SocialPostingModal({ isOpen, onClose }: SocialPostingMod
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-overlay p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto !bg-white dark:!bg-steel-900">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-xl font-bold">Create a New Post</CardTitle>
           <Button

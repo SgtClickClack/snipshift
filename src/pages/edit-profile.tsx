@@ -126,7 +126,7 @@ export default function EditProfilePage() {
                   value={formData.displayName}
                   onChange={handleChange}
                   placeholder="Your Name"
-                  className="bg-white border-steel-200 focus:border-primary focus:ring-primary"
+                  className="bg-card border-border focus:border-primary focus:ring-primary"
                 />
               </div>
 
@@ -138,7 +138,7 @@ export default function EditProfilePage() {
                   value={formData.bio}
                   onChange={handleChange}
                   placeholder="Tell us about yourself..."
-                  className="bg-white border-steel-200 focus:border-primary focus:ring-primary min-h-[100px]"
+                  className="bg-card border-border focus:border-primary focus:ring-primary min-h-[100px]"
                 />
               </div>
 
@@ -151,7 +151,7 @@ export default function EditProfilePage() {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+1 (555) 000-0000"
-                  className="bg-white border-steel-200 focus:border-primary focus:ring-primary"
+                  className="bg-card border-border focus:border-primary focus:ring-primary"
                 />
               </div>
 
@@ -161,7 +161,7 @@ export default function EditProfilePage() {
                   value={formData.location}
                   onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
                   placeholder="City, State"
-                  className="bg-white border-steel-200 focus:border-primary focus:ring-primary"
+                  className="bg-card border-border focus:border-primary focus:ring-primary"
                 />
               </div>
 

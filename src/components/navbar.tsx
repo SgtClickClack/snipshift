@@ -114,7 +114,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
+    <nav className="bg-card border-b-2 border-border shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-16 min-w-0">
           <Link
@@ -124,7 +124,7 @@ export default function Navbar() {
             <img 
               src={logo} 
               alt="Snipshift Logo" 
-              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp invert dark:invert-0 dark:contrast-[1.3] dark:brightness-[1.08] dark:saturate-[1.15]" 
+              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp dark:invert dark:contrast-[1.3] dark:brightness-[1.08] dark:saturate-[1.15]" 
               loading="eager"
               width={120}
               height={40}
@@ -150,7 +150,7 @@ export default function Navbar() {
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="w-full max-w-[200px] justify-between bg-muted dark:bg-steel-800 text-foreground dark:text-white border-border dark:border-steel-600 hover:bg-accent dark:hover:bg-steel-700 z-floating relative"
+                        className="w-full max-w-[200px] justify-between bg-card text-foreground border-border hover:bg-muted z-floating relative"
                       >
                         {currentRoleLabel}
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
@@ -212,19 +212,19 @@ export default function Navbar() {
 
                   {/* Dashboard Link */}
                   <Link to="/dashboard">
-                    <Button variant="ghost" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700">Dashboard</Button>
+                    <Button variant="ghost" className="text-foreground hover:bg-muted">Dashboard</Button>
                   </Link>
 
                   {/* Find Shifts Link */}
                   <Link to="/jobs">
-                    <Button variant="ghost" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700" data-testid="link-find-shifts-desktop">Find Shifts</Button>
+                    <Button variant="ghost" className="text-foreground hover:bg-muted" data-testid="link-find-shifts-desktop">Find Shifts</Button>
                   </Link>
 
                   {/* Install App Button */}
                   <InstallButton 
                     variant="ghost" 
                     size="sm"
-                    className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700"
+                    className="text-foreground hover:bg-muted"
                   />
                 </div>
 
@@ -239,7 +239,7 @@ export default function Navbar() {
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700 relative flex-shrink-0"
+                    className="text-foreground hover:bg-muted relative flex-shrink-0"
                     title="Messages"
                   >
                     <MessageCircle className="h-4 w-4" />
@@ -296,7 +296,7 @@ export default function Navbar() {
                 <div className="md:hidden flex-shrink-0">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700 flex-shrink-0" data-testid="button-mobile-menu" aria-label="Open menu">
+                      <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted flex-shrink-0" data-testid="button-mobile-menu" aria-label="Open menu">
                         <Menu className="h-6 w-6" />
                       </Button>
                     </SheetTrigger>
@@ -330,7 +330,7 @@ export default function Navbar() {
 
                         <SheetClose asChild>
                           <Link to="/jobs">
-                            <Button variant="ghost" className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800" data-testid="link-find-shifts-mobile">
+                            <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800" data-testid="link-find-shifts-mobile">
                               Find Shifts
                             </Button>
                           </Link>
@@ -429,7 +429,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700">Login</Button>
+                  <Button variant="ghost" className="text-foreground hover:bg-muted">Login</Button>
                 </Link>
                 <Link to="/signup">
                   <Button className="bg-red-accent hover:bg-red-accent-hover">Sign Up</Button>

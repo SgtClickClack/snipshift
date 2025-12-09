@@ -315,7 +315,7 @@ export default function MapView({
             )}
 
             {/* Map legend */}
-            <div className="absolute bottom-4 left-4 bg-white dark:bg-steel-900 rounded-lg p-3 shadow-lg border">
+            <div className="absolute bottom-4 left-4 bg-card rounded-lg p-3 shadow-lg border border-border">
               <h4 className="text-sm font-medium mb-2">Legend</h4>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">

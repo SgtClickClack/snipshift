@@ -61,19 +61,19 @@ function getStatusBadge(status: ApplicationStatus) {
       );
     case 'rejected':
       return (
-        <Badge className="bg-gray-50 text-gray-700 border-gray-200">
+        <Badge className="bg-muted text-muted-foreground border-border">
           Application unsuccessful
         </Badge>
       );
     case 'withdrawn':
       return (
-        <Badge className="bg-gray-50 text-gray-700 border-gray-200">
+        <Badge className="bg-muted text-muted-foreground border-border">
           Withdrawn
         </Badge>
       );
     case 'expired':
       return (
-        <Badge className="bg-gray-50 text-gray-700 border-gray-200">
+        <Badge className="bg-muted text-muted-foreground border-border">
           Expired
         </Badge>
       );

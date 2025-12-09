@@ -147,7 +147,7 @@ export default function RoleSelectionPage() {
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg bg-white/80 shadow-sm ${isSelected ? 'ring-2 ring-red-accent' : ''}`}>
+                    <div className={`p-2 rounded-lg bg-card/80 shadow-sm ${isSelected ? 'ring-2 ring-red-accent' : ''}`}>
                       <IconComponent className="h-7 w-7 text-steel-700" />
                     </div>
                     <div className="flex-1">

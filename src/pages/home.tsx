@@ -109,7 +109,7 @@ export default function HomePage() {
           {/* Role Selection Grid */}
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <Card 
-              className="p-6 bg-white shadow-xl border-2 border-steel-300/50 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300 cursor-pointer group"
+              className="p-6 bg-card shadow-xl border-2 border-border hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300 cursor-pointer group"
               onClick={() => handleRoleSelection('hub')}
             >
               <CardContent className="pt-6 text-center">
@@ -122,7 +122,7 @@ export default function HomePage() {
             </Card>
 
             <Card 
-              className="p-6 bg-white shadow-xl border-2 border-steel-300/50 hover:shadow-2xl hover:border-green-400/50 transition-all duration-300 cursor-pointer group"
+              className="p-6 bg-card shadow-xl border-2 border-border hover:shadow-2xl hover:border-green-400/50 transition-all duration-300 cursor-pointer group"
               onClick={() => handleRoleSelection('professional')}
             >
               <CardContent className="pt-6 text-center">
@@ -135,7 +135,7 @@ export default function HomePage() {
             </Card>
 
             <Card 
-              className="p-6 bg-white shadow-xl border-2 border-steel-300/50 hover:shadow-2xl hover:border-purple-400/50 transition-all duration-300 cursor-pointer group"
+              className="p-6 bg-card shadow-xl border-2 border-border hover:shadow-2xl hover:border-purple-400/50 transition-all duration-300 cursor-pointer group"
               onClick={() => handleRoleSelection('brand')}
             >
               <CardContent className="pt-6 text-center">
@@ -148,7 +148,7 @@ export default function HomePage() {
             </Card>
 
             <Card 
-              className="p-6 bg-white shadow-xl border-2 border-steel-300/50 hover:shadow-2xl hover:border-orange-400/50 transition-all duration-300 cursor-pointer group"
+              className="p-6 bg-card shadow-xl border-2 border-border hover:shadow-2xl hover:border-orange-400/50 transition-all duration-300 cursor-pointer group"
               onClick={() => handleRoleSelection('trainer')}
             >
               <CardContent className="pt-6 text-center">

@@ -302,7 +302,7 @@ export default function DemoPage() {
         </div>
 
         {/* Sample Content */}
-        <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="bg-card rounded-lg shadow-sm p-8">
           <h2 className="text-2xl font-bold text-neutral-900 mb-6">Live Platform Content</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {sampleContent.map((content, index) => (

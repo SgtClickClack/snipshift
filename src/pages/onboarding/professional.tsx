@@ -127,7 +127,7 @@ export default function ProfessionalOnboardingPage() {
                     onChange={handleChange}
                     placeholder="e.g. John Doe"
                     required
-                    className="bg-white"
+                    className="bg-card"
                   />
                 </div>
 
@@ -140,7 +140,7 @@ export default function ProfessionalOnboardingPage() {
                     onChange={handleChange}
                     placeholder="e.g. Barber, Stylist, etc."
                     required
-                    className="bg-white"
+                    className="bg-card"
                   />
                 </div>
 
@@ -150,7 +150,7 @@ export default function ProfessionalOnboardingPage() {
                     value={formData.location}
                     onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
                     placeholder="City, State or Address"
-                    className="bg-white"
+                    className="bg-card"
                   />
                   <p className="text-xs text-steel-500">
                     This helps us show you relevant job opportunities.
@@ -166,7 +166,7 @@ export default function ProfessionalOnboardingPage() {
                     onChange={handleChange}
                     placeholder="Tell us about your experience..."
                     rows={4}
-                    className="bg-white"
+                    className="bg-card"
                   />
                 </div>
 

@@ -167,7 +167,7 @@ export function TutorialOverlay() {
   return (
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm pointer-events-none" data-testid="tutorial-overlay">
       <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-auto">
-        <Card className="w-full max-w-md !bg-white dark:!bg-steel-900 shadow-xl">
+        <Card className="w-full max-w-md bg-card shadow-xl">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-muted-foreground">

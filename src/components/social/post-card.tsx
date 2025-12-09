@@ -165,12 +165,12 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                   <p className="text-xs font-medium text-blue-600 mb-1">Skills Required:</p>
                   <div className="flex flex-wrap gap-1">
                     {post.skillsRequired.slice(0, 5).map((skill, index) => (
-                      <Badge key={`${skill}-${index}`} variant="outline" className="text-xs bg-white dark:bg-steel-900">
+                      <Badge key={`${skill}-${index}`} variant="outline" className="text-xs bg-card">
                         {skill}
                       </Badge>
                     ))}
                     {post.skillsRequired.length > 5 && (
-                      <Badge variant="outline" className="text-xs bg-white dark:bg-steel-900">
+                      <Badge variant="outline" className="text-xs bg-card">
                         +{post.skillsRequired.length - 5} more
                       </Badge>
                     )}

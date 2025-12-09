@@ -126,7 +126,7 @@ export default function HubOnboardingPage() {
                     onChange={handleChange}
                     placeholder="e.g. Elite Cuts"
                     required
-                    className="bg-white"
+                    className="bg-card"
                   />
                 </div>
 
@@ -136,7 +136,7 @@ export default function HubOnboardingPage() {
                     value={formData.location}
                     onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
                     placeholder="City, State or Address"
-                    className="bg-white"
+                    className="bg-card"
                   />
                   <p className="text-xs text-steel-500">
                     Use a generic location like "Downtown Metro" or full address.
@@ -152,7 +152,7 @@ export default function HubOnboardingPage() {
                     onChange={handleChange}
                     placeholder="Briefly describe your shop..."
                     rows={4}
-                    className="bg-white"
+                    className="bg-card"
                   />
                 </div>
 

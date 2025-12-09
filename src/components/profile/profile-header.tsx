@@ -288,7 +288,7 @@ export default function ProfileHeader({
             type="button"
             variant="secondary"
             size="sm"
-            className="absolute top-4 right-4 bg-white/90 dark:bg-steel-900/90 hover:bg-white dark:hover:bg-steel-900 shadow-md"
+            className="absolute top-4 right-4 bg-card/90 hover:bg-card shadow-md"
             onClick={() => bannerFileInputRef.current?.click()}
             disabled={isUploadingBanner}
           >
