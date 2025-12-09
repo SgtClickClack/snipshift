@@ -70,6 +70,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        navbar: {
+          DEFAULT: "hsl(var(--navbar))",
+          foreground: "hsl(var(--navbar-foreground))",
+        },
         steel: {
           50: "hsl(210, 20%, 98%)",
           100: "hsl(210, 18%, 95%)",

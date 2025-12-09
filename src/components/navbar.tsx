@@ -114,7 +114,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-card border-b-2 border-border shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
+    <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-16 min-w-0">
           <Link
@@ -124,7 +124,7 @@ export default function Navbar() {
             <img 
               src={logo} 
               alt="Snipshift Logo" 
-              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp dark:invert dark:contrast-[1.3] dark:brightness-[1.08] dark:saturate-[1.15]" 
+              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp invert contrast-[1.3] brightness-[1.08] saturate-[1.15] dark:invert-0" 
               loading="eager"
               width={120}
               height={40}
@@ -150,7 +150,7 @@ export default function Navbar() {
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="w-full max-w-[200px] justify-between bg-card text-foreground border-border hover:bg-muted z-floating relative"
+                        className="w-full max-w-[200px] justify-between bg-white/10 text-navbar-foreground border-white/20 hover:bg-white/20 z-floating relative"
                       >
                         {currentRoleLabel}
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
@@ -212,19 +212,19 @@ export default function Navbar() {
 
                   {/* Dashboard Link */}
                   <Link to="/dashboard">
-                    <Button variant="ghost" className="text-foreground hover:bg-muted">Dashboard</Button>
+                    <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10">Dashboard</Button>
                   </Link>
 
                   {/* Find Shifts Link */}
                   <Link to="/jobs">
-                    <Button variant="ghost" className="text-foreground hover:bg-muted" data-testid="link-find-shifts-desktop">Find Shifts</Button>
+                    <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10" data-testid="link-find-shifts-desktop">Find Shifts</Button>
                   </Link>
 
                   {/* Install App Button */}
                   <InstallButton 
                     variant="ghost" 
                     size="sm"
-                    className="text-foreground hover:bg-muted"
+                    className="text-navbar-foreground hover:bg-white/10"
                   />
                 </div>
 
@@ -239,7 +239,7 @@ export default function Navbar() {
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-foreground hover:bg-muted relative flex-shrink-0"
+                    className="text-navbar-foreground hover:bg-white/10 relative flex-shrink-0"
                     title="Messages"
                   >
                     <MessageCircle className="h-4 w-4" />
@@ -296,7 +296,7 @@ export default function Navbar() {
                 <div className="md:hidden flex-shrink-0">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted flex-shrink-0" data-testid="button-mobile-menu" aria-label="Open menu">
+                      <Button variant="ghost" size="icon" className="text-navbar-foreground hover:bg-white/10 flex-shrink-0" data-testid="button-mobile-menu" aria-label="Open menu">
                         <Menu className="h-6 w-6" />
                       </Button>
                     </SheetTrigger>
@@ -429,7 +429,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" className="text-foreground hover:bg-muted">Login</Button>
+                  <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10">Login</Button>
                 </Link>
                 <Link to="/signup">
                   <Button className="bg-red-accent hover:bg-red-accent-hover">Sign Up</Button>

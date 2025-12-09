@@ -10,9 +10,12 @@
     --background: 0 0% 97%;
     /* High-contrast dark foreground for maximum readability */
     --foreground: 0 0% 9%;
-    /* Pure white card/navbar surfaces to pop off the background */
+    /* Pure white card surfaces to pop off the background */
     --card: 0 0% 100%;
     --card-foreground: 0 0% 9%;
+    /* Dark navbar for strong visual presence */
+    --navbar: 0 0% 15%;
+    --navbar-foreground: 0 0% 98%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
     --primary: 240 5.9% 10%;
@@ -46,6 +49,9 @@
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
+    /* Dark navbar for dark mode - slightly lighter than background for distinction */
+    --navbar: 240 10% 8%;
+    --navbar-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
