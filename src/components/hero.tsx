@@ -12,25 +12,28 @@ export default function Hero() {
         backgroundBlendMode: 'overlay'
       }}
     >
-      {/* Background Logo Image - positioned in upper center, bigger and brighter */}
-      <div className="absolute inset-0 z-0 flex items-start justify-center pt-20 md:pt-32 overflow-hidden">
-        <img 
-          src="/og-image.png" 
-          alt="Snipshift Logo Background" 
-          className="w-auto h-[40vh] md:h-[50vh] max-w-[90%] object-contain opacity-40 md:opacity-50 brightness-110 contrast-110 scale-125"
-          loading="eager"
-        />
-      </div>
-
-      {/* Reduced Dark Overlay for contrast - lighter to let logo shine through */}
-      <div className="absolute inset-0 bg-black/30 z-[1]" />
+      {/* Dark Overlay to hide background and make logo pop */}
+      <div className="absolute inset-0 bg-black/60 z-[1]" />
 
       {/* Bottom Gradient Overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-[2]" />
 
-      {/* Content Wrapper - positioned lower to avoid logo overlap */}
-      <div className="relative z-10 w-full h-full flex flex-col justify-end pb-32 md:pb-40 px-4 items-center text-center">
-        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8 mb-8 mt-auto">
+      {/* Content Wrapper - flex column with logo first, then content */}
+      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center px-4">
+        {/* Large Bright Logo - dominant visual element */}
+        <img 
+          src="/og-image.png" 
+          alt="Snipshift Logo" 
+          className="w-[70%] max-w-[800px] h-auto object-contain mb-8"
+          style={{
+            filter: 'brightness(1.3) contrast(1.1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.6))',
+            opacity: 1
+          }}
+          loading="eager"
+        />
+        
+        {/* Text and buttons below logo */}
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
           <p className="text-xl md:text-2xl text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium">
             Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
           </p>
