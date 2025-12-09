@@ -78,10 +78,25 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) newErrors.title = "Job title is required";
-    if (!formData.description.trim()) newErrors.description = "Job description is required";
+    
+    if (!formData.description.trim()) {
+      newErrors.description = "Job description is required";
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = "Job description must be at least 10 characters long";
+    }
+    
     if (!formData.location.city.trim()) newErrors.city = "City is required";
     if (!formData.location.state.trim()) newErrors.state = "State is required";
-    if (!formData.payRate.trim()) newErrors.payRate = "Pay rate is required";
+    
+    if (!formData.payRate.trim()) {
+      newErrors.payRate = "Pay rate is required";
+    } else {
+      const payRateNum = parseFloat(formData.payRate);
+      if (isNaN(payRateNum) || payRateNum <= 0) {
+        newErrors.payRate = "Pay rate must be a positive number";
+      }
+    }
+    
     if (!formData.date) newErrors.date = "Date is required";
     if (!formData.time) newErrors.time = "Time is required";
 
@@ -253,6 +268,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                   id="payRate"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={formData.payRate}
                   onChange={(e) => setFormData({ ...formData, payRate: e.target.value })}
                   placeholder="25.00"

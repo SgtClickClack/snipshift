@@ -267,6 +267,7 @@ export default function MultiStepJobForm({
                   id="payRate"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={formData.payRate}
                   onChange={(e) => updateFormData({ payRate: e.target.value })}
                   placeholder="0.00"

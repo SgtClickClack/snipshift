@@ -4,6 +4,17 @@ import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { CreditCard, Wallet, TrendingUp, CheckCircle2, XCircle, Clock, DollarSign } from 'lucide-react';
@@ -117,10 +128,6 @@ export default function WalletPage() {
 
   const handleCancelSubscription = async () => {
     if (isCanceling) return;
-
-    if (!confirm('Are you sure you want to cancel your subscription? It will remain active until the end of the billing period.')) {
-      return;
-    }
 
     try {
       setIsCanceling(true);
@@ -315,13 +322,33 @@ export default function WalletPage() {
                     )}
                     <div className="flex gap-2">
                       {currentSubscription.status === 'active' && !currentSubscription.cancelAtPeriodEnd && (
-                        <Button
-                          variant="destructive"
-                          onClick={handleCancelSubscription}
-                          disabled={isCanceling}
-                        >
-                          {isCanceling ? 'Canceling...' : 'Cancel Subscription'}
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              disabled={isCanceling}
+                            >
+                              {isCanceling ? 'Canceling...' : 'Cancel Subscription'}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to cancel your subscription? It will remain active until the end of the billing period, and you will lose access to premium features after that.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleCancelSubscription}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Cancel Subscription
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                     </div>
                   </div>

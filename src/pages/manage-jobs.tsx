@@ -13,6 +13,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Clock, DollarSign, Users, Briefcase, CheckCircle2, XCircle, CheckCircle, MessageSquare } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
@@ -153,9 +164,7 @@ export default function ManageJobsPage() {
   };
 
   const handleMarkCompleted = (jobId: string) => {
-    if (window.confirm('Are you sure you want to mark this job as completed? This will notify both parties to leave reviews.')) {
-      completeJobMutation.mutate(jobId);
-    }
+    completeJobMutation.mutate(jobId);
   };
 
   if (isLoading) {
@@ -255,14 +264,34 @@ export default function ManageJobsPage() {
 
                     <div className="flex gap-2">
                       {(job.status === 'open' || job.status === 'filled') && (
-                        <Button
-                          onClick={() => handleMarkCompleted(job.id)}
-                          disabled={completeJobMutation.isPending}
-                          className="bg-purple-600 hover:bg-purple-700 text-white"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Mark as Completed
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              disabled={completeJobMutation.isPending}
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Mark as Completed
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Mark Job as Completed?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will mark the job as completed and notify both parties to leave reviews. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleMarkCompleted(job.id)}
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                Mark as Completed
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                       <Button
                         onClick={() => handleViewApplicants(job.id)}
