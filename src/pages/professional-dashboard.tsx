@@ -17,6 +17,7 @@ import StartChatButton from "@/components/messaging/start-chat-button";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
 import ProfileForm from "@/components/profile/profile-form";
+import ProfessionalDigitalResume from "@/components/profile/professional-digital-resume";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/advanced-job-filters";
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
@@ -850,9 +851,7 @@ export default function ProfessionalDashboard() {
         
         {/* Profile Tab */}
         {activeView === 'profile' && (
-          <div className="max-w-4xl pb-12">
-            <ProfileForm onSave={(data) => {}} />
-          </div>
+          <ProfessionalDigitalResume />
         )}
       </div>
       
