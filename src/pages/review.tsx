@@ -53,7 +53,19 @@ export default function ReviewPage() {
   }, [job, user, jobId, applications]);
 
   if (!jobId) {
-    return null;
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <Card className="card-chrome max-w-md">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-2">Missing Job ID</h2>
+            <p className="text-neutral-600 mb-4">No job ID provided. Please select a job to review.</p>
+            <Button onClick={() => navigate('/my-applications')} className="steel-button">
+              Go to Applications
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (isLoadingJob) {

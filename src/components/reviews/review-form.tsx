@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReviewFormProps {
   jobId: string;
@@ -19,8 +20,20 @@ interface ReviewFormProps {
 
 export function ReviewForm({ jobId, jobTitle, revieweeId, revieweeName, onSuccess }: ReviewFormProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [rating, setRating] = useState<number>(0);
   const [comment, setComment] = useState('');
+
+  // Frontend guard: prevent self-review
+  if (user && user.id === revieweeId) {
+    return (
+      <Card className="card-chrome">
+        <CardContent className="p-8 text-center">
+          <p className="text-steel-600">You cannot review yourself.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const createReviewMutation = useMutation({
     mutationFn: (data: CreateReviewData) => createReview(data),
@@ -44,6 +57,16 @@ export function ReviewForm({ jobId, jobTitle, revieweeId, revieweeName, onSucces
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Additional guard check before submission
+    if (user && user.id === revieweeId) {
+      toast({
+        title: 'Cannot review yourself',
+        description: 'You cannot review yourself.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (rating === 0) {
       toast({
