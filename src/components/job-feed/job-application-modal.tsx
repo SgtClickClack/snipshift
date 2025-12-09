@@ -70,11 +70,57 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
       setErrors({});
     },
     onError: (error: any) => {
-      toast({
-        title: "Failed to submit application",
-        description: error.message || "Please try again later",
-        variant: "destructive",
-      });
+      // Check if this is a 409 error (already applied)
+      const errorMessage = error.message || '';
+      const is409Error = errorMessage.startsWith('409:');
+      
+      if (is409Error) {
+        // Extract the message from the error
+        let message = 'You have already applied for this job.';
+        try {
+          // Try to parse JSON message first
+          const jsonMatch = errorMessage.match(/\{.*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.message) {
+              message = parsed.message;
+            }
+          } else {
+            // If no JSON, try to extract plain text after "409: "
+            const textMatch = errorMessage.match(/409:\s*(.+)/);
+            if (textMatch && textMatch[1]) {
+              message = textMatch[1].trim();
+            }
+          }
+        } catch {
+          // If parsing fails, use default message
+        }
+        
+        // Treat 409 as success - user has already applied
+        toast({
+          title: "Already Applied",
+          description: message,
+          variant: "default",
+        });
+        // Invalidate queries to ensure UI is in sync
+        queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+        if (job?.id) {
+          queryClient.invalidateQueries({ queryKey: ['job', job.id] });
+        }
+        queryClient.invalidateQueries({ queryKey: ['my-applications'] });
+        // Close modal and reset form
+        onClose();
+        setCoverLetter("");
+        setErrors({});
+      } else {
+        // Handle other errors normally
+        toast({
+          title: "Failed to submit application",
+          description: error.message || "Please try again later",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -142,7 +188,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return "";
       return format(d, fmt);
-    } catch (e) {
+    } catch {
       return "";
     }
   };

@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { fetchJobDetails, applyToJob, ApplicationData } from '@/lib/api';
+import { fetchJobDetails, applyToJob, ApplicationData, fetchMyApplications } from '@/lib/api';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Flag, Heart } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { ReportButton } from '@/components/report/report-button';
@@ -43,6 +43,23 @@ export default function JobDetailsPage() {
     retry: false // Don't retry on 404s
   });
 
+  // Check if user has already applied to this job
+  const { data: myApplications } = useQuery({
+    queryKey: ['my-applications'],
+    queryFn: fetchMyApplications,
+    enabled: !!user && !!id, // Only fetch if user is logged in and job ID exists
+  });
+
+  // Set application state to 'applied' if user has already applied
+  useEffect(() => {
+    if (myApplications && id && user) {
+      const hasApplied = myApplications.some(app => app.jobId === id);
+      if (hasApplied) {
+        setApplicationState('applied');
+      }
+    }
+  }, [myApplications, id, user]);
+
   const applyMutation = useMutation({
     mutationFn: (applicationData: ApplicationData) => applyToJob(id!, applicationData),
     onSuccess: () => {
@@ -57,12 +74,51 @@ export default function JobDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['my-applications'] });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Application failed',
-        description: error.message || 'Failed to submit application. Please try again.',
-        variant: 'destructive',
-      });
-      setApplicationState('idle');
+      // Check if this is a 409 error (already applied)
+      const errorMessage = error.message || '';
+      const is409Error = errorMessage.startsWith('409:');
+      
+      if (is409Error) {
+        // Extract the message from the error
+        let message = 'You have already applied for this job.';
+        try {
+          // Try to parse JSON message first
+          const jsonMatch = errorMessage.match(/\{.*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.message) {
+              message = parsed.message;
+            }
+          } else {
+            // If no JSON, try to extract plain text after "409: "
+            const textMatch = errorMessage.match(/409:\s*(.+)/);
+            if (textMatch && textMatch[1]) {
+              message = textMatch[1].trim();
+            }
+          }
+        } catch {
+          // If parsing fails, use default message
+        }
+        
+        // Treat 409 as success - user has already applied
+        setApplicationState('applied');
+        toast({
+          title: 'Already Applied',
+          description: message,
+          variant: 'default',
+        });
+        // Invalidate queries to ensure UI is in sync
+        queryClient.invalidateQueries({ queryKey: ['job', id] });
+        queryClient.invalidateQueries({ queryKey: ['my-applications'] });
+      } else {
+        // Handle other errors normally
+        toast({
+          title: 'Application failed',
+          description: error.message || 'Failed to submit application. Please try again.',
+          variant: 'destructive',
+        });
+        setApplicationState('idle');
+      }
     },
   });
 
@@ -89,33 +145,8 @@ export default function JobDetailsPage() {
     applyMutation.mutate(applicationData);
   };
 
-  if (isLoading) {
-    return <PageLoadingFallback />;
-  }
-
-  // Guard clause: check if ID is missing or job fetch failed
-  if (!id || error || !job) {
-    // Silent error handling for production
-    
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="job-not-found">
-        <Card className="card-chrome max-w-md">
-          <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold text-error mb-2">Job Not Found</h2>
-            <p className="text-muted-foreground mb-4">The job you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={() => navigate('/jobs')}>
-              Back to Job Feed
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const requirements = Array.isArray(job.requirements) ? job.requirements : [];
-  const hasLocation = typeof job.lat === 'number' && typeof job.lng === 'number';
-
   // Build JSON-LD JobPosting schema for Google for Jobs
+  // Must be called before early returns to satisfy React Hooks rules
   const jobPostingSchema = useMemo(() => {
     if (!job) return null;
 
@@ -208,7 +239,7 @@ export default function JobDetailsPage() {
         if (!isNaN(date.getTime())) {
           return date.toISOString();
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, return undefined
       }
       
@@ -227,7 +258,7 @@ export default function JobDetailsPage() {
           date.setDate(date.getDate() + 30);
           return date.toISOString();
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, return undefined
       }
       
@@ -286,6 +317,32 @@ export default function JobDetailsPage() {
 
     return schema;
   }, [job]);
+
+  if (isLoading) {
+    return <PageLoadingFallback />;
+  }
+
+  // Guard clause: check if ID is missing or job fetch failed
+  if (!id || error || !job) {
+    // Silent error handling for production
+    
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="job-not-found">
+        <Card className="card-chrome max-w-md">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-bold text-error mb-2">Job Not Found</h2>
+            <p className="text-muted-foreground mb-4">The job you're looking for doesn't exist or has been removed.</p>
+            <Button onClick={() => navigate('/jobs')}>
+              Back to Job Feed
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const requirements = Array.isArray(job.requirements) ? job.requirements : [];
+  const hasLocation = typeof job.lat === 'number' && typeof job.lng === 'number';
 
   return (
     <ErrorBoundary>
