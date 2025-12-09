@@ -46,6 +46,7 @@ import applicationsRouter from './routes/applications.js';
 import communityRouter from './routes/community.js';
 import trainingRouter from './routes/training.js';
 import analyticsRouter from './routes/analytics.js';
+import professionalRouter from './routes/professional.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
@@ -174,6 +175,7 @@ app.use('/api/applications', applicationsRouter);
 app.use('/api/community', communityRouter);
 app.use('/api/training', trainingRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/professional', professionalRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
