@@ -305,21 +305,21 @@ export default function Navbar() {
                         <Menu className="h-6 w-6" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="bg-steel-900 text-white border-steel-700">
+                    <SheetContent side="right" className="!bg-steel-900 dark:!bg-steel-900 text-white dark:text-steel-100 border-steel-700 dark:border-steel-800">
                       <SheetHeader>
-                        <SheetTitle className="text-white">Menu</SheetTitle>
+                        <SheetTitle className="text-white dark:text-steel-100">Menu</SheetTitle>
                       </SheetHeader>
                       <div className="flex flex-col space-y-4 mt-8">
-                        <div className="px-2 pb-4 border-b border-steel-700 mb-4">
+                        <div className="px-2 pb-4 border-b border-steel-700 dark:border-steel-800 mb-4">
                            <div className="flex items-center gap-3 mb-3">
                              <UserAvatar className="h-10 w-10" />
                              <div className="overflow-hidden">
-                               <p className="font-medium truncate text-white">{user.displayName || user.name || 'User'}</p>
-                               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                               <p className="font-medium truncate text-white dark:text-steel-100">{user.displayName || user.name || 'User'}</p>
+                               <p className="text-xs text-muted-foreground dark:text-steel-300 truncate">{user.email}</p>
                              </div>
                            </div>
                            
-                           <div className="flex items-center text-sm text-blue-400">
+                           <div className="flex items-center text-sm text-blue-400 dark:text-blue-300">
                              <Check className="mr-2 h-4 w-4" />
                              Current: {currentRoleLabel}
                            </div>
@@ -327,7 +327,7 @@ export default function Navbar() {
 
                         <SheetClose asChild>
                           <Link to="/dashboard">
-                            <Button variant="ghost" className="w-full justify-start text-white hover:bg-steel-700">
+                            <Button variant="ghost" className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800">
                               Dashboard
                             </Button>
                           </Link>
@@ -335,7 +335,7 @@ export default function Navbar() {
 
                         <SheetClose asChild>
                           <Link to="/jobs">
-                            <Button variant="ghost" className="w-full justify-start text-white hover:bg-steel-700" data-testid="link-find-shifts-mobile">
+                            <Button variant="ghost" className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800" data-testid="link-find-shifts-mobile">
                               Find Shifts
                             </Button>
                           </Link>
@@ -344,13 +344,13 @@ export default function Navbar() {
                         {/* Mobile Role Switching Links - Grouped */}
                          {availableRoles.length > 0 && (
                            <div className="py-2">
-                             <p className="px-4 text-xs text-muted-foreground uppercase mb-2">Switch View</p>
+                             <p className="px-4 text-xs text-muted-foreground dark:text-steel-300 uppercase mb-2">Switch View</p>
                              {availableRoles.map((r) => (
                                 <SheetClose asChild key={r}>
                                   <Button 
                                     variant="ghost" 
                                     onClick={() => handleSwitchRole(r)}
-                                    className="w-full justify-start text-muted-foreground hover:text-white hover:bg-steel-700"
+                                    className="w-full justify-start text-muted-foreground dark:text-steel-300 hover:text-white dark:hover:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800"
                                   >
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Switch to {getRoleLabel(r)}
@@ -362,13 +362,13 @@ export default function Navbar() {
 
                          {missingRoles.length > 0 && (
                            <div className="py-2">
-                             <p className="px-4 text-xs text-muted-foreground uppercase mb-2">Grow</p>
+                             <p className="px-4 text-xs text-muted-foreground dark:text-steel-300 uppercase mb-2">Grow</p>
                              {missingRoles.includes('hub') && (
                                 <SheetClose asChild>
                                   <Button 
                                     variant="ghost" 
                                     onClick={() => navigate('/onboarding/hub')}
-                                    className="w-full justify-start text-blue-400 hover:text-blue-300 hover:bg-steel-700"
+                                    className="w-full justify-start text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 hover:bg-steel-700 dark:hover:bg-steel-800"
                                   >
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                     Create Business Profile
@@ -380,7 +380,7 @@ export default function Navbar() {
                                   <Button 
                                     variant="ghost" 
                                     onClick={() => navigate('/onboarding/professional')}
-                                    className="w-full justify-start text-blue-400 hover:text-blue-300 hover:bg-steel-700"
+                                    className="w-full justify-start text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 hover:bg-steel-700 dark:hover:bg-steel-800"
                                   >
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                     Create Professional Profile
@@ -395,15 +395,23 @@ export default function Navbar() {
                            <InstallButton 
                              variant="ghost" 
                              size="sm"
-                             className="w-full justify-start text-white hover:bg-steel-700 hover:text-white"
+                             className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800"
                            />
                          </div>
 
-                         <div className="border-t border-steel-700 my-2 pt-2">
+                         {/* Theme Toggle */}
+                         <div className="px-2 py-2">
+                           <div className="flex items-center justify-between w-full">
+                             <span className="text-sm text-white dark:text-steel-100">Theme</span>
+                             <ModeToggle />
+                           </div>
+                         </div>
+
+                         <div className="border-t border-steel-700 dark:border-steel-800 my-2 pt-2">
                             {(user.roles || []).includes('admin') && (
                               <SheetClose asChild>
                                 <Link to="/admin">
-                                  <Button variant="ghost" className="w-full justify-start text-white hover:bg-red-600">
+                                  <Button variant="ghost" className="w-full justify-start text-white dark:text-steel-100 hover:bg-red-600 dark:hover:bg-red-700">
                                     <Shield className="h-4 w-4 mr-2" />
                                     Admin Dashboard
                                   </Button>
@@ -412,7 +420,7 @@ export default function Navbar() {
                             )}
                             
                             <SheetClose asChild>
-                              <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-white hover:bg-steel-700">
+                              <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800">
                                 <LogOut className="h-4 w-4 mr-2" />
                                 Logout
                               </Button>
