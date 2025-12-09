@@ -25,6 +25,7 @@ import JobApplicationModal from "@/components/job-feed/job-application-modal";
 import GoogleMapView from "@/components/job-feed/google-map-view";
 import LocationSearch from "@/components/job-feed/location-search";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
+import ApplicationsView from "./professional-dashboard/ApplicationsView";
 import { SEO } from "@/components/seo/SEO";
 
 export default function ProfessionalDashboard() {
@@ -742,63 +743,7 @@ export default function ProfessionalDashboard() {
         
         {/* Applications Tab */}
         {activeView === 'applications' && (
-          <Card className="rounded-lg border shadow-sm">
-            <CardHeader className="border-b">
-              <CardTitle>My Applications</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              {stats.activeApplications === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No applications yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Start applying to jobs to see your applications here</p>
-                  <Button onClick={() => setActiveView('jobs')}>Browse Jobs</Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {jobs.filter(job => job.applicants?.includes(user?.id || '')).map((job) => (
-                    <div key={job.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-medium">{job.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Applied on {format(new Date(job.createdAt), "MMM d, yyyy")}
-                          </p>
-                        </div>
-                        <Badge variant="secondary">Pending</Badge>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div className="flex items-center text-muted-foreground">
-                          <Calendar className="mr-2 h-4 w-4" />
-                          {job.date ? (() => {
-                            try {
-                              const date = new Date(job.date);
-                              return isNaN(date.getTime()) ? 'Date TBD' : format(date, "MMM d");
-                            } catch {
-                              return 'Date TBD';
-                            }
-                          })() : 'Date TBD'}
-                        </div>
-                        <div className="flex items-center text-muted-foreground">
-                          <DollarSign className="mr-2 h-4 w-4" />
-                          ${job.payRate}/{job.payType}
-                        </div>
-                        {job.hubId && (
-                          <StartChatButton
-                            otherUserId={job.hubId}
-                            otherUserName="Shop Owner"
-                            otherUserRole="hub"
-                            variant="outline"
-                            size="sm"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ApplicationsView />
         )}
         
         {/* Calendar Tab */}
