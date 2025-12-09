@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import { fetchJobDetails, applyToJob, ApplicationData } from '@/lib/api';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,178 @@ export default function JobDetailsPage() {
   const requirements = Array.isArray(job.requirements) ? job.requirements : [];
   const hasLocation = typeof job.lat === 'number' && typeof job.lng === 'number';
 
+  // Build JSON-LD JobPosting schema for Google for Jobs
+  const jobPostingSchema = useMemo(() => {
+    if (!job) return null;
+
+    // Parse salary from rate/payRate
+    const parseSalary = (rate?: string): { value?: number; currency?: string } | undefined => {
+      if (!rate) return undefined;
+      
+      // Extract numeric value and currency
+      const numericMatch = rate.match(/[\d,]+\.?\d*/);
+      if (!numericMatch) return undefined;
+      
+      const value = parseFloat(numericMatch[0].replace(/,/g, ''));
+      if (isNaN(value)) return undefined;
+      
+      // Default to AUD for Australian site
+      const currency = rate.includes('$') ? 'AUD' : 'AUD';
+      
+      return { value, currency };
+    };
+
+    // Parse location into structured format
+    const parseLocation = (): {
+      '@type': string;
+      address?: {
+        '@type': string;
+        addressLocality?: string;
+        addressRegion?: string;
+        addressCountry?: string;
+        streetAddress?: string;
+      };
+    } | undefined => {
+      if (!job.location && !job.city && !job.state) return undefined;
+
+      const location: {
+        '@type': string;
+        address?: {
+          '@type': string;
+          addressLocality?: string;
+          addressRegion?: string;
+          addressCountry?: string;
+          streetAddress?: string;
+        };
+      } = {
+        '@type': 'Place',
+      };
+
+      if (job.city || job.state || job.location) {
+        location.address = {
+          '@type': 'PostalAddress',
+          addressCountry: 'AU', // Default to Australia
+        };
+
+        if (job.city) {
+          location.address.addressLocality = job.city;
+        }
+        if (job.state) {
+          location.address.addressRegion = job.state;
+        }
+        if (job.address) {
+          location.address.streetAddress = job.address;
+        }
+        
+        // If location is a string, try to parse it
+        if (typeof job.location === 'string' && !job.city && !job.state) {
+          const parts = job.location.split(',').map(p => p.trim());
+          if (parts.length >= 2) {
+            location.address.addressLocality = parts[0];
+            location.address.addressRegion = parts[1];
+          } else {
+            location.address.addressLocality = job.location;
+          }
+        }
+      }
+
+      return location;
+    };
+
+    // Format dates for ISO 8601
+    const formatDate = (dateStr?: string): string | undefined => {
+      if (!dateStr) return undefined;
+      
+      try {
+        // If it's already in ISO format, return as is
+        if (dateStr.includes('T') || dateStr.includes('Z')) {
+          return new Date(dateStr).toISOString();
+        }
+        
+        // Try to parse and format
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
+      } catch (e) {
+        // If parsing fails, return undefined
+      }
+      
+      return undefined;
+    };
+
+    // Calculate validThrough (30 days from job date or createdAt, or use job date)
+    const calculateValidThrough = (): string | undefined => {
+      const baseDate = job.date || job.startTime;
+      if (!baseDate) return undefined;
+      
+      try {
+        const date = new Date(baseDate);
+        if (!isNaN(date.getTime())) {
+          // Set validThrough to 30 days after the job date
+          date.setDate(date.getDate() + 30);
+          return date.toISOString();
+        }
+      } catch (e) {
+        // If parsing fails, return undefined
+      }
+      
+      return undefined;
+    };
+
+    const salary = parseSalary(job.rate || job.payRate || job.hourlyRate);
+    const jobLocation = parseLocation();
+    const datePosted = formatDate(job.date || job.startTime);
+    const validThrough = calculateValidThrough();
+
+    const schema: any = {
+      '@context': 'https://schema.org/',
+      '@type': 'JobPosting',
+      title: job.title,
+      description: job.description || '',
+      employmentType: 'CONTRACTOR',
+      hiringOrganization: {
+        '@type': 'Organization',
+        name: job.shopName || 'SnipShift',
+      },
+    };
+
+    if (datePosted) {
+      schema.datePosted = datePosted;
+    }
+
+    if (validThrough) {
+      schema.validThrough = validThrough;
+    }
+
+    if (jobLocation) {
+      schema.jobLocation = jobLocation;
+    }
+
+    if (salary && salary.value) {
+      schema.baseSalary = {
+        '@type': 'MonetaryAmount',
+        currency: salary.currency || 'AUD',
+        value: {
+          '@type': 'QuantitativeValue',
+          value: salary.value,
+          unitText: 'HOUR',
+        },
+      };
+    }
+
+    // Add job identifier
+    if (job.id) {
+      schema.identifier = {
+        '@type': 'PropertyValue',
+        name: 'SnipShift',
+        value: job.id,
+      };
+    }
+
+    return schema;
+  }, [job]);
+
   return (
     <ErrorBoundary>
       <SEO 
@@ -113,6 +286,13 @@ export default function JobDetailsPage() {
         description={job?.description}
         type="article"
       />
+      {jobPostingSchema && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify(jobPostingSchema, null, 0)}
+          </script>
+        </Helmet>
+      )}
       <div className="min-h-screen bg-gray-50 overflow-x-hidden" data-testid="job-details-page">
         <div className="max-w-4xl mx-auto px-4 py-6 w-full max-w-full">
           {/* Back Button */}

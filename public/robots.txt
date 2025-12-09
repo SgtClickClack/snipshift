@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /hub-dashboard
+Disallow: /professional-dashboard
+Sitemap: https://snipshift.com.au/sitemap.xml
+
