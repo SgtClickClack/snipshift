@@ -1,5 +1,6 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, QueryFunction, QueryCache, MutationCache } from "@tanstack/react-query";
 import { auth } from "./firebase";
+import { toast } from "@/hooks/use-toast";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -100,7 +101,32 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Global error handlers for queries and mutations
+const queryCache = new QueryCache({
+  onError: (error) => {
+    const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+    toast({ 
+      variant: "destructive", 
+      title: "Error", 
+      description: errorMessage 
+    });
+  },
+});
+
+const mutationCache = new MutationCache({
+  onError: (error) => {
+    const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+    toast({ 
+      variant: "destructive", 
+      title: "Action Failed", 
+      description: errorMessage 
+    });
+  },
+});
+
 export const queryClient = new QueryClient({
+  queryCache,
+  mutationCache,
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
