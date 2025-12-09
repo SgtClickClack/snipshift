@@ -469,7 +469,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           </Card>
           
           {/* Form fields with top margin to account for overlapping avatar */}
-          <div className="mt-16 md:mt-20">
+          <div>
             {renderBasicFields()}
           </div>
           

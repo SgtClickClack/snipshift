@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import logoProcessed from "@/assets/logo-processed.png";
 
 export default function Hero() {
   return (
@@ -19,7 +18,7 @@ export default function Hero() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
         <div className="flex justify-center mb-8">
           <img 
-            src={logoProcessed} 
+            src="/og-image.png" 
             alt="Snipshift Logo" 
             className="h-32 md:h-40 w-auto object-contain mx-auto mb-6 drop-shadow-2xl logo-sharp"
             style={{

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchShifts } from '@/lib/api';
-import { Shift } from '@shared/schema';
+import { Shift, Job } from '@shared/firebase-schema';
 import { Button } from '@/components/ui/button';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
@@ -10,19 +10,16 @@ import { JobFilters } from '@/components/jobs/job-filters';
 import { JobCard, JobCardData } from '@/components/job-feed/JobCard';
 import { SearchX } from 'lucide-react';
 
-// Shift type for the feed
-type ShiftType = Shift;
-
 export default function JobFeedPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [selectedJob, setSelectedJob] = useState<ShiftType | null>(null);
+  const [selectedJob, setSelectedJob] = useState<JobCardData | null>(null);
   
   // Default center (New York - matching mock data)
-  const [centerLocation, setCenterLocation] = useState({ lat: 40.7128, lng: -74.0060 });
-  const [radius, setRadius] = useState(50);
-  const [searchLocation, setSearchLocation] = useState('New York');
+  const [centerLocation] = useState({ lat: 40.7128, lng: -74.0060 });
+  const [radius] = useState(50);
+  const [searchLocation] = useState('New York');
 
   // Build filter params from URL search params
   const status = (searchParams.get('status') as 'open' | 'filled' | 'completed') || 'open';
@@ -50,7 +47,7 @@ export default function JobFeedPage() {
   }
 
   // Normalize shifts to ensure consistent structure for JobCard component
-  const jobList: JobCardData[] = (shifts || []).map((shift: any) => {
+  const jobList: JobCardData[] = (shifts || []).map((shift: Shift) => {
     // Extract city and state from location string if needed
     let locationCity = 'Unknown';
     let locationState = '';
@@ -66,12 +63,16 @@ export default function JobFeedPage() {
       }
     }
     
+    // Convert rate to string if it's a number (Job type expects string)
+    const rateValue = shift.pay || shift.hourlyRate;
+    const rateString = rateValue !== undefined ? String(rateValue) : undefined;
+    
     return {
       id: shift.id,
       title: shift.title,
-      // Use pay if available, otherwise hourlyRate
-      rate: shift.pay || shift.hourlyRate,
-      payRate: shift.pay || shift.hourlyRate,
+      // Use pay if available, otherwise hourlyRate, converted to string
+      rate: rateString,
+      payRate: rateString,
       // Use date (which is startTime) for date field
       date: shift.date || shift.startTime,
       startTime: shift.startTime,
@@ -176,9 +177,9 @@ export default function JobFeedPage() {
                 {/* Map View */}
                 <div className={`flex-1 ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
                   <GoogleMapView
-                    jobs={jobList}
-                    onJobSelect={setSelectedJob}
-                    selectedJob={selectedJob}
+                    jobs={jobList as Job[]}
+                    onJobSelect={(job) => setSelectedJob(job as JobCardData | null)}
+                    selectedJob={selectedJob as Job | null}
                     centerLocation={centerLocation}
                     radius={radius}
                     searchLocation={searchLocation}
