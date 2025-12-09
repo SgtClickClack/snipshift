@@ -2,6 +2,8 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+// Import react-big-calendar CSS globally to ensure it loads
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import { StartupErrorBoundary } from "./components/startup-error-boundary";
 
 // Version indicator removed for production

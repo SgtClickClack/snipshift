@@ -626,45 +626,54 @@ export default function ProfessionalCalendar({
                     {format(weekRange.start, "MMM d")} - {format(weekRange.end, "MMM d, yyyy")}
                   </div>
                 )}
-                {/* Ensure filteredEvents is always an array before passing to Calendar */}
-                {Array.isArray(filteredEvents) ? (
-                  <Calendar
-                    localizer={localizer}
-                    events={filteredEvents || []}
-                    startAccessor="start"
-                    endAccessor="end"
-                    style={{ height: "100%" }}
-                    view={view}
-                    onView={setView}
-                    date={currentDate}
-                    onNavigate={setCurrentDate}
-                    onSelectEvent={handleSelectEvent}
-                    onSelectSlot={handleSelectSlot}
-                    selectable
-                    eventPropGetter={eventStyleGetter}
-                    components={{
-                      toolbar: customToolbar,
-                      header: customHeader,
-                    }}
-                    formats={{
-                      dayFormat: "EEE",
-                      dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
-                        // This is used for week view column headers
-                        return format(date, "EEE M/d");
-                      },
-                      dayRangeHeaderFormat: ({ start, end }) =>
-                        `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`,
-                      monthHeaderFormat: "MMMM yyyy",
-                      timeGutterFormat: "h:mm a",
-                      eventTimeRangeFormat: ({ start, end }) =>
-                        `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`,
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-muted-foreground">Calendar is loading...</div>
-                  </div>
-                )}
+                {/* Calendar component - filteredEvents is always an array due to defensive coding */}
+                {/* Ensure events is always a valid array for react-big-calendar */}
+                {(() => {
+                  try {
+                    const safeEvents = Array.isArray(filteredEvents) ? filteredEvents : [];
+                    return (
+                      <Calendar
+                        localizer={localizer}
+                        events={safeEvents}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ height: "100%" }}
+                        view={view}
+                        onView={setView}
+                        date={currentDate}
+                        onNavigate={setCurrentDate}
+                        onSelectEvent={handleSelectEvent}
+                        onSelectSlot={handleSelectSlot}
+                        selectable
+                        eventPropGetter={eventStyleGetter}
+                        components={{
+                          toolbar: customToolbar,
+                          header: customHeader,
+                        }}
+                        formats={{
+                          dayFormat: "EEE",
+                          dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
+                            // This is used for week view column headers
+                            return format(date, "EEE M/d");
+                          },
+                          dayRangeHeaderFormat: ({ start, end }) =>
+                            `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`,
+                          monthHeaderFormat: "MMMM yyyy",
+                          timeGutterFormat: "h:mm a",
+                          eventTimeRangeFormat: ({ start, end }) =>
+                            `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`,
+                        }}
+                      />
+                    );
+                  } catch (error) {
+                    console.error('Error rendering Calendar component:', error);
+                    return (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-muted-foreground">Error loading calendar. Please refresh the page.</div>
+                      </div>
+                    );
+                  }
+                })()}
                 {/* Current Time Indicator - only show in week/day view */}
                 {view === "week" || view === "day" ? (
                   <CurrentTimeIndicator
