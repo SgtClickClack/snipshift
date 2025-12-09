@@ -301,7 +301,7 @@ export default function ProfessionalDashboard() {
         setActiveView('calendar');
         break;
       case 'open-messages':
-        setShowMessaging(true);
+        navigate('/professional-messages');
         break;
       default:
         break;
@@ -317,7 +317,7 @@ export default function ProfessionalDashboard() {
         setActiveView('calendar');
         break;
       case 'messages':
-        setShowMessaging(true);
+        navigate('/professional-messages');
         break;
       case 'reviews':
         setActiveView('profile');
@@ -361,7 +361,7 @@ export default function ProfessionalDashboard() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button 
-                onClick={() => setShowMessaging(true)}
+                onClick={() => navigate('/professional-messages')}
                 className="flex-1 md:flex-none bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
                 data-testid="button-open-messages"
               >

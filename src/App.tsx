@@ -68,6 +68,8 @@ const CommunityPage = lazy(() => import('@/pages/community'));
 const WalletPage = lazy(() => import('@/pages/wallet'));
 const EarningsPage = lazy(() => import('@/pages/earnings'));
 const MessagesPage = lazy(() => import('@/pages/messages'));
+const ProfessionalMessagesPage = lazy(() => import('@/pages/professional-messages'));
+const SettingsPage = lazy(() => import('@/pages/settings'));
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
 
 // Complex components - lazy load to reduce bundle size
@@ -297,6 +299,14 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
+        <Route path="/professional-messages" element={
+          <ProtectedRoute requiredRole="professional">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ProfessionalMessagesPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
         <Route path="/brand-dashboard" element={
           <ProtectedRoute requiredRole="brand">
             <Suspense fallback={<PageLoadingFallback />}>
@@ -392,6 +402,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <MessagesPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <SettingsPage />
             </Suspense>
           </ProtectedRoute>
         } />
