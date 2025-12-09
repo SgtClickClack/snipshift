@@ -98,10 +98,10 @@ export function InstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-overlay animate-in slide-in-from-bottom-5 pointer-events-none">
-      <div className="bg-steel-900 text-white rounded-lg shadow-xl border border-steel-700 p-3 flex items-center gap-2 pointer-events-auto">
+      <div className="bg-card dark:bg-steel-900 text-card-foreground dark:text-white rounded-lg shadow-xl border border-border dark:border-steel-700 p-3 flex items-center gap-2 pointer-events-auto">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-xs mb-0.5 text-white truncate">Install Snipshift</p>
-          <p className="text-xs text-steel-300 line-clamp-1">
+          <p className="font-semibold text-xs mb-0.5 text-card-foreground dark:text-white truncate">Install Snipshift</p>
+          <p className="text-xs text-muted-foreground dark:text-steel-300 line-clamp-1">
             Add to home screen
           </p>
         </div>
@@ -118,7 +118,7 @@ export function InstallPrompt() {
             size="sm"
             variant="ghost"
             onClick={handleDismiss}
-            className="text-white hover:bg-steel-800 h-7 w-7 p-0"
+            className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-800 h-7 w-7 p-0"
           >
             <X className="h-3 w-3" />
           </Button>

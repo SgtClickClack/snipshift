@@ -3,7 +3,7 @@ import logo from '@/assets/logo-processed.png';
 
 export function Footer() {
   return (
-    <footer className="bg-steel-900 border-t-2 border-steel-800 text-steel-300 pb-safe w-full overflow-x-hidden">
+    <footer className="bg-background dark:bg-steel-900 border-t-2 border-border dark:border-steel-800 text-muted-foreground dark:text-steel-300 pb-safe w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
@@ -23,17 +23,17 @@ export function Footer() {
                 }}
               />
             </Link>
-            <p className="text-sm text-steel-400 mb-4">
+            <p className="text-sm text-muted-foreground dark:text-steel-400 mb-4">
               Connect barbers, stylists, and professionals with flexible work opportunities.
             </p>
           </div>
 
           {/* Product Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Product</h3>
+            <h3 className="text-foreground dark:text-white font-semibold mb-4 text-sm uppercase tracking-wider">Product</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/jobs" className="text-steel-400 hover:text-white transition-colors text-sm">
+                <Link to="/jobs" className="text-muted-foreground dark:text-steel-400 hover:text-foreground dark:hover:text-white transition-colors text-sm">
                   Find Shifts
                 </Link>
               </li>
@@ -52,7 +52,7 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Company</h3>
+            <h3 className="text-foreground dark:text-white font-semibold mb-4 text-sm uppercase tracking-wider">Company</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/about" className="text-steel-400 hover:text-white transition-colors text-sm">
@@ -72,7 +72,7 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Legal</h3>
+            <h3 className="text-foreground dark:text-white font-semibold mb-4 text-sm uppercase tracking-wider">Legal</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/terms" className="text-steel-400 hover:text-white transition-colors text-sm">
@@ -89,9 +89,9 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-8 pt-8 border-t border-steel-800">
+        <div className="mt-8 pt-8 border-t border-border dark:border-steel-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-steel-400">
+            <p className="text-sm text-muted-foreground dark:text-steel-400">
               © {new Date().getFullYear()} SnipShift. All rights reserved.
             </p>
             <div className="mt-4 md:mt-0 flex space-x-6">

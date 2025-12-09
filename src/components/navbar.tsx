@@ -107,14 +107,14 @@ export default function Navbar() {
   const UserAvatar = ({ className }: { className?: string }) => (
     <Avatar className={`cursor-pointer border border-steel-600 ${className || 'h-8 w-8'}`}>
       <AvatarImage src={user?.photoURL || user?.avatarUrl} alt={user?.displayName || 'User'} />
-      <AvatarFallback className="bg-steel-700 text-white text-xs font-medium">
+      <AvatarFallback className="bg-muted text-foreground dark:bg-steel-700 dark:text-white text-xs font-medium">
         {getInitials(user?.displayName || user?.name, user?.email)}
       </AvatarFallback>
     </Avatar>
   );
 
   return (
-    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
+    <nav className="bg-background dark:bg-gradient-to-r dark:from-steel-900 dark:via-steel-800 dark:to-steel-900 border-b-2 border-border dark:border-steel-600 shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-16 min-w-0">
           <Link
@@ -151,29 +151,29 @@ export default function Navbar() {
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="w-full max-w-[200px] justify-between bg-steel-800 text-white border-steel-600 hover:bg-steel-700 hover:text-white z-floating relative"
+                        className="w-full max-w-[200px] justify-between bg-muted dark:bg-steel-800 text-foreground dark:text-white border-border dark:border-steel-600 hover:bg-accent dark:hover:bg-steel-700 z-floating relative"
                       >
                         {currentRoleLabel}
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[240px] max-w-[calc(100vw-2rem)] bg-steel-800 border-steel-600 text-white z-floating" align="end">
+                    <DropdownMenuContent className="w-[240px] max-w-[calc(100vw-2rem)] bg-popover dark:bg-steel-800 border-border dark:border-steel-600 text-popover-foreground dark:text-white z-floating" align="end">
                       
                       <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Current View</DropdownMenuLabel>
-                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white justify-between font-bold bg-steel-700/50">
+                      <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground dark:focus:bg-steel-700 dark:focus:text-white justify-between font-bold bg-accent/50 dark:bg-steel-700/50">
                         {currentRoleLabel}
                         <Check className="h-4 w-4 text-green-400" />
                       </DropdownMenuItem>
 
                       {availableRoles.length > 0 && (
                         <>
-                          <DropdownMenuSeparator className="bg-steel-600" />
+                          <DropdownMenuSeparator className="bg-border dark:bg-steel-600" />
                           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Switch View</DropdownMenuLabel>
                           {availableRoles.map((r) => (
                             <DropdownMenuItem 
                               key={r} 
                               onClick={() => handleSwitchRole(r)}
-                              className="focus:bg-steel-700 focus:text-white cursor-pointer"
+                              className="focus:bg-accent focus:text-accent-foreground dark:focus:bg-steel-700 dark:focus:text-white cursor-pointer"
                             >
                               <RefreshCw className="mr-2 h-4 w-4 text-muted-foreground" />
                               Switch to {getRoleLabel(r)}
@@ -184,13 +184,13 @@ export default function Navbar() {
 
                       {missingRoles.length > 0 && (
                         <>
-                          <DropdownMenuSeparator className="bg-steel-600" />
+                          <DropdownMenuSeparator className="bg-border dark:bg-steel-600" />
                           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Grow</DropdownMenuLabel>
                           
                           {missingRoles.includes('hub') && (
                             <DropdownMenuItem 
                               onClick={() => navigate('/onboarding/hub')}
-                              className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
+                              className="text-blue-600 dark:text-blue-400 focus:text-blue-700 dark:focus:text-blue-300 focus:bg-accent dark:focus:bg-steel-700 cursor-pointer"
                             >
                               <PlusCircle className="mr-2 h-4 w-4" />
                               Create Business Profile
@@ -200,7 +200,7 @@ export default function Navbar() {
                           {missingRoles.includes('professional') && (
                             <DropdownMenuItem 
                               onClick={() => navigate('/onboarding/professional')}
-                              className="text-blue-400 focus:text-blue-300 focus:bg-steel-700 cursor-pointer"
+                              className="text-blue-600 dark:text-blue-400 focus:text-blue-700 dark:focus:text-blue-300 focus:bg-accent dark:focus:bg-steel-700 cursor-pointer"
                             >
                               <PlusCircle className="mr-2 h-4 w-4" />
                               Create Professional Profile
@@ -213,19 +213,19 @@ export default function Navbar() {
 
                   {/* Dashboard Link */}
                   <Link to="/dashboard">
-                    <Button variant="ghost" className="text-white hover:bg-steel-700">Dashboard</Button>
+                    <Button variant="ghost" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700">Dashboard</Button>
                   </Link>
 
                   {/* Find Shifts Link */}
                   <Link to="/jobs">
-                    <Button variant="ghost" className="text-white hover:bg-steel-700" data-testid="link-find-shifts-desktop">Find Shifts</Button>
+                    <Button variant="ghost" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700" data-testid="link-find-shifts-desktop">Find Shifts</Button>
                   </Link>
 
                   {/* Install App Button */}
                   <InstallButton 
                     variant="ghost" 
                     size="sm"
-                    className="text-white hover:bg-steel-700"
+                    className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700"
                   />
                 </div>
 
@@ -240,7 +240,7 @@ export default function Navbar() {
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-white hover:bg-steel-700 relative flex-shrink-0"
+                    className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700 relative flex-shrink-0"
                     title="Messages"
                   >
                     <MessageCircle className="h-4 w-4" />
@@ -259,7 +259,7 @@ export default function Navbar() {
                       <UserAvatar />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-steel-800 border-steel-600 text-white z-floating" align="end">
+                  <DropdownMenuContent className="w-56 bg-popover dark:bg-steel-800 border-border dark:border-steel-600 text-popover-foreground dark:text-white z-floating" align="end">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
@@ -297,20 +297,20 @@ export default function Navbar() {
                 <div className="md:hidden flex-shrink-0">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-white hover:bg-steel-700 flex-shrink-0" data-testid="button-mobile-menu" aria-label="Open menu">
+                      <Button variant="ghost" size="icon" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700 flex-shrink-0" data-testid="button-mobile-menu" aria-label="Open menu">
                         <Menu className="h-6 w-6" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="!bg-steel-900 dark:!bg-steel-900 text-white dark:text-steel-100 border-steel-700 dark:border-steel-800">
+                    <SheetContent side="right" className="!bg-background dark:!bg-steel-900 text-foreground dark:text-steel-100 border-border dark:border-steel-800">
                       <SheetHeader>
-                        <SheetTitle className="text-white dark:text-steel-100">Menu</SheetTitle>
+                        <SheetTitle className="text-foreground dark:text-steel-100">Menu</SheetTitle>
                       </SheetHeader>
                       <div className="flex flex-col space-y-4 mt-8">
-                        <div className="px-2 pb-4 border-b border-steel-700 dark:border-steel-800 mb-4">
+                        <div className="px-2 pb-4 border-b border-border dark:border-steel-800 mb-4">
                            <div className="flex items-center gap-3 mb-3">
                              <UserAvatar className="h-10 w-10" />
                              <div className="overflow-hidden">
-                               <p className="font-medium truncate text-white dark:text-steel-100">{user.displayName || user.name || 'User'}</p>
+                               <p className="font-medium truncate text-foreground dark:text-steel-100">{user.displayName || user.name || 'User'}</p>
                                <p className="text-xs text-muted-foreground dark:text-steel-300 truncate">{user.email}</p>
                              </div>
                            </div>
@@ -323,7 +323,7 @@ export default function Navbar() {
 
                         <SheetClose asChild>
                           <Link to="/dashboard">
-                            <Button variant="ghost" className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800">
+                            <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800">
                               Dashboard
                             </Button>
                           </Link>
@@ -346,7 +346,7 @@ export default function Navbar() {
                                   <Button 
                                     variant="ghost" 
                                     onClick={() => handleSwitchRole(r)}
-                                    className="w-full justify-start text-muted-foreground dark:text-steel-300 hover:text-white dark:hover:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800"
+                                    className="w-full justify-start text-muted-foreground dark:text-steel-300 hover:text-foreground dark:hover:text-steel-100 hover:bg-muted dark:hover:bg-steel-800"
                                   >
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Switch to {getRoleLabel(r)}
@@ -364,7 +364,7 @@ export default function Navbar() {
                                   <Button 
                                     variant="ghost" 
                                     onClick={() => navigate('/onboarding/hub')}
-                                    className="w-full justify-start text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 hover:bg-steel-700 dark:hover:bg-steel-800"
+                                    className="w-full justify-start text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 hover:bg-muted dark:hover:bg-steel-800"
                                   >
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                     Create Business Profile
@@ -376,7 +376,7 @@ export default function Navbar() {
                                   <Button 
                                     variant="ghost" 
                                     onClick={() => navigate('/onboarding/professional')}
-                                    className="w-full justify-start text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 hover:bg-steel-700 dark:hover:bg-steel-800"
+                                    className="w-full justify-start text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 hover:bg-muted dark:hover:bg-steel-800"
                                   >
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                     Create Professional Profile
@@ -391,23 +391,23 @@ export default function Navbar() {
                            <InstallButton 
                              variant="ghost" 
                              size="sm"
-                             className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800"
+                             className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800"
                            />
                          </div>
 
                          {/* Theme Toggle */}
                          <div className="px-2 py-2">
                            <div className="flex items-center justify-between w-full">
-                             <span className="text-sm text-white dark:text-steel-100">Theme</span>
+                             <span className="text-sm text-foreground dark:text-steel-100">Theme</span>
                              <ModeToggle />
                            </div>
                          </div>
 
-                         <div className="border-t border-steel-700 dark:border-steel-800 my-2 pt-2">
+                         <div className="border-t border-border dark:border-steel-800 my-2 pt-2">
                             {(user.roles || []).includes('admin') && (
                               <SheetClose asChild>
                                 <Link to="/admin">
-                                  <Button variant="ghost" className="w-full justify-start text-white dark:text-steel-100 hover:bg-red-600 dark:hover:bg-red-700">
+                                  <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-destructive/10 dark:hover:bg-red-700">
                                     <Shield className="h-4 w-4 mr-2" />
                                     Admin Dashboard
                                   </Button>
@@ -416,7 +416,7 @@ export default function Navbar() {
                             )}
                             
                             <SheetClose asChild>
-                              <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-white dark:text-steel-100 hover:bg-steel-700 dark:hover:bg-steel-800">
+                              <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800">
                                 <LogOut className="h-4 w-4 mr-2" />
                                 Logout
                               </Button>
@@ -430,7 +430,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" className="text-white hover:bg-steel-700">Login</Button>
+                  <Button variant="ghost" className="text-foreground dark:text-white hover:bg-muted dark:hover:bg-steel-700">Login</Button>
                 </Link>
                 <Link to="/signup">
                   <Button className="bg-red-accent hover:bg-red-accent-hover">Sign Up</Button>
