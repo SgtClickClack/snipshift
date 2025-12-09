@@ -66,6 +66,7 @@ const DemoPage = lazy(() => import('@/pages/demo'));
 const ProfilePage = lazy(() => import('@/pages/profile'));
 const CommunityPage = lazy(() => import('@/pages/community'));
 const WalletPage = lazy(() => import('@/pages/wallet'));
+const EarningsPage = lazy(() => import('@/pages/earnings'));
 const MessagesPage = lazy(() => import('@/pages/messages'));
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
 
@@ -375,6 +376,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <WalletPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/earnings" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <EarningsPage />
             </Suspense>
           </ProtectedRoute>
         } />

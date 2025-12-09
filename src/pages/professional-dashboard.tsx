@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +10,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
-import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users } from "lucide-react";
+import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet } from "lucide-react";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
+import ProfessionalOverview from "@/components/dashboard/professional-overview";
 import ProfileForm from "@/components/profile/profile-form";
 import ProfessionalDigitalResume from "@/components/profile/professional-digital-resume";
 import MessagingModal from "@/components/messaging/messaging-modal";
@@ -29,6 +30,7 @@ import { SEO } from "@/components/seo/SEO";
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeView = (searchParams.get('view') as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') || 'overview';
   
@@ -377,6 +379,16 @@ export default function ProfessionalDashboard() {
                 <span className="inline sm:hidden">Jobs</span>
               </Button>
               <Button
+                onClick={() => navigate('/earnings')}
+                variant="outline"
+                className="flex-1 md:flex-none"
+                data-testid="button-earnings"
+              >
+                <Wallet className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Earnings</span>
+                <span className="inline sm:hidden">Wallet</span>
+              </Button>
+              <Button
                 onClick={() => {
                   setActiveView('jobs');
                   setViewMode('map');
@@ -462,62 +474,11 @@ export default function ProfessionalDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Overview Tab */}
         {activeView === 'overview' && (
-          <div className="space-y-6">
-            <DashboardStats role="professional" stats={stats} onStatClick={handleStatClick} />
-            
-            <div className="grid lg:grid-cols-3 gap-6">
-              <QuickActions role="professional" onAction={handleQuickAction} />
-              
-              <div className="lg:col-span-2">
-                <Card className="rounded-lg border shadow-sm">
-                  <CardHeader className="border-b">
-                    <CardTitle>Recent Jobs</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {jobs.slice(0, 3).map((job) => (
-                        <div key={job.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                          <div>
-                            <h4 className="font-medium">{job.title}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              ${job.payRate}/{job.payType} • {
-                                typeof job.location === 'object' && job.location 
-                                  ? `${job.location.city || ''}, ${job.location.state || ''}`
-                                  : (job.location || 'Remote')
-                              }
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            {job.hubId && (
-                              <StartChatButton
-                                otherUserId={job.hubId}
-                                otherUserName="Shop Owner"
-                                otherUserRole="hub"
-                                variant="outline"
-                                size="sm"
-                              />
-                            )}
-                            <Button 
-                              onClick={() => handleApplyToJob(job)}
-                              size="sm"
-                              disabled={job.applicants?.includes(user?.id || "")}
-                            >
-                              {job.applicants?.includes(user?.id || "") ? "Applied" : "Apply"}
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      {jobs.length === 0 && (
-                        <p className="text-muted-foreground text-center py-4">
-                          No jobs available right now. Check back later for new opportunities!
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
+          <ProfessionalOverview
+            bookings={bookings}
+            jobs={jobs}
+            onViewChange={setActiveView}
+          />
         )}
         
         {/* Jobs Tab */}
