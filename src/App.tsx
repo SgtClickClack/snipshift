@@ -22,23 +22,29 @@ import { RouteProgressBar } from '@/components/ui/route-progress-bar';
 import Navbar from '@/components/navbar';
 import { Footer } from '@/components/layout/footer';
 
-// Core pages - load immediately for fast initial render
+// Core pages - load immediately for fast initial render (critical for FCP/LCP)
 import LandingPage from '@/pages/landing';
 import HomePage from '@/pages/home';
 import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
 import { OAuthCallback } from '@/pages/oauth-callback';
-import RoleSelectionPage from '@/pages/role-selection';
-import OnboardingPage from '@/pages/onboarding';
-import HubOnboardingPage from '@/pages/onboarding/hub';
-import ProfessionalOnboardingPage from '@/pages/onboarding/professional';
-import TermsPage from '@/pages/legal/terms';
-import PrivacyPage from '@/pages/legal/privacy';
-import AboutPage from '@/pages/company/about';
-import ContactPage from '@/pages/company/contact';
 import NotFound from '@/pages/not-found';
-import DashboardRedirect from '@/pages/dashboard-redirect';
-import ComingSoonPage from '@/pages/coming-soon';
+
+// Onboarding pages - lazy load (behind auth wall)
+const RoleSelectionPage = lazy(() => import('@/pages/role-selection'));
+const OnboardingPage = lazy(() => import('@/pages/onboarding'));
+const HubOnboardingPage = lazy(() => import('@/pages/onboarding/hub'));
+const ProfessionalOnboardingPage = lazy(() => import('@/pages/onboarding/professional'));
+
+// Legal & Company pages - lazy load (less critical)
+const TermsPage = lazy(() => import('@/pages/legal/terms'));
+const PrivacyPage = lazy(() => import('@/pages/legal/privacy'));
+const AboutPage = lazy(() => import('@/pages/company/about'));
+const ContactPage = lazy(() => import('@/pages/company/contact'));
+
+// Utility pages - lazy load
+const DashboardRedirect = lazy(() => import('@/pages/dashboard-redirect'));
+const ComingSoonPage = lazy(() => import('@/pages/coming-soon'));
 
 // Dashboard pages - lazy load to reduce initial bundle
 const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
@@ -126,25 +132,33 @@ function AppRoutes() {
 
         <Route path="/role-selection" element={
           <AuthGuard requireAuth={true}>
-            <RoleSelectionPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <RoleSelectionPage />
+            </Suspense>
           </AuthGuard>
         } />
 
         <Route path="/onboarding" element={
           <AuthGuard requireAuth={true}>
-            <OnboardingPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <OnboardingPage />
+            </Suspense>
           </AuthGuard>
         } />
 
         <Route path="/onboarding/hub" element={
           <AuthGuard requireAuth={true}>
-            <HubOnboardingPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <HubOnboardingPage />
+            </Suspense>
           </AuthGuard>
         } />
 
         <Route path="/onboarding/professional" element={
           <AuthGuard requireAuth={true}>
-            <ProfessionalOnboardingPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ProfessionalOnboardingPage />
+            </Suspense>
           </AuthGuard>
         } />
 
@@ -154,33 +168,43 @@ function AppRoutes() {
         {/* Legal Pages */}
         <Route path="/terms" element={
           <AuthGuard>
-            <TermsPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <TermsPage />
+            </Suspense>
           </AuthGuard>
         } />
 
         <Route path="/privacy" element={
           <AuthGuard>
-            <PrivacyPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PrivacyPage />
+            </Suspense>
           </AuthGuard>
         } />
 
         {/* Company Pages */}
         <Route path="/about" element={
           <AuthGuard>
-            <AboutPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <AboutPage />
+            </Suspense>
           </AuthGuard>
         } />
 
         <Route path="/contact" element={
           <AuthGuard>
-            <ContactPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ContactPage />
+            </Suspense>
           </AuthGuard>
         } />
 
         {/* Protected dashboard routes */}
         <Route path="/dashboard" element={
           <AuthGuard requireAuth={true}>
-            <DashboardRedirect />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <DashboardRedirect />
+            </Suspense>
           </AuthGuard>
         } />
 
@@ -291,19 +315,25 @@ function AppRoutes() {
         {/* Protected feature routes - Disabled for stability */}
         <Route path="/community" element={
           <ProtectedRoute>
-            <ComingSoonPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ComingSoonPage />
+            </Suspense>
           </ProtectedRoute>
         } />
 
         <Route path="/social-feed" element={
           <ProtectedRoute>
-            <ComingSoonPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ComingSoonPage />
+            </Suspense>
           </ProtectedRoute>
         } />
 
         <Route path="/training-hub" element={
           <ProtectedRoute>
-            <ComingSoonPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ComingSoonPage />
+            </Suspense>
           </ProtectedRoute>
         } />
 
