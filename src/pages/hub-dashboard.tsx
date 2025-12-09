@@ -814,6 +814,9 @@ export default function HubDashboard() {
                                  <div className="mt-2 text-sm text-muted-foreground">
                                     Applying for: <span className="font-medium text-foreground break-words">{app.job?.title || app.shift?.title || 'Unknown Position'}</span>
                                  </div>
+                                 {(!app.job && !app.shift) && (
+                                   <p className="text-xs text-amber-600 mt-1">⚠️ Original job/shift may have been deleted</p>
+                                 )}
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${

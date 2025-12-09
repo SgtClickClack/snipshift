@@ -116,7 +116,7 @@ export const applications = pgTable('applications', {
   id: uuid('id').defaultRandom().primaryKey(),
   jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'cascade' }), // Made nullable
   shiftId: uuid('shift_id').references(() => shifts.id, { onDelete: 'cascade' }), // Added shift support
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // Nullable for now since we don't have user auth yet
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // Cascade delete: applications are deleted when user is deleted
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
   coverLetter: text('cover_letter').notNull(),

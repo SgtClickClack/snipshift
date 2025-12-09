@@ -102,7 +102,14 @@ export default function MyApplicationsPage() {
                 <Card
                   key={application.id}
                   className="card-chrome cursor-pointer transition-colors hover:border-primary"
-                  onClick={() => navigate(`/jobs/${application.jobId}`)}
+                  onClick={() => {
+                    if (application.jobId) {
+                      navigate(`/jobs/${application.jobId}`);
+                    } else {
+                      // Handle orphaned application (job was deleted but application wasn't)
+                      console.warn('Application has no jobId:', application.id);
+                    }
+                  }}
                 >
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -110,10 +117,13 @@ export default function MyApplicationsPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-steel-900 mb-1">
-                            {application.jobTitle}
+                            {application.jobTitle || 'Unknown Position'}
                           </h3>
                           {application.shopName && (
                             <p className="text-steel-600 mb-3">{application.shopName}</p>
+                          )}
+                          {!application.jobId && (
+                            <p className="text-xs text-amber-600 mt-1">⚠️ Original job may have been deleted</p>
                           )}
                         </div>
                         <div className="ml-4">
