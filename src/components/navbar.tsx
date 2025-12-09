@@ -114,7 +114,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-background dark:bg-gradient-to-r dark:from-steel-900 dark:via-steel-800 dark:to-steel-900 border-b-2 border-border dark:border-steel-600 shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
+    <nav className="bg-gradient-to-r from-steel-900 via-steel-800 to-steel-900 border-b-2 border-steel-600 shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-16 min-w-0">
           <Link
