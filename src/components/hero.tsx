@@ -28,7 +28,7 @@ export default function Hero() {
           }}
         >
           <img 
-            src="/logo-no-background.png" 
+            src="/nobackgroundlogo.png" 
             alt="Snipshift Logo" 
             className="w-full h-auto object-contain"
             style={{
