@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +21,17 @@ import {
   Calendar,
   Briefcase,
   FileText,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Loader2,
+  Camera
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import PortfolioLightbox from './portfolio-lightbox';
 import { apiRequest } from '@/lib/queryClient';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { storage, auth } from '@/lib/firebase';
 
 interface PortfolioItem {
   id: string;
@@ -107,6 +111,10 @@ export default function ProfessionalDigitalResume({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [newSkill, setNewSkill] = useState('');
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
 
   // Default profile data
   const defaultProfile: ProfessionalProfile = {
@@ -209,6 +217,200 @@ export default function ProfessionalDigitalResume({
     }));
   };
 
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload images.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingBanner(true);
+
+    try {
+      const userId = firebaseUser.uid;
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const storagePath = `users/${userId}/banner.${fileExtension}`;
+      const storageRef = ref(storage, storagePath);
+
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      await new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          uploadTask.cancel();
+          reject(new Error('Upload timeout'));
+        }, 30000);
+
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            if (progress > 0) {
+              clearTimeout(timeoutId);
+            }
+          },
+          (error: any) => {
+            clearTimeout(timeoutId);
+            console.error("Banner upload error:", error);
+            reject(error);
+          },
+          async () => {
+            clearTimeout(timeoutId);
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              setProfile(prev => ({ ...prev, bannerUrl: downloadURL }));
+              toast({
+                title: "Banner updated",
+                description: "Your banner image has been successfully uploaded.",
+              });
+              resolve();
+            } catch (error) {
+              console.error("Error getting banner download URL:", error);
+              reject(error);
+            }
+          }
+        );
+      });
+    } catch (error: any) {
+      console.error("Error uploading banner:", error);
+      const errorMessage = error.message || "Failed to upload banner image. Please try again.";
+      toast({
+        title: "Upload failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingBanner(false);
+      if (bannerFileInputRef.current) {
+        bannerFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload images.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const userId = firebaseUser.uid;
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const storagePath = `users/${userId}/avatar.${fileExtension}`;
+      const storageRef = ref(storage, storagePath);
+
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      await new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          uploadTask.cancel();
+          reject(new Error('Upload timeout'));
+        }, 30000);
+
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            if (progress > 0) {
+              clearTimeout(timeoutId);
+            }
+          },
+          (error: any) => {
+            clearTimeout(timeoutId);
+            console.error("Avatar upload error:", error);
+            reject(error);
+          },
+          async () => {
+            clearTimeout(timeoutId);
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              setProfile(prev => ({ ...prev, avatarUrl: downloadURL }));
+              toast({
+                title: "Profile picture updated",
+                description: "Your profile picture has been successfully uploaded.",
+              });
+              resolve();
+            } catch (error) {
+              console.error("Error getting avatar download URL:", error);
+              reject(error);
+            }
+          }
+        );
+      });
+    } catch (error: any) {
+      console.error("Error uploading avatar:", error);
+      const errorMessage = error.message || "Failed to upload profile picture. Please try again.";
+      toast({
+        title: "Upload failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleAddPortfolioImage = (url: string) => {
     setProfile(prev => ({
       ...prev,
@@ -274,12 +476,36 @@ export default function ProfessionalDigitalResume({
               />
             )}
             {isEditing && (
-              <div className="absolute top-4 right-4">
-                <Button variant="secondary" size="sm">
-                  <ImageIcon className="h-4 w-4 mr-2" />
-                  Change Banner
-                </Button>
-              </div>
+              <>
+                <div className="absolute top-4 right-4">
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => bannerFileInputRef.current?.click()}
+                    disabled={isUploadingBanner}
+                  >
+                    {isUploadingBanner ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Change Banner
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <input
+                  ref={bannerFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  onChange={handleBannerUpload}
+                  className="hidden"
+                  disabled={isUploadingBanner}
+                />
+              </>
             )}
           </div>
           <CardContent className="pt-4 pb-6">
@@ -293,13 +519,29 @@ export default function ProfessionalDigitalResume({
                   </AvatarFallback>
                 </Avatar>
                 {isEditing && (
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="absolute bottom-0 right-0 rounded-full"
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="absolute bottom-0 right-0 rounded-full"
+                      onClick={() => avatarFileInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                    >
+                      {isUploadingAvatar ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <input
+                      ref={avatarFileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={isUploadingAvatar}
+                    />
+                  </>
                 )}
               </div>
 
