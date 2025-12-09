@@ -22,7 +22,7 @@ export default function Hero() {
       <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center px-4">
         {/* Large Bright Logo - dominant visual element */}
         <img 
-          src="/logo-no%20background.png" 
+          src="/logo-no-background.png" 
           alt="Snipshift Logo" 
           className="w-[70%] max-w-[800px] h-auto object-contain mb-8"
           style={{
