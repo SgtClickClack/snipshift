@@ -58,7 +58,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/";
+    // Navigation is handled by logout() function
   };
 
   const handleSwitchRole = async (role: string) => {

@@ -205,12 +205,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      // Clear test user session storage
       sessionStorage.removeItem('snipshift_test_user');
+      
+      // Clear any user-related localStorage items
+      // Note: We don't clear theme or PWA install status as those are user preferences
+      // But we clear any potential auth-related data
+      if (typeof window !== 'undefined') {
+        // Clear any potential auth tokens or user data from localStorage
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+      }
+      
+      // Sign out from Firebase
       await signOutUser();
+      
+      // Clear user state immediately
+      setUser(null);
+      
+      // Navigate to login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     } catch (e) {
       console.error('Logout error', e);
+      // Even if there's an error, clear state and navigate
+      setUser(null);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
-    // State update handled by onAuthStateChange
+    // State update also handled by onAuthStateChange as fallback
   };
 
   const setCurrentRole = (role: NonNullable<User['currentRole']>) => {

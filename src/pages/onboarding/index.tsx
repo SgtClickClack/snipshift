@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { ChevronLeft, ChevronRight, Scissors, Building2 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
+import { getDashboardRoute } from '@/lib/roles';
 
 type OnboardingRole = 'professional' | 'business';
 
@@ -39,6 +40,14 @@ export default function OnboardingPage() {
     location: user?.location || '',
     avatarUrl: user?.avatarUrl || user?.profileImage || '',
   });
+
+  // Redirect if user has already completed onboarding
+  useEffect(() => {
+    if (user?.isOnboarded === true) {
+      const dashboardRoute = user.currentRole ? getDashboardRoute(user.currentRole) : '/dashboard';
+      navigate(dashboardRoute, { replace: true });
+    }
+  }, [user, navigate]);
 
   const updateFormData = (updates: Partial<OnboardingData>) => {
     setFormData(prev => ({ ...prev, ...updates }));

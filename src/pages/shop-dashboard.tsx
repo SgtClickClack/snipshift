@@ -215,8 +215,8 @@ export default function ShopDashboard() {
                     className="bg-indigo-600 hover:bg-indigo-700"
                     onClick={() => {
                       toast({
-                        title: "Redirecting to Stripe Onboarding...",
-                        description: "You will be redirected to Stripe to complete your setup.",
+                        title: "Payment system coming soon",
+                        description: "Stripe integration is currently under development.",
                       });
                     }}
                   >
