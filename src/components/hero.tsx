@@ -24,8 +24,8 @@ export default function Hero() {
       <div className="absolute inset-0 bg-black/60 z-[1]" />
 
       {/* Content Wrapper */}
-      <div className="relative z-10 w-full h-full flex flex-col justify-end pb-24 px-4 items-center text-center">
-        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
+      <div className="relative z-10 w-full h-full flex flex-col justify-end pb-32 md:pb-40 px-4 items-center text-center">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8 mb-8">
           <p className="text-xl md:text-2xl text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium">
             Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
           </p>
