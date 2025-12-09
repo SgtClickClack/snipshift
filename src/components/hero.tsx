@@ -12,18 +12,21 @@ export default function Hero() {
         backgroundBlendMode: 'overlay'
       }}
     >
-      {/* Background Logo Image - positioned in upper center, reduced opacity */}
-      <div className="absolute inset-0 z-0 flex items-start justify-center pt-20 md:pt-32">
+      {/* Background Logo Image - positioned in upper center, bigger and brighter */}
+      <div className="absolute inset-0 z-0 flex items-start justify-center pt-20 md:pt-32 overflow-hidden">
         <img 
           src="/og-image.png" 
           alt="Snipshift Logo Background" 
-          className="w-auto h-[40vh] md:h-[50vh] max-w-[90%] object-contain opacity-20 md:opacity-25"
+          className="w-auto h-[40vh] md:h-[50vh] max-w-[90%] object-contain opacity-40 md:opacity-50 brightness-110 contrast-110 scale-125"
           loading="eager"
         />
       </div>
 
-      {/* Dark Overlay for contrast */}
-      <div className="absolute inset-0 bg-black/60 z-[1]" />
+      {/* Reduced Dark Overlay for contrast - lighter to let logo shine through */}
+      <div className="absolute inset-0 bg-black/30 z-[1]" />
+
+      {/* Bottom Gradient Overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-[2]" />
 
       {/* Content Wrapper - positioned lower to avoid logo overlap */}
       <div className="relative z-10 w-full h-full flex flex-col justify-end pb-32 md:pb-40 px-4 items-center text-center">
