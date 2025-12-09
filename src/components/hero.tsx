@@ -12,48 +12,43 @@ export default function Hero() {
         backgroundBlendMode: 'overlay'
       }}
     >
+      {/* Background Logo Image */}
+      <img 
+        src="/og-image.png" 
+        alt="Snipshift Logo Background" 
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        style={{
+          objectFit: 'cover',
+        }}
+        loading="eager"
+      />
+
       {/* Dark Overlay for contrast */}
-      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 bg-black/60 z-[1]" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
-        <div className="flex justify-center mb-8">
-          <img 
-            src="/og-image.png" 
-            alt="Snipshift Logo" 
-            className="h-32 md:h-40 w-auto object-contain mx-auto mb-6 drop-shadow-2xl logo-sharp"
-            style={{
-              imageRendering: 'auto',
-              filter: 'brightness(2.5) contrast(2.0) saturate(1.2) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
-              WebkitFontSmoothing: 'antialiased',
-            }}
-            loading="eager"
-            width={160}
-            height={160}
-          />
-        </div>
-        
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 drop-shadow-lg tracking-tight">
+        <h1 className="text-5xl md:text-7xl font-bold mb-6 drop-shadow-lg tracking-tight relative z-10">
           Connect. Cover. Grow.
         </h1>
-        <p className="text-xl md:text-2xl mb-10 text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium">
+        <p className="text-xl md:text-2xl mb-10 text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium relative z-10">
           Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
         </p>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12 relative z-10">
           <Link to="/signup">
-            <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl" data-testid="button-get-started">
+            <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl relative z-10" data-testid="button-get-started">
               Get Started Today
             </Button>
           </Link>
           
           <Link to="/login">
-            <Button size="lg" variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-lg px-8 py-4" data-testid="button-login">
+            <Button size="lg" variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-lg px-8 py-4 relative z-10" data-testid="button-login">
               Already have an account? Login
             </Button>
           </Link>
         </div>
         
-        <p className="text-sm opacity-75">Join thousands of professionals already on Snipshift</p>
+        <p className="text-sm opacity-75 relative z-10">Join thousands of professionals already on Snipshift</p>
       </div>
     </div>
   );
