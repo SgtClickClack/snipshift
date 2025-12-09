@@ -358,7 +358,7 @@ export default function JobDetailsPage() {
           </script>
         </Helmet>
       )}
-      <div className="min-h-screen bg-gray-50 overflow-x-hidden" data-testid="job-details-page">
+      <div className="min-h-screen bg-background overflow-x-hidden" data-testid="job-details-page">
         <div className="max-w-4xl mx-auto px-4 py-6 w-full max-w-full">
           {/* Back Button */}
           <Button
