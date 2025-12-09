@@ -158,3 +158,5 @@ snipshift/
 /test-results/
 /playwright-report/
 /playwright/.cache/
+tests/storageState.json
+tests/auth-setup-failure.png
