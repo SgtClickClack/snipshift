@@ -7,6 +7,7 @@ import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as notificationService from '../services/notification.service.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import * as emailService from '../services/email.service.js';
 
 const router = Router();
 
@@ -146,8 +147,18 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       targetTitle,
       targetId
     );
-    // TODO: Send email notification here
-    // Example: await emailService.sendApplicationReceivedEmail(ownerEmail, userName, targetTitle);
+    
+    // Send email notification to job owner
+    const owner = await usersRepo.getUserById(ownerId);
+    if (owner && owner.email) {
+      const applicationLink = `https://snipshift.com.au/manage-jobs?jobId=${targetId}`;
+      await emailService.notifyApplicationReceived(
+        owner.email,
+        userName,
+        targetTitle,
+        applicationLink
+      );
+    }
   }
 
   res.status(201).json({

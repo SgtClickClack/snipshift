@@ -10,9 +10,47 @@ import WelcomeEmail from '../emails/WelcomeEmail.js';
 import ApplicationStatusEmail from '../emails/ApplicationStatusEmail.js';
 import NewMessageEmail from '../emails/NewMessageEmail.js';
 import JobAlertEmail from '../emails/JobAlertEmail.js';
+import * as emailTemplates from './email-templates.js';
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Snipshift <noreply@snipshift.com.au>';
 const FROM_NAME = 'Snipshift';
+
+/**
+ * Generic email sending function
+ * Works with or without API key (mocks in dev mode)
+ */
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string
+): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey || !resend) {
+    // Mock mode: just log the email
+    console.log('📧 [MOCK EMAIL]: To:', to, 'Subject:', subject);
+    return true; // Return true so the app continues to work
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      html,
+    });
+
+    if (error) {
+      console.error('Failed to send email:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return false;
+  }
+}
 
 /**
  * Send welcome email to new user
@@ -195,5 +233,20 @@ export async function sendJobAlertEmail(
     console.error('Error sending job alert email:', error);
     return false;
   }
+}
+
+/**
+ * Notify job owner when an application is received
+ */
+export async function notifyApplicationReceived(
+  ownerEmail: string,
+  applicantName: string,
+  jobTitle: string,
+  applicationLink?: string
+): Promise<boolean> {
+  const html = emailTemplates.getApplicationEmail(applicantName, jobTitle, applicationLink);
+  const subject = `New Application: ${applicantName} applied for ${jobTitle}`;
+  
+  return await sendEmail(ownerEmail, subject, html);
 }
 
