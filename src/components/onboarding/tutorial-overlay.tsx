@@ -160,9 +160,14 @@ export function TutorialOverlay() {
     handleClose();
   };
 
-  // Disable overlay during e2e to avoid interference
+  // Early return: Disable overlay during e2e to avoid interference
+  // This check prevents any rendering in E2E test environments
   if (import.meta.env.VITE_E2E === '1') return null;
-  if (!isVisible || !currentStepData) return null;
+
+  // Early return: Do not render if tutorial is not visible or no step data
+  // This prevents any DOM element from being created that could block pointer events
+  // When inactive, the component returns null, ensuring no overlay exists in the DOM
+  if (!isVisible || !currentStepData || !userRole) return null;
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm pointer-events-none" data-testid="tutorial-overlay">
