@@ -110,7 +110,7 @@ export function JobFeedFilterBar({ onFiltersChange, className }: JobFeedFilterBa
     (jobType && jobType !== 'all');
 
   return (
-    <Card className={cn('border-border', className)}>
+    <Card className={cn('border-border', className)} data-testid="job-feed-filter-bar">
       <CardContent className="p-4">
         <div className="space-y-4">
           {/* Header with Clear Button */}
@@ -177,7 +177,7 @@ export function JobFeedFilterBar({ onFiltersChange, className }: JobFeedFilterBa
               Job Type
             </Label>
             <Select value={jobType} onValueChange={(value) => setJobType(value as typeof jobType)}>
-              <SelectTrigger id="jobType">
+              <SelectTrigger id="jobType" data-testid="filter-job-type">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>

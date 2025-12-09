@@ -19,7 +19,7 @@ export interface JobCardData {
 /**
  * JobCard Component Props
  */
-interface JobCardProps {
+interface JobCardProps extends React.HTMLAttributes<HTMLDivElement> {
   job: JobCardData;
   onViewDetails?: () => void;
   onApply?: () => void;
@@ -37,9 +37,9 @@ interface JobCardProps {
  * 
  * @component
  */
-export function JobCard({ job, onViewDetails, onApply }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onApply, ...props }: JobCardProps) {
   return (
-    <Card className="hover:shadow-lg transition-all duration-200 border-border">
+    <Card className="hover:shadow-lg transition-all duration-200 border-border" {...props}>
       <CardContent className="p-5">
         {/* Job Title */}
         <div className="mb-4">

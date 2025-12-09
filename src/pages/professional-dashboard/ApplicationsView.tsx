@@ -76,13 +76,13 @@ export default function ApplicationsView() {
           className="w-full"
         >
           <TabsList className="mb-6">
-            <TabsTrigger value="pending">
+            <TabsTrigger value="pending" data-testid="tab-pending">
               Pending ({statusCounts.pending})
             </TabsTrigger>
-            <TabsTrigger value="confirmed">
+            <TabsTrigger value="confirmed" data-testid="tab-confirmed">
               Confirmed ({statusCounts.confirmed})
             </TabsTrigger>
-            <TabsTrigger value="rejected">
+            <TabsTrigger value="rejected" data-testid="tab-rejected">
               Rejected/Archived ({statusCounts.rejected})
             </TabsTrigger>
           </TabsList>

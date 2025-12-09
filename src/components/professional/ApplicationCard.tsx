@@ -225,6 +225,7 @@ export function ApplicationCard({
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={handleWithdrawClick}
                 disabled={withdrawMutation.isPending}
+                data-testid={`button-withdraw-application-${application.id}`}
               >
                 <X className="h-4 w-4 mr-2" />
                 {withdrawMutation.isPending ? 'Withdrawing...' : 'Withdraw'}

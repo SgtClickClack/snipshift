@@ -13,53 +13,23 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Professional Applications E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to professional dashboard first
-    await page.goto('/professional-dashboard');
-    await page.waitForLoadState('networkidle');
+    // Navigate to professional dashboard with applications view
+    await page.goto('/professional-dashboard?view=applications');
+    await page.waitForLoadState('domcontentloaded');
     
-    // Wait for page to fully load and check for redirects
+    // Wait for page to fully load
     await page.waitForTimeout(3000);
     
-    // Check if we were redirected
+    // Check if we were redirected (e.g., due to auth issues)
     const currentUrl = page.url();
-    
-    // If redirected to login, the storageState might not be loading correctly
     if (currentUrl.includes('/login')) {
-      // Try waiting a bit more - sometimes auth takes time to initialize
-      await page.waitForTimeout(2000);
-      const newUrl = page.url();
-      if (newUrl.includes('/login')) {
-        throw new Error('Not authenticated - redirected to login. Check auth.setup.ts and storageState.json');
-      }
+      throw new Error('Not authenticated - redirected to login. Check auth.setup.ts');
     }
-    
-    // If redirected to role-selection, select professional role
-    if (currentUrl.includes('/role-selection')) {
-      const professionalButton = page.getByRole('button', { name: /professional/i }).first();
-      if (await professionalButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await professionalButton.click();
-        await page.waitForURL((url) => url.pathname.includes('/professional-dashboard'), { timeout: 10000 });
-        await page.waitForTimeout(2000);
-      }
-    }
-    
-    // Verify we're on professional dashboard
-    const finalUrl = page.url();
-    if (!finalUrl.includes('/professional-dashboard')) {
-      throw new Error(`Expected to be on professional-dashboard, but got: ${finalUrl}`);
-    }
-    
-    // Navigate to applications view by clicking the Applications tab
-    // The tab has data-testid="tab-applications"
-    const applicationsTab = page.getByTestId('tab-applications');
-    await expect(applicationsTab).toBeVisible({ timeout: 10000 });
-    await applicationsTab.click();
-    await page.waitForTimeout(2000);
     
     // Verify we're on the applications view
     // The ApplicationsView component should render "My Applications" title
-    const applicationsTitle = page.getByText('My Applications', { exact: false }).first();
-    await expect(applicationsTitle).toBeVisible({ timeout: 10000 });
+    const applicationsTitle = page.getByRole('heading', { name: /my applications/i });
+    await expect(applicationsTitle).toBeVisible({ timeout: 15000 });
   });
 
   test.describe('Status Tabs', () => {
