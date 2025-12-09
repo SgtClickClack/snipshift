@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export default function Hero() {
   return (
     <div 
-      className="relative text-white py-32 overflow-hidden bg-steel-900"
+      className="relative text-white min-h-screen flex items-center justify-center overflow-hidden bg-steel-900"
       style={{
         backgroundImage: `url('/hero-background.png'), linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
         backgroundSize: 'cover',
@@ -19,6 +19,7 @@ export default function Hero() {
         className="absolute inset-0 w-full h-full object-cover z-0"
         style={{
           objectFit: 'cover',
+          objectPosition: 'center',
         }}
         loading="eager"
       />
@@ -26,15 +27,12 @@ export default function Hero() {
       {/* Dark Overlay for contrast */}
       <div className="absolute inset-0 bg-black/60 z-[1]" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 drop-shadow-lg tracking-tight relative z-10">
-          Connect. Cover. Grow.
-        </h1>
-        <p className="text-xl md:text-2xl mb-10 text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium relative z-10">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10 flex flex-col items-center justify-center gap-8 py-16">
+        <p className="text-xl md:text-2xl text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium relative z-10">
           Snipshift bridges barbershops and salons with verified professionals for seamless workforce flexibility
         </p>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12 relative z-10">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
           <Link to="/signup">
             <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl relative z-10" data-testid="button-get-started">
               Get Started Today
