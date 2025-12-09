@@ -72,44 +72,55 @@ export function InstallPrompt() {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    // Don't show again for this session
-    window.sessionStorage.setItem('pwa-prompt-dismissed', 'true');
+    // Don't show again permanently (use localStorage instead of sessionStorage)
+    window.localStorage.setItem('pwa-prompt-dismissed', 'true');
   };
 
-  // Don't show if already installed or dismissed this session
+  // Auto-dismiss after 10 seconds
+  useEffect(() => {
+    if (isVisible && deferredPrompt) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        window.localStorage.setItem('pwa-prompt-dismissed', 'true');
+      }, 10000); // 10 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, deferredPrompt]);
+
+  // Don't show if already installed or dismissed
   if (isInstalled || !isVisible || !deferredPrompt) {
     return null;
   }
 
-  if (window.sessionStorage.getItem('pwa-prompt-dismissed') === 'true') {
+  if (window.localStorage.getItem('pwa-prompt-dismissed') === 'true') {
     return null;
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[100] animate-in slide-in-from-bottom-5 pointer-events-none">
-      <div className="bg-steel-900 text-white rounded-lg shadow-xl border border-steel-700 p-4 flex items-center gap-3 pointer-events-auto">
-        <div className="flex-1">
-          <p className="font-semibold text-sm mb-1 text-white">Install Snipshift</p>
-          <p className="text-xs text-steel-200">
-            Add to your home screen for quick access
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-[100] animate-in slide-in-from-bottom-5 pointer-events-none">
+      <div className="bg-steel-900 text-white rounded-lg shadow-xl border border-steel-700 p-3 flex items-center gap-2 pointer-events-auto">
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-xs mb-0.5 text-white truncate">Install Snipshift</p>
+          <p className="text-xs text-steel-300 line-clamp-1">
+            Add to home screen
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <Button
             size="sm"
             onClick={handleInstallClick}
-            className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold"
+            className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold h-8 px-3 text-xs"
           >
-            <Download className="h-4 w-4 mr-1" />
+            <Download className="h-3 w-3 mr-1" />
             Install
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={handleDismiss}
-            className="text-white hover:bg-steel-800 h-8 w-8 p-0"
+            className="text-white hover:bg-steel-800 h-7 w-7 p-0"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
         </div>
       </div>

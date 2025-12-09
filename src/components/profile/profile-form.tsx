@@ -75,12 +75,36 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     trainingLocation: ''
   });
 
-  // Initialize profile picture and banner from user data
+  // Load user profile data
   useEffect(() => {
     if (user) {
       const avatarUrl = user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || '';
       const bannerUrl = user.bannerUrl || '';
-      setFormData(prev => ({ ...prev, avatarUrl, bannerUrl }));
+      
+      // Parse location if it's a string
+      let homeLocation = { city: '', state: '', country: 'United States' };
+      if (user.location) {
+        if (typeof user.location === 'string') {
+          const parts = user.location.split(',').map(s => s.trim());
+          homeLocation.city = parts[0] || '';
+          homeLocation.state = parts[1] || '';
+        }
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        displayName: user.displayName || user.name || prev.displayName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        bio: user.bio || prev.bio,
+        website: user.website || prev.website,
+        avatarUrl,
+        bannerUrl,
+        homeLocation,
+        skills: user.skills || prev.skills,
+        experience: user.experience || prev.experience,
+        isRoamingNomad: user.isRoamingNomad || prev.isRoamingNomad,
+      }));
     }
   }, [user]);
 
@@ -135,72 +159,115 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     });
   };
 
-  const renderBasicFields = () => (
-    <>
-      <div className="grid grid-cols-2 gap-4">
+  const renderBasicFields = () => {
+    // When not editing, only show fields with values
+    if (!isEditing) {
+      return (
+        <div className="space-y-4">
+          {formData.displayName && (
+            <div>
+              <Label className="text-muted-foreground text-sm">Display Name</Label>
+              <p className="text-foreground mt-1">{formData.displayName}</p>
+            </div>
+          )}
+          {formData.email && (
+            <div>
+              <Label className="text-muted-foreground text-sm">Email</Label>
+              <p className="text-foreground mt-1">{formData.email}</p>
+            </div>
+          )}
+          {formData.phone && (
+            <div>
+              <Label className="text-muted-foreground text-sm">Phone</Label>
+              <p className="text-foreground mt-1">{formData.phone}</p>
+            </div>
+          )}
+          {formData.website && (
+            <div>
+              <Label className="text-muted-foreground text-sm">Website</Label>
+              <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline mt-1 block">
+                {formData.website}
+              </a>
+            </div>
+          )}
+          {formData.bio && (
+            <div>
+              <Label className="text-muted-foreground text-sm">Bio</Label>
+              <p className="text-foreground mt-1 whitespace-pre-wrap">{formData.bio}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // When editing, show all fields
+    return (
+      <>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="displayName">Display Name</Label>
+            <Input
+              id="displayName"
+              value={formData.displayName}
+              onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+              disabled={!isEditing}
+              data-testid="input-display-name"
+            />
+          </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              disabled={true} // Email typically shouldn't be editable
+              data-testid="input-email"
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              disabled={!isEditing}
+              placeholder="+1 (555) 123-4567"
+              data-testid="input-phone"
+            />
+          </div>
+          <div>
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              disabled={!isEditing}
+              placeholder="https://yourwebsite.com"
+              data-testid="input-website"
+            />
+          </div>
+        </div>
+        
         <div>
-          <Label htmlFor="displayName">Display Name</Label>
-          <Input
-            id="displayName"
-            value={formData.displayName}
-            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea
+            id="bio"
+            value={formData.bio}
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             disabled={!isEditing}
-            data-testid="input-display-name"
+            placeholder="Tell us about yourself..."
+            rows={3}
+            data-testid="textarea-bio"
           />
         </div>
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            disabled={true} // Email typically shouldn't be editable
-            data-testid="input-email"
-          />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="phone">Phone</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            disabled={!isEditing}
-            placeholder="+1 (555) 123-4567"
-            data-testid="input-phone"
-          />
-        </div>
-        <div>
-          <Label htmlFor="website">Website</Label>
-          <Input
-            id="website"
-            value={formData.website}
-            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-            disabled={!isEditing}
-            placeholder="https://yourwebsite.com"
-            data-testid="input-website"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="bio">Bio</Label>
-        <Textarea
-          id="bio"
-          value={formData.bio}
-          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-          disabled={!isEditing}
-          placeholder="Tell us about yourself..."
-          rows={3}
-          data-testid="textarea-bio"
-        />
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   const renderHubFields = () => (
     <>
@@ -284,83 +351,131 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     </>
   );
 
-  const renderProfessionalFields = () => (
-    <>
-      <div>
-        <Label>Skills & Expertise</Label>
-        <div className="flex flex-wrap gap-2 mt-2 mb-2">
-          {formData.skills.map((skill, index) => (
-            <Badge key={`${skill}-${index}`} variant="secondary" className="flex items-center gap-1" data-testid={`skill-${index}`}>
-              {skill}
-              {isEditing && (
-                <button
-                  onClick={() => removeSkill(skill)}
-                  className="ml-1 text-xs hover:text-destructive"
-                  data-testid={`remove-skill-${index}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
+  const renderProfessionalFields = () => {
+    // When not editing, only show fields with values
+    if (!isEditing) {
+      return (
+        <div className="space-y-4">
+          {formData.skills.length > 0 && (
+            <div>
+              <Label className="text-muted-foreground text-sm">Skills & Expertise</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.skills.map((skill, index) => (
+                  <Badge key={`${skill}-${index}`} variant="secondary" data-testid={`skill-${index}`}>
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {formData.experience && (
+            <div>
+              <Label className="text-muted-foreground text-sm">Experience</Label>
+              <p className="text-foreground mt-1 whitespace-pre-wrap">{formData.experience}</p>
+            </div>
+          )}
+          {(formData.homeLocation.city || formData.isRoamingNomad) && (
+            <div className="space-y-2">
+              {formData.homeLocation.city && (
+                <div>
+                  <Label className="text-muted-foreground text-sm">Home Location</Label>
+                  <p className="text-foreground mt-1">
+                    {formData.homeLocation.city}
+                    {formData.homeLocation.state && `, ${formData.homeLocation.state}`}
+                  </p>
+                </div>
               )}
-            </Badge>
-          ))}
+              {formData.isRoamingNomad && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground">Available for travel work</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        {isEditing && (
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add a skill..."
-              value={formData.newSkill}
-              onChange={(e) => setFormData({ ...formData, newSkill: e.target.value })}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-              data-testid="input-new-skill"
-            />
-            <Button type="button" onClick={addSkill} size="sm" data-testid="button-add-skill">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </div>
-      
-      <div>
-        <Label htmlFor="experience">Experience</Label>
-        <Textarea
-          id="experience"
-          value={formData.experience}
-          onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-          disabled={!isEditing}
-          placeholder="Describe your professional experience..."
-          rows={3}
-          data-testid="textarea-experience"
-        />
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
+      );
+    }
+
+    // When editing, show all fields
+    return (
+      <>
         <div>
-          <Label htmlFor="homeCity">Home Location</Label>
-          <Input
-            id="homeCity"
-            value={formData.homeLocation.city}
-            onChange={(e) => setFormData({ 
-              ...formData, 
-              homeLocation: { ...formData.homeLocation, city: e.target.value }
-            })}
+          <Label>Skills & Expertise</Label>
+          <div className="flex flex-wrap gap-2 mt-2 mb-2">
+            {formData.skills.map((skill, index) => (
+              <Badge key={`${skill}-${index}`} variant="secondary" className="flex items-center gap-1" data-testid={`skill-${index}`}>
+                {skill}
+                {isEditing && (
+                  <button
+                    onClick={() => removeSkill(skill)}
+                    className="ml-1 text-xs hover:text-destructive"
+                    data-testid={`remove-skill-${index}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </Badge>
+            ))}
+          </div>
+          {isEditing && (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add a skill..."
+                value={formData.newSkill}
+                onChange={(e) => setFormData({ ...formData, newSkill: e.target.value })}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                data-testid="input-new-skill"
+              />
+              <Button type="button" onClick={addSkill} size="sm" data-testid="button-add-skill">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+        
+        <div>
+          <Label htmlFor="experience">Experience</Label>
+          <Textarea
+            id="experience"
+            value={formData.experience}
+            onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
             disabled={!isEditing}
-            placeholder="City, State"
-            data-testid="input-home-location"
+            placeholder="Describe your professional experience..."
+            rows={3}
+            data-testid="textarea-experience"
           />
         </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="isRoamingNomad"
-            checked={formData.isRoamingNomad}
-            onCheckedChange={(checked) => setFormData({ ...formData, isRoamingNomad: checked as boolean })}
-            disabled={!isEditing}
-            data-testid="checkbox-roaming-nomad"
-          />
-          <Label htmlFor="isRoamingNomad">Available for travel work</Label>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="homeCity">Home Location</Label>
+            <Input
+              id="homeCity"
+              value={formData.homeLocation.city}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                homeLocation: { ...formData.homeLocation, city: e.target.value }
+              })}
+              disabled={!isEditing}
+              placeholder="City, State"
+              data-testid="input-home-location"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isRoamingNomad"
+              checked={formData.isRoamingNomad}
+              onCheckedChange={(checked) => setFormData({ ...formData, isRoamingNomad: checked as boolean })}
+              disabled={!isEditing}
+              data-testid="checkbox-roaming-nomad"
+            />
+            <Label htmlFor="isRoamingNomad">Available for travel work</Label>
+          </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   const renderBrandFields = () => (
     <>
@@ -425,58 +540,56 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5" />
-            My Profile
-          </CardTitle>
-          <div className="flex gap-2">
-            {!isEditing ? (
-              <Button onClick={() => setIsEditing(true)} variant="outline" data-testid="button-edit-profile">
-                Edit Profile
-              </Button>
-            ) : (
-              <>
-                <Button onClick={() => setIsEditing(false)} variant="outline" data-testid="button-cancel-edit">
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit} disabled={isLoading} data-testid="button-save-profile">
-                  <Save className="h-4 w-4 mr-2" />
-                  {isLoading ? 'Saving...' : 'Save'}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4 pb-12">
-        <form onSubmit={handleSubmit} className="space-y-4 pb-4">
+      <CardContent className="p-0">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Profile Header with Banner and Avatar */}
-          <Card className="overflow-visible">
-            <CardContent className="p-0">
-              <div className="relative">
-                <ProfileHeader
-                  bannerUrl={formData.bannerUrl}
-                  avatarUrl={formData.avatarUrl}
-                  displayName={formData.displayName || user?.displayName || 'User'}
-                  editable={isEditing}
-                  onBannerUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, bannerUrl: url })) : undefined}
-                  onAvatarUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, avatarUrl: url })) : undefined}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Form fields with top margin to account for overlapping avatar */}
-          <div>
-            {renderBasicFields()}
+          <div className="relative overflow-visible">
+            <ProfileHeader
+              bannerUrl={formData.bannerUrl}
+              avatarUrl={formData.avatarUrl}
+              displayName={formData.displayName || user?.displayName || 'User'}
+              editable={isEditing}
+              onBannerUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, bannerUrl: url })) : undefined}
+              onAvatarUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, avatarUrl: url })) : undefined}
+            />
           </div>
           
-          {user.currentRole === 'hub' && renderHubFields()}
-          {user.currentRole === 'professional' && renderProfessionalFields()}
-          {user.currentRole === 'brand' && renderBrandFields()}
-          {user.currentRole === 'trainer' && renderTrainerFields()}
+          {/* Title and Edit Button - positioned below banner with padding for avatar */}
+          <div className="px-6 pt-20 md:pt-24 pb-4">
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5" />
+                My Profile
+              </CardTitle>
+              <div className="flex gap-2">
+                {!isEditing ? (
+                  <Button onClick={() => setIsEditing(true)} variant="outline" data-testid="button-edit-profile">
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <>
+                    <Button onClick={() => setIsEditing(false)} variant="outline" data-testid="button-cancel-edit">
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} disabled={isLoading} data-testid="button-save-profile">
+                      <Save className="h-4 w-4 mr-2" />
+                      {isLoading ? 'Saving...' : 'Save'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Form fields */}
+          <div className="px-6 pb-12 space-y-4">
+            {renderBasicFields()}
+            
+            {user.currentRole === 'hub' && renderHubFields()}
+            {user.currentRole === 'professional' && renderProfessionalFields()}
+            {user.currentRole === 'brand' && renderBrandFields()}
+            {user.currentRole === 'trainer' && renderTrainerFields()}
+          </div>
         </form>
       </CardContent>
     </Card>
