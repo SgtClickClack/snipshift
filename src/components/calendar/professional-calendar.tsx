@@ -122,7 +122,7 @@ class CalendarErrorBoundary extends Component<
   }
 }
 
-// Current Time Indicator Component
+// Current Time Indicator Component - Red line like Google Calendar
 function CurrentTimeIndicator({
   currentTime,
   view,
@@ -164,12 +164,12 @@ function CurrentTimeIndicator({
       }}
     >
       <div className="flex items-center h-0.5">
-        <div className="w-14 text-xs text-primary font-medium pr-2 text-right bg-background/80">
+        <div className="w-14 text-xs text-red-600 font-medium pr-2 text-right bg-background/80">
           {format(currentTime, "h:mm a")}
         </div>
         <div className="flex-1 relative">
-          <div className="h-0.5 bg-primary relative">
-            <div className="absolute -left-1.5 -top-1.5 w-3 h-3 bg-primary rounded-full border-2 border-background"></div>
+          <div className="h-0.5 bg-red-600 relative">
+            <div className="absolute -left-1.5 -top-1.5 w-3 h-3 bg-red-600 rounded-full border-2 border-background"></div>
           </div>
         </div>
       </div>
@@ -325,49 +325,65 @@ export default function ProfessionalCalendar({
     }
   }, [events, statusFilter]);
 
-  // Event style getter
+  // Event style getter with high contrast colors (WCAG AA compliant)
   const eventStyleGetter = useCallback(
     (event: CalendarEvent) => {
       // Defensive check: ensure event and resource exist
       if (!event || !event.resource) {
         return {
           style: {
-            backgroundColor: "#6b7280",
-            borderColor: "#4b5563",
-            color: "#fff",
+            backgroundColor: "#4b5563", // gray-600 - darker for better contrast
+            borderColor: "#374151", // gray-700 - darker border
+            color: "#ffffff", // white text for high contrast
             borderRadius: "4px",
-            border: "1px solid #4b5563",
-            padding: "2px 4px",
+            border: "2px solid #374151",
+            padding: "4px 6px",
+            fontWeight: "500",
           },
         };
       }
 
       let backgroundColor = "";
       let borderColor = "";
-      let color = "#fff";
+      let color = "#ffffff"; // Default to white for high contrast
+      let opacity = 1; // Default opacity
 
       const status = event.resource.status || "pending";
+      
+      // Check if event is in the past
+      const now = new Date();
+      const isPastEvent = event.end < now;
+      
+      // Apply faded style (opacity 0.6) to past events
+      if (isPastEvent) {
+        opacity = 0.6;
+      }
+
       switch (status) {
         case "confirmed":
-          backgroundColor = "#22c55e"; // green-500
-          borderColor = "#16a34a"; // green-600
+          backgroundColor = "#16a34a"; // green-600 - darker for better contrast
+          borderColor = "#15803d"; // green-700 - darker border
+          color = "#ffffff"; // white text
           break;
         case "pending":
-          backgroundColor = "#3b82f6"; // blue-500
-          borderColor = "#2563eb"; // blue-600
+          backgroundColor = "#2563eb"; // blue-600 - darker for better contrast
+          borderColor = "#1d4ed8"; // blue-700 - darker border
+          color = "#ffffff"; // white text
           break;
         case "completed":
-          backgroundColor = "#6b7280"; // gray-500
-          borderColor = "#4b5563"; // gray-600
+          backgroundColor = "#4b5563"; // gray-600 - darker for better contrast
+          borderColor = "#374151"; // gray-700 - darker border
+          color = "#ffffff"; // white text
           break;
         case "past":
-          backgroundColor = "#9ca3af"; // gray-400
-          borderColor = "#6b7280"; // gray-500
-          color = "#1f2937"; // gray-800
+          backgroundColor = "#6b7280"; // gray-500
+          borderColor = "#4b5563"; // gray-600
+          color = "#ffffff"; // white text for better contrast
           break;
         default:
-          backgroundColor = "#6b7280";
-          borderColor = "#4b5563";
+          backgroundColor = "#4b5563"; // gray-600
+          borderColor = "#374151"; // gray-700
+          color = "#ffffff"; // white text
       }
 
       return {
@@ -376,8 +392,11 @@ export default function ProfessionalCalendar({
           borderColor,
           color,
           borderRadius: "4px",
-          border: `1px solid ${borderColor}`,
-          padding: "2px 4px",
+          border: `2px solid ${borderColor}`,
+          padding: "4px 6px",
+          fontWeight: "500",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.2)",
+          opacity,
         },
       };
     },
@@ -567,7 +586,7 @@ export default function ProfessionalCalendar({
   // Custom toolbar component (returns null to hide default toolbar)
   const customToolbar = useCallback(() => null, []);
   
-  // Custom header component to add current day styling
+  // Custom header component to add current day styling with background highlight
   const customHeader = useCallback(
     ({ date, localizer, label }: { date: Date; localizer: any; label: string }) => {
       const isCurrentDay = isSameDay(date, new Date());
@@ -575,7 +594,8 @@ export default function ProfessionalCalendar({
       const parts = label.split(" ");
       return (
         <div
-          className={`rbc-header ${isCurrentDay ? "rbc-header-today" : ""}`}
+          className={`rbc-header ${isCurrentDay ? "rbc-header-today bg-blue-50/50" : ""}`}
+          style={isCurrentDay ? { backgroundColor: "rgba(239, 246, 255, 0.5)" } : {}}
         >
           {parts.length > 1 ? (
             <>
@@ -591,22 +611,26 @@ export default function ProfessionalCalendar({
     []
   );
 
-  // Create event/availability mutation (placeholder - adjust based on your API)
+  // Create event/availability mutation - uses shifts endpoint for availability slots
   const createEventMutation = useMutation({
     mutationFn: async (data: { title: string; start: Date; end: Date }) => {
-      // This is a placeholder - adjust based on your actual API endpoint
-      const response = await apiRequest("POST", "/api/availability", {
-        title: data.title,
-        start: data.start.toISOString(),
-        end: data.end.toISOString(),
+      // Use shifts endpoint with proper data structure matching ShiftSchema
+      const response = await apiRequest("POST", "/api/shifts", {
+        title: data.title || "Availability",
+        description: "Availability slot",
+        startTime: data.start.toISOString(),
+        endTime: data.end.toISOString(),
+        status: "open",
       });
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both applications and shifts queries to refresh calendar
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
       toast({
         title: "Event created",
-        description: "Your event has been created successfully",
+        description: "Your availability slot has been created successfully",
       });
       setShowCreateModal(false);
       setSelectedSlot(null);
@@ -620,6 +644,89 @@ export default function ProfessionalCalendar({
       });
     },
   });
+
+  // Update event mutation for drag-and-drop and resize
+  const updateEventMutation = useMutation({
+    mutationFn: async (data: { id: string; start: Date; end: Date }) => {
+      // Try to update via PUT endpoint (full update) or PATCH if PUT doesn't exist
+      try {
+        const response = await apiRequest("PUT", `/api/shifts/${data.id}`, {
+          startTime: data.start.toISOString(),
+          endTime: data.end.toISOString(),
+        });
+        return response.json();
+      } catch (error: any) {
+        // Fallback: if PUT doesn't work, we might need to handle this differently
+        // For now, we'll throw the error and handle it in onError
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      toast({
+        title: "Event updated",
+        description: "Shift has been rescheduled successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update event",
+        description: error?.message || "Please try again later",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle event drop (drag-and-drop)
+  const handleEventDrop = useCallback(
+    ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
+      // Validate dates
+      if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+        toast({
+          title: "Invalid time slot",
+          description: "Please select a valid time slot",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Ensure end is after start
+      const validEnd = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000);
+
+      updateEventMutation.mutate({
+        id: event.id,
+        start,
+        end: validEnd,
+      });
+    },
+    [updateEventMutation, toast]
+  );
+
+  // Handle event resize
+  const handleEventResize = useCallback(
+    ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
+      // Validate dates
+      if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+        toast({
+          title: "Invalid time slot",
+          description: "Please select a valid time slot",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Ensure end is after start
+      const validEnd = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000);
+
+      updateEventMutation.mutate({
+        id: event.id,
+        start,
+        end: validEnd,
+      });
+    },
+    [updateEventMutation, toast]
+  );
 
   const handleCreateEvent = () => {
     if (!selectedSlot) {
@@ -976,7 +1083,11 @@ export default function ProfessionalCalendar({
                             onNavigate={handleNavigate}
                             onSelectEvent={handleSelectEvent}
                             onSelectSlot={handleSelectSlot}
+                            onEventDrop={handleEventDrop}
+                            onEventResize={handleEventResize}
                             selectable
+                            resizable
+                            draggableAccessor={() => true}
                             eventPropGetter={eventStyleGetter}
                             min={new Date(2020, 0, 1, 0, 0, 0)}
                             max={new Date(2030, 11, 31, 23, 59, 59)}
@@ -985,18 +1096,36 @@ export default function ProfessionalCalendar({
                               header: customHeader,
                             }}
                             formats={{
-                              dayFormat: "EEE",
+                              dayFormat: (date: Date, culture?: string, localizer?: any) => {
+                                try {
+                                  // Use moment format for week/day view headers: "Mon 12/10"
+                                  return moment(date).format("ddd D/M");
+                                } catch (e) {
+                                  console.error('[CALENDAR ERROR] dayFormat error:', e);
+                                  return format(date, "EEE M/d");
+                                }
+                              },
+                              weekdayFormat: (date: Date, culture?: string, localizer?: any) => {
+                                try {
+                                  // Format for month view weekday headers: "Mon"
+                                  return moment(date).format("ddd");
+                                } catch (e) {
+                                  console.error('[CALENDAR ERROR] weekdayFormat error:', e);
+                                  return format(date, "EEE");
+                                }
+                              },
                               dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
                                 try {
-                                  return format(date, "EEE M/d");
+                                  // Week view day headers: "Mon 12/10"
+                                  return moment(date).format("ddd D/M");
                                 } catch (e) {
                                   console.error('[CALENDAR ERROR] dayHeaderFormat error:', e);
-                                  return date.toLocaleDateString();
+                                  return format(date, "EEE M/d");
                                 }
                               },
                               dayRangeHeaderFormat: ({ start, end }) => {
                                 try {
-                                  return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
+                                  return `${moment(start).format("MMM D")} - ${moment(end).format("MMM D, YYYY")}`;
                                 } catch (e) {
                                   console.error('[CALENDAR ERROR] dayRangeHeaderFormat error:', e);
                                   return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;

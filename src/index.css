@@ -175,88 +175,141 @@ button:active, a:active, [role="button"]:active {
   border-left-color: hsl(var(--primary));
 }
 
-/* React Big Calendar Styles */
+/* React Big Calendar Styles - High Contrast */
 .rbc-calendar {
   font-family: inherit;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
+/* Header styling with high contrast */
 .rbc-header {
   padding: 0.75rem 0.5rem;
   font-weight: 600;
-  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  border-bottom: 2px solid hsl(var(--border));
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 .rbc-header-today {
-  background-color: hsl(var(--accent) / 0.2) !important;
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
   border-left: 3px solid hsl(var(--primary)) !important;
   font-weight: 700;
 }
 
-/* Current day column styling in week/day view */
-.rbc-time-view .rbc-day-slot.rbc-today {
-  background-color: hsl(var(--accent) / 0.1) !important;
-}
-
-.rbc-time-view .rbc-day-slot.rbc-today .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.3);
-}
-
-.rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
-  border-left: 2px solid hsl(var(--primary) / 0.5) !important;
-}
-
-.rbc-day-bg {
-  border-color: hsl(var(--border) / 0.4);
-}
-
-.rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.3);
+/* Time gutter with high contrast */
+.rbc-time-header-gutter {
+  background-color: hsl(var(--muted));
+  border-right: 2px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  font-weight: 600;
 }
 
 .rbc-time-header-content {
-  border-left-color: hsl(var(--border) / 0.4);
+  border-left: 2px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+/* Current day column styling in week/day view */
+.rbc-time-view .rbc-day-slot.rbc-today {
+  background-color: hsl(var(--accent) / 0.2) !important;
+}
+
+.rbc-time-view .rbc-day-slot.rbc-today .rbc-time-slot {
+  border-top-color: hsl(var(--border));
+}
+
+.rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
+  border-left: 3px solid hsl(var(--primary)) !important;
+}
+
+/* Day background with clear borders */
+.rbc-day-bg {
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+.rbc-time-slot {
+  border-top-color: hsl(var(--border) / 0.6);
 }
 
 .rbc-time-content {
-  border-top-color: hsl(var(--border) / 0.3);
+  border-top-color: hsl(var(--border));
+  background-color: hsl(var(--background));
 }
 
 .rbc-time-view {
-  border-color: hsl(var(--border) / 0.4);
-}
-
-.rbc-time-header-gutter {
-  border-right-color: hsl(var(--border) / 0.4);
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--background));
 }
 
 .rbc-day-slot .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.3);
+  border-top-color: hsl(var(--border) / 0.6);
 }
 
+/* Today indicator with high contrast */
 .rbc-today {
-  background-color: hsl(var(--accent) / 0.15) !important;
+  background-color: hsl(var(--accent) / 0.25) !important;
 }
 
 .rbc-today .rbc-day-bg {
-  background-color: hsl(var(--accent) / 0.1) !important;
-  border-left: 2px solid hsl(var(--primary) / 0.5) !important;
+  background-color: hsl(var(--accent) / 0.2) !important;
+  border-left: 3px solid hsl(var(--primary)) !important;
 }
 
+/* Off-range days with subtle background */
 .rbc-off-range-bg {
-  background-color: hsl(var(--muted) / 0.3);
+  background-color: hsl(var(--muted) / 0.4);
+  color: hsl(var(--muted-foreground));
 }
 
+/* Events with high contrast and color coding */
 .rbc-event {
   border-radius: 4px;
-  padding: 2px 4px;
+  padding: 4px 6px;
+  border: 2px solid;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .rbc-event-content {
   font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Event hover state */
+.rbc-event:focus,
+.rbc-event:active {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Month view cells */
+.rbc-date-cell {
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
+
+.rbc-date-cell > a {
+  color: hsl(var(--foreground));
+  text-decoration: none;
+}
+
+.rbc-date-cell > a:hover {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+/* Selected date styling */
+.rbc-selected {
+  background-color: hsl(var(--primary) / 0.2) !important;
+  border: 2px solid hsl(var(--primary)) !important;
 }
 
 /* Hide default toolbar */
