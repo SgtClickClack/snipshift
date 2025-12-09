@@ -19,11 +19,11 @@ export function AuthGuard({
   allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, isAuthReady } = useAuth();
   const location = useLocation();
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
+  // Show loading spinner while checking authentication or waiting for auth to be ready
+  if (isLoading || !isAuthReady) {
     return <LoadingScreen />;
   }
 

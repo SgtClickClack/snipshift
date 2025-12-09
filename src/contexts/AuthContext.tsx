@@ -33,6 +33,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAuthReady: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
   setCurrentRole: (role: NonNullable<User['currentRole']>) => void;
@@ -51,6 +52,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const location = useLocation();
 
     // Test Environment Auth Bypass
@@ -137,6 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     uid: 'test-firebase-uid'
                 });
                 setIsLoading(false);
+                setIsAuthReady(true);
                 return; // Skip Firebase listener
             }
         }
@@ -208,6 +211,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
       }
       setIsLoading(false);
+      setIsAuthReady(true);
     });
 
     return () => unsubscribe();
@@ -342,6 +346,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     isLoading,
     isAuthenticated: !!user,
+    isAuthReady,
     login,
     logout,
     setCurrentRole,

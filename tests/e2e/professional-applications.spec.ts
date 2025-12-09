@@ -13,6 +13,27 @@ import { test, expect } from '../sessionStorage.setup';
 
 test.describe('Professional Applications E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
+    // Capture fatal JavaScript errors that prevent React from mounting
+    page.on('pageerror', (exception) => {
+      console.error('🚨 [FATAL RENDER ERROR]:', exception.message);
+      console.error('📋 [STACK TRACE]:', exception.stack);
+      console.error('📋 [ERROR NAME]:', exception.name);
+    });
+    
+    // Capture console errors (may contain additional context)
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.error('📋 [CONSOLE ERROR]:', msg.text());
+      } else if (msg.text().includes('E2E Debug') || msg.text().includes('Active View') || msg.text().includes('Applications condition')) {
+        console.log('📋 [PAGE CONSOLE]:', msg.text());
+      }
+    });
+    
+    // Capture request failures that might prevent resources from loading
+    page.on('requestfailed', request => {
+      console.error('🚨 [REQUEST FAILED]:', request.url(), request.failure()?.errorText);
+    });
+    
     // Ensure user's currentRole is set to professional before navigating
     // This prevents redirects to hub-dashboard if user has multiple roles
     await page.goto('/professional-dashboard');
@@ -46,45 +67,81 @@ test.describe('Professional Applications E2E Tests', () => {
     
     // Wait for page to fully load (use domcontentloaded to avoid redirect loops)
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
     
-    // First, check for debug elements to understand what's happening
-    const debugView = page.getByTestId('debug-view');
-    const notRenderedMsg = page.getByTestId('applications-view-not-rendered');
-    const applicationsContainer = page.getByTestId('applications-view-container');
-    
-    const debugVisible = await debugView.isVisible({ timeout: 5000 }).catch(() => false);
-    const notRenderedVisible = await notRenderedMsg.isVisible({ timeout: 5000 }).catch(() => false);
-    const containerVisible = await applicationsContainer.isVisible({ timeout: 5000 }).catch(() => false);
-    
-    if (notRenderedVisible) {
-      // The view condition is false - get the message
-      const message = await notRenderedMsg.textContent();
-      throw new Error(`Applications view condition failed: ${message}`);
+    // CRITICAL: Wait for URL to stabilize - there may be redirect loops
+    // Wait for the URL to stop changing for at least 2 seconds
+    let previousUrl = page.url();
+    let stableCount = 0;
+    for (let i = 0; i < 10; i++) {
+      await page.waitForTimeout(500);
+      const currentUrl = page.url();
+      if (currentUrl === previousUrl) {
+        stableCount++;
+        if (stableCount >= 4) {
+          // URL has been stable for 2 seconds
+          break;
+        }
+      } else {
+        stableCount = 0;
+        previousUrl = currentUrl;
+      }
     }
     
-    if (!containerVisible && !debugVisible) {
+    // E2E Debug: Wait for console logs to appear (give React time to render)
+    await page.waitForTimeout(1000);
+    
+    // CRITICAL: Use explicit wait for the heading element instead of generic timeouts
+    // This is the most reliable way to ensure the component has rendered
+    const applicationsTitle = page.getByRole('heading', { name: /my applications/i });
+    
+    try {
+      // Wait explicitly for the heading to be visible - this is the key element
+      await applicationsTitle.waitFor({ state: 'visible', timeout: 30000 });
+      console.log('✅ Applications heading found - ApplicationsView is rendering!');
+    } catch (error) {
+      // If heading not found, check for debug elements to understand what's happening
+      const debugView = page.getByTestId('debug-view');
+      const notRenderedMsg = page.getByTestId('applications-view-not-rendered');
+      const applicationsContainer = page.getByTestId('applications-view-container');
+      
+      const debugVisible = await debugView.isVisible({ timeout: 2000 }).catch(() => false);
+      const notRenderedVisible = await notRenderedMsg.isVisible({ timeout: 2000 }).catch(() => false);
+      const containerVisible = await applicationsContainer.isVisible({ timeout: 2000 }).catch(() => false);
+      
       // Take a screenshot to see what's actually on the page
       await page.screenshot({ path: 'test-results/applications-view-debug.png', fullPage: true });
       const currentUrl = page.url();
       const pageContent = await page.content();
+      
+      // Get page title and body content to understand what's rendering
+      const pageTitle = await page.title();
+      const bodyText = await page.locator('body').textContent().catch(() => 'Unable to get body text');
+      const hasLoadingScreen = await page.locator('[data-testid="loading-screen"], .loading-screen, [class*="Loading"]').isVisible().catch(() => false);
+      
+      console.log('❌ Applications heading not found after 30s wait');
       console.log('Current URL:', currentUrl);
+      console.log('Page title:', pageTitle);
+      console.log('Has loading screen:', hasLoadingScreen);
+      console.log('Body text (first 500 chars):', bodyText?.substring(0, 500));
       console.log('Page contains "applications":', pageContent.includes('applications'));
       console.log('Page contains "My Applications":', pageContent.includes('My Applications'));
       console.log('Page contains "APPLICATIONS READY":', pageContent.includes('APPLICATIONS READY'));
       console.log('Page contains "NOT rendered":', pageContent.includes('NOT rendered'));
+      console.log('Debug element visible:', debugVisible);
+      console.log('Not rendered message visible:', notRenderedVisible);
+      console.log('Container visible:', containerVisible);
+      
+      if (notRenderedVisible) {
+        // The view condition is false - get the message
+        const message = await notRenderedMsg.textContent();
+        throw new Error(`Applications view condition failed: ${message}`);
+      }
+      
       throw new Error(`Applications view container not found. URL: ${currentUrl}. Screenshot saved.`);
     }
     
-    // If debug element is visible, component is rendering but might have other issues
-    if (debugVisible) {
-      console.log('✅ Debug element found - ApplicationsView is rendering!');
-    }
-    
-    // Verify we're on the applications view
-    // The ApplicationsView component should render "My Applications" title
-    const applicationsTitle = page.getByRole('heading', { name: /my applications/i });
-    await expect(applicationsTitle).toBeVisible({ timeout: 15000 });
+    // Verify the heading is visible (should already be visible from wait above)
+    await expect(applicationsTitle).toBeVisible({ timeout: 5000 });
   });
 
   test.describe('Status Tabs', () => {

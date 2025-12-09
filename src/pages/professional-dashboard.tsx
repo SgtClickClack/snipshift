@@ -36,6 +36,13 @@ export default function ProfessionalDashboard() {
   const viewParam = searchParams.get('view');
   const activeView = (viewParam as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') || 'overview';
   
+  // E2E Debug: Log activeView immediately after parsing
+  if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
+    console.log('E2E Debug: Active View Determined As:', activeView);
+    console.log('E2E Debug: View param from URL:', viewParam);
+    console.log('E2E Debug: Applications condition result:', activeView === 'applications');
+  }
+  
   // Debug logging for view switching (remove in production)
   useEffect(() => {
     if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
