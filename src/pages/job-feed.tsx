@@ -172,21 +172,20 @@ export default function JobFeedPage() {
                     ))}
                   </div>
                 )}
-              </div>
 
-              {/* Map View */}
-              <div className={`flex-1 ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
-                <GoogleMapView
-                  jobs={jobList}
-                  onJobSelect={setSelectedJob}
-                  selectedJob={selectedJob}
-                  centerLocation={centerLocation}
-                  radius={radius}
-                  searchLocation={searchLocation}
-                />
+                {/* Map View */}
+                <div className={`flex-1 ${viewMode === 'list' ? 'hidden' : 'block h-full'}`}>
+                  <GoogleMapView
+                    jobs={jobList}
+                    onJobSelect={setSelectedJob}
+                    selectedJob={selectedJob}
+                    centerLocation={centerLocation}
+                    radius={radius}
+                    searchLocation={searchLocation}
+                  />
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
       </div>
