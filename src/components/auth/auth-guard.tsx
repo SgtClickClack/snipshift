@@ -59,8 +59,26 @@ export function AuthGuard({
 
   // If specific role is required but user's currentRole doesn't match
   if (requiredRole && user && user.currentRole !== requiredRole) {
+    // Debug logging for E2E tests
+    if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
+      console.log('[AuthGuard] Role mismatch:', {
+        requiredRole,
+        userCurrentRole: user.currentRole,
+        userRoles: user.roles,
+        redirectingTo: getDashboardRoute(user.currentRole)
+      });
+    }
     const userDashboard = getDashboardRoute(user.currentRole);
     return <Navigate to={userDashboard} replace />;
+  }
+  
+  // Debug: Log successful role check
+  if (requiredRole && (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1')) {
+    console.log('[AuthGuard] Role check passed:', {
+      requiredRole,
+      userCurrentRole: user?.currentRole,
+      userRoles: user?.roles
+    });
   }
 
   // If multiple roles are allowed, check if user's role is in the allowed list

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/loading/loading-spinner';
@@ -20,6 +20,13 @@ import { useApplicationsData, ApplicationStatusFilter } from './useApplicationsD
  * @component
  */
 export default function ApplicationsView() {
+  // Debug logging to confirm component is mounting
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
+      console.log('[ApplicationsView] Component mounted');
+    }
+  }, []);
+  
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'rejected'>('pending');
 
@@ -59,11 +66,15 @@ export default function ApplicationsView() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="applications-view">
+      {/* DEBUG ELEMENT - Remove after fixing */}
+      <div data-testid="debug-view" style={{ padding: '10px', background: 'yellow', color: 'black', fontWeight: 'bold' }}>
+        APPLICATIONS READY - Component is rendering
+      </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Title */}
         <header className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">My Applications</h1>
+          <h1 className="text-3xl font-bold text-foreground" data-testid="applications-title">My Applications</h1>
           <p className="text-muted-foreground mt-2">
             View and manage the status of shifts you have applied for
           </p>

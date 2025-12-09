@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../sessionStorage.setup';
 
 /**
  * E2E Tests for Professional Applications View
@@ -13,17 +13,72 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Professional Applications E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to professional dashboard with applications view
-    await page.goto('/professional-dashboard?view=applications');
+    // Ensure user's currentRole is set to professional before navigating
+    // This prevents redirects to hub-dashboard if user has multiple roles
+    await page.goto('/professional-dashboard');
     await page.waitForLoadState('domcontentloaded');
     
-    // Wait for page to fully load
-    await page.waitForTimeout(3000);
-    
-    // Check if we were redirected (e.g., due to auth issues)
+    // Check if we were redirected (e.g., due to auth or role issues)
     const currentUrl = page.url();
     if (currentUrl.includes('/login')) {
       throw new Error('Not authenticated - redirected to login. Check auth.setup.ts');
+    }
+    
+    // If redirected to hub-dashboard, the user's currentRole might not be set to professional
+    // Try to set it via the role selection or navigate directly with the view param
+    if (currentUrl.includes('/hub-dashboard')) {
+      // User might have multiple roles - try to switch to professional role
+      // Or navigate directly to professional dashboard with view param
+      await page.goto('/professional-dashboard?view=applications');
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(2000);
+      
+      // Check again if we're still redirected
+      const newUrl = page.url();
+      if (newUrl.includes('/hub-dashboard') || newUrl.includes('/login')) {
+        throw new Error(`Unable to access professional dashboard. Current URL: ${newUrl}. User may need currentRole set to 'professional'.`);
+      }
+    } else {
+      // Navigate to applications view if we're already on professional dashboard
+      await page.goto('/professional-dashboard?view=applications');
+      await page.waitForLoadState('domcontentloaded');
+    }
+    
+    // Wait for page to fully load (use domcontentloaded to avoid redirect loops)
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(3000);
+    
+    // First, check for debug elements to understand what's happening
+    const debugView = page.getByTestId('debug-view');
+    const notRenderedMsg = page.getByTestId('applications-view-not-rendered');
+    const applicationsContainer = page.getByTestId('applications-view-container');
+    
+    const debugVisible = await debugView.isVisible({ timeout: 5000 }).catch(() => false);
+    const notRenderedVisible = await notRenderedMsg.isVisible({ timeout: 5000 }).catch(() => false);
+    const containerVisible = await applicationsContainer.isVisible({ timeout: 5000 }).catch(() => false);
+    
+    if (notRenderedVisible) {
+      // The view condition is false - get the message
+      const message = await notRenderedMsg.textContent();
+      throw new Error(`Applications view condition failed: ${message}`);
+    }
+    
+    if (!containerVisible && !debugVisible) {
+      // Take a screenshot to see what's actually on the page
+      await page.screenshot({ path: 'test-results/applications-view-debug.png', fullPage: true });
+      const currentUrl = page.url();
+      const pageContent = await page.content();
+      console.log('Current URL:', currentUrl);
+      console.log('Page contains "applications":', pageContent.includes('applications'));
+      console.log('Page contains "My Applications":', pageContent.includes('My Applications'));
+      console.log('Page contains "APPLICATIONS READY":', pageContent.includes('APPLICATIONS READY'));
+      console.log('Page contains "NOT rendered":', pageContent.includes('NOT rendered'));
+      throw new Error(`Applications view container not found. URL: ${currentUrl}. Screenshot saved.`);
+    }
+    
+    // If debug element is visible, component is rendering but might have other issues
+    if (debugVisible) {
+      console.log('✅ Debug element found - ApplicationsView is rendering!');
     }
     
     // Verify we're on the applications view

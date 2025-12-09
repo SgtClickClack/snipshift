@@ -90,16 +90,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
 
             if (shouldBypass) {
-                const primaryRole = rolesList[0] || 'professional';
-                
-                // Get isOnboarded and ID from session if available
+                // CRITICAL: Read currentRole from sessionStorage if available, otherwise use roles[0]
+                const stored = sessionStorage.getItem('snipshift_test_user');
+                let currentRole: string = rolesList[0] || 'professional';
                 let isOnboarded = true;
                 let userId = 'test-user-id';
                 
-                const stored = sessionStorage.getItem('snipshift_test_user');
                 if (stored) {
                     try {
                         const data = JSON.parse(stored);
+                        // Use currentRole from sessionStorage if it exists, otherwise fall back to roles[0]
+                        if (data.currentRole) {
+                            currentRole = data.currentRole;
+                        } else if (data.roles && data.roles.length > 0) {
+                            currentRole = data.roles[0];
+                        }
                         if (data.isOnboarded !== undefined) {
                             isOnboarded = data.isOnboarded;
                         }
@@ -111,12 +116,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     }
                 }
 
+                // Debug logging for E2E tests
+                if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
+                    console.log('[AuthContext] Setting test user:', {
+                        currentRole,
+                        roles: rolesList,
+                        isOnboarded
+                    });
+                }
+
                 setUser({
                     id: userId,
                     email: 'test@snipshift.com',
                     name: 'Test User',
                     roles: rolesList as any,
-                    currentRole: primaryRole as any,
+                    currentRole: currentRole as any,
                     isOnboarded: isOnboarded,
                     createdAt: new Date(),
                     updatedAt: new Date(),
