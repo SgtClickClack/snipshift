@@ -30,58 +30,23 @@ test.describe('Landing Page Layout Regression Tests', () => {
       // Wait for badges to be rendered
       await page.waitForTimeout(1000);
       
-      // Check each badge is visible
-      // Badges are in divs with absolute positioning, rounded-full, and contain the number text
+      // Check each badge is visible using data-testid
       for (let i = 1; i <= 4; i++) {
-        // Find badge using a more specific selector - badges have rounded-full class and are in cards
-        const badge = await page.evaluateHandle((badgeNumber) => {
-          // Look for divs with rounded-full class (badges are circular)
-          const candidates = Array.from(document.querySelectorAll('div.rounded-full, div[class*="rounded-full"]'));
-          for (const el of candidates) {
-            // Check if it contains the badge number and is absolutely positioned
-            if (el.textContent?.trim() === String(badgeNumber)) {
-              const style = window.getComputedStyle(el);
-              if (style.position === 'absolute') {
-                // Verify it's in the "How It Works" section by checking parent structure
-                const section = el.closest('section, div[class*="How"], div[class*="py-20"]');
-                if (section) {
-                  return el;
-                }
-              }
-            }
-          }
-          // Fallback: search all elements
-          const allElements = Array.from(document.querySelectorAll('*'));
-          for (const el of allElements) {
-            if (el.textContent?.trim() === String(badgeNumber) && el.tagName === 'DIV') {
-              const style = window.getComputedStyle(el);
-              if (style.position === 'absolute' && style.borderRadius === '50%') {
-                return el;
-              }
-            }
-          }
-          return null;
-        }, i);
+        const badge = page.getByTestId(`step-badge-${i}`);
+        await expect(badge).toBeVisible();
         
-        const badgeElement = badge.asElement();
-        expect(badgeElement).not.toBeNull();
+        // Verify badge is within viewport
+        const boundingBox = await badge.boundingBox();
+        expect(boundingBox).not.toBeNull();
         
-        if (badgeElement) {
-          await expect(badgeElement).toBeVisible();
+        if (boundingBox) {
+          const viewportSize = page.viewportSize();
+          expect(viewportSize).not.toBeNull();
           
-          // Verify badge is within viewport
-          const boundingBox = await badgeElement.boundingBox();
-          expect(boundingBox).not.toBeNull();
-          
-          if (boundingBox) {
-            const viewportSize = page.viewportSize();
-            expect(viewportSize).not.toBeNull();
-            
-            if (viewportSize) {
-              // Check badge is within viewport bounds (allowing for negative top position)
-              expect(boundingBox.x).toBeGreaterThanOrEqual(-50); // Allow for badges extending above cards
-              expect(boundingBox.x + boundingBox.width).toBeLessThanOrEqual(viewportSize.width + 50);
-            }
+          if (viewportSize) {
+            // Check badge is within viewport bounds (allowing for negative top position)
+            expect(boundingBox.x).toBeGreaterThanOrEqual(-50); // Allow for badges extending above cards
+            expect(boundingBox.x + boundingBox.width).toBeLessThanOrEqual(viewportSize.width + 50);
           }
         }
       }
@@ -94,47 +59,19 @@ test.describe('Landing Page Layout Regression Tests', () => {
       
       await page.waitForTimeout(1000);
       
-      // Find badge 1 using evaluate with more specific selector
-      const badge1Handle = await page.evaluateHandle(() => {
-        // Look for divs with rounded-full class first
-        const candidates = Array.from(document.querySelectorAll('div.rounded-full, div[class*="rounded-full"]'));
-        for (const el of candidates) {
-          if (el.textContent?.trim() === '1') {
-            const style = window.getComputedStyle(el);
-            if (style.position === 'absolute') {
-              return el;
-            }
-          }
-        }
-        // Fallback: search all divs
-        const allDivs = Array.from(document.querySelectorAll('div'));
-        for (const el of allDivs) {
-          if (el.textContent?.trim() === '1') {
-            const style = window.getComputedStyle(el);
-            if (style.position === 'absolute' && style.borderRadius === '50%') {
-              return el;
-            }
-          }
-        }
-        return null;
+      // Find badge 1 using data-testid
+      const badge1 = page.getByTestId('step-badge-1');
+      await expect(badge1).toBeVisible();
+      
+      // Get computed z-index
+      const zIndex = await badge1.evaluate((el) => {
+        return window.getComputedStyle(el).zIndex;
       });
       
-      const badge1 = badge1Handle.asElement();
-      expect(badge1).not.toBeNull();
-      
-      if (badge1) {
-        await expect(badge1).toBeVisible();
-        
-        // Get computed z-index
-        const zIndex = await badge1.evaluate((el) => {
-          return window.getComputedStyle(el).zIndex;
-        });
-        
-        // z-badge class should have z-index >= 20
-        // Convert to number (handles 'auto' and other values)
-        const zIndexNum = zIndex === 'auto' ? 0 : parseInt(zIndex, 10);
-        expect(zIndexNum).toBeGreaterThanOrEqual(20);
-      }
+      // z-badge class should have z-index >= 20
+      // Convert to number (handles 'auto' and other values)
+      const zIndexNum = zIndex === 'auto' ? 0 : parseInt(zIndex, 10);
+      expect(zIndexNum).toBeGreaterThanOrEqual(20);
     });
   });
 

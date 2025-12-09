@@ -30,7 +30,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8 md:pt-6">
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-1">
                 1
               </div>
               <CardContent className="pt-0">
@@ -44,7 +44,7 @@ export default function LandingPage() {
             
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-2">
                 2
               </div>
               <CardContent className="pt-0">
@@ -58,7 +58,7 @@ export default function LandingPage() {
             
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-3">
                 3
               </div>
               <CardContent className="pt-0">
@@ -72,7 +72,7 @@ export default function LandingPage() {
             
             {/* Keep overflow-visible to prevent badge clipping */}
             <Card className="text-center p-8 bg-slate-900/50 border border-white/10 rounded-xl hover:shadow-xl hover:border-white/20 transition-all duration-300 relative overflow-visible">
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-4">
                 4
               </div>
               <CardContent className="pt-0">
