@@ -13,24 +13,41 @@ const { Client } = require('pg');
 
 const fs = require('fs');
 
-// Load environment variables
-const envPath = path.resolve(__dirname, '../.env');
-console.log('Loading .env from:', envPath);
+// Load environment variables - check multiple locations
+const rootEnvPath = path.resolve(__dirname, '../.env');
+const apiEnvPath = path.resolve(__dirname, '../api/.env');
+const cwdEnvPath = path.resolve(process.cwd(), '.env');
 
-if (fs.existsSync(envPath)) {
-    const envConfig = dotenv.parse(fs.readFileSync(envPath));
-    console.log('Keys found in .env:', Object.keys(envConfig));
+console.log('Loading .env files...');
+
+// Try root .env first
+if (fs.existsSync(rootEnvPath)) {
+    const envConfig = dotenv.parse(fs.readFileSync(rootEnvPath));
+    console.log('Keys found in root .env:', Object.keys(envConfig));
     for (const k in envConfig) {
         process.env[k] = envConfig[k];
     }
 } else {
-    console.log('.env file not found at', envPath);
+    console.log('Root .env file not found at', rootEnvPath);
+}
+
+// Try api/.env if DATABASE_URL still not found
+if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+    if (fs.existsSync(apiEnvPath)) {
+        const envConfig = dotenv.parse(fs.readFileSync(apiEnvPath));
+        console.log('Keys found in api/.env:', Object.keys(envConfig));
+        for (const k in envConfig) {
+            process.env[k] = envConfig[k];
+        }
+    } else {
+        console.log('api/.env file not found at', apiEnvPath);
+    }
 }
 
 // Also try loading from CWD if not found
-if (!process.env.DATABASE_URL) {
-    console.log('Trying to load .env from CWD:', path.resolve(process.cwd(), '.env'));
-    dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+    console.log('Trying to load .env from CWD:', cwdEnvPath);
+    dotenv.config({ path: cwdEnvPath });
 }
 
 // Initialize Firebase Admin if not already initialized
