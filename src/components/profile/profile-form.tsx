@@ -464,8 +464,6 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
                   onBannerUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, bannerUrl: url })) : undefined}
                   onAvatarUpload={isEditing ? (url) => setFormData(prev => ({ ...prev, avatarUrl: url })) : undefined}
                 />
-                {/* Spacer for overlapping avatar (avatar is 96px/128px, overlaps by 48px, so need ~80px/96px + padding) */}
-                <div className="h-20 md:h-24" />
               </div>
             </CardContent>
           </Card>
