@@ -295,3 +295,49 @@ export async function createPortalSession(): Promise<{ url: string }> {
   const res = await apiRequest('POST', '/api/stripe/create-portal-session');
   return res.json();
 }
+
+// --- Stubs for E2E Testing & Future Implementation ---
+
+// Type alias for ApplicationData (used in job-details.tsx)
+export type ApplicationData = CreateApplicationData;
+
+// Notifications
+export interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  read: boolean;
+  timestamp: string;
+}
+
+export const fetchNotifications = async (): Promise<Notification[]> => { return []; };
+
+export const markNotificationAsRead = async (id: string): Promise<boolean> => { return true; };
+
+export const markAllNotificationsAsRead = async (): Promise<boolean> => { return true; };
+
+// Job Board
+export const fetchJobDetails = async (id: string): Promise<JobDetails> => { 
+  return {} as JobDetails; 
+};
+
+export const applyToJob = async (id: string, data: ApplicationData): Promise<{ id: string; status: string }> => { 
+  return { id: 'mock-application-id', status: 'pending' }; 
+};
+
+export const fetchMyApplications = async (): Promise<Application[]> => { return []; };
+
+export const fetchJobApplications = async (): Promise<JobApplication[]> => { return []; };
+
+// Social / Community
+export const createConversation = async (userId: string): Promise<{ id: string }> => { 
+  return { id: 'mock-conv-id' }; 
+};
+
+export async function fetchUserReviews(userId: string): Promise<Review[]> {
+  const res = await apiRequest('GET', `/api/reviews/${userId}`);
+  return res.json();
+}
+
+// Subscription
+export const cancelSubscription = async (): Promise<boolean> => { return true; };
