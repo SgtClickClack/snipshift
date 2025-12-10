@@ -28,6 +28,26 @@ interface ProfileHeaderProps {
   className?: string;
 }
 
+// Helper function to extract URL string from various object structures
+function extractUrlString(value: any): string | null {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (value && typeof value === 'object') {
+    // Try common object structures
+    if (value.bannerUrl && typeof value.bannerUrl === 'string') {
+      return value.bannerUrl;
+    }
+    if (value.data?.bannerUrl && typeof value.data.bannerUrl === 'string') {
+      return value.data.bannerUrl;
+    }
+    if (value.url && typeof value.url === 'string') {
+      return value.url;
+    }
+  }
+  return null;
+}
+
 export default function ProfileHeader({
   bannerUrl,
   avatarUrl,
@@ -55,31 +75,49 @@ export default function ProfileHeader({
       // Type safety: Ensure current is a string (not an object)
       if (current && typeof current !== 'string') {
         console.error('Banner useEffect - current is not a string, resetting:', current);
-        // If current is an object, reset to prop or empty string
-        return (typeof bannerUrl === 'string' ? bannerUrl : null) || null;
+        // If current is an object, try to extract URL or reset
+        const extractedCurrent = extractUrlString(current);
+        if (extractedCurrent) {
+          return extractedCurrent;
+        }
+        // If we can't extract, reset to prop or null
+        const extractedProp = extractUrlString(bannerUrl);
+        return extractedProp || null;
       }
 
-      // Type safety: Ensure prop is a string before using it
-      if (bannerUrl && typeof bannerUrl !== 'string') {
-        console.error('Banner useEffect - bannerUrl prop is not a string, keeping current:', bannerUrl);
+      // Extract URL string from prop if it's an object
+      let propUrlString: string | null = null;
+      if (typeof bannerUrl === 'string') {
+        propUrlString = bannerUrl;
+      } else if (bannerUrl && typeof bannerUrl === 'object') {
+        console.warn('Banner useEffect - bannerUrl prop is an object, extracting URL:', bannerUrl);
+        propUrlString = extractUrlString(bannerUrl);
+        if (!propUrlString) {
+          console.error('Banner useEffect - Could not extract URL from object, keeping current:', bannerUrl);
+          return current;
+        }
+      } else if (bannerUrl === null || bannerUrl === undefined) {
+        propUrlString = null;
+      } else {
+        console.error('Banner useEffect - bannerUrl prop has unexpected type:', typeof bannerUrl, bannerUrl);
         return current;
       }
 
       // Only update if prop is different from current state
       // IMPORTANT: If current state has a cache-busting timestamp (?t=) and prop doesn't,
       // keep the current state to preserve the optimistic update
-      if (bannerUrl !== current) {
+      if (propUrlString !== current) {
         // Check if current has cache-busting but prop doesn't (base URL match)
         // Only do string operations if both are strings
-        if (typeof current === 'string' && typeof bannerUrl === 'string') {
+        if (typeof current === 'string' && typeof propUrlString === 'string') {
           const currentBaseUrl = current.split('?')[0];
-          const propBaseUrl = bannerUrl.split('?')[0];
+          const propBaseUrl = propUrlString.split('?')[0];
           
           if (currentBaseUrl && propBaseUrl && currentBaseUrl === propBaseUrl && current.includes('?t=')) {
             // Current has cache-busting, prop doesn't - keep current state
             console.log('Banner useEffect - Preserving cache-busted URL:', { 
               current, 
-              prop: bannerUrl 
+              prop: propUrlString 
             });
             return current;
           }
@@ -87,9 +125,9 @@ export default function ProfileHeader({
         
         console.log('Banner useEffect - Prop changed, updating state:', { 
           from: current, 
-          to: bannerUrl 
+          to: propUrlString 
         });
-        return bannerUrl;
+        return propUrlString;
       }
       return current;
     });
