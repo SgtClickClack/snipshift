@@ -108,7 +108,36 @@ test('Shop Owner can post a shift and see it in the feed', async ({ page }) => {
 
   // 16. Assert: "E2E Test Shift" is visible in the list
   // We might need to wait for the feed to load
-  await expect(page.getByText('E2E Test Shift').first()).toBeVisible();
+  // Wait for the jobs feed to load first
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(3000); // Give time for React to render and API calls to complete
+  
+  // Wait for job cards to appear in the feed
+  const jobCards = page.locator('[data-testid^="job-card"], .card-chrome, [class*="job-card"]');
+  await expect(jobCards.first()).toBeVisible({ timeout: 15000 }).catch(() => {
+    // If no job cards appear, the feed might be empty or still loading
+    console.log('⚠️ No job cards found, waiting longer...');
+  });
+  
+  // Try to find the shift text - it might be in a hidden element initially
+  const shiftText = page.getByText('E2E Test Shift').first();
+  
+  // Wait for the element to be attached to DOM first
+  await shiftText.waitFor({ state: 'attached', timeout: 15000 });
+  
+  // Scroll into view if needed and wait for visibility
+  await shiftText.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(500); // Give time for scroll to complete
+  
+  // Check if element is visible, if not try to find it in a different way
+  const isVisible = await shiftText.isVisible().catch(() => false);
+  if (!isVisible) {
+    // Try finding by test ID or in a card
+    const shiftCard = page.locator('[data-testid*="job"], .card-chrome').filter({ hasText: 'E2E Test Shift' }).first();
+    await expect(shiftCard).toBeVisible({ timeout: 5000 });
+  } else {
+    await expect(shiftText).toBeVisible({ timeout: 5000 });
+  }
 
   // 17. Shop Owner Logs out
   await page.click('[data-testid="button-profile-menu"]');

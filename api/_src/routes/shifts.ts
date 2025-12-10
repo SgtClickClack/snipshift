@@ -112,10 +112,27 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
     const newShift = await shiftsRepo.createShift(shiftPayload);
 
     if (!newShift) {
-      console.error('[POST /api/shifts] createShift returned null - database may not be available');
+      // Check if database is available
+      const { getDatabase } = await import('../db/connection.js');
+      const db = getDatabase();
+      const dbAvailable = db !== null;
+      
+      console.error('[POST /api/shifts] createShift returned null', {
+        databaseAvailable: dbAvailable,
+        shiftPayload: {
+          employerId: shiftPayload.employerId,
+          title: shiftPayload.title,
+          startTime: shiftPayload.startTime,
+          endTime: shiftPayload.endTime,
+        }
+      });
+      
       res.status(500).json({ 
-        message: 'Failed to create shift - database unavailable',
-        error: 'Database connection failed or insert returned no result'
+        message: 'Failed to create shift',
+        error: dbAvailable 
+          ? 'Database insert returned no result - check database logs' 
+          : 'Database connection unavailable',
+        databaseAvailable: dbAvailable
       });
       return;
     }

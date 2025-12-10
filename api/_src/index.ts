@@ -866,6 +866,41 @@ app.get('/api/applications', asyncHandler(async (req, res) => {
   res.status(200).json([]);
 }));
 
+// Handler for fetching current user info (alias for /api/me)
+app.get('/api/user', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const user = await usersRepo.getUserById(userId);
+
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  res.status(200).json({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    roles: user.roles,
+    bio: user.bio,
+    phone: user.phone,
+    location: user.location,
+    avatarUrl: user.avatarUrl,
+    bannerUrl: user.bannerUrl,
+    averageRating: user.averageRating,
+    reviewCount: user.reviewCount,
+    isOnboarded: user.isOnboarded,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  });
+}));
+
 // Handler for fetching current user's applications
 app.get('/api/me/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;

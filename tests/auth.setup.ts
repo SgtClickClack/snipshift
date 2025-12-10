@@ -15,9 +15,48 @@ const __dirname = path.dirname(__filename);
 async function globalSetup(config: FullConfig) {
   console.log('🔐 Global Setup: Authenticating test user...');
 
-  const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3002';
+  const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
   const testEmail = process.env.TEST_EMAIL || 'test@snipshift.com';
   const testPassword = process.env.TEST_PASSWORD || 'password123';
+
+  // Wait for servers to be ready before starting
+  console.log('⏳ Waiting for servers to be ready...');
+  const maxWaitTime = 120000; // 2 minutes
+  const startTime = Date.now();
+  let serversReady = false;
+  
+  while (Date.now() - startTime < maxWaitTime && !serversReady) {
+    try {
+      // Check if frontend is ready
+      const frontendResponse = await fetch(`${baseURL}/`, { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000)
+      }).catch(() => null);
+      
+      // Check if API is ready
+      const apiResponse = await fetch('http://localhost:5000/health', { 
+        method: 'GET',
+        signal: AbortSignal.timeout(5000)
+      }).catch(() => null);
+      
+      if (frontendResponse?.ok && apiResponse?.ok) {
+        console.log('✅ Servers are ready!');
+        serversReady = true;
+        break;
+      } else {
+        console.log('⏳ Waiting for servers...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (error) {
+      // Servers not ready yet, wait and retry
+      console.log('⏳ Servers not ready, retrying...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+  
+  if (!serversReady) {
+    throw new Error('Servers did not become ready within timeout period');
+  }
 
   // Create a new browser context
   const browser = await chromium.launch();
@@ -27,15 +66,36 @@ async function globalSetup(config: FullConfig) {
   try {
     // Navigate to login page
     console.log(`📝 Navigating to login page: ${baseURL}/login`);
-    await page.goto(`${baseURL}/login`);
+    await page.goto(`${baseURL}/login`, { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForLoadState('domcontentloaded');
 
-    // Wait for login form to be visible
+    // Wait for page to be fully interactive
+    await page.waitForTimeout(2000);
+
+    // Wait for login form to be visible - try multiple selectors
     const emailInput = page.getByTestId('input-email').or(page.locator('input[type="email"]')).first();
     const passwordInput = page.getByTestId('input-password').or(page.locator('input[type="password"]')).first();
 
-    await emailInput.waitFor({ state: 'visible', timeout: 10000 });
-    await passwordInput.waitFor({ state: 'visible', timeout: 10000 });
+    // Try to wait for the inputs with a longer timeout and better error handling
+    try {
+      await emailInput.waitFor({ state: 'visible', timeout: 20000 });
+      await passwordInput.waitFor({ state: 'visible', timeout: 20000 });
+    } catch (error) {
+      // Take a screenshot for debugging
+      await page.screenshot({ path: path.join(__dirname, 'login-page-debug.png'), fullPage: true });
+      console.log('⚠️  Login form not found, checking page content...');
+      const pageContent = await page.content();
+      console.log(`Page title: ${await page.title()}`);
+      console.log(`Page URL: ${page.url()}`);
+      // Check if there are any errors in the console
+      const errors = await page.evaluate(() => {
+        return (window as any).__playwright_errors || [];
+      });
+      if (errors.length > 0) {
+        console.log('Page errors:', errors);
+      }
+      throw error;
+    }
 
     console.log('✍️  Filling in credentials...');
     // Fill in credentials
@@ -73,6 +133,52 @@ async function globalSetup(config: FullConfig) {
     
     if (!isAuthenticated) {
       throw new Error(`Authentication failed. Current URL: ${currentUrl}`);
+    }
+
+    // CRITICAL: Ensure the database user exists
+    // The E2E tests use a fixed user ID (00000000-0000-0000-0000-000000000001) which must exist in the database
+    // Note: The API runs on port 5000, not 3002
+    console.log('🔍 Ensuring database user exists...');
+    try {
+      // The API is running on port 5000 (see server startup logs)
+      const apiBaseURL = process.env.API_URL || 'http://localhost:5000';
+      
+      // Try to get or create the user via API
+      // First, try calling /api/user to see if user exists
+      const userResponse = await page.request.get(`${apiBaseURL}/api/user`, {
+        headers: {
+          'Authorization': 'Bearer mock-test-token', // Use the E2E mock token
+        },
+      }).catch(() => null);
+
+      if (!userResponse || (!userResponse.ok() && userResponse.status() === 401)) {
+        // User doesn't exist, try to create via register endpoint
+        console.log('📝 Creating database user...');
+        const registerResponse = await page.request.post(`${apiBaseURL}/api/users/register`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          data: {
+            email: testEmail,
+            name: 'Test User',
+            password: testPassword,
+            role: 'professional', // Default to professional for calendar tests
+          },
+        }).catch(() => null);
+
+        if (registerResponse && registerResponse.ok()) {
+          const userData = await registerResponse.json();
+          console.log(`✅ Database user created: ${userData.email} (ID: ${userData.id})`);
+        } else {
+          console.log(`⚠️  User registration failed, but continuing...`);
+        }
+      } else if (userResponse && userResponse.ok()) {
+        const userData = await userResponse.json();
+        console.log(`✅ Database user exists: ${userData.email} (ID: ${userData.id})`);
+      }
+    } catch (error) {
+      console.log(`⚠️  Failed to ensure database user exists: ${error}. Continuing anyway...`);
+      // This is not fatal - the API might create the user on first use
     }
 
     // If we're on hub-dashboard or need to ensure professional role, set role

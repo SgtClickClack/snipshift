@@ -56,5 +56,8 @@ export default defineConfig({
     env: {
       VITE_E2E: '1', // Disable tutorial overlay during E2E tests
     },
+    // Wait for both frontend and API to be ready
+    // The frontend will be ready when localhost:3000 responds
+    // We'll add a health check in the test setup to ensure API is also ready
   },
 });

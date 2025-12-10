@@ -11,8 +11,42 @@ async function checkNoHorizontalScroll(page: Page) {
   expect(scrollWidth).toBeLessThanOrEqual(viewportWidth + 1);
 }
 
+/**
+ * Helper function to wait for both frontend and API servers to be ready
+ */
+async function waitForServersReady(page: Page) {
+  // Wait for API to be ready
+  await expect.poll(async () => {
+    try {
+      const response = await page.request.get('http://localhost:5000/health');
+      return response.status();
+    } catch (e) {
+      return 0;
+    }
+  }, {
+    timeout: 30000,
+    intervals: [1000, 2000, 5000],
+  }).toBe(200);
+  
+  // Wait for frontend to be ready
+  await expect.poll(async () => {
+    try {
+      const response = await page.request.get('http://localhost:3000');
+      return response.status();
+    } catch (e) {
+      return 0;
+    }
+  }, {
+    timeout: 30000,
+    intervals: [1000, 2000, 5000],
+  }).toBe(200);
+}
+
 test.describe('Landing Page Layout Regression Tests', () => {
   test.beforeEach(async ({ page }) => {
+    // Wait for servers to be ready before starting tests
+    await waitForServersReady(page);
+    
     // Navigate to landing page
     await page.goto('/');
     // Wait for page to load (use domcontentloaded for faster tests, networkidle can be flaky)
@@ -306,46 +340,49 @@ test.describe('Landing Page Layout Regression Tests', () => {
       });
       const darkPage = await context.newPage();
       
-      // Set theme to dark mode via localStorage before navigation
-      await darkPage.addInitScript(() => {
-        localStorage.setItem('snipshift-ui-theme', 'dark');
-      });
-      
-      // Navigate to landing page
-      await darkPage.goto('/');
-      await darkPage.waitForLoadState('domcontentloaded');
-      await darkPage.waitForTimeout(1500);
-      
-      // Wait for theme to be applied
-      await darkPage.waitForFunction(() => {
-        return document.documentElement.classList.contains('dark');
-      }, { timeout: 5000 });
-      
-      // Wait a bit more for all styles to be applied
-      await darkPage.waitForTimeout(500);
-      
-      // Scroll to top to ensure Hero section is visible
-      await darkPage.evaluate(() => window.scrollTo(0, 0));
-      await darkPage.waitForTimeout(500);
-      
-      // Take snapshot of Hero section - use viewport screenshot since Hero is full screen
-      await expect(darkPage).toHaveScreenshot('landing-dark-hero.png', {
-        maxDiffPixels: 200,
-        fullPage: false, // Only capture viewport
-      });
-      
-      // Scroll to "How It Works" section
-      const howItWorksHeading = darkPage.getByRole('heading', { name: /How Snipshift Works/i });
-      await howItWorksHeading.scrollIntoViewIfNeeded();
-      await darkPage.waitForTimeout(500);
-      
-      // Find the parent container of "How It Works" section
-      const howItWorksSection = howItWorksHeading.locator('..').locator('..');
-      await expect(howItWorksSection).toHaveScreenshot('landing-dark-how-it-works.png', {
-        maxDiffPixels: 200,
-      });
-      
-      await context.close();
+      try {
+        // Set theme to dark mode via localStorage before navigation
+        await darkPage.addInitScript(() => {
+          localStorage.setItem('snipshift-ui-theme', 'dark');
+        });
+        
+        // Navigate to landing page
+        await darkPage.goto('/');
+        await darkPage.waitForLoadState('domcontentloaded');
+        await darkPage.waitForTimeout(1500);
+        
+        // Wait for theme to be applied
+        await darkPage.waitForFunction(() => {
+          return document.documentElement.classList.contains('dark');
+        }, { timeout: 5000 });
+        
+        // Wait a bit more for all styles to be applied
+        await darkPage.waitForTimeout(500);
+        
+        // Scroll to top to ensure Hero section is visible
+        await darkPage.evaluate(() => window.scrollTo(0, 0));
+        await darkPage.waitForTimeout(500);
+        
+        // Take snapshot of Hero section - use viewport screenshot since Hero is full screen
+        await expect(darkPage).toHaveScreenshot('landing-dark-hero.png', {
+          maxDiffPixels: 200,
+          fullPage: false, // Only capture viewport
+        });
+        
+        // Scroll to "How It Works" section
+        const howItWorksHeading = darkPage.getByRole('heading', { name: /How Snipshift Works/i });
+        await howItWorksHeading.scrollIntoViewIfNeeded();
+        await darkPage.waitForTimeout(500);
+        
+        // Find the parent container of "How It Works" section
+        const howItWorksSection = howItWorksHeading.locator('..').locator('..');
+        await expect(howItWorksSection).toHaveScreenshot('landing-dark-how-it-works.png', {
+          maxDiffPixels: 200,
+        });
+      } finally {
+        // Always close context in finally block
+        await context.close();
+      }
     });
 
     test('should display landing page correctly in light mode', async ({ page, browser }) => {
@@ -355,66 +392,69 @@ test.describe('Landing Page Layout Regression Tests', () => {
       });
       const lightPage = await context.newPage();
       
-      // Set theme to light mode via localStorage before navigation
-      await lightPage.addInitScript(() => {
-        localStorage.setItem('snipshift-ui-theme', 'light');
-      });
-      
-      // Navigate to landing page
-      await lightPage.goto('/');
-      await lightPage.waitForLoadState('domcontentloaded');
-      await lightPage.waitForTimeout(1500);
-      
-      // Wait for theme to be applied (light mode)
-      await lightPage.waitForFunction(() => {
-        return document.documentElement.classList.contains('light');
-      }, { timeout: 5000 }).catch(async () => {
-        // If light class isn't applied, try toggling manually
-        const themeToggle = lightPage.getByRole('button', { name: /toggle theme/i }).or(
-          lightPage.locator('button[aria-label="Toggle theme"]')
-        ).first();
-        if (await themeToggle.isVisible().catch(() => false)) {
-          await themeToggle.click();
-          await lightPage.waitForTimeout(300);
-          const lightOption = lightPage.getByRole('menuitem', { name: /^light$/i });
-          if (await lightOption.isVisible().catch(() => false)) {
-            await lightOption.click();
-            await lightPage.waitForTimeout(500);
+      try {
+        // Set theme to light mode via localStorage before navigation
+        await lightPage.addInitScript(() => {
+          localStorage.setItem('snipshift-ui-theme', 'light');
+        });
+        
+        // Navigate to landing page
+        await lightPage.goto('/');
+        await lightPage.waitForLoadState('domcontentloaded');
+        await lightPage.waitForTimeout(1500);
+        
+        // Wait for theme to be applied (light mode)
+        await lightPage.waitForFunction(() => {
+          return document.documentElement.classList.contains('light');
+        }, { timeout: 5000 }).catch(async () => {
+          // If light class isn't applied, try toggling manually
+          const themeToggle = lightPage.getByRole('button', { name: /toggle theme/i }).or(
+            lightPage.locator('button[aria-label="Toggle theme"]')
+          ).first();
+          if (await themeToggle.isVisible().catch(() => false)) {
+            await themeToggle.click();
+            await lightPage.waitForTimeout(300);
+            const lightOption = lightPage.getByRole('menuitem', { name: /^light$/i });
+            if (await lightOption.isVisible().catch(() => false)) {
+              await lightOption.click();
+              await lightPage.waitForTimeout(500);
+            }
           }
-        }
-      });
-      
-      // Verify light theme is applied
-      const hasLightClass = await lightPage.evaluate(() => {
-        return document.documentElement.classList.contains('light');
-      });
-      expect(hasLightClass).toBe(true);
-      
-      // Wait a bit more for all styles to be applied
-      await lightPage.waitForTimeout(500);
-      
-      // Scroll to top to ensure Hero section is visible
-      await lightPage.evaluate(() => window.scrollTo(0, 0));
-      await lightPage.waitForTimeout(500);
-      
-      // Take snapshot of Hero section - use viewport screenshot since Hero is full screen
-      await expect(lightPage).toHaveScreenshot('landing-light-hero.png', {
-        maxDiffPixels: 200,
-        fullPage: false, // Only capture viewport
-      });
-      
-      // Scroll to "How It Works" section
-      const howItWorksHeading = lightPage.getByRole('heading', { name: /How Snipshift Works/i });
-      await howItWorksHeading.scrollIntoViewIfNeeded();
-      await lightPage.waitForTimeout(500);
-      
-      // Find the parent container of "How It Works" section
-      const howItWorksSection = howItWorksHeading.locator('..').locator('..');
-      await expect(howItWorksSection).toHaveScreenshot('landing-light-how-it-works.png', {
-        maxDiffPixels: 200,
-      });
-      
-      await context.close();
+        });
+        
+        // Verify light theme is applied (do this before screenshots)
+        const hasLightClass = await lightPage.evaluate(() => {
+          return document.documentElement.classList.contains('light');
+        });
+        expect(hasLightClass).toBe(true);
+        
+        // Wait a bit more for all styles to be applied
+        await lightPage.waitForTimeout(500);
+        
+        // Scroll to top to ensure Hero section is visible
+        await lightPage.evaluate(() => window.scrollTo(0, 0));
+        await lightPage.waitForTimeout(500);
+        
+        // Take snapshot of Hero section - use viewport screenshot since Hero is full screen
+        await expect(lightPage).toHaveScreenshot('landing-light-hero.png', {
+          maxDiffPixels: 200,
+          fullPage: false, // Only capture viewport
+        });
+        
+        // Scroll to "How It Works" section
+        const howItWorksHeading = lightPage.getByRole('heading', { name: /How Snipshift Works/i });
+        await howItWorksHeading.scrollIntoViewIfNeeded();
+        await lightPage.waitForTimeout(500);
+        
+        // Find the parent container of "How It Works" section
+        const howItWorksSection = howItWorksHeading.locator('..').locator('..');
+        await expect(howItWorksSection).toHaveScreenshot('landing-light-how-it-works.png', {
+          maxDiffPixels: 200,
+        });
+      } finally {
+        // Always close context in finally block
+        await context.close();
+      }
     });
 
     test('should toggle theme and change visual appearance', async ({ page }) => {

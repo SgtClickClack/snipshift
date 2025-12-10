@@ -14,9 +14,43 @@ import { ensureCalendarTestData } from '../testDataSetup';
  */
 
 /**
+ * Helper function to wait for both frontend and API servers to be ready
+ */
+async function waitForServersReady(page: Page) {
+  // Wait for API to be ready
+  await expect.poll(async () => {
+    try {
+      const response = await page.request.get('http://localhost:5000/health');
+      return response.status();
+    } catch (e) {
+      return 0;
+    }
+  }, {
+    timeout: 30000,
+    intervals: [1000, 2000, 5000],
+  }).toBe(200);
+  
+  // Wait for frontend to be ready
+  await expect.poll(async () => {
+    try {
+      const response = await page.request.get('http://localhost:3000');
+      return response.status();
+    } catch (e) {
+      return 0;
+    }
+  }, {
+    timeout: 30000,
+    intervals: [1000, 2000, 5000],
+  }).toBe(200);
+}
+
+/**
  * Helper function to navigate to calendar view
  */
 async function navigateToCalendarView(page: Page) {
+  // Wait for servers to be ready first
+  await waitForServersReady(page);
+  
   // Collect all console messages
   const consoleMessages: string[] = [];
   
@@ -279,11 +313,15 @@ test.describe('Professional Calendar E2E Tests', () => {
       // Set view to Week mode
       await setWeekView(page);
       
-      // Wait for calendar to fully render
-      await page.waitForTimeout(2000);
+      // Wait for calendar to fully render - wait for network idle and React hydration
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(3000);
       
       // Find the main calendar area using data-testid
       const calendarMainArea = page.getByTestId('calendar-main-area');
+      
+      // Wait for calendar to be visible
+      await expect(calendarMainArea).toBeVisible({ timeout: 10000 });
       
       // Scroll to ensure calendar is in view
       await calendarMainArea.scrollIntoViewIfNeeded();
@@ -304,15 +342,19 @@ test.describe('Professional Calendar E2E Tests', () => {
       // Set view to Week mode
       await setWeekView(page);
       
-      // Wait for calendar to fully render
-      await page.waitForTimeout(2000);
+      // Wait for calendar to fully render - wait for network idle and React hydration
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(3000);
+      
+      // Find the main calendar area using data-testid
+      const calendarMainArea = page.getByTestId('calendar-main-area');
+      
+      // Wait for calendar to be visible
+      await expect(calendarMainArea).toBeVisible({ timeout: 10000 });
       
       // Scroll to top to ensure calendar is in view
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForTimeout(1000);
-      
-      // Find the main calendar area using data-testid
-      const calendarMainArea = page.getByTestId('calendar-main-area');
       
       // Scroll to ensure calendar is in view
       await calendarMainArea.scrollIntoViewIfNeeded();
@@ -447,7 +489,14 @@ test.describe('Professional Calendar E2E Tests', () => {
         
         // Verify API call was successful (201 Created for POST)
         if (response) {
-          expect([200, 201]).toContain(response.status());
+          const status = response.status();
+          if (status === 500) {
+            // Log the error response for debugging
+            const errorBody = await response.json().catch(() => ({}));
+            console.error('❌ API returned 500 error:', errorBody);
+            throw new Error(`API returned 500 error: ${JSON.stringify(errorBody)}`);
+          }
+          expect([200, 201]).toContain(status);
           console.log('✅ Availability slot created successfully via API');
         } else {
           // If we can't intercept the response, at least verify the modal closed
@@ -456,6 +505,12 @@ test.describe('Professional Calendar E2E Tests', () => {
           // Modal should close after successful creation
           if (!modalStillVisible) {
             console.log('✅ Modal closed after creation attempt - likely successful');
+          } else {
+            // Check for error messages in the modal
+            const errorMessage = await page.locator('[role="alert"], .error, [class*="error"]').first().textContent().catch(() => null);
+            if (errorMessage) {
+              throw new Error(`Modal still visible with error: ${errorMessage}`);
+            }
           }
         }
         

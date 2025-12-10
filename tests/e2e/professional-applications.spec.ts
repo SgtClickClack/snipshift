@@ -34,6 +34,19 @@ test.describe('Professional Applications E2E Tests', () => {
       console.error('🚨 [REQUEST FAILED]:', request.url(), request.failure()?.errorText);
     });
     
+    // Wait for servers to be ready before navigating
+    await expect.poll(async () => {
+      try {
+        const response = await page.request.get('http://localhost:5000/health');
+        return response.status();
+      } catch (e) {
+        return 0;
+      }
+    }, {
+      timeout: 30000,
+      intervals: [1000, 2000, 5000],
+    }).toBe(200);
+    
     // Navigate directly to applications view with E2E mode flag
     // This avoids race conditions from multiple navigation calls
     await page.goto('/professional-dashboard?view=applications&e2e=true');
