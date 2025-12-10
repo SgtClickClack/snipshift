@@ -9,6 +9,9 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'application_update',
   'chat_message',
   'system',
+  'SHIFT_INVITE',
+  'SHIFT_CONFIRMED',
+  'SHIFT_CANCELLED',
 ]);
 
 /**

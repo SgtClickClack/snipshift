@@ -1,8 +1,11 @@
 import { Router } from 'express';
+import { eq, and, sql } from 'drizzle-orm';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { ShiftSchema } from '../validation/schemas.js';
+import { ShiftSchema, ShiftInviteSchema } from '../validation/schemas.js';
+import { shiftOffers, shifts } from '../db/schema.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
+import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
@@ -52,8 +55,47 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
     return;
   }
 
-  // Create shift
+  // Create shift(s)
   try {
+    const isRecurring = shiftData.isRecurring || false;
+    const recurringShifts = shiftData.recurringShifts || [];
+
+    // If recurring and we have recurring shifts data, create multiple shifts in a transaction
+    if (isRecurring && recurringShifts.length > 0) {
+      const parentShiftData = {
+        employerId: userId,
+        title: shiftData.title,
+        description: shiftData.description || shiftData.requirements || '',
+        startTime,
+        endTime,
+        hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
+        status: shiftData.status || 'draft',
+        location: shiftData.location,
+      };
+
+      const createdShifts = await shiftsRepo.createRecurringShifts(
+        parentShiftData,
+        recurringShifts
+      );
+
+      if (!createdShifts || createdShifts.length === 0) {
+        console.error('[POST /api/shifts] createRecurringShifts returned empty - database may not be available');
+        res.status(500).json({ 
+          message: 'Failed to create recurring shifts - database unavailable',
+          error: 'Database connection failed or insert returned no result'
+        });
+        return;
+      }
+
+      res.status(201).json({
+        parent: createdShifts[0],
+        children: createdShifts.slice(1),
+        total: createdShifts.length,
+      });
+      return;
+    }
+
+    // Single shift creation
     const shiftPayload = {
       employerId: userId,
       title: shiftData.title,
@@ -63,6 +105,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
       status: shiftData.status || 'draft',
       location: shiftData.location,
+      isRecurring: isRecurring,
     };
     
     const newShift = await shiftsRepo.createShift(shiftPayload);
@@ -95,7 +138,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 router.get('/', asyncHandler(async (req, res) => {
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-  const status = req.query.status as 'draft' | 'invited' | 'open' | 'filled' | 'completed' | undefined;
+  const status = req.query.status as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | undefined;
 
   const result = await shiftsRepo.getShifts({
     status: status || 'open', // Default to open shifts only for public feed
@@ -156,8 +199,8 @@ router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReque
   if (endTime !== undefined) updates.endTime = endTime;
   if (hourlyRate !== undefined) updates.hourlyRate = hourlyRate;
   if (status !== undefined) {
-    if (!['draft', 'invited', 'open', 'filled', 'completed'].includes(status)) {
-      res.status(400).json({ message: 'Invalid status. Must be one of: draft, invited, open, filled, completed' });
+    if (!['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled'].includes(status)) {
+      res.status(400).json({ message: 'Invalid status. Must be one of: draft, pending, invited, open, filled, completed, confirmed, cancelled' });
       return;
     }
     updates.status = status;
@@ -196,8 +239,8 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
   }
 
   // Validate status
-  if (!['draft', 'invited', 'open', 'filled', 'completed'].includes(status)) {
-    res.status(400).json({ message: 'Invalid status. Must be one of: draft, invited, open, filled, completed' });
+  if (!['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled'].includes(status)) {
+    res.status(400).json({ message: 'Invalid status. Must be one of: draft, pending, invited, open, filled, completed, confirmed, cancelled' });
     return;
   }
 
@@ -430,6 +473,78 @@ router.get('/offers/me', authenticateUser, asyncHandler(async (req: Authenticate
   res.status(200).json(enrichedShifts);
 }));
 
+// Invite a professional to a shift (create shift offer)
+router.post('/:id/invite', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const { professionalId } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (!professionalId) {
+    res.status(400).json({ message: 'professionalId is required' });
+    return;
+  }
+
+  // Get shift to check ownership
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (shift.employerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You can only invite professionals to your own shifts' });
+    return;
+  }
+
+  // Create shift offer
+  const shiftOffer = await shiftOffersRepo.createShiftOffer({
+    shiftId: id,
+    professionalId,
+  });
+
+  if (!shiftOffer) {
+    res.status(500).json({ message: 'Failed to create shift offer' });
+    return;
+  }
+
+  // Update shift to assign the professional and set status to 'invited'
+  const updatedShift = await shiftsRepo.updateShift(id, {
+    assigneeId: professionalId,
+    status: 'invited',
+  });
+
+  if (!updatedShift) {
+    res.status(500).json({ message: 'Failed to update shift' });
+    return;
+  }
+
+  // Send notification to professional
+  try {
+    await notificationService.notifyProfessionalOfInvite(professionalId, {
+      id: shift.id,
+      title: shift.title,
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      location: shift.location,
+      hourlyRate: shift.hourlyRate,
+      employerId: shift.employerId,
+    });
+  } catch (error) {
+    // Log error but don't fail the request
+    console.error('[POST /api/shifts/:id/invite] Error sending notification:', error);
+  }
+
+  res.status(201).json({
+    shift: updatedShift,
+    offer: shiftOffer,
+  });
+}));
+
 // Accept a shift offer (update status to 'confirmed')
 router.post('/:id/accept', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
@@ -452,8 +567,8 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     return;
   }
 
-  if (shift.status !== 'invited') {
-    res.status(400).json({ message: 'Shift is not in invited status' });
+  if (shift.status !== 'invited' && shift.status !== 'pending') {
+    res.status(400).json({ message: 'Shift is not in a valid status for acceptance' });
     return;
   }
 
@@ -463,6 +578,29 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   if (!updatedShift) {
     res.status(500).json({ message: 'Failed to accept shift' });
     return;
+  }
+
+  // Get professional information
+  const professional = await usersRepo.getUserById(userId);
+  const professionalName = professional?.name || 'Professional';
+
+  // Send notification to business
+  try {
+    await notificationService.notifyBusinessOfAcceptance(
+      shift.employerId,
+      professionalName,
+      {
+        id: shift.id,
+        title: shift.title,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        location: shift.location,
+        hourlyRate: shift.hourlyRate,
+      }
+    );
+  } catch (error) {
+    // Log error but don't fail the request
+    console.error('[POST /api/shifts/:id/accept] Error sending notification:', error);
   }
 
   res.status(200).json(updatedShift);
@@ -490,8 +628,8 @@ router.post('/:id/decline', authenticateUser, asyncHandler(async (req: Authentic
     return;
   }
 
-  if (shift.status !== 'invited') {
-    res.status(400).json({ message: 'Shift is not in invited status' });
+  if (shift.status !== 'invited' && shift.status !== 'pending') {
+    res.status(400).json({ message: 'Shift is not in a valid status for decline' });
     return;
   }
 
@@ -507,6 +645,195 @@ router.post('/:id/decline', authenticateUser, asyncHandler(async (req: Authentic
   }
 
   res.status(200).json(updatedShift);
+}));
+
+// Smart Fill: Invite a professional to a shift
+router.post('/:id/invite', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = ShiftInviteSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ') 
+    });
+    return;
+  }
+
+  const { professionalId } = validationResult.data;
+
+  // Get shift to check ownership
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (shift.employerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You can only invite professionals to your own shifts' });
+    return;
+  }
+
+  // Check if shift is in a valid state for inviting
+  if (shift.status !== 'draft' && shift.status !== 'open') {
+    res.status(400).json({ message: 'Shift must be in draft or open status to send invites' });
+    return;
+  }
+
+  // Check if professional exists
+  const professional = await usersRepo.getUserById(professionalId);
+  if (!professional) {
+    res.status(404).json({ message: 'Professional not found' });
+    return;
+  }
+
+  // Check if there's already a pending offer for this shift and professional
+  const existingOffers = await shiftOffersRepo.getOffersForProfessional(professionalId, 'pending');
+  const hasExistingOffer = existingOffers.some(offer => offer.shiftId === shiftId);
+  
+  if (hasExistingOffer) {
+    res.status(409).json({ message: 'An invite has already been sent to this professional for this shift' });
+    return;
+  }
+
+  // Create shift offer (expires in 7 days by default)
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  const offer = await shiftOffersRepo.createShiftOffer({
+    shiftId,
+    professionalId,
+    expiresAt,
+  });
+
+  if (!offer) {
+    res.status(500).json({ message: 'Failed to create shift offer' });
+    return;
+  }
+
+  // Update shift status to 'pending' if it was 'draft'
+  if (shift.status === 'draft') {
+    await shiftsRepo.updateShift(shiftId, { status: 'pending' });
+  }
+
+  // TODO: Send notification to professional (mock for now)
+  // await notificationService.notifyShiftInvite(professionalId, shiftId, shift.title);
+
+  res.status(201).json({
+    message: 'Invite sent successfully',
+    offer,
+  });
+}));
+
+// Accept a shift offer
+router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: offerId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get offer
+  const offer = await shiftOffersRepo.getShiftOfferById(offerId);
+  if (!offer) {
+    res.status(404).json({ message: 'Shift offer not found' });
+    return;
+  }
+
+  // Verify the offer belongs to the current user
+  if (offer.professionalId !== userId) {
+    res.status(403).json({ message: 'Forbidden: This offer is not for you' });
+    return;
+  }
+
+  // Verify the offer is still valid
+  const isValid = await shiftOffersRepo.isOfferValid(offerId);
+  if (!isValid) {
+    res.status(400).json({ message: 'This offer is no longer valid (expired or already processed)' });
+    return;
+  }
+
+  // Get the shift
+  const shift = await shiftsRepo.getShiftById(offer.shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Check if shift is still available
+  if (shift.status === 'filled' || shift.status === 'confirmed' || shift.status === 'completed') {
+    res.status(400).json({ message: 'This shift is no longer available' });
+    return;
+  }
+
+  // Use transaction to:
+  // 1. Update offer status to accepted
+  // 2. Update shift assigneeId and status to confirmed
+  // 3. Decline all other pending offers for this shift
+  const { getDb } = await import('../db/index.js');
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ message: 'Database not available' });
+    return;
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      // Update offer to accepted
+      await tx
+        .update(shiftOffers)
+        .set({ status: 'accepted' })
+        .where(eq(shiftOffers.id, offerId));
+
+      // Update shift
+      await tx
+        .update(shifts)
+        .set({
+          assigneeId: userId,
+          status: 'confirmed',
+        })
+        .where(eq(shifts.id, offer.shiftId));
+
+      // Decline all other pending offers for this shift
+      const conditions = [
+        eq(shiftOffers.shiftId, offer.shiftId),
+        eq(shiftOffers.status, 'pending'),
+        sql`${shiftOffers.id} != ${offerId}`
+      ];
+      await tx
+        .update(shiftOffers)
+        .set({
+          status: 'declined',
+          updatedAt: sql`NOW()`,
+        })
+        .where(and(...conditions));
+    });
+
+    // Fetch updated shift
+    const updatedShift = await shiftsRepo.getShiftById(offer.shiftId);
+    const updatedOffer = await shiftOffersRepo.getShiftOfferById(offerId);
+
+    res.status(200).json({
+      message: 'Shift offer accepted successfully',
+      shift: updatedShift,
+      offer: updatedOffer,
+    });
+  } catch (error: any) {
+    console.error('[PUT /api/shifts/offers/:id/accept] Error accepting offer:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+    });
+    throw error;
+  }
 }));
 
 export default router;
