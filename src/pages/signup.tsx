@@ -125,16 +125,18 @@ export default function SignupPage() {
       const userData = await response.json();
       
       // Create properly formatted user object for auth service
+      // Backend returns: id, email, name, role
+      // Frontend expects: id, email, roles (array), currentRole, displayName, etc.
       const newUser = {
         id: userData.id,
         email: userData.email,
         password: '', // Don't store password in frontend
-        roles: Array.isArray(userData.roles) ? userData.roles : ['client'],
-        currentRole: userData.currentRole ?? 'client',
+        roles: Array.isArray(userData.roles) ? userData.roles : [userData.role || 'client'],
+        currentRole: userData.currentRole || userData.role || 'client',
         provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
-        displayName: userData.displayName || formData.email.split('@')[0],
+        displayName: userData.displayName || userData.name || formData.email.split('@')[0],
         profileImage: userData.profileImage || '',
       };
       
@@ -165,10 +167,35 @@ export default function SignupPage() {
       console.error("Signup error:", error);
       let message = "Please check your information and try again";
       
+      // Handle Firebase auth errors
       if (error?.code === 'auth/email-already-in-use') {
         message = "This email is already in use";
       } else if (error?.code === 'auth/weak-password') {
         message = "Password is too weak";
+      } else if (error?.code === 'auth/invalid-email') {
+        message = "Invalid email address";
+      } else if (error?.code === 'auth/network-request-failed') {
+        message = "Network error. Please check your connection and try again";
+      }
+      // Handle API errors (format: "status: message")
+      else if (error?.message) {
+        const errorMsg = error.message;
+        // Check if it's an API error (format: "status: message")
+        const apiErrorMatch = errorMsg.match(/^\d+:\s*(.+)$/);
+        if (apiErrorMatch) {
+          const apiMessage = apiErrorMatch[1];
+          // Try to parse JSON error message from backend
+          try {
+            const parsed = JSON.parse(apiMessage);
+            message = parsed.message || apiMessage;
+          } catch {
+            // If not JSON, use the message as-is
+            message = apiMessage;
+          }
+        } else {
+          // Use the error message directly if it's not in the API format
+          message = errorMsg;
+        }
       }
 
       toast({
