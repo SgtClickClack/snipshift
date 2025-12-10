@@ -41,7 +41,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         globIgnores: ['**/logoblackback.png'], // Exclude large logo from precaching
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MB limit (to accommodate herobarber images)
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
