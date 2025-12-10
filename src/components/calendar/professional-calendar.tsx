@@ -697,14 +697,13 @@ export default function ProfessionalCalendar({
         return;
       }
 
-      // Get employer ID from the first booking (assuming all belong to same employer)
-      const firstBooking = bookings?.[0];
-      const employerId = firstBooking?.shift?.employerId || firstBooking?.job?.businessId;
+      // Get employer ID from auth context
+      const employerId = user?.id;
       
       if (!employerId) {
         toast({
           title: "Error",
-          description: "Could not determine employer ID.",
+          description: "Please log in to use Smart Fill.",
           variant: "destructive",
         });
         setIsCalculatingMatches(false);
@@ -725,7 +724,7 @@ export default function ProfessionalCalendar({
     } finally {
       setIsCalculatingMatches(false);
     }
-  }, [dateRange, mode, events, bookings, toast]);
+  }, [dateRange, mode, events, bookings, toast, user]);
 
   const handleSendInvites = useCallback(async () => {
     const matchesToSend = smartMatches.filter((m) => m.suggestedCandidate !== null);
