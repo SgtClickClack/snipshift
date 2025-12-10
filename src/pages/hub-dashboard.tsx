@@ -1055,7 +1055,15 @@ export default function HubDashboard() {
                 <form onSubmit={handleProfileSubmit} className="space-y-6">
                   {/* Profile Header with Banner and Avatar */}
                   <div className="relative overflow-visible z-0">
+                    {/* Debug: Show what data we have */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="text-xs text-red-500 mb-2 p-2 bg-red-50 rounded">
+                        DEBUG: profileData.bannerUrl = {profileData.bannerUrl ? 'Has Image' : 'Empty'} | 
+                        URL: {profileData.bannerUrl ? profileData.bannerUrl.substring(0, 50) + '...' : 'null'}
+                      </div>
+                    )}
                     <ProfileHeader
+                      key={`profile-header-${profileData.bannerUrl || 'no-banner'}-${profileData.avatarUrl || 'no-avatar'}`}
                       bannerUrl={profileData.bannerUrl}
                       avatarUrl={profileData.avatarUrl}
                       displayName={profileData.displayName || user?.displayName || 'Business'}

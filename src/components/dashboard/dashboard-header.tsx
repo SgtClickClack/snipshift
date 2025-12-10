@@ -591,12 +591,19 @@ export default function DashboardHeader({
   // Prioritize live state (localBannerUrl) over prop (bannerImage) for preview
   const displayBannerUrl = localBannerUrl || bannerImage || null;
 
+  // Debug log to track URL changes
+  useEffect(() => {
+    if (displayBannerUrl) {
+      console.log('DashboardHeader - Display banner URL changed:', displayBannerUrl.substring(0, 100));
+    }
+  }, [displayBannerUrl]);
+
   return (
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible mb-16", className)}>
       {/* Banner Image or Gradient Fallback */}
       {displayBannerUrl ? (
         <OptimizedImage
-          key={displayBannerUrl} // Force re-render when URL changes
+          key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
           src={displayBannerUrl}
           alt="Banner"
           priority={true}

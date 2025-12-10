@@ -553,12 +553,19 @@ export default function ProfileHeader({
   // Prioritize live state (localBannerUrl) over prop (bannerUrl) for preview
   const displayBannerUrl = localBannerUrl || bannerUrl || null;
 
+  // Debug log to track URL changes
+  useEffect(() => {
+    if (displayBannerUrl) {
+      console.log('ProfileHeader - Display banner URL changed:', displayBannerUrl.substring(0, 100));
+    }
+  }, [displayBannerUrl]);
+
   return (
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible", className)}>
       {/* Banner Image or Gradient Fallback */}
       {displayBannerUrl ? (
         <OptimizedImage
-          key={displayBannerUrl} // Force re-render when URL changes
+          key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
           src={displayBannerUrl}
           alt="Banner"
           priority={true}
