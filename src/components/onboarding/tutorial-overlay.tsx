@@ -174,16 +174,20 @@ export function TutorialOverlay() {
       localStorage.getItem('E2E_MODE') === 'true'
     ));
   
-  // E2E DEBUG: Log environment variable and visibility state
-  console.log('E2E DEBUG: VITE_E2E value:', import.meta.env.VITE_E2E);
-  console.log('E2E DEBUG: MODE value:', import.meta.env.MODE);
-  console.log('E2E DEBUG: isE2EMode:', isE2EMode);
-  console.log('E2E DEBUG: isVisible state:', isVisible);
-  console.log('E2E DEBUG: currentStepData:', currentStepData);
-  console.log('E2E DEBUG: userRole:', userRole);
+  // E2E DEBUG: Log environment variable and visibility state (development/E2E only)
+  if (import.meta.env.DEV || import.meta.env.VITE_E2E === '1') {
+    console.log('E2E DEBUG: VITE_E2E value:', import.meta.env.VITE_E2E);
+    console.log('E2E DEBUG: MODE value:', import.meta.env.MODE);
+    console.log('E2E DEBUG: isE2EMode:', isE2EMode);
+    console.log('E2E DEBUG: isVisible state:', isVisible);
+    console.log('E2E DEBUG: currentStepData:', currentStepData);
+    console.log('E2E DEBUG: userRole:', userRole);
+  }
   
   if (isE2EMode) {
-    console.log('E2E DEBUG: Returning null due to E2E mode detection');
+    if (import.meta.env.DEV || import.meta.env.VITE_E2E === '1') {
+      console.log('E2E DEBUG: Returning null due to E2E mode detection');
+    }
     return null;
   }
 
