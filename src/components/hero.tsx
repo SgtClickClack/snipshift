@@ -2,21 +2,23 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export default function Hero() {
+  const heroImageUrl = encodeURI('/herobarber (2).png');
+  
   return (
     <div 
       className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-center"
       style={{
-        backgroundImage: `url('/herobarber%20(2).png'), linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%)`,
+        backgroundImage: `url('${heroImageUrl}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundBlendMode: 'overlay'
+        backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Dark Overlay to hide background and make logo pop - only in dark mode */}
-      <div className="absolute inset-0 dark:bg-black/60 z-base" />
+      {/* Dark Overlay for text readability - reduced opacity to show image */}
+      <div className="absolute inset-0 bg-black/30 dark:bg-black/40 z-base" />
 
-      {/* Bottom Gradient Overlay for text readability - only in dark mode */}
-      <div className="absolute inset-0 dark:bg-gradient-to-t dark:from-black/80 dark:via-black/40 dark:to-transparent z-elevated" />
+      {/* Bottom Gradient Overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent z-elevated" />
 
       {/* Content Wrapper */}
       <div className="relative z-elevated w-full py-12 md:py-16 flex flex-col items-center justify-center text-center px-4">
