@@ -1,8 +1,19 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDashboardRoute } from "@/lib/roles";
 
 export default function Hero() {
+  const { user, isAuthenticated } = useAuth();
   const heroImageUrl = encodeURI('/herobarber (2).png');
+  
+  // Determine dashboard route based on user role
+  const getDashboardLink = () => {
+    if (!user?.currentRole) {
+      return '/dashboard';
+    }
+    return getDashboardRoute(user.currentRole as any);
+  };
   
   return (
     <div 
@@ -28,19 +39,35 @@ export default function Hero() {
             Connect verified barbers with top shops for seamless workforce flexibility
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-2">
-            <Link to="/signup">
-              <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl" data-testid="button-get-started">
-                Get Started
-              </Button>
-            </Link>
-            
-            <Link to="/login">
-              <Button size="lg" variant="outline" className="bg-background/80 dark:bg-white/10 border-border dark:border-white/30 text-foreground dark:text-white hover:bg-muted dark:hover:bg-white/20 text-lg px-8 py-4" data-testid="button-login">
-                Login
-              </Button>
-            </Link>
-          </div>
+          {isAuthenticated && user ? (
+            // Scenario B: User is Logged IN - Single "Go to Dashboard" button
+            <div className="flex items-center justify-center mb-2">
+              <Link to={getDashboardLink()}>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl h-12" 
+                  data-testid="button-go-to-dashboard"
+                >
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            // Scenario A: User is Logged OUT - "Get Started" and "Login" buttons
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-2">
+              <Link to="/signup">
+                <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl" data-testid="button-get-started">
+                  Get Started
+                </Button>
+              </Link>
+              
+              <Link to="/login">
+                <Button size="lg" variant="outline" className="bg-background/80 dark:bg-white/10 border-border dark:border-white/30 text-foreground dark:text-white hover:bg-muted dark:hover:bg-white/20 text-lg px-8 py-4" data-testid="button-login">
+                  Login
+                </Button>
+              </Link>
+            </div>
+          )}
           
           <p className="text-sm text-muted-foreground opacity-75">Join thousands of professionals already on Snipshift</p>
         </div>
