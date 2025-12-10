@@ -51,9 +51,10 @@
             metaThemeColor.setAttribute("name", "theme-color");
             document.head.appendChild(metaThemeColor);
           }
+          // Match the actual background color from CSS: hsl(0, 0%, 97%) for light mode
           var backgroundColor = activeTheme === "dark" 
             ? "hsl(240, 10%, 3.9%)" 
-            : "hsl(0, 0%, 100%)";
+            : "hsl(0, 0%, 97%)";
           metaThemeColor.setAttribute("content", backgroundColor);
         } catch (e) {
           console.error("Theme pre-load error:", e);
@@ -93,7 +94,7 @@
 
       /* Splash Screen - Shows while React hydrates */
       :root {
-        --splash-bg: #ffffff;
+        --splash-bg: hsl(0, 0%, 97%);
         --splash-loader: #3b82f6;
         --splash-text: rgba(0, 0, 0, 0.8);
       }

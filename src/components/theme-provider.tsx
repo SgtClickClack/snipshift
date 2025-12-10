@@ -56,11 +56,12 @@ export function ThemeProvider({
     root.style.colorScheme = activeTheme
 
     // Update meta theme-color for mobile status bars
+    // Match the actual background color from CSS: hsl(0, 0%, 97%) = #f7f7f7
     const metaThemeColor = document.querySelector("meta[name='theme-color']")
     if (metaThemeColor) {
       const backgroundColor = activeTheme === "dark" 
-        ? "#1a1a1a" 
-        : "#ffffff"
+        ? "hsl(240, 10%, 3.9%)" 
+        : "hsl(0, 0%, 97%)"
       metaThemeColor.setAttribute("content", backgroundColor)
     }
   }, [theme])
@@ -78,11 +79,12 @@ export function ThemeProvider({
       root.style.colorScheme = systemTheme
 
       // Update meta theme-color for mobile status bars
+      // Match the actual background color from CSS: hsl(0, 0%, 97%) = #f7f7f7
       const metaThemeColor = document.querySelector("meta[name='theme-color']")
       if (metaThemeColor) {
         const backgroundColor = systemTheme === "dark" 
-          ? "#1a1a1a" 
-          : "#ffffff"
+          ? "hsl(240, 10%, 3.9%)" 
+          : "hsl(0, 0%, 97%)"
         metaThemeColor.setAttribute("content", backgroundColor)
       }
     }

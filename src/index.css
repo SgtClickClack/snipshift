@@ -4,8 +4,7 @@
 
 @layer base {
   :root {
-    /* Force browser to render in light mode */
-    color-scheme: light;
+    /* color-scheme will be set dynamically by theme provider */
     /* Soft, desaturated off-white background for visual hierarchy */
     --background: 0 0% 97%;
     /* High-contrast dark foreground for maximum readability */
@@ -83,28 +82,47 @@
 
   /* The Nuclear Option for Mobile Browsers - Force off-white in light mode */
   /* Samsung Internet Dark Mode Override Prevention */
-  html, body {
+  html {
     /* Tell browser to stop auto-adjusting colors */
     forced-color-adjust: none !important;
     -webkit-print-color-adjust: exact !important;
-    
-    /* The Gradient Trick: Samsung often skips inverting gradients */
-    background-image: linear-gradient(hsl(var(--background)), hsl(var(--background))) !important;
-    background-color: hsl(var(--background)) !important;
     
     overflow-x: hidden;
     width: 100%;
     position: relative;
   }
 
+  /* Light mode specific styles for mobile */
+  html.light, html:not(.dark) {
+    color-scheme: light !important;
+    /* The Gradient Trick: Samsung often skips inverting gradients */
+    background-image: linear-gradient(hsl(var(--background)), hsl(var(--background))) !important;
+    background-color: hsl(var(--background)) !important;
+  }
+
   body {
     @apply bg-background text-foreground;
     color: hsl(var(--foreground)) !important;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Tell browser to stop auto-adjusting colors */
+    forced-color-adjust: none !important;
+    -webkit-print-color-adjust: exact !important;
+    background-color: hsl(var(--background)) !important;
+  }
+
+  /* Light mode body background */
+  html.light body, html:not(.dark) body {
+    background-image: linear-gradient(hsl(var(--background)), hsl(var(--background))) !important;
   }
 
   /* Reset gradient trick for dark mode */
-  .dark html, .dark body {
+  html.dark {
+    color-scheme: dark !important;
+    background-image: none !important;
+    background-color: hsl(var(--background)) !important;
+  }
+
+  html.dark body {
     background-image: none !important;
     background-color: hsl(var(--background)) !important;
   }
