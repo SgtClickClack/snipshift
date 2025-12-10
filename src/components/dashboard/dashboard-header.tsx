@@ -59,10 +59,36 @@ export default function DashboardHeader({
   useEffect(() => {
     setLocalBannerUrl((current) => {
       // Only update if prop is different from current state
-      // This prevents overwriting manual updates unnecessarily
-      return bannerImage !== current ? bannerImage : current;
+      // IMPORTANT: If current state has a cache-busting timestamp (?t=) and prop doesn't,
+      // keep the current state to preserve the optimistic update
+      if (bannerImage !== current) {
+        // Check if current has cache-busting but prop doesn't (base URL match)
+        const currentBaseUrl = current?.split('?')[0];
+        const propBaseUrl = bannerImage?.split('?')[0];
+        
+        if (currentBaseUrl && propBaseUrl && currentBaseUrl === propBaseUrl && current?.includes('?t=')) {
+          // Current has cache-busting, prop doesn't - keep current state
+          console.log('Banner useEffect - Preserving cache-busted URL:', { 
+            current, 
+            prop: bannerImage 
+          });
+          return current;
+        }
+        
+        console.log('Banner useEffect - Prop changed, updating state:', { 
+          from: current, 
+          to: bannerImage 
+        });
+        return bannerImage;
+      }
+      return current;
     });
   }, [bannerImage]);
+
+  // Debug: Log when localBannerUrl state changes
+  useEffect(() => {
+    console.log('Banner state changed to:', localBannerUrl);
+  }, [localBannerUrl]);
 
   useEffect(() => {
     setLocalLogoUrl((current) => {
@@ -221,12 +247,16 @@ export default function DashboardHeader({
       const firebaseUrlWithCacheBust = `${downloadURL}?t=${Date.now()}`;
       const previousBannerUrl = localBannerUrl; // Store previous value for rollback
       
+      console.log('Banner - Previous URL:', previousBannerUrl);
+      console.log('Banner - Setting new URL (optimistic):', firebaseUrlWithCacheBust);
+      
       // Update state immediately so user sees the change instantly
       setLocalBannerUrl(firebaseUrlWithCacheBust);
       console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
       // Call parent callback immediately
       onBannerUpload?.(firebaseUrlWithCacheBust);
+      console.log('Banner - Parent callback called with:', firebaseUrlWithCacheBust);
 
       // Now save to database in the background (don't await before showing UI)
       try {
@@ -235,14 +265,20 @@ export default function DashboardHeader({
         });
 
         console.log('Banner API upload response:', responseData);
+        console.log('Banner API response keys:', Object.keys(responseData || {}));
+        console.log('Banner API response.bannerUrl:', responseData?.bannerUrl);
 
         // Verify API response (optional - Firebase URL is already shown)
-        if (responseData.bannerUrl && typeof responseData.bannerUrl === 'string') {
+        if (responseData?.bannerUrl && typeof responseData.bannerUrl === 'string') {
           // API returned a URL - update with API response (may differ from Firebase URL)
           const apiUrlWithCacheBust = `${responseData.bannerUrl}?t=${Date.now()}`;
+          console.log('Banner - Updating state with API response URL:', apiUrlWithCacheBust);
           setLocalBannerUrl(apiUrlWithCacheBust);
           onBannerUpload?.(apiUrlWithCacheBust);
           console.log('Banner state updated with API response URL:', apiUrlWithCacheBust);
+        } else {
+          // API didn't return bannerUrl - keep using Firebase URL (already set optimistically)
+          console.log('Banner - API response missing bannerUrl, keeping Firebase URL:', firebaseUrlWithCacheBust);
         }
 
         // Show success toast
@@ -472,6 +508,7 @@ export default function DashboardHeader({
       {/* Banner Image or Gradient Fallback */}
       {localBannerUrl ? (
         <OptimizedImage
+          key={localBannerUrl} // Force re-render when URL changes
           src={localBannerUrl}
           alt="Banner"
           priority={true}
