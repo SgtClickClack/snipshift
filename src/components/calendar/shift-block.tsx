@@ -38,6 +38,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
     return (
       <div
         onClick={onClick}
+        data-testid="shift-block-ghost-slot"
         className={cn(
           "w-full h-full rounded border-2 border-dashed border-gray-400",
           "bg-transparent opacity-60 cursor-pointer",
@@ -71,6 +72,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
     return (
       <div
         onClick={onClick}
+        data-testid="shift-block-pending"
         className={cn(
           "w-full h-full rounded-full px-2 py-1",
           "bg-amber-500 border-2 border-amber-600",
@@ -109,6 +111,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
     return (
       <div
         onClick={onClick}
+        data-testid="shift-block-confirmed"
         className={cn(
           "w-full h-full rounded px-2 py-1",
           "bg-green-600 border-2 border-green-700",

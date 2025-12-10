@@ -29,7 +29,7 @@ export default function LandingPage() {
           {/* Add top padding to accommodate badges that extend above cards, especially on mobile */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8 md:pt-6">
             {/* Keep overflow-visible to prevent badge clipping */}
-            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible">
+            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-1">
                 1
               </div>
@@ -43,40 +43,40 @@ export default function LandingPage() {
             </Card>
             
             {/* Keep overflow-visible to prevent badge clipping */}
-            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible">
+            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-2">
                 2
               </div>
               <CardContent className="pt-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-steel-500 to-steel-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <FileText className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-card-foreground">Post or Browse Opportunities</h3>
-                <p className="text-muted-foreground text-sm">Shop owners create job posts with shift details, pay rates, and requirements. Brands share product launches and collaborations. Trainers list courses and workshops. Professionals browse the feed, filter by location and skills, and apply directly to opportunities that interest them.</p>
+                <p className="text-muted-foreground text-sm">Shop owners post shifts with clear rates and requirements. Brands share launches. Professionals browse the feed to find work that fits their schedule.</p>
               </CardContent>
             </Card>
             
             {/* Keep overflow-visible to prevent badge clipping */}
-            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible">
+            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-3">
                 3
               </div>
               <CardContent className="pt-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-steel-600 to-steel-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Handshake className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-card-foreground">Connect & Apply</h3>
-                <p className="text-muted-foreground text-sm">Professionals apply to shifts or opportunities. Shop owners review applications and connect with the right talent.</p>
+                <p className="text-muted-foreground text-sm">Apply to shifts in one click. Shop owners review profiles and ratings, then book the best talent instantly.</p>
               </CardContent>
             </Card>
             
             {/* Keep overflow-visible to prevent badge clipping */}
-            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible">
+            <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge" data-testid="step-badge-4">
                 4
               </div>
               <CardContent className="pt-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-steel-700 to-steel-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <CheckCircle className="text-white h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-card-foreground">Work Together</h3>

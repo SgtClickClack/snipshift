@@ -117,6 +117,7 @@ export function ShiftOfferCard({
             onClick={() => onAccept(offer.id)}
             disabled={isProcessing}
             className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            data-testid="shift-offer-accept-button"
           >
             Accept Shift
           </Button>
@@ -125,6 +126,7 @@ export function ShiftOfferCard({
             disabled={isProcessing}
             variant="outline"
             className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+            data-testid="shift-offer-decline-button"
           >
             Decline
           </Button>

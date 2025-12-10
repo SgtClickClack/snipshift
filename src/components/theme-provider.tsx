@@ -22,87 +22,31 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark",
   storageKey = "vite-ui-theme",
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return (localStorage.getItem(storageKey) as Theme) || defaultTheme
-      } catch (e) {
-        // Samsung Internet Secret Mode or other privacy modes may block localStorage
-        console.warn("localStorage access blocked, using default theme:", e)
-        return defaultTheme
-      }
-    }
-    return defaultTheme
-  })
+  // Force dark mode - theme state is kept for compatibility but always returns "dark"
+  const [theme] = useState<Theme>("dark")
 
   useEffect(() => {
     const root = window.document.documentElement
 
+    // Always force dark mode
     root.classList.remove("light", "dark")
-
-    let systemTheme: "light" | "dark" = "light"
-    if (theme === "system") {
-      systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-    }
-
-    const activeTheme = theme === "system" ? systemTheme : theme
-
-    root.classList.add(activeTheme)
-    root.style.colorScheme = activeTheme
+    root.classList.add("dark")
+    root.style.colorScheme = "dark"
 
     // Update meta theme-color for mobile status bars
-    // Match the actual background color from CSS: hsl(0, 0%, 97%) = #f7f7f7
     const metaThemeColor = document.querySelector("meta[name='theme-color']")
     if (metaThemeColor) {
-      const backgroundColor = activeTheme === "dark" 
-        ? "hsl(240, 10%, 3.9%)" 
-        : "hsl(0, 0%, 97%)"
-      metaThemeColor.setAttribute("content", backgroundColor)
+      metaThemeColor.setAttribute("content", "hsl(240, 10%, 3.9%)")
     }
-  }, [theme])
-
-  useEffect(() => {
-    if (theme !== "system") return
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      const root = window.document.documentElement
-      root.classList.remove("light", "dark")
-      const systemTheme = e.matches ? "dark" : "light"
-      root.classList.add(systemTheme)
-      root.style.colorScheme = systemTheme
-
-      // Update meta theme-color for mobile status bars
-      // Match the actual background color from CSS: hsl(0, 0%, 97%) = #f7f7f7
-      const metaThemeColor = document.querySelector("meta[name='theme-color']")
-      if (metaThemeColor) {
-        const backgroundColor = systemTheme === "dark" 
-          ? "hsl(240, 10%, 3.9%)" 
-          : "hsl(0, 0%, 97%)"
-        metaThemeColor.setAttribute("content", backgroundColor)
-      }
-    }
-
-    mediaQuery.addEventListener("change", handleChange)
-    return () => mediaQuery.removeEventListener("change", handleChange)
-  }, [theme])
+  }, [])
 
   const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      try {
-        localStorage.setItem(storageKey, theme)
-      } catch (e) {
-        // Samsung Internet Secret Mode or other privacy modes may block localStorage
-        console.warn("localStorage write blocked, theme change will not persist:", e)
-      }
-      setTheme(theme)
+    theme: "dark" as Theme,
+    setTheme: () => {
+      // Theme changes are disabled - always dark mode
     },
   }
 

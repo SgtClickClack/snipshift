@@ -83,6 +83,11 @@ export function Footer() {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link to="/sitemap" className="text-steel-400 hover:text-white transition-colors text-sm">
+                  Sitemap
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -111,6 +116,12 @@ export function Footer() {
                 LinkedIn
               </a>
             </div>
+          </div>
+          {/* Acknowledgement of Country */}
+          <div className="mt-6 pt-6 border-t border-border dark:border-steel-800">
+            <p className="text-xs text-muted-foreground dark:text-steel-500 text-center">
+              We acknowledge the traditional custodians of the land on which we live and work. We pay our respects to their Elders, past, present, and emerging.
+            </p>
           </div>
         </div>
       </div>

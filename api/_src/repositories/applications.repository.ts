@@ -185,40 +185,68 @@ export async function getApplicationsForBusiness(
     return null;
   }
 
-  const conditions = [
-    or(
-      eq(jobs.businessId, businessId),
-      eq(shifts.employerId, businessId)
-    )
-  ];
+  try {
+    const conditions = [
+      or(
+        eq(jobs.businessId, businessId),
+        eq(shifts.employerId, businessId)
+      )
+    ];
 
-  if (filters.status) {
-    conditions.push(eq(applications.status, filters.status));
+    if (filters.status) {
+      conditions.push(eq(applications.status, filters.status));
+    }
+
+    const whereClause = and(...conditions);
+
+    const result = await db
+      .select({
+        application: applications,
+        job: jobs,
+        shift: shifts,
+        // We might want user details too if we are showing applicants
+        user: users
+      })
+      .from(applications)
+      .leftJoin(jobs, eq(applications.jobId, jobs.id))
+      .leftJoin(shifts, eq(applications.shiftId, shifts.id))
+      .leftJoin(users, eq(applications.userId, users.id))
+      .where(whereClause)
+      .orderBy(desc(applications.appliedAt));
+
+    return result.map((row) => ({
+      ...row.application,
+      job: row.job,
+      shift: row.shift,
+      user: row.user
+    })) as any;
+  } catch (error: any) {
+    // Extract detailed error information
+    const errorDetails = {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      hint: error?.hint,
+      constraint: error?.constraint,
+      table: error?.table,
+      column: error?.column,
+      cause: error?.cause,
+      // Check for nested errors (common in Drizzle)
+      nestedMessage: error?.cause?.message,
+      nestedCode: error?.cause?.code,
+      nestedDetail: error?.cause?.detail,
+    };
+
+    console.error('[getApplicationsForBusiness] Database query error:', {
+      businessId,
+      filters,
+      error: errorDetails,
+      stack: error?.stack,
+    });
+
+    // Re-throw to be caught by error handler middleware
+    throw error;
   }
-
-  const whereClause = and(...conditions);
-
-  const result = await db
-    .select({
-      application: applications,
-      job: jobs,
-      shift: shifts,
-      // We might want user details too if we are showing applicants
-      user: users
-    })
-    .from(applications)
-    .leftJoin(jobs, eq(applications.jobId, jobs.id))
-    .leftJoin(shifts, eq(applications.shiftId, shifts.id))
-    .leftJoin(users, eq(applications.userId, users.id))
-    .where(whereClause)
-    .orderBy(desc(applications.appliedAt));
-
-  return result.map((row) => ({
-    ...row.application,
-    job: row.job,
-    shift: row.shift,
-    user: row.user
-  })) as any;
 }
 
 /**

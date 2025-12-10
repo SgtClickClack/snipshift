@@ -254,6 +254,7 @@ export function AssignStaffModal({
                         onClick={() => handleInvite(professional)}
                         size="sm"
                         className="ml-4"
+                        data-testid={`invite-button-${professional.name.toLowerCase().replace(/\s+/g, '-')}`}
                       >
                         <UserPlus className="h-4 w-4 mr-1" />
                         Invite
@@ -316,6 +317,7 @@ export function AssignStaffModal({
                           onClick={() => handleInvite(professional)}
                           size="sm"
                           className="ml-4"
+                          data-testid={`invite-button-${professional.name.toLowerCase().replace(/\s+/g, '-')}`}
                         >
                           <UserPlus className="h-4 w-4 mr-1" />
                           Invite

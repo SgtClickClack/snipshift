@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/sheet";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute } from "@/lib/roles";
-import { ModeToggle } from "@/components/mode-toggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { InstallButton } from "@/components/pwa/install-button";
 import logo from "@/assets/logo-processed.png";
@@ -136,11 +135,6 @@ export default function Navbar() {
           </Link>
           
           <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 flex-shrink-0 min-w-0">
-            <ErrorBoundary fallback={<div className="w-9 h-9 flex-shrink-0" />}>
-              <div className="flex-shrink-0">
-                <ModeToggle />
-              </div>
-            </ErrorBoundary>
             {user ? (
               <>
                 {/* Desktop Menu Items */}
@@ -392,14 +386,6 @@ export default function Navbar() {
                              size="sm"
                              className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800"
                            />
-                         </div>
-
-                         {/* Theme Toggle */}
-                         <div className="px-2 py-2">
-                           <div className="flex items-center justify-between w-full">
-                             <span className="text-sm text-foreground dark:text-steel-100">Theme</span>
-                             <ModeToggle />
-                           </div>
                          </div>
 
                          <div className="border-t border-border dark:border-steel-800 my-2 pt-2">

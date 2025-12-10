@@ -25,7 +25,7 @@ export default function Pricing() {
         "Keep 100% of your hourly rate",
         "Instant payouts available",
         "Build your digital reputation",
-        "Access to premium shifts",
+        "First access to high-paying shifts",
       ],
       cta: "Join as Pro",
       buttonVariant: "secondary" as const,
@@ -34,7 +34,7 @@ export default function Pricing() {
     },
     {
       name: "Salon Starter",
-      description: "Perfect for occasional cover and emergencies.",
+      description: "Perfect for emergency cover.",
       price: "$0",
       duration: "month",
       subPrice: "+ $20 Booking Fee per shift",
@@ -57,7 +57,7 @@ export default function Pricing() {
       subPrice: "$0 Booking Fees",
       features: [
         "Unlimited Booking Fees waived",
-        "Priority matching algorithm",
+        "Smart-Fill Roster Technology",
         "Dedicated Account Manager",
         "Save ~30% after 3 shifts",
       ],
@@ -142,8 +142,7 @@ export default function Pricing() {
                 {tier.cta === "Join as Pro" ? (
                   <Link to="/signup" className="w-full">
                     <Button
-                      variant={tier.buttonVariant}
-                      className="w-full font-semibold py-6"
+                      className="w-full font-semibold py-6 bg-zinc-800 hover:bg-zinc-700 text-white"
                     >
                       {tier.cta}
                     </Button>
@@ -151,16 +150,14 @@ export default function Pricing() {
                 ) : tier.cta === "Post a Job" ? (
                   <Link to="/post-job" className="w-full">
                     <Button
-                      variant={tier.buttonVariant}
-                      className="w-full font-semibold py-6"
+                      className="w-full font-semibold py-6 bg-zinc-800 hover:bg-zinc-700 text-white"
                     >
                       {tier.cta}
                     </Button>
                   </Link>
                 ) : (
                   <Button
-                    variant={tier.buttonVariant}
-                    className="w-full font-semibold py-6"
+                    className="w-full font-semibold py-6 bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white"
                     onClick={() => {
                       toast({
                         title: "Coming soon!",

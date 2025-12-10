@@ -106,7 +106,7 @@ export default defineConfig({
     force: true, // Force dependency pre-bundling
   },
   server: {
-    port: 3002,
+    port: 3000,
     strictPort: true,
     proxy: {
       // Forward REST API requests

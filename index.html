@@ -33,16 +33,11 @@
       // Pre-load theme script to prevent flash of wrong theme
       (function() {
         try {
-          var storageKey = "vite-ui-theme";
-          var theme = localStorage.getItem(storageKey) || "system";
+          // Force dark mode permanently
           var root = document.documentElement;
-          
-          var systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-          var activeTheme = theme === "system" ? systemTheme : theme;
-          
           root.classList.remove("light", "dark");
-          root.classList.add(activeTheme);
-          root.style.colorScheme = activeTheme;
+          root.classList.add("dark");
+          root.style.colorScheme = "dark";
           
           // Create or update meta theme-color for mobile status bars
           var metaThemeColor = document.querySelector("meta[name='theme-color']");
@@ -51,11 +46,7 @@
             metaThemeColor.setAttribute("name", "theme-color");
             document.head.appendChild(metaThemeColor);
           }
-          // Match the actual background color from CSS: hsl(0, 0%, 97%) for light mode
-          var backgroundColor = activeTheme === "dark" 
-            ? "hsl(240, 10%, 3.9%)" 
-            : "hsl(0, 0%, 97%)";
-          metaThemeColor.setAttribute("content", backgroundColor);
+          metaThemeColor.setAttribute("content", "hsl(240, 10%, 3.9%)");
         } catch (e) {
           console.error("Theme pre-load error:", e);
         }

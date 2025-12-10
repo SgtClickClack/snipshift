@@ -129,7 +129,7 @@ export default function CreateShiftModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="create-shift-modal">
         <DialogHeader>
           <DialogTitle>Create New Shift</DialogTitle>
           <DialogDescription>
@@ -332,7 +332,7 @@ export default function CreateShiftModal({
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} data-testid="create-shift-submit">
               {isLoading ? "Creating..." : repeatWeekly ? "Create Recurring Shifts" : "Create Shift"}
             </Button>
           </DialogFooter>

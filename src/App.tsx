@@ -40,6 +40,7 @@ const ProfessionalOnboardingPage = lazy(() => import('@/pages/onboarding/profess
 // Legal & Company pages - lazy load (less critical)
 const TermsPage = lazy(() => import('@/pages/legal/terms'));
 const PrivacyPage = lazy(() => import('@/pages/legal/privacy'));
+const SitemapPage = lazy(() => import('@/pages/legal/sitemap'));
 const AboutPage = lazy(() => import('@/pages/company/about'));
 const ContactPage = lazy(() => import('@/pages/company/contact'));
 
@@ -183,6 +184,14 @@ function AppRoutes() {
           <AuthGuard>
             <Suspense fallback={<PageLoadingFallback />}>
               <PrivacyPage />
+            </Suspense>
+          </AuthGuard>
+        } />
+
+        <Route path="/sitemap" element={
+          <AuthGuard>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <SitemapPage />
             </Suspense>
           </AuthGuard>
         } />
