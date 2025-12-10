@@ -293,7 +293,7 @@ export default function ProfileHeader({
       setLocalBannerUrl(firebaseUrlWithCacheBust);
       console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
-      // Call parent callback immediately
+      // Call parent callback immediately to update form data
       onBannerUpload?.(firebaseUrlWithCacheBust);
       console.log('Banner - Parent callback called with:', firebaseUrlWithCacheBust);
 
@@ -550,13 +550,16 @@ export default function ProfileHeader({
     .toUpperCase()
     .slice(0, 2) || 'U';
 
+  // Prioritize live state (localBannerUrl) over prop (bannerUrl) for preview
+  const displayBannerUrl = localBannerUrl || bannerUrl || null;
+
   return (
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible", className)}>
       {/* Banner Image or Gradient Fallback */}
-      {localBannerUrl ? (
+      {displayBannerUrl ? (
         <OptimizedImage
-          key={localBannerUrl} // Force re-render when URL changes
-          src={localBannerUrl}
+          key={displayBannerUrl} // Force re-render when URL changes
+          src={displayBannerUrl}
           alt="Banner"
           priority={true}
           fallbackType="banner"

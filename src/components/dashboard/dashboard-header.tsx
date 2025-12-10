@@ -588,13 +588,16 @@ export default function DashboardHeader({
     }
   };
 
+  // Prioritize live state (localBannerUrl) over prop (bannerImage) for preview
+  const displayBannerUrl = localBannerUrl || bannerImage || null;
+
   return (
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible mb-16", className)}>
       {/* Banner Image or Gradient Fallback */}
-      {localBannerUrl ? (
+      {displayBannerUrl ? (
         <OptimizedImage
-          key={localBannerUrl} // Force re-render when URL changes
-          src={localBannerUrl}
+          key={displayBannerUrl} // Force re-render when URL changes
+          src={displayBannerUrl}
           alt="Banner"
           priority={true}
           fallbackType="banner"
