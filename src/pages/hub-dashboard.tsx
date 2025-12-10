@@ -81,7 +81,8 @@ export default function HubDashboard() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && !isEditingProfile) {
+      // Only sync from user when not editing to avoid overwriting local changes
       setProfileData({
         displayName: user.displayName || "",
         bio: user.bio || "",
@@ -90,7 +91,7 @@ export default function HubDashboard() {
         bannerUrl: user.bannerUrl || user.bannerImage || ""
       });
     }
-  }, [user]);
+  }, [user, isEditingProfile]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
@@ -1017,15 +1018,19 @@ export default function HubDashboard() {
                       avatarUrl={profileData.avatarUrl}
                       displayName={profileData.displayName || user?.displayName || 'Business'}
                       editable={isEditingProfile}
-                      onBannerUpload={isEditingProfile ? async (url) => {
+                      onBannerUpload={isEditingProfile ? (url) => {
+                        // ProfileHeader already calls API and saves to DB
+                        // Just update local state for immediate UI update
                         setProfileData(prev => ({ ...prev, bannerUrl: url }));
-                        // Refresh user data to get updated banner URL
-                        await refreshUser();
+                        // Refresh user in background without blocking
+                        refreshUser().catch(err => console.error('Failed to refresh user:', err));
                       } : undefined}
-                      onAvatarUpload={isEditingProfile ? async (url) => {
+                      onAvatarUpload={isEditingProfile ? (url) => {
+                        // ProfileHeader already calls API and saves to DB
+                        // Just update local state for immediate UI update
                         setProfileData(prev => ({ ...prev, avatarUrl: url }));
-                        // Refresh user data to get updated avatar URL
-                        await refreshUser();
+                        // Refresh user in background without blocking
+                        refreshUser().catch(err => console.error('Failed to refresh user:', err));
                       } : undefined}
                     />
                   </div>
