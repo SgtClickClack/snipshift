@@ -74,7 +74,9 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleBack = () => {
+  const handleBack = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
@@ -367,9 +369,10 @@ export default function OnboardingPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleBack}
+                onClick={(e) => handleBack(e)}
                 disabled={currentStep === 1}
                 className="steel"
+                data-testid="button-back"
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Back
