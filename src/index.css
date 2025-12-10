@@ -185,21 +185,22 @@ button:active, a:active, [role="button"]:active {
 /* Header styling with high contrast */
 .rbc-header {
   padding: 0.75rem 0.5rem;
-  font-weight: 600;
+  font-weight: 700;
   border-bottom: 2px solid hsl(var(--border));
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  background-color: hsl(var(--background));
+  background-color: hsl(var(--muted) / 0.3);
   color: hsl(var(--foreground));
+  font-size: 0.875rem;
 }
 
 .rbc-header-today {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: hsl(var(--foreground)) !important;
   border-left: 3px solid hsl(var(--primary)) !important;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 /* Time gutter with high contrast */
@@ -217,7 +218,7 @@ button:active, a:active, [role="button"]:active {
 
 /* Current day column styling in week/day view - Google Calendar style */
 .rbc-time-view .rbc-day-slot.rbc-today {
-  background-color: rgba(239, 246, 255, 0.5) !important; /* bg-blue-50/50 */
+  background-color: rgba(59, 130, 246, 0.08) !important; /* Subtle blue tint */
 }
 
 .rbc-time-view .rbc-day-slot.rbc-today .rbc-time-slot {
@@ -226,11 +227,11 @@ button:active, a:active, [role="button"]:active {
 
 .rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
   border-left: 3px solid hsl(var(--primary)) !important;
-  background-color: rgba(239, 246, 255, 0.5) !important; /* bg-blue-50/50 */
+  background-color: rgba(59, 130, 246, 0.08) !important; /* Subtle blue tint */
 }
 
 .rbc-time-view .rbc-day-bg.rbc-today {
-  background-color: rgba(239, 246, 255, 0.5) !important; /* bg-blue-50/50 */
+  background-color: rgba(59, 130, 246, 0.08) !important; /* Subtle blue tint */
 }
 
 /* Day background with clear borders */
@@ -240,7 +241,7 @@ button:active, a:active, [role="button"]:active {
 }
 
 .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.6);
+  border-top-color: hsl(var(--border) / 0.5);
 }
 
 .rbc-time-content {
@@ -254,16 +255,16 @@ button:active, a:active, [role="button"]:active {
 }
 
 .rbc-day-slot .rbc-time-slot {
-  border-top-color: hsl(var(--border) / 0.6);
+  border-top-color: hsl(var(--border) / 0.5);
 }
 
-/* Today indicator with high contrast */
+/* Today indicator with subtle transparent accent */
 .rbc-today {
-  background-color: hsl(var(--accent) / 0.25) !important;
+  background-color: rgba(59, 130, 246, 0.08) !important;
 }
 
 .rbc-today .rbc-day-bg {
-  background-color: hsl(var(--accent) / 0.2) !important;
+  background-color: rgba(59, 130, 246, 0.08) !important;
   border-left: 3px solid hsl(var(--primary)) !important;
 }
 
@@ -338,24 +339,33 @@ button:active, a:active, [role="button"]:active {
   border-color: hsl(var(--primary));
 }
 
-/* Grid line improvements */
+/* Grid line improvements - lighter for better readability */
 .rbc-month-view,
 .rbc-time-view {
-  border-color: hsl(var(--border) / 0.4);
+  border-color: hsl(var(--border) / 0.6);
 }
 
 .rbc-month-row {
-  border-color: hsl(var(--border) / 0.4);
+  border-color: hsl(var(--border) / 0.6);
 }
 
 .rbc-day-bg + .rbc-day-bg {
-  border-left-color: hsl(var(--border) / 0.4);
+  border-left-color: hsl(var(--border) / 0.6);
 }
 
 .rbc-row {
-  border-color: hsl(var(--border) / 0.3);
+  border-color: hsl(var(--border) / 0.5);
 }
 
 .rbc-row-segment {
-  border-color: hsl(var(--border) / 0.3);
+  border-color: hsl(var(--border) / 0.5);
+}
+
+/* Additional grid line styling for better visibility */
+.rbc-time-content {
+  border-left-color: hsl(var(--border) / 0.6);
+}
+
+.rbc-day-slot {
+  border-right-color: hsl(var(--border) / 0.6);
 }

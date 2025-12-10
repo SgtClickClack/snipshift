@@ -164,7 +164,7 @@ function CurrentTimeIndicator({
       }}
     >
       <div className="flex items-center h-0.5">
-        <div className="w-14 text-xs text-red-600 font-medium pr-2 text-right bg-background/80">
+        <div className="w-14 text-xs text-red-600 font-medium pr-2 pl-1 text-right bg-red-50 dark:bg-red-950/80 rounded-full border border-red-200 dark:border-red-900/50">
           {format(currentTime, "h:mm a")}
         </div>
         <div className="flex-1 relative">
@@ -594,16 +594,16 @@ export default function ProfessionalCalendar({
       const parts = label.split(" ");
       return (
         <div
-          className={`rbc-header ${isCurrentDay ? "rbc-header-today bg-blue-50/50" : ""}`}
-          style={isCurrentDay ? { backgroundColor: "rgba(239, 246, 255, 0.5)" } : {}}
+          className={`rbc-header ${isCurrentDay ? "rbc-header-today" : ""}`}
+          style={isCurrentDay ? { backgroundColor: "rgba(59, 130, 246, 0.15)" } : {}}
         >
           {parts.length > 1 ? (
             <>
-              <div className="font-semibold">{parts[0]}</div>
-              <div className="text-sm text-muted-foreground">{parts.slice(1).join(" ")}</div>
+              <div className={`font-bold ${isCurrentDay ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`}>{parts[0]}</div>
+              <div className={`text-sm ${isCurrentDay ? "text-blue-700 dark:text-blue-300 font-medium" : "text-muted-foreground"}`}>{parts.slice(1).join(" ")}</div>
             </>
           ) : (
-            label
+            <span className={isCurrentDay ? "font-bold text-blue-600 dark:text-blue-400" : "font-semibold"}>{label}</span>
           )}
         </div>
       );
@@ -767,7 +767,7 @@ export default function ProfessionalCalendar({
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Left Sidebar - 25% */}
-      <div className="w-full lg:w-1/4 space-y-4">
+      <div className="w-full lg:w-1/4 space-y-4 bg-slate-900/50 dark:bg-slate-950/50 p-4 rounded-lg border border-slate-800/50">
         {/* Mini Calendar */}
         <Card>
           <CardHeader>
@@ -890,7 +890,7 @@ export default function ProfessionalCalendar({
 
       {/* Main Calendar Area - 75% */}
       <div className="flex-1 lg:w-3/4" data-testid="calendar-main-area">
-        <Card className="h-full flex flex-col">
+        <Card className="h-full flex flex-col bg-background">
           <CardHeader className="border-b">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <CardTitle className="text-xl" data-testid="calendar-schedule-title">Schedule</CardTitle>
@@ -1070,29 +1070,6 @@ export default function ProfessionalCalendar({
                           position: 'relative'
                         }}
                       >
-                        {/* Empty State - shown when no events */}
-                        {safeEvents.length === 0 && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10 pointer-events-none">
-                            <CalendarIcon className="h-16 w-16 text-muted-foreground/40 mb-4" />
-                            <h3 className="text-lg font-semibold mb-2">No shifts scheduled</h3>
-                            <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                              Click on any time slot to create a new shift or availability.
-                            </p>
-                            <Button
-                              onClick={() => {
-                                const today = new Date();
-                                setSelectedDate(today);
-                                setSelectedSlot(null);
-                                setNewEventTitle("");
-                                setShowCreateModal(true);
-                              }}
-                              className="mt-2 pointer-events-auto"
-                            >
-                              <Plus className="mr-2 h-4 w-4" />
-                              Create Shift
-                            </Button>
-                          </div>
-                        )}
                         <CalendarErrorBoundary>
                           <Calendar
                             localizer={localizer}
