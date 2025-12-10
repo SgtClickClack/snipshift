@@ -6,7 +6,7 @@ export default function Hero() {
     <div 
       className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-center"
       style={{
-        backgroundImage: `url('/hero-background.png'), linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%)`,
+        backgroundImage: `url('/herobarber%20(2).png'), linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundBlendMode: 'overlay'
