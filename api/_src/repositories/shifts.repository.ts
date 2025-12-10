@@ -12,7 +12,7 @@ import { getDb } from '../db/index.js';
 export interface ShiftFilters {
   employerId?: string;
   assigneeId?: string;
-  status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
+  status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
   limit?: number;
   offset?: number;
 }
@@ -111,9 +111,11 @@ export async function createShift(shiftData: {
   startTime: Date | string;
   endTime: Date | string;
   hourlyRate: string;
-  status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
+  status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
   assigneeId?: string;
   location?: string;
+  isRecurring?: boolean;
+  parentShiftId?: string;
 }): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
   if (!db) {
@@ -134,6 +136,8 @@ export async function createShift(shiftData: {
         status: shiftData.status || 'draft',
         assigneeId: shiftData.assigneeId || null,
         location: shiftData.location || null,
+        isRecurring: shiftData.isRecurring || false,
+        parentShiftId: shiftData.parentShiftId || null,
       })
       .returning();
 
@@ -151,6 +155,94 @@ export async function createShift(shiftData: {
 }
 
 /**
+ * Create multiple recurring shifts in a transaction
+ * @param parentShiftData - Data for the parent shift (first in series)
+ * @param recurringShiftsData - Array of shift data for recurring instances
+ * @returns Array of created shifts (parent first, then children)
+ */
+export async function createRecurringShifts(
+  parentShiftData: {
+    employerId: string;
+    title: string;
+    description: string;
+    startTime: Date | string;
+    endTime: Date | string;
+    hourlyRate: string;
+    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+    location?: string;
+  },
+  recurringShiftsData: Array<{
+    startTime: Date | string;
+    endTime: Date | string;
+  }>
+): Promise<typeof shifts.$inferSelect[]> {
+  const db = getDb();
+  if (!db) {
+    console.error('[createRecurringShifts] Database not available');
+    throw new Error('Database not available');
+  }
+
+  try {
+    return await db.transaction(async (tx) => {
+      // Create parent shift first
+      const [parentShift] = await tx
+        .insert(shifts)
+        .values({
+          employerId: parentShiftData.employerId,
+          title: parentShiftData.title,
+          description: parentShiftData.description,
+          startTime: typeof parentShiftData.startTime === 'string' ? new Date(parentShiftData.startTime) : parentShiftData.startTime,
+          endTime: typeof parentShiftData.endTime === 'string' ? new Date(parentShiftData.endTime) : parentShiftData.endTime,
+          hourlyRate: parentShiftData.hourlyRate,
+          status: parentShiftData.status || 'draft',
+          location: parentShiftData.location || null,
+          isRecurring: true,
+          parentShiftId: null, // Parent has no parent
+        })
+        .returning();
+
+      if (!parentShift) {
+        throw new Error('Failed to create parent shift');
+      }
+
+      // Create child shifts
+      const childShifts = await Promise.all(
+        recurringShiftsData.map((childData) =>
+          tx
+            .insert(shifts)
+            .values({
+              employerId: parentShiftData.employerId,
+              title: parentShiftData.title,
+              description: parentShiftData.description,
+              startTime: typeof childData.startTime === 'string' ? new Date(childData.startTime) : childData.startTime,
+              endTime: typeof childData.endTime === 'string' ? new Date(childData.endTime) : childData.endTime,
+              hourlyRate: parentShiftData.hourlyRate,
+              status: parentShiftData.status || 'draft',
+              location: parentShiftData.location || null,
+              isRecurring: true,
+              parentShiftId: parentShift.id,
+            })
+            .returning()
+        )
+      );
+
+      // Flatten the results (each insert returns an array with one element)
+      const allChildShifts = childShifts.map(([shift]) => shift).filter(Boolean);
+
+      return [parentShift, ...allChildShifts];
+    });
+  } catch (error: any) {
+    console.error('[createRecurringShifts] Database error:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      constraint: error?.constraint,
+    });
+    throw error;
+  }
+}
+
+/**
  * Update a shift by ID
  */
 export async function updateShift(
@@ -161,9 +253,11 @@ export async function updateShift(
     startTime?: Date | string;
     endTime?: Date | string;
     hourlyRate?: string;
-    status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
+    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
     assigneeId?: string;
     location?: string;
+    isRecurring?: boolean;
+    parentShiftId?: string;
   }
 ): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
@@ -212,7 +306,7 @@ export async function deleteShift(id: string): Promise<boolean> {
 /**
  * Get shifts created by a specific employer
  */
-export async function getShiftsByEmployer(employerId: string, status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed'): Promise<typeof shifts.$inferSelect[]> {
+export async function getShiftsByEmployer(employerId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled'): Promise<typeof shifts.$inferSelect[]> {
   const db = getDb();
   if (!db) {
     return [];
@@ -235,7 +329,7 @@ export async function getShiftsByEmployer(employerId: string, status?: 'draft' |
 /**
  * Get shifts assigned to a specific professional (assignee)
  */
-export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed'): Promise<typeof shifts.$inferSelect[]> {
+export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled'): Promise<typeof shifts.$inferSelect[]> {
   const db = getDb();
   if (!db) {
     return [];

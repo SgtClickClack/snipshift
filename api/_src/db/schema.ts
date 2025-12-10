@@ -9,7 +9,7 @@ import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, i
 import { relations } from 'drizzle-orm';
 import { users, userRoleEnum } from './schema/users.js';
 import { notifications, notificationTypeEnum } from './schema/notifications.js';
-import { shifts, shiftStatusEnum } from './schema/shifts.js';
+import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum } from './schema/shifts.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
 import { comments } from './schema/comments.js';
@@ -20,6 +20,7 @@ export {
   users, userRoleEnum, 
   notifications, notificationTypeEnum, 
   shifts, shiftStatusEnum,
+  shiftOffers, shiftOfferStatusEnum,
   posts, postTypeEnum,
   postLikes,
   comments,
@@ -435,7 +436,30 @@ export const shiftsRelations = relations(shifts, ({ one, many }) => ({
     fields: [shifts.employerId],
     references: [users.id],
   }),
+  assignee: one(users, {
+    fields: [shifts.assigneeId],
+    references: [users.id],
+    relationName: 'assignee',
+  }),
+  parentShift: one(shifts, {
+    fields: [shifts.parentShiftId],
+    references: [shifts.id],
+    relationName: 'parent',
+  }),
+  childShifts: many(shifts, { relationName: 'parent' }),
   applications: many(applications),
+  offers: many(shiftOffers),
+}));
+
+export const shiftOffersRelations = relations(shiftOffers, ({ one }) => ({
+  shift: one(shifts, {
+    fields: [shiftOffers.shiftId],
+    references: [shifts.id],
+  }),
+  professional: one(users, {
+    fields: [shiftOffers.professionalId],
+    references: [users.id],
+  }),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({

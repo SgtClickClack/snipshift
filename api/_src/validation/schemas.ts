@@ -128,7 +128,26 @@ export const ShiftSchema = z.object({
     }, 'Pay rate must be a positive number'),
   ]).optional(),
   location: z.string().optional(),
-  status: z.enum(['draft', 'invited', 'open', 'filled', 'completed']).optional(),
+  status: z.enum(['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled']).optional(),
+  isRecurring: z.boolean().optional(),
+  recurringShifts: z.array(z.object({
+    startTime: z.string(),
+    endTime: z.string(),
+  })).optional(), // Array of recurring shift instances
+});
+
+/**
+ * Schema for shift invite (Smart Fill)
+ */
+export const ShiftInviteSchema = z.object({
+  professionalId: z.string().uuid('Invalid professional ID'),
+});
+
+/**
+ * Schema for shift offer acceptance
+ */
+export const ShiftOfferAcceptSchema = z.object({
+  offerId: z.string().uuid('Invalid offer ID').optional(), // Optional if accepting via shift ID
 });
 
 /**
