@@ -216,39 +216,57 @@ export default function DashboardHeader({
 
       console.log('Banner Firebase upload response:', downloadURL);
 
-      // The "Real" Await: Call API to update profile in database
-      const responseData = await updateBusinessProfile({
-        bannerUrl: downloadURL,
-      });
-
-      console.log('Banner API upload response:', responseData);
-
-      // Check the Result: Verify we got a valid URL back
-      if (!responseData.bannerUrl || typeof responseData.bannerUrl !== 'string') {
-        throw new Error('API did not return a valid banner URL');
-      }
-
-      // Log the new banner URL for debugging
-      console.log('New Banner URL:', responseData.bannerUrl);
-
-      // Force UI Refresh (Cache Busting): Append timestamp to URL
-      const newUrl = `${responseData.bannerUrl}?t=${Date.now()}`;
+      // OPTIMISTIC UPDATE: Update UI immediately with Firebase URL (don't wait for API)
+      // Add cache-busting timestamp to force browser to reload the image
+      const firebaseUrlWithCacheBust = `${downloadURL}?t=${Date.now()}`;
+      const previousBannerUrl = localBannerUrl; // Store previous value for rollback
       
-      // Update local state immediately so user sees the change
-      setLocalBannerUrl(newUrl);
+      // Update state immediately so user sees the change instantly
+      setLocalBannerUrl(firebaseUrlWithCacheBust);
+      console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
-      // Call parent callback with the new URL
-      onBannerUpload?.(newUrl);
+      // Call parent callback immediately
+      onBannerUpload?.(firebaseUrlWithCacheBust);
 
-      // Only show success if API succeeded
-      toast({
-        title: "Banner updated",
-        description: "Your banner image has been successfully uploaded.",
-      });
+      // Now save to database in the background (don't await before showing UI)
+      try {
+        const responseData = await updateBusinessProfile({
+          bannerUrl: downloadURL,
+        });
 
-      // Refresh global user state to get fresh image URLs
-      if (refreshUser) {
-        refreshUser().catch(err => console.error('Failed to refresh user after banner upload:', err));
+        console.log('Banner API upload response:', responseData);
+
+        // Verify API response (optional - Firebase URL is already shown)
+        if (responseData.bannerUrl && typeof responseData.bannerUrl === 'string') {
+          // API returned a URL - update with API response (may differ from Firebase URL)
+          const apiUrlWithCacheBust = `${responseData.bannerUrl}?t=${Date.now()}`;
+          setLocalBannerUrl(apiUrlWithCacheBust);
+          onBannerUpload?.(apiUrlWithCacheBust);
+          console.log('Banner state updated with API response URL:', apiUrlWithCacheBust);
+        }
+
+        // Show success toast
+        toast({
+          title: "Banner updated",
+          description: "Your banner image has been successfully uploaded.",
+        });
+
+        // Refresh global user state to get fresh image URLs
+        if (refreshUser) {
+          refreshUser().catch(err => console.error('Failed to refresh user after banner upload:', err));
+        }
+      } catch (apiError: any) {
+        // API call failed - revert to previous state
+        console.error('Banner API update failed, reverting state:', apiError);
+        setLocalBannerUrl(previousBannerUrl);
+        onBannerUpload?.(previousBannerUrl || '');
+        
+        // Show error toast but don't throw - Firebase upload succeeded
+        toast({
+          title: "Upload warning",
+          description: "Image uploaded but failed to save to profile. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
       console.error("Error uploading banner:", error);
@@ -381,36 +399,57 @@ export default function DashboardHeader({
 
       console.log('Logo Firebase upload response:', downloadURL);
 
-      // The "Real" Await: Call API to update profile in database
-      const responseData = await updateBusinessProfile({
-        avatarUrl: downloadURL,
-      });
-
-      console.log('Logo API upload response:', responseData);
-
-      // Check the Result: Verify we got a valid URL back
-      if (!responseData.avatarUrl || typeof responseData.avatarUrl !== 'string') {
-        throw new Error('API did not return a valid avatar URL');
-      }
-
-      // Force UI Refresh (Cache Busting): Append timestamp to URL
-      const newUrl = responseData.avatarUrl + '?t=' + new Date().getTime();
+      // OPTIMISTIC UPDATE: Update UI immediately with Firebase URL (don't wait for API)
+      // Add cache-busting timestamp to force browser to reload the image
+      const firebaseUrlWithCacheBust = `${downloadURL}?t=${Date.now()}`;
+      const previousLogoUrl = localLogoUrl; // Store previous value for rollback
       
-      // Update local state immediately so user sees the change
-      setLocalLogoUrl(newUrl);
+      // Update state immediately so user sees the change instantly
+      setLocalLogoUrl(firebaseUrlWithCacheBust);
+      console.log('Logo state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
-      // Call parent callback with the new URL
-      onLogoUpload?.(newUrl);
+      // Call parent callback immediately
+      onLogoUpload?.(firebaseUrlWithCacheBust);
 
-      // Only show success if API succeeded
-      toast({
-        title: "Profile picture updated",
-        description: "Your profile picture has been successfully uploaded.",
-      });
+      // Now save to database in the background (don't await before showing UI)
+      try {
+        const responseData = await updateBusinessProfile({
+          avatarUrl: downloadURL,
+        });
 
-      // Refresh global user state to get fresh image URLs
-      if (refreshUser) {
-        refreshUser().catch(err => console.error('Failed to refresh user after logo upload:', err));
+        console.log('Logo API upload response:', responseData);
+
+        // Verify API response (optional - Firebase URL is already shown)
+        if (responseData.avatarUrl && typeof responseData.avatarUrl === 'string') {
+          // API returned a URL - update with API response (may differ from Firebase URL)
+          const apiUrlWithCacheBust = `${responseData.avatarUrl}?t=${Date.now()}`;
+          setLocalLogoUrl(apiUrlWithCacheBust);
+          onLogoUpload?.(apiUrlWithCacheBust);
+          console.log('Logo state updated with API response URL:', apiUrlWithCacheBust);
+        }
+
+        // Show success toast
+        toast({
+          title: "Profile picture updated",
+          description: "Your profile picture has been successfully uploaded.",
+        });
+
+        // Refresh global user state to get fresh image URLs
+        if (refreshUser) {
+          refreshUser().catch(err => console.error('Failed to refresh user after logo upload:', err));
+        }
+      } catch (apiError: any) {
+        // API call failed - revert to previous state
+        console.error('Logo API update failed, reverting state:', apiError);
+        setLocalLogoUrl(previousLogoUrl);
+        onLogoUpload?.(previousLogoUrl || '');
+        
+        // Show error toast but don't throw - Firebase upload succeeded
+        toast({
+          title: "Upload warning",
+          description: "Image uploaded but failed to save to profile. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
       console.error("Error uploading avatar:", error);
