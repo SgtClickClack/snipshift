@@ -148,7 +148,7 @@ export default function HomePage() {
             </Card>
 
             <Card 
-              className="p-6 bg-card shadow-xl border-2 border-border hover:shadow-2xl hover:border-orange-400/50 transition-all duration-300 cursor-pointer group"
+              className="p-6 bg-white shadow-xl border-2 border-orange-300 hover:shadow-2xl hover:border-orange-400 transition-all duration-300 cursor-pointer group"
               onClick={() => handleRoleSelection('trainer')}
             >
               <CardContent className="pt-6 text-center">
