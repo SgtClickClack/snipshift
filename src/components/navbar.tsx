@@ -118,20 +118,24 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16 min-w-0">
           <Link
             to={!user ? "/" : "/dashboard"}
-            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 min-w-0"
+            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 min-w-0 bg-transparent"
           >
-            <img 
-              src={logo} 
-              alt="Snipshift Logo" 
-              className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp invert contrast-[1.3] brightness-[1.08] saturate-[1.15] dark:invert-0" 
-              loading="eager"
-              width={120}
-              height={40}
-              style={{
-                imageRendering: 'auto',
-                WebkitFontSmoothing: 'antialiased',
-              }}
-            />
+            <div className="bg-transparent">
+              <img 
+                src={logo} 
+                alt="Snipshift Logo" 
+                className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp invert contrast-[1.3] brightness-[1.08] saturate-[1.15] dark:invert-0" 
+                loading="eager"
+                width={120}
+                height={40}
+                style={{
+                  imageRendering: 'auto',
+                  WebkitFontSmoothing: 'antialiased',
+                  backgroundColor: 'transparent',
+                  display: 'block',
+                }}
+              />
+            </div>
           </Link>
           
           <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 flex-shrink-0 min-w-0">
