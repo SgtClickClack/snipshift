@@ -194,6 +194,12 @@ button:active, a:active, [role="button"]:active {
   background-color: hsl(var(--muted) / 0.3);
   color: hsl(var(--foreground));
   font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+/* Weekend header styling */
+.rbc-header-weekend {
+  border-bottom-color: hsl(var(--border) / 0.9) !important;
 }
 
 /* Dark mode header improvements */
@@ -201,6 +207,10 @@ button:active, a:active, [role="button"]:active {
   background-color: hsl(var(--muted) / 0.6) !important;
   border-bottom-color: hsl(var(--border) / 0.8) !important;
   color: hsl(var(--foreground)) !important;
+}
+
+.dark .rbc-header-weekend {
+  border-bottom-color: hsl(var(--border) / 1) !important;
 }
 
 .rbc-header-today {
@@ -217,9 +227,9 @@ button:active, a:active, [role="button"]:active {
   color: hsl(var(--foreground)) !important;
 }
 
-/* Time gutter with high contrast */
+/* Time gutter with high contrast and subtle gradient */
 .rbc-time-header-gutter {
-  background-color: hsl(var(--muted));
+  background: linear-gradient(to right, hsl(var(--muted)), hsl(var(--muted) / 0.95));
   border-right: 2px solid hsl(var(--border));
   color: hsl(var(--foreground));
   font-weight: 600;
@@ -230,9 +240,9 @@ button:active, a:active, [role="button"]:active {
   background-color: hsl(var(--background));
 }
 
-/* Dark mode time gutter - better contrast */
+/* Dark mode time gutter - better contrast with gradient */
 .dark .rbc-time-header-gutter {
-  background-color: hsl(var(--muted) / 0.8) !important;
+  background: linear-gradient(to right, hsl(var(--muted) / 0.8), hsl(var(--muted) / 0.75)) !important;
   border-right-color: hsl(var(--border) / 0.9) !important;
   color: hsl(var(--foreground)) !important;
   font-weight: 700;
@@ -277,6 +287,18 @@ button:active, a:active, [role="button"]:active {
 .rbc-day-bg {
   border-color: hsl(var(--border));
   background-color: hsl(var(--background));
+  transition: background-color 0.2s ease;
+}
+
+/* Weekend day backgrounds - subtle color tint */
+.rbc-day-bg:nth-child(1),
+.rbc-day-bg:nth-child(7) {
+  background-color: rgba(168, 85, 247, 0.02);
+}
+
+.dark .rbc-day-bg:nth-child(1),
+.dark .rbc-day-bg:nth-child(7) {
+  background-color: rgba(168, 85, 247, 0.05) !important;
 }
 
 /* Dark mode day background - ensure visibility */
@@ -355,16 +377,30 @@ button:active, a:active, [role="button"]:active {
 .rbc-date-cell {
   color: hsl(var(--foreground));
   font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 .rbc-date-cell > a {
   color: hsl(var(--foreground));
   text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 .rbc-date-cell > a:hover {
   color: hsl(var(--primary));
   text-decoration: underline;
+  transform: scale(1.05);
+}
+
+/* Weekend date cells - subtle color accent */
+.rbc-date-cell:nth-child(1) > a,
+.rbc-date-cell:nth-child(7) > a {
+  color: rgba(168, 85, 247, 0.8);
+}
+
+.dark .rbc-date-cell:nth-child(1) > a,
+.dark .rbc-date-cell:nth-child(7) > a {
+  color: rgba(192, 132, 252, 0.9) !important;
 }
 
 /* Dark mode date cells - better contrast */
@@ -406,6 +442,16 @@ button:active, a:active, [role="button"]:active {
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   border-color: hsl(var(--primary));
+}
+
+/* Calendar container with subtle gradient overlay */
+.rbc-calendar {
+  background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
+  position: relative;
+}
+
+.dark .rbc-calendar {
+  background: linear-gradient(135deg, hsl(var(--background)) 0%, rgba(59, 130, 246, 0.02) 50%, rgba(168, 85, 247, 0.02) 100%);
 }
 
 /* Grid line improvements - lighter for better readability */

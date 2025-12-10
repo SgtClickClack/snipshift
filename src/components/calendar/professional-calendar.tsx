@@ -590,20 +590,40 @@ export default function ProfessionalCalendar({
   const customHeader = useCallback(
     ({ date, localizer, label }: { date: Date; localizer: any; label: string }) => {
       const isCurrentDay = isSameDay(date, new Date());
+      const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+      
+      // Add subtle color accents based on day of week
+      const dayColors: Record<number, { bg: string; text: string; darkText: string }> = {
+        0: { bg: "rgba(168, 85, 247, 0.08)", text: "text-purple-600", darkText: "dark:text-purple-400" }, // Sunday - Purple
+        1: { bg: "rgba(59, 130, 246, 0.08)", text: "text-blue-600", darkText: "dark:text-blue-400" }, // Monday - Blue
+        2: { bg: "rgba(14, 165, 233, 0.08)", text: "text-sky-600", darkText: "dark:text-sky-400" }, // Tuesday - Sky
+        3: { bg: "rgba(20, 184, 166, 0.08)", text: "text-teal-600", darkText: "dark:text-teal-400" }, // Wednesday - Teal
+        4: { bg: "rgba(34, 197, 94, 0.08)", text: "text-green-600", darkText: "dark:text-green-400" }, // Thursday - Green
+        5: { bg: "rgba(251, 146, 60, 0.08)", text: "text-orange-600", darkText: "dark:text-orange-400" }, // Friday - Orange
+        6: { bg: "rgba(236, 72, 153, 0.08)", text: "text-pink-600", darkText: "dark:text-pink-400" }, // Saturday - Pink
+      };
+      
+      const dayColor = dayColors[dayOfWeek];
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
       // Split the label (format: "EEE M/d" like "Mon 9/12")
       const parts = label.split(" ");
+      
       return (
         <div
-          className={`rbc-header ${isCurrentDay ? "rbc-header-today" : ""}`}
-          style={isCurrentDay ? { backgroundColor: "rgba(59, 130, 246, 0.15)" } : {}}
+          className={`rbc-header ${isCurrentDay ? "rbc-header-today" : ""} ${isWeekend ? "rbc-header-weekend" : ""}`}
+          style={isCurrentDay 
+            ? { backgroundColor: "rgba(59, 130, 246, 0.15)" } 
+            : { backgroundColor: dayColor.bg }
+          }
         >
           {parts.length > 1 ? (
             <>
-              <div className={`font-bold ${isCurrentDay ? "text-blue-600 dark:text-blue-300" : "text-foreground dark:text-foreground"}`}>{parts[0]}</div>
+              <div className={`font-bold ${isCurrentDay ? "text-blue-600 dark:text-blue-300" : `${dayColor.text} ${dayColor.darkText}`}`}>{parts[0]}</div>
               <div className={`text-sm ${isCurrentDay ? "text-blue-700 dark:text-blue-200 font-medium" : "text-muted-foreground dark:text-muted-foreground"}`}>{parts.slice(1).join(" ")}</div>
             </>
           ) : (
-            <span className={isCurrentDay ? "font-bold text-blue-600 dark:text-blue-300" : "font-semibold text-foreground dark:text-foreground"}>{label}</span>
+            <span className={isCurrentDay ? "font-bold text-blue-600 dark:text-blue-300" : `font-semibold ${dayColor.text} ${dayColor.darkText}`}>{label}</span>
           )}
         </div>
       );
@@ -767,7 +787,7 @@ export default function ProfessionalCalendar({
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Left Sidebar - 25% */}
-      <div className="w-full lg:w-1/4 space-y-4 bg-slate-900/50 dark:bg-slate-800/80 dark:border-slate-700/60 p-4 rounded-lg border border-slate-800/50">
+      <div className="w-full lg:w-1/4 space-y-4 bg-gradient-to-br from-slate-900/50 via-purple-900/20 to-blue-900/20 dark:from-slate-800/80 dark:via-purple-900/30 dark:to-blue-900/30 dark:border-slate-700/60 p-4 rounded-lg border border-slate-800/50">
         {/* Mini Calendar */}
         <Card>
           <CardHeader>
@@ -891,12 +911,12 @@ export default function ProfessionalCalendar({
       {/* Main Calendar Area - 75% */}
       <div className="flex-1 lg:w-3/4" data-testid="calendar-main-area">
         <Card className="h-full flex flex-col bg-background">
-          <CardHeader className="border-b">
+          <CardHeader className="border-b bg-gradient-to-r from-background via-purple-50/5 to-blue-50/5 dark:from-background dark:via-purple-950/10 dark:to-blue-950/10">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-xl" data-testid="calendar-schedule-title">Schedule</CardTitle>
+              <CardTitle className="text-xl bg-gradient-to-r from-foreground via-purple-600 to-blue-600 dark:from-foreground dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent" data-testid="calendar-schedule-title">Schedule</CardTitle>
               <div className="flex items-center gap-2">
                 {/* View Switcher */}
-                <div className="flex gap-1 border rounded-md p-1">
+                <div className="flex gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
                   <Button
                     variant={view === "month" ? "default" : "ghost"}
                     size="sm"
