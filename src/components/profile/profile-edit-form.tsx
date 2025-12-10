@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -85,6 +85,34 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
   const updateFormData = (updates: Partial<UserProfile>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
+
+  // Sync bannerUrl when profile.bannerImageURL changes (e.g., after a refetch or upload)
+  useEffect(() => {
+    if (profile?.bannerImageURL) {
+      const extractedBannerUrl = typeof profile.bannerImageURL === 'string' 
+        ? profile.bannerImageURL 
+        : (profile.bannerImageURL as any)?.bannerUrl || (profile.bannerImageURL as any)?.url || null;
+      
+      if (extractedBannerUrl && extractedBannerUrl !== formData.bannerImageURL) {
+        console.log('ProfileEditForm - Syncing bannerImageURL from profile prop:', extractedBannerUrl);
+        setFormData(prev => ({ ...prev, bannerImageURL: extractedBannerUrl }));
+      }
+    }
+  }, [profile?.bannerImageURL]);
+
+  // Sync profileImageURL when profile.profileImageURL changes (e.g., after a refetch or upload)
+  useEffect(() => {
+    if (profile?.profileImageURL) {
+      const extractedAvatarUrl = typeof profile.profileImageURL === 'string' 
+        ? profile.profileImageURL 
+        : (profile.profileImageURL as any)?.avatarUrl || (profile.profileImageURL as any)?.url || null;
+      
+      if (extractedAvatarUrl && extractedAvatarUrl !== formData.profileImageURL) {
+        console.log('ProfileEditForm - Syncing profileImageURL from profile prop:', extractedAvatarUrl);
+        setFormData(prev => ({ ...prev, profileImageURL: extractedAvatarUrl }));
+      }
+    }
+  }, [profile?.profileImageURL]);
 
 
   const addSkillOrService = () => {

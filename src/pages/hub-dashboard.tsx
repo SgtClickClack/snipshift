@@ -93,6 +93,33 @@ export default function HubDashboard() {
     }
   }, [user, isEditingProfile]);
 
+  // Sync bannerUrl when user.bannerUrl changes (e.g., after a refetch or upload)
+  // This runs even when editing to ensure the preview updates
+  useEffect(() => {
+    if (user?.bannerUrl) {
+      const extractedBannerUrl = typeof user.bannerUrl === 'string' 
+        ? user.bannerUrl 
+        : (user.bannerUrl as any)?.bannerUrl || (user.bannerUrl as any)?.url || null;
+      
+      if (extractedBannerUrl && extractedBannerUrl !== profileData.bannerUrl) {
+        console.log('HubDashboard - Syncing bannerUrl from user prop:', extractedBannerUrl);
+        setProfileData(prev => ({ ...prev, bannerUrl: extractedBannerUrl }));
+      }
+    }
+  }, [user?.bannerUrl]);
+
+  // Sync avatarUrl when user.avatarUrl changes (e.g., after a refetch or upload)
+  // This runs even when editing to ensure the preview updates
+  useEffect(() => {
+    if (user) {
+      const avatarUrl = user.avatarUrl || user.profileImageURL || user.profileImage || '';
+      if (avatarUrl && avatarUrl !== profileData.avatarUrl) {
+        console.log('HubDashboard - Syncing avatarUrl from user prop:', avatarUrl);
+        setProfileData(prev => ({ ...prev, avatarUrl }));
+      }
+    }
+  }, [user?.avatarUrl, user?.profileImageURL, user?.profileImage]);
+
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
       const res = await apiRequest("PUT", "/api/me", data);
