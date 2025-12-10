@@ -437,20 +437,20 @@ export default function HubDashboard() {
           title={user?.displayName || "Business Dashboard"}
           subtitle={user?.email}
           editable={isEditingProfile}
-          onBannerUpload={isEditingProfile ? (url) => {
+          onBannerUpload={(url) => {
             // DashboardHeader already calls API and saves to DB
-            // Just update local state for immediate UI update
+            // Update local state for immediate UI update (including Profile Settings preview)
             setProfileData(prev => ({ ...prev, bannerUrl: url }));
             // Refresh user in background without blocking
             refreshUser().catch(err => console.error('Failed to refresh user:', err));
-          } : undefined}
-          onLogoUpload={isEditingProfile ? (url) => {
+          }}
+          onLogoUpload={(url) => {
             // DashboardHeader already calls API and saves to DB
-            // Just update local state for immediate UI update
+            // Update local state for immediate UI update (including Profile Settings preview)
             setProfileData(prev => ({ ...prev, avatarUrl: url }));
             // Refresh user in background without blocking
             refreshUser().catch(err => console.error('Failed to refresh user:', err));
-          } : undefined}
+          }}
         />
       </div>
 
