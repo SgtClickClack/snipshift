@@ -51,7 +51,48 @@ export default function ProfileHeader({
 
   // Sync local state with props when they change externally
   useEffect(() => {
-    setLocalBannerUrl(bannerUrl);
+    setLocalBannerUrl((current) => {
+      // Type safety: Ensure current is a string (not an object)
+      if (current && typeof current !== 'string') {
+        console.error('Banner useEffect - current is not a string, resetting:', current);
+        // If current is an object, reset to prop or empty string
+        return (typeof bannerUrl === 'string' ? bannerUrl : null) || null;
+      }
+
+      // Type safety: Ensure prop is a string before using it
+      if (bannerUrl && typeof bannerUrl !== 'string') {
+        console.error('Banner useEffect - bannerUrl prop is not a string, keeping current:', bannerUrl);
+        return current;
+      }
+
+      // Only update if prop is different from current state
+      // IMPORTANT: If current state has a cache-busting timestamp (?t=) and prop doesn't,
+      // keep the current state to preserve the optimistic update
+      if (bannerUrl !== current) {
+        // Check if current has cache-busting but prop doesn't (base URL match)
+        // Only do string operations if both are strings
+        if (typeof current === 'string' && typeof bannerUrl === 'string') {
+          const currentBaseUrl = current.split('?')[0];
+          const propBaseUrl = bannerUrl.split('?')[0];
+          
+          if (currentBaseUrl && propBaseUrl && currentBaseUrl === propBaseUrl && current.includes('?t=')) {
+            // Current has cache-busting, prop doesn't - keep current state
+            console.log('Banner useEffect - Preserving cache-busted URL:', { 
+              current, 
+              prop: bannerUrl 
+            });
+            return current;
+          }
+        }
+        
+        console.log('Banner useEffect - Prop changed, updating state:', { 
+          from: current, 
+          to: bannerUrl 
+        });
+        return bannerUrl;
+      }
+      return current;
+    });
   }, [bannerUrl]);
 
   useEffect(() => {
@@ -195,39 +236,93 @@ export default function ProfileHeader({
 
       console.log('Banner Firebase upload response:', downloadURL);
 
-      // The "Real" Await: Call API to update profile in database
-      const apiResponse = await apiRequest('PUT', '/api/me', {
-        bannerUrl: downloadURL,
-      });
-
-      // Check the Result: Verify API response is 200 OK
-      if (!apiResponse.ok) {
-        const errorText = await apiResponse.text();
-        throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
+      // OPTIMISTIC UPDATE: Update UI immediately with Firebase URL (don't wait for API)
+      // Ensure downloadURL is a string
+      if (typeof downloadURL !== 'string') {
+        console.error('Banner - downloadURL is not a string:', downloadURL);
+        throw new Error('Firebase upload did not return a valid URL string');
       }
+      
+      // Add cache-busting timestamp to force browser to reload the image
+      const firebaseUrlWithCacheBust = `${downloadURL}?t=${Date.now()}`;
+      const previousBannerUrl = localBannerUrl; // Store previous value for rollback
+      
+      console.log('Banner - Previous URL:', previousBannerUrl);
+      console.log('Banner - Setting new URL (optimistic):', firebaseUrlWithCacheBust);
+      console.log('Setting bannerUrl to string:', firebaseUrlWithCacheBust);
+      
+      // Update state immediately so user sees the change instantly
+      setLocalBannerUrl(firebaseUrlWithCacheBust);
+      console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
+      
+      // Call parent callback immediately
+      onBannerUpload?.(firebaseUrlWithCacheBust);
+      console.log('Banner - Parent callback called with:', firebaseUrlWithCacheBust);
 
-      const responseData = await apiResponse.json();
-      console.log('Banner API upload response:', responseData);
+      // Now save to database in the background (don't await before showing UI)
+      try {
+        const apiResponse = await apiRequest('PUT', '/api/me', {
+          bannerUrl: downloadURL,
+        });
 
-      // Check the Result: Verify we got a valid URL back
-      if (!responseData.bannerUrl || typeof responseData.bannerUrl !== 'string') {
-        throw new Error('API did not return a valid banner URL');
+        // Check the Result: Verify API response is 200 OK
+        if (!apiResponse.ok) {
+          const errorText = await apiResponse.text();
+          throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
+        }
+
+        const responseData = await apiResponse.json();
+        console.log('Banner API upload response:', responseData);
+        console.log('Banner API response keys:', Object.keys(responseData || {}));
+        console.log('Banner API response.bannerUrl:', responseData?.bannerUrl);
+
+        // Extract URL from API response - check multiple possible paths
+        let finalUrl: string | null = null;
+        
+        if (responseData?.data?.bannerUrl && typeof responseData.data.bannerUrl === 'string') {
+          finalUrl = responseData.data.bannerUrl;
+        } else if (responseData?.bannerUrl && typeof responseData.bannerUrl === 'string') {
+          finalUrl = responseData.bannerUrl;
+        } else {
+          // API didn't return bannerUrl - keep using Firebase URL (already set optimistically)
+          console.log('Banner - API response missing bannerUrl, keeping Firebase URL:', firebaseUrlWithCacheBust);
+          finalUrl = downloadURL; // Use the Firebase URL we already have
+        }
+
+        // Only update if we have a valid string URL
+        if (finalUrl && typeof finalUrl === 'string') {
+          const apiUrlWithCacheBust = `${finalUrl}?t=${Date.now()}`;
+          console.log('Setting bannerUrl to string:', apiUrlWithCacheBust);
+          console.log('Banner - Updating state with API response URL:', apiUrlWithCacheBust);
+          setLocalBannerUrl(apiUrlWithCacheBust);
+          onBannerUpload?.(apiUrlWithCacheBust);
+          console.log('Banner state updated with API response URL:', apiUrlWithCacheBust);
+        } else {
+          console.error('Banner - Failed to extract valid URL string from API response:', responseData);
+        }
+
+        // Show success toast
+        toast({
+          title: "Banner updated",
+          description: "Your banner image has been successfully uploaded.",
+        });
+      } catch (apiError: any) {
+        // API call failed - revert to previous state
+        console.error('Banner API update failed, reverting state:', apiError);
+        
+        // Ensure previousBannerUrl is a string before reverting
+        const safePreviousUrl = (typeof previousBannerUrl === 'string' ? previousBannerUrl : null) || null;
+        console.log('Banner - Reverting to previous URL (type-checked):', safePreviousUrl);
+        setLocalBannerUrl(safePreviousUrl);
+        onBannerUpload?.(safePreviousUrl || '');
+        
+        // Show error toast but don't throw - Firebase upload succeeded
+        toast({
+          title: "Upload warning",
+          description: "Image uploaded but failed to save to profile. Please try again.",
+          variant: "destructive",
+        });
       }
-
-      // Force UI Refresh (Cache Busting): Append timestamp to URL
-      const newUrl = responseData.bannerUrl + '?t=' + new Date().getTime();
-      
-      // Update local state immediately so user sees the change
-      setLocalBannerUrl(newUrl);
-      
-      // Call parent callback with the new URL
-      onBannerUpload?.(newUrl);
-
-      // Only show success if API succeeded
-      toast({
-        title: "Banner updated",
-        description: "Your banner image has been successfully uploaded.",
-      });
     } catch (error: any) {
       console.error("Error uploading banner:", error);
       const errorMessage = error.message || "Failed to upload banner image. Please try again.";
@@ -422,6 +517,7 @@ export default function ProfileHeader({
       {/* Banner Image or Gradient Fallback */}
       {localBannerUrl ? (
         <OptimizedImage
+          key={localBannerUrl} // Force re-render when URL changes
           src={localBannerUrl}
           alt="Banner"
           priority={true}
