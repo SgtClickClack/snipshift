@@ -1011,14 +1011,18 @@ export default function HubDashboard() {
               <CardContent className="p-0">
                 <form onSubmit={handleProfileSubmit} className="space-y-6">
                   {/* Profile Header with Banner and Avatar */}
-                  <div className="relative overflow-visible">
+                  <div className="relative overflow-visible z-0">
                     <ProfileHeader
                       bannerUrl={profileData.bannerUrl}
                       avatarUrl={profileData.avatarUrl}
                       displayName={profileData.displayName || user?.displayName || 'Business'}
                       editable={isEditingProfile}
-                      onBannerUpload={isEditingProfile ? (url) => setProfileData(prev => ({ ...prev, bannerUrl: url })) : undefined}
-                      onAvatarUpload={isEditingProfile ? (url) => setProfileData(prev => ({ ...prev, avatarUrl: url })) : undefined}
+                      onBannerUpload={isEditingProfile ? (url) => {
+                        setProfileData(prev => ({ ...prev, bannerUrl: url }));
+                      } : undefined}
+                      onAvatarUpload={isEditingProfile ? (url) => {
+                        setProfileData(prev => ({ ...prev, avatarUrl: url }));
+                      } : undefined}
                     />
                   </div>
                   

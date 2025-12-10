@@ -288,8 +288,12 @@ export default function ProfileHeader({
             type="button"
             variant="secondary"
             size="sm"
-            className="absolute top-2 right-2 md:top-4 md:right-4 bg-card/90 hover:bg-card shadow-md z-10"
-            onClick={() => bannerFileInputRef.current?.click()}
+            className="absolute top-2 right-2 md:top-4 md:right-4 bg-card/90 hover:bg-card shadow-md z-50 pointer-events-auto"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              bannerFileInputRef.current?.click();
+            }}
             disabled={isUploadingBanner}
           >
             {isUploadingBanner ? (
