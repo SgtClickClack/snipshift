@@ -52,23 +52,42 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   }
 
   // Create shift
-  const newShift = await shiftsRepo.createShift({
-    employerId: userId,
-    title: shiftData.title,
-    description: shiftData.description || shiftData.requirements || '',
-    startTime,
-    endTime,
-    hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
-    status: shiftData.status || 'open',
-    location: shiftData.location,
-  });
+  try {
+    const shiftPayload = {
+      employerId: userId,
+      title: shiftData.title,
+      description: shiftData.description || shiftData.requirements || '',
+      startTime,
+      endTime,
+      hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
+      status: shiftData.status || 'open',
+      location: shiftData.location,
+    };
+    
+    const newShift = await shiftsRepo.createShift(shiftPayload);
 
-  if (!newShift) {
-    res.status(500).json({ message: 'Failed to create shift' });
-    return;
+    if (!newShift) {
+      console.error('[POST /api/shifts] createShift returned null - database may not be available');
+      res.status(500).json({ 
+        message: 'Failed to create shift - database unavailable',
+        error: 'Database connection failed or insert returned no result'
+      });
+      return;
+    }
+
+    res.status(201).json(newShift);
+  } catch (error: any) {
+    // Error will be caught by asyncHandler and passed to errorHandler middleware
+    console.error('[POST /api/shifts] Error creating shift:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      constraint: error?.constraint,
+      stack: error?.stack,
+      body: req.body,
+    });
+    throw error;
   }
-
-  res.status(201).json(newShift);
 }));
 
 // Get all open shifts (public read)
@@ -103,6 +122,55 @@ router.get('/:id', asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(shift);
+}));
+
+// Update shift (full update - for drag-and-drop rescheduling) (authenticated, employer only)
+router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const { title, description, startTime, endTime, hourlyRate, status, location } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get shift to check ownership
+  const existingShift = await shiftsRepo.getShiftById(id);
+  if (!existingShift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (existingShift.employerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You can only update your own shifts' });
+    return;
+  }
+
+  // Build update object with only provided fields
+  const updates: any = {};
+  if (title !== undefined) updates.title = title;
+  if (description !== undefined) updates.description = description;
+  if (startTime !== undefined) updates.startTime = startTime;
+  if (endTime !== undefined) updates.endTime = endTime;
+  if (hourlyRate !== undefined) updates.hourlyRate = hourlyRate;
+  if (status !== undefined) {
+    if (!['open', 'filled', 'completed'].includes(status)) {
+      res.status(400).json({ message: 'Invalid status. Must be one of: open, filled, completed' });
+      return;
+    }
+    updates.status = status;
+  }
+  if (location !== undefined) updates.location = location;
+
+  const updatedShift = await shiftsRepo.updateShift(id, updates);
+
+  if (!updatedShift) {
+    res.status(500).json({ message: 'Failed to update shift' });
+    return;
+  }
+
+  res.status(200).json(updatedShift);
 }));
 
 // Update shift status (authenticated, employer only)

@@ -111,24 +111,36 @@ export async function createShift(shiftData: {
 }): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
   if (!db) {
+    console.error('[createShift] Database not available');
     return null;
   }
 
-  const [newShift] = await db
-    .insert(shifts)
-    .values({
-      employerId: shiftData.employerId,
-      title: shiftData.title,
-      description: shiftData.description,
-      startTime: typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime,
-      endTime: typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime,
-      hourlyRate: shiftData.hourlyRate,
-      status: shiftData.status || 'open',
-      location: shiftData.location || null,
-    })
-    .returning();
+  try {
+    const [newShift] = await db
+      .insert(shifts)
+      .values({
+        employerId: shiftData.employerId,
+        title: shiftData.title,
+        description: shiftData.description,
+        startTime: typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime,
+        endTime: typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime,
+        hourlyRate: shiftData.hourlyRate,
+        status: shiftData.status || 'open',
+        location: shiftData.location || null,
+      })
+      .returning();
 
-  return newShift || null;
+    return newShift || null;
+  } catch (error: any) {
+    console.error('[createShift] Database error:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      constraint: error?.constraint,
+      data: shiftData,
+    });
+    throw error; // Re-throw to be caught by error handler
+  }
 }
 
 /**

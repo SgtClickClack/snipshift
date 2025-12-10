@@ -114,11 +114,11 @@ export const ShiftSchema = z.object({
   startTime: z.string().optional(), // ISO datetime string
   endTime: z.string().optional(), // ISO datetime string
   hourlyRate: z.union([
-    z.number().positive('Hourly rate must be a positive number'),
+    z.number().nonnegative('Hourly rate must be a non-negative number'),
     z.string().refine((val) => {
       const num = parseFloat(val);
-      return !isNaN(num) && num > 0;
-    }, 'Hourly rate must be a positive number'),
+      return !isNaN(num) && num >= 0;
+    }, 'Hourly rate must be a non-negative number'),
   ]).optional(),
   pay: z.union([ // Alias for hourlyRate for frontend compatibility
     z.number().positive('Pay rate must be a positive number'),

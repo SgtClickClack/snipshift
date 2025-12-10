@@ -290,10 +290,8 @@ test.describe('Professional Calendar E2E Tests', () => {
       await page.waitForTimeout(1000);
       
       // Take snapshot of the calendar component
-      // Target the main calendar area (the Card containing "Schedule")
-      const calendarContainer = calendarMainArea.locator('..').or(calendarMainArea);
-      
-      await expect(calendarContainer).toHaveScreenshot('calendar-week-desktop.png', {
+      // Target the main calendar area directly
+      await expect(calendarMainArea).toHaveScreenshot('calendar-week-desktop.png', {
         maxDiffPixels: 500,
         fullPage: false,
       });
@@ -321,9 +319,7 @@ test.describe('Professional Calendar E2E Tests', () => {
       await page.waitForTimeout(1000);
       
       // Take snapshot of the calendar component
-      const calendarContainer = calendarMainArea.locator('..').or(calendarMainArea);
-      
-      await expect(calendarContainer).toHaveScreenshot('calendar-week-mobile.png', {
+      await expect(calendarMainArea).toHaveScreenshot('calendar-week-mobile.png', {
         maxDiffPixels: 500,
         fullPage: false,
       });
@@ -449,9 +445,9 @@ test.describe('Professional Calendar E2E Tests', () => {
           submitButton.click().catch(() => {})
         ]);
         
-        // Verify API call was successful (200 status)
+        // Verify API call was successful (201 Created for POST)
         if (response) {
-          expect(response.status()).toBe(200);
+          expect([200, 201]).toContain(response.status());
           console.log('✅ Availability slot created successfully via API');
         } else {
           // If we can't intercept the response, at least verify the modal closed
@@ -550,7 +546,7 @@ test.describe('Professional Calendar E2E Tests', () => {
         
         // Date range should have changed (or at least calendar should have navigated)
         // We verify navigation worked by checking that calendar is still functional
-        const scheduleTitle = page.getByText('Schedule');
+        const scheduleTitle = page.getByTestId('calendar-schedule-title');
         await expect(scheduleTitle).toBeVisible();
       }
       

@@ -215,11 +215,11 @@ export default function ProfessionalCalendar({
   const calendarRef = useRef<HTMLDivElement>(null);
   const timeIndicatorRef = useRef<HTMLDivElement>(null);
 
-  // Update current time every minute for time indicator
+  // Update current time every second for smooth time indicator movement
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    }, 1000); // Update every second for smooth movement
     return () => clearInterval(interval);
   }, []);
 
@@ -615,11 +615,13 @@ export default function ProfessionalCalendar({
   const createEventMutation = useMutation({
     mutationFn: async (data: { title: string; start: Date; end: Date }) => {
       // Use shifts endpoint with proper data structure matching ShiftSchema
+      // Note: hourlyRate is required by the database, so we provide a default
       const response = await apiRequest("POST", "/api/shifts", {
         title: data.title || "Availability",
         description: "Availability slot",
         startTime: data.start.toISOString(),
         endTime: data.end.toISOString(),
+        hourlyRate: "0", // Default to 0 for availability slots (can be updated later)
         status: "open",
       });
       return response.json();
@@ -980,6 +982,7 @@ export default function ProfessionalCalendar({
                     ) : null}
                   </div>
                 )}
+                
                 {/* Calendar component - filteredEvents is always an array due to defensive coding */}
                 {/* Ensure events is always a valid array for react-big-calendar */}
                 {(() => {
@@ -1063,9 +1066,33 @@ export default function ProfessionalCalendar({
                         style={{ 
                           height: `${calendarHeight}px`, 
                           minHeight: `${calendarHeight}px`,
-                          width: '100%' 
+                          width: '100%',
+                          position: 'relative'
                         }}
                       >
+                        {/* Empty State - shown when no events */}
+                        {safeEvents.length === 0 && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10 pointer-events-none">
+                            <CalendarIcon className="h-16 w-16 text-muted-foreground/40 mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">No shifts scheduled</h3>
+                            <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                              Click on any time slot to create a new shift or availability.
+                            </p>
+                            <Button
+                              onClick={() => {
+                                const today = new Date();
+                                setSelectedDate(today);
+                                setSelectedSlot(null);
+                                setNewEventTitle("");
+                                setShowCreateModal(true);
+                              }}
+                              className="mt-2 pointer-events-auto"
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              Create Shift
+                            </Button>
+                          </div>
+                        )}
                         <CalendarErrorBoundary>
                           <Calendar
                             localizer={localizer}
@@ -1087,7 +1114,11 @@ export default function ProfessionalCalendar({
                             onEventResize={handleEventResize}
                             selectable
                             resizable
-                            draggableAccessor={() => true}
+                            draggableAccessor={(event: CalendarEvent) => {
+                              // Allow dragging only if event is not in the past
+                              const now = new Date();
+                              return event.end >= now;
+                            }}
                             eventPropGetter={eventStyleGetter}
                             min={new Date(2020, 0, 1, 0, 0, 0)}
                             max={new Date(2030, 11, 31, 23, 59, 59)}

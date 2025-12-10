@@ -215,9 +215,9 @@ button:active, a:active, [role="button"]:active {
   background-color: hsl(var(--background));
 }
 
-/* Current day column styling in week/day view */
+/* Current day column styling in week/day view - Google Calendar style */
 .rbc-time-view .rbc-day-slot.rbc-today {
-  background-color: hsl(var(--accent) / 0.2) !important;
+  background-color: rgba(239, 246, 255, 0.5) !important; /* bg-blue-50/50 */
 }
 
 .rbc-time-view .rbc-day-slot.rbc-today .rbc-time-slot {
@@ -226,6 +226,11 @@ button:active, a:active, [role="button"]:active {
 
 .rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
   border-left: 3px solid hsl(var(--primary)) !important;
+  background-color: rgba(239, 246, 255, 0.5) !important; /* bg-blue-50/50 */
+}
+
+.rbc-time-view .rbc-day-bg.rbc-today {
+  background-color: rgba(239, 246, 255, 0.5) !important; /* bg-blue-50/50 */
 }
 
 /* Day background with clear borders */
