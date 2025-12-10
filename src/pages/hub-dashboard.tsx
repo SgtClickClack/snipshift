@@ -9,9 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User } from "lucide-react";
+import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { SEO } from "@/components/seo/SEO";
+import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { format } from "date-fns";
 import { createShift, fetchShopShifts, updateShiftStatus } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
@@ -33,7 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile';
+type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar';
 
 export default function HubDashboard() {
   const { user, refreshUser } = useAuth();
@@ -324,6 +326,17 @@ export default function HubDashboard() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Business Dashboard" />
+      
+      {/* Banner/Profile Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DashboardHeader
+          bannerImage={user?.bannerUrl || user?.bannerImage}
+          profileImage={user?.avatarUrl || user?.photoURL || user?.profileImageURL || user?.profileImage}
+          title={user?.displayName || "Business Dashboard"}
+          subtitle={user?.email}
+        />
+      </div>
+
       {/* Dashboard Header */}
       <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -360,7 +373,7 @@ export default function HubDashboard() {
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'overview'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700 dark:text-steel-400 dark:hover:text-steel-300'
               }`}
               data-testid="tab-overview"
             >
@@ -372,7 +385,7 @@ export default function HubDashboard() {
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'jobs'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700 dark:text-steel-400 dark:hover:text-steel-300'
               }`}
               data-testid="tab-jobs"
             >
@@ -385,7 +398,7 @@ export default function HubDashboard() {
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'applications'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700 dark:text-steel-400 dark:hover:text-steel-300'
               }`}
               data-testid="tab-applications"
             >
@@ -394,11 +407,23 @@ export default function HubDashboard() {
               <span className="hidden md:inline text-muted-foreground">({stats.totalApplications})</span>
             </button>
             <button
+              onClick={() => setActiveView('calendar')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
+                activeView === 'calendar'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-steel-500 hover:text-steel-700 dark:text-steel-400 dark:hover:text-steel-300'
+              }`}
+              data-testid="tab-calendar"
+            >
+              <Calendar className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Calendar</span>
+            </button>
+            <button
               onClick={() => setActiveView('profile')}
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'profile'
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                  : 'border-transparent text-steel-500 hover:text-steel-700 dark:text-steel-400 dark:hover:text-steel-300'
               }`}
               data-testid="tab-profile"
             >
@@ -851,6 +876,54 @@ export default function HubDashboard() {
               </CardContent>
             </Card>
           </div>
+        )}
+        
+        {/* Calendar Tab */}
+        {activeView === 'calendar' && (
+          <ProfessionalCalendar
+            bookings={jobs.map((job) => {
+              // Map job/shift to booking format expected by calendar
+              const bookingData: any = {
+                id: job.id,
+                status: job.status === 'open' ? 'pending' : job.status === 'filled' ? 'confirmed' : 'completed',
+                appliedAt: job.createdAt,
+              };
+              
+              // Add job or shift based on type
+              if (job._type === 'shift') {
+                bookingData.shift = {
+                  id: job.id,
+                  title: job.title,
+                  date: job.date,
+                  startTime: job.startTime,
+                  endTime: job.endTime,
+                  status: job.status,
+                  hourlyRate: job.payRate,
+                  location: typeof job.location === 'string' ? job.location : job.location?.address || '',
+                };
+              } else {
+                bookingData.job = {
+                  id: job.id,
+                  title: job.title,
+                  date: job.date,
+                  startTime: job.startTime,
+                  endTime: job.endTime,
+                  status: job.status,
+                  payRate: job.payRate,
+                  address: typeof job.location === 'string' ? job.location : job.location?.address || '',
+                  description: job.description,
+                };
+              }
+              
+              return bookingData;
+            })}
+            isLoading={isLoading}
+            mode="business"
+            onCreateShift={() => {
+              setActiveView('jobs');
+              setShowForm(true);
+            }}
+          />
         )}
         
         {/* Profile Tab */}

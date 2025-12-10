@@ -75,6 +75,10 @@ interface ProfessionalCalendarProps {
   bookings?: any[] | null;
   isLoading?: boolean;
   onDateSelect?: (date: Date) => void;
+  /** Mode: 'professional' for My Shifts, 'business' for All Company Shifts */
+  mode?: 'professional' | 'business';
+  /** Callback when Create button is clicked in business mode (opens Create New Shift modal) */
+  onCreateShift?: () => void;
 }
 
 type JobStatus = "all" | "pending" | "confirmed" | "completed";
@@ -181,6 +185,8 @@ export default function ProfessionalCalendar({
   bookings = [],
   isLoading = false,
   onDateSelect,
+  mode = 'professional',
+  onCreateShift,
 }: ProfessionalCalendarProps) {
   // Log component mount
   console.log('[CALENDAR COMPONENT] ProfessionalCalendar component mounted');
@@ -837,26 +843,51 @@ export default function ProfessionalCalendar({
           </CardContent>
         </Card>
 
-        {/* Create Availability Button */}
+        {/* Create Availability/Shift Button */}
         <Card>
           <CardContent className="pt-6">
             <Button
               onClick={() => {
-                const today = new Date();
-                setSelectedDate(today);
-                setSelectedSlot(null); // Clear slot selection for manual creation
-                setNewEventTitle("");
-                setShowCreateModal(true);
+                if (mode === 'business' && onCreateShift) {
+                  // Business mode: Open Create New Shift modal
+                  onCreateShift();
+                } else {
+                  // Professional mode: Open Create Availability modal
+                  const today = new Date();
+                  setSelectedDate(today);
+                  setSelectedSlot(null); // Clear slot selection for manual creation
+                  setNewEventTitle("");
+                  setShowCreateModal(true);
+                }
               }}
               className="w-full"
               size="lg"
-              data-testid="button-create-availability"
+              data-testid={mode === 'business' ? "button-create-shift" : "button-create-availability"}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Create Availability/Shift
+              {mode === 'business' ? 'Create New Shift' : 'Create Availability'}
             </Button>
           </CardContent>
         </Card>
+
+        {/* Empty State Message */}
+        {!isLoading && filteredEvents.length === 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-2">
+                <CalendarIcon className="h-8 w-8 text-muted-foreground mx-auto" />
+                <p className="text-sm font-medium text-foreground">
+                  {mode === 'business' ? 'No shifts scheduled' : 'No shifts scheduled'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {mode === 'business' 
+                    ? 'Create a new shift to get started' 
+                    : 'Create availability to start booking shifts'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Card>

@@ -27,6 +27,7 @@ import LocationSearch from "@/components/job-feed/location-search";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import ApplicationsView from "./professional-dashboard/ApplicationsView";
 import { SEO } from "@/components/seo/SEO";
+import DashboardHeader from "@/components/dashboard/dashboard-header";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -350,6 +351,17 @@ export default function ProfessionalDashboard() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Professional Dashboard" />
+      
+      {/* Banner/Profile Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DashboardHeader
+          bannerImage={user?.bannerUrl || user?.bannerImage}
+          profileImage={user?.avatarUrl || user?.photoURL}
+          title={user?.displayName || "Professional Dashboard"}
+          subtitle={user?.email}
+        />
+      </div>
+
       {/* Dashboard Header */}
       <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
