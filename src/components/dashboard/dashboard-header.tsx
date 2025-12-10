@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { apiRequest } from "@/lib/queryClient";
+import { updateBusinessProfile } from "@/lib/api";
 
 interface DashboardHeaderProps {
   /** Banner image URL */
@@ -206,17 +207,10 @@ export default function DashboardHeader({
       console.log('Banner Firebase upload response:', downloadURL);
 
       // The "Real" Await: Call API to update profile in database
-      const apiResponse = await apiRequest('PUT', '/api/me', {
+      const responseData = await updateBusinessProfile({
         bannerUrl: downloadURL,
       });
 
-      // Check the Result: Verify API response is 200 OK
-      if (!apiResponse.ok) {
-        const errorText = await apiResponse.text();
-        throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
-      }
-
-      const responseData = await apiResponse.json();
       console.log('Banner API upload response:', responseData);
 
       // Check the Result: Verify we got a valid URL back
@@ -370,17 +364,10 @@ export default function DashboardHeader({
       console.log('Logo Firebase upload response:', downloadURL);
 
       // The "Real" Await: Call API to update profile in database
-      const apiResponse = await apiRequest('PUT', '/api/me', {
+      const responseData = await updateBusinessProfile({
         avatarUrl: downloadURL,
       });
 
-      // Check the Result: Verify API response is 200 OK
-      if (!apiResponse.ok) {
-        const errorText = await apiResponse.text();
-        throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
-      }
-
-      const responseData = await apiResponse.json();
       console.log('Logo API upload response:', responseData);
 
       // Check the Result: Verify we got a valid URL back

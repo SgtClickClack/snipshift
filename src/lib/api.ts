@@ -30,7 +30,36 @@ export interface JobFilterParams {
  * @param data - Profile data to update (avatarUrl, bannerUrl, displayName, bio, phone, location)
  * @returns Promise resolving to the updated user object
  */
-export async function updateUserProfile(data: UpdateProfileData) {
+export async function updateUserProfile(data: UpdateProfileData | FormData) {
+  // Check if data is FormData
+  const isFormData = data instanceof FormData;
+  
+  // If FormData, use it directly. Otherwise, use the data as-is (will be JSON stringified)
+  const response = await apiRequest('PUT', '/api/me', data);
+  // apiRequest already throws on non-OK responses, so we can safely parse JSON
+  return response.json();
+}
+
+export interface UpdateBusinessProfileData {
+  displayName?: string;
+  bio?: string;
+  phone?: string;
+  location?: string;
+  avatarUrl?: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+}
+
+/**
+ * Update the current business profile
+ * @param data - Business profile data to update (avatarUrl/logoUrl, bannerUrl, displayName, bio, phone, location)
+ * @returns Promise resolving to the updated user object
+ */
+export async function updateBusinessProfile(data: UpdateBusinessProfileData | FormData) {
+  // Check if data is FormData
+  const isFormData = data instanceof FormData;
+  
+  // If FormData, use it directly. Otherwise, use the data as-is (will be JSON stringified)
   const response = await apiRequest('PUT', '/api/me', data);
   // apiRequest already throws on non-OK responses, so we can safely parse JSON
   return response.json();

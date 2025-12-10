@@ -52,8 +52,12 @@ export async function apiRequest(
 ): Promise<Response> {
   const isSafe = method.toUpperCase() === 'GET' || method.toUpperCase() === 'HEAD' || method.toUpperCase() === 'OPTIONS';
   
+  // Check if data is FormData
+  const isFormData = data instanceof FormData;
+  
   const headers: Record<string, string> = {
-    ...(data ? { "Content-Type": "application/json" } : {}),
+    // Only set Content-Type for non-FormData. FormData sets its own boundary.
+    ...(data && !isFormData ? { "Content-Type": "application/json" } : {}),
     ...(isSafe ? {} : { 'X-Snipshift-CSRF': '1' }),
   };
 
@@ -84,7 +88,7 @@ export async function apiRequest(
   const res = await fetch(url, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: data ? (isFormData ? data : JSON.stringify(data)) : undefined,
     credentials: "include",
   });
 
