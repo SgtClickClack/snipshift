@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/use-image-upload";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ProfileHeaderProps {
   /** Banner image URL */
@@ -43,8 +44,19 @@ export default function ProfileHeader({
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [showBannerCropper, setShowBannerCropper] = useState(false);
   const [bannerImageSrc, setBannerImageSrc] = useState<string | null>(null);
+  const [localBannerUrl, setLocalBannerUrl] = useState<string | null | undefined>(bannerUrl);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null | undefined>(avatarUrl);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync local state with props when they change externally
+  useEffect(() => {
+    setLocalBannerUrl(bannerUrl);
+  }, [bannerUrl]);
+
+  useEffect(() => {
+    setLocalAvatarUrl(avatarUrl);
+  }, [avatarUrl]);
 
   const handleBannerFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,6 +114,12 @@ export default function ProfileHeader({
   };
 
   const handleBannerCropComplete = async (croppedImageBlob: Blob) => {
+    // Validation First: Check if blob exists
+    if (!croppedImageBlob) {
+      console.error('Banner crop complete called with no blob');
+      return;
+    }
+
     setShowBannerCropper(false);
     
     // Clean up the object URL
@@ -130,15 +148,10 @@ export default function ProfileHeader({
       // Convert blob to File for compression
       const croppedFile = new File([croppedImageBlob], 'banner.jpg', { type: 'image/jpeg' });
       
-      // Compress the cropped image using the hook's compression function
+      // The "Real" Await: Compress the cropped image
       const compressedFile = await handleBannerImageSelect(croppedFile);
       if (!compressedFile) {
-        toast({
-          title: "Compression failed",
-          description: "Failed to compress image. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        throw new Error('Compression failed - no file returned');
       }
 
       const userId = firebaseUser.uid;
@@ -147,7 +160,8 @@ export default function ProfileHeader({
 
       const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 
-      await new Promise<void>((resolve, reject) => {
+      // The "Real" Await: Wait for Firebase upload to complete
+      const downloadURL = await new Promise<string>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           uploadTask.cancel();
           reject(new Error('Upload timeout'));
@@ -163,25 +177,56 @@ export default function ProfileHeader({
           },
           (error: any) => {
             clearTimeout(timeoutId);
-            console.error("Banner upload error:", error);
+            console.error("Banner Firebase upload error:", error);
             reject(error);
           },
           async () => {
             clearTimeout(timeoutId);
             try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              onBannerUpload?.(downloadURL);
-              toast({
-                title: "Banner updated",
-                description: "Your banner image has been successfully uploaded.",
-              });
-              resolve();
+              const url = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(url);
             } catch (error) {
               console.error("Error getting banner download URL:", error);
               reject(error);
             }
           }
         );
+      });
+
+      console.log('Banner Firebase upload response:', downloadURL);
+
+      // The "Real" Await: Call API to update profile in database
+      const apiResponse = await apiRequest('PUT', '/api/me', {
+        bannerUrl: downloadURL,
+      });
+
+      // Check the Result: Verify API response is 200 OK
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
+      }
+
+      const responseData = await apiResponse.json();
+      console.log('Banner API upload response:', responseData);
+
+      // Check the Result: Verify we got a valid URL back
+      if (!responseData.bannerUrl || typeof responseData.bannerUrl !== 'string') {
+        throw new Error('API did not return a valid banner URL');
+      }
+
+      // Force UI Refresh (Cache Busting): Append timestamp to URL
+      const newUrl = responseData.bannerUrl + '?t=' + new Date().getTime();
+      
+      // Update local state immediately so user sees the change
+      setLocalBannerUrl(newUrl);
+      
+      // Call parent callback with the new URL
+      onBannerUpload?.(newUrl);
+
+      // Only show success if API succeeded
+      toast({
+        title: "Banner updated",
+        description: "Your banner image has been successfully uploaded.",
       });
     } catch (error: any) {
       console.error("Error uploading banner:", error);
@@ -213,6 +258,7 @@ export default function ProfileHeader({
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Validation First: Check if file exists immediately
     const file = e.target.files?.[0];
     if (!file) {
       // Reset input if no file selected
@@ -266,15 +312,10 @@ export default function ProfileHeader({
     setIsUploadingAvatar(true);
 
     try {
-      // Compress the image
+      // The "Real" Await: Compress the image
       const compressedFile = await handleAvatarImageSelect(file);
       if (!compressedFile) {
-        toast({
-          title: "Compression failed",
-          description: "Failed to process image. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        throw new Error('Compression failed - no file returned');
       }
 
       const userId = firebaseUser.uid;
@@ -284,7 +325,8 @@ export default function ProfileHeader({
 
       const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 
-      await new Promise<void>((resolve, reject) => {
+      // The "Real" Await: Wait for Firebase upload to complete
+      const downloadURL = await new Promise<string>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           uploadTask.cancel();
           reject(new Error('Upload timeout'));
@@ -300,25 +342,56 @@ export default function ProfileHeader({
           },
           (error: any) => {
             clearTimeout(timeoutId);
-            console.error("Avatar upload error:", error);
+            console.error("Avatar Firebase upload error:", error);
             reject(error);
           },
           async () => {
             clearTimeout(timeoutId);
             try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              onAvatarUpload?.(downloadURL);
-              toast({
-                title: "Profile picture updated",
-                description: "Your profile picture has been successfully uploaded.",
-              });
-              resolve();
+              const url = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(url);
             } catch (error) {
               console.error("Error getting avatar download URL:", error);
               reject(error);
             }
           }
         );
+      });
+
+      console.log('Avatar Firebase upload response:', downloadURL);
+
+      // The "Real" Await: Call API to update profile in database
+      const apiResponse = await apiRequest('PUT', '/api/me', {
+        avatarUrl: downloadURL,
+      });
+
+      // Check the Result: Verify API response is 200 OK
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
+      }
+
+      const responseData = await apiResponse.json();
+      console.log('Avatar API upload response:', responseData);
+
+      // Check the Result: Verify we got a valid URL back
+      if (!responseData.avatarUrl || typeof responseData.avatarUrl !== 'string') {
+        throw new Error('API did not return a valid avatar URL');
+      }
+
+      // Force UI Refresh (Cache Busting): Append timestamp to URL
+      const newUrl = responseData.avatarUrl + '?t=' + new Date().getTime();
+      
+      // Update local state immediately so user sees the change
+      setLocalAvatarUrl(newUrl);
+      
+      // Call parent callback with the new URL
+      onAvatarUpload?.(newUrl);
+
+      // Only show success if API succeeded
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been successfully uploaded.",
       });
     } catch (error: any) {
       console.error("Error uploading avatar:", error);
@@ -347,9 +420,9 @@ export default function ProfileHeader({
   return (
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible", className)}>
       {/* Banner Image or Gradient Fallback */}
-      {bannerUrl ? (
+      {localBannerUrl ? (
         <OptimizedImage
-          src={bannerUrl}
+          src={localBannerUrl}
           alt="Banner"
           priority={true}
           fallbackType="banner"
@@ -414,7 +487,7 @@ export default function ProfileHeader({
       <div className="absolute -bottom-12 left-4 z-elevated">
         <div className="relative">
           <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-white shadow-lg">
-            <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+            <AvatarImage src={localAvatarUrl || undefined} alt={displayName} />
             <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
               {avatarInitials}
             </AvatarFallback>
