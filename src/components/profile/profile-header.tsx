@@ -61,26 +61,9 @@ export default function ProfileHeader({
       return;
     }
 
-    // Show compression toast
-    toast({
-      title: "Compressing image...",
-      description: "Please wait while we optimize your image.",
-    });
-
-    // Compress the image before showing in cropper
-    const compressedFile = await handleBannerImageSelect(file);
-    if (!compressedFile) {
-      toast({
-        title: "Compression failed",
-        description: "Failed to process image. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate compressed file size (5MB limit)
+    // Validate file size (5MB limit)
     const maxSize = 5 * 1024 * 1024; // 5MB
-    if (compressedFile.size > maxSize) {
+    if (file.size > maxSize) {
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
@@ -89,10 +72,19 @@ export default function ProfileHeader({
       return;
     }
 
-    // Create object URL for the cropper
-    const imageUrl = URL.createObjectURL(compressedFile);
-    setBannerImageSrc(imageUrl);
-    setShowBannerCropper(true);
+    // Create object URL for the cropper immediately (no compression needed for preview)
+    try {
+      const imageUrl = URL.createObjectURL(file);
+      setBannerImageSrc(imageUrl);
+      setShowBannerCropper(true);
+    } catch (error) {
+      console.error('Error creating image URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load image. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBannerCropComplete = async (croppedImageBlob: Blob) => {
