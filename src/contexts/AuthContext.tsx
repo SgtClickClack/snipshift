@@ -168,35 +168,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
               isOnboarded: profile.isOnboarded ?? false
             });
           } else if (res.status === 401) {
-            console.warn('Profile fetch failed (401). Attempting to sync user via /api/login...');
-            try {
-              const loginRes = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({})
-              });
-
-              if (loginRes.ok) {
-                const profile = await loginRes.json();
-                setUser({ 
-                  ...profile, 
-                  uid: firebaseUser.uid,
-                  roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
-                  createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
-                  updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
-                  isOnboarded: profile.isOnboarded ?? false
-                });
-              } else {
-                console.error('Sync failed via /api/login', loginRes.status);
-                setUser(null);
-              }
-            } catch (loginErr) {
-              console.error('Error calling /api/login', loginErr);
-              setUser(null);
-            }
+            // 401 means token is invalid - just set user to null, don't reload
+            // The UI will show "Logged Out" state gracefully
+            console.warn('Profile fetch failed (401). User token is invalid.');
+            setUser(null);
           } else {
             console.warn('User authenticated in Firebase but profile fetch failed', res.status);
             // Optional: Set a minimal user or redirect to signup completion?
@@ -334,6 +309,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
           isOnboarded: profile.isOnboarded ?? false
         });
+      } else if (res.status === 401) {
+        // 401 means token is invalid - just set user to null, don't reload
+        console.warn('Failed to refresh user profile (401). User token is invalid.');
+        setUser(null);
       } else {
         console.warn('Failed to refresh user profile', res.status);
       }
