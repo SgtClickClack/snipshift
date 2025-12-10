@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/use-image-upload";
-import { compressImage } from "@/lib/image-compression";
 
 interface ProfileHeaderProps {
   /** Banner image URL */
@@ -49,7 +48,13 @@ export default function ProfileHeader({
 
   const handleBannerFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      // Reset input if no file selected
+      if (bannerFileInputRef.current) {
+        bannerFileInputRef.current.value = '';
+      }
+      return;
+    }
 
     // Validate file type
     if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
@@ -58,6 +63,9 @@ export default function ProfileHeader({
         description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
         variant: "destructive",
       });
+      if (bannerFileInputRef.current) {
+        bannerFileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -69,10 +77,13 @@ export default function ProfileHeader({
         description: "Please select an image smaller than 5MB.",
         variant: "destructive",
       });
+      if (bannerFileInputRef.current) {
+        bannerFileInputRef.current.value = '';
+      }
       return;
     }
 
-    // Create object URL for the cropper immediately (no compression needed for preview)
+    // Create object URL for the cropper immediately (no compression before cropper)
     try {
       const imageUrl = URL.createObjectURL(file);
       setBannerImageSrc(imageUrl);
@@ -84,6 +95,9 @@ export default function ProfileHeader({
         description: "Failed to load image. Please try again.",
         variant: "destructive",
       });
+      if (bannerFileInputRef.current) {
+        bannerFileInputRef.current.value = '';
+      }
     }
   };
 
@@ -103,6 +117,10 @@ export default function ProfileHeader({
         description: "Please log in to upload images.",
         variant: "destructive",
       });
+      // Reset input
+      if (bannerFileInputRef.current) {
+        bannerFileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -112,8 +130,16 @@ export default function ProfileHeader({
       // Convert blob to File for compression
       const croppedFile = new File([croppedImageBlob], 'banner.jpg', { type: 'image/jpeg' });
       
-      // Compress the cropped image before upload
-      const compressedFile = await compressImage(croppedFile);
+      // Compress the cropped image using the hook's compression function
+      const compressedFile = await handleBannerImageSelect(croppedFile);
+      if (!compressedFile) {
+        toast({
+          title: "Compression failed",
+          description: "Failed to compress image. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const userId = firebaseUser.uid;
       const storagePath = `users/${userId}/banner.jpg`;
@@ -166,6 +192,7 @@ export default function ProfileHeader({
         variant: "destructive",
       });
     } finally {
+      // Always reset uploading state and input
       setIsUploadingBanner(false);
       if (bannerFileInputRef.current) {
         bannerFileInputRef.current.value = '';
@@ -179,6 +206,7 @@ export default function ProfileHeader({
       URL.revokeObjectURL(bannerImageSrc);
       setBannerImageSrc(null);
     }
+    // Always reset input on cancel
     if (bannerFileInputRef.current) {
       bannerFileInputRef.current.value = '';
     }
@@ -186,7 +214,13 @@ export default function ProfileHeader({
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      // Reset input if no file selected
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = '';
+      }
+      return;
+    }
 
     // Validate file type
     if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
@@ -195,34 +229,23 @@ export default function ProfileHeader({
         description: "Please select a valid image file (JPEG, PNG, GIF, or WebP).",
         variant: "destructive",
       });
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = '';
+      }
       return;
     }
 
-    // Show compression toast
-    toast({
-      title: "Compressing image...",
-      description: "Please wait while we optimize your image.",
-    });
-
-    // Compress the image
-    const compressedFile = await handleAvatarImageSelect(file);
-    if (!compressedFile) {
-      toast({
-        title: "Compression failed",
-        description: "Failed to process image. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate compressed file size (5MB limit)
+    // Validate file size (5MB limit) before processing
     const maxSize = 5 * 1024 * 1024; // 5MB
-    if (compressedFile.size > maxSize) {
+    if (file.size > maxSize) {
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
         variant: "destructive",
       });
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -233,12 +256,27 @@ export default function ProfileHeader({
         description: "Please log in to upload images.",
         variant: "destructive",
       });
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = '';
+      }
       return;
     }
 
+    // Set uploading state immediately
     setIsUploadingAvatar(true);
 
     try {
+      // Compress the image
+      const compressedFile = await handleAvatarImageSelect(file);
+      if (!compressedFile) {
+        toast({
+          title: "Compression failed",
+          description: "Failed to process image. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const userId = firebaseUser.uid;
       const fileExtension = 'jpg'; // Always use jpg after compression
       const storagePath = `users/${userId}/avatar.${fileExtension}`;
@@ -291,6 +329,7 @@ export default function ProfileHeader({
         variant: "destructive",
       });
     } finally {
+      // Always reset uploading state and input
       setIsUploadingAvatar(false);
       if (avatarFileInputRef.current) {
         avatarFileInputRef.current.value = '';
