@@ -128,7 +128,6 @@ export async function updateShiftOffer(
     .update(shiftOffers)
     .set({
       ...updates,
-      updatedAt: sql`NOW()`,
     })
     .where(eq(shiftOffers.id, id))
     .returning();
@@ -162,7 +161,6 @@ export async function declineAllPendingOffersForShift(shiftId: string, exceptOff
         .update(shiftOffers)
         .set({
           status: 'declined',
-          updatedAt: sql`NOW()`,
         })
         .where(eq(shiftOffers.id, offer.id));
       updatedCount++;

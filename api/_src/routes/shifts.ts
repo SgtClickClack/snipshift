@@ -9,6 +9,7 @@ import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import * as notificationService from '../lib/notifications-service.js';
 
 const router = Router();
 
@@ -812,7 +813,6 @@ router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: Auth
         .update(shiftOffers)
         .set({
           status: 'declined',
-          updatedAt: sql`NOW()`,
         })
         .where(and(...conditions));
     });

@@ -254,7 +254,7 @@ export async function updateShift(
     endTime?: Date | string;
     hourlyRate?: string;
     status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
-    assigneeId?: string;
+    assigneeId?: string | null;
     location?: string;
     isRecurring?: boolean;
     parentShiftId?: string;
@@ -335,17 +335,45 @@ export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' |
     return [];
   }
 
-  const conditions = [eq(shifts.assigneeId, assigneeId)];
-  if (status) {
-    conditions.push(eq(shifts.status, status));
+  try {
+    const conditions = [eq(shifts.assigneeId, assigneeId)];
+    if (status) {
+      conditions.push(eq(shifts.status, status));
+    }
+
+    const result = await db
+      .select()
+      .from(shifts)
+      .where(and(...conditions))
+      .orderBy(desc(shifts.createdAt));
+
+    return result;
+  } catch (error: any) {
+    // Extract detailed error information
+    const errorDetails = {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      hint: error?.hint,
+      constraint: error?.constraint,
+      table: error?.table,
+      column: error?.column,
+      cause: error?.cause,
+      // Check for nested errors (common in Drizzle)
+      nestedMessage: error?.cause?.message,
+      nestedCode: error?.cause?.code,
+      nestedDetail: error?.cause?.detail,
+    };
+
+    console.error('[getShiftsByAssignee] Database query error:', {
+      assigneeId,
+      status,
+      error: errorDetails,
+      stack: error?.stack,
+    });
+
+    // Re-throw to be caught by error handler middleware
+    throw error;
   }
-
-  const result = await db
-    .select()
-    .from(shifts)
-    .where(and(...conditions))
-    .orderBy(desc(shifts.createdAt));
-
-  return result;
 }
 
