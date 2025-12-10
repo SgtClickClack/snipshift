@@ -723,8 +723,21 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
     await shiftsRepo.updateShift(shiftId, { status: 'pending' });
   }
 
-  // TODO: Send notification to professional (mock for now)
-  // await notificationService.notifyShiftInvite(professionalId, shiftId, shift.title);
+  // Send notification to professional
+  try {
+    await notificationsService.notifyProfessionalOfInvite(professionalId, {
+      id: shift.id,
+      title: shift.title,
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      location: shift.location,
+      hourlyRate: shift.hourlyRate,
+      employerId: shift.employerId,
+    });
+  } catch (error) {
+    // Log error but don't fail the request
+    console.error('[POST /api/shifts/:id/invite] Error sending notification:', error);
+  }
 
   res.status(201).json({
     message: 'Invite sent successfully',
@@ -820,6 +833,29 @@ router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: Auth
     // Fetch updated shift
     const updatedShift = await shiftsRepo.getShiftById(offer.shiftId);
     const updatedOffer = await shiftOffersRepo.getShiftOfferById(offerId);
+
+    // Get professional information
+    const professional = await usersRepo.getUserById(userId);
+    const professionalName = professional?.name || 'Professional';
+
+    // Send notification to business
+    try {
+      await notificationsService.notifyBusinessOfAcceptance(
+        shift.employerId,
+        professionalName,
+        {
+          id: shift.id,
+          title: shift.title,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+          location: shift.location,
+          hourlyRate: shift.hourlyRate,
+        }
+      );
+    } catch (error) {
+      // Log error but don't fail the request
+      console.error('[PUT /api/shifts/offers/:id/accept] Error sending notification:', error);
+    }
 
     res.status(200).json({
       message: 'Shift offer accepted successfully',

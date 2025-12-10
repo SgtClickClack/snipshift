@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import NotificationDropdown from "./notification-dropdown";
-import { useNotification } from "@/contexts/NotificationContext";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface NotificationBellProps {
   className?: string;
@@ -16,7 +16,7 @@ export default function NotificationBell({
   const bellRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
+  const { notifications, unreadCount, handleNotificationClick, handleMarkAllRead } = useNotifications();
 
   // Handle clicking outside to close dropdown
   useEffect(() => {
@@ -53,13 +53,13 @@ export default function NotificationBell({
     setIsOpen(!isOpen);
   };
 
-  const handleNotificationClick = (notificationId: string) => {
-    markAsRead(notificationId);
+  const handleNotificationClickWrapper = (notificationId: string) => {
+    handleNotificationClick(notificationId);
     setIsOpen(false);
   };
 
-  const handleMarkAllRead = () => {
-    markAllAsRead();
+  const handleMarkAllReadWrapper = () => {
+    handleMarkAllRead();
     setIsOpen(false);
   };
 
@@ -101,8 +101,8 @@ export default function NotificationBell({
         <div ref={dropdownRef} data-testid="notification-dropdown">
           <NotificationDropdown
             notifications={notifications}
-            onNotificationClick={handleNotificationClick}
-            onMarkAllRead={handleMarkAllRead}
+            onNotificationClick={handleNotificationClickWrapper}
+            onMarkAllRead={handleMarkAllReadWrapper}
             onClose={handleClose}
           />
         </div>

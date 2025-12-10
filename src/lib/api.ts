@@ -305,16 +305,50 @@ export type ApplicationData = CreateApplicationData;
 export interface Notification {
   id: string;
   type: string;
+  title: string;
   message: string;
-  read: boolean;
-  timestamp: string;
+  link: string | null;
+  data?: Record<string, any>;
+  isRead: boolean;
+  createdAt: string;
 }
 
-export const fetchNotifications = async (): Promise<Notification[]> => { return []; };
+/**
+ * Fetch notifications for the current user
+ * @param limit - Maximum number of notifications to return (default: 50)
+ */
+export const fetchNotifications = async (limit: number = 50): Promise<Notification[]> => {
+  const query = new URLSearchParams();
+  if (limit) query.append('limit', limit.toString());
+  const res = await apiRequest('GET', `/api/notifications?${query.toString()}`);
+  return res.json();
+};
 
-export const markNotificationAsRead = async (id: string): Promise<boolean> => { return true; };
+/**
+ * Mark a single notification as read
+ * @param id - Notification ID
+ */
+export const markNotificationAsRead = async (id: string): Promise<{ id: string; isRead: boolean }> => {
+  const res = await apiRequest('PATCH', `/api/notifications/${id}/read`);
+  return res.json();
+};
 
-export const markAllNotificationsAsRead = async (): Promise<boolean> => { return true; };
+/**
+ * Mark all notifications as read for the current user
+ */
+export const markAllNotificationsAsRead = async (): Promise<{ count: number }> => {
+  const res = await apiRequest('PATCH', '/api/notifications/read-all');
+  return res.json();
+};
+
+/**
+ * Get unread notification count
+ */
+export const fetchUnreadNotificationCount = async (): Promise<number> => {
+  const res = await apiRequest('GET', '/api/notifications/unread-count');
+  const data = await res.json();
+  return data.count || 0;
+};
 
 // Job Board
 export const fetchJobDetails = async (id: string): Promise<JobDetails> => { 

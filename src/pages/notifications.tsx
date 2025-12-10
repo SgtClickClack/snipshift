@@ -35,6 +35,12 @@ function getNotificationIcon(type: Notification['type']) {
       return <Briefcase className="h-5 w-5 text-emerald-600" />;
     case 'application_status_change':
       return <CheckCircle2 className="h-5 w-5 text-emerald-600" />;
+    case 'SHIFT_INVITE':
+      return <Briefcase className="h-5 w-5 text-blue-600" />;
+    case 'SHIFT_CONFIRMED':
+      return <CheckCircle2 className="h-5 w-5 text-emerald-600" />;
+    case 'SHIFT_CANCELLED':
+      return <Info className="h-5 w-5 text-red-600" />;
     case 'job_posted':
     case 'job_updated':
       return <Info className="h-5 w-5 text-blue-600" />;
@@ -55,6 +61,24 @@ function getNotificationBadge(type: Notification['type']) {
       return (
         <Badge className="bg-blue-50 text-blue-700 border-blue-200">
           Status Update
+        </Badge>
+      );
+    case 'SHIFT_INVITE':
+      return (
+        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+          Shift Invite
+        </Badge>
+      );
+    case 'SHIFT_CONFIRMED':
+      return (
+        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+          Confirmed
+        </Badge>
+      );
+    case 'SHIFT_CANCELLED':
+      return (
+        <Badge className="bg-red-50 text-red-700 border-red-200">
+          Cancelled
         </Badge>
       );
     default:

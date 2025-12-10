@@ -36,7 +36,7 @@ export function useNotifications() {
   // Mark notification as read
   const markAsReadMutation = useMutation({
     mutationFn: markNotificationAsRead,
-    onSuccess: (_, notificationId) => {
+    onSuccess: (response, notificationId) => {
       queryClient.setQueryData(['notifications', user?.id], (old: APINotification[] = []) =>
         old.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       );

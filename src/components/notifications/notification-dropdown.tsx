@@ -13,7 +13,15 @@ import {
   X
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
-import { Notification, NotificationType } from "@/contexts/NotificationContext";
+interface Notification {
+  id: string;
+  type: string;
+  title?: string;
+  message: string;
+  timestamp: string | Date;
+  isRead: boolean;
+  link?: string | null;
+}
 
 interface NotificationDropdownProps {
   notifications: Notification[];
@@ -29,14 +37,16 @@ export default function NotificationDropdown({
   onClose
 }: NotificationDropdownProps) {
   const navigate = useNavigate();
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
   
-  const getIcon = (type: NotificationType) => {
+  const getIcon = (type: string) => {
     switch (type) {
-      case 'success':
+      case 'SHIFT_CONFIRMED':
+      case 'application_status_change':
         return CheckCircle2;
-      case 'warning':
+      case 'SHIFT_CANCELLED':
         return AlertTriangle;
+      case 'SHIFT_INVITE':
       case 'offer':
         return Briefcase;
       default:
@@ -44,12 +54,14 @@ export default function NotificationDropdown({
     }
   };
 
-  const getColorClass = (type: NotificationType) => {
+  const getColorClass = (type: string) => {
     switch (type) {
-      case 'success':
+      case 'SHIFT_CONFIRMED':
+      case 'application_status_change':
         return 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300';
-      case 'warning':
+      case 'SHIFT_CANCELLED':
         return 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'SHIFT_INVITE':
       case 'offer':
         return 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300';
       default:
@@ -57,15 +69,16 @@ export default function NotificationDropdown({
     }
   };
 
-  const getTimeDisplay = (timestamp: Date) => {
+  const getTimeDisplay = (timestamp: string | Date) => {
     try {
+      const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
       const now = new Date();
-      const diffInHours = (now.getTime() - timestamp.getTime()) / (1000 * 60 * 60);
+      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
       if (diffInHours < 24) {
-        return formatDistanceToNow(timestamp, { addSuffix: true });
+        return formatDistanceToNow(date, { addSuffix: true });
       } else {
-        return format(timestamp, "MMM d, yyyy");
+        return format(date, "MMM d, yyyy");
       }
     } catch (e) {
       return '';
@@ -75,8 +88,11 @@ export default function NotificationDropdown({
   const handleNotificationClick = (notification: Notification) => {
     onNotificationClick(notification.id);
     
-    // If it's an offer type, navigate to Job Offers section
-    if (notification.type === 'offer') {
+    // Navigate to link if provided
+    if (notification.link) {
+      navigate(notification.link);
+    } else if (notification.type === 'SHIFT_INVITE' || notification.type === 'offer') {
+      // Default navigation for shift invites
       navigate('/professional-dashboard?view=overview');
     }
   };
@@ -140,7 +156,7 @@ export default function NotificationDropdown({
                   <div
                     key={notification.id}
                     className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-steel-50 dark:hover:bg-steel-800 border ${
-                      notification.read 
+                      notification.isRead 
                         ? 'bg-card border-transparent' 
                         : 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800'
                     }`}
@@ -157,18 +173,20 @@ export default function NotificationDropdown({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className={`text-sm font-semibold mb-1 ${notification.read ? 'text-steel-700' : 'text-steel-900'}`}>
-                              {notification.type === 'offer' && 'New Job Offer'}
-                              {notification.type === 'success' && 'Success'}
-                              {notification.type === 'warning' && 'Warning'}
-                              {notification.type === 'info' && 'Info'}
+                            <p className={`text-sm font-semibold mb-1 ${notification.isRead ? 'text-steel-700' : 'text-steel-900'}`}>
+                              {notification.title || 
+                                (notification.type === 'SHIFT_INVITE' && 'New Shift Offer') ||
+                                (notification.type === 'SHIFT_CONFIRMED' && 'Shift Confirmed') ||
+                                (notification.type === 'SHIFT_CANCELLED' && 'Shift Cancelled') ||
+                                (notification.type === 'offer' && 'New Job Offer') ||
+                                'Notification'}
                             </p>
-                            <p className={`text-sm ${notification.read ? 'text-steel-600' : 'text-steel-900 font-medium'}`}>
+                            <p className={`text-sm ${notification.isRead ? 'text-steel-600' : 'text-steel-900 font-medium'}`}>
                               {notification.message}
                             </p>
                           </div>
                           
-                          {!notification.read && (
+                          {!notification.isRead && (
                             <div className="w-2 h-2 bg-blue-600 rounded-full mt-1 flex-shrink-0"></div>
                           )}
                         </div>
