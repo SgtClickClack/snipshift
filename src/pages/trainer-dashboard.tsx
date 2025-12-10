@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Eye } from "lucide-react";
 import { TrainingModule } from "@/shared/types";
+import DashboardHeader from "@/components/dashboard/dashboard-header";
 
 interface ContentFormData {
   title: string;
@@ -27,7 +28,7 @@ interface ContentFormData {
 }
 
 export default function TrainerDashboard() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<'overview' | 'content' | 'profile'>('overview');
@@ -130,13 +131,36 @@ export default function TrainerDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Dashboard Header */}
-      <div className="bg-card shadow-sm">
+      {/* Banner/Profile Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DashboardHeader
+          bannerImage={user?.bannerUrl || user?.bannerImage}
+          profileImage={user?.avatarUrl || user?.photoURL}
+          title="Trainer Hub"
+          subtitle="Manage your courses and content"
+          editable={true}
+          onBannerUpload={(url) => {
+            // DashboardHeader already calls API and saves to DB
+            // Just update local state for immediate UI update
+            // Refresh user in background without blocking
+            refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
+          }}
+          onLogoUpload={(url) => {
+            // DashboardHeader already calls API and saves to DB
+            // Just update local state for immediate UI update
+            // Refresh user in background without blocking
+            refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
+          }}
+        />
+      </div>
+
+      {/* Dashboard Header with Actions */}
+      <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-neutral-900">Trainer Hub</h1>
-              <p className="text-neutral-600">{user.displayName || user.email}</p>
+              <h1 className="text-2xl font-bold text-foreground">Trainer Hub</h1>
+              <p className="text-muted-foreground">{user.displayName || user.email}</p>
             </div>
             <Button 
               onClick={() => setShowContentModal(true)}
