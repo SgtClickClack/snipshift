@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/use-image-upload";
-import { updateUserProfile } from "@/lib/api";
+import { apiRequest } from "@/lib/queryClient";
 
 interface DashboardHeaderProps {
   /** Banner image URL */
@@ -71,6 +71,7 @@ export default function DashboardHeader({
   const handleBannerFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
+      // Reset input if no file selected
       if (bannerFileInputRef.current) {
         bannerFileInputRef.current.value = '';
       }
@@ -104,7 +105,7 @@ export default function DashboardHeader({
       return;
     }
 
-    // Create object URL for the cropper
+    // Create object URL for the cropper immediately (no compression before cropper)
     try {
       const imageUrl = URL.createObjectURL(file);
       setBannerImageSrc(imageUrl);
@@ -144,6 +145,7 @@ export default function DashboardHeader({
         description: "Please log in to upload images.",
         variant: "destructive",
       });
+      // Reset input
       if (bannerFileInputRef.current) {
         bannerFileInputRef.current.value = '';
       }
@@ -204,10 +206,17 @@ export default function DashboardHeader({
       console.log('Banner Firebase upload response:', downloadURL);
 
       // The "Real" Await: Call API to update profile in database
-      const responseData = await updateUserProfile({
+      const apiResponse = await apiRequest('PUT', '/api/me', {
         bannerUrl: downloadURL,
       });
 
+      // Check the Result: Verify API response is 200 OK
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
+      }
+
+      const responseData = await apiResponse.json();
       console.log('Banner API upload response:', responseData);
 
       // Check the Result: Verify we got a valid URL back
@@ -216,13 +225,13 @@ export default function DashboardHeader({
       }
 
       // Force UI Refresh (Cache Busting): Append timestamp to URL
-      const bustedUrl = `${responseData.bannerUrl}?t=${Date.now()}`;
+      const newUrl = responseData.bannerUrl + '?t=' + new Date().getTime();
       
       // Update local state immediately so user sees the change
-      setLocalBannerUrl(bustedUrl);
+      setLocalBannerUrl(newUrl);
       
       // Call parent callback with the new URL
-      onBannerUpload?.(bustedUrl);
+      onBannerUpload?.(newUrl);
 
       // Only show success if API succeeded
       toast({
@@ -251,6 +260,7 @@ export default function DashboardHeader({
       URL.revokeObjectURL(bannerImageSrc);
       setBannerImageSrc(null);
     }
+    // Always reset input on cancel
     if (bannerFileInputRef.current) {
       bannerFileInputRef.current.value = '';
     }
@@ -260,6 +270,7 @@ export default function DashboardHeader({
     // Validation First: Check if file exists immediately
     const file = e.target.files?.[0];
     if (!file) {
+      // Reset input if no file selected
       if (logoFileInputRef.current) {
         logoFileInputRef.current.value = '';
       }
@@ -279,7 +290,7 @@ export default function DashboardHeader({
       return;
     }
 
-    // Validate file size (5MB limit)
+    // Validate file size (5MB limit) before processing
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
       toast({
@@ -306,6 +317,7 @@ export default function DashboardHeader({
       return;
     }
 
+    // Set uploading state immediately
     setIsUploadingLogo(true);
 
     try {
@@ -358,10 +370,17 @@ export default function DashboardHeader({
       console.log('Logo Firebase upload response:', downloadURL);
 
       // The "Real" Await: Call API to update profile in database
-      const responseData = await updateUserProfile({
+      const apiResponse = await apiRequest('PUT', '/api/me', {
         avatarUrl: downloadURL,
       });
 
+      // Check the Result: Verify API response is 200 OK
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        throw new Error(`API update failed: ${apiResponse.status} - ${errorText}`);
+      }
+
+      const responseData = await apiResponse.json();
       console.log('Logo API upload response:', responseData);
 
       // Check the Result: Verify we got a valid URL back
@@ -370,22 +389,22 @@ export default function DashboardHeader({
       }
 
       // Force UI Refresh (Cache Busting): Append timestamp to URL
-      const bustedUrl = `${responseData.avatarUrl}?t=${Date.now()}`;
+      const newUrl = responseData.avatarUrl + '?t=' + new Date().getTime();
       
       // Update local state immediately so user sees the change
-      setLocalLogoUrl(bustedUrl);
+      setLocalLogoUrl(newUrl);
       
       // Call parent callback with the new URL
-      onLogoUpload?.(bustedUrl);
+      onLogoUpload?.(newUrl);
 
       // Only show success if API succeeded
       toast({
-        title: "Logo updated",
-        description: "Your logo has been successfully uploaded.",
+        title: "Profile picture updated",
+        description: "Your profile picture has been successfully uploaded.",
       });
     } catch (error: any) {
-      console.error("Error uploading logo:", error);
-      const errorMessage = error.message || "Failed to upload logo. Please try again.";
+      console.error("Error uploading avatar:", error);
+      const errorMessage = error.message || "Failed to upload profile picture. Please try again.";
       toast({
         title: "Upload failed",
         description: errorMessage,
