@@ -114,6 +114,7 @@ export function ShiftOfferCard({
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <Button
+            type="button"
             onClick={() => onAccept(offer.id)}
             disabled={isProcessing}
             className="flex-1 bg-green-600 hover:bg-green-700 text-white"
@@ -122,6 +123,7 @@ export function ShiftOfferCard({
             Accept Shift
           </Button>
           <Button
+            type="button"
             onClick={() => onDecline(offer.id)}
             disabled={isProcessing}
             variant="outline"

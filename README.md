@@ -28,6 +28,11 @@ SnipShift is a modern marketplace platform that connects barbershops, salons, an
 - **Analytics** - Vercel Analytics and Speed Insights
 - **Mobile Responsive** - Fully optimized for all device sizes
 
+## 📚 Documentation
+
+- [Email Setup Guide](docs/EMAIL_SETUP.md) - Configure Resend for transactional emails
+- [Data Seeding](api/scripts/README.md) - Pre-fill calendars with sample data
+
 ## 🏗️ Tech Stack
 
 ### Frontend

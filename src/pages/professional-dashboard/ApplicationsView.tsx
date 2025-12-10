@@ -30,10 +30,10 @@ export default function ApplicationsView() {
     : undefined;
 
   // Fetch filtered applications for the current tab
-  const { applications: filteredApplications, isLoading, error } = useApplicationsData(statusFilter);
+  const { applications: filteredApplications, isLoading, error, refetch: refetchFiltered } = useApplicationsData(statusFilter);
 
   // Fetch all applications (no filter) to get counts for all tabs
-  const { applications: allApplications } = useApplicationsData(undefined);
+  const { applications: allApplications, refetch: refetchAll } = useApplicationsData(undefined);
 
   // Calculate status counts from all applications
   const statusCounts = useMemo(() => {
@@ -113,7 +113,7 @@ export default function ApplicationsView() {
                     <p className="text-muted-foreground max-w-md mb-6">
                       {error.message || 'An error occurred while fetching your applications. Please try again later.'}
                     </p>
-                    <Button onClick={() => window.location.reload()}>
+                    <Button onClick={() => { refetchFiltered(); refetchAll(); }}>
                       Retry
                     </Button>
                   </div>
@@ -178,7 +178,7 @@ export default function ApplicationsView() {
                     <p className="text-muted-foreground max-w-md mb-6">
                       {error.message || 'An error occurred while fetching your applications. Please try again later.'}
                     </p>
-                    <Button onClick={() => window.location.reload()}>
+                    <Button onClick={() => { refetchFiltered(); refetchAll(); }}>
                       Retry
                     </Button>
                   </div>
@@ -237,7 +237,7 @@ export default function ApplicationsView() {
                     <p className="text-muted-foreground max-w-md mb-6">
                       {error.message || 'An error occurred while fetching your applications. Please try again later.'}
                     </p>
-                    <Button onClick={() => window.location.reload()}>
+                    <Button onClick={() => { refetchFiltered(); refetchAll(); }}>
                       Retry
                     </Button>
                   </div>

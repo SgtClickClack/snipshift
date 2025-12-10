@@ -12,6 +12,7 @@
     "start": "tsx _src/server.ts",
     "build": "tsc && node fix-imports.js",
     "seed:plans": "ts-node _src/scripts/seed-plans.ts",
+    "seed:data": "tsx scripts/seed-data.ts",
     "migrate:onboarding": "ts-node _src/scripts/migrate-onboarding.ts",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
