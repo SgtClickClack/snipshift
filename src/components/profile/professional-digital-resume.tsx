@@ -536,7 +536,7 @@ export default function ProfessionalDigitalResume({
                 {bannerImageSrc && (
                   <ImageCropper
                     imageSrc={bannerImageSrc}
-                    aspectRatio={16 / 9}
+                    aspectRatio={5 / 1}
                     onCropComplete={handleBannerCropComplete}
                     onCancel={handleBannerCropCancel}
                     open={showBannerCropper}

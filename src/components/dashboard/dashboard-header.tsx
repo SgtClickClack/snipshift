@@ -54,10 +54,10 @@ export default function DashboardHeader({
       </div>
 
       {/* Title and Subtitle (overlapping bottom-right) */}
-      <div className="absolute -bottom-12 left-40 md:left-48 right-4 z-10">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground truncate">{title}</h1>
+      <div className="absolute -bottom-12 left-40 md:left-48 right-4 z-10 min-w-0">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground break-words line-clamp-2">{title}</h1>
         {subtitle && (
-          <p className="text-sm md:text-base text-muted-foreground truncate mt-1">{subtitle}</p>
+          <p className="text-sm md:text-base text-muted-foreground break-words line-clamp-1 mt-1">{subtitle}</p>
         )}
       </div>
     </div>

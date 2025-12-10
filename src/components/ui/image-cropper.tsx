@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -23,6 +23,15 @@ export function ImageCropper({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  // Reset crop and zoom when dialog opens or image changes
+  useEffect(() => {
+    if (open && imageSrc) {
+      setCrop({ x: 0, y: 0 });
+      // For wide aspect ratios (like banners), start with a slightly higher zoom
+      setZoom(aspectRatio > 3 ? 1.2 : 1);
+    }
+  }, [open, imageSrc, aspectRatio]);
 
   const onCropChange = useCallback((crop: { x: number; y: number }) => {
     setCrop(crop);
@@ -107,11 +116,14 @@ export function ImageCropper({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="max-w-4xl w-full">
+      <DialogContent className="max-w-5xl w-full">
         <DialogHeader>
           <DialogTitle>Crop Image</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Adjust the image to fit your banner. Use zoom and drag to position the image.
+          </p>
         </DialogHeader>
-        <div className="relative w-full h-[400px] bg-black rounded-lg overflow-hidden">
+        <div className="relative w-full h-[500px] bg-black rounded-lg overflow-hidden">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -122,15 +134,19 @@ export function ImageCropper({
             onCropComplete={onCropCompleteCallback}
             cropShape="rect"
             showGrid={true}
+            restrictPosition={true}
           />
         </div>
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Zoom</label>
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium">Zoom</label>
+              <span className="text-xs text-muted-foreground">{zoom.toFixed(1)}x</span>
+            </div>
             <Slider
               value={[zoom]}
               min={1}
-              max={3}
+              max={4}
               step={0.1}
               onValueChange={(value) => setZoom(value[0])}
               className="w-full"
