@@ -57,11 +57,19 @@ export default function DashboardHeader({
 
   // Sync local state with props when they change externally
   useEffect(() => {
-    setLocalBannerUrl(bannerImage);
+    setLocalBannerUrl((current) => {
+      // Only update if prop is different from current state
+      // This prevents overwriting manual updates unnecessarily
+      return bannerImage !== current ? bannerImage : current;
+    });
   }, [bannerImage]);
 
   useEffect(() => {
-    setLocalLogoUrl(profileImage);
+    setLocalLogoUrl((current) => {
+      // Only update if prop is different from current state
+      // This prevents overwriting manual updates unnecessarily
+      return profileImage !== current ? profileImage : current;
+    });
   }, [profileImage]);
 
   const avatarInitials = title
@@ -220,8 +228,11 @@ export default function DashboardHeader({
         throw new Error('API did not return a valid banner URL');
       }
 
+      // Log the new banner URL for debugging
+      console.log('New Banner URL:', responseData.bannerUrl);
+
       // Force UI Refresh (Cache Busting): Append timestamp to URL
-      const newUrl = responseData.bannerUrl + '?t=' + new Date().getTime();
+      const newUrl = `${responseData.bannerUrl}?t=${Date.now()}`;
       
       // Update local state immediately so user sees the change
       setLocalBannerUrl(newUrl);
