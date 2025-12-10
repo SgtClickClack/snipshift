@@ -105,7 +105,8 @@ export default function ProfileHeader({
 
       // Only update if prop is different from current state
       // IMPORTANT: If current state has a cache-busting timestamp (?t=) and prop doesn't,
-      // keep the current state to preserve the optimistic update
+      // we should still update if the base URL is different (new upload)
+      // But preserve cache-busting if the base URL matches (same image, just refreshed)
       if (propUrlString !== current) {
         // Check if current has cache-busting but prop doesn't (base URL match)
         // Only do string operations if both are strings
@@ -113,14 +114,27 @@ export default function ProfileHeader({
           const currentBaseUrl = current.split('?')[0];
           const propBaseUrl = propUrlString.split('?')[0];
           
+          // If base URLs match and current has cache-busting, preserve it
+          // But if base URLs are different, it's a new image - update with prop
           if (currentBaseUrl && propBaseUrl && currentBaseUrl === propBaseUrl && current.includes('?t=')) {
-            // Current has cache-busting, prop doesn't - keep current state
-            console.log('Banner useEffect - Preserving cache-busted URL:', { 
+            // Same image, current has cache-busting - keep current state
+            console.log('Banner useEffect - Preserving cache-busted URL (same base):', { 
               current, 
               prop: propUrlString 
             });
             return current;
           }
+          
+          // Base URLs are different - this is a new image, update with prop
+          // Add cache-busting to the new prop URL to force refresh
+          const newUrlWithCacheBust = propUrlString.includes('?') 
+            ? propUrlString 
+            : `${propUrlString}?t=${Date.now()}`;
+          console.log('Banner useEffect - New image detected, updating with cache-bust:', { 
+            from: current, 
+            to: newUrlWithCacheBust 
+          });
+          return newUrlWithCacheBust;
         }
         
         console.log('Banner useEffect - Prop changed, updating state:', { 
@@ -293,6 +307,12 @@ export default function ProfileHeader({
       setLocalBannerUrl(firebaseUrlWithCacheBust);
       console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
+      // Clear any pending file/cropper state - we now have the live URL
+      if (bannerImageSrc) {
+        URL.revokeObjectURL(bannerImageSrc);
+        setBannerImageSrc(null);
+      }
+      
       // Call parent callback immediately to update form data
       onBannerUpload?.(firebaseUrlWithCacheBust);
       console.log('Banner - Parent callback called with:', firebaseUrlWithCacheBust);
@@ -333,6 +353,11 @@ export default function ProfileHeader({
           console.log('Setting bannerUrl to string:', apiUrlWithCacheBust);
           console.log('Banner - Updating state with API response URL:', apiUrlWithCacheBust);
           setLocalBannerUrl(apiUrlWithCacheBust);
+          // Clear any pending file/cropper state - we now have the live URL
+          if (bannerImageSrc) {
+            URL.revokeObjectURL(bannerImageSrc);
+            setBannerImageSrc(null);
+          }
           onBannerUpload?.(apiUrlWithCacheBust);
           console.log('Banner state updated with API response URL:', apiUrlWithCacheBust);
         } else {
@@ -551,14 +576,19 @@ export default function ProfileHeader({
     .slice(0, 2) || 'U';
 
   // Prioritize live state (localBannerUrl) over prop (bannerUrl) for preview
-  const displayBannerUrl = localBannerUrl || bannerUrl || null;
+  // IMPORTANT: Only use bannerImageSrc (cropper preview) if we're actively cropping
+  // Otherwise, always use the live URL (localBannerUrl or bannerUrl prop)
+  const displayBannerUrl = showBannerCropper 
+    ? bannerImageSrc  // Show cropper preview while cropping
+    : (localBannerUrl || bannerUrl || null); // Show live URL otherwise
 
   // Debug log to track URL changes
   useEffect(() => {
     if (displayBannerUrl) {
       console.log('ProfileHeader - Display banner URL changed:', displayBannerUrl.substring(0, 100));
+      console.log('ProfileHeader - showBannerCropper:', showBannerCropper, 'localBannerUrl:', localBannerUrl?.substring(0, 50), 'bannerUrl prop:', bannerUrl?.substring(0, 50));
     }
-  }, [displayBannerUrl]);
+  }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerUrl]);
 
   return (
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible", className)}>

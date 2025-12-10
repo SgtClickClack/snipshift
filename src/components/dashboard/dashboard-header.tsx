@@ -322,6 +322,12 @@ export default function DashboardHeader({
       setLocalBannerUrl(firebaseUrlWithCacheBust);
       console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
+      // Clear any pending file/cropper state - we now have the live URL
+      if (bannerImageSrc) {
+        URL.revokeObjectURL(bannerImageSrc);
+        setBannerImageSrc(null);
+      }
+      
       // Call parent callback immediately
       onBannerUpload?.(firebaseUrlWithCacheBust);
       console.log('Banner - Parent callback called with:', firebaseUrlWithCacheBust);
@@ -356,6 +362,11 @@ export default function DashboardHeader({
           console.log('Setting bannerUrl to string:', apiUrlWithCacheBust);
           console.log('Banner - Updating state with API response URL:', apiUrlWithCacheBust);
           setLocalBannerUrl(apiUrlWithCacheBust);
+          // Clear any pending file/cropper state - we now have the live URL
+          if (bannerImageSrc) {
+            URL.revokeObjectURL(bannerImageSrc);
+            setBannerImageSrc(null);
+          }
           onBannerUpload?.(apiUrlWithCacheBust);
           console.log('Banner state updated with API response URL:', apiUrlWithCacheBust);
         } else {
@@ -589,14 +600,19 @@ export default function DashboardHeader({
   };
 
   // Prioritize live state (localBannerUrl) over prop (bannerImage) for preview
-  const displayBannerUrl = localBannerUrl || bannerImage || null;
+  // IMPORTANT: Only use bannerImageSrc (cropper preview) if we're actively cropping
+  // Otherwise, always use the live URL (localBannerUrl or bannerImage prop)
+  const displayBannerUrl = showBannerCropper 
+    ? bannerImageSrc  // Show cropper preview while cropping
+    : (localBannerUrl || bannerImage || null); // Show live URL otherwise
 
   // Debug log to track URL changes
   useEffect(() => {
     if (displayBannerUrl) {
       console.log('DashboardHeader - Display banner URL changed:', displayBannerUrl.substring(0, 100));
+      console.log('DashboardHeader - showBannerCropper:', showBannerCropper, 'localBannerUrl:', localBannerUrl?.substring(0, 50), 'bannerImage prop:', bannerImage?.substring(0, 50));
     }
-  }, [displayBannerUrl]);
+  }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerImage]);
 
   return (
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible mb-16", className)}>
