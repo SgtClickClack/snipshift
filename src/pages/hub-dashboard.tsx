@@ -15,6 +15,7 @@ import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
+import ProfileHeader from "@/components/profile/profile-header";
 import { format } from "date-fns";
 import { createShift, fetchShopShifts, updateShiftStatus } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
@@ -74,8 +75,10 @@ export default function HubDashboard() {
     displayName: "",
     bio: "",
     location: "",
-    avatarUrl: ""
+    avatarUrl: "",
+    bannerUrl: ""
   });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -83,7 +86,8 @@ export default function HubDashboard() {
         displayName: user.displayName || "",
         bio: user.bio || "",
         location: user.location || "",
-        avatarUrl: user.avatarUrl || user.profileImageURL || user.profileImage || ""
+        avatarUrl: user.avatarUrl || user.profileImageURL || user.profileImage || "",
+        bannerUrl: user.bannerUrl || user.bannerImage || ""
       });
     }
   }, [user]);
@@ -99,6 +103,7 @@ export default function HubDashboard() {
         description: "Your shop profile information has been updated."
       });
       await refreshUser();
+      setIsEditingProfile(false);
     },
     onError: (error) => {
       // console.error("Failed to update profile:", error);
@@ -1003,66 +1008,90 @@ export default function HubDashboard() {
         {activeView === 'profile' && (
           <div className="max-w-4xl">
             <Card className="bg-card rounded-lg border border-border shadow-sm">
-              <CardHeader className="border-b border-border">
-                <CardTitle>Profile Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-0">
                 <form onSubmit={handleProfileSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="businessName">Business Name</Label>
-                      <Input
-                        id="businessName"
-                        value={profileData.displayName}
-                        onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
-                        placeholder="Enter your business name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Bio / Description</Label>
-                      <Textarea
-                        id="bio"
-                        value={profileData.bio}
-                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                        placeholder="Tell us about your business..."
-                        rows={4}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={profileData.location}
-                        onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
-                        placeholder="e.g., New York, NY"
-                      />
-                    </div>
-
-                    <div className="space-y-2 hidden">
-                      <Label htmlFor="avatarUrl">Profile Image URL</Label>
-                      <Input
-                        id="avatarUrl"
-                        value={profileData.avatarUrl}
-                        onChange={(e) => setProfileData({ ...profileData, avatarUrl: e.target.value })}
-                        placeholder="https://..."
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Provide a URL for your business logo or profile image.
-                      </p>
+                  {/* Profile Header with Banner and Avatar */}
+                  <div className="relative overflow-visible">
+                    <ProfileHeader
+                      bannerUrl={profileData.bannerUrl}
+                      avatarUrl={profileData.avatarUrl}
+                      displayName={profileData.displayName || user?.displayName || 'Business'}
+                      editable={isEditingProfile}
+                      onBannerUpload={isEditingProfile ? (url) => setProfileData(prev => ({ ...prev, bannerUrl: url })) : undefined}
+                      onAvatarUpload={isEditingProfile ? (url) => setProfileData(prev => ({ ...prev, avatarUrl: url })) : undefined}
+                    />
+                  </div>
+                  
+                  {/* Title and Edit Button - positioned below banner with padding for avatar */}
+                  <div className="px-6 pt-20 md:pt-24 pb-4">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Profile Settings
+                      </CardTitle>
+                      <div className="flex gap-2">
+                        {!isEditingProfile ? (
+                          <Button onClick={() => setIsEditingProfile(true)} variant="outline" data-testid="button-edit-profile">
+                            Edit Profile
+                          </Button>
+                        ) : (
+                          <>
+                            <Button onClick={() => setIsEditingProfile(false)} variant="outline" data-testid="button-cancel-edit">
+                              Cancel
+                            </Button>
+                            <Button type="submit" disabled={updateProfileMutation.isPending} data-testid="button-save-profile">
+                              {updateProfileMutation.isPending ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save'
+                              )}
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Form fields */}
+                  <div className="px-6 pb-6">
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="businessName">Business Name</Label>
+                        <Input
+                          id="businessName"
+                          value={profileData.displayName}
+                          onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
+                          placeholder="Enter your business name"
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
 
-                  <div className="flex justify-end pt-4">
-                    <Button 
-                      type="submit" 
-                      disabled={updateProfileMutation.isPending}
-                      className="w-full sm:min-w-[120px]"
-                    >
-                      {updateProfileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Save Changes
-                    </Button>
+                      <div className="space-y-2">
+                        <Label htmlFor="bio">Bio / Description</Label>
+                        <Textarea
+                          id="bio"
+                          value={profileData.bio}
+                          onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                          placeholder="Tell us about your business..."
+                          rows={4}
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="location">Location</Label>
+                        <Input
+                          id="location"
+                          value={profileData.location}
+                          onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                          placeholder="e.g., New York, NY"
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </form>
               </CardContent>

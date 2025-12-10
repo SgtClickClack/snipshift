@@ -288,19 +288,20 @@ export default function ProfileHeader({
             type="button"
             variant="secondary"
             size="sm"
-            className="absolute top-4 right-4 bg-card/90 hover:bg-card shadow-md"
+            className="absolute top-2 right-2 md:top-4 md:right-4 bg-card/90 hover:bg-card shadow-md z-10"
             onClick={() => bannerFileInputRef.current?.click()}
             disabled={isUploadingBanner}
           >
             {isUploadingBanner ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Uploading...
+                <span className="hidden sm:inline">Uploading...</span>
               </>
             ) : (
               <>
-                <Camera className="w-4 h-4 mr-2" />
-                Edit Banner
+                <Camera className="w-4 h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Edit Banner</span>
+                <span className="sm:hidden">Banner</span>
               </>
             )}
           </Button>
@@ -334,17 +335,17 @@ export default function ProfileHeader({
             </AvatarFallback>
           </Avatar>
           
-          {/* Avatar Edit Button (overlay on hover) */}
+          {/* Avatar Edit Button (overlay on hover, always visible on mobile) */}
           {editable && (
             <>
               <label
                 htmlFor="avatar-upload-input"
-                className="absolute inset-0 rounded-full bg-black bg-opacity-0 hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer group"
+                className="absolute inset-0 rounded-full bg-black bg-opacity-0 hover:bg-opacity-50 active:bg-opacity-50 md:active:bg-opacity-0 transition-all duration-200 flex items-center justify-center cursor-pointer group"
               >
                 {isUploadingAvatar ? (
                   <Loader2 className="w-6 h-6 text-white animate-spin" />
                 ) : (
-                  <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <Camera className="w-6 h-6 text-white opacity-50 md:opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 transition-opacity duration-200" />
                 )}
               </label>
               <input
