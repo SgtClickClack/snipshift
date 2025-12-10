@@ -6,6 +6,7 @@ export interface UpdateProfileData {
   phone?: string;
   location?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
 }
 
 export interface JobFilterParams {
@@ -24,8 +25,15 @@ export interface JobFilterParams {
   lng?: number;
 }
 
+/**
+ * Update the current user's profile
+ * @param data - Profile data to update (avatarUrl, bannerUrl, displayName, bio, phone, location)
+ * @returns Promise resolving to the updated user object
+ */
 export async function updateUserProfile(data: UpdateProfileData) {
-  return apiRequest('PUT', '/api/me', data);
+  const response = await apiRequest('PUT', '/api/me', data);
+  // apiRequest already throws on non-OK responses, so we can safely parse JSON
+  return response.json();
 }
 
 export async function fetchJobs(params: JobFilterParams = {}) {
