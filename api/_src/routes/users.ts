@@ -5,6 +5,7 @@ import * as usersRepo from '../repositories/users.repository.js';
 import * as emailService from '../services/email.service.js';
 import { auth } from '../config/firebase.js';
 import { z } from 'zod';
+import { uploadProfileImages } from '../middleware/upload.js';
 
 const router = Router();
 
@@ -189,22 +190,43 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
 }));
 
 // Update current user profile
-router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
+  // Check for uploaded files (FormData)
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+  
   // Log incoming request for debugging
   console.log('[PUT /api/me] Update request:', {
     userId: req.user.id,
+    hasFiles: !!files,
+    fileFields: files ? Object.keys(files) : [],
     hasAvatarUrl: !!req.body.avatarUrl,
     hasBannerUrl: !!req.body.bannerUrl,
+    hasLogo: !!(files && files.logo),
+    hasBanner: !!(files && files.banner),
+    hasAvatar: !!(files && files.avatar),
     avatarUrl: req.body.avatarUrl ? req.body.avatarUrl.substring(0, 50) + '...' : undefined,
     bannerUrl: req.body.bannerUrl ? req.body.bannerUrl.substring(0, 50) + '...' : undefined,
   });
 
-  // Validate request body
+  // If files are uploaded via FormData, we need to handle them
+  // For now, we'll still expect URLs in the body (since frontend uploads to Firebase first)
+  // But we log the files for debugging
+  if (files) {
+    console.log('[PUT /api/me] Files received:', {
+      logo: files.logo ? files.logo[0]?.originalname : undefined,
+      banner: files.banner ? files.banner[0]?.originalname : undefined,
+      avatar: files.avatar ? files.avatar[0]?.originalname : undefined,
+    });
+    // TODO: If direct file upload is needed, upload files to Firebase Storage here
+    // For now, we continue with URL-based approach
+  }
+
+  // Validate request body (files are handled separately, body contains other fields)
   const validationResult = UpdateProfileSchema.safeParse(req.body);
   if (!validationResult.success) {
     console.error('[PUT /api/me] Validation error:', validationResult.error.errors);
