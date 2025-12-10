@@ -9,7 +9,7 @@ import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
-import * as notificationService from '../lib/notifications-service.js';
+import * as notificationsService from '../lib/notifications-service.js';
 
 const router = Router();
 
@@ -526,7 +526,7 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
 
   // Send notification to professional
   try {
-    await notificationService.notifyProfessionalOfInvite(professionalId, {
+    await notificationsService.notifyProfessionalOfInvite(professionalId, {
       id: shift.id,
       title: shift.title,
       startTime: shift.startTime,
@@ -587,7 +587,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
 
   // Send notification to business
   try {
-    await notificationService.notifyBusinessOfAcceptance(
+    await notificationsService.notifyBusinessOfAcceptance(
       shift.employerId,
       professionalName,
       {
@@ -636,7 +636,7 @@ router.post('/:id/decline', authenticateUser, asyncHandler(async (req: Authentic
 
   // Remove assigneeId and revert status to draft
   const updatedShift = await shiftsRepo.updateShift(id, { 
-    assigneeId: null,
+    assigneeId: undefined,
     status: 'draft'
   });
 

@@ -124,11 +124,15 @@ export async function updateShiftOffer(
     return null;
   }
 
+  // Build update object explicitly to avoid type issues
+  const updateData: { status?: 'pending' | 'accepted' | 'declined' } = {};
+  if (updates.status !== undefined) {
+    updateData.status = updates.status;
+  }
+
   const [updatedOffer] = await db
     .update(shiftOffers)
-    .set({
-      ...updates,
-    })
+    .set(updateData)
     .where(eq(shiftOffers.id, id))
     .returning();
 
