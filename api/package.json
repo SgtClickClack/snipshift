@@ -18,6 +18,7 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "db:check": "ts-node _src/scripts/check-db.ts",
+    "db:reset": "tsx scripts/reset-db.ts",
     "db:clean": "ts-node _src/scripts/seed-clean.ts",
     "db:wipe-mock-shifts": "ts-node _src/scripts/wipe-mock-shifts.ts",
     "db:apply-migration": "ts-node _src/scripts/apply-migration.ts",
