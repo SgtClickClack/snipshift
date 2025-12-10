@@ -30,6 +30,8 @@ export function ImageCropper({
       setCrop({ x: 0, y: 0 });
       // For wide aspect ratios (like banners), start with a slightly higher zoom
       setZoom(aspectRatio > 3 ? 1.2 : 1);
+      // Reset cropped area pixels - it will be set by onCropComplete when cropper initializes
+      setCroppedAreaPixels(null);
     }
   }, [open, imageSrc, aspectRatio]);
 
@@ -43,6 +45,7 @@ export function ImageCropper({
 
   const onCropCompleteCallback = useCallback(
     (croppedArea: Area, croppedAreaPixels: Area) => {
+      // Always update the cropped area pixels when the cropper reports a change
       setCroppedAreaPixels(croppedAreaPixels);
     },
     []
@@ -103,6 +106,8 @@ export function ImageCropper({
 
   const handleApply = async () => {
     if (!croppedAreaPixels) {
+      // If croppedAreaPixels is not set yet, show an error
+      console.error('Crop area not initialized. Please wait for the image to load.');
       return;
     }
 
@@ -124,18 +129,20 @@ export function ImageCropper({
           </p>
         </DialogHeader>
         <div className="relative w-full h-[500px] bg-black rounded-lg overflow-hidden">
-          <Cropper
-            image={imageSrc}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspectRatio}
-            onCropChange={onCropChange}
-            onZoomChange={onZoomChange}
-            onCropComplete={onCropCompleteCallback}
-            cropShape="rect"
-            showGrid={true}
-            restrictPosition={true}
-          />
+          {imageSrc && (
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspectRatio}
+              onCropChange={onCropChange}
+              onZoomChange={onZoomChange}
+              onCropComplete={onCropCompleteCallback}
+              cropShape="rect"
+              showGrid={true}
+              restrictPosition={true}
+            />
+          )}
         </div>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -157,7 +164,9 @@ export function ImageCropper({
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button onClick={handleApply}>Apply</Button>
+          <Button onClick={handleApply} disabled={!croppedAreaPixels}>
+            Apply
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
