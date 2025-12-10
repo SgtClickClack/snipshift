@@ -22,7 +22,7 @@ export default function Hero() {
       <div className="relative z-elevated w-full h-full flex flex-col items-center justify-center text-center px-4">
         {/* Large Bright Logo - dominant visual element */}
         <div 
-          className="w-[70%] max-w-[800px] mb-8 overflow-hidden"
+          className="w-[90%] sm:w-[80%] md:w-[70%] max-w-[800px] mb-8 overflow-hidden"
           style={{
             background: 'transparent',
             clipPath: 'inset(0 0 20% 0)'
