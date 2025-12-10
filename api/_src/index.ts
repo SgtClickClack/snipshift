@@ -88,6 +88,21 @@ app.use('/api/webhooks', webhooksRouter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging middleware - log ALL incoming API requests AFTER body parsing
+app.use((req, res, next) => {
+  // Only log API routes to avoid noise
+  if (req.path.startsWith('/api/')) {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`, {
+      hasBody: !!req.body,
+      bodyKeys: req.body ? Object.keys(req.body) : [],
+      hasAuth: !!req.headers.authorization,
+      authHeaderPrefix: req.headers.authorization ? req.headers.authorization.substring(0, 30) + '...' : undefined,
+      contentType: req.headers['content-type'],
+    });
+  }
+  next();
+});
+
 // Debug endpoint to diagnose Vercel environment
 app.get('/api/debug', async (req, res) => {
   try {

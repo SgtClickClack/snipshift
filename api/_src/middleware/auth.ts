@@ -63,6 +63,14 @@ export function authenticateUser(
   res: Response,
   next: NextFunction
 ): void {
+  // Log when auth middleware is called
+  if (req.path.startsWith('/api/')) {
+    console.log(`[AUTH] authenticateUser called for ${req.method} ${req.path}`, {
+      hasAuthHeader: !!req.headers.authorization,
+      authHeaderPrefix: req.headers.authorization?.substring(0, 20),
+    });
+  }
+
   try {
     // Check if auth service is available
     const firebaseAuth = auth;
