@@ -47,6 +47,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNotification } from "@/contexts/NotificationContext";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import { ShiftBlock } from "./shift-block";
 import { AssignStaffModal, Professional } from "./assign-staff-modal";
@@ -217,6 +218,7 @@ export default function ProfessionalCalendar({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { addNotification } = useNotification();
   const [currentDate, setCurrentDate] = useState<Date>(() => {
     const date = new Date();
     // Ensure date is valid
@@ -757,6 +759,9 @@ export default function ProfessionalCalendar({
         description: `Successfully sent ${matchesToSend.length} invite${matchesToSend.length !== 1 ? 's' : ''}.`,
       });
 
+      // Add notification
+      addNotification('success', `Invites sent successfully to ${matchesToSend.length} candidate${matchesToSend.length !== 1 ? 's' : ''}`);
+
       setShowSmartFillModal(false);
     } catch (error) {
       console.error("Error sending invites:", error);
@@ -766,7 +771,7 @@ export default function ProfessionalCalendar({
         variant: "destructive",
       });
     }
-  }, [smartMatches, queryClient, toast]);
+  }, [smartMatches, queryClient, toast, addNotification]);
 
   // Custom toolbar component (returns null to hide default toolbar)
   const customToolbar = useCallback(() => null, []);

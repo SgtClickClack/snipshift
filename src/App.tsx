@@ -10,6 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { NotificationToast } from '@/components/notifications/notification-toast';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
@@ -459,6 +460,7 @@ function App() {
                 <NotificationProvider>
                   <RouteProgressBar />
                   <Toaster />
+                  <NotificationToast />
                   <AppRoutes />
                   <TutorialOverlay />
                   <FeedbackWidget />

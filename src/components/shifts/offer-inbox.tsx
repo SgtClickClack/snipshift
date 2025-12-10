@@ -5,11 +5,13 @@ import { ShiftOfferCard } from "./shift-offer-card";
 import { useToast } from "@/hooks/use-toast";
 import { Inbox, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 
 export function OfferInbox() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { addNotification } = useNotification();
 
   // Fetch shift offers
   const { data: offers = [], isLoading } = useQuery<ShiftOffer[]>({
@@ -28,6 +30,8 @@ export function OfferInbox() {
         title: "Shift Accepted",
         description: "You've successfully accepted the shift offer.",
       });
+      // Add notification
+      addNotification('success', 'Shift confirmed! Added to your calendar.');
     },
     onError: (error: any) => {
       toast({
@@ -105,7 +109,7 @@ export function OfferInbox() {
   }
 
   return (
-    <Card>
+    <Card data-testid="offer-inbox">
       <CardHeader>
         <CardTitle>Job Requests ({offers.length})</CardTitle>
       </CardHeader>

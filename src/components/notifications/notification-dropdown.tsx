@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +6,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Bell, 
   Briefcase, 
-  MessageCircle, 
+  CheckCircle2,
+  AlertTriangle,
+  Info,
   CheckCheck,
-  X,
-  Info
+  X
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
-import { Notification } from "@/lib/api";
+import { formatDistanceToNow, format } from "date-fns";
+import { Notification, NotificationType } from "@/contexts/NotificationContext";
 
 interface NotificationDropdownProps {
   notifications: Notification[];
@@ -27,48 +28,56 @@ export default function NotificationDropdown({
   onMarkAllRead,
   onClose
 }: NotificationDropdownProps) {
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const navigate = useNavigate();
+  const unreadCount = notifications.filter(n => !n.read).length;
   
-  const getIcon = (type: Notification['type']) => {
+  const getIcon = (type: NotificationType) => {
     switch (type) {
-      case 'application_received':
-      case 'application_status_change':
+      case 'success':
+        return CheckCircle2;
+      case 'warning':
+        return AlertTriangle;
+      case 'offer':
         return Briefcase;
-      case 'job_posted':
-      case 'job_updated':
-      case 'job_completed':
-        return Bell;
       default:
         return Info;
     }
   };
 
-  const getColorClass = (type: Notification['type']) => {
+  const getColorClass = (type: NotificationType) => {
     switch (type) {
-      case 'application_received':
-        return 'bg-blue-100 text-blue-600';
-      case 'application_status_change':
-        return 'bg-green-100 text-green-600';
-      case 'job_completed':
-        return 'bg-yellow-100 text-yellow-600';
+      case 'success':
+        return 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300';
+      case 'warning':
+        return 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'offer':
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300';
       default:
-        return 'bg-steel-100 text-steel-600';
+        return 'bg-steel-100 text-steel-600 dark:bg-steel-800 dark:text-steel-300';
     }
   };
 
-  const getTimeDisplay = (timestamp: string) => {
+  const getTimeDisplay = (timestamp: Date) => {
     try {
-      const date = new Date(timestamp);
       const now = new Date();
-      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+      const diffInHours = (now.getTime() - timestamp.getTime()) / (1000 * 60 * 60);
 
       if (diffInHours < 24) {
-        return formatDistanceToNow(date, { addSuffix: true });
+        return formatDistanceToNow(timestamp, { addSuffix: true });
       } else {
-        return format(date, "MMM d, yyyy");
+        return format(timestamp, "MMM d, yyyy");
       }
     } catch (e) {
       return '';
+    }
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    onNotificationClick(notification.id);
+    
+    // If it's an offer type, navigate to Job Offers section
+    if (notification.type === 'offer') {
+      navigate('/professional-dashboard?view=overview');
     }
   };
 
@@ -117,7 +126,7 @@ export default function NotificationDropdown({
             <Bell className="w-12 h-12 text-steel-300 mx-auto mb-3" />
             <p className="text-steel-500 font-medium mb-1">No notifications yet</p>
             <p className="text-sm text-steel-400">
-              You'll see updates about jobs, messages, and social activity here
+              You'll see updates about jobs, messages, and activity here
             </p>
           </div>
         ) : (
@@ -131,11 +140,11 @@ export default function NotificationDropdown({
                   <div
                     key={notification.id}
                     className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-steel-50 dark:hover:bg-steel-800 border ${
-                      notification.isRead 
+                      notification.read 
                         ? 'bg-card border-transparent' 
                         : 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800'
                     }`}
-                    onClick={() => onNotificationClick(notification.id)}
+                    onClick={() => handleNotificationClick(notification)}
                     data-testid={`notification-${notification.id}`}
                   >
                     <div className="flex items-start gap-3">
@@ -148,22 +157,25 @@ export default function NotificationDropdown({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <p className={`text-sm font-semibold mb-1 ${notification.isRead ? 'text-steel-700' : 'text-steel-900'}`}>
-                              {notification.title}
+                            <p className={`text-sm font-semibold mb-1 ${notification.read ? 'text-steel-700' : 'text-steel-900'}`}>
+                              {notification.type === 'offer' && 'New Job Offer'}
+                              {notification.type === 'success' && 'Success'}
+                              {notification.type === 'warning' && 'Warning'}
+                              {notification.type === 'info' && 'Info'}
                             </p>
-                            <p className={`text-sm ${notification.isRead ? 'text-steel-600' : 'text-steel-900 font-medium'}`}>
+                            <p className={`text-sm ${notification.read ? 'text-steel-600' : 'text-steel-900 font-medium'}`}>
                               {notification.message}
                             </p>
                           </div>
                           
-                          {!notification.isRead && (
+                          {!notification.read && (
                             <div className="w-2 h-2 bg-blue-600 rounded-full mt-1 flex-shrink-0"></div>
                           )}
                         </div>
 
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-steel-500">
-                            {getTimeDisplay(notification.createdAt)}
+                            {getTimeDisplay(notification.timestamp)}
                           </span>
                         </div>
                       </div>
