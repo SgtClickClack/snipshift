@@ -11,6 +11,7 @@ import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { apiRequest } from "@/lib/queryClient";
 import { updateBusinessProfile } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardHeaderProps {
   /** Banner image URL */
@@ -42,6 +43,7 @@ export default function DashboardHeader({
   className,
 }: DashboardHeaderProps) {
   const { toast } = useToast();
+  const { refreshUser } = useAuth();
   const { isCompressing: isCompressingBanner, handleImageSelect: handleBannerImageSelect } = useImageUpload();
   const { isCompressing: isCompressingLogo, handleImageSelect: handleLogoImageSelect } = useImageUpload();
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -232,6 +234,11 @@ export default function DashboardHeader({
         title: "Banner updated",
         description: "Your banner image has been successfully uploaded.",
       });
+
+      // Refresh global user state to get fresh image URLs
+      if (refreshUser) {
+        refreshUser().catch(err => console.error('Failed to refresh user after banner upload:', err));
+      }
     } catch (error: any) {
       console.error("Error uploading banner:", error);
       const errorMessage = error.message || "Failed to upload banner image. Please try again.";
@@ -389,6 +396,11 @@ export default function DashboardHeader({
         title: "Profile picture updated",
         description: "Your profile picture has been successfully uploaded.",
       });
+
+      // Refresh global user state to get fresh image URLs
+      if (refreshUser) {
+        refreshUser().catch(err => console.error('Failed to refresh user after logo upload:', err));
+      }
     } catch (error: any) {
       console.error("Error uploading avatar:", error);
       const errorMessage = error.message || "Failed to upload profile picture. Please try again.";
