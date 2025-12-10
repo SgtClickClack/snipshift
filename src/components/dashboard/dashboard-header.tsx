@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
@@ -32,10 +33,13 @@ export default function DashboardHeader({
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible mb-16", className)}>
       {/* Banner Image or Gradient Fallback */}
       {bannerImage ? (
-        <img
+        <OptimizedImage
           src={bannerImage}
           alt="Banner"
+          priority={true}
+          fallbackType="banner"
           className="w-full h-full object-cover rounded-lg"
+          containerClassName="w-full h-full"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg" />

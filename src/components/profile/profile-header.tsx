@@ -1,12 +1,15 @@
 import { useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Camera, Loader2 } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
+import { useImageUpload } from "@/hooks/use-image-upload";
+import { compressImage } from "@/lib/image-compression";
 
 interface ProfileHeaderProps {
   /** Banner image URL */
@@ -35,6 +38,8 @@ export default function ProfileHeader({
   className,
 }: ProfileHeaderProps) {
   const { toast } = useToast();
+  const { isCompressing: isCompressingBanner, handleImageSelect: handleBannerImageSelect } = useImageUpload();
+  const { isCompressing: isCompressingAvatar, handleImageSelect: handleAvatarImageSelect } = useImageUpload();
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [showBannerCropper, setShowBannerCropper] = useState(false);
@@ -42,7 +47,7 @@ export default function ProfileHeader({
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleBannerFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBannerFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -56,9 +61,26 @@ export default function ProfileHeader({
       return;
     }
 
-    // Validate file size (5MB limit)
+    // Show compression toast
+    toast({
+      title: "Compressing image...",
+      description: "Please wait while we optimize your image.",
+    });
+
+    // Compress the image before showing in cropper
+    const compressedFile = await handleBannerImageSelect(file);
+    if (!compressedFile) {
+      toast({
+        title: "Compression failed",
+        description: "Failed to process image. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate compressed file size (5MB limit)
     const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    if (compressedFile.size > maxSize) {
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
@@ -68,7 +90,7 @@ export default function ProfileHeader({
     }
 
     // Create object URL for the cropper
-    const imageUrl = URL.createObjectURL(file);
+    const imageUrl = URL.createObjectURL(compressedFile);
     setBannerImageSrc(imageUrl);
     setShowBannerCropper(true);
   };
@@ -95,11 +117,17 @@ export default function ProfileHeader({
     setIsUploadingBanner(true);
 
     try {
+      // Convert blob to File for compression
+      const croppedFile = new File([croppedImageBlob], 'banner.jpg', { type: 'image/jpeg' });
+      
+      // Compress the cropped image before upload
+      const compressedFile = await compressImage(croppedFile);
+
       const userId = firebaseUser.uid;
       const storagePath = `users/${userId}/banner.jpg`;
       const storageRef = ref(storage, storagePath);
 
-      const uploadTask = uploadBytesResumable(storageRef, croppedImageBlob);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 
       await new Promise<void>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -178,9 +206,26 @@ export default function ProfileHeader({
       return;
     }
 
-    // Validate file size (5MB limit)
+    // Show compression toast
+    toast({
+      title: "Compressing image...",
+      description: "Please wait while we optimize your image.",
+    });
+
+    // Compress the image
+    const compressedFile = await handleAvatarImageSelect(file);
+    if (!compressedFile) {
+      toast({
+        title: "Compression failed",
+        description: "Failed to process image. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate compressed file size (5MB limit)
     const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    if (compressedFile.size > maxSize) {
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
@@ -203,11 +248,11 @@ export default function ProfileHeader({
 
     try {
       const userId = firebaseUser.uid;
-      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const fileExtension = 'jpg'; // Always use jpg after compression
       const storagePath = `users/${userId}/avatar.${fileExtension}`;
       const storageRef = ref(storage, storagePath);
 
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 
       await new Promise<void>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -272,10 +317,13 @@ export default function ProfileHeader({
     <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible", className)}>
       {/* Banner Image or Gradient Fallback */}
       {bannerUrl ? (
-        <img
+        <OptimizedImage
           src={bannerUrl}
           alt="Banner"
+          priority={true}
+          fallbackType="banner"
           className="w-full h-full object-cover rounded-lg"
+          containerClassName="w-full h-full"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg" />
@@ -296,10 +344,12 @@ export default function ProfileHeader({
             }}
             disabled={isUploadingBanner}
           >
-            {isUploadingBanner ? (
+            {isUploadingBanner || isCompressingBanner ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                <span className="hidden sm:inline">Uploading...</span>
+                <span className="hidden sm:inline">
+                  {isCompressingBanner ? "Compressing..." : "Uploading..."}
+                </span>
               </>
             ) : (
               <>
@@ -315,7 +365,7 @@ export default function ProfileHeader({
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={handleBannerFileSelect}
             className="hidden"
-            disabled={isUploadingBanner}
+            disabled={isUploadingBanner || isCompressingBanner}
           />
           {bannerImageSrc && (
             <ImageCropper
@@ -346,7 +396,7 @@ export default function ProfileHeader({
                 htmlFor="avatar-upload-input"
                 className="absolute inset-0 rounded-full bg-black bg-opacity-0 hover:bg-opacity-50 active:bg-opacity-50 md:active:bg-opacity-0 transition-all duration-200 flex items-center justify-center cursor-pointer group"
               >
-                {isUploadingAvatar ? (
+                {isUploadingAvatar || isCompressingAvatar ? (
                   <Loader2 className="w-6 h-6 text-white animate-spin" />
                 ) : (
                   <Camera className="w-6 h-6 text-white opacity-50 md:opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 transition-opacity duration-200" />
@@ -359,7 +409,7 @@ export default function ProfileHeader({
                 accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                 onChange={handleAvatarUpload}
                 className="hidden"
-                disabled={isUploadingAvatar}
+                disabled={isUploadingAvatar || isCompressingAvatar}
               />
             </>
           )}

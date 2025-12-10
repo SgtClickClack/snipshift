@@ -7,6 +7,7 @@ import { User, MapPin, Calendar, Star, MessageCircle, Briefcase, Award, Users } 
 import { format } from "date-fns";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import ProfileHeader from "./profile-header";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface PortfolioItem {
   id: string;
@@ -323,10 +324,12 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                     {filteredPortfolio?.map((item, index) => (
                       <div key={item.id} className="group cursor-pointer" data-testid={`portfolio-item-${index}`}>
                         <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                          <img
+                          <OptimizedImage
                             src={item.imageURL}
                             alt={item.caption}
+                            fallbackType="image"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            containerClassName="w-full h-full"
                           />
                         </div>
                         {item.caption && (

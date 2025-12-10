@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Share2, TrendingUp, Users, Eye, MessageCircle, Heart, Edit, Trash, Tag, Calendar, Globe } from "lucide-react";
 import { format } from "date-fns";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface SocialPost {
   id: string;
@@ -354,10 +355,12 @@ export default function BrandDashboard() {
 
                       {post.imageUrl && (
                         <div className="mb-4">
-                          <img 
+                          <OptimizedImage 
                             src={post.imageUrl} 
                             alt="Post image"
+                            fallbackType="image"
                             className="rounded-lg max-w-full h-48 object-cover"
+                            containerClassName="w-full"
                           />
                         </div>
                       )}

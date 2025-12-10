@@ -33,6 +33,9 @@ import { apiRequest } from '@/lib/queryClient';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth } from '@/lib/firebase';
 import { ImageCropper } from '@/components/ui/image-cropper';
+import { OptimizedImage } from '@/components/ui/optimized-image';
+import { useImageUpload } from '@/hooks/use-image-upload';
+import { compressImage } from '@/lib/image-compression';
 
 interface PortfolioItem {
   id: string;
@@ -108,6 +111,8 @@ export default function ProfessionalDigitalResume({
 }: ProfessionalDigitalResumeProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isCompressing: isCompressingBanner, handleImageSelect: handleBannerImageSelect } = useImageUpload();
+  const { isCompressing: isCompressingAvatar, handleImageSelect: handleAvatarImageSelect } = useImageUpload();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
@@ -220,7 +225,7 @@ export default function ProfessionalDigitalResume({
     }));
   };
 
-  const handleBannerFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBannerFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -234,9 +239,26 @@ export default function ProfessionalDigitalResume({
       return;
     }
 
-    // Validate file size (5MB limit)
+    // Show compression toast
+    toast({
+      title: "Compressing image...",
+      description: "Please wait while we optimize your image.",
+    });
+
+    // Compress the image before showing in cropper
+    const compressedFile = await handleBannerImageSelect(file);
+    if (!compressedFile) {
+      toast({
+        title: "Compression failed",
+        description: "Failed to process image. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate compressed file size (5MB limit)
     const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    if (compressedFile.size > maxSize) {
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
@@ -246,7 +268,7 @@ export default function ProfessionalDigitalResume({
     }
 
     // Create object URL for the cropper
-    const imageUrl = URL.createObjectURL(file);
+    const imageUrl = URL.createObjectURL(compressedFile);
     setBannerImageSrc(imageUrl);
     setShowBannerCropper(true);
   };
@@ -273,11 +295,17 @@ export default function ProfessionalDigitalResume({
     setIsUploadingBanner(true);
 
     try {
+      // Convert blob to File for compression
+      const croppedFile = new File([croppedImageBlob], 'banner.jpg', { type: 'image/jpeg' });
+      
+      // Compress the cropped image before upload
+      const compressedFile = await compressImage(croppedFile);
+
       const userId = firebaseUser.uid;
       const storagePath = `users/${userId}/banner.jpg`;
       const storageRef = ref(storage, storagePath);
 
-      const uploadTask = uploadBytesResumable(storageRef, croppedImageBlob);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 
       await new Promise<void>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -356,9 +384,26 @@ export default function ProfessionalDigitalResume({
       return;
     }
 
-    // Validate file size (5MB limit)
+    // Show compression toast
+    toast({
+      title: "Compressing image...",
+      description: "Please wait while we optimize your image.",
+    });
+
+    // Compress the image
+    const compressedFile = await handleAvatarImageSelect(file);
+    if (!compressedFile) {
+      toast({
+        title: "Compression failed",
+        description: "Failed to process image. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate compressed file size (5MB limit)
     const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    if (compressedFile.size > maxSize) {
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
@@ -381,11 +426,11 @@ export default function ProfessionalDigitalResume({
 
     try {
       const userId = firebaseUser.uid;
-      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const fileExtension = 'jpg'; // Always use jpg after compression
       const storagePath = `users/${userId}/avatar.${fileExtension}`;
       const storageRef = ref(storage, storagePath);
 
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 
       await new Promise<void>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -497,10 +542,13 @@ export default function ProfessionalDigitalResume({
         <Card className="mb-6 overflow-hidden">
           <div className="relative h-48 bg-gradient-to-r from-primary/20 to-primary/10">
             {profile.bannerUrl && (
-              <img 
+              <OptimizedImage 
                 src={profile.bannerUrl} 
                 alt="Banner" 
+                priority={true}
+                fallbackType="banner"
                 className="w-full h-full object-cover"
+                containerClassName="w-full h-full"
               />
             )}
             {isEditing && (
@@ -510,12 +558,12 @@ export default function ProfessionalDigitalResume({
                     variant="secondary" 
                     size="sm"
                     onClick={() => bannerFileInputRef.current?.click()}
-                    disabled={isUploadingBanner}
+                    disabled={isUploadingBanner || isCompressingBanner}
                   >
-                    {isUploadingBanner ? (
+                    {isUploadingBanner || isCompressingBanner ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
+                        {isCompressingBanner ? "Compressing..." : "Uploading..."}
                       </>
                     ) : (
                       <>
@@ -531,7 +579,7 @@ export default function ProfessionalDigitalResume({
                   accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                   onChange={handleBannerFileSelect}
                   className="hidden"
-                  disabled={isUploadingBanner}
+                  disabled={isUploadingBanner || isCompressingBanner}
                 />
                 {bannerImageSrc && (
                   <ImageCropper
@@ -562,9 +610,9 @@ export default function ProfessionalDigitalResume({
                       size="sm" 
                       className="absolute bottom-0 right-0 rounded-full"
                       onClick={() => avatarFileInputRef.current?.click()}
-                      disabled={isUploadingAvatar}
+                      disabled={isUploadingAvatar || isCompressingAvatar}
                     >
-                      {isUploadingAvatar ? (
+                      {isUploadingAvatar || isCompressingAvatar ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Camera className="h-4 w-4" />
@@ -576,7 +624,7 @@ export default function ProfessionalDigitalResume({
                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                       onChange={handleAvatarUpload}
                       className="hidden"
-                      disabled={isUploadingAvatar}
+                      disabled={isUploadingAvatar || isCompressingAvatar}
                     />
                   </>
                 )}

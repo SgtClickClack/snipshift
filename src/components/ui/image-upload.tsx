@@ -4,8 +4,10 @@ import { storage } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useImageUpload } from '@/hooks/use-image-upload';
+import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploadProps {
   /** Current image URL (for preview) */
@@ -43,6 +45,8 @@ export function ImageUpload({
   className,
 }: ImageUploadProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const { isCompressing, error: compressionError, handleImageSelect, clearError } = useImageUpload();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
@@ -53,13 +57,6 @@ export function ImageUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file size
-    if (file.size > maxSize) {
-      const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(1);
-      setError(`File size exceeds ${maxSizeMB}MB limit`);
-      return;
-    }
-
     // Validate file type
     if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
       setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
@@ -67,25 +64,49 @@ export function ImageUpload({
     }
 
     setError(null);
+    clearError();
+
+    // Show compression toast
+    if (!isCompressing) {
+      toast({
+        title: "Compressing image...",
+        description: "Please wait while we optimize your image for upload.",
+      });
+    }
+
+    // Compress the image
+    const compressedFile = await handleImageSelect(file);
+    if (!compressedFile) {
+      setError(compressionError || 'Failed to process image');
+      return;
+    }
+
+    // Validate compressed file size
+    if (compressedFile.size > maxSize) {
+      const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(1);
+      setError(`File size exceeds ${maxSizeMB}MB limit`);
+      return;
+    }
+
     setUploading(true);
     setUploadProgress(0);
 
-    // Create preview
+    // Create preview from compressed file
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressedFile);
 
     try {
       // Create storage reference
-      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const fileExtension = 'jpg'; // Always use jpg after compression
       const storageFileName = `${fileName}.${fileExtension}`;
       const storagePath = `${pathPrefix}/${entityId}/${storageFileName}`;
       const storageRef = ref(storage, storagePath);
 
-      // Upload file
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      // Upload compressed file
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 
       uploadTask.on(
         'state_changed',
@@ -185,22 +206,42 @@ export function ImageUpload({
               variant="outline"
               size="sm"
               onClick={handleClick}
-              disabled={uploading || !user}
+              disabled={uploading || isCompressing || !user}
               className="bg-steel-700 hover:bg-steel-600 border-steel-600 whitespace-nowrap"
             >
-              <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">{uploading ? 'Uploading...' : 'Upload Image'}</span>
+              {isCompressing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 flex-shrink-0 animate-spin" />
+                  <span className="truncate">Compressing...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{uploading ? 'Uploading...' : 'Upload Image'}</span>
+                </>
+              )}
             </Button>
           </div>
         )}
 
-        {uploading && (
+        {(uploading || isCompressing) && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="w-full px-4 space-y-2">
-              <Progress value={uploadProgress} className="h-2" />
-              <p className="text-xs text-center text-white">
-                {Math.round(uploadProgress)}% uploaded
-              </p>
+              {uploading ? (
+                <>
+                  <Progress value={uploadProgress} className="h-2" />
+                  <p className="text-xs text-center text-white">
+                    {Math.round(uploadProgress)}% uploaded
+                  </p>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  <p className="text-xs text-center text-white">
+                    Compressing image...
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -215,8 +256,8 @@ export function ImageUpload({
         disabled={uploading || !user}
       />
 
-      {error && (
-        <p className="text-sm text-red-500">{error}</p>
+      {(error || compressionError) && (
+        <p className="text-sm text-red-500">{error || compressionError}</p>
       )}
 
       {!previewUrl && !uploading && (
@@ -225,11 +266,20 @@ export function ImageUpload({
           variant="outline"
           size="sm"
           onClick={handleClick}
-          disabled={!user}
+          disabled={!user || isCompressing}
           className="w-full bg-steel-700 hover:bg-steel-600 border-steel-600 whitespace-nowrap"
         >
-          <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span className="truncate">Choose Image</span>
+          {isCompressing ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 flex-shrink-0 animate-spin" />
+              <span className="truncate">Compressing...</span>
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Choose Image</span>
+            </>
+          )}
         </Button>
       )}
     </div>
