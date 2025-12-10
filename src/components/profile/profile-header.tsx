@@ -303,7 +303,8 @@ export default function ProfileHeader({
       console.log('Banner - Setting new URL (optimistic):', firebaseUrlWithCacheBust);
       console.log('Setting bannerUrl to string:', firebaseUrlWithCacheBust);
       
-      // Update state immediately so user sees the change instantly
+      // FORCE IMMEDIATE UPDATE: Update state immediately so user sees the change instantly
+      // This must happen BEFORE any async operations to ensure instant UI feedback
       setLocalBannerUrl(firebaseUrlWithCacheBust);
       console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
@@ -313,7 +314,7 @@ export default function ProfileHeader({
         setBannerImageSrc(null);
       }
       
-      // Call parent callback immediately to update form data
+      // Call parent callback immediately to update form data (this triggers parent state update)
       onBannerUpload?.(firebaseUrlWithCacheBust);
       console.log('Banner - Parent callback called with:', firebaseUrlWithCacheBust);
 
@@ -595,7 +596,7 @@ export default function ProfileHeader({
       {/* Banner Image or Gradient Fallback */}
       {displayBannerUrl ? (
         <OptimizedImage
-          key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
+          key={displayBannerUrl} // Force re-render when URL changes - using full URL ensures cache-busting works
           src={displayBannerUrl}
           alt="Banner"
           priority={true}
