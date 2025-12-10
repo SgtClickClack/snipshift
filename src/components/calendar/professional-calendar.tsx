@@ -1848,7 +1848,7 @@ export default function ProfessionalCalendar({
           open={showSmartFillModal}
           onOpenChange={setShowSmartFillModal}
           matches={smartMatches}
-          onConfirm={handleSendInvites}
+          onConfirm={handleSmartFillConfirm}
           isLoading={isCalculatingMatches}
         />
       )}
