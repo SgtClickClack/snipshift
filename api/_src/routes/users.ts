@@ -6,6 +6,7 @@ import * as emailService from '../services/email.service.js';
 import { auth } from '../config/firebase.js';
 import { z } from 'zod';
 import { uploadProfileImages } from '../middleware/upload.js';
+import admin from 'firebase-admin';
 
 const router = Router();
 
@@ -213,20 +214,83 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     bannerUrl: req.body.bannerUrl ? req.body.bannerUrl.substring(0, 50) + '...' : undefined,
   });
 
-  // If files are uploaded via FormData, we need to handle them
-  // For now, we'll still expect URLs in the body (since frontend uploads to Firebase first)
-  // But we log the files for debugging
+  // Process uploaded files (FormData) - upload to Firebase Storage if present
+  let processedAvatarUrl: string | undefined = undefined;
+  let processedBannerUrl: string | undefined = undefined;
+
   if (files) {
     console.log('[PUT /api/me] Files received:', {
       logo: files.logo ? files.logo[0]?.originalname : undefined,
       banner: files.banner ? files.banner[0]?.originalname : undefined,
       avatar: files.avatar ? files.avatar[0]?.originalname : undefined,
     });
-    // TODO: If direct file upload is needed, upload files to Firebase Storage here
-    // For now, we continue with URL-based approach
+
+    try {
+      // Get Firebase Storage bucket
+      const firebaseAdmin = (admin as any).default || admin;
+      const appName = 'snipshift-worker-v2';
+      let app: admin.app.App;
+      try {
+        app = firebaseAdmin.app(appName);
+      } catch (e) {
+        throw new Error('Firebase app not initialized');
+      }
+      const bucket = firebaseAdmin.storage(app).bucket();
+
+      // Process logo/avatar file
+      const logoFile = files.logo?.[0] || files.avatar?.[0];
+      if (logoFile) {
+        const fileExtension = logoFile.originalname.split('.').pop() || 'jpg';
+        const fileName = `users/${req.user.uid}/avatar.${fileExtension}`;
+        const file = bucket.file(fileName);
+
+        // Upload file buffer to Firebase Storage
+        await file.save(logoFile.buffer, {
+          metadata: {
+            contentType: logoFile.mimetype,
+          },
+        });
+
+        // Make file publicly accessible
+        await file.makePublic();
+
+        // Get public URL
+        processedAvatarUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        console.log('[PUT /api/me] Uploaded avatar/logo to Firebase Storage:', processedAvatarUrl.substring(0, 50) + '...');
+      }
+
+      // Process banner file
+      const bannerFile = files.banner?.[0];
+      if (bannerFile) {
+        const fileExtension = bannerFile.originalname.split('.').pop() || 'jpg';
+        const fileName = `users/${req.user.uid}/banner.${fileExtension}`;
+        const file = bucket.file(fileName);
+
+        // Upload file buffer to Firebase Storage
+        await file.save(bannerFile.buffer, {
+          metadata: {
+            contentType: bannerFile.mimetype,
+          },
+        });
+
+        // Make file publicly accessible
+        await file.makePublic();
+
+        // Get public URL
+        processedBannerUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        console.log('[PUT /api/me] Uploaded banner to Firebase Storage:', processedBannerUrl.substring(0, 50) + '...');
+      }
+    } catch (error: any) {
+      console.error('[PUT /api/me] Error uploading files to Firebase Storage:', error);
+      res.status(500).json({ 
+        message: 'Failed to upload files: ' + (error.message || 'Unknown error')
+      });
+      return;
+    }
   }
 
   // Validate request body (files are handled separately, body contains other fields)
+  // If files were uploaded, we'll use those URLs instead of body URLs
   const validationResult = UpdateProfileSchema.safeParse(req.body);
   if (!validationResult.success) {
     console.error('[PUT /api/me] Validation error:', validationResult.error.errors);
@@ -244,13 +308,22 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   if (bio !== undefined) updates.bio = bio;
   if (phone !== undefined) updates.phone = phone;
   if (location !== undefined) updates.location = location;
-  if (avatarUrl !== undefined) {
+  
+  // Use processed file URLs if available, otherwise use URLs from body
+  if (processedAvatarUrl !== undefined) {
+    updates.avatarUrl = processedAvatarUrl;
+    console.log('[PUT /api/me] Updating avatarUrl from uploaded file:', processedAvatarUrl.substring(0, 50) + '...');
+  } else if (avatarUrl !== undefined) {
     updates.avatarUrl = avatarUrl;
-    console.log('[PUT /api/me] Updating avatarUrl:', avatarUrl.substring(0, 50) + '...');
+    console.log('[PUT /api/me] Updating avatarUrl from body:', avatarUrl.substring(0, 50) + '...');
   }
-  if (bannerUrl !== undefined) {
+  
+  if (processedBannerUrl !== undefined) {
+    updates.bannerUrl = processedBannerUrl;
+    console.log('[PUT /api/me] Updating bannerUrl from uploaded file:', processedBannerUrl.substring(0, 50) + '...');
+  } else if (bannerUrl !== undefined) {
     updates.bannerUrl = bannerUrl;
-    console.log('[PUT /api/me] Updating bannerUrl:', bannerUrl.substring(0, 50) + '...');
+    console.log('[PUT /api/me] Updating bannerUrl from body:', bannerUrl.substring(0, 50) + '...');
   }
 
   // Update user in database
