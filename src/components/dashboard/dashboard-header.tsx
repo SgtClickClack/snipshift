@@ -58,21 +58,37 @@ export default function DashboardHeader({
   // Sync local state with props when they change externally
   useEffect(() => {
     setLocalBannerUrl((current) => {
+      // Type safety: Ensure current is a string (not an object)
+      if (current && typeof current !== 'string') {
+        console.error('Banner useEffect - current is not a string, resetting:', current);
+        // If current is an object, reset to prop or empty string
+        return (typeof bannerImage === 'string' ? bannerImage : null) || null;
+      }
+
+      // Type safety: Ensure prop is a string before using it
+      if (bannerImage && typeof bannerImage !== 'string') {
+        console.error('Banner useEffect - bannerImage prop is not a string, keeping current:', bannerImage);
+        return current;
+      }
+
       // Only update if prop is different from current state
       // IMPORTANT: If current state has a cache-busting timestamp (?t=) and prop doesn't,
       // keep the current state to preserve the optimistic update
       if (bannerImage !== current) {
         // Check if current has cache-busting but prop doesn't (base URL match)
-        const currentBaseUrl = current?.split('?')[0];
-        const propBaseUrl = bannerImage?.split('?')[0];
-        
-        if (currentBaseUrl && propBaseUrl && currentBaseUrl === propBaseUrl && current?.includes('?t=')) {
-          // Current has cache-busting, prop doesn't - keep current state
-          console.log('Banner useEffect - Preserving cache-busted URL:', { 
-            current, 
-            prop: bannerImage 
-          });
-          return current;
+        // Only do string operations if both are strings
+        if (typeof current === 'string' && typeof bannerImage === 'string') {
+          const currentBaseUrl = current.split('?')[0];
+          const propBaseUrl = bannerImage.split('?')[0];
+          
+          if (currentBaseUrl && propBaseUrl && currentBaseUrl === propBaseUrl && current.includes('?t=')) {
+            // Current has cache-busting, prop doesn't - keep current state
+            console.log('Banner useEffect - Preserving cache-busted URL:', { 
+              current, 
+              prop: bannerImage 
+            });
+            return current;
+          }
         }
         
         console.log('Banner useEffect - Prop changed, updating state:', { 
@@ -87,7 +103,11 @@ export default function DashboardHeader({
 
   // Debug: Log when localBannerUrl state changes
   useEffect(() => {
-    console.log('Banner state changed to:', localBannerUrl);
+    if (localBannerUrl && typeof localBannerUrl !== 'string') {
+      console.error('Banner state is NOT a string! Type:', typeof localBannerUrl, 'Value:', localBannerUrl);
+    } else {
+      console.log('Banner state changed to:', localBannerUrl);
+    }
   }, [localBannerUrl]);
 
   useEffect(() => {
@@ -243,12 +263,19 @@ export default function DashboardHeader({
       console.log('Banner Firebase upload response:', downloadURL);
 
       // OPTIMISTIC UPDATE: Update UI immediately with Firebase URL (don't wait for API)
+      // Ensure downloadURL is a string
+      if (typeof downloadURL !== 'string') {
+        console.error('Banner - downloadURL is not a string:', downloadURL);
+        throw new Error('Firebase upload did not return a valid URL string');
+      }
+      
       // Add cache-busting timestamp to force browser to reload the image
       const firebaseUrlWithCacheBust = `${downloadURL}?t=${Date.now()}`;
       const previousBannerUrl = localBannerUrl; // Store previous value for rollback
       
       console.log('Banner - Previous URL:', previousBannerUrl);
       console.log('Banner - Setting new URL (optimistic):', firebaseUrlWithCacheBust);
+      console.log('Setting bannerUrl to string:', firebaseUrlWithCacheBust);
       
       // Update state immediately so user sees the change instantly
       setLocalBannerUrl(firebaseUrlWithCacheBust);
@@ -268,17 +295,30 @@ export default function DashboardHeader({
         console.log('Banner API response keys:', Object.keys(responseData || {}));
         console.log('Banner API response.bannerUrl:', responseData?.bannerUrl);
 
-        // Verify API response (optional - Firebase URL is already shown)
-        if (responseData?.bannerUrl && typeof responseData.bannerUrl === 'string') {
-          // API returned a URL - update with API response (may differ from Firebase URL)
-          const apiUrlWithCacheBust = `${responseData.bannerUrl}?t=${Date.now()}`;
+        // Extract URL from API response - check multiple possible paths
+        // If response has data.bannerUrl, use that. Otherwise check response.bannerUrl. Otherwise fallback to firebaseUrl
+        let finalUrl: string | null = null;
+        
+        if (responseData?.data?.bannerUrl && typeof responseData.data.bannerUrl === 'string') {
+          finalUrl = responseData.data.bannerUrl;
+        } else if (responseData?.bannerUrl && typeof responseData.bannerUrl === 'string') {
+          finalUrl = responseData.bannerUrl;
+        } else {
+          // API didn't return bannerUrl - keep using Firebase URL (already set optimistically)
+          console.log('Banner - API response missing bannerUrl, keeping Firebase URL:', firebaseUrlWithCacheBust);
+          finalUrl = downloadURL; // Use the Firebase URL we already have
+        }
+
+        // Only update if we have a valid string URL
+        if (finalUrl && typeof finalUrl === 'string') {
+          const apiUrlWithCacheBust = `${finalUrl}?t=${Date.now()}`;
+          console.log('Setting bannerUrl to string:', apiUrlWithCacheBust);
           console.log('Banner - Updating state with API response URL:', apiUrlWithCacheBust);
           setLocalBannerUrl(apiUrlWithCacheBust);
           onBannerUpload?.(apiUrlWithCacheBust);
           console.log('Banner state updated with API response URL:', apiUrlWithCacheBust);
         } else {
-          // API didn't return bannerUrl - keep using Firebase URL (already set optimistically)
-          console.log('Banner - API response missing bannerUrl, keeping Firebase URL:', firebaseUrlWithCacheBust);
+          console.error('Banner - Failed to extract valid URL string from API response:', responseData);
         }
 
         // Show success toast
@@ -294,8 +334,12 @@ export default function DashboardHeader({
       } catch (apiError: any) {
         // API call failed - revert to previous state
         console.error('Banner API update failed, reverting state:', apiError);
-        setLocalBannerUrl(previousBannerUrl);
-        onBannerUpload?.(previousBannerUrl || '');
+        
+        // Ensure previousBannerUrl is a string before reverting
+        const safePreviousUrl = (typeof previousBannerUrl === 'string' ? previousBannerUrl : null) || null;
+        console.log('Banner - Reverting to previous URL (type-checked):', safePreviousUrl);
+        setLocalBannerUrl(safePreviousUrl);
+        onBannerUpload?.(safePreviousUrl || '');
         
         // Show error toast but don't throw - Firebase upload succeeded
         toast({
