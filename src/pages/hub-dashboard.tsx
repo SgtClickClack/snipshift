@@ -1059,12 +1059,12 @@ export default function HubDashboard() {
                       </CardTitle>
                       <div className="flex gap-2">
                         {!isEditingProfile ? (
-                          <Button onClick={() => setIsEditingProfile(true)} variant="outline" data-testid="button-edit-profile">
+                          <Button type="button" onClick={() => setIsEditingProfile(true)} variant="outline" data-testid="button-edit-profile">
                             Edit Profile
                           </Button>
                         ) : (
                           <>
-                            <Button onClick={() => setIsEditingProfile(false)} variant="outline" data-testid="button-cancel-edit">
+                            <Button type="button" onClick={() => setIsEditingProfile(false)} variant="outline" data-testid="button-cancel-edit">
                               Cancel
                             </Button>
                             <Button type="submit" disabled={updateProfileMutation.isPending} data-testid="button-save-profile">
