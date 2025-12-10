@@ -1017,11 +1017,15 @@ export default function HubDashboard() {
                       avatarUrl={profileData.avatarUrl}
                       displayName={profileData.displayName || user?.displayName || 'Business'}
                       editable={isEditingProfile}
-                      onBannerUpload={isEditingProfile ? (url) => {
+                      onBannerUpload={isEditingProfile ? async (url) => {
                         setProfileData(prev => ({ ...prev, bannerUrl: url }));
+                        // Refresh user data to get updated banner URL
+                        await refreshUser();
                       } : undefined}
-                      onAvatarUpload={isEditingProfile ? (url) => {
+                      onAvatarUpload={isEditingProfile ? async (url) => {
                         setProfileData(prev => ({ ...prev, avatarUrl: url }));
+                        // Refresh user data to get updated avatar URL
+                        await refreshUser();
                       } : undefined}
                     />
                   </div>
