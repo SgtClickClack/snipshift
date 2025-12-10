@@ -599,11 +599,11 @@ export default function ProfessionalCalendar({
         >
           {parts.length > 1 ? (
             <>
-              <div className={`font-bold ${isCurrentDay ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`}>{parts[0]}</div>
-              <div className={`text-sm ${isCurrentDay ? "text-blue-700 dark:text-blue-300 font-medium" : "text-muted-foreground"}`}>{parts.slice(1).join(" ")}</div>
+              <div className={`font-bold ${isCurrentDay ? "text-blue-600 dark:text-blue-300" : "text-foreground dark:text-foreground"}`}>{parts[0]}</div>
+              <div className={`text-sm ${isCurrentDay ? "text-blue-700 dark:text-blue-200 font-medium" : "text-muted-foreground dark:text-muted-foreground"}`}>{parts.slice(1).join(" ")}</div>
             </>
           ) : (
-            <span className={isCurrentDay ? "font-bold text-blue-600 dark:text-blue-400" : "font-semibold"}>{label}</span>
+            <span className={isCurrentDay ? "font-bold text-blue-600 dark:text-blue-300" : "font-semibold text-foreground dark:text-foreground"}>{label}</span>
           )}
         </div>
       );
@@ -767,7 +767,7 @@ export default function ProfessionalCalendar({
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Left Sidebar - 25% */}
-      <div className="w-full lg:w-1/4 space-y-4 bg-slate-900/50 dark:bg-slate-950/50 p-4 rounded-lg border border-slate-800/50">
+      <div className="w-full lg:w-1/4 space-y-4 bg-slate-900/50 dark:bg-slate-800/80 dark:border-slate-700/60 p-4 rounded-lg border border-slate-800/50">
         {/* Mini Calendar */}
         <Card>
           <CardHeader>

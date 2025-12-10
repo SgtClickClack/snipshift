@@ -196,11 +196,25 @@ button:active, a:active, [role="button"]:active {
   font-size: 0.875rem;
 }
 
+/* Dark mode header improvements */
+.dark .rbc-header {
+  background-color: hsl(var(--muted) / 0.6) !important;
+  border-bottom-color: hsl(var(--border) / 0.8) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
 .rbc-header-today {
   background-color: rgba(59, 130, 246, 0.15) !important;
   color: hsl(var(--foreground)) !important;
   border-left: 3px solid hsl(var(--primary)) !important;
   font-weight: 800;
+}
+
+/* Dark mode today header - more visible */
+.dark .rbc-header-today {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+  border-left-color: hsl(var(--primary)) !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 /* Time gutter with high contrast */
@@ -214,6 +228,18 @@ button:active, a:active, [role="button"]:active {
 .rbc-time-header-content {
   border-left: 2px solid hsl(var(--border));
   background-color: hsl(var(--background));
+}
+
+/* Dark mode time gutter - better contrast */
+.dark .rbc-time-header-gutter {
+  background-color: hsl(var(--muted) / 0.8) !important;
+  border-right-color: hsl(var(--border) / 0.9) !important;
+  color: hsl(var(--foreground)) !important;
+  font-weight: 700;
+}
+
+.dark .rbc-time-header-content {
+  border-left-color: hsl(var(--border) / 0.9) !important;
 }
 
 /* Current day column styling in week/day view - Google Calendar style */
@@ -234,10 +260,29 @@ button:active, a:active, [role="button"]:active {
   background-color: rgba(59, 130, 246, 0.08) !important; /* Subtle blue tint */
 }
 
+/* Dark mode current day - more visible */
+.dark .rbc-time-view .rbc-day-slot.rbc-today {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
+.dark .rbc-time-view .rbc-header.rbc-header-today + .rbc-day-bg {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
+.dark .rbc-time-view .rbc-day-bg.rbc-today {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
 /* Day background with clear borders */
 .rbc-day-bg {
   border-color: hsl(var(--border));
   background-color: hsl(var(--background));
+}
+
+/* Dark mode day background - ensure visibility */
+.dark .rbc-day-bg {
+  border-color: hsl(var(--border) / 0.8) !important;
+  background-color: hsl(var(--background)) !important;
 }
 
 .rbc-time-slot {
@@ -265,6 +310,16 @@ button:active, a:active, [role="button"]:active {
 
 .rbc-today .rbc-day-bg {
   background-color: rgba(59, 130, 246, 0.08) !important;
+  border-left: 3px solid hsl(var(--primary)) !important;
+}
+
+/* Dark mode today indicator - more visible */
+.dark .rbc-today {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
+.dark .rbc-today .rbc-day-bg {
+  background-color: rgba(59, 130, 246, 0.18) !important;
   border-left: 3px solid hsl(var(--primary)) !important;
 }
 
@@ -310,6 +365,20 @@ button:active, a:active, [role="button"]:active {
 .rbc-date-cell > a:hover {
   color: hsl(var(--primary));
   text-decoration: underline;
+}
+
+/* Dark mode date cells - better contrast */
+.dark .rbc-date-cell {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600;
+}
+
+.dark .rbc-date-cell > a {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .rbc-date-cell > a:hover {
+  color: hsl(var(--primary)) !important;
 }
 
 /* Selected date styling */
@@ -368,4 +437,42 @@ button:active, a:active, [role="button"]:active {
 
 .rbc-day-slot {
   border-right-color: hsl(var(--border) / 0.6);
+}
+
+/* Dark mode grid lines - lighter for better visibility */
+.dark .rbc-month-view,
+.dark .rbc-time-view {
+  border-color: hsl(var(--border) / 0.8) !important;
+}
+
+.dark .rbc-month-row {
+  border-color: hsl(var(--border) / 0.8) !important;
+}
+
+.dark .rbc-day-bg + .rbc-day-bg {
+  border-left-color: hsl(var(--border) / 0.8) !important;
+}
+
+.dark .rbc-row {
+  border-color: hsl(var(--border) / 0.7) !important;
+}
+
+.dark .rbc-row-segment {
+  border-color: hsl(var(--border) / 0.7) !important;
+}
+
+.dark .rbc-time-content {
+  border-left-color: hsl(var(--border) / 0.8) !important;
+}
+
+.dark .rbc-day-slot {
+  border-right-color: hsl(var(--border) / 0.8) !important;
+}
+
+.dark .rbc-time-slot {
+  border-top-color: hsl(var(--border) / 0.7) !important;
+}
+
+.dark .rbc-day-slot .rbc-time-slot {
+  border-top-color: hsl(var(--border) / 0.7) !important;
 }
