@@ -153,8 +153,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-steel-900 mb-2">Choose Your Role</h2>
-              <p className="text-steel-600">Tell us who you are</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Choose Your Role</h2>
+              <p className="text-gray-300">Tell us who you are</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
@@ -164,17 +164,17 @@ export default function OnboardingPage() {
                 className={`p-6 rounded-lg border-2 transition-all ${
                   formData.role === 'professional'
                     ? 'border-red-accent bg-red-accent/10 shadow-lg'
-                    : 'border-steel-300 bg-card hover:border-steel-400 hover:shadow-md'
+                    : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600 hover:shadow-md'
                 }`}
               >
                 <div className="flex flex-col items-center space-y-4">
                   <div className={`p-4 rounded-full ${
-                    formData.role === 'professional' ? 'bg-red-accent' : 'bg-steel-200'
+                    formData.role === 'professional' ? 'bg-red-accent' : 'bg-zinc-700'
                   }`}>
                     <Scissors className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold text-steel-900">I am a Barber</h3>
-                  <p className="text-sm text-steel-600 text-center">
+                  <h3 className="text-xl font-semibold text-white">I am a Barber</h3>
+                  <p className="text-sm text-gray-300 text-center">
                     Looking for work opportunities and gigs
                   </p>
                 </div>
@@ -191,12 +191,12 @@ export default function OnboardingPage() {
               >
                 <div className="flex flex-col items-center space-y-4">
                   <div className={`p-4 rounded-full ${
-                    formData.role === 'business' ? 'bg-red-accent' : 'bg-steel-200'
+                    formData.role === 'business' ? 'bg-red-accent' : 'bg-zinc-700'
                   }`}>
                     <Building2 className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold text-steel-900">I am a Shop Owner</h3>
-                  <p className="text-sm text-steel-600 text-center">
+                  <h3 className="text-xl font-semibold text-white">I am a Shop Owner</h3>
+                  <p className="text-sm text-gray-300 text-center">
                     Looking to hire barbers for my shop
                   </p>
                 </div>
@@ -209,12 +209,12 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-steel-900 mb-2">The Basics</h2>
-              <p className="text-steel-600">Let's start with your contact information</p>
+              <h2 className="text-2xl font-bold text-white mb-2">The Basics</h2>
+              <p className="text-gray-300">Let's start with your contact information</p>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="displayName" className="text-steel-700">
+                <Label htmlFor="displayName" className="text-gray-300">
                   Display Name *
                 </Label>
                 <Input
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-steel-700">
+                <Label htmlFor="phone" className="text-gray-300">
                   Phone Number *
                 </Label>
                 <Input
@@ -248,12 +248,12 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-steel-900 mb-2">First Impression</h2>
-              <p className="text-steel-600">Add a photo and tell us about yourself</p>
+              <h2 className="text-2xl font-bold text-white mb-2">First Impression</h2>
+              <p className="text-gray-300">Add a photo and tell us about yourself</p>
             </div>
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-steel-700">Profile Picture</Label>
+                <Label className="text-gray-300">Profile Picture</Label>
                 {user && (
                   <ImageUpload
                     currentImageUrl={formData.avatarUrl}
@@ -274,7 +274,7 @@ export default function OnboardingPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bio" className="text-steel-700">
+                <Label htmlFor="bio" className="text-gray-300">
                   Short Bio *
                 </Label>
                 <Textarea
@@ -286,7 +286,7 @@ export default function OnboardingPage() {
                   className="w-full"
                   data-testid="input-bio"
                 />
-                <p className="text-xs text-steel-500">
+                <p className="text-xs text-gray-400">
                   {formData.bio.length}/1000 characters
                 </p>
               </div>
@@ -298,12 +298,12 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-steel-900 mb-2">Location</h2>
-              <p className="text-steel-600">Where are you located?</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Location</h2>
+              <p className="text-gray-300">Where are you located?</p>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-steel-700">
+                <Label htmlFor="location" className="text-gray-300">
                   City/Suburb *
                 </Label>
                 <Input
@@ -314,7 +314,7 @@ export default function OnboardingPage() {
                   className="w-full"
                   data-testid="input-location"
                 />
-                <p className="text-xs text-steel-500">
+                <p className="text-xs text-gray-400">
                   This helps us show you relevant opportunities nearby
                 </p>
               </div>
@@ -334,19 +334,19 @@ export default function OnboardingPage() {
         description="Finish setting up your SnipShift profile to start finding work opportunities or hiring talent."
         url="/onboarding"
       />
-      <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4 pb-24 md:pb-4">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 pb-24 md:pb-4">
       <div className="w-full max-w-2xl">
         {/* Progress indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-steel-700">
+            <span className="text-sm font-medium text-gray-300">
               Step {currentStep} of {TOTAL_STEPS}
             </span>
-            <span className="text-sm text-steel-500">
+            <span className="text-sm text-gray-400">
               {Math.round((currentStep / TOTAL_STEPS) * 100)}% Complete
             </span>
           </div>
-          <div className="w-full bg-steel-200 rounded-full h-2">
+          <div className="w-full bg-zinc-800 rounded-full h-2">
             <div
               className="bg-red-accent h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
@@ -355,9 +355,9 @@ export default function OnboardingPage() {
         </div>
 
         {/* Main card */}
-        <Card className="card-chrome">
+        <Card className="card-chrome bg-zinc-900 border border-zinc-800">
           <CardHeader>
-            <CardTitle className="text-center text-steel-900">
+            <CardTitle className="text-center text-white">
               Welcome to SnipShift
             </CardTitle>
           </CardHeader>
@@ -365,7 +365,7 @@ export default function OnboardingPage() {
             {renderStepContent()}
 
             {/* Navigation buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-steel-300">
+            <div className="flex justify-between mt-8 pt-6 border-t border-zinc-800">
               <Button
                 type="button"
                 variant="outline"
