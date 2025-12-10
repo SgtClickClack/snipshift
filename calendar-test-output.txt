@@ -1,0 +1,798 @@
+﻿
+> snipshift-web@1.1.1 test:e2e
+> playwright test tests/e2e/professional-calendar.spec.ts -g should display calendar week view correctly on desktop --project=chromium --timeout=60000
+
+≡ƒöÉ Global Setup: Authenticating test user...
+≡ƒô¥ Navigating to login page: http://localhost:3002/login
+Γ£ì∩╕Å  Filling in credentials...
+ΓÅ│ Waiting for authentication...
+≡ƒöä Setting user role to professional...
+≡ƒô¥ Updating sessionStorage with professional role...
+Γ£à SessionStorage updated with professional role
+≡ƒöä Reloading page to apply role change...
+≡ƒôì Navigating to professional dashboard...
+≡ƒöì Verifying professional role access...
+Γ£à Successfully accessed professional dashboard at: http://localhost:3002/professional-dashboard
+≡ƒöì Polling sessionStorage to verify currentRole is set to "professional"...
+Γ£à SessionStorage verified: currentRole is "professional"
+≡ƒôï Roles: ["professional","business"]
+≡ƒÆ╛ Session state saved to: C:\Users\USER\Snipshift\tests\storageState.json
+≡ƒôï SessionStorage items saved: 1
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] ΓÇ║ tests\e2e\professional-calendar.spec.ts:231:5 ΓÇ║ Professional Calendar E2E Tests ΓÇ║ Visual Regression Tests ΓÇ║ should display calendar week view correctly on desktop
+node.exe : [1A[2K[chromium] ΓÇ║ tests\e2e\professional-calendar.spec.ts:231:5 ΓÇ║ Professional Calendar E2E Tests ΓÇ║ 
+Visual Regression Tests ΓÇ║ should display calendar week view correctly on desktop
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\RescueAdmin\AppData\Ro ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([1A[2K[chromi...ctly on desktop:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Could not manually restore storageState: ReferenceError: require is not defined
+    at navigateToCalendarView 
+[90m(file:///C:/Users/USER/Snipshift/[39mtests/e2e/professional-calendar.spec.ts:46:16[90m)[39m
+    at [90mfile:///C:/Users/USER/Snipshift/[39mtests/e2e/professional-calendar.spec.ts:224:11
+    at [90mC:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\fixtureRunner.js:228:52
+    at [90mC:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\testInfo.js:305:17
+    at TimeoutManager.withRunnable 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\timeoutManager.js:68:9[90m)[39m
+    at TestInfoImpl._runWithTimeout 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\testInfo.js:303:34[90m)[39m
+    at FixtureRunner.resolveParametersAndRunFunction 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\fixtureRunner.js:228:20[90m)[39m
+[90m    at runNextTicks (node:internal/process/task_queues:65:5)[39m
+[90m    at processImmediate (node:internal/timers:473:9)[39m
+    at [90mC:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\workerMain.js:469:11
+    at TestInfoImpl._runAsStep 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\testInfo.js:294:7[90m)[39m
+    at WorkerMain._runEachHooksForSuites 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\workerMain.js:468:9[90m)[39m
+    at [90mC:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\workerMain.js:302:9
+    at TestInfoImpl._runAsStep 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\testInfo.js:294:7[90m)[39m
+    at [90mC:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\workerMain.js:298:7
+    at WorkerMain._runTest 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\workerMain.js:283:5[90m)[39m
+    at WorkerMain.runTestGroup 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\worker\workerMain.js:198:11[90m)[39m
+    at process.<anonymous> 
+[90m(C:\Users\USER\Snipshift\[39mnode_modules\[4mplaywright[24m\lib\common\process.js:65:22[90m)[39m
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load notifications: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async fetchNotifications (http://localhost:3002/src/lib/api.ts:194:17)
+    at async Promise.all (index 0)
+    at async http://localhost:3002/src/contexts/NotificationContext.tsx:38:39
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] activeView === "applications": false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] activeView === "applications": false
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K
+=== CONSOLE MESSAGES ===
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: [ProfessionalDashboard] activeView === "applications": false
+
+[1A[2K[log]: [ProfessionalDashboard] activeView === "applications": false
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[log]: E2E Debug: Active View Determined As: calendar
+
+[1A[2K[log]: E2E Debug: View param from URL: calendar
+
+[1A[2K[log]: E2E Debug: Applications condition result: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[log]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[log]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[log]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K=== END CONSOLE MESSAGES ===
+
+
+[1A[2KCurrent URL after navigation: http://localhost:3002/professional-dashboard?view=calendar
+
+[1A[2KPage content check:
+
+[1A[2K- Has calendar-view-not-rendered: [33mfalse[39m
+
+[1A[2K- Has calendar-schedule-title: [33mtrue[39m
+
+[1A[2K- Has rbc-calendar: [33mtrue[39m
+
+[1A[2K- Has react-big-calendar-container: [33mtrue[39m
+
+[1A[2K- Has calendar-error (any error state): [33mfalse[39m
+
+[1A[2KCalendar container count: [33m1[39m
+
+[1A[2KCalendar elements status: {
+  "scheduleTitle": "found",
+  "calendarContainer": "found",
+  "rbcCalendar": "found",
+  "anyError": []
+}
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K≡ƒôà Setting up calendar test data...
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load notifications: Error: 500: Internal Server Error
+
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async fetchNotifications (http://localhost:3002/src/lib/api.ts:194:17)
+    at async Promise.all (index 0)
+    at async http://localhost:3002/src/contexts/NotificationContext.tsx:38:39
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] activeView === "applications": false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] activeView === "applications": false
+
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2KΓ₧ò Creating test bookings via UI...
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Active View Determined As: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: View param from URL: calendar
+
+[1A[2K[CALENDAR DEBUG]: E2E Calendar Debug: Calendar condition result: true
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Applications Tab - activeView: calendar condition: false
+
+[1A[2K[CALENDAR DEBUG]: [ProfessionalDashboard] Rendering Calendar Tab - activeView: calendar condition: true
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR COMPONENT] ProfessionalCalendar component mounted
+
+[1A[2K[CALENDAR DEBUG]: [CALENDAR RENDER] Starting Calendar render function
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2K[CONSOLE ERROR]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1A[2K[CONSOLE ERROR]: Error fetching user conversations: Error: 500: Internal Server Error
+    at throwIfResNotOk (http://localhost:3002/src/lib/queryClient.ts:7:15)
+    at async apiRequest (http://localhost:3002/src/lib/queryClient.ts:49:5)
+    at async MessagingService.getUserChats (http://localhost:3002/src/lib/messaging.ts:55:30)
+    at async pollChats (http://localhost:3002/src/lib/messaging.ts:128:31)
+
+
+[1A[2KΓÜá∩╕Å  Could not create booking via UI: Error: locator.click: Test timeout of 60000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: /create availability/i }).or(getByRole('button', { name: /create.*shift/i 
+})).first()[22m
+[2m    - locator resolved to <button data-testid="button-create-availability" class="inline-flex items-center 
+justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all duration-200 
+focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 
+disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary 
+text-primary-foreground hover:bg-primary/90 h-11 rounded-md px-8 w-full">ΓÇª</button>[22m
+[2m  - attempting click action[22m
+[2m    2 ├ù waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-auto">ΓÇª</div> from <div 
+data-testid="tutorial-overlay" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm pointer-events-none">ΓÇª</div> 
+subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 ├ù waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-auto">ΓÇª</div> from <div 
+data-testid="tutorial-overlay" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm pointer-events-none">ΓÇª</div> 
+subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    96 ├ù waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-auto">ΓÇª</div> from <div 
+data-testid="tutorial-overlay" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm pointer-events-none">ΓÇª</div> 
+subtree intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is visible, enabled and stable[22m
+[2m    - scrolling into view if needed[22m
+[2m    - done scrolling[22m
+
+
+[1A[2KΓÜá∩╕Å  Could not create test data via API: page.evaluate: Target page, context or browser has been closed
+    at ensureCalendarTestData [90m(C:\Users\USER\Snipshift\[39mtests\testDataSetup.ts:103:34[90m)[39m
+    at [90mC:\Users\USER\Snipshift\[39mtests\e2e\professional-calendar.spec.ts:227:5
+[1A[2KΓ£à Test data setup complete
+
+[1A[2K  1) [chromium] ΓÇ║ tests\e2e\professional-calendar.spec.ts:231:5 ΓÇ║ Professional Calendar E2E Tests ΓÇ║ Visual Regression Tests ΓÇ║ should display calendar week view correctly on desktop 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      219 |
+      220 | test.describe('Professional Calendar E2E Tests', () => {
+    > 221 |   test.beforeEach(async ({ page }) => {
+          |        ^
+      222 |     // Navigate to calendar view (authentication handled by global setup)
+      223 |     // Error listeners are set up in navigateToCalendarView
+      224 |     await navigateToCalendarView(page);
+        at C:\Users\USER\Snipshift\tests\e2e\professional-calendar.spec.ts:221:8
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-professional-calendar--c9c0b-k-view-correctly-on-desktop-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\e2e-professional-calendar--c9c0b-k-view-correctly-on-desktop-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] ΓÇ║ tests\e2e\professional-calendar.spec.ts:231:5 ΓÇ║ Professional Calendar E2E Tests ΓÇ║ Visual Regression Tests ΓÇ║ should display calendar week view correctly on desktop 
+
+[36m  Serving HTML report at http://localhost:9323. Press Ctrl+C to quit.[39m

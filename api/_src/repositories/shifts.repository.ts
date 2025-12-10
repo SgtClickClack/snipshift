@@ -11,7 +11,8 @@ import { getDb } from '../db/index.js';
 
 export interface ShiftFilters {
   employerId?: string;
-  status?: 'open' | 'filled' | 'completed';
+  assigneeId?: string;
+  status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
   limit?: number;
   offset?: number;
 }
@@ -33,7 +34,8 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
   }
 
   const { 
-    employerId, 
+    employerId,
+    assigneeId,
     status, 
     limit = 50, 
     offset = 0,
@@ -43,6 +45,9 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
   
   if (employerId) {
     conditions.push(eq(shifts.employerId, employerId));
+  }
+  if (assigneeId) {
+    conditions.push(eq(shifts.assigneeId, assigneeId));
   }
   if (status) {
     conditions.push(eq(shifts.status, status));
@@ -106,7 +111,8 @@ export async function createShift(shiftData: {
   startTime: Date | string;
   endTime: Date | string;
   hourlyRate: string;
-  status?: 'open' | 'filled' | 'completed';
+  status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
+  assigneeId?: string;
   location?: string;
 }): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
@@ -125,7 +131,8 @@ export async function createShift(shiftData: {
         startTime: typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime,
         endTime: typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime,
         hourlyRate: shiftData.hourlyRate,
-        status: shiftData.status || 'open',
+        status: shiftData.status || 'draft',
+        assigneeId: shiftData.assigneeId || null,
         location: shiftData.location || null,
       })
       .returning();
@@ -154,7 +161,8 @@ export async function updateShift(
     startTime?: Date | string;
     endTime?: Date | string;
     hourlyRate?: string;
-    status?: 'open' | 'filled' | 'completed';
+    status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
+    assigneeId?: string;
     location?: string;
   }
 ): Promise<typeof shifts.$inferSelect | null> {
@@ -204,13 +212,36 @@ export async function deleteShift(id: string): Promise<boolean> {
 /**
  * Get shifts created by a specific employer
  */
-export async function getShiftsByEmployer(employerId: string, status?: 'open' | 'filled' | 'completed'): Promise<typeof shifts.$inferSelect[]> {
+export async function getShiftsByEmployer(employerId: string, status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed'): Promise<typeof shifts.$inferSelect[]> {
   const db = getDb();
   if (!db) {
     return [];
   }
 
   const conditions = [eq(shifts.employerId, employerId)];
+  if (status) {
+    conditions.push(eq(shifts.status, status));
+  }
+
+  const result = await db
+    .select()
+    .from(shifts)
+    .where(and(...conditions))
+    .orderBy(desc(shifts.createdAt));
+
+  return result;
+}
+
+/**
+ * Get shifts assigned to a specific professional (assignee)
+ */
+export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed'): Promise<typeof shifts.$inferSelect[]> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  const conditions = [eq(shifts.assigneeId, assigneeId)];
   if (status) {
     conditions.push(eq(shifts.status, status));
   }

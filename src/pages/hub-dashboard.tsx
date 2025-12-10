@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
+import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { SEO } from "@/components/seo/SEO";
@@ -55,6 +56,8 @@ export default function HubDashboard() {
   };
 
   const [showForm, setShowForm] = useState(false);
+  const [showCreateShiftModal, setShowCreateShiftModal] = useState(false);
+  const [selectedDateForShift, setSelectedDateForShift] = useState<Date | undefined>();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -188,6 +191,72 @@ export default function HubDashboard() {
       toast({
         title: "Error", 
         description: "Failed to post shift. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Mutation for creating shifts (including recurring)
+  const createShiftMutation = useMutation({
+    mutationFn: async ({ shiftData, recurringShifts }: { shiftData: any; recurringShifts?: any[] }) => {
+      if (recurringShifts && recurringShifts.length > 0) {
+        // Create all recurring shifts
+        const promises = recurringShifts.map((shift) => {
+          const payload: any = {
+            title: shift.title,
+            description: shift.description || shift.requirements || '',
+            hourlyRate: shift.hourlyRate,
+            startTime: shift.startTime.toISOString(),
+            endTime: shift.endTime.toISOString(),
+            location: shift.location || '',
+            status: shift.status || 'open',
+          };
+          // Add recurring metadata if present
+          if (shift.recurringSeriesId) {
+            payload.recurringSeriesId = shift.recurringSeriesId;
+          }
+          if (shift.isRecurring !== undefined) {
+            payload.isRecurring = shift.isRecurring;
+          }
+          if (shift.recurringIndex !== undefined) {
+            payload.recurringIndex = shift.recurringIndex;
+          }
+          return createShift(payload);
+        });
+        return Promise.all(promises);
+      } else {
+        // Single shift
+        const payload = {
+          title: shiftData.title,
+          description: shiftData.description || shiftData.requirements || '',
+          hourlyRate: shiftData.hourlyRate,
+          startTime: shiftData.startTime.toISOString(),
+          endTime: shiftData.endTime.toISOString(),
+          location: shiftData.location || '',
+          status: shiftData.status || 'open',
+        };
+        return [await createShift(payload)];
+      }
+    },
+    onSuccess: (results) => {
+      const count = results.length;
+      toast({
+        title: "Success",
+        description: count > 1 
+          ? `${count} recurring shifts created successfully!`
+          : "Shift created successfully!"
+      });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
+      setShowCreateShiftModal(false);
+      setSelectedDateForShift(undefined);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create shift(s). Please try again.",
         variant: "destructive"
       });
     }
@@ -885,7 +954,10 @@ export default function HubDashboard() {
               // Map job/shift to booking format expected by calendar
               const bookingData: any = {
                 id: job.id,
-                status: job.status === 'open' ? 'pending' : job.status === 'filled' ? 'confirmed' : 'completed',
+                status: job.status === 'draft' ? 'draft' : 
+                        job.status === 'invited' ? 'invited' :
+                        job.status === 'open' ? 'pending' : 
+                        job.status === 'filled' ? 'confirmed' : 'completed',
                 appliedAt: job.createdAt,
               };
               
@@ -900,6 +972,7 @@ export default function HubDashboard() {
                   status: job.status,
                   hourlyRate: job.payRate,
                   location: typeof job.location === 'string' ? job.location : job.location?.address || '',
+                  assignedStaff: (job as any).assignedStaff || null,
                 };
               } else {
                 bookingData.job = {
@@ -912,6 +985,7 @@ export default function HubDashboard() {
                   payRate: job.payRate,
                   address: typeof job.location === 'string' ? job.location : job.location?.address || '',
                   description: job.description,
+                  assignedStaff: (job as any).assignedStaff || null,
                 };
               }
               
@@ -920,8 +994,7 @@ export default function HubDashboard() {
             isLoading={isLoading}
             mode="business"
             onCreateShift={() => {
-              setActiveView('jobs');
-              setShowForm(true);
+              setShowCreateShiftModal(true);
             }}
           />
         )}
@@ -997,6 +1070,20 @@ export default function HubDashboard() {
           </div>
         )}
       </div>
+
+      {/* Create Shift Modal */}
+      <CreateShiftModal
+        isOpen={showCreateShiftModal}
+        onClose={() => {
+          setShowCreateShiftModal(false);
+          setSelectedDateForShift(undefined);
+        }}
+        onSubmit={(shiftData, recurringShifts) => {
+          createShiftMutation.mutate({ shiftData, recurringShifts });
+        }}
+        initialDate={selectedDateForShift}
+        isLoading={createShiftMutation.isPending}
+      />
     </div>
   );
 }

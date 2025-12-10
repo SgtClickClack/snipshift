@@ -5,6 +5,7 @@ import { ShiftSchema } from '../validation/schemas.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
+import * as usersRepo from '../repositories/users.repository.js';
 
 const router = Router();
 
@@ -60,7 +61,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       startTime,
       endTime,
       hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
-      status: shiftData.status || 'open',
+      status: shiftData.status || 'draft',
       location: shiftData.location,
     };
     
@@ -94,7 +95,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 router.get('/', asyncHandler(async (req, res) => {
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-  const status = req.query.status as 'open' | 'filled' | 'completed' | undefined;
+  const status = req.query.status as 'draft' | 'invited' | 'open' | 'filled' | 'completed' | undefined;
 
   const result = await shiftsRepo.getShifts({
     status: status || 'open', // Default to open shifts only for public feed
@@ -155,11 +156,21 @@ router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReque
   if (endTime !== undefined) updates.endTime = endTime;
   if (hourlyRate !== undefined) updates.hourlyRate = hourlyRate;
   if (status !== undefined) {
-    if (!['open', 'filled', 'completed'].includes(status)) {
-      res.status(400).json({ message: 'Invalid status. Must be one of: open, filled, completed' });
+    if (!['draft', 'invited', 'open', 'filled', 'completed'].includes(status)) {
+      res.status(400).json({ message: 'Invalid status. Must be one of: draft, invited, open, filled, completed' });
       return;
     }
     updates.status = status;
+  }
+  
+  // Handle assignedStaff if provided (store as JSON in description or separate field)
+  // For now, we'll store it in the shift object - in production, you might want a separate table
+  if (req.body.assignedStaffId !== undefined || req.body.assignedStaff !== undefined) {
+    // Store assigned staff info - in a real app, you'd have a separate shift_assignments table
+    // For now, we'll just update the status to 'invited' if assignedStaffId is provided
+    if (req.body.assignedStaffId && !updates.status) {
+      updates.status = 'invited';
+    }
   }
   if (location !== undefined) updates.location = location;
 
@@ -185,8 +196,8 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
   }
 
   // Validate status
-  if (!['open', 'filled', 'completed'].includes(status)) {
-    res.status(400).json({ message: 'Invalid status. Must be one of: open, filled, completed' });
+  if (!['draft', 'invited', 'open', 'filled', 'completed'].includes(status)) {
+    res.status(400).json({ message: 'Invalid status. Must be one of: draft, invited, open, filled, completed' });
     return;
   }
 
@@ -380,6 +391,122 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
   });
 
   res.status(200).json(allListings);
+}));
+
+// Get shift offers for a professional (shifts where assigneeId == current user AND status == 'invited')
+router.get('/offers/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Fetch shifts assigned to this user with status 'invited'
+  const shifts = await shiftsRepo.getShiftsByAssignee(userId, 'invited');
+
+  // Enrich shifts with employer (business) information
+  const enrichedShifts = await Promise.all(
+    shifts.map(async (shift) => {
+      const employer = await usersRepo.getUserById(shift.employerId);
+      
+      return {
+        id: shift.id,
+        title: shift.title,
+        description: shift.description,
+        startTime: shift.startTime.toISOString(),
+        endTime: shift.endTime.toISOString(),
+        hourlyRate: shift.hourlyRate,
+        location: shift.location,
+        status: shift.status,
+        employerId: shift.employerId,
+        businessName: employer?.name || 'Unknown Business',
+        businessLogo: employer?.avatarUrl || null,
+        createdAt: shift.createdAt.toISOString(),
+      };
+    })
+  );
+
+  res.status(200).json(enrichedShifts);
+}));
+
+// Accept a shift offer (update status to 'confirmed')
+router.post('/:id/accept', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get shift to verify it's assigned to this user
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (shift.assigneeId !== userId) {
+    res.status(403).json({ message: 'Forbidden: This shift is not assigned to you' });
+    return;
+  }
+
+  if (shift.status !== 'invited') {
+    res.status(400).json({ message: 'Shift is not in invited status' });
+    return;
+  }
+
+  // Update shift status to confirmed
+  const updatedShift = await shiftsRepo.updateShift(id, { status: 'confirmed' });
+
+  if (!updatedShift) {
+    res.status(500).json({ message: 'Failed to accept shift' });
+    return;
+  }
+
+  res.status(200).json(updatedShift);
+}));
+
+// Decline a shift offer (remove assigneeId and revert status to 'draft')
+router.post('/:id/decline', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get shift to verify it's assigned to this user
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (shift.assigneeId !== userId) {
+    res.status(403).json({ message: 'Forbidden: This shift is not assigned to you' });
+    return;
+  }
+
+  if (shift.status !== 'invited') {
+    res.status(400).json({ message: 'Shift is not in invited status' });
+    return;
+  }
+
+  // Remove assigneeId and revert status to draft
+  const updatedShift = await shiftsRepo.updateShift(id, { 
+    assigneeId: null,
+    status: 'draft'
+  });
+
+  if (!updatedShift) {
+    res.status(500).json({ message: 'Failed to decline shift' });
+    return;
+  }
+
+  res.status(200).json(updatedShift);
 }));
 
 export default router;

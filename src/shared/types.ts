@@ -6,7 +6,7 @@ export interface Shift {
   startTime: string;
   endTime: string;
   hourlyRate: string;
-  status: 'open' | 'filled' | 'completed';
+  status: 'open' | 'filled' | 'completed' | 'draft' | 'invited';
   location?: string;
   createdAt: string;
   updatedAt: string;
@@ -15,6 +15,11 @@ export interface Shift {
   pay?: string; // Alias for hourlyRate
   date?: string; // Alias for startTime
   requirements?: string; // Alias for description
+  
+  // Recurring shift metadata
+  recurringSeriesId?: string; // ID to group shifts in the same recurring series
+  isRecurring?: boolean; // Flag to indicate if this shift is part of a recurring series
+  recurringIndex?: number; // Index in the recurring series (0-based)
 }
 
 export interface Post {

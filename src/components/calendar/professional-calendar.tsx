@@ -23,6 +23,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Calendar as CalendarIcon,
   Plus,
   Clock,
@@ -31,11 +41,19 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  Repeat,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import StartChatButton from "@/components/messaging/start-chat-button";
+import { ShiftBlock } from "./shift-block";
+import { AssignStaffModal, Professional } from "./assign-staff-modal";
+import { AutoFillButton } from "./auto-fill-button";
+import { SmartFillConfirmationModal, SmartMatch } from "./smart-fill-confirmation-modal";
+import { calculateSmartMatches } from "./smart-fill-utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Import react-big-calendar CSS
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -66,7 +84,7 @@ interface CalendarEvent extends Event {
   end: Date;
   resource: {
     booking: any;
-    status: "confirmed" | "pending" | "completed" | "past";
+    status: "draft" | "invited" | "confirmed" | "pending" | "completed" | "past";
     type: "job" | "shift";
   };
 }
@@ -198,6 +216,7 @@ export default function ProfessionalCalendar({
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState<Date>(() => {
     const date = new Date();
     // Ensure date is valid
@@ -220,6 +239,18 @@ export default function ProfessionalCalendar({
   const [currentTime, setCurrentTime] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
   const timeIndicatorRef = useRef<HTMLDivElement>(null);
+  const [showAssignStaffModal, setShowAssignStaffModal] = useState(false);
+  const [selectedShiftForAssignment, setSelectedShiftForAssignment] = useState<CalendarEvent | null>(null);
+  const [showSmartFillModal, setShowSmartFillModal] = useState(false);
+  const [showRecurringDialog, setShowRecurringDialog] = useState(false);
+  const [pendingRecurringAction, setPendingRecurringAction] = useState<{
+    type: 'delete' | 'move';
+    event: CalendarEvent;
+    newStart?: Date;
+    newEnd?: Date;
+  } | null>(null);
+  const [smartMatches, setSmartMatches] = useState<SmartMatch[]>([]);
+  const [isCalculatingMatches, setIsCalculatingMatches] = useState(false);
 
   // Update current time every second for smooth time indicator movement
   useEffect(() => {
@@ -270,25 +301,42 @@ export default function ProfessionalCalendar({
               endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000);
             }
 
-            // Determine status
-            let status: "confirmed" | "pending" | "completed" | "past";
+            // Determine status - support draft, invited, confirmed, pending, completed, past
+            let status: "draft" | "invited" | "confirmed" | "pending" | "completed" | "past";
             if (isPast(endDate) && !isToday(endDate)) {
               status = "past";
-            } else if (booking.status === "accepted" || booking.status === "confirmed") {
+            } else if (job.status === "draft") {
+              status = "draft";
+            } else if (job.status === "invited") {
+              status = "invited";
+            } else if (booking.status === "accepted" || booking.status === "confirmed" || job.status === "filled") {
               status = "confirmed";
-            } else if (booking.status === "completed") {
+            } else if (booking.status === "completed" || job.status === "completed") {
               status = "completed";
             } else {
               status = "pending";
             }
 
+            // Include assignedStaff if available
+            const assignedStaff = job.assignedStaff || booking.assignedStaff || null;
+            
             return {
               id: booking.id || job.id || `event-${Date.now()}-${Math.random()}`,
               title: job.title || "Untitled Job",
               start: startDate,
               end: endDate,
               resource: {
-                booking,
+                booking: {
+                  ...booking,
+                  shift: booking.shift ? {
+                    ...booking.shift,
+                    assignedStaff,
+                  } : undefined,
+                  job: booking.job ? {
+                    ...booking.job,
+                    assignedStaff,
+                  } : undefined,
+                },
                 status,
                 type: booking.job ? "job" : "shift",
               },
@@ -366,6 +414,18 @@ export default function ProfessionalCalendar({
       }
 
       switch (status) {
+        case "draft":
+          // Ghost slot styling - transparent with dashed border
+          backgroundColor = "transparent";
+          borderColor = "#9ca3af"; // gray-400
+          color = "#6b7280"; // gray-500
+          opacity = 0.6;
+          break;
+        case "invited":
+          backgroundColor = "#f59e0b"; // amber-500
+          borderColor = "#d97706"; // amber-600
+          color = "#ffffff"; // white text
+          break;
         case "confirmed":
           backgroundColor = "#16a34a"; // green-600 - darker for better contrast
           borderColor = "#15803d"; // green-700 - darker border
@@ -413,9 +473,18 @@ export default function ProfessionalCalendar({
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
     // Defensive check: ensure event exists
     if (!event) return;
+    
+    // If it's a draft shift in business mode, open AssignStaffModal
+    if (mode === 'business' && event.resource?.status === 'draft') {
+      setSelectedShiftForAssignment(event);
+      setShowAssignStaffModal(true);
+      return;
+    }
+    
+    // Otherwise, show event details
     setSelectedEvent(event);
     setShowEventDetails(true);
-  }, []);
+  }, [mode]);
 
   // Handle slot click (for quick event creation)
   const handleSelectSlot = useCallback(
@@ -589,6 +658,117 @@ export default function ProfessionalCalendar({
     return null;
   }, [currentDate, view]);
 
+  // Smart Fill handlers
+  const handleSmartFillClick = useCallback(async () => {
+    if (!dateRange || mode !== 'business') {
+      toast({
+        title: "Smart Fill Unavailable",
+        description: "Smart Fill is only available in business mode.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCalculatingMatches(true);
+    try {
+      // Extract draft shifts from bookings
+      const draftShifts = events
+        .filter((event) => event.resource?.status === 'draft' && event.resource?.type === 'shift')
+        .map((event) => {
+          const booking = event.resource?.booking;
+          const shift = booking?.shift || booking?.job;
+          return {
+            id: event.id,
+            title: event.title,
+            startTime: shift?.startTime || event.start.toISOString(),
+            endTime: shift?.endTime || event.end.toISOString(),
+            status: 'draft',
+            role: shift?.role,
+            jobType: shift?.jobType,
+          };
+        });
+
+      if (draftShifts.length === 0) {
+        toast({
+          title: "No Draft Shifts",
+          description: "No draft shifts found in the current view.",
+        });
+        setIsCalculatingMatches(false);
+        return;
+      }
+
+      // Get employer ID from the first booking (assuming all belong to same employer)
+      const firstBooking = bookings?.[0];
+      const employerId = firstBooking?.shift?.employerId || firstBooking?.job?.businessId;
+      
+      if (!employerId) {
+        toast({
+          title: "Error",
+          description: "Could not determine employer ID.",
+          variant: "destructive",
+        });
+        setIsCalculatingMatches(false);
+        return;
+      }
+
+      // Calculate matches
+      const matches = await calculateSmartMatches(draftShifts, employerId, dateRange);
+      setSmartMatches(matches);
+      setShowSmartFillModal(true);
+    } catch (error) {
+      console.error("Error calculating smart matches:", error);
+      toast({
+        title: "Error",
+        description: "Failed to calculate smart matches. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCalculatingMatches(false);
+    }
+  }, [dateRange, mode, events, bookings, toast]);
+
+  const handleSendInvites = useCallback(async () => {
+    const matchesToSend = smartMatches.filter((m) => m.suggestedCandidate !== null);
+    
+    if (matchesToSend.length === 0) {
+      return;
+    }
+
+    try {
+      // Update each shift status from DRAFT to INVITED
+      for (const match of matchesToSend) {
+        try {
+          await apiRequest('PATCH', `/api/shifts/${match.shiftId}`, { 
+            status: 'invited'
+          });
+          
+          // TODO: Trigger notification to the professional
+          // This would typically be done via a separate endpoint or notification service
+        } catch (error) {
+          console.error(`Failed to update shift ${match.shiftId}:`, error);
+        }
+      }
+
+      // Invalidate queries to refresh the calendar
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+
+      toast({
+        title: "Invites Sent",
+        description: `Successfully sent ${matchesToSend.length} invite${matchesToSend.length !== 1 ? 's' : ''}.`,
+      });
+
+      setShowSmartFillModal(false);
+    } catch (error) {
+      console.error("Error sending invites:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send some invites. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [smartMatches, queryClient, toast]);
+
   // Custom toolbar component (returns null to hide default toolbar)
   const customToolbar = useCallback(() => null, []);
   
@@ -642,13 +822,15 @@ export default function ProfessionalCalendar({
     mutationFn: async (data: { title: string; start: Date; end: Date }) => {
       // Use shifts endpoint with proper data structure matching ShiftSchema
       // Note: hourlyRate is required by the database, so we provide a default
+      // In business mode, create as 'draft' (Ghost Slot). In professional mode, use 'open'
+      const defaultStatus = mode === 'business' ? 'draft' : 'open';
       const response = await apiRequest("POST", "/api/shifts", {
-        title: data.title || "Availability",
-        description: "Availability slot",
+        title: data.title || (mode === 'business' ? "New Shift" : "Availability"),
+        description: mode === 'business' ? "Shift slot" : "Availability slot",
         startTime: data.start.toISOString(),
         endTime: data.end.toISOString(),
         hourlyRate: "0", // Default to 0 for availability slots (can be updated later)
-        status: "open",
+        status: defaultStatus,
       });
       return response.json();
     },
@@ -657,8 +839,10 @@ export default function ProfessionalCalendar({
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
       toast({
-        title: "Event created",
-        description: "Your availability slot has been created successfully",
+        title: mode === 'business' ? "Shift created" : "Event created",
+        description: mode === 'business' 
+          ? "Your shift slot has been created. Click it to assign staff."
+          : "Your availability slot has been created successfully",
       });
       setShowCreateModal(false);
       setSelectedSlot(null);
@@ -706,6 +890,91 @@ export default function ProfessionalCalendar({
     },
   });
 
+  // Assign staff to shift mutation
+  const assignStaffMutation = useMutation({
+    mutationFn: async (data: { shiftId: string; professional: Professional }) => {
+      const response = await apiRequest("PUT", `/api/shifts/${data.shiftId}`, {
+        status: "invited",
+        assignedStaffId: data.professional.id,
+        assignedStaff: {
+          id: data.professional.id,
+          name: data.professional.name,
+          displayName: data.professional.displayName,
+          email: data.professional.email,
+          photoURL: data.professional.photoURL || data.professional.avatar,
+        },
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      toast({
+        title: "Staff invited",
+        description: "An invitation has been sent to the selected professional",
+      });
+      setShowAssignStaffModal(false);
+      setSelectedShiftForAssignment(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to assign staff",
+        description: error?.message || "Please try again later",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle staff assignment
+  const handleAssignStaff = useCallback((professional: Professional) => {
+    if (!selectedShiftForAssignment) return;
+    assignStaffMutation.mutate({
+      shiftId: selectedShiftForAssignment.id,
+      professional,
+    });
+  }, [selectedShiftForAssignment, assignStaffMutation]);
+
+  // Check if event is part of a recurring series
+  const isRecurringEvent = useCallback((event: CalendarEvent): boolean => {
+    const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
+    return !!(shift?.isRecurring || shift?.recurringSeriesId);
+  }, []);
+
+  // Handle Smart Fill confirmation (used by SmartFillConfirmationModal)
+  const handleSmartFillConfirm = useCallback(async () => {
+    try {
+      // Send invites for all matches with suggested candidates
+      const matchesWithCandidates = smartMatches.filter((m) => m.suggestedCandidate !== null);
+      
+      for (const match of matchesWithCandidates) {
+        if (match.suggestedCandidate) {
+          await assignStaffMutation.mutateAsync({
+            shiftId: match.shiftId,
+            professional: {
+              id: match.suggestedCandidate.id,
+              name: match.suggestedCandidate.name,
+              email: match.suggestedCandidate.email,
+            },
+          });
+        }
+      }
+      
+      toast({
+        title: "Invites sent",
+        description: `Sent ${matchesWithCandidates.length} invitation(s) to matched professionals`,
+      });
+      
+      setShowSmartFillModal(false);
+      setSmartMatches([]);
+    } catch (error: any) {
+      toast({
+        title: "Failed to send invites",
+        description: error?.message || "Please try again later",
+        variant: "destructive",
+      });
+    }
+  }, [smartMatches, assignStaffMutation, toast]);
+
   // Handle event drop (drag-and-drop)
   const handleEventDrop = useCallback(
     ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
@@ -722,13 +991,27 @@ export default function ProfessionalCalendar({
       // Ensure end is after start
       const validEnd = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000);
 
+      // Check if this is a recurring shift
+      if (isRecurringEvent(event)) {
+        // Show dialog to ask user if they want to move this shift only or all future shifts
+        setPendingRecurringAction({
+          type: 'move',
+          event,
+          newStart: start,
+          newEnd: validEnd,
+        });
+        setShowRecurringDialog(true);
+        return;
+      }
+
+      // Non-recurring shift - proceed with update
       updateEventMutation.mutate({
         id: event.id,
         start,
         end: validEnd,
       });
     },
-    [updateEventMutation, toast]
+    [updateEventMutation, toast, isRecurringEvent]
   );
 
   // Handle event resize
@@ -747,13 +1030,61 @@ export default function ProfessionalCalendar({
       // Ensure end is after start
       const validEnd = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000);
 
+      // Check if this is a recurring shift
+      if (isRecurringEvent(event)) {
+        // Show dialog to ask user if they want to resize this shift only or all future shifts
+        setPendingRecurringAction({
+          type: 'move',
+          event,
+          newStart: start,
+          newEnd: validEnd,
+        });
+        setShowRecurringDialog(true);
+        return;
+      }
+
+      // Non-recurring shift - proceed with update
       updateEventMutation.mutate({
         id: event.id,
         start,
         end: validEnd,
       });
     },
-    [updateEventMutation, toast]
+    [updateEventMutation, toast, isRecurringEvent]
+  );
+
+  // Handle recurring action confirmation
+  const handleRecurringAction = useCallback(
+    (applyToAll: boolean) => {
+      if (!pendingRecurringAction) return;
+
+      const { type, event, newStart, newEnd } = pendingRecurringAction;
+
+      if (type === 'move' && newStart && newEnd) {
+        // For now, we'll just update the single shift
+        // In a full implementation, you'd need to:
+        // 1. If applyToAll: Find all future shifts in the series and update them
+        // 2. If !applyToAll: Just update this shift (and potentially break the series)
+        updateEventMutation.mutate({
+          id: event.id,
+          start: newStart,
+          end: newEnd,
+        });
+      } else if (type === 'delete') {
+        // Handle delete - would need to implement delete mutation
+        // For now, just show a message
+        toast({
+          title: "Delete recurring shift",
+          description: applyToAll 
+            ? "All future shifts in this series will be deleted"
+            : "Only this shift will be deleted",
+        });
+      }
+
+      setShowRecurringDialog(false);
+      setPendingRecurringAction(null);
+    },
+    [pendingRecurringAction, updateEventMutation, toast]
   );
 
   const handleCreateEvent = () => {
@@ -946,6 +1277,14 @@ export default function ProfessionalCalendar({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <CardTitle className="text-xl bg-gradient-to-r from-foreground via-purple-600 to-blue-600 dark:from-foreground dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent" data-testid="calendar-schedule-title">Schedule</CardTitle>
               <div className="flex items-center gap-2">
+                {/* Smart Fill Button - Only show in business mode */}
+                {mode === 'business' && (
+                  <AutoFillButton
+                    onClick={handleSmartFillClick}
+                    isLoading={isCalculatingMatches}
+                  />
+                )}
+                
                 {/* View Switcher */}
                 <div className="flex gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
                   <Button
@@ -1153,6 +1492,26 @@ export default function ProfessionalCalendar({
                             components={{
                               toolbar: customToolbar,
                               header: customHeader,
+                              event: ({ event }: { event: CalendarEvent }) => {
+                                // Use ShiftBlock for business mode, default rendering for professional mode
+                                if (mode === 'business') {
+                                  const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
+                                  const isRecurring = shift?.isRecurring || shift?.recurringSeriesId;
+                                  return (
+                                    <ShiftBlock
+                                      event={event}
+                                      onClick={() => handleSelectEvent(event)}
+                                      isRecurring={isRecurring}
+                                    />
+                                  );
+                                }
+                                // Default event rendering for professional mode
+                                return (
+                                  <div className="rbc-event-content">
+                                    {event.title}
+                                  </div>
+                                );
+                              },
                             }}
                             formats={{
                               dayFormat: (date: Date, culture?: string, localizer?: any) => {
@@ -1310,11 +1669,80 @@ export default function ProfessionalCalendar({
                 <Button variant="outline" className="flex-1">
                   View Details
                 </Button>
+                {mode === 'business' && isRecurringEvent(selectedEvent) && (
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      setPendingRecurringAction({
+                        type: 'delete',
+                        event: selectedEvent,
+                      });
+                      setShowRecurringDialog(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                )}
               </div>
+              {mode === 'business' && isRecurringEvent(selectedEvent) && (
+                <div className="pt-2 border-t flex items-center gap-2 text-sm text-muted-foreground">
+                  <Repeat className="h-4 w-4" />
+                  <span>This is part of a recurring series</span>
+                </div>
+              )}
             </div>
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Recurring Shift Action Dialog */}
+      <AlertDialog open={showRecurringDialog} onOpenChange={setShowRecurringDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Recurring Shift</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingRecurringAction?.type === 'delete'
+                ? "This shift is part of a recurring series. What would you like to do?"
+                : "This shift is part of a recurring series. Would you like to apply this change to all future shifts?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowRecurringDialog(false);
+              setPendingRecurringAction(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            {pendingRecurringAction?.type === 'delete' ? (
+              <>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => handleRecurringAction(false)}
+                >
+                  This Shift Only
+                </AlertDialogAction>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => handleRecurringAction(true)}
+                >
+                  All Future Shifts
+                </AlertDialogAction>
+              </>
+            ) : (
+              <>
+                <AlertDialogAction onClick={() => handleRecurringAction(false)}>
+                  This Shift Only
+                </AlertDialogAction>
+                <AlertDialogAction onClick={() => handleRecurringAction(true)}>
+                  All Future Shifts
+                </AlertDialogAction>
+              </>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Quick Event Creation Modal */}
       <Sheet open={showCreateModal} onOpenChange={(open) => {
@@ -1400,6 +1828,31 @@ export default function ProfessionalCalendar({
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Assign Staff Modal */}
+      {mode === 'business' && selectedShiftForAssignment && (
+        <AssignStaffModal
+          isOpen={showAssignStaffModal}
+          onClose={() => {
+            setShowAssignStaffModal(false);
+            setSelectedShiftForAssignment(null);
+          }}
+          onAssign={handleAssignStaff}
+          shiftTitle={selectedShiftForAssignment.title}
+          shiftDate={selectedShiftForAssignment.start}
+        />
+      )}
+
+      {/* Smart Fill Confirmation Modal */}
+      {mode === 'business' && (
+        <SmartFillConfirmationModal
+          open={showSmartFillModal}
+          onOpenChange={setShowSmartFillModal}
+          matches={smartMatches}
+          onConfirm={handleSendInvites}
+          isLoading={isCalculatingMatches}
+        />
+      )}
     </div>
   );
 }

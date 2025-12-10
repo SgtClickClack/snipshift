@@ -1,0 +1,6 @@
+[
+  {
+    "name": "snipshift_test_user",
+    "value": "{\"roles\":[\"business\",\"professional\"],\"isOnboarded\":true,\"currentRole\":\"professional\"}"
+  }
+]

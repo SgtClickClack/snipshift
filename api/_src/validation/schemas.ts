@@ -128,7 +128,7 @@ export const ShiftSchema = z.object({
     }, 'Pay rate must be a positive number'),
   ]).optional(),
   location: z.string().optional(),
-  status: z.enum(['open', 'filled', 'completed']).optional(),
+  status: z.enum(['draft', 'invited', 'open', 'filled', 'completed']).optional(),
 });
 
 /**

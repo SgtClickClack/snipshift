@@ -4,7 +4,7 @@ import { users } from './users.js';
 /**
  * Shift status enum
  */
-export const shiftStatusEnum = pgEnum('shift_status', ['open', 'filled', 'completed']);
+export const shiftStatusEnum = pgEnum('shift_status', ['draft', 'invited', 'open', 'filled', 'completed', 'confirmed']);
 
 /**
  * Shifts table
@@ -13,17 +13,19 @@ export const shiftStatusEnum = pgEnum('shift_status', ['open', 'filled', 'comple
 export const shifts = pgTable('shifts', {
   id: uuid('id').defaultRandom().primaryKey(),
   employerId: uuid('employer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  assigneeId: uuid('assignee_id').references(() => users.id, { onDelete: 'set null' }),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
   hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
-  status: shiftStatusEnum('status').notNull().default('open'),
+  status: shiftStatusEnum('status').notNull().default('draft'),
   location: varchar('location', { length: 512 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   employerIdIdx: index('shifts_employer_id_idx').on(table.employerId),
+  assigneeIdIdx: index('shifts_assignee_id_idx').on(table.assigneeId),
   statusIdx: index('shifts_status_idx').on(table.status),
   startTimeIdx: index('shifts_start_time_idx').on(table.startTime),
   statusStartTimeIdx: index('shifts_status_start_time_idx').on(table.status, table.startTime),

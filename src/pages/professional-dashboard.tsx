@@ -28,6 +28,7 @@ import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import ApplicationsView from "./professional-dashboard/ApplicationsView";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
+import { OfferInbox } from "@/components/shifts/offer-inbox";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -483,6 +484,11 @@ export default function ProfessionalDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Job Requests - Always visible at the top */}
+        <div className="mb-8">
+          <OfferInbox />
+        </div>
+
         {/* Overview Tab */}
         {activeView === 'overview' && (
           <ProfessionalOverview
