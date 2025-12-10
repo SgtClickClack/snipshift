@@ -195,9 +195,19 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     return;
   }
 
+  // Log incoming request for debugging
+  console.log('[PUT /api/me] Update request:', {
+    userId: req.user.id,
+    hasAvatarUrl: !!req.body.avatarUrl,
+    hasBannerUrl: !!req.body.bannerUrl,
+    avatarUrl: req.body.avatarUrl ? req.body.avatarUrl.substring(0, 50) + '...' : undefined,
+    bannerUrl: req.body.bannerUrl ? req.body.bannerUrl.substring(0, 50) + '...' : undefined,
+  });
+
   // Validate request body
   const validationResult = UpdateProfileSchema.safeParse(req.body);
   if (!validationResult.success) {
+    console.error('[PUT /api/me] Validation error:', validationResult.error.errors);
     res.status(400).json({ 
       message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
     });
@@ -212,32 +222,45 @@ router.put('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
   if (bio !== undefined) updates.bio = bio;
   if (phone !== undefined) updates.phone = phone;
   if (location !== undefined) updates.location = location;
-  if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
-  if (bannerUrl !== undefined) updates.bannerUrl = bannerUrl;
+  if (avatarUrl !== undefined) {
+    updates.avatarUrl = avatarUrl;
+    console.log('[PUT /api/me] Updating avatarUrl:', avatarUrl.substring(0, 50) + '...');
+  }
+  if (bannerUrl !== undefined) {
+    updates.bannerUrl = bannerUrl;
+    console.log('[PUT /api/me] Updating bannerUrl:', bannerUrl.substring(0, 50) + '...');
+  }
 
   // Update user in database
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
 
   if (!updatedUser) {
+    console.error('[PUT /api/me] User not found:', req.user.id);
     res.status(404).json({ message: 'User not found' });
     return;
   }
 
-    // Return updated user object
-    res.status(200).json({
-      id: updatedUser.id,
-      email: updatedUser.email,
-      name: updatedUser.name,
-      displayName: updatedUser.name,
-      bio: updatedUser.bio,
-      phone: updatedUser.phone,
-      location: updatedUser.location,
-      avatarUrl: updatedUser.avatarUrl || null,
-      bannerUrl: updatedUser.bannerUrl || null,
-      roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
-      currentRole: updatedUser.role,
-      uid: req.user.uid
-    });
+  console.log('[PUT /api/me] Update successful:', {
+    userId: updatedUser.id,
+    avatarUrl: updatedUser.avatarUrl ? updatedUser.avatarUrl.substring(0, 50) + '...' : null,
+    bannerUrl: updatedUser.bannerUrl ? updatedUser.bannerUrl.substring(0, 50) + '...' : null,
+  });
+
+  // Return updated user object
+  res.status(200).json({
+    id: updatedUser.id,
+    email: updatedUser.email,
+    name: updatedUser.name,
+    displayName: updatedUser.name,
+    bio: updatedUser.bio,
+    phone: updatedUser.phone,
+    location: updatedUser.location,
+    avatarUrl: updatedUser.avatarUrl || null,
+    bannerUrl: updatedUser.bannerUrl || null,
+    roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
+    currentRole: updatedUser.role,
+    uid: req.user.uid
+  });
 }));
 
 // Complete onboarding
