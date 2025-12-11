@@ -149,19 +149,9 @@ export default function BrandDashboard() {
         <DashboardHeader
           user={user}
           business={null}
-          title={user?.displayName || user?.name || "Brand Dashboard"}
+          title={user?.name || user?.displayName || "Brand Dashboard"}
           subtitle="Manage your brand presence"
           isBrand={true}
-          onBannerUpload={(url) => {
-            // DashboardHeader already calls API and saves to DB
-            // Just refresh user in background without blocking
-            refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
-          }}
-          onLogoUpload={(url) => {
-            // DashboardHeader already calls API and saves to DB
-            // Just refresh user in background without blocking
-            refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
-          }}
         />
       </div>
 
