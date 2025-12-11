@@ -140,14 +140,6 @@ export default function BrandDashboard() {
     return <div>Access denied</div>;
   }
 
-  // Debug: Log to verify DashboardHeader is being rendered
-  console.log('BrandDashboard - Rendering DashboardHeader with:', {
-    bannerImage: user?.bannerUrl || user?.bannerImage,
-    profileImage: user?.avatarUrl || user?.photoURL,
-    title: user?.displayName || "Brand Dashboard",
-    editable: true
-  });
-
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Brand Dashboard" />
@@ -155,21 +147,19 @@ export default function BrandDashboard() {
       {/* Banner/Profile Header with editable banner and avatar upload */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <DashboardHeader
-          bannerImage={user?.bannerUrl || user?.bannerImage}
-          profileImage={user?.avatarUrl || user?.photoURL}
-          title={user?.displayName || "Brand Dashboard"}
-          subtitle={user?.email}
-          editable={true}
+          user={user}
+          business={null}
+          title={user?.displayName || user?.name || "Brand Dashboard"}
+          subtitle="Manage your brand presence"
+          isBrand={true}
           onBannerUpload={(url) => {
             // DashboardHeader already calls API and saves to DB
-            // Just update local state for immediate UI update
-            // Refresh user in background without blocking
+            // Just refresh user in background without blocking
             refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
           }}
           onLogoUpload={(url) => {
             // DashboardHeader already calls API and saves to DB
-            // Just update local state for immediate UI update
-            // Refresh user in background without blocking
+            // Just refresh user in background without blocking
             refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
           }}
         />

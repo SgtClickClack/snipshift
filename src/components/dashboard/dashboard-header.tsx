@@ -10,10 +10,22 @@ import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { apiRequest } from "@/lib/queryClient";
-import { updateBusinessProfile } from "@/lib/api";
+import { updateBusinessProfile, updateUserProfile } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import type { User } from "@/contexts/AuthContext";
 
 interface DashboardHeaderProps {
+  // New API props
+  /** User object - if provided, extracts bannerImage and profileImage from user */
+  user?: User | null;
+  /** Business object - if provided, extracts bannerImage and profileImage from business */
+  business?: any | null;
+  /** Whether this is a brand dashboard (affects upload endpoint) */
+  isBrand?: boolean;
+  /** Whether this is a trainer dashboard (affects upload endpoint) */
+  isTrainer?: boolean;
+  
+  // Legacy API props (for backward compatibility)
   /** Banner image URL */
   bannerImage?: string | null;
   /** Profile/Logo image URL */
@@ -56,17 +68,32 @@ function extractUrlString(value: any): string | null {
 }
 
 export default function DashboardHeader({
-  bannerImage,
-  profileImage,
+  // New API props
+  user,
+  business,
+  isBrand = false,
+  isTrainer = false,
+  // Legacy API props
+  bannerImage: legacyBannerImage,
+  profileImage: legacyProfileImage,
   title,
   subtitle,
-  editable = false,
+  editable: legacyEditable,
   onBannerUpload,
   onLogoUpload,
   className,
 }: DashboardHeaderProps) {
   const { toast } = useToast();
   const { refreshUser } = useAuth();
+  
+  // Extract banner and profile images from user/business if provided (new API)
+  // Otherwise fall back to legacy props
+  const bannerImage = user?.bannerUrl || user?.bannerImage || business?.bannerUrl || business?.bannerImage || legacyBannerImage;
+  const profileImage = user?.avatarUrl || user?.photoURL || business?.avatarUrl || business?.logoUrl || business?.profileImage || legacyProfileImage;
+  
+  // Determine editable state: new API takes precedence (isBrand/isTrainer means always editable)
+  // Otherwise use legacy editable prop (defaults to false)
+  const editable = isBrand || isTrainer || legacyEditable || false;
   const { isCompressing: isCompressingBanner, handleImageSelect: handleBannerImageSelect } = useImageUpload();
   const { isCompressing: isCompressingLogo, handleImageSelect: handleLogoImageSelect } = useImageUpload();
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -334,7 +361,9 @@ export default function DashboardHeader({
 
       // Now save to database in the background (don't await before showing UI)
       try {
-        const responseData = await updateBusinessProfile({
+        // Use updateUserProfile for brands/trainers, updateBusinessProfile for businesses
+        const updateFunction = (isBrand || isTrainer) ? updateUserProfile : updateBusinessProfile;
+        const responseData = await updateFunction({
           bannerUrl: downloadURL,
         });
 
@@ -545,7 +574,9 @@ export default function DashboardHeader({
 
       // Now save to database in the background (don't await before showing UI)
       try {
-        const responseData = await updateBusinessProfile({
+        // Use updateUserProfile for brands/trainers, updateBusinessProfile for businesses
+        const updateFunction = (isBrand || isTrainer) ? updateUserProfile : updateBusinessProfile;
+        const responseData = await updateFunction({
           avatarUrl: downloadURL,
         });
 
