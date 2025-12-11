@@ -111,11 +111,7 @@ function AppRoutes() {
           </AuthGuard>
         } />
 
-        <Route path="/demo" element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <DemoPage />
-          </Suspense>
-        } />
+        {/* Removed /demo route - development-only feature */}
 
         <Route path="/design-showcase" element={
           <Suspense fallback={<PageLoadingFallback />}>

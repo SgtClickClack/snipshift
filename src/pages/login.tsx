@@ -77,31 +77,11 @@ export default function LoginPage() {
       const cleanEmail = formData.email.trim();
       const cleanPassword = formData.password.trim();
 
-      // Magic Bypass for E2E Tests
-      if (cleanEmail === 'test@snipshift.com' && cleanPassword === 'password123') {
-        const testUser: User = {
-            id: '00000000-0000-0000-0000-000000000001', // Must match API bypass ID
-            email: 'test@snipshift.com',
-            name: 'Test User',
-            roles: ['business'],
-            currentRole: 'business',
-            isOnboarded: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            uid: 'test-firebase-uid'
-         };
-         
-        sessionStorage.setItem('snipshift_test_user', JSON.stringify({ 
-          roles: ['business'], 
-          currentRole: 'business',
-          isOnboarded: true 
-        }));
-        
-        // Update Context immediately
-        login(testUser);
-
-        toast({
-          title: "Login successful",
+      // Removed test bypass - E2E tests need to use proper authentication
+      // Proceed with normal Firebase authentication
+      
+      toast({
+        title: "Login successful",
           description: "Welcome back!",
         });
         

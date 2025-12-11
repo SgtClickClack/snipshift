@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
 import { users } from '../db/schema.js';
 
@@ -176,4 +176,57 @@ export async function deleteUser(id: string): Promise<boolean> {
     .returning();
     
   return !!deletedUser;
+}
+
+/**
+ * Get user count by role
+ */
+export async function getUserCountByRole(role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub'): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return mockUsers.filter(u => u.role === role).length;
+  }
+
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users)
+    .where(eq(users.role, role));
+
+  return Number(result?.count || 0);
+}
+
+/**
+ * Get active user count by role
+ */
+export async function getActiveUserCountByRole(role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub'): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return mockUsers.filter(u => u.role === role && (u.isActive !== false)).length;
+  }
+
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users)
+    .where(
+      and(
+        eq(users.role, role),
+        sql`(${users.isActive} IS NULL OR ${users.isActive} = true)`
+      )
+    );
+
+  return Number(result?.count || 0);
+}
+
+/**
+ * Ban a user (set isActive to false)
+ */
+export async function banUser(id: string): Promise<typeof users.$inferSelect | null> {
+  return updateUser(id, { isActive: false });
+}
+
+/**
+ * Unban a user (set isActive to true)
+ */
+export async function unbanUser(id: string): Promise<typeof users.$inferSelect | null> {
+  return updateUser(id, { isActive: true });
 }

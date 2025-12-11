@@ -1,0 +1,82 @@
+# Render Blueprint for Snipshift Production Deployment
+# This file defines the infrastructure for deploying Snipshift on Render.com
+# 
+# Usage: 
+#   1. Connect your Git repository to Render
+#   2. Render will automatically detect this file and create the services
+#   3. Set environment variables in Render dashboard
+
+services:
+  # Frontend Web Service
+  - type: web
+    name: snipshift-web
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter # or standard/pro for production
+    region: oregon # or your preferred region
+    buildCommand: docker build -t snipshift-web .
+    startCommand: serve -s dist -l 3000
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        sync: false # Set this in Render dashboard to your API service URL
+      - key: VITE_FIREBASE_API_KEY
+        sync: false
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: VITE_FIREBASE_PROJECT_ID
+        sync: false
+      - key: VITE_STRIPE_PUBLISHABLE_KEY
+        sync: false
+    healthCheckPath: /
+    autoDeploy: true
+
+  # Backend API Service
+  - type: web
+    name: snipshift-api
+    env: docker
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    plan: starter # or standard/pro for production
+    region: oregon # or your preferred region
+    buildCommand: docker build -t snipshift-api .
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: snipshift-db
+          property: connectionString
+      - key: POSTGRES_URL
+        fromDatabase:
+          name: snipshift-db
+          property: connectionString
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # PostgreSQL Database
+  - type: pspg
+    name: snipshift-db
+    plan: starter # or standard/pro for production
+    region: oregon # or your preferred region
+    databaseName: snipshift
+    databaseUser: snipshift
+    # Note: Render will automatically set DATABASE_URL and POSTGRES_URL
+    # for services that reference this database

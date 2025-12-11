@@ -10,6 +10,8 @@
   "scripts": {
     "postinstall": "tsc && node fix-imports.js",
     "start": "tsx _src/server.ts",
+    "start:migrate": "npm run db:migrate && npm start",
+    "db:migrate": "tsx _src/scripts/apply-migration.ts || echo 'No migrations to apply'",
     "build": "tsc && node fix-imports.js",
     "seed:plans": "ts-node _src/scripts/seed-plans.ts",
     "seed:data": "tsx scripts/seed-data.ts",

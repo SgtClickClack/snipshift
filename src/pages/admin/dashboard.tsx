@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Shield, Users, Briefcase, DollarSign, AlertTriangle, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, Users, Briefcase, DollarSign, AlertTriangle, Trash2, CheckCircle2, XCircle, Ban, UserCheck, TrendingUp, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminStats {
@@ -27,11 +27,29 @@ interface AdminStats {
   mrr: number;
 }
 
+interface AdminMetrics {
+  revenue: {
+    totalCommission: number;
+    commissionThisMonth: number;
+  };
+  users: {
+    total: number;
+    shops: number;
+    barbers: number;
+  };
+  shifts: {
+    completed: number;
+  };
+}
+
 interface User {
   id: string;
   email: string;
   name: string;
   role: string;
+  isActive: boolean;
+  stripeAccountId: string | null;
+  stripeOnboardingComplete: boolean;
   createdAt: string;
   averageRating: number | null;
   reviewCount: number;
@@ -79,11 +97,21 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('stats');
 
-  // Fetch admin stats
+  // Fetch admin stats (legacy)
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<AdminStats>({
     queryKey: ['admin', 'stats'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/stats');
+      return response.json();
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch admin metrics (new comprehensive endpoint)
+  const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery<AdminMetrics>({
+    queryKey: ['admin', 'metrics'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/admin/metrics');
       return response.json();
     },
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -153,6 +181,46 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBanUser = async (userId: string) => {
+    try {
+      await apiRequest('POST', `/api/admin/users/${userId}/ban`);
+
+      toast({
+        title: 'User banned',
+        description: 'User has been banned and their sessions revoked.',
+      });
+
+      refetchUsers();
+      refetchMetrics();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to ban user.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUnbanUser = async (userId: string) => {
+    try {
+      await apiRequest('POST', `/api/admin/users/${userId}/unban`);
+
+      toast({
+        title: 'User unbanned',
+        description: 'User has been unbanned successfully.',
+      });
+
+      refetchUsers();
+      refetchMetrics();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to unban user.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
     try {
       await apiRequest('DELETE', `/api/admin/users/${userId}`);
@@ -164,6 +232,7 @@ export default function AdminDashboard() {
 
       refetchUsers();
       refetchStats();
+      refetchMetrics();
     } catch (error) {
       toast({
         title: 'Error',
@@ -222,56 +291,57 @@ export default function AdminDashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="border-red-500/20 bg-red-500/5">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-wrap gap-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Commission</CardTitle>
+              <TrendingUp className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {statsLoading ? '...' : stats?.totalUsers.toLocaleString() || 0}
+              <div className="text-2xl font-bold text-red-500">
+                ${metricsLoading ? '...' : metrics?.revenue.totalCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">All-time platform revenue</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-500/20 bg-green-500/5">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-wrap gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">This Month</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-500">
+                ${metricsLoading ? '...' : metrics?.revenue.commissionThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Commission this month</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-wrap gap-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Jobs</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Active Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {statsLoading ? '...' : stats?.activeJobs.toLocaleString() || 0}
+                {metricsLoading ? '...' : metrics?.users.total.toLocaleString() || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {statsLoading ? '' : `of ${stats?.totalJobs.toLocaleString() || 0} total`}
+                {metricsLoading ? '' : `${metrics?.users.shops || 0} shops, ${metrics?.users.barbers || 0} barbers`}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-wrap gap-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">MRR</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Completed Shifts</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${statsLoading ? '...' : stats?.mrr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                {metricsLoading ? '...' : metrics?.shifts.completed.toLocaleString() || 0}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Monthly Recurring Revenue</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-wrap gap-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Volume</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${statsLoading ? '...' : stats?.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">All-time revenue</p>
+              <p className="text-xs text-muted-foreground mt-1">Total completed shifts</p>
             </CardContent>
           </Card>
         </div>
@@ -285,7 +355,77 @@ export default function AdminDashboard() {
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="stats" className="mt-6">
+          <TabsContent value="stats" className="mt-6 space-y-6">
+            {/* Revenue Pulse Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Revenue Pulse
+                </CardTitle>
+                <CardDescription>Platform commission growth over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Revenue chart coming soon</p>
+                    <p className="text-sm mt-1">Total Commission: ${metrics?.revenue.totalCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
+                    <p className="text-sm">This Month: ${metrics?.revenue.commissionThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity Feed */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Recent Activity
+                </CardTitle>
+                <CardDescription>Live stream of platform events</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                    <div className="rounded-full bg-green-500/10 p-2">
+                      <Users className="h-4 w-4 text-green-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">New User Signup</p>
+                      <p className="text-xs text-muted-foreground">A new user joined the platform</p>
+                      <p className="text-xs text-muted-foreground mt-1">Just now</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                    <div className="rounded-full bg-blue-500/10 p-2">
+                      <Briefcase className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">New Booking</p>
+                      <p className="text-xs text-muted-foreground">A shift was completed and payment processed</p>
+                      <p className="text-xs text-muted-foreground mt-1">5 minutes ago</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                    <div className="rounded-full bg-purple-500/10 p-2">
+                      <DollarSign className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Payout Processed</p>
+                      <p className="text-xs text-muted-foreground">Commission earned from completed shift</p>
+                      <p className="text-xs text-muted-foreground mt-1">1 hour ago</p>
+                    </div>
+                  </div>
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    Activity feed will show real-time events as they occur
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Platform Statistics */}
             <Card>
               <CardHeader>
                 <CardTitle>Platform Statistics</CardTitle>
@@ -295,20 +435,25 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 bg-muted rounded-lg">
                     <p className="text-sm text-muted-foreground">Total Users</p>
-                    <p className="text-2xl font-bold">{stats?.totalUsers.toLocaleString() || 0}</p>
+                    <p className="text-2xl font-bold">{metrics?.users.total.toLocaleString() || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {metrics?.users.shops || 0} shops, {metrics?.users.barbers || 0} barbers
+                    </p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">Total Jobs</p>
-                    <p className="text-2xl font-bold">{stats?.totalJobs.toLocaleString() || 0}</p>
+                    <p className="text-sm text-muted-foreground">Completed Shifts</p>
+                    <p className="text-2xl font-bold">{metrics?.shifts.completed.toLocaleString() || 0}</p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">Active Jobs</p>
-                    <p className="text-2xl font-bold">{stats?.activeJobs.toLocaleString() || 0}</p>
-                  </div>
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">Monthly Recurring Revenue</p>
+                    <p className="text-sm text-muted-foreground">Total Commission</p>
                     <p className="text-2xl font-bold">
-                      ${stats?.mrr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                      ${metrics?.revenue.totalCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground">This Month</p>
+                    <p className="text-2xl font-bold">
+                      ${metrics?.revenue.commissionThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                     </p>
                   </div>
                 </div>
@@ -333,6 +478,8 @@ export default function AdminDashboard() {
                           <th className="text-left p-3 text-sm font-medium text-muted-foreground">Name</th>
                           <th className="text-left p-3 text-sm font-medium text-muted-foreground">Email</th>
                           <th className="text-left p-3 text-sm font-medium text-muted-foreground">Role</th>
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Stripe</th>
                           <th className="text-left p-3 text-sm font-medium text-muted-foreground">Rating</th>
                           <th className="text-left p-3 text-sm font-medium text-muted-foreground">Joined</th>
                           <th className="text-right p-3 text-sm font-medium text-muted-foreground">Actions</th>
@@ -345,6 +492,22 @@ export default function AdminDashboard() {
                             <td className="p-3 text-muted-foreground">{user.email}</td>
                             <td className="p-3">{getRoleBadge(user.role)}</td>
                             <td className="p-3">
+                              {user.isActive !== false ? (
+                                <Badge variant="default" className="bg-green-500">Active</Badge>
+                              ) : (
+                                <Badge variant="destructive">Banned</Badge>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              {user.stripeAccountId ? (
+                                <Badge variant={user.stripeOnboardingComplete ? "default" : "secondary"}>
+                                  {user.stripeOnboardingComplete ? 'Connected' : 'Pending'}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">Not connected</span>
+                              )}
+                            </td>
+                            <td className="p-3">
                               {user.averageRating ? (
                                 <span>{user.averageRating?.toFixed(1) ?? 'N/A'} ({user.reviewCount ?? 0})</span>
                               ) : (
@@ -355,33 +518,74 @@ export default function AdminDashboard() {
                               {new Date(user.createdAt).toLocaleDateString()}
                             </td>
                             <td className="p-3 text-right">
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
+                              <div className="flex items-center justify-end gap-2">
+                                {user.isActive !== false ? (
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                      >
+                                        <Ban className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Ban User</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will ban the user and revoke their current sessions. They will not be able to access the platform.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleBanUser(user.id)}
+                                          className="bg-orange-600 hover:bg-orange-700"
+                                        >
+                                          Ban User
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                ) : (
                                   <Button
-                                    variant="destructive"
+                                    variant="outline"
                                     size="sm"
+                                    onClick={() => handleUnbanUser(user.id)}
+                                    className="text-green-600 border-green-600 hover:bg-green-50"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <UserCheck className="h-4 w-4" />
                                   </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This will permanently delete the user account. This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteUser(user.id)}
-                                      className="bg-red-600 hover:bg-red-700"
+                                )}
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
                                     >
-                                      Delete User
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete the user account. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteUser(user.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Delete User
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             </td>
                           </tr>
                         ))}

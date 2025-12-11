@@ -60,88 +60,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const location = useLocation();
 
-    // Test Environment Auth Bypass
-    useEffect(() => {
-        // Check URL for test_user bypass
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(location.search);
-            let shouldBypass = false;
-            let rolesList: Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'> = ['professional'];
-
-            if (params.get('test_user') === 'true') {
-                shouldBypass = true;
-                
-                const rolesParam = params.get('roles');
-                if (rolesParam) {
-                    rolesList = rolesParam.split(',') as any;
-                }
-                
-                const onboardedParam = params.get('onboarded');
-                const isOnboarded = onboardedParam === 'false' ? false : true;
-
-                // Persist to session storage to survive redirects/reloads
-                sessionStorage.setItem('snipshift_test_user', JSON.stringify({ roles: rolesList, isOnboarded }));
-            } else {
-                const stored = sessionStorage.getItem('snipshift_test_user');
-                if (stored) {
-                    shouldBypass = true;
-                    try {
-                        const data = JSON.parse(stored);
-                        if (data.roles) {
-                            rolesList = data.roles;
-                        }
-                    } catch (e) {
-                        console.error('Failed to parse test user session', e);
-                    }
-                }
-            }
-
-            if (shouldBypass) {
-                // CRITICAL: Read currentRole from sessionStorage if available, otherwise use roles[0]
-                const stored = sessionStorage.getItem('snipshift_test_user');
-                let currentRole: string = rolesList[0] || 'professional';
-                let isOnboarded = true;
-                let userId = 'test-user-id';
-                
-                if (stored) {
-                    try {
-                        const data = JSON.parse(stored);
-                        // Use currentRole from sessionStorage if it exists, otherwise fall back to roles[0]
-                        if (data.currentRole) {
-                            currentRole = data.currentRole;
-                        } else if (data.roles && data.roles.length > 0) {
-                            currentRole = data.roles[0];
-                        }
-                        if (data.isOnboarded !== undefined) {
-                            isOnboarded = data.isOnboarded;
-                        }
-                        if (data.id) {
-                            userId = data.id;
-                        }
-                    } catch (e) {
-                        console.warn('Failed to parse test user session', e);
-                    }
-                }
-
-                // Test user authentication (E2E mode)
-
-                setUser({
-                    id: userId,
-                    email: 'test@snipshift.com',
-                    name: 'Test User',
-                    roles: rolesList as any,
-                    currentRole: currentRole as any,
-                    isOnboarded: isOnboarded,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    uid: 'test-firebase-uid'
-                });
-                setIsLoading(false);
-                setIsAuthReady(true);
-                return; // Skip Firebase listener
-            }
-        }
-    
     // Wrap listener setup in try-catch to ensure loading states are always set
     let unsubscribe: (() => void) | null = null;
     try {
@@ -220,9 +138,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      // Clear test user session storage
-      sessionStorage.removeItem('snipshift_test_user');
-      
       // Clear any user-related localStorage items
       // Note: We don't clear theme or PWA install status as those are user preferences
       // But we clear any potential auth-related data
@@ -282,21 +197,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return auth.currentUser.getIdToken();
     }
     
-    // Return mock token for E2E tests
-    if (typeof window !== 'undefined') {
-        const stored = sessionStorage.getItem('snipshift_test_user');
-        if (stored) {
-            try {
-                const data = JSON.parse(stored);
-                if (data.email && data.email.startsWith('e2e_test_')) {
-                    return `mock-token-${data.email}`;
-                }
-            } catch (e) {
-                console.warn('Failed to parse test user for token', e);
-            }
-        }
-    }
-    
+    // Removed test bypass - E2E tests need to use proper authentication
     return null;
   };
 

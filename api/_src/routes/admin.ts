@@ -5,6 +5,7 @@ import * as usersRepo from '../repositories/users.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as paymentsRepo from '../repositories/payments.repository.js';
 import * as reportsRepo from '../repositories/reports.repository.js';
+import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as emailService from '../services/email.service.js';
 
 const router = express.Router();
@@ -19,7 +20,7 @@ const router = express.Router();
 router.use(authenticateUser);
 router.use(requireAdmin);
 
-// Handler for admin stats
+// Handler for admin stats (legacy - kept for backward compatibility)
 router.get('/stats', asyncHandler(async (req: AuthenticatedRequest, res) => {
   const [totalUsers, totalJobs, activeJobs, totalRevenue, mrr] = await Promise.all([
     usersRepo.getUserCount(),
@@ -35,6 +36,40 @@ router.get('/stats', asyncHandler(async (req: AuthenticatedRequest, res) => {
     activeJobs,
     totalRevenue,
     mrr, // Monthly Recurring Revenue
+  });
+}));
+
+// Handler for admin metrics (new comprehensive endpoint)
+router.get('/metrics', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const [
+    totalCommission,
+    commissionThisMonth,
+    totalUsers,
+    shopUsers,
+    barberUsers,
+    completedShifts
+  ] = await Promise.all([
+    shiftsRepo.getTotalCommission(),
+    shiftsRepo.getCommissionThisMonth(),
+    usersRepo.getUserCount(),
+    usersRepo.getActiveUserCountByRole('business'),
+    usersRepo.getActiveUserCountByRole('professional'),
+    shiftsRepo.getCompletedShiftsCount(),
+  ]);
+
+  res.status(200).json({
+    revenue: {
+      totalCommission: totalCommission,
+      commissionThisMonth: commissionThisMonth,
+    },
+    users: {
+      total: totalUsers,
+      shops: shopUsers,
+      barbers: barberUsers,
+    },
+    shifts: {
+      completed: completedShifts,
+    },
   });
 }));
 
@@ -56,6 +91,9 @@ router.get('/users', asyncHandler(async (req: AuthenticatedRequest, res) => {
     email: user.email,
     name: user.name,
     role: user.role,
+    isActive: user.isActive !== false, // Default to true if null
+    stripeAccountId: user.stripeAccountId || null,
+    stripeOnboardingComplete: user.stripeOnboardingComplete || false,
     createdAt: user.createdAt.toISOString(),
     averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
     reviewCount: user.reviewCount ? parseInt(user.reviewCount) : 0,
@@ -69,7 +107,50 @@ router.get('/users', asyncHandler(async (req: AuthenticatedRequest, res) => {
   });
 }));
 
-// Handler for banning/deleting a user (admin only)
+// Handler for banning a user (admin only)
+router.post('/users/:id/ban', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+
+  // Prevent self-banning
+  if (req.user?.id === id) {
+    res.status(400).json({ message: 'Cannot ban your own account' });
+    return;
+  }
+
+  const bannedUser = await usersRepo.banUser(id);
+  if (bannedUser) {
+    // TODO: Revoke current sessions (would need session management system)
+    res.status(200).json({
+      id: bannedUser.id,
+      email: bannedUser.email,
+      name: bannedUser.name,
+      isActive: bannedUser.isActive,
+      message: 'User banned successfully',
+    });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+}));
+
+// Handler for unbanning a user (admin only)
+router.post('/users/:id/unban', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+
+  const unbannedUser = await usersRepo.unbanUser(id);
+  if (unbannedUser) {
+    res.status(200).json({
+      id: unbannedUser.id,
+      email: unbannedUser.email,
+      name: unbannedUser.name,
+      isActive: unbannedUser.isActive,
+      message: 'User unbanned successfully',
+    });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+}));
+
+// Handler for deleting a user (admin only)
 router.delete('/users/:id', asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
 

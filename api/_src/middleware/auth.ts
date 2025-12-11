@@ -52,6 +52,20 @@ export function requireAdmin(
 }
 
 /**
+ * Super Admin authorization middleware (alias for requireAdmin)
+ * For platform owner access - ensures only admin role can access
+ * MUST be used after authenticateUser middleware
+ */
+export function requireSuperAdmin(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  // Use the same logic as requireAdmin
+  requireAdmin(req, res, next);
+}
+
+/**
  * Authentication middleware that verifies the user via Firebase Auth
  * 
  * @param req - Express request object

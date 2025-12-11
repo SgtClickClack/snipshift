@@ -25,6 +25,7 @@ export const users = pgTable('users', {
   averageRating: decimal('average_rating', { precision: 3, scale: 2 }),
   reviewCount: decimal('review_count', { precision: 10, scale: 0 }).default('0'),
   isOnboarded: boolean('is_onboarded').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
   stripeAccountId: varchar('stripe_account_id', { length: 255 }),
   stripeOnboardingComplete: boolean('stripe_onboarding_complete').notNull().default(false),
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),

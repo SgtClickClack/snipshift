@@ -490,3 +490,65 @@ export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' |
   }
 }
 
+/**
+ * Get total commission earned (sum of application_fee_amount from completed shifts)
+ */
+export async function getTotalCommission(): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const [result] = await db
+    .select({ total: sql<number>`COALESCE(SUM(${shifts.applicationFeeAmount}), 0)` })
+    .from(shifts)
+    .where(eq(shifts.status, 'completed'));
+
+  // applicationFeeAmount is in cents, convert to dollars
+  return (Number(result?.total || 0) / 100) || 0;
+}
+
+/**
+ * Get commission earned this month
+ */
+export async function getCommissionThisMonth(): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const [result] = await db
+    .select({ total: sql<number>`COALESCE(SUM(${shifts.applicationFeeAmount}), 0)` })
+    .from(shifts)
+    .where(
+      and(
+        eq(shifts.status, 'completed'),
+        gte(shifts.updatedAt, startOfMonth)
+      )
+    );
+
+  // applicationFeeAmount is in cents, convert to dollars
+  return (Number(result?.total || 0) / 100) || 0;
+}
+
+/**
+ * Get count of completed shifts
+ */
+export async function getCompletedShiftsCount(): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(shifts)
+    .where(eq(shifts.status, 'completed'));
+
+  return Number(result?.count || 0);
+}
+

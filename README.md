@@ -5,7 +5,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/SgtClickClack/snipshift)
 [![License](https://img.shields.io/badge/license-Private-red.svg)](LICENSE)
 
-SnipShift is a modern marketplace platform that connects barbershops, salons, and workspaces with talented professionals seeking flexible work opportunities. Built for the gig economy, SnipShift empowers professionals to work on their own terms while helping businesses find qualified talent quickly and efficiently.
+SnipShift is an "Uber for Barbers" marketplace platform that connects barbershops, salons, and workspaces with talented professionals seeking flexible work opportunities. Built for the gig economy, SnipShift empowers professionals to work on their own terms while helping businesses find qualified talent quickly and efficiently.
 
 ## ✨ Features
 
@@ -30,6 +30,9 @@ SnipShift is a modern marketplace platform that connects barbershops, salons, an
 
 ## 📚 Documentation
 
+- [API Reference](docs/API_REFERENCE.md) - Complete API endpoint documentation
+- [Go-Live Checklist](docs/GO_LIVE_CHECKLIST.md) - Production launch verification checklist
+- [Docker Deployment Guide](docs/DOCKER_DEPLOYMENT.md) - Production deployment with Docker
 - [Email Setup Guide](docs/EMAIL_SETUP.md) - Configure Resend for transactional emails
 - [Data Seeding](api/scripts/README.md) - Pre-fill calendars with sample data
 
@@ -45,17 +48,45 @@ SnipShift is a modern marketplace platform that connects barbershops, salons, an
 - **TanStack Query** - Data fetching and caching
 
 ### Backend
-- **Express.js** - RESTful API server
+- **Express.js** - RESTful API server (Node.js)
 - **PostgreSQL** - Relational database
 - **Drizzle ORM** - Type-safe database queries
 - **Firebase Auth** - Authentication and user management
 - **Firebase Storage** - File storage
 
 ### Services
-- **Stripe** - Payment processing
+- **Stripe Connect** - Payment processing and marketplace payments
 - **Resend** - Transactional emails
 - **Vercel** - Hosting and deployment
 - **Playwright** - End-to-end testing
+
+## 🏛️ Architecture
+
+```
+┌─────────────┐
+│   Frontend  │  React/Vite (Port 5173)
+│  (Client)   │
+└──────┬──────┘
+       │ HTTP/REST
+       │ Authorization: Bearer <token>
+       ▼
+┌─────────────┐
+│     API     │  Express/Node.js (Port 5000)
+│  (Backend)  │
+└──────┬──────┘
+       │ SQL Queries
+       │ Drizzle ORM
+       ▼
+┌─────────────┐
+│  PostgreSQL │  Database
+│  (Database) │
+└─────────────┘
+```
+
+**External Services:**
+- **Firebase** - Authentication & File Storage
+- **Stripe** - Payment Processing
+- **Resend** - Email Delivery
 
 ## 🚀 Getting Started
 
@@ -120,11 +151,24 @@ SnipShift is a modern marketplace platform that connects barbershops, salons, an
    ```
 
 6. **Start the development server**
+   
+   To run both frontend and backend together:
    ```bash
+   npm run dev:all
+   ```
+   
+   Or run them separately:
+   ```bash
+   # Terminal 1: Frontend
    npm run dev
+   
+   # Terminal 2: Backend
+   cd api && npm start
    ```
 
-   The app will be available at `http://localhost:5173`
+   The app will be available at:
+   - Frontend: `http://localhost:5173`
+   - API: `http://localhost:5000`
 
 ## 📜 Available Scripts
 
@@ -193,8 +237,16 @@ npm run test:e2e:ui
 
 ## 🚢 Deployment
 
-### Vercel Deployment
+For production deployment instructions, see [Docker Deployment Guide](docs/DOCKER_DEPLOYMENT.md).
 
+### Quick Deployment Options
+
+**Docker (Recommended for Production)**
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**Vercel Deployment**
 1. Connect your repository to Vercel
 2. Set environment variables in Vercel dashboard
 3. Deploy automatically on push to `main` branch
@@ -207,8 +259,10 @@ Run migrations before deploying:
 
 ```bash
 cd api
-npm run migrate:onboarding
+npm run migrate
 ```
+
+**Note:** In production, ensure the `pgcrypto` extension is enabled in PostgreSQL for UUID generation.
 
 ## 📄 License
 

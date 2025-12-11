@@ -108,27 +108,8 @@ export default function OnboardingPage() {
 
       // Refresh user data to get updated isOnboarded flag
       if (user) {
-        // Update session storage for E2E tests
-        if (typeof window !== 'undefined') {
-             const stored = sessionStorage.getItem('snipshift_test_user');
-             if (stored) {
-                 try {
-                     const data = JSON.parse(stored);
-                     // Map 'business' to 'hub' if needed, but AuthContext handles strings.
-                     // We need to ensure the role matches what AuthContext expects.
-                     const newRole = formData.role || 'client';
-                     
-                     sessionStorage.setItem('snipshift_test_user', JSON.stringify({
-                         ...data,
-                         isOnboarded: true,
-                         roles: [newRole], // Update the role so we don't get sent to role-selection
-                         currentRole: newRole
-                     }));
-                 } catch (e) {
-                     console.error('Failed to update test user session', e);
-                 }
-             }
-        }
+        // Removed test bypass - E2E tests need to use proper authentication
+        // Onboarding completion is handled by normal auth flow
 
         // Force a page reload to ensure auth context updates
         window.location.href = '/dashboard';

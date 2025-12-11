@@ -105,16 +105,7 @@ export default function SignupPage() {
 
     try {
       // 1. Create user in Firebase to establish auth session
-      // SKIP for E2E tests to avoid needing real Firebase credentials in CI/Test envs
-      if (formData.email.startsWith('e2e_test_')) {
-        sessionStorage.setItem('snipshift_test_user', JSON.stringify({
-            email: formData.email,
-            roles: ['client'],
-            isOnboarded: false
-        }));
-      } else {
-        await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      }
+      await createUserWithEmailAndPassword(auth, formData.email, formData.password);
 
       // 2. Create user in Backend DB
       const response = await apiRequest("POST", "/api/register", {
@@ -140,18 +131,7 @@ export default function SignupPage() {
         profileImage: userData.profileImage || '',
       };
       
-      // FOR E2E TESTS: Update the session storage with the real ID from the backend
-      // This ensures subsequent requests use the correct ID in the mock token logic if needed
-      if (formData.email.startsWith('e2e_test_')) {
-         const existingSession = sessionStorage.getItem('snipshift_test_user');
-         if (existingSession) {
-            const parsed = JSON.parse(existingSession);
-            sessionStorage.setItem('snipshift_test_user', JSON.stringify({
-                ...parsed,
-                id: userData.id
-            }));
-         }
-      }
+      // Removed test bypass - E2E tests need to use proper authentication
       
       login(newUser);
       
