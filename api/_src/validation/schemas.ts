@@ -144,6 +144,54 @@ export const ShiftInviteSchema = z.object({
 });
 
 /**
+ * Schema for opening hours (day configuration)
+ */
+export const OpeningHoursDaySchema = z.object({
+  open: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
+  close: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
+  enabled: z.boolean(),
+});
+
+/**
+ * Schema for opening hours (all days)
+ */
+export const OpeningHoursSchema = z.object({
+  monday: OpeningHoursDaySchema,
+  tuesday: OpeningHoursDaySchema,
+  wednesday: OpeningHoursDaySchema,
+  thursday: OpeningHoursDaySchema,
+  friday: OpeningHoursDaySchema,
+  saturday: OpeningHoursDaySchema,
+  sunday: OpeningHoursDaySchema,
+});
+
+/**
+ * Schema for smart fill request
+ */
+export const SmartFillSchema = z.object({
+  startDate: z.string().datetime('Invalid start date format (ISO 8601)'),
+  endDate: z.string().datetime('Invalid end date format (ISO 8601)'),
+  shopId: z.string().uuid('Invalid shop ID'),
+  actionType: z.enum(['post_to_board', 'invite_favorites'], {
+    errorMap: () => ({ message: 'actionType must be either "post_to_board" or "invite_favorites"' }),
+  }),
+  calendarSettings: z.object({
+    openingHours: OpeningHoursSchema,
+    shiftPattern: z.enum(['half-day', 'thirds', 'full-day', 'custom']),
+    defaultShiftLength: z.number().positive().optional(), // Required if shiftPattern is 'custom'
+  }),
+  favoriteProfessionalIds: z.array(z.string().uuid('Invalid professional ID')).optional(), // Required if actionType is 'invite_favorites'
+  defaultHourlyRate: z.union([
+    z.number().nonnegative(),
+    z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Hourly rate must be a non-negative number'),
+  ]).optional().default('45'),
+  defaultLocation: z.string().optional(),
+});
+
+/**
  * Schema for shift offer acceptance
  */
 export const ShiftOfferAcceptSchema = z.object({

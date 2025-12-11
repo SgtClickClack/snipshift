@@ -4,7 +4,7 @@
  * Encapsulates database queries for shifts with pagination and filtering
  */
 
-import { eq, and, desc, sql, gte } from 'drizzle-orm';
+import { eq, and, desc, sql, gte, lte } from 'drizzle-orm';
 import { shifts } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
@@ -239,6 +239,107 @@ export async function createRecurringShifts(
       constraint: error?.constraint,
     });
     throw error;
+  }
+}
+
+/**
+ * Create multiple shifts in a batch (transaction)
+ * @param shiftsData - Array of shift data to create
+ * @returns Array of created shifts
+ */
+export async function createBatchShifts(
+  shiftsData: Array<{
+    employerId: string;
+    title: string;
+    description: string;
+    startTime: Date | string;
+    endTime: Date | string;
+    hourlyRate: string;
+    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+    location?: string;
+    assigneeId?: string;
+  }>
+): Promise<typeof shifts.$inferSelect[]> {
+  const db = getDb();
+  if (!db) {
+    console.error('[createBatchShifts] Database not available');
+    throw new Error('Database not available');
+  }
+
+  if (shiftsData.length === 0) {
+    return [];
+  }
+
+  try {
+    return await db.transaction(async (tx) => {
+      const createdShifts = await Promise.all(
+        shiftsData.map((shiftData) =>
+          tx
+            .insert(shifts)
+            .values({
+              employerId: shiftData.employerId,
+              title: shiftData.title,
+              description: shiftData.description,
+              startTime: typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime,
+              endTime: typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime,
+              hourlyRate: shiftData.hourlyRate,
+              status: shiftData.status || 'draft',
+              location: shiftData.location || null,
+              assigneeId: shiftData.assigneeId || null,
+              isRecurring: false,
+              parentShiftId: null,
+            })
+            .returning()
+        )
+      );
+
+      // Flatten the results (each insert returns an array with one element)
+      return createdShifts.map(([shift]) => shift).filter(Boolean);
+    });
+  } catch (error: any) {
+    console.error('[createBatchShifts] Database error:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      constraint: error?.constraint,
+      count: shiftsData.length,
+    });
+    throw error;
+  }
+}
+
+/**
+ * Get shifts by employer within a date range
+ */
+export async function getShiftsByEmployerInRange(
+  employerId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<typeof shifts.$inferSelect[]> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(shifts)
+      .where(
+        and(
+          eq(shifts.employerId, employerId),
+          gte(shifts.startTime, startDate),
+          lte(shifts.startTime, endDate)
+        )
+      );
+
+    return result;
+  } catch (error: any) {
+    console.error('[getShiftsByEmployerInRange] Database error:', {
+      message: error?.message,
+      code: error?.code,
+    });
+    return [];
   }
 }
 

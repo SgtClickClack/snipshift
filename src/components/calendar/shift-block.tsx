@@ -133,7 +133,31 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
     );
   }
 
-  // State D: CONFIRMED (Locked) - Green with full profile and drop shadow
+  // State D: PENDING/OPEN (Posted to Job Board) - Yellow/Amber
+  if (status === 'pending' || status === 'open' || status === 'OPEN' || status === 'PUBLISHED') {
+    return (
+      <div
+        onClick={onClick}
+        data-testid="shift-block-open"
+        className={cn(
+          "w-full h-full rounded px-2 py-1",
+          "bg-yellow-500 border-2 border-yellow-600",
+          "cursor-pointer hover:bg-yellow-600 transition-colors",
+          "flex items-center gap-2 relative"
+        )}
+        style={{ minHeight: '24px' }}
+      >
+        <span className="text-white text-xs font-medium truncate flex-1">
+          {event.title || 'Open Shift'}
+        </span>
+        {showRecurring && (
+          <Repeat className="h-3 w-3 text-white absolute top-0 right-0" />
+        )}
+      </div>
+    );
+  }
+
+  // State E: CONFIRMED (Locked) - Green with full profile and drop shadow
   if (status === 'confirmed' || status === 'filled') {
     const staffName = assignedStaff?.name || assignedStaff?.displayName || 'Staff Member';
     const initials = staffName

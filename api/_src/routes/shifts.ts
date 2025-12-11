@@ -10,6 +10,9 @@ import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
+import { SmartFillSchema } from '../validation/schemas.js';
+import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
+import { createBatchShifts, getShiftsByEmployerInRange } from '../repositories/shifts.repository.js';
 
 const router = Router();
 
@@ -760,6 +763,180 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
     message: 'Invite sent successfully',
     offer,
   });
+}));
+
+// Smart Fill: Batch create shifts for unassigned slots
+router.post('/smart-fill', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = SmartFillSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validationResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+    });
+    return;
+  }
+
+  const { startDate, endDate, shopId, actionType, calendarSettings, favoriteProfessionalIds, defaultHourlyRate, defaultLocation } = validationResult.data;
+
+  // Security: Ensure the requester is the owner of the shop
+  if (shopId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You can only smart fill shifts for your own shop' });
+    return;
+  }
+
+  // Validate favoriteProfessionalIds if actionType is 'invite_favorites'
+  if (actionType === 'invite_favorites') {
+    if (!favoriteProfessionalIds || favoriteProfessionalIds.length === 0) {
+      res.status(400).json({ message: 'favoriteProfessionalIds is required when actionType is "invite_favorites"' });
+      return;
+    }
+  }
+
+  try {
+    // Parse dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      res.status(400).json({ message: 'Invalid date format' });
+      return;
+    }
+
+    if (start >= end) {
+      res.status(400).json({ message: 'startDate must be before endDate' });
+      return;
+    }
+
+    // 1. Generate theoretical slots based on calendar settings
+    const generatedSlots = generateShiftSlotsForRange(start, end, calendarSettings);
+
+    if (generatedSlots.length === 0) {
+      res.status(200).json({
+        success: true,
+        count: 0,
+        message: 'No slots generated for the specified date range and settings',
+      });
+      return;
+    }
+
+    // 2. Fetch existing shifts in the date range
+    const existingShifts = await getShiftsByEmployerInRange(shopId, start, end);
+
+    // 3. Filter out slots that overlap with existing shifts
+    const existingShiftRanges = existingShifts.map(shift => ({
+      start: shift.startTime,
+      end: shift.endTime,
+    }));
+
+    const availableSlots = filterOverlappingSlots(generatedSlots, existingShiftRanges);
+
+    if (availableSlots.length === 0) {
+      res.status(200).json({
+        success: true,
+        count: 0,
+        message: 'All slots are already filled',
+      });
+      return;
+    }
+
+    // 4. Determine status and assigneeId based on actionType
+    const status = actionType === 'post_to_board' ? 'open' : 'invited';
+    const hourlyRate = typeof defaultHourlyRate === 'string' ? defaultHourlyRate : defaultHourlyRate.toString();
+
+    // 5. Prepare shift data for batch creation
+    const shiftsToCreate = availableSlots.map((slot, index) => {
+      let assigneeId: string | undefined;
+      
+      // If inviting favorites, assign to favorite professionals in round-robin fashion
+      if (actionType === 'invite_favorites' && favoriteProfessionalIds && favoriteProfessionalIds.length > 0) {
+        assigneeId = favoriteProfessionalIds[index % favoriteProfessionalIds.length];
+      }
+
+      // Generate title based on pattern and slot index
+      let title = 'Open Shift';
+      if (slot.pattern === 'half-day') {
+        title = slot.slotIndex === 0 ? 'Morning Shift' : 'Afternoon Shift';
+      } else if (slot.pattern === 'thirds') {
+        const labels = ['Morning Shift', 'Afternoon Shift', 'Close Shift'];
+        title = labels[slot.slotIndex] || 'Open Shift';
+      } else if (slot.pattern === 'full-day') {
+        title = 'Full Day Shift';
+      }
+
+      return {
+        employerId: shopId,
+        title,
+        description: `Shift posted via Smart Fill`,
+        startTime: slot.start,
+        endTime: slot.end,
+        hourlyRate,
+        status: status as 'open' | 'invited',
+        location: defaultLocation || null,
+        assigneeId,
+      };
+    });
+
+    // 6. Batch create shifts
+    const createdShifts = await createBatchShifts(shiftsToCreate);
+
+    // 7. Send notifications if actionType is 'invite_favorites'
+    if (actionType === 'invite_favorites' && favoriteProfessionalIds && favoriteProfessionalIds.length > 0) {
+      // Group shifts by assigneeId
+      const shiftsByAssignee = new Map<string, typeof createdShifts>();
+      
+      createdShifts.forEach((shift) => {
+        if (shift.assigneeId) {
+          if (!shiftsByAssignee.has(shift.assigneeId)) {
+            shiftsByAssignee.set(shift.assigneeId, []);
+          }
+          shiftsByAssignee.get(shift.assigneeId)!.push(shift);
+        }
+      });
+
+      // Send notifications to each professional
+      for (const [professionalId, shifts] of shiftsByAssignee.entries()) {
+        try {
+          // Send notification for each shift (or batch them - your choice)
+          for (const shift of shifts) {
+            await notificationsService.notifyProfessionalOfInvite(professionalId, {
+              id: shift.id,
+              title: shift.title,
+              startTime: shift.startTime,
+              endTime: shift.endTime,
+              location: shift.location || undefined,
+              hourlyRate: shift.hourlyRate,
+              employerId: shift.employerId,
+            });
+          }
+        } catch (error) {
+          // Log error but don't fail the request
+          console.error(`[POST /api/shifts/smart-fill] Error sending notification to ${professionalId}:`, error);
+        }
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      count: createdShifts.length,
+      message: `${createdShifts.length} shift${createdShifts.length !== 1 ? 's' : ''} ${actionType === 'post_to_board' ? 'posted to job board' : 'created and invitations sent'} successfully`,
+    });
+  } catch (error: any) {
+    console.error('[POST /api/shifts/smart-fill] Error:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      stack: error?.stack,
+      body: req.body,
+    });
+    throw error;
+  }
 }));
 
 // Accept a shift offer
