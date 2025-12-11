@@ -60,6 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const location = useLocation();
 
+  useEffect(() => {
     // Wrap listener setup in try-catch to ensure loading states are always set
     let unsubscribe: (() => void) | null = null;
     try {
