@@ -271,8 +271,26 @@ export function TutorialTrigger() {
   const { user } = useAuth();
 
   const restartTutorial = () => {
-    if (user?.currentRole) {
-      window.dispatchEvent(new CustomEvent('start-tutorial'));
+    // For business/hub role, use the new driver.js tour
+    if (user?.currentRole === 'business' || user?.currentRole === 'hub') {
+      import("@/lib/tours").then(({ startBusinessTour }) => {
+        startBusinessTour();
+      });
+    } else if (user?.currentRole === 'trainer') {
+      // For trainer role, use the trainer tour
+      import("@/lib/tours").then(({ startTrainerTour }) => {
+        startTrainerTour();
+      });
+    } else if (user?.currentRole === 'brand') {
+      // For brand role, use the brand tour
+      import("@/lib/tours").then(({ startBrandTour }) => {
+        startBrandTour();
+      });
+    } else {
+      // For other roles, use the existing tutorial overlay
+      if (user?.currentRole) {
+        window.dispatchEvent(new CustomEvent('start-tutorial'));
+      }
     }
   };
 

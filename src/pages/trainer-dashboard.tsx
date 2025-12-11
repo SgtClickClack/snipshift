@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Eye } from "lucide-react";
 import { TrainingModule } from "@/shared/types";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
+import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 
 interface ContentFormData {
   title: string;
@@ -162,14 +163,18 @@ export default function TrainerDashboard() {
               <h1 className="text-2xl font-bold text-foreground">Trainer Hub</h1>
               <p className="text-muted-foreground">{user.displayName || user.email}</p>
             </div>
-            <Button 
-              onClick={() => setShowContentModal(true)}
-              className="bg-primary hover:bg-blue-700"
-              data-testid="button-upload-content"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Upload Content
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <TutorialTrigger />
+              <Button 
+                id="upload-content-btn"
+                onClick={() => setShowContentModal(true)}
+                className="bg-primary hover:bg-blue-700"
+                data-testid="button-upload-content"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Upload Content
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -185,6 +190,7 @@ export default function TrainerDashboard() {
             ].map((tab) => (
               <button
                 key={tab.id}
+                id={tab.id === 'profile' ? 'trainer-profile-tab' : undefined}
                 onClick={() => setActiveView(tab.id as any)}
                 className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                   activeView === tab.id
@@ -207,7 +213,7 @@ export default function TrainerDashboard() {
         {activeView === 'overview' && (
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div id="trainer-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">

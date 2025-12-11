@@ -17,6 +17,7 @@ import { OptimizedImage } from "@/components/ui/optimized-image";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
 import { SEO } from "@/components/seo/SEO";
+import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 
 interface SocialPost {
   id: string;
@@ -238,14 +239,18 @@ export default function BrandDashboard() {
               <h1 className="text-2xl font-bold text-foreground">Brand Dashboard</h1>
               <p className="text-muted-foreground">{user.displayName || user.email}</p>
             </div>
-            <Button 
-              onClick={() => setShowPostModal(true)}
-              className="bg-primary hover:bg-blue-700"
-              data-testid="button-create-post"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Post
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <TutorialTrigger />
+              <Button 
+                id="create-post-btn"
+                onClick={() => setShowPostModal(true)}
+                className="bg-primary hover:bg-blue-700"
+                data-testid="button-create-post"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Post
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -261,6 +266,7 @@ export default function BrandDashboard() {
             ].map((tab) => (
               <button
                 key={tab.id}
+                id={tab.id === 'profile' ? 'brand-profile-tab' : undefined}
                 onClick={() => setActiveView(tab.id as any)}
                 className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                   activeView === tab.id
@@ -283,7 +289,7 @@ export default function BrandDashboard() {
         {activeView === 'overview' && (
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div id="brand-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">

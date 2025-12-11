@@ -463,6 +463,7 @@ export default function HubDashboard() {
             <div className="flex flex-wrap gap-2">
               <TutorialTrigger />
               <Button 
+                id="messages-btn"
                 onClick={() => handleQuickAction('open-messages')}
                 className="bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
                 data-testid="button-open-messages"
@@ -471,6 +472,7 @@ export default function HubDashboard() {
                 Messages
               </Button>
               <Button 
+                id="post-job-btn"
                 onClick={() => handleQuickAction('post-job')}
                 className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 data-testid="button-post-job"
@@ -534,6 +536,7 @@ export default function HubDashboard() {
               <span className="hidden md:inline">Calendar</span>
             </button>
             <button
+              id="profile-tab-trigger"
               onClick={() => setActiveView('profile')}
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
                 activeView === 'profile'
@@ -995,54 +998,56 @@ export default function HubDashboard() {
         
         {/* Calendar Tab */}
         {activeView === 'calendar' && (
-          <ProfessionalCalendar
-            bookings={(jobs || []).map((job) => {
-              // Map job/shift to booking format expected by calendar
-              const bookingData: any = {
-                id: job.id,
-                status: job.status === 'draft' ? 'draft' : 
-                        job.status === 'invited' ? 'invited' :
-                        job.status === 'open' ? 'pending' : 
-                        job.status === 'filled' ? 'confirmed' : 'completed',
-                appliedAt: job.createdAt,
-              };
-              
-              // Add job or shift based on type
-              if (job._type === 'shift') {
-                bookingData.shift = {
+          <div id="calendar-view">
+            <ProfessionalCalendar
+              bookings={(jobs || []).map((job) => {
+                // Map job/shift to booking format expected by calendar
+                const bookingData: any = {
                   id: job.id,
-                  title: job.title,
-                  date: job.date,
-                  startTime: job.startTime,
-                  endTime: job.endTime,
-                  status: job.status,
-                  hourlyRate: job.payRate,
-                  location: typeof job.location === 'string' ? job.location : job.location?.address || '',
-                  assignedStaff: (job as any).assignedStaff || null,
+                  status: job.status === 'draft' ? 'draft' : 
+                          job.status === 'invited' ? 'invited' :
+                          job.status === 'open' ? 'pending' : 
+                          job.status === 'filled' ? 'confirmed' : 'completed',
+                  appliedAt: job.createdAt,
                 };
-              } else {
-                bookingData.job = {
-                  id: job.id,
-                  title: job.title,
-                  date: job.date,
-                  startTime: job.startTime,
-                  endTime: job.endTime,
-                  status: job.status,
-                  payRate: job.payRate,
-                  address: typeof job.location === 'string' ? job.location : job.location?.address || '',
-                  description: job.description,
-                  assignedStaff: (job as any).assignedStaff || null,
-                };
-              }
-              
-              return bookingData;
-            })}
-            isLoading={isLoading}
-            mode="business"
-            onCreateShift={() => {
-              setShowCreateShiftModal(true);
-            }}
-          />
+                
+                // Add job or shift based on type
+                if (job._type === 'shift') {
+                  bookingData.shift = {
+                    id: job.id,
+                    title: job.title,
+                    date: job.date,
+                    startTime: job.startTime,
+                    endTime: job.endTime,
+                    status: job.status,
+                    hourlyRate: job.payRate,
+                    location: typeof job.location === 'string' ? job.location : job.location?.address || '',
+                    assignedStaff: (job as any).assignedStaff || null,
+                  };
+                } else {
+                  bookingData.job = {
+                    id: job.id,
+                    title: job.title,
+                    date: job.date,
+                    startTime: job.startTime,
+                    endTime: job.endTime,
+                    status: job.status,
+                    payRate: job.payRate,
+                    address: typeof job.location === 'string' ? job.location : job.location?.address || '',
+                    description: job.description,
+                    assignedStaff: (job as any).assignedStaff || null,
+                  };
+                }
+                
+                return bookingData;
+              })}
+              isLoading={isLoading}
+              mode="business"
+              onCreateShift={() => {
+                setShowCreateShiftModal(true);
+              }}
+            />
+          </div>
         )}
         
         {/* Profile Tab */}
