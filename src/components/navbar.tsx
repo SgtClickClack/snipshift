@@ -26,7 +26,7 @@ import {
   SheetClose
 } from "@/components/ui/sheet";
 import { apiRequest } from "@/lib/queryClient";
-import { getDashboardRoute } from "@/lib/roles";
+import { getDashboardRoute, mapRoleToApiRole } from "@/lib/roles";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { InstallButton } from "@/components/pwa/install-button";
 import logo from "@/assets/logo-processed.png";
@@ -63,7 +63,11 @@ export default function Navbar() {
   const handleSwitchRole = async (role: string) => {
     if (!user) return;
     try {
-      await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role });
+      // Map frontend role to backend API role
+      // Backend only accepts: 'professional', 'business', 'admin', 'trainer'
+      const apiRole = mapRoleToApiRole(role as any);
+      
+      await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: apiRole });
       setCurrentRole(role as any);
       const target = getDashboardRoute(role as any);
       navigate(target);

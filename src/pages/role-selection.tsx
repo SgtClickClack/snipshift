@@ -6,7 +6,7 @@ import { Store, UserCheck, Award, GraduationCap, Scissors } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
-import { getDashboardRoute } from "@/lib/roles";
+import { getDashboardRoute, mapRoleToApiRole } from "@/lib/roles";
 
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
@@ -46,15 +46,8 @@ export default function RoleSelectionPage() {
       // Set currentRole to the first selected role
       const primaryRole = selectedRoles[0];
       
-      // Map frontend roles to database enum values
-      // Note: 'hub' and 'brand' map to 'business' in the database enum
-      const roleMapping: Record<string, 'professional' | 'business' | 'admin' | 'trainer'> = {
-        'hub': 'business',
-        'brand': 'business',
-        'professional': 'professional',
-        'trainer': 'trainer',
-      };
-      const dbRole = roleMapping[primaryRole] || 'professional';
+      // Map frontend role to backend API role
+      const dbRole = mapRoleToApiRole(primaryRole);
       
       const currentRoleResponse = await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: dbRole });
       

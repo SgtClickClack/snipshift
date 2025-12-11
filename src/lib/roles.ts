@@ -19,4 +19,21 @@ export function hasRole(roles: AppRole[] | undefined | null, role: AppRole): boo
   return !!roles && Array.isArray(roles) && roles.includes(role);
 }
 
+/**
+ * Maps frontend roles to backend API role values.
+ * The backend API only accepts: 'professional', 'business', 'admin', 'trainer'
+ */
+export function mapRoleToApiRole(frontendRole: AppRole): 'professional' | 'business' | 'admin' | 'trainer' {
+  const roleMapping: Record<AppRole, 'professional' | 'business' | 'admin' | 'trainer'> = {
+    'hub': 'business',
+    'brand': 'business',
+    'business': 'business',
+    'professional': 'professional',
+    'trainer': 'trainer',
+    'admin': 'admin',
+    'client': 'professional', // Default fallback
+  };
+  return roleMapping[frontendRole] || 'professional';
+}
+
 
