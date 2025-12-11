@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Share2, TrendingUp, Users, Eye, MessageCircle, Heart, Edit, Trash, Tag, Calendar, Globe } from "lucide-react";
 import { format } from "date-fns";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import DashboardHeader from "@/components/dashboard/dashboard-header";
+import { SEO } from "@/components/seo/SEO";
 
 interface SocialPost {
   id: string;
@@ -42,7 +44,7 @@ interface PostFormData {
 }
 
 export default function BrandDashboard() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<'overview' | 'posts' | 'profile'>('overview');
@@ -139,14 +141,39 @@ export default function BrandDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Dashboard Header */}
-      <div className="bg-card shadow-sm">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <SEO title="Brand Dashboard" />
+      
+      {/* Banner/Profile Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DashboardHeader
+          bannerImage={user?.bannerUrl || user?.bannerImage}
+          profileImage={user?.avatarUrl || user?.photoURL}
+          title={user?.displayName || "Brand Dashboard"}
+          subtitle={user?.email}
+          editable={true}
+          onBannerUpload={(url) => {
+            // DashboardHeader already calls API and saves to DB
+            // Just update local state for immediate UI update
+            // Refresh user in background without blocking
+            refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
+          }}
+          onLogoUpload={(url) => {
+            // DashboardHeader already calls API and saves to DB
+            // Just update local state for immediate UI update
+            // Refresh user in background without blocking
+            refreshUser?.().catch(err => console.error('Failed to refresh user:', err));
+          }}
+        />
+      </div>
+
+      {/* Dashboard Header with Actions */}
+      <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-neutral-900">Brand Dashboard</h1>
-              <p className="text-neutral-600">{user.displayName || user.email}</p>
+              <h1 className="text-2xl font-bold text-foreground">Brand Dashboard</h1>
+              <p className="text-muted-foreground">{user.displayName || user.email}</p>
             </div>
             <Button 
               onClick={() => setShowPostModal(true)}
