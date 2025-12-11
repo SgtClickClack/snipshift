@@ -615,7 +615,7 @@ export default function DashboardHeader({
   }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerImage]);
 
   return (
-    <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible mb-16", className)}>
+    <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible mb-16 bg-gradient-to-r from-blue-500 to-cyan-500", className)}>
       {/* Banner Image or Gradient Fallback */}
       {displayBannerUrl ? (
         <OptimizedImage
