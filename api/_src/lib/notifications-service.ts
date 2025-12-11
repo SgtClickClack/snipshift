@@ -294,3 +294,70 @@ Snipshift Team
   }
 }
 
+/**
+ * Notify shop owner when payment fails for a shift
+ */
+export async function notifyShopOfPaymentFailure(
+  shopId: string,
+  shiftId: string,
+  shiftTitle: string,
+  paymentIntentId: string
+): Promise<void> {
+  try {
+    const title = 'Payment Failed for Shift';
+    const message = `Payment failed for shift: ${shiftTitle}. Please update your payment method.`;
+
+    // Create in-app notification
+    await createInAppNotification(
+      shopId,
+      'SYSTEM',
+      title,
+      message,
+      {
+        shiftId,
+        paymentIntentId,
+        type: 'payment_failed',
+      }
+    );
+
+    // Get shop owner's email
+    const shop = await usersRepo.getUserById(shopId);
+    if (shop?.email) {
+      const emailBody = `
+URGENT: Payment Failed for Shift
+
+Hello ${shop.name || 'Shop Owner'},
+
+Payment authorization failed for the following shift:
+
+Shift ID: #${shiftId.substring(0, 8)}
+Shift Title: ${shiftTitle}
+Payment Intent: ${paymentIntentId}
+
+The barber has accepted this shift, but we were unable to authorize payment. Please:
+
+1. Update your payment method in your billing settings
+2. Contact support if you believe this is an error
+
+The shift will remain in "Payment Failed" status until the issue is resolved.
+
+Best regards,
+Snipshift Team
+      `.trim();
+
+      await sendEmailMock(
+        shop.email,
+        `URGENT: Payment Failed for Shift #${shiftId.substring(0, 8)}`,
+        emailBody
+      );
+    }
+  } catch (error: any) {
+    console.error('[notifyShopOfPaymentFailure] Error:', {
+      message: error?.message,
+      shopId,
+      shiftId,
+    });
+    // Don't throw - notification failures shouldn't break the workflow
+  }
+}
+
