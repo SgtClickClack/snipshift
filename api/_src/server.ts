@@ -1,5 +1,7 @@
 import app from './index.js';
 import { startShiftCompletionCron } from './services/shift-completion-cron.js';
+import { initializeSocketIO } from './socket/socket-server.js';
+import { Server as HttpServer } from 'http';
 
 const PORT = process.env.PORT || 5000;
 
@@ -16,6 +18,10 @@ if (process.env.VERCEL !== '1') {
   const server = app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`[SERVER] ✓ API server running on http://0.0.0.0:${PORT}`);
     console.log(`[SERVER] ✓ Health check: http://0.0.0.0:${PORT}/health`);
+    
+    // Initialize Socket.io server
+    initializeSocketIO(server as HttpServer);
+    console.log(`[SERVER] ✓ Socket.io server initialized`);
   });
   
   server.on('error', (error: any) => {

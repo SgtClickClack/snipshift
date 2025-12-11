@@ -10,6 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { SocketProvider } from '@/contexts/SocketContext';
 import { NotificationToast } from '@/components/notifications/notification-toast';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -462,18 +463,20 @@ function App() {
           <TooltipProvider>
             <Router>
               <AuthProvider>
-                <NotificationProvider>
-                  <RouteProgressBar />
-                  <Toaster />
-                  <NotificationToast />
-                  <AppRoutes />
-                  <TutorialOverlay />
-                  <FeedbackWidget />
-                  <InstallPrompt />
-                  <PwaUpdateHandler />
-                  <Analytics />
-                  <SpeedInsights />
-                </NotificationProvider>
+                <SocketProvider>
+                  <NotificationProvider>
+                    <RouteProgressBar />
+                    <Toaster />
+                    <NotificationToast />
+                    <AppRoutes />
+                    <TutorialOverlay />
+                    <FeedbackWidget />
+                    <InstallPrompt />
+                    <PwaUpdateHandler />
+                    <Analytics />
+                    <SpeedInsights />
+                  </NotificationProvider>
+                </SocketProvider>
               </AuthProvider>
             </Router>
           </TooltipProvider>

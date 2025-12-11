@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu, RefreshCw, Briefcase, User, Settings } from "lucide-react";
-import { messagingService } from "@/lib/messaging";
 import NotificationBell from "./notifications/notification-bell";
-import { Chat } from "@shared/firebase-schema";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -31,29 +31,25 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { InstallButton } from "@/components/pwa/install-button";
 import logo from "@/assets/logo-processed.png";
 
+async function fetchUnreadCount(): Promise<{ unreadCount: number }> {
+  const res = await apiRequest('GET', '/api/conversations/unread-count');
+  return res.json();
+}
+
 export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [userChats, setUserChats] = useState<Chat[]>([]);
   
-  // Notifications - removed hook usage here as it's now internal to NotificationBell
-  
-  useEffect(() => {
-    if (!user) {
-      setUnreadCount(0);
-      return;
-    }
+  // Fetch unread message count
+  const { data: unreadData } = useQuery({
+    queryKey: ['/api/conversations/unread-count'],
+    queryFn: fetchUnreadCount,
+    enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
-    const unsubscribe = messagingService.onChatsChange(user.id, (chats) => {
-      setUserChats(chats);
-      const totalUnread = chats.reduce((total, chat) => total + (chat.unreadCount?.[user.id] || 0), 0);
-      setUnreadCount(totalUnread);
-    });
-
-    return unsubscribe;
-  }, [user]);
+  const unreadCount = unreadData?.unreadCount || 0;
 
   const handleLogout = async () => {
     await logout();

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, MapPin, Calendar, Star, MessageCircle, Briefcase, Award, Users } from "lucide-react";
 import { format } from "date-fns";
-import StartChatButton from "@/components/messaging/start-chat-button";
+import { StartConversationButton } from "@/components/messaging/start-conversation-button";
 import ProfileHeader from "./profile-header";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 
@@ -158,10 +158,8 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
                   
                   <div className="flex gap-2">
                     {!isOwnProfile && (
-                      <StartChatButton
-                        otherUserId={profile.id}
-                        otherUserName={profile.displayName}
-                        otherUserRole={profile.role}
+                      <StartConversationButton
+                        targetUserId={profile.id}
                         variant="outline"
                       />
                     )}

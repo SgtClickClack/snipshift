@@ -1,0 +1,178 @@
+/**
+ * Socket.io Context Provider
+ * 
+ * Manages Socket.io connection and provides real-time messaging functionality
+ */
+
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
+import { useAuth } from './AuthContext';
+
+interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+  sender: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+interface SocketContextType {
+  socket: Socket | null;
+  isConnected: boolean;
+  joinConversation: (conversationId: string) => void;
+  leaveConversation: (conversationId: string) => void;
+  sendMessage: (conversationId: string, content: string) => void;
+  onMessage: (callback: (message: Message) => void) => () => void;
+  onError: (callback: (error: { message: string }) => void) => () => void;
+}
+
+const SocketContext = createContext<SocketContextType | undefined>(undefined);
+
+export function SocketProvider({ children }: { children: React.ReactNode }) {
+  const { user, token } = useAuth();
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const messageCallbacksRef = useRef<Set<(message: Message) => void>>(new Set());
+  const errorCallbacksRef = useRef<Set<(error: { message: string }) => void>>(new Set());
+
+  useEffect(() => {
+    if (!user || !token) {
+      // Disconnect if user logs out
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
+    }
+
+    // Get API URL from environment or use default
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    // Initialize socket connection
+    const newSocket = io(apiUrl, {
+      auth: {
+        token: token,
+      },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+    });
+
+    newSocket.on('connect', () => {
+      console.log('[SOCKET] Connected to server');
+      setIsConnected(true);
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('[SOCKET] Disconnected from server');
+      setIsConnected(false);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('[SOCKET] Connection error:', error);
+      setIsConnected(false);
+    });
+
+    newSocket.on('joined_room', (data: { conversationId: string }) => {
+      console.log('[SOCKET] Joined room:', data.conversationId);
+    });
+
+    newSocket.on('new_message', (message: Message) => {
+      console.log('[SOCKET] New message received:', message);
+      // Notify all registered callbacks
+      messageCallbacksRef.current.forEach((callback) => {
+        try {
+          callback(message);
+        } catch (error) {
+          console.error('[SOCKET] Error in message callback:', error);
+        }
+      });
+    });
+
+    newSocket.on('error', (error: { message: string }) => {
+      console.error('[SOCKET] Error:', error);
+      // Notify all registered error callbacks
+      errorCallbacksRef.current.forEach((callback) => {
+        try {
+          callback(error);
+        } catch (err) {
+          console.error('[SOCKET] Error in error callback:', err);
+        }
+      });
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+      setSocket(null);
+      setIsConnected(false);
+    };
+  }, [user, token]);
+
+  const joinConversation = useCallback((conversationId: string) => {
+    if (socket && isConnected) {
+      socket.emit('join_room', { conversationId });
+    }
+  }, [socket, isConnected]);
+
+  const leaveConversation = useCallback((conversationId: string) => {
+    if (socket && isConnected) {
+      socket.emit('leave_room', { conversationId });
+    }
+  }, [socket, isConnected]);
+
+  const sendMessage = useCallback((conversationId: string, content: string) => {
+    if (socket && isConnected) {
+      socket.emit('send_message', { conversationId, content });
+    } else {
+      console.error('[SOCKET] Cannot send message: not connected');
+    }
+  }, [socket, isConnected]);
+
+  const onMessage = useCallback((callback: (message: Message) => void) => {
+    messageCallbacksRef.current.add(callback);
+    return () => {
+      messageCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
+  const onError = useCallback((callback: (error: { message: string }) => void) => {
+    errorCallbacksRef.current.add(callback);
+    return () => {
+      errorCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
+  return (
+    <SocketContext.Provider
+      value={{
+        socket,
+        isConnected,
+        joinConversation,
+        leaveConversation,
+        sendMessage,
+        onMessage,
+        onError,
+      }}
+    >
+      {children}
+    </SocketContext.Provider>
+  );
+}
+
+export function useSocket() {
+  const context = useContext(SocketContext);
+  if (context === undefined) {
+    throw new Error('useSocket must be used within a SocketProvider');
+  }
+  return context;
+}

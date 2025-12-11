@@ -1838,20 +1838,22 @@ app.post('/api/conversations', authenticateUser, asyncHandler(async (req: Authen
     return;
   }
 
-  const { participant2Id, jobId } = req.body;
+  // Support both targetUserId (new) and participant2Id (legacy) for backward compatibility
+  const targetUserId = req.body.targetUserId || req.body.participant2Id;
+  const jobId = req.body.jobId;
 
-  if (!participant2Id) {
-    res.status(400).json({ message: 'participant2Id is required' });
+  if (!targetUserId) {
+    res.status(400).json({ message: 'targetUserId is required' });
     return;
   }
 
-  if (participant2Id === userId) {
+  if (targetUserId === userId) {
     res.status(400).json({ message: 'Cannot create conversation with yourself' });
     return;
   }
 
   // Check if conversation already exists
-  const existing = await conversationsRepo.findConversation(userId, participant2Id, jobId);
+  const existing = await conversationsRepo.findConversation(userId, targetUserId, jobId);
   if (existing) {
     res.status(200).json({
       id: existing.id,
@@ -1863,7 +1865,7 @@ app.post('/api/conversations', authenticateUser, asyncHandler(async (req: Authen
   // Create new conversation
   const newConversation = await conversationsRepo.createConversation({
     participant1Id: userId,
-    participant2Id,
+    participant2Id: targetUserId,
     jobId: jobId || undefined,
   });
 
@@ -1989,6 +1991,20 @@ app.patch('/api/conversations/:id/read', authenticateUser, asyncHandler(async (r
   await messagesRepo.markMessagesAsRead(id, userId);
 
   res.status(200).json({ success: true });
+}));
+
+// Handler for getting unread message count
+app.get('/api/conversations/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const unreadCount = await messagesRepo.getUnreadCount(userId);
+
+  res.status(200).json({ unreadCount });
 }));
 
 // Report endpoints

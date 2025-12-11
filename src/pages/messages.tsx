@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSocket } from '@/contexts/SocketContext';
 import { useToast } from '@/hooks/use-toast';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -113,27 +114,37 @@ function formatMessageTime(dateString: string): string {
 export default function MessagesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedConversationId = searchParams.get('conversation');
   const [messageContent, setMessageContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { isConnected, joinConversation, leaveConversation, sendMessage: socketSendMessage, onMessage, onError } = useSocket();
 
-  // Fetch conversations list
+  // Fetch conversations list (no polling - real-time updates via socket)
   const { data: conversations = [], isLoading: isLoadingConversations } = useQuery<Conversation[]>({
     queryKey: ['/api/conversations'],
     queryFn: fetchConversations,
-    refetchInterval: 3000, // Poll every 3 seconds
     enabled: !!user,
   });
 
-  // Fetch selected conversation detail
+  // Fetch selected conversation detail (no polling - real-time updates via socket)
   const { data: conversationDetail, isLoading: isLoadingDetail } = useQuery<ConversationDetail>({
     queryKey: ['/api/conversations', selectedConversationId],
     queryFn: () => fetchConversationDetail(selectedConversationId!),
     enabled: !!selectedConversationId && !!user,
-    refetchInterval: 3000, // Poll every 3 seconds
   });
+
+  // Join conversation room when selected
+  useEffect(() => {
+    if (selectedConversationId && isConnected) {
+      joinConversation(selectedConversationId);
+      return () => {
+        leaveConversation(selectedConversationId);
+      };
+    }
+  }, [selectedConversationId, isConnected, joinConversation, leaveConversation]);
 
   // Mark messages as read when conversation is opened
   useEffect(() => {
@@ -147,39 +158,70 @@ export default function MessagesPage() {
         });
       });
     }
-  }, [selectedConversationId, conversationDetail]);
+  }, [selectedConversationId, conversationDetail, toast]);
+
+  // Listen for real-time messages via Socket.io
+  useEffect(() => {
+    const unsubscribe = onMessage((message: Message) => {
+      // Update conversation detail if this message belongs to the current conversation
+      if (message.conversationId === selectedConversationId) {
+        queryClient.setQueryData<ConversationDetail>(
+          ['/api/conversations', selectedConversationId],
+          (oldData) => {
+            if (!oldData) return oldData;
+            // Check if message already exists (avoid duplicates)
+            const messageExists = oldData.messages.some((m) => m.id === message.id);
+            if (messageExists) return oldData;
+            return {
+              ...oldData,
+              messages: [...oldData.messages, message],
+            };
+          }
+        );
+      }
+      // Refresh conversations list to update latest message
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+    });
+
+    return unsubscribe;
+  }, [selectedConversationId, onMessage, queryClient]);
+
+  // Listen for socket errors
+  useEffect(() => {
+    const unsubscribe = onError((error) => {
+      toast({
+        title: 'Connection Error',
+        description: error.message || 'Failed to connect to messaging service',
+        variant: 'destructive',
+      });
+    });
+
+    return unsubscribe;
+  }, [onError, toast]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversationDetail?.messages]);
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: ({ conversationId, content }: { conversationId: string; content: string }) =>
-      sendMessage(conversationId, content),
-    onSuccess: () => {
-      setMessageContent('');
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/conversations', selectedConversationId] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to send message',
-        variant: 'destructive',
-      });
-    },
-  });
-
   const handleSendMessage = () => {
-    if (!selectedConversationId || !messageContent.trim()) return;
+    if (!selectedConversationId || !messageContent.trim() || !isConnected) {
+      if (!isConnected) {
+        toast({
+          title: 'Connection Error',
+          description: 'Not connected to messaging service. Please wait...',
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
 
-    sendMessageMutation.mutate({
-      conversationId: selectedConversationId,
-      content: messageContent.trim(),
-    });
+    // Send via Socket.io for real-time delivery
+    socketSendMessage(selectedConversationId, messageContent.trim());
+    setMessageContent('');
+    
+    // Optimistically update UI (socket will send the actual message)
+    // The socket event handler will update the UI when the message is confirmed
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -397,12 +439,12 @@ export default function MessagesPage() {
                       onChange={(e) => setMessageContent(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type a message..."
-                      disabled={sendMessageMutation.isPending}
+                      disabled={!isConnected}
                       className="flex-1"
                     />
                     <Button
                       onClick={handleSendMessage}
-                      disabled={!messageContent.trim() || sendMessageMutation.isPending}
+                      disabled={!messageContent.trim() || !isConnected}
                       size="icon"
                       aria-label="Send message"
                     >

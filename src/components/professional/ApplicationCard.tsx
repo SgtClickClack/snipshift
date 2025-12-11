@@ -16,6 +16,7 @@ import { MapPin, Clock, DollarSign, Eye, X, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { useWithdrawApplication } from '@/pages/professional-dashboard/useWithdrawApplication';
 import { ApplicationStatusModal } from './ApplicationStatusModal';
+import { StartConversationButton } from '@/components/messaging/start-conversation-button';
 
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected';
 
@@ -206,16 +207,16 @@ export function ApplicationCard({
               View Status Update
             </Button>
           )}
-          {canMessage && onMessage && (
-            <Button
+          {canMessage && application.businessId && (
+            <StartConversationButton
+              targetUserId={application.businessId}
               variant="default"
               size="sm"
               className="flex-1"
-              onClick={() => onMessage(application)}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Message
-            </Button>
+            </StartConversationButton>
           )}
           {canWithdraw && (
             <>
