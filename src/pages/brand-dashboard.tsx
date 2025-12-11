@@ -222,7 +222,7 @@ export default function BrandDashboard() {
       <SEO title="Brand Dashboard" />
       
       {/* Banner/Profile Header with editable banner and avatar upload */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full max-w-full overflow-x-hidden">
         <DashboardHeader
           user={user}
           business={null}
@@ -503,7 +503,7 @@ export default function BrandDashboard() {
               <CardContent className="p-0">
                 <form onSubmit={handleProfileSubmit} className="space-y-6">
                   {/* Profile Header with Banner and Avatar */}
-                  <div className="relative w-full max-w-full z-0">
+                  <div className="relative w-full max-w-full overflow-hidden z-0">
                     <ProfileHeader
                       key={`profile-header-${profileData.bannerUrl || 'no-banner'}-${profileData.avatarUrl || 'no-avatar'}`}
                       bannerUrl={profileData.bannerUrl}

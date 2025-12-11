@@ -592,7 +592,7 @@ export default function ProfileHeader({
   }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerUrl]);
 
   return (
-    <div className={cn("relative w-full max-w-full h-48 md:h-64 rounded-lg mb-12", className)}>
+    <div className={cn("relative w-full max-w-full overflow-hidden rounded-lg h-48 md:h-64 mb-12", className)}>
       {/* Banner Image or Gradient Fallback */}
       <div className="w-full h-full rounded-t-lg overflow-hidden absolute inset-0 z-0">
         {displayBannerUrl ? (

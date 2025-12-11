@@ -646,7 +646,7 @@ export default function DashboardHeader({
   }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerImage]);
 
   return (
-    <div className={cn("relative w-full max-w-full h-48 md:h-64 rounded-lg mb-12 bg-gradient-to-r from-blue-500 to-cyan-500", className)} style={{ minHeight: '192px' }}>
+    <div className={cn("relative w-full max-w-full overflow-hidden rounded-lg h-48 md:h-64 mb-12 bg-gradient-to-r from-blue-500 to-cyan-500", className)} style={{ minHeight: '192px' }}>
       {/* Banner Image or Gradient Fallback */}
       <div className="w-full h-full rounded-t-lg overflow-hidden absolute inset-0 z-0">
         {displayBannerUrl ? (
