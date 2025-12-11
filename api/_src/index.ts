@@ -1725,6 +1725,30 @@ app.get('/api/payments/history', authenticateUser, asyncHandler(async (req: Auth
 // ============================================================================
 
 // Handler for fetching user's conversations
+// Handler for getting unread message count
+// MUST be defined BEFORE /api/conversations/:id to avoid route conflict
+app.get('/api/conversations/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const unreadCount = await messagesRepo.getUnreadCount(userId);
+    res.status(200).json({ unreadCount });
+  } catch (error: any) {
+    console.error('[GET /api/conversations/unread-count] Error:', error);
+    console.error('[GET /api/conversations/unread-count] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Failed to fetch unread count',
+      error: error?.message || 'Unknown error',
+      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
+  }
+}));
+
 app.get('/api/conversations', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
 
@@ -1993,29 +2017,6 @@ app.patch('/api/conversations/:id/read', authenticateUser, asyncHandler(async (r
   res.status(200).json({ success: true });
 }));
 
-// Handler for getting unread message count
-// Trigger redeploy - database schema synced 2025-01-XX
-app.get('/api/conversations/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  try {
-    const unreadCount = await messagesRepo.getUnreadCount(userId);
-    res.status(200).json({ unreadCount });
-  } catch (error: any) {
-    console.error('[GET /api/conversations/unread-count] Error:', error);
-    console.error('[GET /api/conversations/unread-count] Stack:', error?.stack);
-    res.status(500).json({ 
-      message: 'Failed to fetch unread count',
-      error: error?.message || 'Unknown error',
-      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
-    });
-  }
-}));
 
 // Report endpoints
 // Handler for creating a report
