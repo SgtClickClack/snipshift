@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Store, UserCheck, Shield, CheckCircle2, CreditCard } from "lucide-react";
+import { Store, UserCheck, Shield, CheckCircle2, CreditCard, UserPlus, FileText, Handshake, CheckCircle } from "lucide-react";
 import Pricing from "@/components/pricing";
 import { SEO } from "@/components/seo/SEO";
 import { useAuth } from "@/contexts/AuthContext";
