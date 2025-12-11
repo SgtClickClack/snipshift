@@ -225,9 +225,7 @@ export async function createExpressDashboardLoginLink(accountId: string, returnU
   }
 
   try {
-    const loginLink = await stripe.accounts.createLoginLink(accountId, {
-      redirect_url: returnUrl,
-    });
+    const loginLink = await stripe.accounts.createLoginLink(accountId);
     return loginLink.url;
   } catch (error: any) {
     console.error('[STRIPE_CONNECT] Error creating login link:', error);

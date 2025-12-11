@@ -68,6 +68,10 @@ export async function createUser(
       averageRating: null,
       reviewCount: '0',
       isOnboarded: false,
+      isActive: true,
+      stripeAccountId: null,
+      stripeOnboardingComplete: false,
+      stripeCustomerId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

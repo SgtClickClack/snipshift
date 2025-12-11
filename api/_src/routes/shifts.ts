@@ -975,7 +975,7 @@ router.post('/smart-fill', authenticateUser, asyncHandler(async (req: Authentica
         endTime: slot.end,
         hourlyRate,
         status: status as 'open' | 'invited',
-        location: defaultLocation || null,
+        location: defaultLocation || undefined,
         assigneeId,
       };
     });

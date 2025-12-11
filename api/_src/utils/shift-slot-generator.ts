@@ -6,6 +6,7 @@
  */
 
 export interface OpeningHours {
+  [key: string]: { open: string; close: string; enabled: boolean } | undefined;
   monday: { open: string; close: string; enabled: boolean };
   tuesday: { open: string; close: string; enabled: boolean };
   wednesday: { open: string; close: string; enabled: boolean };

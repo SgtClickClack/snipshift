@@ -57,15 +57,6 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'incomplete',
 ]);
 
-/**
- * Payment status enum
- */
-export const paymentStatusEnum = pgEnum('payment_status', [
-  'pending',
-  'succeeded',
-  'failed',
-  'refunded',
-]);
 
 /**
  * Report reason enum
