@@ -646,9 +646,9 @@ export default function DashboardHeader({
   }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerImage]);
 
   return (
-    <div className={cn("relative w-full max-w-full overflow-hidden rounded-lg h-48 md:h-64 mb-12 bg-gradient-to-r from-blue-500 to-cyan-500", className)} style={{ minHeight: '192px' }}>
+    <div className={cn("relative w-full max-w-full mb-16", className)}>
       {/* Banner Image or Gradient Fallback */}
-      <div className="w-full h-full rounded-t-lg overflow-hidden absolute inset-0 z-0">
+      <div className="relative w-full max-w-full h-32 md:h-48 rounded-t-lg overflow-hidden bg-gradient-to-r from-blue-500 to-cyan-500">
         {displayBannerUrl ? (
           <OptimizedImage
             key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
@@ -715,7 +715,7 @@ export default function DashboardHeader({
       )}
 
       {/* Avatar/Logo Container (overlapping bottom-left) */}
-      <div className="absolute -bottom-12 left-4 z-10">
+      <div className="absolute -bottom-10 left-6 z-10">
         <div className="relative">
           <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-background shadow-lg">
             <AvatarImage src={localLogoUrl || undefined} alt={title} />
@@ -752,7 +752,7 @@ export default function DashboardHeader({
       </div>
 
       {/* Title and Subtitle (overlapping bottom-right) */}
-      <div className="absolute -bottom-12 left-40 md:left-48 right-4 z-10 min-w-0">
+      <div className="absolute -bottom-10 left-32 md:left-40 right-4 z-10 min-w-0">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground break-words line-clamp-2">{title}</h1>
         {subtitle && (
           <p className="text-sm md:text-base text-muted-foreground break-words line-clamp-1 mt-1">{subtitle}</p>

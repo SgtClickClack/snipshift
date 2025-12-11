@@ -592,9 +592,9 @@ export default function ProfileHeader({
   }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerUrl]);
 
   return (
-    <div className={cn("relative w-full max-w-full overflow-hidden rounded-lg h-48 md:h-64 mb-12", className)}>
+    <div className={cn("relative w-full max-w-full mb-16", className)}>
       {/* Banner Image or Gradient Fallback */}
-      <div className="w-full h-full rounded-t-lg overflow-hidden absolute inset-0 z-0">
+      <div className="relative w-full max-w-full h-32 md:h-48 rounded-t-lg overflow-hidden bg-gradient-to-r from-blue-500 to-cyan-500">
         {displayBannerUrl ? (
           <OptimizedImage
             key={displayBannerUrl} // Force re-render when URL changes - using full URL ensures cache-busting works
@@ -661,7 +661,7 @@ export default function ProfileHeader({
       )}
 
       {/* Avatar Container (overlapping bottom-left) */}
-      <div className="absolute -bottom-12 left-4 z-elevated">
+      <div className="absolute -bottom-10 left-6 z-elevated">
         <div className="relative">
           <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-white shadow-lg">
             <AvatarImage src={localAvatarUrl || undefined} alt={displayName} />
