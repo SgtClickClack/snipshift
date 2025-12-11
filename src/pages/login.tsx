@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,17 +11,43 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 import { useAuth, User } from "@/contexts/AuthContext";
+import { getDashboardRoute } from "@/lib/roles";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, user, isAuthReady } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState(false);
+
+  // Handle post-login redirection based on user role
+  useEffect(() => {
+    if (pendingRedirect && isAuthReady && user) {
+      setPendingRedirect(false);
+      
+      // Check if user has a role and is onboarded
+      if (user.isOnboarded === false) {
+        // User needs to complete onboarding
+        navigate("/onboarding", { replace: true });
+        return;
+      }
+      
+      if (user.currentRole && user.currentRole !== 'client') {
+        // User has a role - redirect to their dashboard
+        const dashboardRoute = getDashboardRoute(user.currentRole);
+        navigate(dashboardRoute, { replace: true });
+        return;
+      }
+      
+      // User is onboarded but has no role or is a client - go to role selection
+      navigate("/role-selection", { replace: true });
+    }
+  }, [pendingRedirect, isAuthReady, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +70,7 @@ export default function LoginPage() {
          
         sessionStorage.setItem('snipshift_test_user', JSON.stringify({ 
           roles: ['business'], 
+          currentRole: 'business',
           isOnboarded: true 
         }));
         
@@ -55,8 +82,9 @@ export default function LoginPage() {
           description: "Welcome back!",
         });
         
-        // Navigate to dashboard
-        navigate("/hub-dashboard");
+        // Navigate to role-based dashboard
+        const dashboardRoute = getDashboardRoute(testUser.currentRole);
+        navigate(dashboardRoute, { replace: true });
         return;
       }
 
@@ -67,9 +95,9 @@ export default function LoginPage() {
         description: "Welcome back!",
       });
 
-      // Redirect to home for role selection
-      // Auth state sync happens via onAuthStateChanged in AuthContext
-      navigate("/home");
+      // Set flag to wait for auth state to sync and user profile to load
+      // The useEffect above will handle the role-based redirection
+      setPendingRedirect(true);
     } catch (error: any) {
       console.error("Login error:", error);
       

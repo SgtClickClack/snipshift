@@ -6,6 +6,7 @@ import { Chrome } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { getDashboardRoute } from "@/lib/roles";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -78,7 +79,18 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate('/role-selection');
+        // Role-based redirection: check user's current role and onboarding status
+        if (userData.isOnboarded === false) {
+          // User needs to complete onboarding
+          navigate('/onboarding', { replace: true });
+        } else if (userData.currentRole && userData.currentRole !== 'client') {
+          // User has a role - redirect to their dashboard
+          const dashboardRoute = getDashboardRoute(userData.currentRole);
+          navigate(dashboardRoute, { replace: true });
+        } else {
+          // User is onboarded but has no role or is a client - go to role selection
+          navigate('/role-selection', { replace: true });
+        }
       }
       
     } catch (error: any) {
