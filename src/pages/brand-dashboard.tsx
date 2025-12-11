@@ -498,12 +498,12 @@ export default function BrandDashboard() {
 
         {/* Profile Tab */}
         {activeView === 'profile' && (
-          <div className="max-w-4xl w-full max-w-full overflow-hidden">
+          <div className="max-w-4xl">
             <Card className="bg-card rounded-lg border border-border shadow-sm">
               <CardContent className="p-0">
                 <form onSubmit={handleProfileSubmit} className="space-y-6">
                   {/* Profile Header with Banner and Avatar */}
-                  <div className="relative w-full max-w-full overflow-hidden z-0">
+                  <div className="relative overflow-visible z-0">
                     <ProfileHeader
                       key={`profile-header-${profileData.bannerUrl || 'no-banner'}-${profileData.avatarUrl || 'no-avatar'}`}
                       bannerUrl={profileData.bannerUrl}

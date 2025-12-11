@@ -592,23 +592,21 @@ export default function ProfileHeader({
   }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerUrl]);
 
   return (
-    <div className={cn("relative w-full max-w-[100vw] h-48 md:h-64 rounded-lg overflow-hidden", className)}>
+    <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible", className)}>
       {/* Banner Image or Gradient Fallback */}
-      <div className="relative w-full h-full">
-        {displayBannerUrl ? (
-          <OptimizedImage
-            key={displayBannerUrl} // Force re-render when URL changes - using full URL ensures cache-busting works
-            src={displayBannerUrl}
-            alt="Banner"
-            priority={true}
-            fallbackType="banner"
-            className="w-full h-full object-cover rounded-lg"
-            containerClassName="w-full h-full absolute inset-0"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg absolute inset-0" />
-        )}
-      </div>
+      {displayBannerUrl ? (
+        <OptimizedImage
+          key={displayBannerUrl} // Force re-render when URL changes - using full URL ensures cache-busting works
+          src={displayBannerUrl}
+          alt="Banner"
+          priority={true}
+          fallbackType="banner"
+          className="w-full h-full object-cover rounded-lg"
+          containerClassName="w-full h-full"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg" />
+      )}
 
       {/* Banner Edit Button (top-right) */}
       {editable && (

@@ -646,23 +646,21 @@ export default function DashboardHeader({
   }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerImage]);
 
   return (
-    <div className={cn("relative w-full max-w-[100vw] h-48 md:h-64 rounded-lg overflow-hidden mb-16 bg-gradient-to-r from-blue-500 to-cyan-500", className)} style={{ minHeight: '192px' }}>
+    <div className={cn("relative w-full h-48 md:h-64 rounded-lg overflow-visible mb-16 bg-gradient-to-r from-blue-500 to-cyan-500", className)} style={{ minHeight: '192px' }}>
       {/* Banner Image or Gradient Fallback */}
-      <div className="relative w-full h-full">
-        {displayBannerUrl ? (
-          <OptimizedImage
-            key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
-            src={displayBannerUrl}
-            alt="Banner"
-            priority={true}
-            fallbackType="banner"
-            className="w-full h-full object-cover rounded-lg"
-            containerClassName="w-full h-full absolute inset-0"
-            />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg absolute inset-0" />
-        )}
-      </div>
+      {displayBannerUrl ? (
+        <OptimizedImage
+          key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
+          src={displayBannerUrl}
+          alt="Banner"
+          priority={true}
+          fallbackType="banner"
+          className="w-full h-full object-cover rounded-lg"
+          containerClassName="w-full h-full absolute inset-0"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg absolute inset-0" />
+      )}
 
       {/* Banner Edit Button (top-right) */}
       {editable && (
