@@ -92,3 +92,67 @@
 
 **Next Priority Task**
 - Test the complete flow: shift completion → cron flagging → notification → review submission → rating aggregation
+
+---
+
+#### 2025-01-XX: Stripe Connect Marketplace Payments Implementation
+
+**Core Components Implemented:**
+- Database Schema Extensions
+- Stripe Connect Service
+- Payment Processing Logic
+- Onboarding Flows
+- Dashboard UI Components
+
+**Key Features**
+- **Database Schema:**
+  - Added `stripeAccountId`, `stripeOnboardingComplete`, and `stripeCustomerId` to users table
+  - Added `paymentStatus` enum ('UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED') and `paymentIntentId` to shifts table
+  - Migration SQL file: `0009_add_stripe_connect_fields.sql`
+- **Backend Logic:**
+  - Created Stripe Connect service for Express account onboarding and management
+  - Implemented PaymentIntent creation with manual capture on shift confirmation
+  - Payment capture and transfer to barber on shift completion (with Snipshift commission)
+  - Security checks: verify `charges_enabled` before allowing barbers to accept shifts
+  - Webhook handlers for Connect account updates and payment events
+- **API Endpoints:**
+  - `GET /api/stripe-connect/account/status` - Get Connect account status
+  - `POST /api/stripe-connect/account/create` - Create Connect account and onboarding link
+  - `POST /api/stripe-connect/account/onboarding-link` - Create new onboarding link
+  - `GET /api/stripe-connect/account/verify` - Verify if user can accept shifts
+  - `POST /api/stripe-connect/customer/create` - Create/get Stripe Customer for shops
+- **Frontend UI:**
+  - Created `PayoutSettings` component for Professional Dashboard
+  - Added "Payouts" tab to Professional Dashboard
+  - Created `BillingSettings` component for Shop Dashboard
+  - Integrated billing settings into Shop Dashboard
+  - Onboarding redirect handling with success/error states
+- **Payment Flow:**
+  - Escrow model: PaymentIntent created on shift confirmation (manual capture)
+  - Funds held until shift completion
+  - Automatic capture and transfer on shift completion (barber receives payment minus commission)
+  - Commission rate configurable via `SNIPSHIFT_COMMISSION_RATE` env var (default 10%)
+
+**Integration Points**
+- API endpoints: `/api/stripe-connect/*`
+- Webhook handlers: `account.updated`, `payment_intent.succeeded`, `payment_intent.payment_failed`
+- Shift acceptance flow: PaymentIntent creation integrated
+- Shift completion flow: Payment capture integrated with review submission
+- Dashboard components: `professional-dashboard.tsx`, `shop-dashboard.tsx`
+
+**File Paths**
+- `api/_src/db/schema/users.ts` - Schema updates
+- `api/_src/db/schema/shifts.ts` - Payment fields
+- `api/drizzle/0009_add_stripe_connect_fields.sql` - Migration
+- `api/_src/services/stripe-connect.service.ts` - Connect service
+- `api/_src/routes/stripe-connect.ts` - Connect API routes
+- `api/_src/routes/shifts.ts` - Payment logic integration
+- `api/_src/routes/webhooks.ts` - Connect webhook handlers
+- `api/_src/repositories/shifts.repository.ts` - Payment field support
+- `src/components/payments/payout-settings.tsx` - Payout settings UI
+- `src/components/payments/billing-settings.tsx` - Billing settings UI
+- `src/pages/professional-dashboard.tsx` - Payouts tab integration
+- `src/pages/shop-dashboard.tsx` - Billing settings integration
+
+**Next Priority Task**
+- Test complete payment flow: Connect onboarding → shift acceptance → payment authorization → shift completion → payment capture and transfer

@@ -12,6 +12,11 @@ export const shiftStatusEnum = pgEnum('shift_status', ['draft', 'pending', 'invi
 export const attendanceStatusEnum = pgEnum('attendance_status', ['pending', 'completed', 'no_show']);
 
 /**
+ * Payment status enum
+ */
+export const paymentStatusEnum = pgEnum('payment_status', ['UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED']);
+
+/**
  * Shifts table
  * Stores shift postings created by employers (business users)
  */
@@ -26,6 +31,8 @@ export const shifts = pgTable('shifts', {
   hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
   status: shiftStatusEnum('status').notNull().default('draft'),
   attendanceStatus: attendanceStatusEnum('attendance_status').default('pending'),
+  paymentStatus: paymentStatusEnum('payment_status').default('UNPAID'),
+  paymentIntentId: varchar('payment_intent_id', { length: 255 }),
   location: varchar('location', { length: 512 }),
   isRecurring: boolean('is_recurring').notNull().default(false),
   autoAccept: boolean('auto_accept').notNull().default(false),
@@ -40,6 +47,8 @@ export const shifts = pgTable('shifts', {
   statusStartTimeIdx: index('shifts_status_start_time_idx').on(table.status, table.startTime),
   parentShiftIdIdx: index('shifts_parent_shift_id_idx').on(table.parentShiftId),
   attendanceStatusIdx: index('shifts_attendance_status_idx').on(table.attendanceStatus),
+  paymentStatusIdx: index('shifts_payment_status_idx').on(table.paymentStatus),
+  paymentIntentIdIdx: index('shifts_payment_intent_id_idx').on(table.paymentIntentId),
 }));
 
 /**

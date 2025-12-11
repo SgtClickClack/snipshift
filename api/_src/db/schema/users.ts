@@ -25,10 +25,15 @@ export const users = pgTable('users', {
   averageRating: decimal('average_rating', { precision: 3, scale: 2 }),
   reviewCount: decimal('review_count', { precision: 10, scale: 0 }).default('0'),
   isOnboarded: boolean('is_onboarded').notNull().default(false),
+  stripeAccountId: varchar('stripe_account_id', { length: 255 }),
+  stripeOnboardingComplete: boolean('stripe_onboarding_complete').notNull().default(false),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   emailIdx: index('users_email_idx').on(table.email),
   roleIdx: index('users_role_idx').on(table.role),
+  stripeAccountIdIdx: index('users_stripe_account_id_idx').on(table.stripeAccountId),
+  stripeCustomerIdIdx: index('users_stripe_customer_id_idx').on(table.stripeCustomerId),
 }));
 

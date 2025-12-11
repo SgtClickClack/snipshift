@@ -31,6 +31,7 @@ import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { OfferInbox } from "@/components/shifts/offer-inbox";
 import JobBoard from "@/components/job-board/JobBoard";
 import PendingReviewNotification from "@/components/shifts/pending-review-notification";
+import PayoutSettings from "@/components/payments/payout-settings";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -38,9 +39,9 @@ export default function ProfessionalDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewParam = searchParams.get('view');
-  const activeView = (viewParam as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') || 'overview';
+  const activeView = (viewParam as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'payouts') || 'overview';
   
-  const setActiveView = (view: 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar') => {
+  const setActiveView = (view: 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'payouts') => {
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
       newParams.set('view', view);
@@ -484,6 +485,18 @@ export default function ProfessionalDashboard() {
               <User className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
               <span className="hidden md:inline">Profile</span>
             </button>
+            <button
+              onClick={() => setActiveView('payouts')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
+                activeView === 'payouts'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-steel-500 hover:text-steel-700'
+              }`}
+              data-testid="tab-payouts"
+            >
+              <Wallet className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Payouts</span>
+            </button>
           </div>
         </div>
       </div>
@@ -793,6 +806,11 @@ export default function ProfessionalDashboard() {
         {/* Profile Tab */}
         {activeView === 'profile' && (
           <ProfessionalDigitalResume />
+        )}
+
+        {/* Payouts Tab */}
+        {activeView === 'payouts' && (
+          <PayoutSettings />
         )}
       </div>
       

@@ -11,6 +11,7 @@ import * as applicationsRepo from '../repositories/applications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
 import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
+import * as stripeConnectService from '../services/stripe-connect.service.js';
 import { SmartFillSchema } from '../validation/schemas.js';
 import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
 import { createBatchShifts, getShiftsByEmployerInRange } from '../repositories/shifts.repository.js';
@@ -601,8 +602,85 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     return;
   }
 
-  // Update shift status to confirmed
-  const updatedShift = await shiftsRepo.updateShift(id, { status: 'confirmed' });
+  // Verify barber has completed Stripe Connect onboarding
+  const barber = await usersRepo.getUserById(userId);
+  if (!barber || !barber.stripeAccountId) {
+    res.status(400).json({ message: 'You must complete payout setup before accepting shifts' });
+    return;
+  }
+
+  const canAcceptShifts = await stripeConnectService.isAccountReady(barber.stripeAccountId);
+  if (!canAcceptShifts) {
+    res.status(400).json({ message: 'Your payout account is not fully set up. Please complete onboarding.' });
+    return;
+  }
+
+  // Get shop (employer) information
+  const shop = await usersRepo.getUserById(shift.employerId);
+  if (!shop) {
+    res.status(404).json({ message: 'Shop not found' });
+    return;
+  }
+
+  // Ensure shop has a Stripe customer ID
+  let customerId = shop.stripeCustomerId;
+  if (!customerId) {
+    customerId = await stripeConnectService.createStripeCustomer(shop.email, shop.name, shop.id);
+    if (customerId) {
+      await usersRepo.updateUser(shop.id, { stripeCustomerId: customerId });
+    }
+  }
+
+  if (!customerId) {
+    res.status(500).json({ message: 'Failed to set up payment for shop' });
+    return;
+  }
+
+  // Calculate shift amount and commission
+  const hourlyRate = parseFloat(shift.hourlyRate.toString());
+  const startTime = new Date(shift.startTime);
+  const endTime = new Date(shift.endTime);
+  const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+  const shiftAmount = Math.round(hourlyRate * hours * 100); // Convert to cents
+  const commissionRate = parseFloat(process.env.SNIPSHIFT_COMMISSION_RATE || '0.10'); // 10% default
+  const commissionAmount = Math.round(shiftAmount * commissionRate);
+  const barberAmount = shiftAmount - commissionAmount;
+
+  // Create PaymentIntent with manual capture
+  let paymentIntentId: string | null = null;
+  try {
+    paymentIntentId = await stripeConnectService.createPaymentIntent(
+      shiftAmount,
+      'usd', // TODO: Make currency configurable
+      customerId,
+      commissionAmount,
+      {
+        destination: barber.stripeAccountId,
+      },
+      {
+        shiftId: shift.id,
+        barberId: userId,
+        shopId: shift.employerId,
+        type: 'shift_payment',
+      }
+    );
+  } catch (error: any) {
+    console.error('[SHIFT_ACCEPT] Error creating PaymentIntent:', error);
+    res.status(500).json({ message: 'Failed to create payment authorization', error: error.message });
+    return;
+  }
+
+  if (!paymentIntentId) {
+    res.status(500).json({ message: 'Failed to create payment authorization' });
+    return;
+  }
+
+  // Update shift status to confirmed and store payment info
+  const updatedShift = await shiftsRepo.updateShift(id, {
+    status: 'confirmed',
+    paymentStatus: 'AUTHORIZED',
+    paymentIntentId: paymentIntentId,
+  });
 
   if (!updatedShift) {
     res.status(500).json({ message: 'Failed to accept shift' });
@@ -1324,10 +1402,39 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
 
   // If shop is reviewing barber, mark attendance as completed (unless no-show)
   if (reviewData.type === 'SHOP_REVIEWING_BARBER' && !reviewData.markAsNoShow) {
-    await shiftsRepo.updateShift(shiftId, {
-      attendanceStatus: 'completed',
-      status: 'completed',
-    });
+    // Capture payment and transfer to barber
+    if (shift.paymentIntentId && shift.paymentStatus === 'AUTHORIZED') {
+      try {
+        const captured = await stripeConnectService.capturePaymentIntent(shift.paymentIntentId);
+        if (captured) {
+          await shiftsRepo.updateShift(shiftId, {
+            attendanceStatus: 'completed',
+            status: 'completed',
+            paymentStatus: 'PAID',
+          });
+        } else {
+          console.error(`[SHIFT_REVIEW] Failed to capture payment for shift ${shiftId}`);
+          // Still mark as completed, but payment status remains AUTHORIZED
+          await shiftsRepo.updateShift(shiftId, {
+            attendanceStatus: 'completed',
+            status: 'completed',
+          });
+        }
+      } catch (error: any) {
+        console.error(`[SHIFT_REVIEW] Error capturing payment for shift ${shiftId}:`, error);
+        // Still mark as completed
+        await shiftsRepo.updateShift(shiftId, {
+          attendanceStatus: 'completed',
+          status: 'completed',
+        });
+      }
+    } else {
+      // No payment to capture, just mark as completed
+      await shiftsRepo.updateShift(shiftId, {
+        attendanceStatus: 'completed',
+        status: 'completed',
+      });
+    }
   }
 
   // Recalculate and update reviewee's rating

@@ -3,6 +3,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import { stripe } from '../lib/stripe.js';
 import * as subscriptionsRepo from '../repositories/subscriptions.repository.js';
 import * as paymentsRepo from '../repositories/payments.repository.js';
+import * as usersRepo from '../repositories/users.repository.js';
 
 const router = express.Router();
 
@@ -183,6 +184,77 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
         });
 
         console.warn(`⚠️  Payment failed for subscription ${subscription.id}`);
+        break;
+      }
+
+      case 'account.updated': {
+        // Handle Stripe Connect account updates
+        const account = event.data.object as any;
+        const accountId = account.id;
+
+        // Find user by stripeAccountId
+        const db = await import('../db/index.js').then(m => m.getDb());
+        if (!db) break;
+
+        const { users } = await import('../db/schema.js');
+        const { eq } = await import('drizzle-orm');
+        
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.stripeAccountId, accountId))
+          .limit(1);
+
+        if (user) {
+          // Update user's onboarding status
+          await usersRepo.updateUser(user.id, {
+            stripeOnboardingComplete: account.details_submitted || false,
+          });
+
+          console.info(`✅ Updated Connect account status for user ${user.id}`);
+        }
+        break;
+      }
+
+      case 'payment_intent.succeeded': {
+        // Handle successful payment intent (after capture)
+        const paymentIntent = event.data.object as any;
+        const paymentIntentId = paymentIntent.id;
+
+        // Update shift payment status
+        const db = await import('../db/index.js').then(m => m.getDb());
+        if (!db) break;
+
+        const { shifts } = await import('../db/schema.js');
+        const { eq } = await import('drizzle-orm');
+        
+        const [shift] = await db
+          .select()
+          .from(shifts)
+          .where(eq(shifts.paymentIntentId, paymentIntentId))
+          .limit(1);
+
+        if (shift) {
+          await db
+            .update(shifts)
+            .set({
+              paymentStatus: 'PAID',
+              updatedAt: new Date(),
+            })
+            .where(eq(shifts.id, shift.id));
+
+          console.info(`✅ Payment completed for shift ${shift.id}`);
+        }
+        break;
+      }
+
+      case 'payment_intent.payment_failed': {
+        // Handle failed payment intent
+        const paymentIntent = event.data.object as any;
+        const paymentIntentId = paymentIntent.id;
+
+        // Log failure (could update shift status or notify user)
+        console.warn(`⚠️  Payment failed for PaymentIntent ${paymentIntentId}`);
         break;
       }
 

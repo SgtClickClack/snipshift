@@ -357,12 +357,13 @@ export async function updateShift(
   updates: {
     status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
     attendanceStatus?: 'pending' | 'completed' | 'no_show';
+    paymentStatus?: 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'REFUNDED';
+    paymentIntentId?: string | null;
     title?: string;
     description?: string;
     startTime?: Date | string;
     endTime?: Date | string;
     hourlyRate?: string;
-    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
     assigneeId?: string | null;
     location?: string;
     isRecurring?: boolean;

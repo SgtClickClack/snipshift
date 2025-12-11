@@ -30,6 +30,7 @@ import { Shift } from "@/shared/types";
 import { Plus, Calendar, DollarSign, CreditCard, Wallet, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import PendingReviewNotification from "@/components/shifts/pending-review-notification";
+import BillingSettings from "@/components/payments/billing-settings";
 
 export default function ShopDashboard() {
   const { user } = useAuth();
@@ -189,6 +190,11 @@ export default function ShopDashboard() {
         {/* Pending Review Notification */}
         <div className="mb-8">
           <PendingReviewNotification />
+        </div>
+
+        {/* Billing Settings */}
+        <div className="mb-8">
+          <BillingSettings />
         </div>
         
         {/* Top Section: Stats & Integrations */}
