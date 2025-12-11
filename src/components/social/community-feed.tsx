@@ -201,7 +201,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
               placeholder="Search posts, users, or content..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-4 md:pl-10"
               data-testid="input-search-feed"
             />
           </div>
@@ -293,7 +293,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         ) : (
           <Card>
             <CardContent className="pt-6">
-              <div className="text-center py-12">
+              <div className="text-center py-6 md:py-12">
                 <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">
                   {searchQuery ? "No posts found" : "No posts yet"}

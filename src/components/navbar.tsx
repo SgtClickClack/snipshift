@@ -262,7 +262,7 @@ export default function Navbar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56 bg-popover dark:bg-steel-800 border-border dark:border-steel-600 text-popover-foreground dark:text-white z-floating" align="end">
                     <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
+                      <div className="flex flex-col space-y-2 md:space-y-1">
                         <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
                         <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                       </div>

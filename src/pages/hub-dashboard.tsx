@@ -945,7 +945,7 @@ export default function HubDashboard() {
                 {isLoadingApplications ? (
                    <div className="text-center py-8 text-muted-foreground">Loading applications...</div>
                 ) : applications.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-6 md:py-12">
                     <div className="mb-4 bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto">
                        <Users className="h-8 w-8 text-muted-foreground" />
                     </div>
@@ -1086,7 +1086,7 @@ export default function HubDashboard() {
                   </div>
                   
                   {/* Title and Edit Button - positioned below banner with padding for avatar */}
-                  <div className="px-6 pt-20 md:pt-24 pb-4">
+                  <div className="px-4 md:px-6 pt-12 md:pt-20 lg:pt-24 pb-4">
                     <div className="flex justify-between items-center">
                       <CardTitle className="flex items-center gap-2">
                         <User className="h-5 w-5" />

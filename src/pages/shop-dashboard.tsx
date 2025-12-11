@@ -354,7 +354,7 @@ export default function ShopDashboard() {
                                     onValueChange={(value) => updateStatusMutation.mutate({ id: shift.id, status: value })}
                                   >
                                     <SelectTrigger 
-                                      className={`h-8 text-xs font-medium border-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                      className={`h-10 md:h-8 text-xs font-medium border-0 disabled:opacity-50 disabled:cursor-not-allowed ${
                                         shift.status === 'open' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
                                         shift.status === 'filled' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' :
                                         'bg-red-100 text-red-800 hover:bg-red-200'

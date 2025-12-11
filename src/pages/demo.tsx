@@ -197,7 +197,7 @@ export default function DemoPage() {
     <div className="min-h-screen bg-neutral-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary to-blue-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
           <div className="text-center">
             <Scissors className="text-6xl mx-auto mb-6 opacity-90" />
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -234,7 +234,7 @@ export default function DemoPage() {
       </div>
 
       {/* Quick Access */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-neutral-900 mb-4">Try the Platform</h2>
           <p className="text-neutral-600 text-lg">Click any role below to instantly access demo accounts</p>

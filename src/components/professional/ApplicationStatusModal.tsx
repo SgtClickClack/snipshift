@@ -103,12 +103,12 @@ export function ApplicationStatusModal({
 
         <ScrollArea className="flex-1 pr-4">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-6 md:py-12">
               <LoadingSpinner size="lg" />
               <p className="ml-4 text-muted-foreground">Loading status updates...</p>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-6 md:py-12 text-center">
               <AlertCircle className="h-12 w-12 text-destructive mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 Error loading updates
@@ -118,7 +118,7 @@ export function ApplicationStatusModal({
               </p>
             </div>
           ) : updates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-6 md:py-12 text-center">
               <Clock className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 No updates yet

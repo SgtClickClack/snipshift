@@ -95,7 +95,7 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
               </div>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-2 md:space-y-1">
               {filteredChats.map((chat) => {
                 const otherParticipant = messagingService.getOtherParticipant(chat, user.id);
                 if (!otherParticipant) return null;

@@ -528,7 +528,7 @@ export default function BrandDashboard() {
                   </div>
                   
                   {/* Title and Edit Button - positioned below banner with padding for avatar */}
-                  <div className="px-6 pt-20 md:pt-24 pb-4">
+                  <div className="px-4 md:px-6 pt-12 md:pt-20 lg:pt-24 pb-4">
                     <div className="flex justify-between items-center">
                       <CardTitle className="flex items-center gap-2">
                         <User className="h-5 w-5" />

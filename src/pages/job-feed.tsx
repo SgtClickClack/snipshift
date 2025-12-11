@@ -301,7 +301,7 @@ export default function JobFeedPage() {
                 <>
                   {filteredAndSortedJobs.length === 0 ? (
                     <div className="flex items-center justify-center h-full min-h-[500px]">
-                      <div className="text-center py-16 w-full">
+                      <div className="text-center py-8 md:py-16 w-full">
                         <div className="flex flex-col items-center justify-center text-muted-foreground mb-6">
                           <div className="bg-card p-4 rounded-full shadow-sm border border-border mb-4">
                             <SearchX className="h-8 w-8 text-muted-foreground" />

@@ -92,7 +92,7 @@ export default function ApplicationsView() {
             {isLoading ? (
               // Loading State
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <LoadingSpinner size="lg" />
                   <p className="text-center text-muted-foreground mt-4">
                     Loading your applications...
@@ -102,7 +102,7 @@ export default function ApplicationsView() {
             ) : error ? (
               // Error State
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="bg-destructive/10 rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-destructive" />
@@ -122,7 +122,7 @@ export default function ApplicationsView() {
             ) : filteredApplications.length === 0 ? (
               // Empty State
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="bg-muted rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-muted-foreground" />
@@ -158,7 +158,7 @@ export default function ApplicationsView() {
           <TabsContent value="confirmed" className="mt-0">
             {isLoading ? (
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <LoadingSpinner size="lg" />
                   <p className="text-center text-muted-foreground mt-4">
                     Loading your applications...
@@ -167,7 +167,7 @@ export default function ApplicationsView() {
               </Card>
             ) : error ? (
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="bg-destructive/10 rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-destructive" />
@@ -186,7 +186,7 @@ export default function ApplicationsView() {
               </Card>
             ) : filteredApplications.length === 0 ? (
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="bg-muted rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-muted-foreground" />
@@ -217,7 +217,7 @@ export default function ApplicationsView() {
           <TabsContent value="rejected" className="mt-0">
             {isLoading ? (
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <LoadingSpinner size="lg" />
                   <p className="text-center text-muted-foreground mt-4">
                     Loading your applications...
@@ -226,7 +226,7 @@ export default function ApplicationsView() {
               </Card>
             ) : error ? (
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="bg-destructive/10 rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-destructive" />
@@ -245,7 +245,7 @@ export default function ApplicationsView() {
               </Card>
             ) : filteredApplications.length === 0 ? (
               <Card>
-                <CardContent className="p-12">
+                <CardContent className="p-6 md:p-12">
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="bg-muted rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-muted-foreground" />

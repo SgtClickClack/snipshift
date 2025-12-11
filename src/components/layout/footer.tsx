@@ -4,7 +4,7 @@ import logo from '@/assets/logo-processed.png';
 export function Footer() {
   return (
     <footer className="bg-background dark:bg-steel-900 border-t-2 border-border dark:border-steel-800 text-muted-foreground dark:text-steel-300 pb-safe w-full overflow-x-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-1">

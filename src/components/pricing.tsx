@@ -69,7 +69,7 @@ export default function Pricing() {
   ];
 
   return (
-    <section className="py-20 bg-background border-t border-border overflow-x-hidden" id="pricing">
+    <section className="py-8 md:py-20 bg-background border-t border-border overflow-x-hidden" id="pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">

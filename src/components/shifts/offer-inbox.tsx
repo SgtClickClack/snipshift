@@ -94,7 +94,7 @@ export function OfferInbox() {
           <CardTitle>Job Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-6 md:py-12 text-center">
             <Inbox className="w-12 h-12 text-muted-foreground mb-4" />
             <p className="text-lg font-medium text-foreground mb-2">
               You're all caught up!

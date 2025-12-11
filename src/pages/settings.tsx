@@ -166,7 +166,7 @@ export default function SettingsPage() {
           <div className="lg:w-64 flex-shrink-0">
             <Card>
               <CardContent className="p-2">
-                <nav className="space-y-1">
+                <nav className="space-y-2 md:space-y-1">
                   {categories.map((category) => {
                     const Icon = category.icon;
                     return (

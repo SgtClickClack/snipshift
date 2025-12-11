@@ -198,7 +198,7 @@ export function AssignStaffModal({
               placeholder="Search by name or skill..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-4 md:pl-10"
             />
           </div>
 

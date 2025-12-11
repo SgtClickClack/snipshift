@@ -68,7 +68,7 @@ export default function JobFeedView() {
           {isLoading ? (
             // Loading State
             <Card>
-              <CardContent className="p-12">
+              <CardContent className="p-6 md:p-12">
                 <LoadingSpinner size="lg" />
                 <p className="text-center text-muted-foreground mt-4">Loading available shifts...</p>
               </CardContent>
@@ -76,7 +76,7 @@ export default function JobFeedView() {
           ) : error ? (
             // Error State
             <Card>
-              <CardContent className="p-12">
+              <CardContent className="p-6 md:p-12">
                 <div className="flex flex-col items-center justify-center text-center">
                   <div className="bg-destructive/10 rounded-full p-4 mb-4">
                     <svg
@@ -105,7 +105,7 @@ export default function JobFeedView() {
           ) : jobs.length === 0 ? (
             // Empty State
             <Card>
-              <CardContent className="p-12">
+              <CardContent className="p-6 md:p-12">
                 <div className="flex flex-col items-center justify-center text-center">
                   <div className="bg-muted rounded-full p-4 mb-4">
                     <svg

@@ -211,7 +211,7 @@ export default function SignupPage() {
 
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-background py-6 md:py-12">
       <div className="max-w-md mx-auto px-4">
         <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm">
           <CardHeader className="text-center bg-gradient-to-b from-muted/50 to-card rounded-t-lg border-b border-border/50">

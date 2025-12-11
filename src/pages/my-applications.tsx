@@ -232,7 +232,7 @@ export default function MyApplicationsPage() {
           <TabsContent value="active" className="mt-0">
             {activeApplications.length === 0 ? (
               <Card>
-                <CardContent className="p-12 text-center">
+                <CardContent className="p-6 md:p-12 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground mb-6">
                     <div className="bg-card p-4 rounded-full shadow-sm border border-border mb-4">
                       <Briefcase className="h-8 w-8 text-muted-foreground" />
@@ -266,7 +266,7 @@ export default function MyApplicationsPage() {
           <TabsContent value="past" className="mt-0">
             {pastApplications.length === 0 ? (
               <Card>
-                <CardContent className="p-12 text-center">
+                <CardContent className="p-6 md:p-12 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <div className="bg-card p-4 rounded-full shadow-sm border border-border mb-4">
                       <Briefcase className="h-8 w-8 text-muted-foreground" />

@@ -207,7 +207,7 @@ export default function ManageJobsPage() {
 
         {jobsList.length === 0 ? (
           <Card className="card-chrome">
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-6 md:p-12 text-center">
               <Briefcase className="h-16 w-16 mx-auto text-steel-400 mb-4" />
               <h2 className="text-xl font-bold text-steel-900 mb-2">No job listings yet</h2>
               <p className="text-steel-600 mb-6">Create your first job posting to start receiving applications.</p>

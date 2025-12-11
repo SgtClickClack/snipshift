@@ -147,7 +147,7 @@ export default function NotificationDropdown({
           </div>
         ) : (
           <ScrollArea className="max-h-[60vh]">
-            <div className="space-y-1 p-2">
+            <div className="space-y-2 md:space-y-1 p-2">
               {notifications.map((notification) => {
                 const IconComponent = getIcon(notification.type);
                 const colorClass = getColorClass(notification.type);

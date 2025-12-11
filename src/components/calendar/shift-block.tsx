@@ -131,7 +131,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
             {staffName}
           </div>
           {event.title && (
-            <div className="text-green-100 text-[10px] truncate">
+            <div className="text-green-100 text-xs truncate">
               {event.title}
             </div>
           )}

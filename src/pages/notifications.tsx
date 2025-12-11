@@ -161,7 +161,7 @@ export default function NotificationsPage() {
 
         {notificationsList.length === 0 ? (
           <Card className="card-chrome">
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-6 md:p-12 text-center">
               <Bell className="h-16 w-16 mx-auto text-steel-400 mb-4" />
               <h2 className="text-xl font-bold text-steel-900 mb-2">No notifications</h2>
               <p className="text-steel-600">You're all caught up! New notifications will appear here.</p>

@@ -109,7 +109,7 @@ export function InstallPrompt() {
           <Button
             size="sm"
             onClick={handleInstallClick}
-            className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold h-8 px-3 text-xs"
+            className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold h-10 md:h-8 px-3 text-xs md:text-xs"
           >
             <Download className="h-3 w-3 mr-1" />
             Install

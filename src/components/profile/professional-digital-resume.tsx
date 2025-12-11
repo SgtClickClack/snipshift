@@ -864,7 +864,7 @@ export default function ProfessionalDigitalResume({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-6 md:py-12 text-muted-foreground">
                     <ImageIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No portfolio images yet</p>
                     {isEditing && (

@@ -114,7 +114,7 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
                           </CardTitle>
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-0 pl-10">
+                      <CardContent className="pt-0 pl-4 md:pl-10">
                         <CardDescription className="text-xs">
                           {option.description}
                         </CardDescription>

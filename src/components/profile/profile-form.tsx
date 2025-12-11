@@ -580,7 +580,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           </div>
           
           {/* Title and Edit Button - positioned below banner with padding for avatar */}
-          <div className="px-6 pt-20 md:pt-24 pb-4">
+          <div className="px-4 md:px-6 pt-12 md:pt-20 lg:pt-24 pb-4">
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
                 <Star className="h-5 w-5" />
@@ -607,7 +607,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           </div>
           
           {/* Form fields */}
-          <div className="px-6 pb-12 space-y-4">
+          <div className="px-4 md:px-6 pb-6 md:pb-12 space-y-4">
             {renderBasicFields()}
             
             {user.currentRole === 'hub' && renderHubFields()}

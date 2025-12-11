@@ -109,7 +109,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-background py-6 md:py-12">
       <div className="max-w-md mx-auto px-4">
         <Card className="shadow-sm">
           <CardHeader className="text-center">
