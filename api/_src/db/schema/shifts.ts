@@ -14,7 +14,7 @@ export const attendanceStatusEnum = pgEnum('attendance_status', ['pending', 'com
 /**
  * Payment status enum
  */
-export const paymentStatusEnum = pgEnum('payment_status', ['UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED']);
+export const paymentStatusEnum = pgEnum('payment_status', ['UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED', 'PAYMENT_FAILED']);
 
 /**
  * Shifts table

@@ -357,7 +357,7 @@ export async function updateShift(
   updates: {
     status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
     attendanceStatus?: 'pending' | 'completed' | 'no_show';
-    paymentStatus?: 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'REFUNDED';
+    paymentStatus?: 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'REFUNDED' | 'PAYMENT_FAILED';
     paymentIntentId?: string | null;
     stripeChargeId?: string | null;
     applicationFeeAmount?: number | null;

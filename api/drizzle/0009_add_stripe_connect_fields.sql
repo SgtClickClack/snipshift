@@ -1,6 +1,13 @@
 -- Add payment_status enum
 DO $$ BEGIN
-    CREATE TYPE "public"."payment_status" AS ENUM('UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED');
+    CREATE TYPE "public"."payment_status" AS ENUM('UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED', 'PAYMENT_FAILED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Add PAYMENT_FAILED to existing enum if it doesn't exist
+DO $$ BEGIN
+    ALTER TYPE "public"."payment_status" ADD VALUE IF NOT EXISTS 'PAYMENT_FAILED';
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

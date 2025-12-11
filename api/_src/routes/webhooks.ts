@@ -4,6 +4,8 @@ import { stripe } from '../lib/stripe.js';
 import * as subscriptionsRepo from '../repositories/subscriptions.repository.js';
 import * as paymentsRepo from '../repositories/payments.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import * as shiftsRepo from '../repositories/shifts.repository.js';
+import * as notificationsService from '../lib/notifications-service.js';
 
 const router = express.Router();
 
@@ -189,6 +191,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
 
       case 'account.updated': {
         // Handle Stripe Connect account updates
+        // Check payouts_enabled and charges_enabled to determine if account is fully onboarded
         const account = event.data.object as any;
         const accountId = account.id;
 
@@ -206,22 +209,138 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           .limit(1);
 
         if (user) {
+          // Account is complete only if both charges and payouts are enabled
+          // This ensures barbers can both receive payments and get payouts
+          const isComplete = account.details_submitted === true && 
+                            account.charges_enabled === true && 
+                            account.payouts_enabled === true;
+
           // Update user's onboarding status
           await usersRepo.updateUser(user.id, {
-            stripeOnboardingComplete: account.details_submitted || false,
+            stripeOnboardingComplete: isComplete,
           });
 
-          console.info(`✅ Updated Connect account status for user ${user.id}`);
+          if (!isComplete) {
+            console.warn(`⚠️  Connect account ${accountId} lost verification. User ${user.id} locked from accepting shifts.`);
+          } else {
+            console.info(`✅ Updated Connect account status for user ${user.id} - fully onboarded`);
+          }
         }
         break;
       }
 
       case 'payment_intent.succeeded': {
         // Handle successful payment intent (after capture)
+        // Fail-safe: Ensure payment status is set to PAID even if manual capture flow missed it
         const paymentIntent = event.data.object as any;
         const paymentIntentId = paymentIntent.id;
+        const shiftId = paymentIntent.metadata?.shiftId;
 
-        // Update shift payment status
+        // Try to find shift by metadata first (more reliable), then fallback to paymentIntentId
+        let shift = null;
+        if (shiftId) {
+          shift = await shiftsRepo.getShiftById(shiftId);
+        }
+
+        // If not found by metadata, try by paymentIntentId
+        if (!shift) {
+          const db = await import('../db/index.js').then(m => m.getDb());
+          if (db) {
+            const { shifts } = await import('../db/schema.js');
+            const { eq } = await import('drizzle-orm');
+            
+            const [foundShift] = await db
+              .select()
+              .from(shifts)
+              .where(eq(shifts.paymentIntentId, paymentIntentId))
+              .limit(1);
+            
+            shift = foundShift;
+          }
+        }
+
+        if (shift) {
+          // Update shift payment status to PAID (fail-safe)
+          await shiftsRepo.updateShift(shift.id, {
+            paymentStatus: 'PAID',
+          });
+
+          // Store charge ID if available
+          const chargeId = paymentIntent.latest_charge;
+          if (chargeId && typeof chargeId === 'string') {
+            await shiftsRepo.updateShift(shift.id, {
+              stripeChargeId: chargeId,
+            });
+          }
+
+          console.info(`✅ Payment completed for shift ${shift.id} (webhook fail-safe)`);
+        } else {
+          console.warn(`⚠️  Shift not found for PaymentIntent ${paymentIntentId}`);
+        }
+        break;
+      }
+
+      case 'payment_intent.payment_failed': {
+        // Handle failed payment intent
+        const paymentIntent = event.data.object as any;
+        const paymentIntentId = paymentIntent.id;
+        const shiftId = paymentIntent.metadata?.shiftId;
+
+        // Try to find shift by metadata first, then fallback to paymentIntentId
+        let shift = null;
+        if (shiftId) {
+          shift = await shiftsRepo.getShiftById(shiftId);
+        }
+
+        // If not found by metadata, try by paymentIntentId
+        if (!shift) {
+          const db = await import('../db/index.js').then(m => m.getDb());
+          if (db) {
+            const { shifts } = await import('../db/schema.js');
+            const { eq } = await import('drizzle-orm');
+            
+            const [foundShift] = await db
+              .select()
+              .from(shifts)
+              .where(eq(shifts.paymentIntentId, paymentIntentId))
+              .limit(1);
+            
+            shift = foundShift;
+          }
+        }
+
+        if (shift) {
+          // Update shift payment status to PAYMENT_FAILED
+          await shiftsRepo.updateShift(shift.id, {
+            paymentStatus: 'PAYMENT_FAILED',
+          });
+
+          // Notify shop owner of payment failure
+          await notificationsService.notifyShopOfPaymentFailure(
+            shift.employerId,
+            shift.id,
+            shift.title,
+            paymentIntentId
+          );
+
+          console.warn(`⚠️  Payment failed for shift ${shift.id}, shop notified`);
+        } else {
+          console.warn(`⚠️  Payment failed for PaymentIntent ${paymentIntentId}, but shift not found`);
+        }
+        break;
+      }
+
+      case 'charge.refunded': {
+        // Handle charge refunds
+        const charge = event.data.object as any;
+        const paymentIntentId = charge.payment_intent;
+
+        if (!paymentIntentId) {
+          console.warn('⚠️  Charge refunded but no payment_intent found');
+          break;
+        }
+
+        // Find shift by paymentIntentId
         const db = await import('../db/index.js').then(m => m.getDb());
         if (!db) break;
 
@@ -235,26 +354,15 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           .limit(1);
 
         if (shift) {
-          await db
-            .update(shifts)
-            .set({
-              paymentStatus: 'PAID',
-              updatedAt: new Date(),
-            })
-            .where(eq(shifts.id, shift.id));
+          // Update shift payment status to REFUNDED
+          await shiftsRepo.updateShift(shift.id, {
+            paymentStatus: 'REFUNDED',
+          });
 
-          console.info(`✅ Payment completed for shift ${shift.id}`);
+          console.info(`✅ Charge refunded for shift ${shift.id}`);
+        } else {
+          console.warn(`⚠️  Charge refunded for PaymentIntent ${paymentIntentId}, but shift not found`);
         }
-        break;
-      }
-
-      case 'payment_intent.payment_failed': {
-        // Handle failed payment intent
-        const paymentIntent = event.data.object as any;
-        const paymentIntentId = paymentIntent.id;
-
-        // Log failure (could update shift status or notify user)
-        console.warn(`⚠️  Payment failed for PaymentIntent ${paymentIntentId}`);
         break;
       }
 
