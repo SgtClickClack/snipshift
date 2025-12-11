@@ -154,35 +154,34 @@ export async function getUnreadCount(userId: string): Promise<number> {
     return 0;
   }
 
-  // Count messages where user is receiver (not sender) and isRead is null
-  // We need to join with conversations to verify the user is a participant
-  // But actually, if they are receiving a message in a conversation, they are a participant.
-  // However, simpler approach: 
-  // Find conversations where user is a participant.
-  // Count messages in those conversations where senderId != userId AND isRead IS NULL.
+  try {
+    // Count messages where user is receiver (not sender) and isRead is null
+    // We need to join with conversations to verify the user is a participant
+    // Find conversations where user is a participant.
+    // Count messages in those conversations where senderId != userId AND isRead IS NULL.
 
-  // Better SQL approach with join:
-  // JOIN messages ON conversations.id = messages.conversation_id
-  // WHERE (participant1 = user OR participant2 = user)
-  // AND messages.sender_id != user
-  // AND messages.is_read IS NULL
+    // Using Drizzle:
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .where(
+        and(
+          or(
+            eq(conversations.participant1Id, userId),
+            eq(conversations.participant2Id, userId)
+          ),
+          ne(messages.senderId, userId), // Use ne() instead of raw SQL
+          isNull(messages.isRead)
+        )
+      );
 
-  // Using Drizzle:
-  const result = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(messages)
-    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-    .where(
-      and(
-        or(
-          eq(conversations.participant1Id, userId),
-          eq(conversations.participant2Id, userId)
-        ),
-        ne(messages.senderId, userId), // Use ne() instead of raw SQL
-        isNull(messages.isRead)
-      )
-    );
-
-  return Number(result[0]?.count || 0);
+    return Number(result[0]?.count || 0);
+  } catch (error: any) {
+    console.error('[getUnreadCount] Error:', error);
+    console.error('[getUnreadCount] Stack:', error?.stack);
+    // Return 0 on error to prevent breaking the UI
+    return 0;
+  }
 }
 
