@@ -101,10 +101,51 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login error:", error);
       
-      // Show a simple, consistent error message for all authentication failures
+      let errorTitle = "Login failed";
+      let errorDescription = "Invalid email or password";
+      
+      // Handle Firebase auth errors
+      if (error?.code) {
+        switch (error.code) {
+          case 'auth/network-request-failed':
+            errorTitle = "Network error";
+            errorDescription = "Please check your connection and try again";
+            break;
+          case 'auth/invalid-credential':
+          case 'auth/wrong-password':
+          case 'auth/user-not-found':
+          case 'auth/user-disabled':
+            // Authentication failures - keep default message
+            break;
+          case 'auth/too-many-requests':
+            errorTitle = "Too many attempts";
+            errorDescription = "Please try again later";
+            break;
+          case 'auth/internal-error':
+            errorTitle = "Server error";
+            errorDescription = "Something went wrong. Please try again";
+            break;
+          case 'auth/invalid-email':
+            errorTitle = "Invalid email";
+            errorDescription = "Please check your email address";
+            break;
+          default:
+            // For unknown Firebase errors, show generic message
+            errorDescription = "Something went wrong. Please try again";
+        }
+      } else if (!error?.code && error?.message) {
+        // Handle non-Firebase errors (e.g., network errors without code)
+        if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorTitle = "Network error";
+          errorDescription = "Please check your connection and try again";
+        } else {
+          errorDescription = "Something went wrong. Please try again";
+        }
+      }
+      
       toast({
-        title: "Login failed",
-        description: "Invalid email or password",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {
@@ -161,8 +202,15 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground focus:outline-none touch-manipulation z-elevated"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setShowPassword(!showPassword);
+                      }
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded touch-manipulation z-elevated"
                     aria-label={showPassword ? "Hide password" : "Show password"}
+                    tabIndex={0}
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
