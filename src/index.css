@@ -325,12 +325,17 @@ button:active, a:active, [role="button"]:active {
 
 /* Dark mode day background - ensure visibility */
 .dark .rbc-day-bg {
-  border-color: hsl(var(--border) / 0.8) !important;
+  border-color: #27272a !important; /* Subtle dark mode grid lines */
   background-color: hsl(var(--background)) !important;
 }
 
 .rbc-time-slot {
   border-top-color: hsl(var(--border) / 0.5);
+}
+
+/* Dark mode grid lines - subtle */
+.dark .rbc-time-slot {
+  border-top-color: #27272a !important;
 }
 
 .rbc-time-content {
@@ -375,17 +380,17 @@ button:active, a:active, [role="button"]:active {
 
 /* Events with high contrast and color coding */
 .rbc-event {
-  border-radius: 4px;
-  padding: 4px 6px;
+  border-radius: 6px;
+  padding: 8px 12px;
   border: 2px solid;
   font-weight: 500;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .rbc-event-content {
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.4;
+  font-size: 0.9375rem; /* 15px - slightly larger */
+  font-weight: 600; /* Semi-bold */
+  line-height: 1.5;
 }
 
 /* Event hover state */
@@ -507,14 +512,14 @@ button:active, a:active, [role="button"]:active {
   border-right-color: hsl(var(--border) / 0.6);
 }
 
-/* Dark mode grid lines - lighter for better visibility */
+/* Dark mode grid lines - subtle */
 .dark .rbc-month-view,
 .dark .rbc-time-view {
-  border-color: hsl(var(--border) / 0.8) !important;
+  border-color: #27272a !important;
 }
 
 .dark .rbc-month-row {
-  border-color: hsl(var(--border) / 0.8) !important;
+  border-color: #27272a !important;
 }
 
 .dark .rbc-day-bg + .rbc-day-bg {
