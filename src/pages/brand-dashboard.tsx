@@ -427,6 +427,11 @@ export default function BrandDashboard() {
                 <CardTitle>Brand Profile</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Use the upload buttons in the header above to update your banner image and logo/profile picture.
+                  </p>
+                </div>
                 <div>
                   <Label htmlFor="companyName">Company Name</Label>
                   <Input
@@ -450,14 +455,6 @@ export default function BrandDashboard() {
                     id="website"
                     placeholder="https://your-website.com"
                     data-testid="input-website"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    placeholder="https://example.com/logo.png"
-                    data-testid="input-logo-url"
                   />
                 </div>
                 <Button className="w-full" data-testid="button-save-profile">
