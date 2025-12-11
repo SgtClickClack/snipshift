@@ -2002,9 +2002,18 @@ app.get('/api/conversations/unread-count', authenticateUser, asyncHandler(async 
     return;
   }
 
-  const unreadCount = await messagesRepo.getUnreadCount(userId);
-
-  res.status(200).json({ unreadCount });
+  try {
+    const unreadCount = await messagesRepo.getUnreadCount(userId);
+    res.status(200).json({ unreadCount });
+  } catch (error: any) {
+    console.error('[GET /api/conversations/unread-count] Error:', error);
+    console.error('[GET /api/conversations/unread-count] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Failed to fetch unread count',
+      error: error?.message || 'Unknown error',
+      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
+  }
 }));
 
 // Report endpoints

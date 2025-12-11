@@ -338,13 +338,14 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
   // Allow users to see their own shifts, or potentially public profile shifts
   // For Shop Dashboard, we typically want to see all statuses
   
-  // Fetch both shifts and legacy jobs for this user
-  const [shifts, jobsResult] = await Promise.all([
-    shiftsRepo.getShiftsByEmployer(userId),
-    jobsRepo.getJobs({ businessId: userId })
-  ]);
+  try {
+    // Fetch both shifts and legacy jobs for this user
+    const [shifts, jobsResult] = await Promise.all([
+      shiftsRepo.getShiftsByEmployer(userId),
+      jobsRepo.getJobs({ businessId: userId })
+    ]);
 
-  const jobs = jobsResult?.data || [];
+    const jobs = jobsResult?.data || [];
 
   // Normalize shifts to unified format
   const normalizedShifts = await Promise.all(
@@ -456,14 +457,23 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
     })
   );
 
-  // Combine and sort by createdAt (newest first)
-  const allListings = [...normalizedShifts, ...normalizedJobs].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return dateB - dateA; // Descending order
-  });
+    // Combine and sort by createdAt (newest first)
+    const allListings = [...normalizedShifts, ...normalizedJobs].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Descending order
+    });
 
-  res.status(200).json(allListings);
+    res.status(200).json(allListings);
+  } catch (error: any) {
+    console.error('[GET /api/shifts/shop/:userId] Error:', error);
+    console.error('[GET /api/shifts/shop/:userId] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Failed to fetch shop shifts',
+      error: error?.message || 'Unknown error',
+      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
+  }
 }));
 
 // Get shift offers for a professional (shifts where assigneeId == current user AND status == 'invited')
