@@ -87,40 +87,40 @@ export default function RoleSelectionPage() {
       title: "Professional",
       description: "Barber, stylist, or beauty professional",
       icon: UserCheck,
-      color: "border-steel-300 bg-steel-50/80 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
+      color: "border-steel-700 bg-steel-800/80 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     },
     {
       id: "hub" as const,
       title: "Shop Owner",
       description: "Own a barbershop or salon",
       icon: Store,
-      color: "border-chrome-light bg-chrome-light/20 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
+      color: "border-steel-700 bg-steel-800/60 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     },
     {
       id: "brand" as const,
       title: "Brand",
       description: "Product company or brand representative",
       icon: Award,
-      color: "border-steel-400 bg-steel-100/60 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
+      color: "border-steel-700 bg-steel-800/70 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     },
     {
       id: "trainer" as const,
       title: "Trainer",
       description: "Educator offering courses and training",
       icon: GraduationCap,
-      color: "border-chrome-dark bg-chrome-dark/10 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
+      color: "border-steel-700 bg-steel-800/60 hover:bg-red-accent/10 hover:border-red-accent/60 hover:shadow-lg"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-steel-50 via-white to-chrome-light/20 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-steel-900 via-steel-800 to-steel-950 flex items-center justify-center p-6">
       <div className="w-full max-w-3xl">
         <div className="text-center mb-12">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mb-6 shadow-lg border-2 border-chrome-light">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mb-6 shadow-lg border-2 border-steel-700">
             <Scissors className="text-white text-3xl w-10 h-10" />
           </div>
-          <h1 className="text-4xl font-bold text-steel-900 mb-3 tracking-tight">Welcome to Snipshift!</h1>
-          <p className="text-steel-600 text-lg max-w-md mx-auto leading-relaxed">
+          <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight">Welcome to Snipshift!</h1>
+          <p className="text-steel-300 text-lg max-w-md mx-auto leading-relaxed">
             Select one or more roles to personalize your experience.
           </p>
         </div>
@@ -140,21 +140,21 @@ export default function RoleSelectionPage() {
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg bg-card/80 shadow-sm ${isSelected ? 'ring-2 ring-red-accent' : ''}`}>
-                      <IconComponent className="h-7 w-7 text-steel-700" />
+                    <div className={`p-2 rounded-lg bg-steel-700/50 shadow-sm ${isSelected ? 'ring-2 ring-red-accent' : ''}`}>
+                      <IconComponent className="h-7 w-7 text-steel-200" />
                     </div>
                     <div className="flex-1">
-                      <CardTitle className="text-xl font-bold text-steel-900">
+                      <CardTitle className="text-xl font-bold text-foreground">
                         {role.title}
                       </CardTitle>
-                      <div className="text-sm text-steel-600 mt-1">
+                      <div className="text-sm text-steel-300 mt-1">
                         {isSelected ? 'Selected' : 'Tap to select'}
                       </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <p className="text-steel-600 text-base leading-relaxed">
+                  <p className="text-steel-300 text-base leading-relaxed">
                     {role.description}
                   </p>
                 </CardContent>
@@ -172,7 +172,7 @@ export default function RoleSelectionPage() {
           >
             {isLoading ? "Setting up your account..." : selectedRoles.length > 1 ? "Continue with selected roles" : "Continue to Dashboard"}
           </Button>
-          <p className="text-steel-500 text-sm mt-6 max-w-sm mx-auto">
+          <p className="text-steel-400 text-sm mt-6 max-w-sm mx-auto">
             You can switch roles anytime from the top navigation.
           </p>
         </div>
