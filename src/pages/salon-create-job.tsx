@@ -207,8 +207,7 @@ export default function SalonCreateJobPage() {
       estimatedTotalPay: estimatedTotalPay,
     };
 
-    // Console log the payload as requested
-    console.log('Job Post Payload:', payload);
+    // Payload prepared for submission
   };
 
   const onSaveDraft = () => {

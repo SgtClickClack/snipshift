@@ -250,7 +250,7 @@ export default function MyApplicationsPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {activeApplications.map((application) => (
+                {(activeApplications || []).map((application) => (
                   <ApplicationCard
                     key={application.id}
                     application={application}
@@ -280,7 +280,7 @@ export default function MyApplicationsPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {pastApplications.map((application) => (
+                {(pastApplications || []).map((application) => (
                   <ApplicationCard
                     key={application.id}
                     application={application}

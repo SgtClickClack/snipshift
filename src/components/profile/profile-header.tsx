@@ -118,10 +118,7 @@ export default function ProfileHeader({
           // But if base URLs are different, it's a new image - update with prop
           if (currentBaseUrl && propBaseUrl && currentBaseUrl === propBaseUrl && current.includes('?t=')) {
             // Same image, current has cache-busting - keep current state
-            console.log('Banner useEffect - Preserving cache-busted URL (same base):', { 
-              current, 
-              prop: propUrlString 
-            });
+            // Preserving cache-busted URL (same base)
             return current;
           }
           
@@ -130,17 +127,11 @@ export default function ProfileHeader({
           const newUrlWithCacheBust = propUrlString.includes('?') 
             ? propUrlString 
             : `${propUrlString}?t=${Date.now()}`;
-          console.log('Banner useEffect - New image detected, updating with cache-bust:', { 
-            from: current, 
-            to: newUrlWithCacheBust 
-          });
+          // New image detected, updating with cache-bust
           return newUrlWithCacheBust;
         }
         
-        console.log('Banner useEffect - Prop changed, updating state:', { 
-          from: current, 
-          to: propUrlString 
-        });
+        // Prop changed, updating state
         return propUrlString;
       }
       return current;
@@ -286,7 +277,7 @@ export default function ProfileHeader({
         );
       });
 
-      console.log('Banner Firebase upload response:', downloadURL);
+      // Banner Firebase upload successful
 
       // OPTIMISTIC UPDATE: Update UI immediately with Firebase URL (don't wait for API)
       // Ensure downloadURL is a string
@@ -299,14 +290,9 @@ export default function ProfileHeader({
       const firebaseUrlWithCacheBust = `${downloadURL}?t=${Date.now()}`;
       const previousBannerUrl = localBannerUrl; // Store previous value for rollback
       
-      console.log('Banner - Previous URL:', previousBannerUrl);
-      console.log('Banner - Setting new URL (optimistic):', firebaseUrlWithCacheBust);
-      console.log('Setting bannerUrl to string:', firebaseUrlWithCacheBust);
-      
       // FORCE IMMEDIATE UPDATE: Update state immediately so user sees the change instantly
       // This must happen BEFORE any async operations to ensure instant UI feedback
       setLocalBannerUrl(firebaseUrlWithCacheBust);
-      console.log('Banner state updated optimistically with URL:', firebaseUrlWithCacheBust);
       
       // Clear any pending file/cropper state - we now have the live URL
       if (bannerImageSrc) {
@@ -316,7 +302,6 @@ export default function ProfileHeader({
       
       // Call parent callback immediately to update form data (this triggers parent state update)
       onBannerUpload?.(firebaseUrlWithCacheBust);
-      console.log('Banner - Parent callback called with:', firebaseUrlWithCacheBust);
 
       // Now save to database in the background (don't await before showing UI)
       try {
@@ -331,9 +316,7 @@ export default function ProfileHeader({
         }
 
         const responseData = await apiResponse.json();
-        console.log('Banner API upload response:', responseData);
-        console.log('Banner API response keys:', Object.keys(responseData || {}));
-        console.log('Banner API response.bannerUrl:', responseData?.bannerUrl);
+        // Banner API upload response received
 
         // Extract URL from API response - check multiple possible paths
         let finalUrl: string | null = null;
@@ -344,15 +327,13 @@ export default function ProfileHeader({
           finalUrl = responseData.bannerUrl;
         } else {
           // API didn't return bannerUrl - keep using Firebase URL (already set optimistically)
-          console.log('Banner - API response missing bannerUrl, keeping Firebase URL:', firebaseUrlWithCacheBust);
+          // API response missing bannerUrl, keeping Firebase URL
           finalUrl = downloadURL; // Use the Firebase URL we already have
         }
 
         // Only update if we have a valid string URL
         if (finalUrl && typeof finalUrl === 'string') {
           const apiUrlWithCacheBust = `${finalUrl}?t=${Date.now()}`;
-          console.log('Setting bannerUrl to string:', apiUrlWithCacheBust);
-          console.log('Banner - Updating state with API response URL:', apiUrlWithCacheBust);
           setLocalBannerUrl(apiUrlWithCacheBust);
           // Clear any pending file/cropper state - we now have the live URL
           if (bannerImageSrc) {
@@ -360,7 +341,6 @@ export default function ProfileHeader({
             setBannerImageSrc(null);
           }
           onBannerUpload?.(apiUrlWithCacheBust);
-          console.log('Banner state updated with API response URL:', apiUrlWithCacheBust);
         } else {
           console.error('Banner - Failed to extract valid URL string from API response:', responseData);
         }
@@ -376,7 +356,7 @@ export default function ProfileHeader({
         
         // Ensure previousBannerUrl is a string before reverting
         const safePreviousUrl = (typeof previousBannerUrl === 'string' ? previousBannerUrl : null) || null;
-        console.log('Banner - Reverting to previous URL (type-checked):', safePreviousUrl);
+        // Reverting to previous URL
         setLocalBannerUrl(safePreviousUrl);
         onBannerUpload?.(safePreviousUrl || '');
         
@@ -517,7 +497,7 @@ export default function ProfileHeader({
         );
       });
 
-      console.log('Avatar Firebase upload response:', downloadURL);
+      // Avatar Firebase upload successful
 
       // The "Real" Await: Call API to update profile in database
       const apiResponse = await apiRequest('PUT', '/api/me', {
@@ -531,7 +511,7 @@ export default function ProfileHeader({
       }
 
       const responseData = await apiResponse.json();
-      console.log('Avatar API upload response:', responseData);
+      // Avatar API upload response received
 
       // Check the Result: Verify we got a valid URL back
       if (!responseData.avatarUrl || typeof responseData.avatarUrl !== 'string') {
@@ -583,13 +563,7 @@ export default function ProfileHeader({
     ? bannerImageSrc  // Show cropper preview while cropping
     : (localBannerUrl || bannerUrl || null); // Show live URL otherwise
 
-  // Debug log to track URL changes
-  useEffect(() => {
-    if (displayBannerUrl) {
-      console.log('ProfileHeader - Display banner URL changed:', displayBannerUrl.substring(0, 100));
-      console.log('ProfileHeader - showBannerCropper:', showBannerCropper, 'localBannerUrl:', localBannerUrl?.substring(0, 50), 'bannerUrl prop:', bannerUrl?.substring(0, 50));
-    }
-  }, [displayBannerUrl, showBannerCropper, localBannerUrl, bannerUrl]);
+  // Display banner URL is computed from state and props
 
   return (
     <div className={cn("relative w-full max-w-full mb-16", className)}>

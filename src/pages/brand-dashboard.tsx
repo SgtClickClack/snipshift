@@ -93,7 +93,6 @@ export default function BrandDashboard() {
         : (user.bannerUrl as any)?.bannerUrl || (user.bannerUrl as any)?.url || null;
       
       if (extractedBannerUrl && extractedBannerUrl !== profileData.bannerUrl) {
-        console.log('BrandDashboard - Syncing bannerUrl from user prop:', extractedBannerUrl);
         setProfileData(prev => ({ ...prev, bannerUrl: extractedBannerUrl }));
       }
     }
@@ -105,7 +104,6 @@ export default function BrandDashboard() {
     if (user) {
       const avatarUrl = user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || '';
       if (avatarUrl && avatarUrl !== profileData.avatarUrl) {
-        console.log('BrandDashboard - Syncing avatarUrl from user prop:', avatarUrl);
         setProfileData(prev => ({ ...prev, avatarUrl }));
       }
     }

@@ -218,7 +218,7 @@ export default function ManageJobsPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {jobsList.map((job) => (
+            {(jobsList || []).map((job) => (
               <Card key={job.id} className="card-chrome">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -336,7 +336,7 @@ export default function ManageJobsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {applications.map((application) => (
+                {(applications || []).map((application) => (
                   <Card key={application.id} className="card-chrome">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">

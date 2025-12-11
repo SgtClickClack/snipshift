@@ -272,7 +272,7 @@ export default function ProfessionalOverview({
     if (!jobs || jobs.length === 0) return [];
 
     const userJobIds = new Set(
-      bookings
+      (bookings || [])
         .map((booking) => booking.jobId || booking.shiftId)
         .filter(Boolean)
     );
@@ -432,9 +432,9 @@ export default function ProfessionalOverview({
               <CardTitle>Up Next</CardTitle>
             </CardHeader>
             <CardContent>
-              {upcomingShifts.length > 0 ? (
+              {(upcomingShifts || []).length > 0 ? (
                 <div className="space-y-4">
-                  {upcomingShifts.map((shift, index) => (
+                  {(upcomingShifts || []).map((shift, index) => (
                     <div
                       key={shift.booking.id || index}
                       className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -499,9 +499,9 @@ export default function ProfessionalOverview({
               <CardTitle>Action Items</CardTitle>
             </CardHeader>
             <CardContent>
-              {actionItems.length > 0 ? (
+              {(actionItems || []).length > 0 ? (
                 <div className="space-y-3">
-                  {actionItems.map((item) => (
+                  {(actionItems || []).map((item) => (
                     <div
                       key={item.id}
                       className="flex items-start gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
@@ -547,9 +547,9 @@ export default function ProfessionalOverview({
               <CardTitle>Recommended for You</CardTitle>
             </CardHeader>
             <CardContent>
-              {recommendedJobs.length > 0 ? (
+              {(recommendedJobs || []).length > 0 ? (
                 <div className="space-y-4">
-                  {recommendedJobs.map((job) => (
+                  {(recommendedJobs || []).map((job) => (
                     <div
                       key={job.id}
                       className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"

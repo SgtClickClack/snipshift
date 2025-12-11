@@ -118,14 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     }
                 }
 
-                // Debug logging for E2E tests
-                if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
-                    console.log('[AuthContext] Setting test user:', {
-                        currentRole,
-                        roles: rolesList,
-                        isOnboarded
-                    });
-                }
+                // Test user authentication (E2E mode)
 
                 setUser({
                     id: userId,

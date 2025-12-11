@@ -228,7 +228,7 @@ export default function MessagesPage() {
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
-                    {conversations.map((conv) => {
+                    {(conversations || []).map((conv) => {
                       const isSelected = conv.id === selectedConversationId;
                       const unreadCount = 0; // Could be calculated from latestMessage
 

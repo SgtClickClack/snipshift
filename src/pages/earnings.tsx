@@ -136,7 +136,6 @@ export default function EarningsPage() {
       description: `Invoice for transaction ${transactionId} will be downloaded.`,
     });
     // In production, this would trigger a download
-    console.log('Download invoice:', invoiceUrl);
   };
 
   const getStatusBadge = (status: 'completed' | 'pending' | 'failed') => {

@@ -116,7 +116,6 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
         : (user.bannerUrl as any)?.bannerUrl || (user.bannerUrl as any)?.url || null;
       
       if (extractedBannerUrl && extractedBannerUrl !== formData.bannerUrl) {
-        console.log('ProfileForm - Syncing bannerUrl from user prop:', extractedBannerUrl);
         setFormData(prev => ({ ...prev, bannerUrl: extractedBannerUrl }));
       }
     }
@@ -127,7 +126,6 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     if (user) {
       const avatarUrl = user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || '';
       if (avatarUrl && avatarUrl !== formData.avatarUrl) {
-        console.log('ProfileForm - Syncing avatarUrl from user prop:', avatarUrl);
         setFormData(prev => ({ ...prev, avatarUrl }));
       }
     }

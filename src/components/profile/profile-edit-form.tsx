@@ -94,7 +94,6 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
         : (profile.bannerImageURL as any)?.bannerUrl || (profile.bannerImageURL as any)?.url || null;
       
       if (extractedBannerUrl && extractedBannerUrl !== formData.bannerImageURL) {
-        console.log('ProfileEditForm - Syncing bannerImageURL from profile prop:', extractedBannerUrl);
         setFormData(prev => ({ ...prev, bannerImageURL: extractedBannerUrl }));
       }
     }
@@ -108,7 +107,6 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
         : (profile.profileImageURL as any)?.avatarUrl || (profile.profileImageURL as any)?.url || null;
       
       if (extractedAvatarUrl && extractedAvatarUrl !== formData.profileImageURL) {
-        console.log('ProfileEditForm - Syncing profileImageURL from profile prop:', extractedAvatarUrl);
         setFormData(prev => ({ ...prev, profileImageURL: extractedAvatarUrl }));
       }
     }

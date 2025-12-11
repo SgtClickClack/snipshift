@@ -334,7 +334,7 @@ export default function ShopDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {shifts.map((shift) => {
+                    {(shifts || []).map((shift) => {
                       const itemType = (shift as any)._type || 'job';
                       const isShift = itemType === 'shift';
                       // Check ownership: shifts use employerId, jobs use businessId

@@ -169,7 +169,7 @@ export default function NotificationsPage() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {notificationsList.map((notification) => (
+            {(notificationsList || []).map((notification) => (
               <Card
                 key={notification.id}
                 className={`card-chrome cursor-pointer transition-colors ${

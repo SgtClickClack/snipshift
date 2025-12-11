@@ -102,7 +102,6 @@ export default function HubDashboard() {
         : (user.bannerUrl as any)?.bannerUrl || (user.bannerUrl as any)?.url || null;
       
       if (extractedBannerUrl && extractedBannerUrl !== profileData.bannerUrl) {
-        console.log('HubDashboard - Syncing bannerUrl from user prop:', extractedBannerUrl);
         setProfileData(prev => ({ ...prev, bannerUrl: extractedBannerUrl }));
       }
     }
@@ -114,7 +113,6 @@ export default function HubDashboard() {
     if (user) {
       const avatarUrl = user.avatarUrl || user.profileImageURL || user.profileImage || '';
       if (avatarUrl && avatarUrl !== profileData.avatarUrl) {
-        console.log('HubDashboard - Syncing avatarUrl from user prop:', avatarUrl);
         setProfileData(prev => ({ ...prev, avatarUrl }));
       }
     }

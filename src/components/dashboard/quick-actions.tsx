@@ -152,7 +152,7 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
       </CardHeader>
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10">
-          {actionsConfig.map((action, index) => {
+          {(actionsConfig || []).map((action, index) => {
             const route = getRouteForAction(action.action);
             const content = (
               <>

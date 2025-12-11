@@ -183,7 +183,7 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {statsConfig.map((stat, index) => {
+      {(statsConfig || []).map((stat, index) => {
         // Map variants to distinct brand-aligned styles
         const getVariantStyles = (variant: string | undefined) => {
           switch (variant) {

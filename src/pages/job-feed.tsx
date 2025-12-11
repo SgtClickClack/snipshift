@@ -67,7 +67,7 @@ export default function JobFeedPage() {
   const jobList = useMemo(() => {
     if (!shifts) return [];
 
-    return shifts.map((shift: Shift) => {
+    return (shifts || []).map((shift: Shift) => {
       // Extract city and state from location string if needed
       let locationCity = 'Unknown';
       let locationState = '';
@@ -328,7 +328,7 @@ export default function JobFeedPage() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {filteredAndSortedJobs.map((job) => (
+                      {(filteredAndSortedJobs || []).map((job) => (
                         <EnhancedJobCard
                           key={job.id}
                           job={job as JobCardData & { distance?: number; estimatedTotalPay?: number; hours?: number }}
