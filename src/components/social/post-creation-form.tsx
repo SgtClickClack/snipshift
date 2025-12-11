@@ -127,7 +127,7 @@ export default function PostCreationForm({
 
             {/* Image Preview */}
             {images.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {images.map((image, index) => (
                   <div key={index} className="relative group">
                     <div className="aspect-square bg-steel-200 rounded-lg overflow-hidden">

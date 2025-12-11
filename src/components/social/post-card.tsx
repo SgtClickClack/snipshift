@@ -182,7 +182,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
           {/* Images */}
           {post.images && post.images.length > 0 && (
-            <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
               {post.images.slice(0, 4).map((image, index) => (
                 <div key={`${image}-${index}`} className="aspect-square bg-muted rounded-lg overflow-hidden">
                   <img

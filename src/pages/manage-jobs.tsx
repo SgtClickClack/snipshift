@@ -319,7 +319,7 @@ export default function ManageJobsPage() {
 
         {/* Applicants Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Applicants</DialogTitle>
               <DialogDescription>

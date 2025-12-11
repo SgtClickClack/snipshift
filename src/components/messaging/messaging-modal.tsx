@@ -58,7 +58,7 @@ export default function MessagingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[600px] p-0" data-testid="messaging-modal">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] h-[600px] p-0" data-testid="messaging-modal">
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle>Messages</DialogTitle>

@@ -607,7 +607,7 @@ export default function BrandDashboard() {
 
       {/* Create Post Modal */}
       <Dialog open={showPostModal} onOpenChange={setShowPostModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Social Post</DialogTitle>
           </DialogHeader>

@@ -43,7 +43,7 @@ function PaymentModal({ content, isOpen, onClose, onSuccess }: PaymentModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[95vw] max-w-md">
         <DialogHeader>
           <DialogTitle>Complete Purchase</DialogTitle>
         </DialogHeader>
@@ -66,7 +66,7 @@ function PaymentModal({ content, isOpen, onClose, onSuccess }: PaymentModalProps
                 •••• •••• •••• 4242
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-neutral-700">Expiry</label>
                 <div className="mt-1 p-3 border rounded-lg bg-neutral-50 text-neutral-600">

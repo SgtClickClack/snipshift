@@ -226,7 +226,7 @@ export default function MultiStepJobForm({
         {/* Step 2: Compensation & Location */}
         {currentStep === 2 && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="date">Date *</Label>
                 <Input
@@ -260,7 +260,7 @@ export default function MultiStepJobForm({
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="payRate">Pay Rate *</Label>
                 <Input
@@ -290,7 +290,7 @@ export default function MultiStepJobForm({
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="city">City *</Label>
                 <Input
@@ -336,7 +336,7 @@ export default function MultiStepJobForm({
                 <p className="text-muted-foreground mt-1">{formData.description}</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center">
                   <Calendar className="mr-2 h-4 w-4 text-primary" />
                   <span>{format(new Date(formData.date), "EEE, MMM d, yyyy")} at {formData.startTime}</span>

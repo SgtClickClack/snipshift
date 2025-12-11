@@ -58,7 +58,7 @@ export function SmartFillConfirmationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Smart Fill Roster - Review Matches</DialogTitle>
           <DialogDescription>

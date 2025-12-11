@@ -129,7 +129,7 @@ export default function CreateShiftModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="create-shift-modal">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="create-shift-modal">
         <DialogHeader>
           <DialogTitle>Create New Shift</DialogTitle>
           <DialogDescription>
@@ -160,7 +160,7 @@ export default function CreateShiftModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="date">Date *</Label>
               <Input
@@ -171,7 +171,7 @@ export default function CreateShiftModal({
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <Label htmlFor="startTime">Start Time *</Label>
                 <Input
@@ -195,7 +195,7 @@ export default function CreateShiftModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="hourlyRate">Hourly Rate ($) *</Label>
               <Input

@@ -228,7 +228,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     // When editing, show all fields
     return (
       <>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="displayName">Display Name</Label>
             <Input
@@ -252,7 +252,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="phone">Phone</Label>
             <Input
@@ -296,7 +296,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
 
   const renderHubFields = () => (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="businessName">Business Name</Label>
           <Input
@@ -330,7 +330,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       
       <div>
         <Label>Business Address</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
           <Input
             placeholder="Street Address"
             value={formData.address.street}
@@ -472,7 +472,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
           />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="homeCity">Home Location</Label>
             <Input
@@ -533,7 +533,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
 
   const renderTrainerFields = () => (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="yearsExperience">Years of Experience</Label>
           <Input

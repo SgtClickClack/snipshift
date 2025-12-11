@@ -434,7 +434,7 @@ export default function TrainerDashboard() {
 
       {/* Upload Content Modal */}
       <Dialog open={showContentModal} onOpenChange={setShowContentModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload Training Content</DialogTitle>
           </DialogHeader>

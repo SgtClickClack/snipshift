@@ -830,7 +830,7 @@ export default function ProfessionalDigitalResume({
               </CardHeader>
               <CardContent>
                 {profile.portfolio.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {profile.portfolio.map((item, index) => (
                       <div
                         key={item.id}

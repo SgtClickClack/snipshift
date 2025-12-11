@@ -498,7 +498,7 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
             <CardContent>
               <div className="space-y-3">
                 {DAYS_OF_WEEK.map((day) => (
-                  <div key={day} className="grid grid-cols-3 gap-3 items-center">
+                  <div key={day} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
                     <Label className="capitalize font-medium">{day}</Label>
                     <Input
                       type="time"
