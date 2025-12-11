@@ -629,7 +629,7 @@ export default function ProfessionalDashboard() {
               </div>
             ) : (
               <div className="space-y-6">
-                {filteredJobs.map((job) => {
+                {(filteredJobs || []).map((job) => {
                   const hasApplied = job.applicants?.includes(user?.id || "");
                   
                   return (
@@ -699,7 +699,7 @@ export default function ProfessionalDashboard() {
                           <div className="mb-4">
                             <p className="text-sm font-medium text-muted-foreground mb-2">Required Skills:</p>
                             <div className="flex flex-wrap gap-1">
-                              {job.skillsRequired.map((skill, index) => (
+                              {(job.skillsRequired || []).map((skill, index) => (
                                 <Badge 
                                   key={`${skill}-${index}`}
                                   variant="secondary"

@@ -46,7 +46,7 @@ export default function ProfessionalMessagesPage() {
     : null;
 
   // Filter conversations based on search
-  const filteredConversations = conversations.filter(conv =>
+  const filteredConversations = (conversations || []).filter(conv =>
     conv.salonName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -198,7 +198,7 @@ export default function ProfessionalMessagesPage() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {filteredConversations.map((conversation) => (
+                {(filteredConversations || []).map((conversation) => (
                   <button
                     key={conversation.id}
                     onClick={() => handleSelectConversation(conversation.id)}
@@ -314,7 +314,7 @@ export default function ProfessionalMessagesPage() {
                     <p className="text-sm mt-2">Start the conversation!</p>
                   </div>
                 ) : (
-                  groupMessagesByDate(selectedConversation.messages).map((group, groupIndex) => (
+                  groupMessagesByDate(selectedConversation?.messages || []).map((group, groupIndex) => (
                     <div key={groupIndex}>
                       {/* Date Header */}
                       <div className="flex items-center justify-center my-4">
@@ -324,7 +324,7 @@ export default function ProfessionalMessagesPage() {
                       </div>
 
                       {/* Messages */}
-                      {group.messages.map((message) => {
+                      {(group.messages || []).map((message) => {
                         if (message.type === 'system') {
                           return (
                             <div key={message.id} className="flex items-center justify-center my-2">

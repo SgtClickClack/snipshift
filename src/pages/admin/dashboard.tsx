@@ -339,7 +339,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {usersData?.data.map((user) => (
+                        {(usersData?.data || []).map((user) => (
                           <tr key={user.id} className="border-b border-border hover:bg-muted/50">
                             <td className="p-3">{user.name}</td>
                             <td className="p-3 text-muted-foreground">{user.email}</td>
@@ -419,7 +419,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {jobsData?.data.map((job) => (
+                        {(jobsData?.data || []).map((job) => (
                           <tr key={job.id} className="border-b border-border hover:bg-muted/50">
                             <td className="p-3 font-medium">{job.title}</td>
                             <td className="p-3 text-muted-foreground">{job.shopName || 'N/A'}</td>
@@ -465,7 +465,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {reportsData?.data.map((report) => (
+                        {(reportsData?.data || []).map((report) => (
                           <tr key={report.id} className="border-b border-border hover:bg-muted/50">
                             <td className="p-3">
                               <div>

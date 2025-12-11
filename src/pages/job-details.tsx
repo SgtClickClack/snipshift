@@ -450,7 +450,7 @@ export default function JobDetailsPage() {
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-foreground mb-4">Requirements</h2>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  {requirements.map((req, index) => (
+                  {(requirements || []).map((req, index) => (
                     <li key={`${req.substring(0, 20)}-${index}`}>{req}</li>
                   ))}
                 </ul>

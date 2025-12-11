@@ -410,7 +410,7 @@ export default function BrandDashboard() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {posts.map((post) => (
+                {(posts || []).map((post) => (
                   <Card key={post.id} className="overflow-hidden" data-testid={`post-card-${post.id}`}>
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-4">

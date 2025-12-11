@@ -352,7 +352,7 @@ export default function MessagesPage() {
                       <p className="text-sm mt-2">Start the conversation!</p>
                     </div>
                   ) : (
-                    conversationDetail.messages.map((message) => {
+                    (conversationDetail?.messages || []).map((message) => {
                       const isMe = message.senderId === user?.id;
                       return (
                         <div

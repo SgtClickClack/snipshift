@@ -246,7 +246,7 @@ export default function WalletPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  plans.map((plan) => (
+                  (plans || []).map((plan) => (
                     <Card key={plan.id} className="flex flex-col border-2 hover:border-primary transition-colors">
                       <CardHeader>
                         <CardTitle className="text-2xl">{plan.name}</CardTitle>
@@ -258,7 +258,7 @@ export default function WalletPage() {
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                         <ul className="space-y-2 mb-6 flex-1">
-                          {plan.features.map((feature, idx) => (
+                          {(plan.features || []).map((feature, idx) => (
                             <li key={idx} className="flex items-start gap-2">
                               <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                               <span className="text-sm">{feature}</span>
@@ -394,7 +394,7 @@ export default function WalletPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {payments.map((payment) => (
+                      {(payments || []).map((payment) => (
                         <div
                           key={payment.id}
                           className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"

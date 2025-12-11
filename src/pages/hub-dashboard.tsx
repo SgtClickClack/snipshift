@@ -234,7 +234,7 @@ export default function HubDashboard() {
     mutationFn: async ({ shiftData, recurringShifts }: { shiftData: any; recurringShifts?: any[] }) => {
       if (recurringShifts && recurringShifts.length > 0) {
         // Create all recurring shifts
-        const promises = recurringShifts.map((shift) => {
+        const promises = (recurringShifts || []).map((shift) => {
           const payload: any = {
             title: shift.title,
             description: shift.description || shift.requirements || '',
@@ -564,7 +564,7 @@ export default function HubDashboard() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
-                  {jobs.slice(0, 3).map((job) => (
+                  {(jobs || []).slice(0, 3).map((job) => (
                     <div 
                       key={job.id} 
                       className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
@@ -795,7 +795,7 @@ export default function HubDashboard() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).map((job) => {
+                        {(jobs || []).filter(job => statusFilter === 'all' || job.status === statusFilter).map((job) => {
                           const jobType = (job as any)._type || 'job';
                           const isShift = jobType === 'shift';
                           // Check ownership: shifts use employerId, jobs use businessId
@@ -910,7 +910,7 @@ export default function HubDashboard() {
                               </p>
                               {job.skillsRequired && job.skillsRequired.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mb-2">
-                                  {job.skillsRequired.map((skill: any, index: number) => (
+                                  {(job.skillsRequired || []).map((skill: any, index: number) => (
                                     <span 
                                       key={`${skill}-${index}`}
                                       className="bg-primary/10 text-primary px-2 py-1 rounded text-xs"
@@ -954,7 +954,7 @@ export default function HubDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                     {applications.map((app: any) => (
+                     {(applications || []).map((app: any) => (
                         <div key={app.id} className="border rounded-lg p-4 hover:bg-muted transition-colors">
                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                               <div className="flex-1 min-w-0">
@@ -998,7 +998,7 @@ export default function HubDashboard() {
         {/* Calendar Tab */}
         {activeView === 'calendar' && (
           <ProfessionalCalendar
-            bookings={jobs.map((job) => {
+            bookings={(jobs || []).map((job) => {
               // Map job/shift to booking format expected by calendar
               const bookingData: any = {
                 id: job.id,
