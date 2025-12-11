@@ -37,6 +37,7 @@ RUN npm ci --only=production && \
 # Copy source files (TypeScript) - we run with tsx, so we need the source
 COPY --from=builder /app/_src ./_src
 COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/fix-imports.js ./fix-imports.js
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 

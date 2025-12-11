@@ -1,5 +1,7 @@
 import { SEO } from '@/components/seo/SEO';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 export default function TermsPage() {
   return (
@@ -11,6 +13,14 @@ export default function TermsPage() {
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 py-12 px-4">
         <div className="max-w-3xl mx-auto">
+          {/* Disclaimer Banner */}
+          <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              <strong>Legal Disclaimer:</strong> This is a template. Please consult a legal professional before live operation.
+            </AlertDescription>
+          </Alert>
+
           <Card className="card-chrome">
             <CardContent className="prose prose-slate max-w-none p-8">
               <h1 className="text-3xl font-bold text-steel-900 mb-2">Terms of Service</h1>
@@ -24,10 +34,22 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">2. Description of Service</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">2. Marketplace Model</h2>
                 <p className="text-steel-700 mb-4">
-                  SnipShift is a marketplace platform that connects barbers, stylists, beauticians, and other professionals with flexible work opportunities. The Platform facilitates connections between professionals seeking work and businesses offering shifts, gigs, or employment opportunities.
+                  SnipShift operates as a marketplace platform that connects barbers, stylists, beauticians, and other professionals with flexible work opportunities. The Platform facilitates connections between professionals seeking work and businesses offering shifts, gigs, or employment opportunities.
                 </p>
+                <p className="text-steel-700 mb-4">
+                  <strong>Important:</strong> SnipShift acts solely as an intermediary and technology platform. We are not an employer, employment agency, or staffing company. We do not employ professionals, set their work schedules, or control their work performance. The relationship between professionals and businesses is that of independent contractors or direct employment, as determined by the parties involved.
+                </p>
+                <p className="text-steel-700 mb-4">
+                  SnipShift is not responsible for:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li>The quality, safety, or legality of work opportunities posted by businesses</li>
+                  <li>The conduct, qualifications, or performance of professionals or businesses</li>
+                  <li>Employment relationships, tax obligations, or worker classification between users</li>
+                  <li>Disputes between professionals and businesses regarding work performed</li>
+                </ul>
               </section>
 
               <section className="mb-8">
@@ -62,30 +84,76 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">5. Payments and Transactions</h2>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.1 Payment Processing</h3>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">5. Payment Terms</h2>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.1 Stripe Connect</h3>
                 <p className="text-steel-700 mb-4">
-                  SnipShift uses third-party payment processors (including Stripe) to handle payments. By using the Platform, you agree to the terms and conditions of our payment processors. All payments are subject to processing fees as disclosed at the time of transaction.
+                  SnipShift uses Stripe Connect to process payments between businesses and professionals. By using the Platform, you agree to Stripe's Terms of Service and Connected Account Agreement. All payment processing is handled securely through Stripe's infrastructure.
                 </p>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.2 Refunds</h3>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.2 Platform Fees</h3>
                 <p className="text-steel-700 mb-4">
-                  Refund policies vary by transaction type and are subject to the terms agreed upon between users. SnipShift reserves the right to issue refunds at its sole discretion in cases of fraud, technical errors, or other exceptional circumstances.
+                  SnipShift charges a platform fee on transactions processed through the Platform. The current platform fee structure is:
                 </p>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.3 Subscription Fees</h3>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li>Platform fees are calculated as a percentage of the transaction amount</li>
+                  <li>Fees are clearly disclosed before you confirm a booking or accept a shift</li>
+                  <li>Platform fees are deducted from the payment before funds are transferred to professionals</li>
+                  <li>Businesses pay the full agreed-upon rate; professionals receive the rate minus platform fees</li>
+                </ul>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.3 Payout Schedule</h3>
                 <p className="text-steel-700 mb-4">
-                  If you subscribe to a paid plan, you agree to pay all fees associated with your subscription. Subscriptions automatically renew unless cancelled. You may cancel your subscription at any time through your account settings.
+                  Payouts to professionals are processed according to the following schedule:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li>Payments are held in escrow until work is completed and verified</li>
+                  <li>Standard payouts are processed within 2-3 business days after work completion</li>
+                  <li>First-time payouts may be subject to additional verification and may take up to 7 business days</li>
+                  <li>Payouts are transferred directly to the professional's connected Stripe account</li>
+                  <li>Stripe may apply additional processing times based on your account status and location</li>
+                </ul>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.4 Payment Disputes</h3>
+                <p className="text-steel-700 mb-4">
+                  Disputes regarding payment amounts, quality of work, or service delivery should be resolved directly between the business and professional. SnipShift may facilitate dispute resolution but is not obligated to intervene. In cases of fraud or violation of these Terms, SnipShift reserves the right to withhold payments pending investigation.
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">5.5 Refunds</h3>
+                <p className="text-steel-700 mb-4">
+                  Refund policies vary by transaction type and are subject to the terms agreed upon between users. SnipShift reserves the right to issue refunds at its sole discretion in cases of fraud, technical errors, or other exceptional circumstances. Platform fees are generally non-refundable except in cases of platform error.
                 </p>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">6. Intellectual Property</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">6. Cancellations and No-Shows</h2>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.1 Cancellation Policy</h3>
+                <p className="text-steel-700 mb-4">
+                  Cancellation policies are set by individual businesses and may vary. Professionals and businesses are expected to honor their commitments. Cancellation terms should be clearly communicated and agreed upon before work begins.
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.2 No-Shows</h3>
+                <p className="text-steel-700 mb-4">
+                  No-shows (failure to appear for a scheduled shift without proper cancellation) are a serious violation of these Terms. Consequences for no-shows may include:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li>Immediate suspension of your account pending review</li>
+                  <li>Permanent account termination for repeated violations</li>
+                  <li>Financial penalties as determined by the affected business</li>
+                  <li>Negative ratings and reviews that may impact future opportunities</li>
+                </ul>
+                <p className="text-steel-700 mb-4">
+                  Businesses that repeatedly cancel shifts at the last minute or fail to honor commitments may also face account suspension or termination.
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.3 Emergency Cancellations</h3>
+                <p className="text-steel-700 mb-4">
+                  We understand that emergencies occur. If you need to cancel due to a genuine emergency, please contact the other party and SnipShift support as soon as possible. Emergency cancellations will be reviewed on a case-by-case basis and may not result in penalties if properly documented and communicated.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">7. Intellectual Property</h2>
                 <p className="text-steel-700 mb-4">
                   The Platform and its original content, features, and functionality are owned by SnipShift and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws. You may not reproduce, distribute, modify, or create derivative works of any content from the Platform without express written permission.
                 </p>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">7. Limitation of Liability</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">8. Limitation of Liability</h2>
                 <p className="text-steel-700 mb-4">
                   TO THE MAXIMUM EXTENT PERMITTED BY LAW, SNIPSHIFT SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES.
                 </p>
@@ -95,35 +163,35 @@ export default function TermsPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">8. Indemnification</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">9. Indemnification</h2>
                 <p className="text-steel-700 mb-4">
                   You agree to indemnify, defend, and hold harmless SnipShift, its officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses, including reasonable attorneys' fees, arising out of or in any way connected with your use of the Platform or violation of these Terms.
                 </p>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">9. Termination</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">10. Termination</h2>
                 <p className="text-steel-700 mb-4">
                   SnipShift reserves the right to terminate or suspend your account and access to the Platform immediately, without prior notice or liability, for any reason, including if you breach these Terms. Upon termination, your right to use the Platform will immediately cease.
                 </p>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">10. Changes to Terms</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">11. Changes to Terms</h2>
                 <p className="text-steel-700 mb-4">
                   SnipShift reserves the right to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.
                 </p>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">11. Governing Law</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">12. Governing Law</h2>
                 <p className="text-steel-700 mb-4">
                   These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which SnipShift operates, without regard to its conflict of law provisions.
                 </p>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">12. Contact Information</h2>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">13. Contact Information</h2>
                 <p className="text-steel-700 mb-4">
                   If you have any questions about these Terms of Service, please contact us at:
                 </p>

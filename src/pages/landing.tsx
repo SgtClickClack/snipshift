@@ -1,22 +1,90 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Handshake, Store, UserCheck, UserPlus, FileText, CheckCircle } from "lucide-react";
-import Hero from "@/components/hero";
+import { Store, UserCheck, Shield, CheckCircle2, CreditCard } from "lucide-react";
 import Pricing from "@/components/pricing";
 import { SEO } from "@/components/seo/SEO";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDashboardRoute } from "@/lib/roles";
+import { useEffect } from "react";
 
 export default function LandingPage() {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
+  // If authenticated, redirect to dashboard
+  useEffect(() => {
+    if (isAuthenticated && user?.currentRole) {
+      navigate(getDashboardRoute(user.currentRole), { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
+  
+  // Show loading or nothing while redirecting
+  if (isAuthenticated && user?.currentRole) {
+    return null;
+  }
+
   return (
     <>
       <SEO
-        title="SnipShift - Connect Barbers, Stylists & Industry Professionals"
-        description="Connect barbers, stylists, and beauticians with flexible work opportunities. Find gigs, post jobs, and build your professional network in the barbering and beauty industry."
+        title="Snipshift | On-Demand Barber Staffing Australia"
+        description="Connect with top-rated barbers for temporary shifts. Reliable, vetted, and paid securely."
         url="/"
       />
       <div className="min-h-screen">
       {/* Hero Section */}
-      <Hero />
+      <section className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-gradient-to-br from-steel-900 via-steel-800 to-steel-950 border-b border-border flex items-center">
+        <div className="absolute inset-0 bg-black/20 z-base" />
+        
+        <div className="relative z-elevated w-full py-12 md:py-20 flex flex-col items-center justify-center text-center px-4">
+          <div className="max-w-5xl mx-auto flex flex-col items-center gap-8 md:gap-10">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground max-w-4xl mx-auto leading-tight drop-shadow-lg">
+              The On-Demand Marketplace for Barbers & Shops.
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto drop-shadow-md font-medium">
+              Fill empty chairs or find extra shifts instantly. No contracts, just coverage.
+            </p>
+            
+            {!isAuthenticated && (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-4">
+                <Link to="/signup?role=hub">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-8 py-6 shadow-xl h-auto" 
+                    data-testid="button-find-barber"
+                  >
+                    Find a Barber
+                  </Button>
+                </Link>
+                
+                <Link to="/signup?role=professional">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="bg-background/80 dark:bg-white/10 border-2 border-border dark:border-white/30 text-foreground dark:text-white hover:bg-muted dark:hover:bg-white/20 text-lg px-8 py-6 h-auto font-semibold" 
+                    data-testid="button-find-shifts"
+                  >
+                    Find Shifts
+                  </Button>
+                </Link>
+              </div>
+            )}
+            
+            {isAuthenticated && user && (
+              <Link to={getDashboardRoute(user.currentRole)}>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-6 shadow-xl h-auto" 
+                  data-testid="button-go-to-dashboard"
+                >
+                  Go to Dashboard
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* How It Works Section */}
       <div className="py-8 md:py-20 bg-background border-t border-border overflow-x-hidden">
@@ -87,85 +155,135 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Who It's For Section */}
-      <div className="py-8 md:py-20 bg-background border-t border-border">
+      {/* Value Proposition - Dual Track */}
+      <section className="py-12 md:py-20 bg-background border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Perfect For</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Whether you own a business, work as a professional, represent a brand, or teach others</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Built for Both Sides of the Market</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Whether you're filling shifts or finding them, we've got you covered</p>
           </div>
           
-          {/* Debug: Clear Storage Button (for testing) */}
-          {import.meta.env.DEV && (
-            <div className="text-center mb-8">
-              <button 
-                onClick={() => {
-                  localStorage.clear();
-                  window.location.reload();
-                }}
-                className="text-xs opacity-50 hover:opacity-100 bg-muted text-foreground px-3 py-1 rounded border border-border"
-              >
-                Clear Storage (Debug)
-              </button>
-            </div>
-          )}
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="text-center p-6 bg-card shadow-lg border border-border hover:shadow-xl hover:border-border/80 transition-all duration-300">
-              <CardContent className="pt-6">
-                <Store className="h-12 w-12 text-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-card-foreground">Shop Owners</h3>
-                <p className="text-muted-foreground text-sm">Barbershops and salons looking for flexible staffing</p>
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+            {/* For Shops */}
+            <Card className="p-8 bg-card shadow-lg border-2 border-border hover:shadow-xl hover:border-red-accent/50 transition-all duration-300">
+              <CardContent className="pt-0">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center shadow-lg">
+                    <Store className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-card-foreground">For Shops</h3>
+                </div>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  Never lose revenue to a sick day again. Access vetted, rated professionals on demand.
+                </p>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground">Verified professionals with ratings</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground">Instant booking for last-minute coverage</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground">No long-term contracts required</span>
+                  </li>
+                </ul>
+                {!isAuthenticated && (
+                  <Link to="/signup?role=hub">
+                    <Button className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white">
+                      Get Started as Shop Owner
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
             
-            <Card className="text-center p-6 bg-card shadow-lg border border-border hover:shadow-xl hover:border-border/80 transition-all duration-300">
-              <CardContent className="pt-6">
-                <UserCheck className="h-12 w-12 text-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-card-foreground">Professionals</h3>
-                <p className="text-muted-foreground text-sm">Barbers, stylists, and professionals seeking flexible work opportunities</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center p-6 bg-card shadow-lg border border-border hover:shadow-xl hover:border-border/80 transition-all duration-300">
-              <CardContent className="pt-6">
-                <Store className="h-12 w-12 text-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-card-foreground">Brands</h3>
-                <p className="text-muted-foreground text-sm">Product companies connecting with the professional community</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center p-6 bg-card shadow-lg border border-border hover:shadow-xl hover:border-border/80 transition-all duration-300">
-              <CardContent className="pt-6">
-                <UserCheck className="h-12 w-12 text-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-card-foreground">Trainers</h3>
-                <p className="text-muted-foreground text-sm">Educators offering courses, workshops, and skill development</p>
+            {/* For Barbers */}
+            <Card className="p-8 bg-card shadow-lg border-2 border-border hover:shadow-xl hover:border-red-accent/50 transition-all duration-300">
+              <CardContent className="pt-0">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center shadow-lg">
+                    <UserCheck className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-card-foreground">For Barbers</h3>
+                </div>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  Earn extra income on your schedule. Guaranteed payments via Stripe.
+                </p>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground">Flexible shifts that fit your schedule</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground">Secure payments processed through Stripe</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground">Build your reputation with ratings</span>
+                  </li>
+                </ul>
+                {!isAuthenticated && (
+                  <Link to="/signup?role=professional">
+                    <Button className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white">
+                      Get Started as Barber
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Trust Signals */}
+      <section className="py-12 md:py-16 bg-muted/30 border-t border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
+            <div className="flex items-center gap-3">
+              <Shield className="h-6 w-6 text-red-accent" />
+              <span className="text-lg font-semibold text-foreground">Verified Professionals</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-6 w-6 text-red-accent" />
+              <span className="text-lg font-semibold text-foreground">Secure Payments by Stripe</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Pricing Section */}
       <Pricing />
 
-      {/* CTA Section */}
-      <div className="py-8 md:py-20 bg-background border-t border-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-            Ready to Transform Your Career?
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join the community that's reshaping how the industry works together
-          </p>
-          
-          <Link to="/signup">
-            <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-4 shadow-xl" data-testid="button-join-now">
-              Join Snipshift Today
-            </Button>
-          </Link>
-        </div>
-      </div>
+      {/* Final CTA Section */}
+      {!isAuthenticated && (
+        <section className="py-12 md:py-20 bg-gradient-to-br from-steel-900 via-steel-800 to-steel-950 border-t border-border">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+              Ready to Get Started?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Join the marketplace that's reshaping how barbers and shops connect
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/signup?role=hub">
+                <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-8 py-6 shadow-xl" data-testid="button-join-shop">
+                  Shop Owner Sign Up
+                </Button>
+              </Link>
+              <Link to="/signup?role=professional">
+                <Button size="lg" variant="outline" className="bg-background/80 dark:bg-white/10 border-2 border-border dark:border-white/30 text-foreground dark:text-white hover:bg-muted dark:hover:bg-white/20 text-lg px-8 py-6 font-semibold" data-testid="button-join-barber">
+                  Barber Sign Up
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
     </>
   );

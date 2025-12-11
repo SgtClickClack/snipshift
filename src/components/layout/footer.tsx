@@ -59,12 +59,9 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="mailto:support@snipshift.com.au" 
-                  className="text-steel-400 hover:text-white transition-colors text-sm"
-                >
+                <Link to="/contact" className="text-steel-400 hover:text-white transition-colors text-sm">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

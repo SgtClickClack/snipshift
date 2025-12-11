@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ export default function OnboardingPage() {
     location: user?.location || '',
     avatarUrl: user?.avatarUrl || user?.profileImage || '',
   });
+  const rolePreferenceSet = useRef(false);
 
   // Redirect if user has already completed onboarding
   useEffect(() => {
@@ -48,6 +49,49 @@ export default function OnboardingPage() {
       navigate(dashboardRoute, { replace: true });
     }
   }, [user, navigate]);
+
+  // Check for role preference from query params or sessionStorage
+  useEffect(() => {
+    // Only set role preference once
+    if (rolePreferenceSet.current || formData.role) {
+      return;
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    
+    // Map 'hub' to 'business' for onboarding (backend uses 'business')
+    let preferredRole: OnboardingRole | null = null;
+    if (roleParam === 'hub' || roleParam === 'business') {
+      preferredRole = 'business';
+    } else if (roleParam === 'professional') {
+      preferredRole = 'professional';
+    } else if (roleParam === 'trainer') {
+      preferredRole = 'trainer';
+    } else if (roleParam === 'brand') {
+      preferredRole = 'brand';
+    }
+    
+    // Also check sessionStorage (set by signup page)
+    if (!preferredRole) {
+      const storedRole = sessionStorage.getItem('signupRolePreference');
+      if (storedRole === 'hub' || storedRole === 'business') {
+        preferredRole = 'business';
+      } else if (storedRole === 'professional') {
+        preferredRole = 'professional';
+      }
+      // Clear it after reading
+      if (storedRole) {
+        sessionStorage.removeItem('signupRolePreference');
+      }
+    }
+    
+    // Pre-select the role if available
+    if (preferredRole) {
+      setFormData(prev => ({ ...prev, role: preferredRole }));
+      rolePreferenceSet.current = true;
+    }
+  }, [formData.role]);
 
   const updateFormData = (updates: Partial<OnboardingData>) => {
     setFormData(prev => ({ ...prev, ...updates }));

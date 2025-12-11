@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -25,13 +26,21 @@ export default function SignupPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // Check for email in query params (e.g. redirect from login)
+  // Check for email and role in query params (e.g. redirect from login or landing page)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const emailParam = urlParams.get('email');
+    const roleParam = urlParams.get('role');
+    
     if (emailParam) {
       setFormData(prev => ({ ...prev, email: emailParam }));
+    }
+    
+    // Store role preference in sessionStorage to pass to onboarding
+    if (roleParam && (roleParam === 'hub' || roleParam === 'professional')) {
+      sessionStorage.setItem('signupRolePreference', roleParam);
     }
   }, []);
 
@@ -82,6 +91,15 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!agreedToTerms) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please agree to the Terms of Service and Privacy Policy to continue",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (formData.password !== formData.confirmPassword) {
       toast({
@@ -140,9 +158,15 @@ export default function SignupPage() {
         description: "Welcome to Snipshift! Let's set up your profile.",
       });
 
+      // Get role preference from sessionStorage if available
+      const rolePreference = sessionStorage.getItem('signupRolePreference');
+      const onboardingPath = rolePreference ? `/onboarding?role=${rolePreference}` : '/onboarding';
+      
+      // Clear the preference after using it
+      sessionStorage.removeItem('signupRolePreference');
+
       // Force navigation to ensure we leave the page
-      window.location.href = '/onboarding';
-      // navigate("/role-selection"); // Use role-selection directly instead of home to match test expectation
+      window.location.href = onboardingPath;
     } catch (error: any) {
       console.error("Signup error:", error);
       let message = "Please check your information and try again";
@@ -281,10 +305,33 @@ export default function SignupPage() {
                 </div>
               </div>
               
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                  className="mt-1"
+                  data-testid="checkbox-terms"
+                />
+                <Label
+                  htmlFor="terms"
+                  className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
+                >
+                  I agree to the{" "}
+                  <Link to="/terms" className="text-primary hover:underline font-medium" target="_blank">
+                    Terms of Service
+                  </Link>
+                  {" "}and{" "}
+                  <Link to="/privacy" className="text-primary hover:underline font-medium" target="_blank">
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
+              
               <Button 
                 type="submit" 
                 className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                disabled={isLoading}
+                disabled={isLoading || !agreedToTerms}
                 data-testid="button-signup"
               >
                 {isLoading ? "Creating Account..." : "Create Account"}

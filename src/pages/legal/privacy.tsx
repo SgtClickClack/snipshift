@@ -1,5 +1,7 @@
 import { SEO } from '@/components/seo/SEO';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 export default function PrivacyPage() {
   return (
@@ -11,6 +13,14 @@ export default function PrivacyPage() {
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 py-12 px-4">
         <div className="max-w-3xl mx-auto">
+          {/* Disclaimer Banner */}
+          <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              <strong>Legal Disclaimer:</strong> This is a template. Please consult a legal professional before live operation.
+            </AlertDescription>
+          </Alert>
+
           <Card className="card-chrome">
             <CardContent className="prose prose-slate max-w-none p-8">
               <h1 className="text-3xl font-bold text-steel-900 mb-2">Privacy Policy</h1>
@@ -27,17 +37,32 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">2. Information We Collect</h2>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">2.1 Information You Provide</h3>
-                <p className="text-steel-700 mb-4">We collect information that you provide directly to us, including:</p>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">2. Data Collection</h2>
+                <p className="text-steel-700 mb-4">
+                  We collect the following categories of personal information when you use the Platform:
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">2.1 Personal Information</h3>
                 <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
-                  <li><strong>Account Information:</strong> Name, email address, phone number, profile photo, bio, and location</li>
-                  <li><strong>Professional Information:</strong> Skills, work experience, portfolio, certifications, and availability</li>
-                  <li><strong>Business Information:</strong> Business name, address, description, and job postings</li>
-                  <li><strong>Payment Information:</strong> Billing address and payment method details (processed securely through Stripe)</li>
-                  <li><strong>Communications:</strong> Messages sent through the Platform and customer support inquiries</li>
+                  <li><strong>Name:</strong> Your full name or display name as provided during account registration</li>
+                  <li><strong>Email Address:</strong> Your email address used for account creation, authentication, and communications</li>
+                  <li><strong>Location:</strong> Your city, state, or geographic location to facilitate job matching and local opportunities</li>
+                  <li><strong>Phone Number:</strong> Contact number for account verification and communication purposes</li>
+                  <li><strong>Profile Information:</strong> Profile photo, bio, skills, work experience, portfolio, and certifications</li>
                 </ul>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">2.2 Automatically Collected Information</h3>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">2.2 Payment Information</h3>
+                <p className="text-steel-700 mb-4">
+                  Payment information is collected and stored securely through Stripe Connect, our payment processor. This includes:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li><strong>Billing Address:</strong> Required for payment processing and tax purposes</li>
+                  <li><strong>Payment Method Details:</strong> Credit card information, bank account details, or other payment methods (stored securely by Stripe, not on our servers)</li>
+                  <li><strong>Transaction History:</strong> Records of payments, payouts, and financial transactions</li>
+                  <li><strong>Tax Information:</strong> Tax identification numbers or other tax-related information as required by law</li>
+                </ul>
+                <p className="text-steel-700 mb-4">
+                  <strong>Important:</strong> SnipShift does not store your full credit card numbers or sensitive payment details on our servers. All payment information is securely processed and stored by Stripe in accordance with PCI DSS compliance standards.
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">2.3 Automatically Collected Information</h3>
                 <p className="text-steel-700 mb-4">When you use the Platform, we automatically collect certain information, including:</p>
                 <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
                   <li><strong>Usage Data:</strong> Pages visited, features used, time spent on pages, and click patterns</li>
@@ -64,26 +89,53 @@ export default function PrivacyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-steel-900 mb-4">4. How We Share Your Information</h2>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.1 Public Profile Information</h3>
+                <h2 className="text-2xl font-semibold text-steel-900 mb-4">4. Third-Parties</h2>
+                <p className="text-steel-700 mb-4">
+                  We share your information with the following third-party service providers to operate the Platform:
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.1 Stripe</h3>
+                <p className="text-steel-700 mb-4">
+                  <strong>Purpose:</strong> Payment processing and financial transactions
+                </p>
+                <p className="text-steel-700 mb-4">
+                  Stripe Connect processes all payments between businesses and professionals on the Platform. When you connect a payment method or receive payments, your payment information is shared with Stripe. Stripe collects and processes:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li>Payment method details (credit cards, bank accounts)</li>
+                  <li>Billing and shipping addresses</li>
+                  <li>Transaction history and financial records</li>
+                  <li>Tax identification information</li>
+                </ul>
+                <p className="text-steel-700 mb-4">
+                  For more information about Stripe's privacy practices, please visit: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">https://stripe.com/privacy</a>
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.2 Google Services</h3>
+                <p className="text-steel-700 mb-4">
+                  We use various Google services to enhance the Platform:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li><strong>Google Analytics:</strong> We use Google Analytics to understand how users interact with the Platform. Google Analytics collects usage data, device information, and IP addresses. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">Google Privacy Policy</a></li>
+                  <li><strong>Google Maps:</strong> We use Google Maps API to provide location services, address autocomplete, and mapping features. When you use location-based features, your location data may be shared with Google. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">Google Privacy Policy</a></li>
+                  <li><strong>Google OAuth:</strong> If you choose to sign in with Google, Google authenticates your identity and shares your basic profile information (name, email) with us.</li>
+                </ul>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.3 Other Service Providers</h3>
+                <p className="text-steel-700 mb-4">
+                  We also share information with other third-party service providers who perform services on our behalf:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li><strong>Cloud Hosting:</strong> Vercel and other cloud providers host our Platform and may have access to your data as part of their hosting services</li>
+                  <li><strong>Email Services:</strong> We use email service providers to send transactional emails, notifications, and marketing communications</li>
+                  <li><strong>Customer Support:</strong> We may use third-party customer support tools that have access to your account information to assist with support requests</li>
+                </ul>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.4 Public Profile Information</h3>
                 <p className="text-steel-700 mb-4">
                   Your public profile information (name, photo, bio, skills, location) is visible to other users of the Platform to facilitate connections and job matching.
                 </p>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.2 Service Providers</h3>
-                <p className="text-steel-700 mb-4">
-                  We share information with third-party service providers who perform services on our behalf, including:
-                </p>
-                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
-                  <li><strong>Payment Processing:</strong> Stripe processes payments. See Section 5 for details.</li>
-                  <li><strong>Cloud Hosting:</strong> Vercel and other cloud providers host our Platform</li>
-                  <li><strong>Analytics:</strong> We use analytics services to understand Platform usage</li>
-                  <li><strong>Email Services:</strong> We use email service providers to send communications</li>
-                </ul>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.3 Legal Requirements</h3>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.5 Legal Requirements</h3>
                 <p className="text-steel-700 mb-4">
                   We may disclose your information if required to do so by law or in response to valid requests by public authorities (e.g., a court or government agency).
                 </p>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.4 Business Transfers</h3>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">4.6 Business Transfers</h3>
                 <p className="text-steel-700 mb-4">
                   If SnipShift is involved in a merger, acquisition, or asset sale, your information may be transferred as part of that transaction.
                 </p>
@@ -92,13 +144,14 @@ export default function PrivacyPage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold text-steel-900 mb-4">5. Payment Processing and Stripe</h2>
                 <p className="text-steel-700 mb-4">
-                  SnipShift uses Stripe, Inc. ("Stripe") to process payments. When you make a payment through the Platform:
+                  SnipShift uses Stripe Connect to process all payments on the Platform. When you make or receive a payment:
                 </p>
                 <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
                   <li>Your payment information is securely transmitted directly to Stripe</li>
                   <li>Stripe processes your payment in accordance with their Privacy Policy and Terms of Service</li>
                   <li>We do not store your full credit card details on our servers</li>
                   <li>Stripe may collect and use your payment information as described in their privacy policy</li>
+                  <li>Stripe Connect enables direct payments between businesses and professionals</li>
                 </ul>
                 <p className="text-steel-700 mb-4">
                   For more information about Stripe's privacy practices, please visit: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">https://stripe.com/privacy</a>

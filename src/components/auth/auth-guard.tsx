@@ -34,10 +34,11 @@ export function AuthGuard({
   }
 
   // If user is authenticated but not onboarded, redirect to onboarding
-  // Exception: Allow access to onboarding page itself and public routes
+  // Exception: Allow access to onboarding page itself, landing page, legal pages, and other public routes
+  const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/contact', '/about'];
   if (isAuthenticated && user && user.isOnboarded === false) {
-    // Avoid redirect loop when already on onboarding page
-    if (location.pathname !== '/onboarding') {
+    // Avoid redirect loop when already on a public route
+    if (!publicRoutes.includes(location.pathname)) {
       return <Navigate to="/onboarding" replace />;
     }
   }
@@ -50,9 +51,10 @@ export function AuthGuard({
 
   // If user is authenticated but doesn't have a current role, redirect to role selection
   // But only if they're already onboarded (onboarding sets the role)
+  // Exception: Allow public routes to be viewed
   if (isAuthenticated && user && user.isOnboarded !== false && (!user.currentRole || user.currentRole === 'client')) {
-    // Avoid redirect loop when already on role selection
-    if (location.pathname !== '/role-selection') {
+    // Avoid redirect loop when already on a public route
+    if (!publicRoutes.includes(location.pathname) && location.pathname !== '/role-selection') {
       return <Navigate to="/role-selection" replace />;
     }
   }
