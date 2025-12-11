@@ -17,13 +17,32 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, user, isAuthReady } = useAuth();
+  const { login, user, isAuthReady, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
+
+  // Fix 2: Bounce Back - Redirect if already logged in
+  useEffect(() => {
+    if (isAuthReady && isAuthenticated && user) {
+      // User is already logged in, redirect to appropriate dashboard
+      if (user.isOnboarded === false) {
+        navigate("/onboarding", { replace: true });
+        return;
+      }
+      
+      if (user.currentRole && user.currentRole !== 'client') {
+        const dashboardRoute = getDashboardRoute(user.currentRole);
+        navigate(dashboardRoute, { replace: true });
+        return;
+      }
+      
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthReady, isAuthenticated, user, navigate]);
 
   // Handle post-login redirection based on user role
   useEffect(() => {
@@ -54,8 +73,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Fix 1: Ghost Space - Trim email to handle copy-paste trailing spaces
+      const cleanEmail = formData.email.trim();
+      const cleanPassword = formData.password.trim();
+
       // Magic Bypass for E2E Tests
-      if (formData.email === 'test@snipshift.com' && formData.password === 'password123') {
+      if (cleanEmail === 'test@snipshift.com' && cleanPassword === 'password123') {
         const testUser: User = {
             id: '00000000-0000-0000-0000-000000000001', // Must match API bypass ID
             email: 'test@snipshift.com',
@@ -88,7 +111,7 @@ export default function LoginPage() {
         return;
       }
 
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
       
       toast({
         title: "Login successful",
