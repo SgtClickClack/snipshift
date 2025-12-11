@@ -69,6 +69,7 @@ export async function apiRequest(
       console.error("Error getting auth token for request:", error);
     }
     // Removed test bypass - E2E tests need to use proper authentication
+  }
 
   const res = await fetch(url, {
     method,
@@ -97,6 +98,7 @@ export const getQueryFn: <T>(options: {
         console.error("Error getting auth token for query:", error);
       }
     // Removed test bypass - E2E tests need to use proper authentication
+    }
 
     const url = queryKey.join("/") as string;
     const res = await fetch(url, {
