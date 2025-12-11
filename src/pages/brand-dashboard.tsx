@@ -427,6 +427,40 @@ export default function BrandDashboard() {
                 <CardTitle>Brand Profile</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Visual Preview Section matching Business Dashboard */}
+                <div className="relative mb-8 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 group">
+                  {/* Banner Preview */}
+                  <div className="h-32 md:h-48 w-full relative">
+                    <OptimizedImage
+                      src={user?.bannerUrl || user?.bannerImage || '/placeholder-banner.jpg'}
+                      alt="Brand Banner"
+                      fallbackType="banner"
+                      className="w-full h-full object-cover"
+                      containerClassName="w-full h-full"
+                    />
+                    {/* Overlay Hint */}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-sm font-medium">Use header button to edit</p>
+                    </div>
+                  </div>
+
+                  {/* Avatar/Logo Preview (Overlapping) */}
+                  <div className="absolute -bottom-10 left-6">
+                    <div className="h-20 w-20 rounded-full border-4 border-black overflow-hidden bg-zinc-800 relative z-10">
+                      <OptimizedImage
+                        src={user?.avatarUrl || user?.photoURL || user?.profileImageURL || '/placeholder-avatar.jpg'}
+                        alt="Brand Logo"
+                        fallbackType="avatar"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Spacing for overlapping avatar */}
+                <div className="pt-12 md:pt-14"></div>
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                   <p className="text-sm text-blue-800">
                     <strong>Note:</strong> Use the upload buttons in the header above to update your banner image and logo/profile picture.
