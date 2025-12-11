@@ -26,6 +26,7 @@ import { users } from '../_src/db/schema/users.js';
 import { shifts } from '../_src/db/schema/shifts.js';
 import { jobs } from '../_src/db/schema.js';
 import { eq, and, gte, sql } from 'drizzle-orm';
+import * as usersRepo from '../_src/repositories/users.repository.js';
 
 interface SeedOptions {
   userId?: string;
@@ -91,7 +92,7 @@ async function seedShiftsForUser(
         endTime: morningEnd,
         hourlyRate: '25.00',
         status: dayOfWeek === 6 ? 'open' : 'draft', // Saturday shifts are open, others are draft
-        location: '123 Main Street, Melbourne VIC 3000',
+        location: '123 Main Street, Brisbane QLD 4000',
       });
 
       // Afternoon shift: 2 PM - 6 PM (only on Saturday)
@@ -109,7 +110,7 @@ async function seedShiftsForUser(
           endTime: afternoonEnd,
           hourlyRate: '28.00',
           status: 'open',
-          location: '123 Main Street, Melbourne VIC 3000',
+          location: '123 Main Street, Brisbane QLD 4000',
         });
       }
     }
@@ -167,18 +168,18 @@ async function seedJobsForUser(
 
     jobsToCreate.push({
       businessId: userId,
-      title: 'Weekend Barber Needed',
-      payRate: '30.00',
+      title: 'Weekend Cover Needed',
+      payRate: '45.00',
       description: 'Looking for an experienced barber for Saturday shift. Must have 2+ years experience. Great team environment.',
       date: jobDate,
       startTime: '09:00:00',
       endTime: '17:00:00',
       status: 'open',
       role: 'barber',
-      shopName: 'Elite Barbershop',
+      shopName: 'Metro Barbers Brisbane',
       address: '123 Main Street',
-      city: 'Melbourne',
-      state: 'VIC',
+      city: 'Brisbane',
+      state: 'QLD',
     });
   }
 
@@ -193,6 +194,74 @@ async function seedJobsForUser(
 }
 
 /**
+ * Create or update demo users with professional data
+ */
+async function ensureDemoUsers() {
+  const db = getDb();
+  if (!db) {
+    throw new Error('Database not available');
+  }
+
+  // Business user: Metro Barbers Brisbane
+  const businessEmail = 'metro@barbers.com';
+  let businessUser = await usersRepo.getUserByEmail(businessEmail);
+  
+  if (!businessUser) {
+    businessUser = await usersRepo.createUser({
+      email: businessEmail,
+      name: 'Metro Barbers Brisbane',
+      role: 'business',
+    });
+    // Update with bio after creation
+    if (businessUser) {
+      businessUser = await usersRepo.updateUser(businessUser.id, {
+        bio: 'Premier barbershop in the CBD specializing in modern fades.',
+      });
+    }
+    console.log('✅ Created business user: Metro Barbers Brisbane');
+  } else {
+    // Update existing user with professional data
+    businessUser = await usersRepo.updateUser(businessUser.id, {
+      name: 'Metro Barbers Brisbane',
+      bio: 'Premier barbershop in the CBD specializing in modern fades.',
+      role: 'business',
+      roles: ['business'],
+    });
+    console.log('✅ Updated business user: Metro Barbers Brisbane');
+  }
+
+  // Professional user: Julian Roberts
+  const professionalEmail = 'julian@barbers.com';
+  let professionalUser = await usersRepo.getUserByEmail(professionalEmail);
+  
+  if (!professionalUser) {
+    professionalUser = await usersRepo.createUser({
+      email: professionalEmail,
+      name: 'Julian Roberts',
+      role: 'professional',
+    });
+    // Update with bio after creation
+    if (professionalUser) {
+      professionalUser = await usersRepo.updateUser(professionalUser.id, {
+        bio: 'Senior Barber with 8 years experience.',
+      });
+    }
+    console.log('✅ Created professional user: Julian Roberts');
+  } else {
+    // Update existing user with professional data
+    professionalUser = await usersRepo.updateUser(professionalUser.id, {
+      name: 'Julian Roberts',
+      bio: 'Senior Barber with 8 years experience.',
+      role: 'professional',
+      roles: ['professional'],
+    });
+    console.log('✅ Updated professional user: Julian Roberts');
+  }
+
+  return { businessUser, professionalUser };
+}
+
+/**
  * Main seeding function
  */
 async function seedData(options: SeedOptions = {}) {
@@ -204,6 +273,10 @@ async function seedData(options: SeedOptions = {}) {
   console.log('🌱 Starting data seeding...\n');
 
   try {
+    // Ensure demo users exist with professional data
+    await ensureDemoUsers();
+    console.log('');
+
     let businessUsers;
 
     if (options.userId) {
@@ -245,6 +318,15 @@ async function seedData(options: SeedOptions = {}) {
 
     for (const user of businessUsers) {
       console.log(`👤 Seeding data for: ${user.email} (${user.id})`);
+
+      // Update business user with professional name and bio if needed
+      if (user.name === 'Test Business' || user.name === 'Sick Cuts' || !user.bio) {
+        await usersRepo.updateUser(user.id, {
+          name: 'Metro Barbers Brisbane',
+          bio: 'Premier barbershop in the CBD specializing in modern fades.',
+        });
+        console.log(`   ✏️  Updated user profile to professional data`);
+      }
 
       // Check if user already has shifts/jobs
       const existingShifts = await db

@@ -117,9 +117,21 @@ export async function getOrCreateMockBusinessUser(): Promise<typeof users.$infer
   if (!user) {
     user = await createUser({
       email,
-      name: 'Test Business',
+      name: 'Metro Barbers Brisbane',
       role: 'business',
       passwordHash: 'password123'
+    });
+    // Update with bio after creation
+    if (user) {
+      user = await updateUser(user.id, {
+        bio: 'Premier barbershop in the CBD specializing in modern fades.',
+      });
+    }
+  } else if (user.name === 'Test Business' || user.name === 'Sick Cuts') {
+    // Update existing test business to professional name
+    user = await updateUser(user.id, {
+      name: 'Metro Barbers Brisbane',
+      bio: 'Premier barbershop in the CBD specializing in modern fades.',
     });
   }
   
