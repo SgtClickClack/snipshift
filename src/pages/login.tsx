@@ -80,17 +80,6 @@ export default function LoginPage() {
       // Removed test bypass - E2E tests need to use proper authentication
       // Proceed with normal Firebase authentication
       
-      toast({
-        title: "Login successful",
-          description: "Welcome back!",
-        });
-        
-        // Navigate to role-based dashboard
-        const dashboardRoute = getDashboardRoute(testUser.currentRole);
-        navigate(dashboardRoute, { replace: true });
-        return;
-      }
-
       await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
       
       toast({
