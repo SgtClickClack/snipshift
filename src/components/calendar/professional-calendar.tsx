@@ -251,6 +251,7 @@ export default function ProfessionalCalendar({
   const [showAssignStaffModal, setShowAssignStaffModal] = useState(false);
   const [selectedShiftForAssignment, setSelectedShiftForAssignment] = useState<CalendarEvent | null>(null);
   const [showSmartFillModal, setShowSmartFillModal] = useState(false);
+  const [showFindProfessionalMode, setShowFindProfessionalMode] = useState(false);
   const [showRecurringDialog, setShowRecurringDialog] = useState(false);
   const [pendingRecurringAction, setPendingRecurringAction] = useState<{
     type: 'delete' | 'move';
@@ -790,45 +791,27 @@ export default function ProfessionalCalendar({
   // Custom toolbar component (returns null to hide default toolbar)
   const customToolbar = useCallback(() => null, []);
   
-  // Custom header component to add current day styling with background highlight
+  // Custom header component - Clean and minimal design
   const customHeader = useCallback(
     ({ date, localizer, label }: { date: Date; localizer: any; label: string }) => {
       const isCurrentDay = isSameDay(date, new Date());
       const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-      
-      // Add subtle color accents based on day of week
-      const dayColors: Record<number, { bg: string; text: string; darkText: string }> = {
-        0: { bg: "rgba(168, 85, 247, 0.08)", text: "text-purple-600", darkText: "dark:text-purple-400" }, // Sunday - Purple
-        1: { bg: "rgba(59, 130, 246, 0.08)", text: "text-blue-600", darkText: "dark:text-blue-400" }, // Monday - Blue
-        2: { bg: "rgba(14, 165, 233, 0.08)", text: "text-sky-600", darkText: "dark:text-sky-400" }, // Tuesday - Sky
-        3: { bg: "rgba(20, 184, 166, 0.08)", text: "text-teal-600", darkText: "dark:text-teal-400" }, // Wednesday - Teal
-        4: { bg: "rgba(34, 197, 94, 0.08)", text: "text-green-600", darkText: "dark:text-green-400" }, // Thursday - Green
-        5: { bg: "rgba(251, 146, 60, 0.08)", text: "text-orange-600", darkText: "dark:text-orange-400" }, // Friday - Orange
-        6: { bg: "rgba(236, 72, 153, 0.08)", text: "text-pink-600", darkText: "dark:text-pink-400" }, // Saturday - Pink
-      };
-      
-      const dayColor = dayColors[dayOfWeek];
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
-      // Split the label (format: "EEE M/d" like "Mon 9/12")
-      const parts = label.split(" ");
+      // Format: Day name (e.g., "Mon") and Date (e.g., "12")
+      const dayName = moment(date).format('ddd');
+      const dayNumber = moment(date).format('DD');
       
       return (
         <div
           className={`rbc-header ${isCurrentDay ? "rbc-header-today" : ""} ${isWeekend ? "rbc-header-weekend" : ""}`}
-          style={isCurrentDay 
-            ? { backgroundColor: "rgba(59, 130, 246, 0.15)" } 
-            : { backgroundColor: dayColor.bg }
-          }
         >
-          {parts.length > 1 ? (
-            <>
-              <div className={`font-bold ${isCurrentDay ? "text-blue-600 dark:text-blue-300" : `${dayColor.text} ${dayColor.darkText}`}`}>{parts[0]}</div>
-              <div className={`text-sm ${isCurrentDay ? "text-blue-700 dark:text-blue-200 font-medium" : "text-muted-foreground dark:text-muted-foreground"}`}>{parts.slice(1).join(" ")}</div>
-            </>
-          ) : (
-            <span className={isCurrentDay ? "font-bold text-blue-600 dark:text-blue-300" : `font-semibold ${dayColor.text} ${dayColor.darkText}`}>{label}</span>
-          )}
+          <div className={`text-xs uppercase font-semibold ${isCurrentDay ? "text-foreground" : "text-muted-foreground"}`}>
+            {dayName}
+          </div>
+          <div className={`text-xl font-bold ${isCurrentDay ? "text-foreground" : "text-muted-foreground"}`}>
+            {dayNumber}
+          </div>
         </div>
       );
     },
@@ -1907,80 +1890,211 @@ export default function ProfessionalCalendar({
           // Reset form when closing
           setSelectedSlot(null);
           setNewEventTitle("");
+          setShowFindProfessionalMode(false);
         }
       }}>
         <SheetContent className="max-h-[85vh] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Create New Event</SheetTitle>
+            <SheetTitle>
+              {mode === 'business' ? 'Create Shift' : 'Create New Event'}
+            </SheetTitle>
             <SheetDescription>
               {selectedSlot ? (
                 <>
-                  Create an event from {format(selectedSlot.start, "MMM d, h:mm a")} to {format(selectedSlot.end, "h:mm a")}
+                  {mode === 'business' ? 'Create a shift' : 'Create an event'} from {format(selectedSlot.start, "MMM d, h:mm a")} to {format(selectedSlot.end, "h:mm a")}
                 </>
               ) : selectedDate ? (
-                <>Create an event for {format(selectedDate, "MMMM d, yyyy")}</>
+                <>{mode === 'business' ? 'Create a shift' : 'Create an event'} for {format(selectedDate, "MMMM d, yyyy")}</>
               ) : (
-                "Create a new event"
+                mode === 'business' ? "Create a new shift" : "Create a new event"
               )}
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="event-title">Event Title</Label>
-              <Input
-                id="event-title"
-                placeholder="Enter event title"
-                value={newEventTitle}
-                onChange={(e) => setNewEventTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleCreateEvent();
-                  }
-                }}
-                autoFocus
-              />
-            </div>
-            
-            {selectedSlot && (
-              <div className="space-y-2 pt-2 border-t">
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    {format(selectedSlot.start, "EEEE, MMMM d, yyyy")}
-                  </span>
+            {/* Mode Switcher for Business Mode */}
+            {mode === 'business' && (
+              <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                <Button
+                  type="button"
+                  variant={!showFindProfessionalMode ? "default" : "ghost"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setShowFindProfessionalMode(false)}
+                >
+                  Post Open Shift
+                </Button>
+                <Button
+                  type="button"
+                  variant={showFindProfessionalMode ? "default" : "ghost"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setShowFindProfessionalMode(true)}
+                >
+                  🔍 Find Professional
+                </Button>
+              </div>
+            )}
+
+            {!showFindProfessionalMode ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="event-title">Event Title</Label>
+                  <Input
+                    id="event-title"
+                    placeholder="Enter event title"
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleCreateEvent();
+                      }
+                    }}
+                    autoFocus
+                  />
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
-                  </span>
+                
+                {selectedSlot && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {format(selectedSlot.start, "EEEE, MMMM d, yyyy")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setSelectedSlot(null);
+                      setNewEventTitle("");
+                      setShowFindProfessionalMode(false);
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateEvent}
+                    disabled={createEventMutation.isPending}
+                    className="flex-1"
+                  >
+                    {createEventMutation.isPending
+                      ? "Creating..."
+                      : mode === 'business' ? "Create Shift" : "Create Event"}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              /* Find Professional Mode */
+              <div className="space-y-4">
+                {selectedSlot && (
+                  <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Clock className="h-4 w-4" />
+                      <span>
+                        {format(selectedSlot.start, "EEEE, MMMM d, yyyy")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>
+                        {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div className="text-sm text-muted-foreground">
+                  Create a draft shift and search for a professional to fill it immediately.
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setSelectedSlot(null);
+                      setNewEventTitle("");
+                      setShowFindProfessionalMode(false);
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      // Create a draft shift first, then open AssignStaffModal
+                      if (!selectedSlot) return;
+                      
+                      try {
+                        // Create draft shift
+                        const response = await apiRequest("POST", "/api/shifts", {
+                          title: newEventTitle || "New Shift",
+                          description: "Shift slot",
+                          startTime: selectedSlot.start.toISOString(),
+                          endTime: selectedSlot.end.toISOString(),
+                          hourlyRate: "0",
+                          status: "draft",
+                        });
+                        const shiftData = await response.json();
+                        
+                        // Create a temporary CalendarEvent for the AssignStaffModal
+                        const tempEvent: CalendarEvent = {
+                          id: shiftData.id || `temp-${Date.now()}`,
+                          title: newEventTitle || "New Shift",
+                          start: selectedSlot.start,
+                          end: selectedSlot.end,
+                          resource: {
+                            booking: {
+                              shift: {
+                                id: shiftData.id,
+                                title: newEventTitle || "New Shift",
+                                startTime: selectedSlot.start.toISOString(),
+                                endTime: selectedSlot.end.toISOString(),
+                                status: "draft",
+                              },
+                            },
+                            status: "draft",
+                            type: "shift",
+                          },
+                        };
+                        
+                        // Invalidate queries to refresh calendar
+                        queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+                        
+                        // Close this modal and open AssignStaffModal
+                        setShowCreateModal(false);
+                        setSelectedShiftForAssignment(tempEvent);
+                        setShowAssignStaffModal(true);
+                        setNewEventTitle("");
+                        setShowFindProfessionalMode(false);
+                      } catch (error: any) {
+                        toast({
+                          title: "Failed to create shift",
+                          description: error?.message || "Please try again later",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    disabled={createEventMutation.isPending}
+                    className="flex-1"
+                  >
+                    {createEventMutation.isPending
+                      ? "Creating..."
+                      : "Create & Find Professional"}
+                  </Button>
                 </div>
               </div>
             )}
-            
-            <div className="flex gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setSelectedSlot(null);
-                  setNewEventTitle("");
-                }}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateEvent}
-                disabled={createEventMutation.isPending}
-                className="flex-1"
-              >
-                {createEventMutation.isPending
-                  ? "Creating..."
-                  : "Create Event"}
-              </Button>
-            </div>
           </div>
         </SheetContent>
       </Sheet>

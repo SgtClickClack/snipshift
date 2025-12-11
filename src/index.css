@@ -200,48 +200,52 @@ button:active, a:active, [role="button"]:active {
   color: hsl(var(--foreground));
 }
 
-/* Header styling with high contrast */
+/* Header styling - Clean and transparent */
 .rbc-header {
-  padding: 0.75rem 0.5rem;
-  font-weight: 700;
-  border-bottom: 2px solid hsl(var(--border));
+  padding: 0.5rem 0.25rem !important;
+  font-weight: 600;
+  border-bottom: 1px solid hsl(var(--border) / 0.5) !important;
+  border-left: 1px solid hsl(var(--border) / 0.3) !important;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  background-color: hsl(var(--muted) / 0.3);
-  color: hsl(var(--foreground));
-  font-size: 0.875rem;
+  background: transparent !important;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
   transition: all 0.2s ease;
+}
+
+.rbc-header:first-child {
+  border-left: none !important;
 }
 
 /* Weekend header styling */
 .rbc-header-weekend {
-  border-bottom-color: hsl(var(--border) / 0.9) !important;
+  border-bottom-color: hsl(var(--border) / 0.5) !important;
 }
 
 /* Dark mode header improvements */
 .dark .rbc-header {
-  background-color: hsl(var(--muted) / 0.6) !important;
-  border-bottom-color: hsl(var(--border) / 0.8) !important;
-  color: hsl(var(--foreground)) !important;
+  background: transparent !important;
+  border-bottom-color: hsl(var(--border) / 0.3) !important;
+  border-left-color: hsl(var(--border) / 0.2) !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 .dark .rbc-header-weekend {
-  border-bottom-color: hsl(var(--border) / 1) !important;
+  border-bottom-color: hsl(var(--border) / 0.3) !important;
 }
 
 .rbc-header-today {
-  background-color: rgba(59, 130, 246, 0.15) !important;
+  background: transparent !important;
   color: hsl(var(--foreground)) !important;
-  border-left: 3px solid hsl(var(--primary)) !important;
-  font-weight: 800;
+  font-weight: 700;
 }
 
-/* Dark mode today header - more visible */
+/* Dark mode today header - subtle highlight */
 .dark .rbc-header-today {
-  background-color: rgba(59, 130, 246, 0.25) !important;
-  border-left-color: hsl(var(--primary)) !important;
+  background: transparent !important;
   color: hsl(var(--foreground)) !important;
 }
 
