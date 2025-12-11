@@ -231,3 +231,66 @@ Snipshift Team
   }
 }
 
+/**
+ * Notify a business when a professional applies for their shift
+ */
+export async function notifyBusinessOfApplication(
+  businessId: string,
+  applicationDetails: {
+    id: string;
+    shiftId: string;
+    professionalName: string;
+    shiftTitle: string;
+  }
+): Promise<void> {
+  try {
+    const title = 'New Shift Application';
+    const message = `${applicationDetails.professionalName} applied for your shift: ${applicationDetails.shiftTitle}`;
+
+    // Create in-app notification
+    await createInAppNotification(
+      businessId,
+      'SYSTEM',
+      title,
+      message,
+      {
+        applicationId: applicationDetails.id,
+        shiftId: applicationDetails.shiftId,
+        professionalName: applicationDetails.professionalName,
+        type: 'shift_application',
+      }
+    );
+
+    // Get business owner's email
+    const business = await usersRepo.getUserById(businessId);
+    if (business?.email) {
+      const emailBody = `
+Hello ${business.name || 'Business Owner'},
+
+You have received a new application for your shift.
+
+Shift: ${applicationDetails.shiftTitle}
+Applicant: ${applicationDetails.professionalName}
+
+Please log in to review and respond to this application.
+
+Best regards,
+Snipshift Team
+      `.trim();
+
+      await sendEmailMock(
+        business.email,
+        title,
+        emailBody
+      );
+    }
+  } catch (error: any) {
+    console.error('[notifyBusinessOfApplication] Error:', {
+      message: error?.message,
+      businessId,
+      applicationId: applicationDetails.id,
+    });
+    // Don't throw - notification failures shouldn't break the workflow
+  }
+}
+

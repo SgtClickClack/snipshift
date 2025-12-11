@@ -29,6 +29,7 @@ import ApplicationsView from "./professional-dashboard/ApplicationsView";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { OfferInbox } from "@/components/shifts/offer-inbox";
+import JobBoard from "@/components/job-board/JobBoard";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -74,7 +75,7 @@ export default function ProfessionalDashboard() {
     queryKey: ["/api/jobs"],
   });
 
-  const { data: bookings = [], isLoading: isLoadingBookings } = useQuery({
+  const { data: bookingsData, isLoading: isLoadingBookings } = useQuery({
     queryKey: ['/api/applications', { status: 'accepted' }],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/applications?status=accepted");
@@ -82,6 +83,9 @@ export default function ProfessionalDashboard() {
     },
     enabled: !!user?.id
   });
+
+  // Memoize bookings to prevent unnecessary Calendar re-renders
+  const bookings = useMemo(() => bookingsData || [], [bookingsData]);
 
   // Extract booked dates from bookings for calendar indicators
   const bookedDates = useMemo(() => {
@@ -500,6 +504,13 @@ export default function ProfessionalDashboard() {
         
         {/* Jobs Tab */}
         {activeView === 'jobs' && (
+          <div className="space-y-6">
+            <JobBoard />
+          </div>
+        )}
+        
+        {/* Legacy Jobs View - Keeping for reference but replaced by JobBoard */}
+        {false && activeView === 'jobs' && (
           <div className="space-y-6">
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Location Search Panel */}

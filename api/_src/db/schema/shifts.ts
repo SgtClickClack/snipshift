@@ -22,6 +22,7 @@ export const shifts = pgTable('shifts', {
   status: shiftStatusEnum('status').notNull().default('draft'),
   location: varchar('location', { length: 512 }),
   isRecurring: boolean('is_recurring').notNull().default(false),
+  autoAccept: boolean('auto_accept').notNull().default(false),
   parentShiftId: uuid('parent_shift_id').references((): any => shifts.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

@@ -6,8 +6,9 @@ export interface Shift {
   startTime: string;
   endTime: string;
   hourlyRate: string;
-  status: 'open' | 'filled' | 'completed' | 'draft' | 'invited';
+  status: 'open' | 'filled' | 'completed' | 'draft' | 'invited' | 'confirmed';
   location?: string;
+  autoAccept?: boolean;
   createdAt: string;
   updatedAt: string;
   

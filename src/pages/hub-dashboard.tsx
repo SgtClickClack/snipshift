@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -160,6 +160,62 @@ export default function HubDashboard() {
     queryFn: () => fetchShopShifts(user!.id),
     enabled: !!user?.id,
   });
+
+  // Memoize bookings transformation to prevent unnecessary Calendar re-renders
+  const calendarBookings = useMemo(() => {
+    return (jobs || []).map((job) => {
+      // Map job/shift to booking format expected by calendar
+      const bookingData: any = {
+        id: job.id,
+        status: job.status === 'draft' ? 'draft' : 
+                job.status === 'invited' ? 'invited' :
+                job.status === 'open' ? 'pending' : 
+                job.status === 'filled' ? 'confirmed' : 'completed',
+        appliedAt: job.createdAt,
+      };
+      
+      // Add job or shift based on type
+      // Ghost Shift fix: Ensure title has proper fallback even if job.title is null/undefined/empty
+      const safeTitle = job?.title || 
+                       (job as any)?.shift?.title || 
+                       (job as any)?.job?.title || 
+                       "Untitled Shift";
+      
+      if (job._type === 'shift') {
+        bookingData.shift = {
+          id: job.id,
+          title: safeTitle,
+          date: job.date,
+          startTime: job.startTime,
+          endTime: job.endTime,
+          status: job.status,
+          hourlyRate: job.payRate,
+          location: typeof job.location === 'string' ? job.location : job.location?.address || '',
+          assignedStaff: (job as any).assignedStaff || null,
+        };
+      } else {
+        bookingData.job = {
+          id: job.id,
+          title: safeTitle,
+          date: job.date,
+          startTime: job.startTime,
+          endTime: job.endTime,
+          status: job.status,
+          payRate: job.payRate,
+          address: typeof job.location === 'string' ? job.location : job.location?.address || '',
+          description: job.description || '',
+          assignedStaff: (job as any).assignedStaff || null,
+        };
+      }
+      
+      return bookingData;
+    });
+  }, [jobs]);
+
+  // Memoize onCreateShift callback to prevent unnecessary re-renders
+  const handleCreateShift = useCallback(() => {
+    setShowCreateShiftModal(true);
+  }, []);
 
   const createJobMutation = useMutation({
     mutationFn: async (jobData: any) => {
@@ -1000,58 +1056,10 @@ export default function HubDashboard() {
         {activeView === 'calendar' && (
           <div id="calendar-view">
             <ProfessionalCalendar
-              bookings={(jobs || []).map((job) => {
-                // Map job/shift to booking format expected by calendar
-                const bookingData: any = {
-                  id: job.id,
-                  status: job.status === 'draft' ? 'draft' : 
-                          job.status === 'invited' ? 'invited' :
-                          job.status === 'open' ? 'pending' : 
-                          job.status === 'filled' ? 'confirmed' : 'completed',
-                  appliedAt: job.createdAt,
-                };
-                
-                // Add job or shift based on type
-                // Ghost Shift fix: Ensure title has proper fallback even if job.title is null/undefined/empty
-                const safeTitle = job?.title || 
-                                 (job as any)?.shift?.title || 
-                                 (job as any)?.job?.title || 
-                                 "Untitled Shift";
-                
-                if (job._type === 'shift') {
-                  bookingData.shift = {
-                    id: job.id,
-                    title: safeTitle,
-                    date: job.date,
-                    startTime: job.startTime,
-                    endTime: job.endTime,
-                    status: job.status,
-                    hourlyRate: job.payRate,
-                    location: typeof job.location === 'string' ? job.location : job.location?.address || '',
-                    assignedStaff: (job as any).assignedStaff || null,
-                  };
-                } else {
-                  bookingData.job = {
-                    id: job.id,
-                    title: safeTitle,
-                    date: job.date,
-                    startTime: job.startTime,
-                    endTime: job.endTime,
-                    status: job.status,
-                    payRate: job.payRate,
-                    address: typeof job.location === 'string' ? job.location : job.location?.address || '',
-                    description: job.description || '',
-                    assignedStaff: (job as any).assignedStaff || null,
-                  };
-                }
-                
-                return bookingData;
-              })}
+              bookings={calendarBookings}
               isLoading={isLoading}
               mode="business"
-              onCreateShift={() => {
-                setShowCreateShiftModal(true);
-              }}
+              onCreateShift={handleCreateShift}
             />
           </div>
         )}

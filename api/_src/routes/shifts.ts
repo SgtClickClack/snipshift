@@ -161,11 +161,18 @@ router.get('/', asyncHandler(async (req, res) => {
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
   const status = req.query.status as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | undefined;
 
-  const result = await shiftsRepo.getShifts({
+  const filters: any = {
     status: status || 'open', // Default to open shifts only for public feed
     limit,
     offset,
-  });
+  };
+
+  // For open shifts, only show future shifts (startTime > NOW)
+  if ((status || 'open') === 'open') {
+    filters.startTimeAfter = new Date();
+  }
+
+  const result = await shiftsRepo.getShifts(filters);
 
   if (!result) {
     res.status(200).json([]);
@@ -1051,11 +1058,11 @@ router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: Auth
       console.error('[PUT /api/shifts/offers/:id/accept] Error sending notification:', error);
     }
 
-    res.status(200).json({
-      message: 'Shift offer accepted successfully',
-      shift: updatedShift,
-      offer: updatedOffer,
-    });
+  res.status(200).json({
+    message: 'Shift offer accepted successfully',
+    shift: updatedShift,
+    offer: updatedOffer,
+  });
   } catch (error: any) {
     console.error('[PUT /api/shifts/offers/:id/accept] Error accepting offer:', {
       message: error?.message,
@@ -1063,6 +1070,165 @@ router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: Auth
       detail: error?.detail,
     });
     throw error;
+  }
+}));
+
+// Apply for a shift (authenticated, professional only)
+router.post('/:id/apply', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get shift to verify it exists and is open
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  if (shift.status !== 'open') {
+    res.status(400).json({ message: 'Shift is not available for application' });
+    return;
+  }
+
+  // Double-booking protection: Check if user already has a shift at this time
+  const userShifts = await shiftsRepo.getShiftsByAssignee(userId);
+  const shiftStart = new Date(shift.startTime);
+  const shiftEnd = new Date(shift.endTime);
+
+  const hasOverlap = userShifts.some((userShift) => {
+    // Only check confirmed or accepted shifts
+    if (userShift.status !== 'confirmed' && userShift.status !== 'filled') {
+      return false;
+    }
+
+    const userShiftStart = new Date(userShift.startTime);
+    const userShiftEnd = new Date(userShift.endTime);
+
+    // Check if shifts overlap
+    return (
+      (shiftStart >= userShiftStart && shiftStart < userShiftEnd) ||
+      (shiftEnd > userShiftStart && shiftEnd <= userShiftEnd) ||
+      (shiftStart <= userShiftStart && shiftEnd >= userShiftEnd)
+    );
+  });
+
+  if (hasOverlap) {
+    res.status(409).json({ message: 'You already have a shift scheduled during this time' });
+    return;
+  }
+
+  // Check if user has already applied for this shift
+  const existingApplication = await applicationsRepo.hasUserApplied(id, 'shift', userId);
+  if (existingApplication) {
+    res.status(409).json({ message: 'You have already applied for this shift' });
+    return;
+  }
+
+  // Get user information for application
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Check if shift has autoAccept enabled
+  const autoAccept = shift.autoAccept || false;
+
+  if (autoAccept) {
+    // Instant accept: Update shift to CONFIRMED and assign professional
+    const { getDb } = await import('../db/index.js');
+    const db = getDb();
+    if (!db) {
+      res.status(500).json({ message: 'Database not available' });
+      return;
+    }
+
+    try {
+      await db.transaction(async (tx) => {
+        // Update shift to confirmed and assign professional
+        await tx
+          .update(shifts)
+          .set({
+            assigneeId: userId,
+            status: 'confirmed',
+          })
+          .where(eq(shifts.id, id));
+      });
+
+      // Fetch updated shift
+      const updatedShift = await shiftsRepo.getShiftById(id);
+
+      // Send notification to shop
+      try {
+        await notificationsService.notifyBusinessOfAcceptance(
+          shift.employerId,
+          user.name || 'Professional',
+          {
+            id: shift.id,
+            title: shift.title,
+            startTime: shift.startTime,
+            endTime: shift.endTime,
+            location: shift.location || undefined,
+            hourlyRate: shift.hourlyRate,
+          }
+        );
+      } catch (error) {
+        console.error('[POST /api/shifts/:id/apply] Error sending notification:', error);
+      }
+
+      res.status(200).json({
+        message: 'Shift accepted successfully',
+        shift: updatedShift,
+        instantAccept: true,
+      });
+    } catch (error: any) {
+      console.error('[POST /api/shifts/:id/apply] Error accepting shift:', {
+        message: error?.message,
+        code: error?.code,
+        detail: error?.detail,
+      });
+      throw error;
+    }
+  } else {
+    // Create application record
+    const application = await applicationsRepo.createApplication({
+      shiftId: id,
+      userId: userId,
+      name: user.name || 'Professional',
+      email: user.email || '',
+      coverLetter: `Application for shift: ${shift.title}`,
+    });
+
+    if (!application) {
+      res.status(500).json({ message: 'Failed to create application' });
+      return;
+    }
+
+    // Send notification to shop
+    try {
+      await notificationsService.notifyBusinessOfApplication(
+        shift.employerId,
+        {
+          id: application.id,
+          shiftId: shift.id,
+          professionalName: user.name || 'Professional',
+          shiftTitle: shift.title,
+        }
+      );
+    } catch (error) {
+      console.error('[POST /api/shifts/:id/apply] Error sending notification:', error);
+    }
+
+    res.status(201).json({
+      message: 'Application submitted successfully',
+      application,
+      instantAccept: false,
+    });
   }
 }));
 

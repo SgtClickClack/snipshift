@@ -13,6 +13,7 @@ export interface ShiftFilters {
   employerId?: string;
   assigneeId?: string;
   status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+  startTimeAfter?: Date | string;
   limit?: number;
   offset?: number;
 }
@@ -37,6 +38,7 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
     employerId,
     assigneeId,
     status, 
+    startTimeAfter,
     limit = 50, 
     offset = 0,
   } = filters;
@@ -51,6 +53,10 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
   }
   if (status) {
     conditions.push(eq(shifts.status, status));
+  }
+  if (startTimeAfter) {
+    const afterDate = typeof startTimeAfter === 'string' ? new Date(startTimeAfter) : startTimeAfter;
+    conditions.push(gte(shifts.startTime, afterDate));
   }
 
   // Build query

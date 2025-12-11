@@ -287,6 +287,11 @@ export async function declineShiftOffer(shiftId: string): Promise<{ id: string; 
   return res.json();
 }
 
+export async function applyToShift(shiftId: string): Promise<{ message: string; shift?: any; application?: any; instantAccept: boolean }> {
+  const res = await apiRequest('POST', `/api/shifts/${shiftId}/apply`);
+  return res.json();
+}
+
 export interface CreateReviewData {
   revieweeId: string;
   jobId: string;
