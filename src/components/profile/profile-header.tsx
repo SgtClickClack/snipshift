@@ -602,10 +602,10 @@ export default function ProfileHeader({
           priority={true}
           fallbackType="banner"
           className="w-full h-full object-cover rounded-lg"
-          containerClassName="w-full h-full absolute inset-0 overflow-hidden"
+          containerClassName="w-full h-full absolute inset-0 z-0"
         />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg absolute inset-0" />
+          <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg absolute inset-0 z-0" />
         )}
 
       {/* Banner Edit Button (top-right) */}
