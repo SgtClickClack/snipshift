@@ -43,6 +43,7 @@ const OnboardingCompleteSchema = z.object({
 // Name and password are optional to support OAuth flows where:
 // - Name can be extracted from Firebase token (displayName)
 // - Password is not required for OAuth providers
+// Role is optional and defaults to 'professional' if not provided
 const RegisterSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(255).optional(),
@@ -50,6 +51,7 @@ const RegisterSchema = z.object({
     z.string().min(8),
     z.literal(''),
   ]).optional(),
+  role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand']).optional(),
 });
 
     // Register new user (creates user and sends welcome email)
@@ -63,7 +65,7 @@ router.post('/register', asyncHandler(async (req, res) => {
       return;
     }
 
-    let { email, name, password } = validationResult.data;
+    let { email, name, password, role } = validationResult.data;
 
     // E2E Test Hook - If running in E2E mode, check for special test emails
     // This allows tests to "register" without needing a real backend cleanup
@@ -120,12 +122,15 @@ router.post('/register', asyncHandler(async (req, res) => {
     }
 
     // Create user
+    // Map frontend role 'brand' to database role 'business' if needed
+    const dbRole = role === 'brand' ? 'business' : (role || 'professional');
+    
     let newUser;
     try {
       newUser = await usersRepo.createUser({
         email,
         name: finalName,
-        role: 'professional',
+        role: dbRole as 'professional' | 'business' | 'admin' | 'trainer' | 'hub',
       });
     } catch (dbError: any) {
       console.error('[REGISTER ERROR] Database error creating user:', dbError);

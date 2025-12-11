@@ -88,6 +88,7 @@ export async function createUser(
       passwordHash: userData.passwordHash || null,
       role: userData.role || 'professional',
       roles: [userData.role || 'professional'],
+      isActive: true, // Explicitly set isActive to ensure it's always provided
     })
     .returning();
 
