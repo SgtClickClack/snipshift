@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,10 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Share2, TrendingUp, Users, Eye, MessageCircle, Heart, Edit, Trash, Tag, Calendar, Globe } from "lucide-react";
+import { Plus, Share2, TrendingUp, Users, Eye, MessageCircle, Heart, Edit, Trash, Tag, Calendar, Globe, Loader2, User } from "lucide-react";
 import { format } from "date-fns";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
+import ProfileHeader from "@/components/profile/profile-header";
 import { SEO } from "@/components/seo/SEO";
 
 interface SocialPost {
@@ -60,6 +61,82 @@ export default function BrandDashboard() {
     discountPercentage: 0,
     validUntil: ""
   });
+
+  const [profileData, setProfileData] = useState({
+    displayName: "",
+    bio: "",
+    website: "",
+    avatarUrl: "",
+    bannerUrl: ""
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  useEffect(() => {
+    if (user && !isEditingProfile) {
+      // Only sync from user when not editing to avoid overwriting local changes
+      setProfileData({
+        displayName: user.displayName || user.companyName || "",
+        bio: user.bio || user.description || "",
+        website: user.website || "",
+        avatarUrl: user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || "",
+        bannerUrl: user.bannerUrl || user.bannerImage || ""
+      });
+    }
+  }, [user, isEditingProfile]);
+
+  // Sync bannerUrl when user.bannerUrl changes (e.g., after a refetch or upload)
+  // This runs even when editing to ensure the preview updates
+  useEffect(() => {
+    if (user?.bannerUrl) {
+      const extractedBannerUrl = typeof user.bannerUrl === 'string' 
+        ? user.bannerUrl 
+        : (user.bannerUrl as any)?.bannerUrl || (user.bannerUrl as any)?.url || null;
+      
+      if (extractedBannerUrl && extractedBannerUrl !== profileData.bannerUrl) {
+        console.log('BrandDashboard - Syncing bannerUrl from user prop:', extractedBannerUrl);
+        setProfileData(prev => ({ ...prev, bannerUrl: extractedBannerUrl }));
+      }
+    }
+  }, [user?.bannerUrl]);
+
+  // Sync avatarUrl when user.avatarUrl changes (e.g., after a refetch or upload)
+  // This runs even when editing to ensure the preview updates
+  useEffect(() => {
+    if (user) {
+      const avatarUrl = user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || '';
+      if (avatarUrl && avatarUrl !== profileData.avatarUrl) {
+        console.log('BrandDashboard - Syncing avatarUrl from user prop:', avatarUrl);
+        setProfileData(prev => ({ ...prev, avatarUrl }));
+      }
+    }
+  }, [user?.avatarUrl, user?.profileImageURL, user?.profileImage]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof profileData) => {
+      const res = await apiRequest("PUT", "/api/me", data);
+      return res.json();
+    },
+    onSuccess: async () => {
+      toast({
+        title: "Profile updated successfully",
+        description: "Your brand profile information has been updated."
+      });
+      await refreshUser();
+      setIsEditingProfile(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Update Failed",
+        description: "Could not update profile information",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate(profileData);
+  };
 
   const { data: posts = [], isLoading } = useQuery<SocialPost[]>({
     queryKey: ["/api/social-posts", user?.id],
@@ -421,79 +498,107 @@ export default function BrandDashboard() {
 
         {/* Profile Tab */}
         {activeView === 'profile' && (
-          <div className="max-w-2xl space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Brand Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Visual Preview Section matching Business Dashboard */}
-                <div className="relative mb-8 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 group">
-                  {/* Banner Preview */}
-                  <div className="h-32 md:h-48 w-full relative">
-                    <OptimizedImage
-                      src={user?.bannerUrl || user?.bannerImage || '/placeholder-banner.jpg'}
-                      alt="Brand Banner"
-                      fallbackType="banner"
-                      className="w-full h-full object-cover"
-                      containerClassName="w-full h-full"
+          <div className="max-w-4xl">
+            <Card className="bg-card rounded-lg border border-border shadow-sm">
+              <CardContent className="p-0">
+                <form onSubmit={handleProfileSubmit} className="space-y-6">
+                  {/* Profile Header with Banner and Avatar */}
+                  <div className="relative overflow-visible z-0">
+                    <ProfileHeader
+                      key={`profile-header-${profileData.bannerUrl || 'no-banner'}-${profileData.avatarUrl || 'no-avatar'}`}
+                      bannerUrl={profileData.bannerUrl}
+                      avatarUrl={profileData.avatarUrl}
+                      displayName={profileData.displayName || user?.displayName || user?.companyName || 'Brand'}
+                      editable={isEditingProfile}
+                      onBannerUpload={isEditingProfile ? (url) => {
+                        // ProfileHeader already calls API and saves to DB
+                        // Just update local state for immediate UI update
+                        setProfileData(prev => ({ ...prev, bannerUrl: url }));
+                        // Refresh user in background without blocking
+                        refreshUser().catch(err => console.error('Failed to refresh user:', err));
+                      } : undefined}
+                      onAvatarUpload={isEditingProfile ? (url) => {
+                        // ProfileHeader already calls API and saves to DB
+                        // Just update local state for immediate UI update
+                        setProfileData(prev => ({ ...prev, avatarUrl: url }));
+                        // Refresh user in background without blocking
+                        refreshUser().catch(err => console.error('Failed to refresh user:', err));
+                      } : undefined}
                     />
-                    {/* Overlay Hint */}
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white text-sm font-medium">Use header button to edit</p>
+                  </div>
+                  
+                  {/* Title and Edit Button - positioned below banner with padding for avatar */}
+                  <div className="px-6 pt-20 md:pt-24 pb-4">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Profile Settings
+                      </CardTitle>
+                      <div className="flex gap-2">
+                        {!isEditingProfile ? (
+                          <Button type="button" onClick={() => setIsEditingProfile(true)} variant="outline" data-testid="button-edit-profile">
+                            Edit Profile
+                          </Button>
+                        ) : (
+                          <>
+                            <Button type="button" onClick={() => setIsEditingProfile(false)} variant="outline" data-testid="button-cancel-edit">
+                              Cancel
+                            </Button>
+                            <Button type="submit" disabled={updateProfileMutation.isPending} data-testid="button-save-profile">
+                              {updateProfileMutation.isPending ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save'
+                              )}
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Form fields */}
+                  <div className="px-6 pb-6">
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="companyName">Company Name</Label>
+                        <Input
+                          id="companyName"
+                          value={profileData.displayName}
+                          onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
+                          placeholder="Enter your company name"
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
 
-                  {/* Avatar/Logo Preview (Overlapping) */}
-                  <div className="absolute -bottom-10 left-6">
-                    <div className="h-20 w-20 rounded-full border-4 border-black overflow-hidden bg-zinc-800 relative z-10">
-                      <OptimizedImage
-                        src={user?.avatarUrl || user?.photoURL || user?.profileImageURL || '/placeholder-avatar.jpg'}
-                        alt="Brand Logo"
-                        fallbackType="avatar"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
+                      <div className="space-y-2">
+                        <Label htmlFor="bio">Bio / Description</Label>
+                        <Textarea
+                          id="bio"
+                          value={profileData.bio}
+                          onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                          placeholder="Tell us about your brand and products..."
+                          rows={4}
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="website">Website</Label>
+                        <Input
+                          id="website"
+                          value={profileData.website}
+                          onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+                          placeholder="https://your-website.com"
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Spacing for overlapping avatar */}
-                <div className="pt-12 md:pt-14"></div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> Use the upload buttons in the header above to update your banner image and logo/profile picture.
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    placeholder="Your company name"
-                    data-testid="input-company-name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Tell people about your brand and products..."
-                    className="min-h-[100px]"
-                    data-testid="textarea-description"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    placeholder="https://your-website.com"
-                    data-testid="input-website"
-                  />
-                </div>
-                <Button className="w-full" data-testid="button-save-profile">
-                  Save Profile
-                </Button>
+                </form>
               </CardContent>
             </Card>
           </div>
