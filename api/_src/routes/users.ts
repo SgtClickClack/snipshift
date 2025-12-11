@@ -22,7 +22,7 @@ const UpdateProfileSchema = z.object({
 
 // Validation schema for onboarding completion
 const OnboardingCompleteSchema = z.object({
-  role: z.enum(['professional', 'business']),
+  role: z.enum(['professional', 'business', 'trainer', 'brand']),
   displayName: z.string().min(1).max(255),
   phone: z.string().max(50),
   bio: z.string().max(1000).optional(),
@@ -377,10 +377,23 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
 
   const { role, displayName, bio, phone, location, avatarUrl } = validationResult.data;
 
+  // Map frontend roles to backend database roles
+  // 'brand' maps to 'business' in the database, 'trainer' stays as 'trainer'
+  const dbRole = role === 'brand' ? 'business' : role === 'trainer' ? 'trainer' : role;
+
+  // Fetch current user to get existing roles
+  const currentUser = await usersRepo.getUserById(req.user.id);
+  const existingRoles = currentUser?.roles || [];
+  
+  // Add the role to the roles array if not already present
+  // Store the frontend role name (e.g., 'brand') in the roles array
+  const rolesToStore = Array.from(new Set([...existingRoles, role]));
+
   // Prepare update object
   const updates: any = {
     name: displayName,
-    role: role === 'professional' ? 'professional' : 'business',
+    role: dbRole, // Database role (business for brand, trainer for trainer, etc.)
+    roles: rolesToStore, // Frontend roles array
     bio: bio || null,
     phone: phone,
     location: location,
@@ -397,6 +410,9 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
   }
 
     // Return updated user object
+    // Map database role back to frontend role for currentRole if needed
+    const frontendCurrentRole = role; // Use the original frontend role (brand, trainer, etc.)
+    
     res.status(200).json({
       id: updatedUser.id,
       email: updatedUser.email,
@@ -407,8 +423,8 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
       location: updatedUser.location,
       avatarUrl: updatedUser.avatarUrl || null,
       bannerUrl: updatedUser.bannerUrl || null,
-      roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
-      currentRole: updatedUser.role,
+      roles: updatedUser.roles || [role], // Use roles from DB (includes frontend role names)
+      currentRole: frontendCurrentRole, // Return the frontend role name
       uid: req.user.uid,
       isOnboarded: updatedUser.isOnboarded ?? false,
     });

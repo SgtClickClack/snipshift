@@ -162,36 +162,14 @@ export default function DemoPage() {
     }
   ];
 
-  const sampleContent = [
-    {
-      type: "Brand Post",
-      title: "25% Off Premium Tools",
-      author: "ProfHair Products",
-      engagement: "42 likes",
-      status: "Approved"
-    },
-    {
-      type: "Training Event",
-      title: "Advanced Fade Masterclass",
-      author: "Master Barber Mike",
-      engagement: "28 likes",
-      status: "Approved"
-    },
-    {
-      type: "Training Content",
-      title: "Beard Styling Fundamentals",
-      author: "Sarah Chen",
-      engagement: "234 students",
-      status: "Free"
-    },
-    {
-      type: "Training Content",
-      title: "Business Skills for Barbers",
-      author: "Carlos Rodriguez",
-      engagement: "89 students",
-      status: "$29.99"
-    }
-  ];
+  // Empty array - should pull from API/database
+  const sampleContent: Array<{
+    type: string;
+    title: string;
+    author: string;
+    engagement: string;
+    status: string;
+  }> = [];
 
   return (
     <div className="min-h-screen bg-neutral-50">

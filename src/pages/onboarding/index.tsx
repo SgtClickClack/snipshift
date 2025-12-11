@@ -9,11 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { ChevronLeft, ChevronRight, Scissors, Building2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Scissors, Building2, GraduationCap, Briefcase } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import { getDashboardRoute } from '@/lib/roles';
 
-type OnboardingRole = 'professional' | 'business';
+type OnboardingRole = 'professional' | 'business' | 'trainer' | 'brand';
 
 interface OnboardingData {
   role: OnboardingRole | null;
@@ -198,6 +198,50 @@ export default function OnboardingPage() {
                   <h3 className="text-xl font-semibold text-white">I am a Shop Owner</h3>
                   <p className="text-sm text-gray-300 text-center">
                     Looking to hire barbers for my shop
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateFormData({ role: 'trainer' })}
+                data-testid="button-select-trainer"
+                className={`p-6 rounded-lg border-2 transition-all ${
+                  formData.role === 'trainer'
+                    ? 'border-red-accent bg-red-accent/10 shadow-lg'
+                    : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600 hover:shadow-md'
+                }`}
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className={`p-4 rounded-full ${
+                    formData.role === 'trainer' ? 'bg-red-accent' : 'bg-zinc-700'
+                  }`}>
+                    <GraduationCap className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">I am an Educator</h3>
+                  <p className="text-sm text-gray-300 text-center">
+                    Sharing knowledge and training the next generation
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateFormData({ role: 'brand' })}
+                data-testid="button-select-brand"
+                className={`p-6 rounded-lg border-2 transition-all ${
+                  formData.role === 'brand'
+                    ? 'border-red-accent bg-red-accent/10 shadow-lg'
+                    : 'border-steel-300 bg-card hover:border-steel-400 hover:shadow-md'
+                }`}
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className={`p-4 rounded-full ${
+                    formData.role === 'brand' ? 'bg-red-accent' : 'bg-zinc-700'
+                  }`}>
+                    <Briefcase className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">I represent a Brand</h3>
+                  <p className="text-sm text-gray-300 text-center">
+                    Managing products and sponsorships
                   </p>
                 </div>
               </button>

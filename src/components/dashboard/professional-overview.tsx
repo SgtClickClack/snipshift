@@ -297,10 +297,10 @@ export default function ProfessionalOverview({
     return "Good evening";
   }, []);
 
-  // Get profile views (mock for now, would come from analytics API)
+  // Get profile views (empty until API is implemented)
   const profileViews = useMemo(() => {
-    // This would come from analytics API in production
-    return 12; // Mock value
+    // TODO: Fetch from analytics API when available
+    return 0;
   }, []);
 
   const handleQuickApply = (job: Job) => {
