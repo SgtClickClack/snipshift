@@ -144,52 +144,74 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
         }
     
-    const unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
+    // Wrap listener setup in try-catch to ensure loading states are always set
+    let unsubscribe: (() => void) | null = null;
+    try {
+      unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
         try {
-          const token = await firebaseUser.getIdToken();
-          const res = await fetch('/api/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
+          if (firebaseUser) {
+            try {
+              const token = await firebaseUser.getIdToken();
+              const res = await fetch('/api/me', {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (res.ok) {
+                const profile = await res.json();
+                setUser({ 
+                  ...profile, 
+                  uid: firebaseUser.uid,
+                  // Ensure roles is array
+                  roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
+                  // Ensure date strings are Dates
+                  createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
+                  updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
+                  // Ensure isOnboarded is boolean
+                  isOnboarded: profile.isOnboarded ?? false
+                });
+              } else if (res.status === 401) {
+                // 401 means token is invalid - just set user to null, don't reload
+                // The UI will show "Logged Out" state gracefully
+                console.warn('Profile fetch failed (401). User token is invalid.');
+                setUser(null);
+              } else {
+                console.warn('User authenticated in Firebase but profile fetch failed', res.status);
+                // Optional: Set a minimal user or redirect to signup completion?
+                // For now, we logout if we can't identify the user in our system
+                setUser(null);
+              }
+            } catch (error) {
+              console.error('Error fetching user profile:', error);
+              setUser(null);
             }
-          });
-          
-          if (res.ok) {
-            const profile = await res.json();
-            setUser({ 
-              ...profile, 
-              uid: firebaseUser.uid,
-              // Ensure roles is array
-              roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
-              // Ensure date strings are Dates
-              createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
-              updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
-              // Ensure isOnboarded is boolean
-              isOnboarded: profile.isOnboarded ?? false
-            });
-          } else if (res.status === 401) {
-            // 401 means token is invalid - just set user to null, don't reload
-            // The UI will show "Logged Out" state gracefully
-            console.warn('Profile fetch failed (401). User token is invalid.');
-            setUser(null);
           } else {
-            console.warn('User authenticated in Firebase but profile fetch failed', res.status);
-            // Optional: Set a minimal user or redirect to signup completion?
-            // For now, we logout if we can't identify the user in our system
             setUser(null);
           }
         } catch (error) {
-          console.error('Error fetching user profile:', error);
+          // Catch any unexpected errors in the callback itself
+          console.error('Unexpected error in auth state change callback:', error);
           setUser(null);
+        } finally {
+          // CRITICAL: Always set loading states, even if there's an error
+          // This prevents the "Flash of Doom" where the app renders before auth check completes
+          setIsLoading(false);
+          setIsAuthReady(true);
         }
-      } else {
-        setUser(null);
-      }
+      });
+    } catch (error) {
+      // If listener setup fails, still set loading states to prevent infinite loading
+      console.error('Error setting up auth state listener:', error);
       setIsLoading(false);
       setIsAuthReady(true);
-    });
+    }
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [location.search]);
 
   const login = (userData: User) => {
