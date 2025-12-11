@@ -89,6 +89,7 @@ export async function createUser(
       role: userData.role || 'professional',
       roles: [userData.role || 'professional'],
       isActive: true, // Explicitly set isActive to ensure it's always provided
+      stripeOnboardingComplete: false, // Explicitly set to ensure it's always provided
     })
     .returning();
 
