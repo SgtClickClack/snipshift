@@ -561,7 +561,7 @@ export default function BrandDashboard() {
                   </div>
                   
                   {/* Form fields */}
-                  <div className="px-6 pb-6">
+                  <div className="px-6 pb-6 mb-20 md:mb-6">
                     <div className="grid grid-cols-1 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="companyName">Company Name</Label>

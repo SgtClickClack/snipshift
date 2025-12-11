@@ -732,7 +732,7 @@ export default function DashboardHeader({
                 {isUploadingLogo || isCompressingLogo ? (
                   <Loader2 className="w-6 h-6 text-white animate-spin" />
                 ) : (
-                  <Camera className="w-6 h-6 text-white opacity-50 md:opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 transition-opacity duration-200" />
+                  <Camera className="w-6 h-6 text-white opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200" />
                 )}
               </label>
               <input

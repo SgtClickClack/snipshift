@@ -225,7 +225,7 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
             data-testid={`stat-card-${index}`}
             onClick={() => isClickable && onStatClick(stat.action!)}
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-steel-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-steel-400 to-transparent opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>

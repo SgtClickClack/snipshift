@@ -397,7 +397,7 @@ export default function TrainerDashboard() {
               <CardHeader>
                 <CardTitle>Trainer Profile</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pb-20 md:pb-6">
                 <div>
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea

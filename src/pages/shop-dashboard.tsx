@@ -246,7 +246,7 @@ export default function ShopDashboard() {
                 <CardHeader>
                   <CardTitle>Post a New Shift</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pb-20 md:pb-6">
                   <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                     <div>
                       <Label htmlFor="title">Shift Title</Label>

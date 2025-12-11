@@ -488,7 +488,7 @@ export default function SalonCreateJobPage() {
 
           {/* Right Column - Live Preview */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4">
+            <Card className="hidden lg:block sticky top-4">
               <CardHeader>
                 <CardTitle>Live Preview</CardTitle>
                 <p className="text-sm text-muted-foreground">

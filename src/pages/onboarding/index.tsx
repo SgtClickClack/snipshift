@@ -296,7 +296,7 @@ export default function OnboardingPage() {
 
       case 4:
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-20 md:pb-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-white mb-2">Location</h2>
               <p className="text-gray-300">Where are you located?</p>
