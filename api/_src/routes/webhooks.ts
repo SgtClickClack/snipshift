@@ -93,7 +93,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           userId,
           amount,
           currency: session.currency || 'usd',
-          status: 'succeeded',
+          status: 'PAID',
           stripePaymentIntentId: session.payment_intent,
           description: `Subscription: ${plan.name}`,
         });
@@ -135,7 +135,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           subscriptionId: subscription.id,
           amount,
           currency: invoice.currency,
-          status: 'succeeded',
+          status: 'PAID',
           stripePaymentIntentId: invoice.payment_intent,
           stripeChargeId: invoice.charge,
           description: `Subscription renewal: ${invoice.description || 'Monthly subscription'}`,

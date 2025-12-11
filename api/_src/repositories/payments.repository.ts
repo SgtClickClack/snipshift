@@ -16,7 +16,7 @@ export async function createPayment(data: {
   subscriptionId?: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  status: 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'REFUNDED' | 'PAYMENT_FAILED';
   stripePaymentIntentId?: string;
   stripeChargeId?: string;
   description?: string;
@@ -66,7 +66,7 @@ export async function getPaymentByStripePaymentIntentId(stripePaymentIntentId: s
  */
 export async function updatePaymentStatus(
   paymentId: string,
-  status: 'pending' | 'succeeded' | 'failed' | 'refunded'
+  status: 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'REFUNDED' | 'PAYMENT_FAILED'
 ) {
   const db = getDb();
   if (!db) {
@@ -117,7 +117,7 @@ export async function getTotalRevenue(): Promise<number> {
   const [result] = await db
     .select({ total: sql<number>`COALESCE(SUM(${payments.amount}::numeric), 0)` })
     .from(payments)
-    .where(eq(payments.status, 'succeeded'));
+    .where(eq(payments.status, 'PAID'));
 
   return parseFloat(result?.total?.toString() || '0') || 0;
 }
@@ -141,7 +141,7 @@ export async function getMRR(): Promise<number> {
     .from(payments)
     .where(
       and(
-        eq(payments.status, 'succeeded'),
+        eq(payments.status, 'PAID'),
         gte(payments.createdAt, startOfMonth)
       )
     );
