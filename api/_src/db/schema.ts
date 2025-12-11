@@ -274,7 +274,7 @@ export const payments = pgTable('payments', {
   subscriptionId: uuid('subscription_id').references(() => subscriptions.id, { onDelete: 'set null' }),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
   currency: varchar('currency', { length: 3 }).notNull().default('usd'),
-  status: paymentStatusEnum('status').notNull().default('pending'),
+  status: paymentStatusEnum('status').notNull().default('UNPAID'),
   stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).unique(),
   stripeChargeId: varchar('stripe_charge_id', { length: 255 }),
   description: text('description'),
