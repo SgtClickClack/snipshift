@@ -1994,6 +1994,7 @@ app.patch('/api/conversations/:id/read', authenticateUser, asyncHandler(async (r
 }));
 
 // Handler for getting unread message count
+// Trigger redeploy - database schema synced 2025-01-XX
 app.get('/api/conversations/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
 
