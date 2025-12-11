@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -244,6 +245,15 @@ export default function ProfessionalCalendar({
   });
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [newEventTitle, setNewEventTitle] = useState("");
+  const [shiftFormData, setShiftFormData] = useState({
+    title: "",
+    description: "",
+    date: "",
+    startTime: "09:00",
+    endTime: "17:00",
+    hourlyRate: "45",
+    location: "",
+  });
   const [statusFilter, setStatusFilter] = useState<JobStatus>("all");
   const [currentTime, setCurrentTime] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -518,6 +528,16 @@ export default function ProfessionalCalendar({
       setSelectedSlot({ start, end: validEnd });
       setSelectedDate(start);
       setNewEventTitle(""); // Reset title
+      // Initialize form data with selected slot times
+      setShiftFormData({
+        title: "",
+        description: "",
+        date: format(start, "yyyy-MM-dd"),
+        startTime: format(start, "HH:mm"),
+        endTime: format(validEnd, "HH:mm"),
+        hourlyRate: "45",
+        location: "",
+      });
       setShowCreateModal(true);
       
       if (onDateSelect) {
@@ -820,17 +840,18 @@ export default function ProfessionalCalendar({
 
   // Create event/availability mutation - uses shifts endpoint for availability slots
   const createEventMutation = useMutation({
-    mutationFn: async (data: { title: string; start: Date; end: Date }) => {
+    mutationFn: async (data: { title: string; start: Date; end: Date; description?: string; hourlyRate?: string; location?: string }) => {
       // Use shifts endpoint with proper data structure matching ShiftSchema
       // Note: hourlyRate is required by the database, so we provide a default
-      // In business mode, create as 'draft' (Ghost Slot). In professional mode, use 'open'
-      const defaultStatus = mode === 'business' ? 'draft' : 'open';
+      // In business mode, create as 'open' (full shift). In professional mode, use 'open'
+      const defaultStatus = mode === 'business' ? 'open' : 'open';
       const response = await apiRequest("POST", "/api/shifts", {
         title: data.title || (mode === 'business' ? "New Shift" : "Availability"),
-        description: mode === 'business' ? "Shift slot" : "Availability slot",
+        description: data.description || (mode === 'business' ? "Shift slot" : "Availability slot"),
         startTime: data.start.toISOString(),
         endTime: data.end.toISOString(),
-        hourlyRate: "0", // Default to 0 for availability slots (can be updated later)
+        hourlyRate: data.hourlyRate || "45",
+        location: data.location || "",
         status: defaultStatus,
       });
       return response.json();
@@ -842,12 +863,22 @@ export default function ProfessionalCalendar({
       toast({
         title: mode === 'business' ? "Shift created" : "Event created",
         description: mode === 'business' 
-          ? "Your shift slot has been created. Click it to assign staff."
+          ? "Your shift has been created successfully."
           : "Your availability slot has been created successfully",
       });
       setShowCreateModal(false);
       setSelectedSlot(null);
       setNewEventTitle("");
+      // Reset form data
+      setShiftFormData({
+        title: "",
+        description: "",
+        date: "",
+        startTime: "09:00",
+        endTime: "17:00",
+        hourlyRate: "45",
+        location: "",
+      });
     },
     onError: (error: any) => {
       toast({
@@ -1161,18 +1192,18 @@ export default function ProfessionalCalendar({
   );
 
   const handleCreateEvent = () => {
+    // Use form data if available, otherwise fall back to selectedSlot
     let startTime: Date;
     let endTime: Date;
+    let dateStr: string;
 
-    if (!selectedSlot) {
-      // Fallback: use selectedDate if no slot selected
-      if (!selectedDate) return;
-      startTime = new Date(selectedDate);
-      startTime.setHours(9, 0, 0, 0);
-      endTime = new Date(selectedDate);
-      endTime.setHours(17, 0, 0, 0);
-    } else {
-      // Validate slot dates
+    if (shiftFormData.date && shiftFormData.startTime && shiftFormData.endTime) {
+      // Use form data
+      dateStr = shiftFormData.date;
+      startTime = new Date(`${shiftFormData.date}T${shiftFormData.startTime}`);
+      endTime = new Date(`${shiftFormData.date}T${shiftFormData.endTime}`);
+    } else if (selectedSlot) {
+      // Fallback to selected slot
       if (isNaN(selectedSlot.start.getTime()) || isNaN(selectedSlot.end.getTime())) {
         toast({
           title: "Invalid time slot",
@@ -1183,6 +1214,31 @@ export default function ProfessionalCalendar({
       }
       startTime = selectedSlot.start;
       endTime = selectedSlot.end;
+      dateStr = format(selectedSlot.start, "yyyy-MM-dd");
+    } else if (selectedDate) {
+      // Fallback: use selectedDate if no slot selected
+      startTime = new Date(selectedDate);
+      startTime.setHours(9, 0, 0, 0);
+      endTime = new Date(selectedDate);
+      endTime.setHours(17, 0, 0, 0);
+      dateStr = format(selectedDate, "yyyy-MM-dd");
+    } else {
+      toast({
+        title: "Missing information",
+        description: "Please select a date and time for the shift",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate: End time must be after start time
+    if (endTime <= startTime) {
+      toast({
+        title: "Invalid time range",
+        description: "End time must be after start time.",
+        variant: "destructive",
+      });
+      return;
     }
 
     // Prevent creating events in the past (Time Travel Bug fix)
@@ -1221,9 +1277,12 @@ export default function ProfessionalCalendar({
     }
 
     createEventMutation.mutate({
-      title: newEventTitle || "New Event",
+      title: shiftFormData.title || newEventTitle || "New Event",
       start: startTime,
       end: endTime,
+      description: shiftFormData.description,
+      hourlyRate: shiftFormData.hourlyRate || "45",
+      location: shiftFormData.location,
     });
   };
 
@@ -1294,6 +1353,16 @@ export default function ProfessionalCalendar({
                   setSelectedDate(today);
                   setSelectedSlot(null); // Clear slot selection for manual creation
                   setNewEventTitle("");
+                  // Initialize form with today's date and default times
+                  setShiftFormData({
+                    title: "",
+                    description: "",
+                    date: format(today, "yyyy-MM-dd"),
+                    startTime: "09:00",
+                    endTime: "17:00",
+                    hourlyRate: "45",
+                    location: "",
+                  });
                   setShowCreateModal(true);
                 }
               }}
@@ -1889,8 +1958,18 @@ export default function ProfessionalCalendar({
         if (!open) {
           // Reset form when closing
           setSelectedSlot(null);
+          setSelectedDate(undefined);
           setNewEventTitle("");
           setShowFindProfessionalMode(false);
+          setShiftFormData({
+            title: "",
+            description: "",
+            date: "",
+            startTime: "09:00",
+            endTime: "17:00",
+            hourlyRate: "45",
+            location: "",
+          });
         }
       }}>
         <SheetContent className="max-h-[85vh] overflow-y-auto">
@@ -1936,56 +2015,125 @@ export default function ProfessionalCalendar({
             )}
 
             {!showFindProfessionalMode ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="event-title">Event Title</Label>
+              <form onSubmit={(e) => { e.preventDefault(); handleCreateEvent(); }} className="space-y-6">
+                <div>
+                  <Label htmlFor="event-title">Shift Title *</Label>
                   <Input
                     id="event-title"
-                    placeholder="Enter event title"
-                    value={newEventTitle}
-                    onChange={(e) => setNewEventTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleCreateEvent();
-                      }
+                    required
+                    placeholder="e.g., Weekend Barber Needed"
+                    value={shiftFormData.title || newEventTitle}
+                    onChange={(e) => {
+                      setShiftFormData({ ...shiftFormData, title: e.target.value });
+                      setNewEventTitle(e.target.value);
                     }}
+                    className="bg-zinc-900 border-zinc-700"
                     autoFocus
                   />
                 </div>
-                
-                {selectedSlot && (
-                  <div className="space-y-2 pt-2 border-t">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {format(selectedSlot.start, "EEEE, MMMM d, yyyy")}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {format(selectedSlot.start, "h:mm a")} - {format(selectedSlot.end, "h:mm a")}
-                      </span>
-                    </div>
+
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    rows={3}
+                    value={shiftFormData.description}
+                    onChange={(e) => setShiftFormData({ ...shiftFormData, description: e.target.value })}
+                    placeholder="Describe the shift requirements... (e.g., Barber needed for busy Saturday)"
+                    className="bg-zinc-900 border-zinc-700"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="date">Date *</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    required
+                    value={shiftFormData.date || (selectedSlot ? format(selectedSlot.start, "yyyy-MM-dd") : selectedDate ? format(selectedDate, "yyyy-MM-dd") : "")}
+                    onChange={(e) => setShiftFormData({ ...shiftFormData, date: e.target.value })}
+                    min={format(new Date(), "yyyy-MM-dd")}
+                    className="bg-zinc-900 border-zinc-700"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="startTime">Start Time *</Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      required
+                      value={shiftFormData.startTime}
+                      onChange={(e) => setShiftFormData({ ...shiftFormData, startTime: e.target.value })}
+                      className="bg-zinc-900 border-zinc-700"
+                    />
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <Label htmlFor="endTime">End Time *</Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      required
+                      value={shiftFormData.endTime}
+                      onChange={(e) => setShiftFormData({ ...shiftFormData, endTime: e.target.value })}
+                      className="bg-zinc-900 border-zinc-700"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="hourlyRate">Hourly Rate ($) *</Label>
+                    <Input
+                      id="hourlyRate"
+                      type="number"
+                      step="0.01"
+                      required
+                      value={shiftFormData.hourlyRate}
+                      onChange={(e) => setShiftFormData({ ...shiftFormData, hourlyRate: e.target.value })}
+                      placeholder="45.00"
+                      className="bg-zinc-900 border-zinc-700"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={shiftFormData.location}
+                      onChange={(e) => setShiftFormData({ ...shiftFormData, location: e.target.value })}
+                      placeholder="e.g., 123 Main St, City, State"
+                      className="bg-zinc-900 border-zinc-700"
+                    />
+                  </div>
+                </div>
                 
                 <div className="flex gap-2 pt-4">
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={() => {
                       setShowCreateModal(false);
                       setSelectedSlot(null);
+                      setSelectedDate(undefined);
                       setNewEventTitle("");
                       setShowFindProfessionalMode(false);
+                      setShiftFormData({
+                        title: "",
+                        description: "",
+                        date: "",
+                        startTime: "09:00",
+                        endTime: "17:00",
+                        hourlyRate: "45",
+                        location: "",
+                      });
                     }}
                     className="flex-1"
                   >
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleCreateEvent}
+                    type="submit"
                     disabled={createEventMutation.isPending}
                     className="flex-1"
                   >
@@ -1994,7 +2142,7 @@ export default function ProfessionalCalendar({
                       : mode === 'business' ? "Create Shift" : "Create Event"}
                   </Button>
                 </div>
-              </>
+              </form>
             ) : (
               /* Find Professional Mode */
               <div className="space-y-4">
@@ -2023,8 +2171,18 @@ export default function ProfessionalCalendar({
                     onClick={() => {
                       setShowCreateModal(false);
                       setSelectedSlot(null);
+                      setSelectedDate(undefined);
                       setNewEventTitle("");
                       setShowFindProfessionalMode(false);
+                      setShiftFormData({
+                        title: "",
+                        description: "",
+                        date: "",
+                        startTime: "09:00",
+                        endTime: "17:00",
+                        hourlyRate: "45",
+                        location: "",
+                      });
                     }}
                     className="flex-1"
                   >
@@ -2036,13 +2194,23 @@ export default function ProfessionalCalendar({
                       if (!selectedSlot) return;
                       
                       try {
+                        // Use form data if available, otherwise use selectedSlot
+                        const dateStr = shiftFormData.date || (selectedSlot ? format(selectedSlot.start, "yyyy-MM-dd") : "");
+                        const startTime = shiftFormData.date && shiftFormData.startTime 
+                          ? new Date(`${shiftFormData.date}T${shiftFormData.startTime}`)
+                          : selectedSlot?.start || new Date();
+                        const endTime = shiftFormData.date && shiftFormData.endTime
+                          ? new Date(`${shiftFormData.date}T${shiftFormData.endTime}`)
+                          : selectedSlot?.end || new Date();
+                        
                         // Create draft shift
                         const response = await apiRequest("POST", "/api/shifts", {
-                          title: newEventTitle || "New Shift",
-                          description: "Shift slot",
-                          startTime: selectedSlot.start.toISOString(),
-                          endTime: selectedSlot.end.toISOString(),
-                          hourlyRate: "0",
+                          title: shiftFormData.title || newEventTitle || "New Shift",
+                          description: shiftFormData.description || "Shift slot",
+                          startTime: startTime.toISOString(),
+                          endTime: endTime.toISOString(),
+                          hourlyRate: shiftFormData.hourlyRate || "45",
+                          location: shiftFormData.location || "",
                           status: "draft",
                         });
                         const shiftData = await response.json();
@@ -2050,9 +2218,9 @@ export default function ProfessionalCalendar({
                         // Create a temporary CalendarEvent for the AssignStaffModal
                         const tempEvent: CalendarEvent = {
                           id: shiftData.id || `temp-${Date.now()}`,
-                          title: newEventTitle || "New Shift",
-                          start: selectedSlot.start,
-                          end: selectedSlot.end,
+                          title: shiftFormData.title || newEventTitle || "New Shift",
+                          start: startTime,
+                          end: endTime,
                           resource: {
                             booking: {
                               shift: {

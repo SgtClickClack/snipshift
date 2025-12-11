@@ -43,7 +43,7 @@ export default function CreateShiftModal({
     date: initialDate ? format(initialDate, "yyyy-MM-dd") : "",
     startTime: initialStartTime || "09:00",
     endTime: initialEndTime || "17:00",
-    hourlyRate: "",
+    hourlyRate: "45", // Default $45/hr
     location: "",
   });
 
@@ -80,7 +80,7 @@ export default function CreateShiftModal({
         date: "",
         startTime: "09:00",
         endTime: "17:00",
-        hourlyRate: "",
+        hourlyRate: "45", // Default $45/hr
         location: "",
       });
       setRepeatWeekly(false);
@@ -103,6 +103,16 @@ export default function CreateShiftModal({
     // Create base shift data
     const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
     const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+
+    // Validate: End time must be after start time
+    if (endDateTime <= startDateTime) {
+      toast({
+        title: "Invalid time range",
+        description: "End time must be after start time.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Time Travel Bug fix: Prevent creating shifts in the past
     const now = new Date();
@@ -150,7 +160,7 @@ export default function CreateShiftModal({
       requirements: formData.description,
       startTime: startDateTime,
       endTime: endDateTime,
-      hourlyRate: formData.hourlyRate || "0",
+      hourlyRate: formData.hourlyRate || "45",
       location: formData.location,
       status: 'open' as const,
     };
@@ -191,6 +201,7 @@ export default function CreateShiftModal({
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="e.g., Weekend Barber Needed"
+              className="bg-zinc-900 border-zinc-700"
             />
           </div>
 
@@ -201,43 +212,46 @@ export default function CreateShiftModal({
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the shift requirements..."
+              placeholder="Describe the shift requirements... (e.g., Barber needed for busy Saturday)"
+              className="bg-zinc-900 border-zinc-700"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="date">Date *</Label>
+          <div>
+            <Label htmlFor="date">Date *</Label>
+            <Input
+              id="date"
+              type="date"
+              required
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              min={format(new Date(), "yyyy-MM-dd")}
+              className="bg-zinc-900 border-zinc-700"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start Time *</Label>
               <Input
-                id="date"
-                type="date"
+                id="startTime"
+                type="time"
                 required
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                min={format(new Date(), "yyyy-MM-dd")}
+                value={formData.startTime}
+                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                className="bg-zinc-900 border-zinc-700"
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="startTime">Start Time *</Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  required
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="endTime">End Time *</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  required
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End Time *</Label>
+              <Input
+                id="endTime"
+                type="time"
+                required
+                value={formData.endTime}
+                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                className="bg-zinc-900 border-zinc-700"
+              />
             </div>
           </div>
 
@@ -251,7 +265,8 @@ export default function CreateShiftModal({
                 required
                 value={formData.hourlyRate}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                placeholder="0.00"
+                placeholder="45.00"
+                className="bg-zinc-900 border-zinc-700"
               />
             </div>
             <div>
@@ -261,6 +276,7 @@ export default function CreateShiftModal({
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="e.g., 123 Main St, City, State"
+                className="bg-zinc-900 border-zinc-700"
               />
             </div>
           </div>
