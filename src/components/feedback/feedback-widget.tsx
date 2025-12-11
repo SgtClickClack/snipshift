@@ -93,7 +93,7 @@ export function FeedbackWidget() {
       {isOpen && (
         <div className="fixed inset-0 z-overlay bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <Card className="w-full max-w-md bg-card shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 flex-wrap gap-2">
               <CardTitle className="text-lg">Send Feedback</CardTitle>
               <Button
                 variant="ghost"

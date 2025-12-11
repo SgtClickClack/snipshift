@@ -104,7 +104,7 @@ export function ReportButton({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="w-[95vw] sm:max-w-[500px]">
+      <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Report {reportedId ? 'User' : 'Job'}</DialogTitle>
           <DialogDescription>

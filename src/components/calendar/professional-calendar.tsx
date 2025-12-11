@@ -1596,7 +1596,7 @@ export default function ProfessionalCalendar({
 
       {/* Event Details Sheet */}
       <Sheet open={showEventDetails} onOpenChange={setShowEventDetails}>
-        <SheetContent className="w-full sm:max-w-lg">
+        <SheetContent className="w-full sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{selectedEvent?.title || "Event Details"}</SheetTitle>
             <SheetDescription>
@@ -1757,7 +1757,7 @@ export default function ProfessionalCalendar({
           setNewEventTitle("");
         }
       }}>
-        <SheetContent>
+        <SheetContent className="max-h-[85vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Create New Event</SheetTitle>
             <SheetDescription>

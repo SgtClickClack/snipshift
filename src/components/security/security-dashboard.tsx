@@ -50,7 +50,7 @@ export function SecurityDashboard() {
           const Icon = feature.icon;
           return (
             <Card key={feature.name}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-wrap gap-2">
                 <CardTitle className="text-base font-medium flex items-center gap-2">
                   <Icon className="h-5 w-5" />
                   {feature.name}

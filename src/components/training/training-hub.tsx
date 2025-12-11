@@ -43,7 +43,7 @@ function PaymentModal({ content, isOpen, onClose, onSuccess }: PaymentModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-md">
+      <DialogContent className="w-[95vw] max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Complete Purchase</DialogTitle>
         </DialogHeader>

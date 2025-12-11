@@ -241,7 +241,7 @@ export default function CreateShiftModal({
                       <RadioGroup
                         value={useEndDate ? "endDate" : "occurrences"}
                         onValueChange={(value) => setUseEndDate(value === "endDate")}
-                        className="flex flex-row gap-4"
+                        className="flex flex-col sm:flex-row gap-4"
                       >
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="endDate" id="endDate" />

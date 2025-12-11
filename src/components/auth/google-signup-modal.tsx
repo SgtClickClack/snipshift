@@ -67,7 +67,7 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="w-[95vw] sm:max-w-[500px] bg-card" 
+        className="w-[95vw] sm:max-w-[500px] bg-card max-h-[85vh] overflow-y-auto" 
         data-testid="google-signup-modal"
       >
         <DialogHeader>
