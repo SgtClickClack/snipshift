@@ -232,4 +232,122 @@ router.post('/customer/create', authenticateUser, asyncHandler(async (req: Authe
   }
 }));
 
+// Create SetupIntent for adding payment methods
+router.post('/setup-intent', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Ensure customer exists
+  let customerId = user.stripeCustomerId;
+  if (!customerId) {
+    customerId = await stripeConnectService.createStripeCustomer(user.email, user.name, userId);
+    if (customerId) {
+      await usersRepo.updateUser(userId, { stripeCustomerId: customerId });
+    } else {
+      res.status(500).json({ message: 'Failed to create Stripe customer' });
+      return;
+    }
+  }
+
+  try {
+    const clientSecret = await stripeConnectService.createSetupIntent(customerId);
+    
+    if (!clientSecret) {
+      res.status(500).json({ message: 'Failed to create SetupIntent' });
+      return;
+    }
+
+    res.status(200).json({
+      clientSecret,
+    });
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating SetupIntent:', error);
+    res.status(500).json({ message: 'Failed to create SetupIntent', error: error.message });
+  }
+}));
+
+// Create Express Dashboard login link
+router.post('/account/login-link', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const user = await usersRepo.getUserById(userId);
+  if (!user || !user.stripeAccountId) {
+    res.status(404).json({ message: 'User does not have a Stripe Connect account' });
+    return;
+  }
+
+  try {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const returnUrl = `${frontendUrl}/professional-dashboard?view=earnings`;
+
+    const loginUrl = await stripeConnectService.createExpressDashboardLoginLink(
+      user.stripeAccountId,
+      returnUrl
+    );
+
+    if (!loginUrl) {
+      res.status(500).json({ message: 'Failed to create login link' });
+      return;
+    }
+
+    res.status(200).json({
+      loginUrl,
+    });
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating login link:', error);
+    res.status(500).json({ message: 'Failed to create login link', error: error.message });
+  }
+}));
+
+// List payment methods for a customer
+router.get('/payment-methods', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const user = await usersRepo.getUserById(userId);
+  if (!user || !user.stripeCustomerId) {
+    res.status(200).json({ methods: [] });
+    return;
+  }
+
+  try {
+    const methods = await stripeConnectService.listPaymentMethods(user.stripeCustomerId);
+    
+    res.status(200).json({
+      methods: methods.map(method => ({
+        id: method.id,
+        type: method.type,
+        card: method.card ? {
+          brand: method.card.brand,
+          last4: method.card.last4,
+          exp_month: method.card.exp_month,
+          exp_year: method.card.exp_year,
+        } : null,
+      })),
+    });
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error listing payment methods:', error);
+    res.status(500).json({ message: 'Failed to list payment methods', error: error.message });
+  }
+}));
+
 export default router;

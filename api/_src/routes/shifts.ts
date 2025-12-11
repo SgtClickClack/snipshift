@@ -636,6 +636,14 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     return;
   }
 
+  // Get default payment method for shop
+  const paymentMethods = await stripeConnectService.listPaymentMethods(customerId);
+  if (paymentMethods.length === 0) {
+    res.status(400).json({ message: 'Shop must add a payment method before accepting shifts. Please add a payment method in your billing settings.' });
+    return;
+  }
+  const paymentMethodId = paymentMethods[0].id; // Use first payment method
+
   // Calculate shift amount and commission
   const hourlyRate = parseFloat(shift.hourlyRate.toString());
   const startTime = new Date(shift.startTime);
@@ -646,13 +654,14 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   const commissionAmount = Math.round(shiftAmount * commissionRate);
   const barberAmount = shiftAmount - commissionAmount;
 
-  // Create PaymentIntent with manual capture
+  // Create and confirm PaymentIntent with manual capture
   let paymentIntentId: string | null = null;
   try {
-    paymentIntentId = await stripeConnectService.createPaymentIntent(
+    paymentIntentId = await stripeConnectService.createAndConfirmPaymentIntent(
       shiftAmount,
-      'usd', // TODO: Make currency configurable
+      'aud', // Using AUD for Australian market
       customerId,
+      paymentMethodId,
       commissionAmount,
       {
         destination: barber.stripeAccountId,
@@ -680,6 +689,8 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     status: 'confirmed',
     paymentStatus: 'AUTHORIZED',
     paymentIntentId: paymentIntentId,
+    applicationFeeAmount: commissionAmount,
+    transferAmount: barberAmount,
   });
 
   if (!updatedShift) {
@@ -1405,12 +1416,13 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
     // Capture payment and transfer to barber
     if (shift.paymentIntentId && shift.paymentStatus === 'AUTHORIZED') {
       try {
-        const captured = await stripeConnectService.capturePaymentIntent(shift.paymentIntentId);
-        if (captured) {
+        const chargeId = await stripeConnectService.capturePaymentIntentWithChargeId(shift.paymentIntentId);
+        if (chargeId) {
           await shiftsRepo.updateShift(shiftId, {
             attendanceStatus: 'completed',
             status: 'completed',
             paymentStatus: 'PAID',
+            stripeChargeId: chargeId,
           });
         } else {
           console.error(`[SHIFT_REVIEW] Failed to capture payment for shift ${shiftId}`);

@@ -49,7 +49,7 @@ export async function createConnectAccount(email: string, userId: string): Promi
   try {
     const account = await stripe.accounts.create({
       type: 'express',
-      country: 'US', // TODO: Make this configurable based on user location
+      country: 'AU', // Defaulting to AU based on user location context
       email: email,
       capabilities: {
         card_payments: { requested: true },
@@ -193,6 +193,145 @@ export async function getPaymentIntent(paymentIntentId: string) {
     return paymentIntent;
   } catch (error: any) {
     console.error('[STRIPE_CONNECT] Error retrieving PaymentIntent:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get balance for a connected account
+ */
+export async function getAccountBalance(accountId: string) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const balance = await stripe.balance.retrieve({
+      stripeAccount: accountId,
+    });
+    return balance;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error retrieving account balance:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a login link for Stripe Express Dashboard
+ */
+export async function createExpressDashboardLoginLink(accountId: string, returnUrl?: string): Promise<string | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const loginLink = await stripe.accounts.createLoginLink(accountId, {
+      redirect_url: returnUrl,
+    });
+    return loginLink.url;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating login link:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a SetupIntent for collecting payment methods
+ */
+export async function createSetupIntent(customerId: string): Promise<string | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+    });
+
+    return setupIntent.client_secret;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating SetupIntent:', error);
+    throw error;
+  }
+}
+
+/**
+ * List payment methods for a customer
+ */
+export async function listPaymentMethods(customerId: string) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+    });
+
+    return paymentMethods.data;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error listing payment methods:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a PaymentIntent with manual capture and confirm it with a payment method
+ */
+export async function createAndConfirmPaymentIntent(
+  amount: number, // in cents
+  currency: string,
+  customerId: string,
+  paymentMethodId: string,
+  applicationFeeAmount: number, // Snipshift commission in cents
+  transferData: {
+    destination: string; // Barber's Stripe account ID
+  },
+  metadata: Record<string, string>
+): Promise<string | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: currency,
+      customer: customerId,
+      payment_method: paymentMethodId,
+      capture_method: 'manual', // Hold funds until shift completion
+      off_session: true, // Customer is not present
+      confirm: true, // Confirm immediately
+      application_fee_amount: applicationFeeAmount,
+      transfer_data: transferData,
+      metadata: metadata,
+    });
+
+    return paymentIntent.id;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating and confirming PaymentIntent:', error);
+    throw error;
+  }
+}
+
+/**
+ * Capture a PaymentIntent and return the charge ID
+ */
+export async function capturePaymentIntentWithChargeId(paymentIntentId: string): Promise<string | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.capture(paymentIntentId);
+    const chargeId = typeof paymentIntent.latest_charge === 'string' 
+      ? paymentIntent.latest_charge 
+      : paymentIntent.latest_charge?.id || null;
+    return chargeId;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error capturing PaymentIntent:', error);
     throw error;
   }
 }

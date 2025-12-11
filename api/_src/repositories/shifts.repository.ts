@@ -359,6 +359,9 @@ export async function updateShift(
     attendanceStatus?: 'pending' | 'completed' | 'no_show';
     paymentStatus?: 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'REFUNDED';
     paymentIntentId?: string | null;
+    stripeChargeId?: string | null;
+    applicationFeeAmount?: number | null;
+    transferAmount?: number | null;
     title?: string;
     description?: string;
     startTime?: Date | string;

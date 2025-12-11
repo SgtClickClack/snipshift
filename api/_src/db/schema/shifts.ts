@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, decimal, timestamp, pgEnum, index, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, decimal, timestamp, pgEnum, index, boolean, integer } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 
 /**
@@ -33,6 +33,9 @@ export const shifts = pgTable('shifts', {
   attendanceStatus: attendanceStatusEnum('attendance_status').default('pending'),
   paymentStatus: paymentStatusEnum('payment_status').default('UNPAID'),
   paymentIntentId: varchar('payment_intent_id', { length: 255 }),
+  stripeChargeId: varchar('stripe_charge_id', { length: 255 }),
+  applicationFeeAmount: integer('application_fee_amount'), // Snipshift commission in cents
+  transferAmount: integer('transfer_amount'), // Amount sent to barber in cents
   location: varchar('location', { length: 512 }),
   isRecurring: boolean('is_recurring').notNull().default(false),
   autoAccept: boolean('auto_accept').notNull().default(false),

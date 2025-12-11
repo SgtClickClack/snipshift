@@ -18,7 +18,10 @@ CREATE INDEX IF NOT EXISTS "users_stripe_customer_id_idx" ON "users" ("stripe_cu
 -- Add payment fields to shifts table
 ALTER TABLE "shifts" 
 ADD COLUMN IF NOT EXISTS "payment_status" "payment_status" DEFAULT 'UNPAID',
-ADD COLUMN IF NOT EXISTS "payment_intent_id" varchar(255);
+ADD COLUMN IF NOT EXISTS "payment_intent_id" varchar(255),
+ADD COLUMN IF NOT EXISTS "stripe_charge_id" varchar(255),
+ADD COLUMN IF NOT EXISTS "application_fee_amount" integer,
+ADD COLUMN IF NOT EXISTS "transfer_amount" integer;
 
 -- Create indexes for payment fields on shifts
 CREATE INDEX IF NOT EXISTS "shifts_payment_status_idx" ON "shifts" ("payment_status");
