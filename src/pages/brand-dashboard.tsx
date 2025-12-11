@@ -140,6 +140,14 @@ export default function BrandDashboard() {
     return <div>Access denied</div>;
   }
 
+  // Debug: Log to verify DashboardHeader is being rendered
+  console.log('BrandDashboard - Rendering DashboardHeader with:', {
+    bannerImage: user?.bannerUrl || user?.bannerImage,
+    profileImage: user?.avatarUrl || user?.photoURL,
+    title: user?.displayName || "Brand Dashboard",
+    editable: true
+  });
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Brand Dashboard" />
