@@ -89,10 +89,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   isOnboarded: profile.isOnboarded ?? false
                 });
               } else if (res.status === 401) {
-                // 401 means token is invalid - just set user to null, don't reload
-                // The UI will show "Logged Out" state gracefully
-                console.warn('Profile fetch failed (401). User token is invalid.');
-                setUser(null);
+                // 401 means token is invalid or expired - try to refresh token once
+                try {
+                  const refreshedToken = await firebaseUser.getIdToken(true);
+                  const retryRes = await fetch('/api/me', {
+                    headers: {
+                      'Authorization': `Bearer ${refreshedToken}`
+                    }
+                  });
+                  
+                  if (retryRes.ok) {
+                    const profile = await retryRes.json();
+                    setUser({ 
+                      ...profile, 
+                      uid: firebaseUser.uid,
+                      roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
+                      createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
+                      updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
+                      isOnboarded: profile.isOnboarded ?? false
+                    });
+                  } else {
+                    // Token refresh didn't help - user doesn't exist in DB or token is still invalid
+                    // Silently set user to null - don't log warning as this is expected for logged-out users
+                    setUser(null);
+                  }
+                } catch (refreshError) {
+                  // Token refresh failed - user is logged out
+                  setUser(null);
+                }
               } else {
                 console.warn('User authenticated in Firebase but profile fetch failed', res.status);
                 // Optional: Set a minimal user or redirect to signup completion?
@@ -232,9 +256,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isOnboarded: profile.isOnboarded ?? false
         });
       } else if (res.status === 401) {
-        // 401 means token is invalid - just set user to null, don't reload
-        console.warn('Failed to refresh user profile (401). User token is invalid.');
-        setUser(null);
+        // 401 means token is invalid or expired - try to refresh token once
+        try {
+          const refreshedToken = await firebaseUser.getIdToken(true);
+          const retryRes = await fetch('/api/me', {
+            cache: 'no-store',
+            headers: {
+              'Authorization': `Bearer ${refreshedToken}`,
+              'Pragma': 'no-cache',
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          if (retryRes.ok) {
+            const profile = await retryRes.json();
+            setUser({ 
+              ...profile, 
+              uid: firebaseUser.uid,
+              roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
+              createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
+              updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
+              isOnboarded: profile.isOnboarded ?? false
+            });
+          } else {
+            // Token refresh didn't help - silently set user to null
+            setUser(null);
+          }
+        } catch (refreshError) {
+          // Token refresh failed - user is logged out
+          setUser(null);
+        }
       } else {
         console.warn('Failed to refresh user profile', res.status);
       }

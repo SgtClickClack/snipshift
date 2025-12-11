@@ -33,8 +33,20 @@ export default function LandingPage() {
       />
       <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-gradient-to-br from-steel-900 via-steel-800 to-steel-950 border-b border-border flex items-center">
-        <div className="absolute inset-0 bg-black/20 z-base" />
+      <section 
+        className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-center"
+        style={{
+          backgroundImage: `url('/herobarber (2).png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Dark Overlay for text readability - reduced opacity to show image */}
+        <div className="absolute inset-0 bg-black/30 dark:bg-black/40 z-base" />
+        
+        {/* Bottom Gradient Overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent z-elevated" />
         
         <div className="relative z-elevated w-full py-12 md:py-20 flex flex-col items-center justify-center text-center px-4">
           <div className="max-w-5xl mx-auto flex flex-col items-center gap-8 md:gap-10">

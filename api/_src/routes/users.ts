@@ -120,14 +120,30 @@ router.post('/register', asyncHandler(async (req, res) => {
     }
 
     // Create user
-    const newUser = await usersRepo.createUser({
-      email,
-      name: finalName,
-      role: 'professional',
-    });
+    let newUser;
+    try {
+      newUser = await usersRepo.createUser({
+        email,
+        name: finalName,
+        role: 'professional',
+      });
+    } catch (dbError: any) {
+      console.error('[REGISTER ERROR] Database error creating user:', dbError);
+      console.error('[REGISTER ERROR] Database error stack:', dbError?.stack);
+      res.status(500).json({ 
+        message: 'Failed to create user in database',
+        error: dbError?.message || 'Database operation failed',
+        details: process.env.NODE_ENV === 'development' ? dbError?.stack : undefined
+      });
+      return;
+    }
 
     if (!newUser) {
-      res.status(500).json({ message: 'Failed to create user' });
+      console.error('[REGISTER ERROR] createUser returned null/undefined');
+      res.status(500).json({ 
+        message: 'Failed to create user',
+        error: 'User creation returned no result'
+      });
       return;
     }
 

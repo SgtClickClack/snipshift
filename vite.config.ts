@@ -102,7 +102,7 @@ export default defineConfig({
   // VITE_* environment variables are automatically exposed via import.meta.env
   // See src/config/env.ts for centralized access to these variables
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'react/jsx-runtime', 'use-places-autocomplete'],
+    include: ['react', 'react-dom', 'react-router-dom', 'react/jsx-runtime', 'use-places-autocomplete', 'lucide-react'],
     force: true, // Force dependency pre-bundling
   },
   server: {
@@ -147,6 +147,11 @@ export default defineConfig({
           // Group all vendor dependencies together to ensure React is available when needed
           // Vite will handle proper loading order based on import dependencies
           if (id.includes('node_modules')) {
+            // Ensure lucide-react is in vendor chunk to prevent code-splitting issues
+            // This is critical for lazy-loaded components that use icons
+            if (id.includes('lucide-react')) {
+              return 'vendor';
+            }
             // Check if it's a React-related package
             if (id.includes('react') || id.includes('react-dom') || 
                 id.includes('react-router') || id.includes('react-helmet') ||
@@ -162,6 +167,8 @@ export default defineConfig({
       },
       // Ensure external dependencies are properly resolved
       external: [],
+      // Preserve module structure to prevent tree-shaking issues
+      preserveModules: false,
     },
     chunkSizeWarningLimit: 1000,
     commonjsOptions: {

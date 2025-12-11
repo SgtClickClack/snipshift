@@ -44,7 +44,14 @@ import {
   ChevronRight,
   Repeat,
   Trash2,
+  Search,
+  Star,
+  Settings,
 } from "lucide-react";
+// Import UserPlus separately to ensure it's properly included in the bundle
+import { UserPlus } from "lucide-react";
+// Store reference to prevent tree-shaking in production builds
+const UserPlusIcon = UserPlus;
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -54,7 +61,6 @@ import { ShiftBlock } from "./shift-block";
 import { AssignStaffModal, Professional } from "./assign-staff-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Star, Settings } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import CalendarSettingsModal, { CalendarSettings, ShiftPattern, OpeningHours } from "./calendar-settings-modal";
 import { AutoFillButton } from "./auto-fill-button";

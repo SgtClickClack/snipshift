@@ -37,38 +37,79 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         throw new Error("No email provided by Google");
       }
 
+      // Get Firebase token for authentication
+      const token = await firebaseUser.getIdToken();
+
       // 1. Try to register (idempotent - ignores if exists)
       try {
-        await apiRequest('POST', '/api/register', {
-          email,
-          password: '', // Passwordless/OAuth
-          provider: 'google',
-          googleId,
-          displayName: firebaseUser.displayName,
-          profileImage: firebaseUser.photoURL
+        const registerRes = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            email,
+            name: firebaseUser.displayName || email.split('@')[0],
+            password: '', // Passwordless/OAuth
+          })
         });
+        
+        // Only throw if it's not a 409 (user already exists) or 201 (created)
+        if (!registerRes.ok && registerRes.status !== 409) {
+          const errorData = await registerRes.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Registration failed');
+        }
       } catch (e: any) {
-        // Ignore 400 (already exists)
-        // We can't easily distinguish 400 from other errors without parsing message, 
-        // but typically duplicate email is the cause here.
+        // If it's a 409 (user already exists), that's fine - continue to login
+        // Otherwise, log the error but continue - the login endpoint will create the user if needed
+        if (e.message && !e.message.includes('already exists') && !e.message.includes('409')) {
+          console.warn('Registration attempt failed, continuing with login:', e.message);
+        }
       }
 
-      // 2. Login to establish server session
-      const res = await apiRequest('POST', '/api/login', { email, googleId });
-      const userData = await res.json();
+      // 2. Login to establish server session using Firebase token
+      const loginRes = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!loginRes.ok) {
+        const errorData = await loginRes.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Login failed');
+      }
+      
+      const userData = await loginRes.json();
+      
+      // Fetch full user profile from /api/me to get all user data
+      const profileRes = await fetch('/api/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      let fullUserData = userData;
+      if (profileRes.ok) {
+        fullUserData = await profileRes.json();
+      }
       
       login({
-        id: userData.id,
-        email: userData.email,
+        id: fullUserData.id,
+        email: fullUserData.email,
         password: '',
-        roles: userData.roles || [],
-        currentRole: userData.currentRole || null,
+        roles: Array.isArray(fullUserData.roles) ? fullUserData.roles : [fullUserData.role || 'professional'],
+        currentRole: fullUserData.currentRole || fullUserData.role || 'professional',
         provider: 'google',
         googleId,
-        createdAt: new Date(userData.createdAt),
-        updatedAt: new Date(userData.updatedAt),
-        displayName: userData.displayName || firebaseUser.displayName || 'Google User',
-        profileImage: userData.profileImage || firebaseUser.photoURL || '',
+        createdAt: fullUserData.createdAt ? new Date(fullUserData.createdAt) : new Date(),
+        updatedAt: fullUserData.updatedAt ? new Date(fullUserData.updatedAt) : new Date(),
+        displayName: fullUserData.displayName || fullUserData.name || firebaseUser.displayName || 'Google User',
+        profileImage: fullUserData.profileImage || fullUserData.avatarUrl || firebaseUser.photoURL || '',
+        isOnboarded: fullUserData.isOnboarded ?? false,
+        uid: firebaseUser.uid,
       });
       
       toast({

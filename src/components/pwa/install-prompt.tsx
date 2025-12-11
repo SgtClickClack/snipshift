@@ -27,11 +27,15 @@ export function InstallPrompt() {
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing
-      e.preventDefault();
-      // Store the event for later use
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setIsVisible(true);
+      // Only prevent default if we haven't dismissed the prompt before
+      // This prevents the browser warning when the prompt was already dismissed
+      if (window.localStorage.getItem('pwa-prompt-dismissed') !== 'true') {
+        // Prevent the mini-infobar from appearing
+        e.preventDefault();
+        // Store the event for later use
+        setDeferredPrompt(e as BeforeInstallPromptEvent);
+        setIsVisible(true);
+      }
     };
 
     // Listen for app installed event
