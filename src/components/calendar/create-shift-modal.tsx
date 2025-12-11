@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateRecurringShifts, RecurringShiftConfig } from "@/utils/recurring-shifts";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateShiftModalProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ interface CreateShiftModalProps {
   initialStartTime?: string;
   initialEndTime?: string;
   isLoading?: boolean;
+  /** Existing shifts to check for overlaps (optional) */
+  existingShifts?: Array<{ id?: string; startTime: string | Date; endTime: string | Date }>;
 }
 
 export default function CreateShiftModal({
@@ -31,7 +34,9 @@ export default function CreateShiftModal({
   initialStartTime,
   initialEndTime,
   isLoading = false,
+  existingShifts = [],
 }: CreateShiftModalProps) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -98,6 +103,46 @@ export default function CreateShiftModal({
     // Create base shift data
     const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
     const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+
+    // Time Travel Bug fix: Prevent creating shifts in the past
+    const now = new Date();
+    const startOfDay = new Date(startDateTime);
+    startOfDay.setHours(0, 0, 0, 0);
+    const nowStartOfDay = new Date(now);
+    nowStartOfDay.setHours(0, 0, 0, 0);
+    
+    if (startOfDay < nowStartOfDay) {
+      toast({
+        title: "Cannot create shifts in the past",
+        description: "Please select a date from today onwards.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Double Booking Bug fix: Check for overlapping shifts
+    if (existingShifts && existingShifts.length > 0) {
+      const hasOverlap = existingShifts.some((shift) => {
+        const existingStart = new Date(shift.startTime);
+        const existingEnd = new Date(shift.endTime);
+        
+        // Check if the new shift overlaps with existing shift
+        return (
+          (startDateTime >= existingStart && startDateTime < existingEnd) ||
+          (endDateTime > existingStart && endDateTime <= existingEnd) ||
+          (startDateTime <= existingStart && endDateTime >= existingEnd)
+        );
+      });
+
+      if (hasOverlap) {
+        toast({
+          title: "Time slot already booked",
+          description: "This time slot overlaps with an existing shift. Please choose a different time.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     const baseShiftData = {
       title: formData.title,
@@ -169,6 +214,7 @@ export default function CreateShiftModal({
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                min={format(new Date(), "yyyy-MM-dd")}
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

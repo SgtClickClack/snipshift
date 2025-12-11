@@ -227,7 +227,14 @@ export default function ProfessionalCalendar({
     }
     return date;
   });
-  const [view, setView] = useState<View>("month");
+  // Mobile Squeeze fix: Use 'agenda' or 'day' view on mobile instead of 'month' (which is unreadable)
+  const [view, setView] = useState<View>(() => {
+    // Check if we're on mobile (window width < 768px)
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'day'; // Use 'day' view on mobile for better readability
+    }
+    return 'month'; // Default to 'month' view on desktop
+  });
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -261,6 +268,21 @@ export default function ProfessionalCalendar({
     }, 1000); // Update every second for smooth movement
     return () => clearInterval(interval);
   }, []);
+
+  // Mobile Squeeze fix: Dynamically switch view based on window size
+  // Only switch on initial mount and when window size crosses the mobile threshold
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isMobile = window.innerWidth < 768;
+    const currentViewIsMobileUnfriendly = view === 'month';
+    
+    // Only auto-switch if we're in an unreadable view for the current screen size
+    // Don't force switch if user has manually selected a view
+    if (isMobile && currentViewIsMobileUnfriendly) {
+      setView('day');
+    }
+  }, []); // Only run on mount - let user manually switch views after that
 
   // Convert bookings to calendar events
   const events: CalendarEvent[] = useMemo(() => {
@@ -322,9 +344,16 @@ export default function ProfessionalCalendar({
             // Include assignedStaff if available
             const assignedStaff = job.assignedStaff || booking.assignedStaff || null;
             
+            // Ghost Shift fix: Ensure title has proper fallback even if job.title is null/undefined/empty
+            const eventTitle = job?.title || 
+                              (job?.shift?.title) || 
+                              (booking?.shift?.title) || 
+                              (booking?.job?.title) || 
+                              "Untitled Shift";
+            
             return {
               id: booking.id || job.id || `event-${Date.now()}-${Math.random()}`,
-              title: job.title || "Untitled Job",
+              title: eventTitle,
               start: startDate,
               end: endDate,
               resource: {
@@ -381,90 +410,59 @@ export default function ProfessionalCalendar({
     }
   }, [events, statusFilter]);
 
-  // Event style getter with high contrast colors (WCAG AA compliant)
+  // Event style getter with Traffic Light color system
+  // Green: Confirmed (Worker is locked in)
+  // Yellow: Open (Posted, waiting for applicants)
+  // Grey: Draft/Unposted or Past
   const eventStyleGetter = useCallback(
     (event: CalendarEvent) => {
       // Defensive check: ensure event and resource exist
       if (!event || !event.resource) {
         return {
           style: {
-            backgroundColor: "#4b5563", // gray-600 - darker for better contrast
-            borderColor: "#374151", // gray-700 - darker border
-            color: "#ffffff", // white text for high contrast
-            borderRadius: "4px",
-            border: "2px solid #374151",
-            padding: "4px 6px",
-            fontWeight: "500",
+            backgroundColor: "#3f3f46", // zinc-700 - Default (Draft/Unknown)
+            borderRadius: "6px",
+            opacity: 0.9,
+            color: "white",
+            border: "0px",
+            display: "block",
           },
         };
       }
 
-      let backgroundColor = "";
-      let borderColor = "";
-      let color = "#ffffff"; // Default to white for high contrast
-      let opacity = 1; // Default opacity
-
-      const status = event.resource.status || "pending";
+      const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
+      const status = event.resource.status || shift?.status || "DRAFT";
+      const isAssigned = !!(shift?.assignedStaff || shift?.assignedStaffId || shift?.workerId);
       
       // Check if event is in the past
       const now = new Date();
-      const isPastEvent = event.end < now;
+      const isPastEvent = event.end < now && !isToday(event.end);
       
-      // Apply faded style (opacity 0.6) to past events
-      if (isPastEvent) {
-        opacity = 0.6;
-      }
+      let backgroundColor = "#3f3f46"; // Default (Zinc-700) - Draft/Unknown
 
-      switch (status) {
-        case "draft":
-          // Ghost slot styling - transparent with dashed border
-          backgroundColor = "transparent";
-          borderColor = "#9ca3af"; // gray-400
-          color = "#6b7280"; // gray-500
-          opacity = 0.6;
-          break;
-        case "invited":
-          backgroundColor = "#f59e0b"; // amber-500
-          borderColor = "#d97706"; // amber-600
-          color = "#ffffff"; // white text
-          break;
-        case "confirmed":
-          backgroundColor = "#16a34a"; // green-600 - darker for better contrast
-          borderColor = "#15803d"; // green-700 - darker border
-          color = "#ffffff"; // white text
-          break;
-        case "pending":
-          backgroundColor = "#2563eb"; // blue-600 - darker for better contrast
-          borderColor = "#1d4ed8"; // blue-700 - darker border
-          color = "#ffffff"; // white text
-          break;
-        case "completed":
-          backgroundColor = "#4b5563"; // gray-600 - darker for better contrast
-          borderColor = "#374151"; // gray-700 - darker border
-          color = "#ffffff"; // white text
-          break;
-        case "past":
-          backgroundColor = "#6b7280"; // gray-500
-          borderColor = "#4b5563"; // gray-600
-          color = "#ffffff"; // white text for better contrast
-          break;
-        default:
-          backgroundColor = "#4b5563"; // gray-600
-          borderColor = "#374151"; // gray-700
-          color = "#ffffff"; // white text
+      // Traffic Light System:
+      if (isAssigned) {
+        // GREEN: Confirmed/Working - Worker is locked in
+        backgroundColor = "#10b981"; // emerald-500
+      } else if (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") {
+        // YELLOW: Open/Hiring - Posted, waiting for applicants
+        backgroundColor = "#eab308"; // yellow-500
+      } else if (isPastEvent) {
+        // GREY: Past events
+        backgroundColor = "#71717a"; // zinc-500
+      } else if (status === "draft" || status === "DRAFT") {
+        // GREY: Draft/Unposted
+        backgroundColor = "#71717a"; // zinc-500
       }
 
       return {
         style: {
           backgroundColor,
-          borderColor,
-          color,
-          borderRadius: "4px",
-          border: `2px solid ${borderColor}`,
-          padding: "4px 6px",
-          fontWeight: "500",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.2)",
-          opacity,
+          borderRadius: "6px",
+          opacity: isPastEvent ? 0.6 : 0.9,
+          color: "white",
+          border: "0px",
+          display: "block",
         },
       };
     },
@@ -497,6 +495,22 @@ export default function ProfessionalCalendar({
         return;
       }
       
+      // Prevent selecting dates in the past (Time Travel Bug fix)
+      const now = new Date();
+      const startOfDay = new Date(start);
+      startOfDay.setHours(0, 0, 0, 0);
+      const nowStartOfDay = new Date(now);
+      nowStartOfDay.setHours(0, 0, 0, 0);
+      
+      if (startOfDay < nowStartOfDay) {
+        toast({
+          title: "Cannot create shifts in the past",
+          description: "Please select a date from today onwards.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Ensure end is after start
       const validEnd = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000); // Default to 1 hour if invalid
       
@@ -509,7 +523,7 @@ export default function ProfessionalCalendar({
         onDateSelect(start);
       }
     },
-    [onDateSelect]
+    [onDateSelect, toast]
   );
 
   // Handle date change from mini calendar
@@ -992,6 +1006,42 @@ export default function ProfessionalCalendar({
         return;
       }
 
+      // Prevent moving events to the past (Time Travel Bug fix)
+      const now = new Date();
+      const startOfDay = new Date(start);
+      startOfDay.setHours(0, 0, 0, 0);
+      const nowStartOfDay = new Date(now);
+      nowStartOfDay.setHours(0, 0, 0, 0);
+      
+      if (startOfDay < nowStartOfDay) {
+        toast({
+          title: "Cannot move shifts to the past",
+          description: "Please select a date from today onwards.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for overlapping shifts (Double Booking Bug fix)
+      const overlappingEvent = events.find((e) => {
+        if (e.id === event.id) return false; // Skip the event being moved
+        // Check if the new time slot overlaps with existing events
+        return (
+          (start >= e.start && start < e.end) ||
+          (end > e.start && end <= e.end) ||
+          (start <= e.start && end >= e.end)
+        );
+      });
+
+      if (overlappingEvent) {
+        toast({
+          title: "Time slot already booked",
+          description: "This time slot overlaps with an existing shift. Please choose a different time.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Ensure end is after start
       const validEnd = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000);
 
@@ -1015,7 +1065,7 @@ export default function ProfessionalCalendar({
         end: validEnd,
       });
     },
-    [updateEventMutation, toast, isRecurringEvent]
+    [updateEventMutation, toast, isRecurringEvent, events]
   );
 
   // Handle event resize
@@ -1026,6 +1076,42 @@ export default function ProfessionalCalendar({
         toast({
           title: "Invalid time slot",
           description: "Please select a valid time slot",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prevent resizing events to the past (Time Travel Bug fix)
+      const now = new Date();
+      const startOfDay = new Date(start);
+      startOfDay.setHours(0, 0, 0, 0);
+      const nowStartOfDay = new Date(now);
+      nowStartOfDay.setHours(0, 0, 0, 0);
+      
+      if (startOfDay < nowStartOfDay) {
+        toast({
+          title: "Cannot resize shifts to the past",
+          description: "Please select a date from today onwards.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for overlapping shifts (Double Booking Bug fix)
+      const overlappingEvent = events.find((e) => {
+        if (e.id === event.id) return false; // Skip the event being resized
+        // Check if the new time slot overlaps with existing events
+        return (
+          (start >= e.start && start < e.end) ||
+          (end > e.start && end <= e.end) ||
+          (start <= e.start && end >= e.end)
+        );
+      });
+
+      if (overlappingEvent) {
+        toast({
+          title: "Time slot already booked",
+          description: "This time slot overlaps with an existing shift. Please choose a different time.",
           variant: "destructive",
         });
         return;
@@ -1054,7 +1140,7 @@ export default function ProfessionalCalendar({
         end: validEnd,
       });
     },
-    [updateEventMutation, toast, isRecurringEvent]
+    [updateEventMutation, toast, isRecurringEvent, events]
   );
 
   // Handle recurring action confirmation
@@ -1092,27 +1178,60 @@ export default function ProfessionalCalendar({
   );
 
   const handleCreateEvent = () => {
+    let startTime: Date;
+    let endTime: Date;
+
     if (!selectedSlot) {
       // Fallback: use selectedDate if no slot selected
       if (!selectedDate) return;
-      const startTime = new Date(selectedDate);
+      startTime = new Date(selectedDate);
       startTime.setHours(9, 0, 0, 0);
-      const endTime = new Date(selectedDate);
+      endTime = new Date(selectedDate);
       endTime.setHours(17, 0, 0, 0);
-      
-      createEventMutation.mutate({
-        title: newEventTitle || "New Event",
-        start: startTime,
-        end: endTime,
+    } else {
+      // Validate slot dates
+      if (isNaN(selectedSlot.start.getTime()) || isNaN(selectedSlot.end.getTime())) {
+        toast({
+          title: "Invalid time slot",
+          description: "Please select a valid time slot",
+          variant: "destructive",
+        });
+        return;
+      }
+      startTime = selectedSlot.start;
+      endTime = selectedSlot.end;
+    }
+
+    // Prevent creating events in the past (Time Travel Bug fix)
+    const now = new Date();
+    const startOfDay = new Date(startTime);
+    startOfDay.setHours(0, 0, 0, 0);
+    const nowStartOfDay = new Date(now);
+    nowStartOfDay.setHours(0, 0, 0, 0);
+    
+    if (startOfDay < nowStartOfDay) {
+      toast({
+        title: "Cannot create shifts in the past",
+        description: "Please select a date from today onwards.",
+        variant: "destructive",
       });
       return;
     }
 
-    // Validate slot dates
-    if (isNaN(selectedSlot.start.getTime()) || isNaN(selectedSlot.end.getTime())) {
+    // Check for overlapping shifts (Double Booking Bug fix)
+    const overlappingEvent = events.find((e) => {
+      // Check if the new time slot overlaps with existing events
+      return (
+        (startTime >= e.start && startTime < e.end) ||
+        (endTime > e.start && endTime <= e.end) ||
+        (startTime <= e.start && endTime >= e.end)
+      );
+    });
+
+    if (overlappingEvent) {
       toast({
-        title: "Invalid time slot",
-        description: "Please select a valid time slot",
+        title: "Time slot already booked",
+        description: "This time slot overlaps with an existing shift. Please choose a different time.",
         variant: "destructive",
       });
       return;
@@ -1120,8 +1239,8 @@ export default function ProfessionalCalendar({
 
     createEventMutation.mutate({
       title: newEventTitle || "New Event",
-      start: selectedSlot.start,
-      end: selectedSlot.end,
+      start: startTime,
+      end: endTime,
     });
   };
 
@@ -1248,24 +1367,20 @@ export default function ProfessionalCalendar({
               </Select>
             </div>
 
-            {/* Legend */}
+            {/* Legend - Traffic Light System */}
             <div className="space-y-2 pt-4 border-t">
               <p className="text-sm font-medium">Legend</p>
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-green-500"></div>
+                  <div className="w-3 h-3 rounded bg-emerald-500"></div>
                   <span>Confirmed</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-blue-500"></div>
-                  <span>Pending</span>
+                  <div className="w-3 h-3 rounded bg-yellow-500"></div>
+                  <span>Open Slot</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-gray-500"></div>
-                  <span>Completed</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-gray-400"></div>
+                  <div className="w-3 h-3 rounded bg-zinc-500"></div>
                   <span>Past</span>
                 </div>
               </div>
@@ -1364,6 +1479,22 @@ export default function ProfessionalCalendar({
                   width: '100%'
                 }}
               >
+                {/* Legend - Traffic Light System */}
+                <div className="flex gap-4 mb-4 text-sm text-zinc-400 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span>Confirmed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-yellow-500"></div>
+                    <span>Open Slot</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-zinc-500"></div>
+                    <span>Past</span>
+                  </div>
+                </div>
+                
                 {/* Date Range Display */}
                 {dateRange && (
                   <div className="mb-2 text-sm font-medium text-muted-foreground">
@@ -1497,7 +1628,7 @@ export default function ProfessionalCalendar({
                               toolbar: customToolbar,
                               header: customHeader,
                               event: ({ event }: { event: CalendarEvent }) => {
-                                // Use ShiftBlock for business mode, default rendering for professional mode
+                                // Use ShiftBlock for business mode, enhanced rendering for professional mode
                                 if (mode === 'business') {
                                   const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
                                   const isRecurring = shift?.isRecurring || shift?.recurringSeriesId;
@@ -1509,13 +1640,34 @@ export default function ProfessionalCalendar({
                                     />
                                   );
                                 }
-                                // Default event rendering for professional mode
+                                // Enhanced event rendering for professional mode with status indicators
+                                const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
+                                const assignedStaff = shift?.assignedStaff || shift?.professional;
+                                const isAssigned = !!assignedStaff;
+                                const status = event.resource?.status || shift?.status || "DRAFT";
+                                
                                 return (
-                                  <div className="rbc-event-content">
-                                    {event.title}
+                                  <div className="text-xs p-0.5">
+                                    <div className="font-semibold truncate">{event.title}</div>
+                                    <div className="flex items-center gap-1 opacity-90">
+                                      {isAssigned ? (
+                                        <span>👤 {assignedStaff?.name || assignedStaff?.displayName || "Assigned"}</span>
+                                      ) : (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") ? (
+                                        <span>⚠️ Open</span>
+                                      ) : null}
+                                    </div>
                                   </div>
                                 );
                               },
+                            }}
+                            tooltipAccessor={(event: CalendarEvent) => {
+                              const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
+                              const assignedStaff = shift?.assignedStaff || shift?.professional;
+                              const isAssigned = !!assignedStaff;
+                              const status = event.resource?.status || shift?.status || "DRAFT";
+                              const statusText = isAssigned ? "Booked" : (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") ? "Open" : "Draft";
+                              const workerName = assignedStaff?.name || assignedStaff?.displayName;
+                              return `${event.title} - ${moment(event.start).format('h:mm A')} - ${statusText}${workerName ? ` (${workerName})` : ''}`;
                             }}
                             formats={{
                               dayFormat: (date: Date, culture?: string, localizer?: any) => {

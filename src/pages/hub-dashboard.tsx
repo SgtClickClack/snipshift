@@ -1012,10 +1012,16 @@ export default function HubDashboard() {
                 };
                 
                 // Add job or shift based on type
+                // Ghost Shift fix: Ensure title has proper fallback even if job.title is null/undefined/empty
+                const safeTitle = job?.title || 
+                                 (job as any)?.shift?.title || 
+                                 (job as any)?.job?.title || 
+                                 "Untitled Shift";
+                
                 if (job._type === 'shift') {
                   bookingData.shift = {
                     id: job.id,
-                    title: job.title,
+                    title: safeTitle,
                     date: job.date,
                     startTime: job.startTime,
                     endTime: job.endTime,
@@ -1027,14 +1033,14 @@ export default function HubDashboard() {
                 } else {
                   bookingData.job = {
                     id: job.id,
-                    title: job.title,
+                    title: safeTitle,
                     date: job.date,
                     startTime: job.startTime,
                     endTime: job.endTime,
                     status: job.status,
                     payRate: job.payRate,
                     address: typeof job.location === 'string' ? job.location : job.location?.address || '',
-                    description: job.description,
+                    description: job.description || '',
                     assignedStaff: (job as any).assignedStaff || null,
                   };
                 }
@@ -1178,6 +1184,11 @@ export default function HubDashboard() {
         }}
         initialDate={selectedDateForShift}
         isLoading={createShiftMutation.isPending}
+        existingShifts={jobs?.map((job) => ({
+          id: job.id,
+          startTime: job.startTime || job.date,
+          endTime: job.endTime || new Date(new Date(job.startTime || job.date).getTime() + 8 * 60 * 60 * 1000).toISOString(),
+        })) || []}
       />
     </div>
   );
