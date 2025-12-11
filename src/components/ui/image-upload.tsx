@@ -166,6 +166,106 @@ export function ImageUpload({
     className
   );
 
+  // For circle shape, use a flex column layout with the circle and button separate
+  if (shape === 'circle') {
+    return (
+      <div className="flex flex-col items-center gap-4">
+        {/* Show file size limit before upload */}
+        {!previewUrl && !uploading && (
+          <p className="text-xs text-steel-500">
+            Maximum file size: {maxSizeMB}MB (JPEG, PNG, GIF, or WebP)
+          </p>
+        )}
+        
+        <div className={containerClass}>
+          {previewUrl ? (
+            <>
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="w-full h-full object-cover rounded-full"
+              />
+              {!uploading && (
+                <button
+                  onClick={handleRemove}
+                  className="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 rounded-full text-white"
+                  type="button"
+                  aria-label="Remove image"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center w-full h-full p-4 text-center">
+              <ImageIcon className="h-8 w-8 text-steel-500 mb-2" />
+              <p className="text-xs text-steel-400">No image selected</p>
+            </div>
+          )}
+
+          {(uploading || isCompressing) && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+              <div className="w-full px-4 space-y-2">
+                {uploading ? (
+                  <>
+                    <Progress value={uploadProgress} className="h-2" />
+                    <p className="text-xs text-center text-white">
+                      {Math.round(uploadProgress)}% uploaded
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    <p className="text-xs text-center text-white">
+                      Compressing image...
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          onChange={handleFileSelect}
+          className="hidden"
+          disabled={uploading || !user}
+        />
+
+        {(error || compressionError) && (
+          <p className="text-sm text-red-500">{error || compressionError}</p>
+        )}
+
+        {!previewUrl && !uploading && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleClick}
+            disabled={!user || isCompressing}
+            className="bg-steel-700 hover:bg-steel-600 border-steel-600 whitespace-nowrap"
+          >
+            {isCompressing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 flex-shrink-0 animate-spin" />
+                <span className="truncate">Compressing...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Choose Image</span>
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // For rect shape, use the original layout
   return (
     <div className="space-y-2">
       {/* Show file size limit before upload */}
@@ -181,10 +281,7 @@ export function ImageUpload({
             <img
               src={previewUrl}
               alt="Preview"
-              className={cn(
-                'w-full h-full object-cover',
-                shape === 'circle' && 'rounded-full'
-              )}
+              className="w-full h-full object-cover"
             />
             {!uploading && (
               <button
