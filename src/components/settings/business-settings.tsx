@@ -152,17 +152,23 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
           const closeTime = new Date(`2000-01-01T${hours.close}`);
           if (isNaN(openTime.getTime()) || isNaN(closeTime.getTime()) || closeTime <= openTime) {
             errors.push(`${day.label}: Invalid time range`);
-          } else {
-            // Validate shift split for enabled days
-            const totalMinutes = (closeTime.getTime() - openTime.getTime()) / (1000 * 60);
-            if (shiftSplitType === 'thirds' && totalMinutes < 180) {
-              errors.push(`${day.label}: Need at least 3 hours for thirds split`);
-            } else if (shiftSplitType === 'halves' && totalMinutes < 120) {
-              errors.push(`${day.label}: Need at least 2 hours for halves split`);
-            } else if (shiftSplitType === 'custom' && customShiftLength * 60 > totalMinutes) {
-              errors.push(`${day.label}: Custom shift length exceeds opening hours`);
+            } else {
+              // Validate shift split for enabled days
+              const totalMinutes = (closeTime.getTime() - openTime.getTime()) / (1000 * 60);
+              if (shiftSplitType === 'thirds' && totalMinutes < 180) {
+                errors.push(`${day.label}: Need at least 3 hours for thirds split`);
+              } else if (shiftSplitType === 'halves' && totalMinutes < 120) {
+                errors.push(`${day.label}: Need at least 2 hours for halves split`);
+              } else if (shiftSplitType === 'custom') {
+                if (customShiftLength <= 0 || customShiftLength > 24) {
+                  errors.push(`${day.label}: Shift length must be between 0.5 and 24 hours`);
+                } else if (customShiftLength * 60 > totalMinutes) {
+                  errors.push(`${day.label}: Shift length (${customShiftLength}h) exceeds opening hours (${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m)`);
+                } else if (customShiftLength * 60 < 15) {
+                  errors.push(`${day.label}: Shift length must be at least 15 minutes`);
+                }
+              }
             }
-          }
         }
       }
     });
@@ -380,25 +386,50 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
                   <RadioGroupItem value="custom" id="custom" className="mt-1" />
                   <div className="flex-1">
                     <Label htmlFor="custom" className="cursor-pointer font-medium">
-                      Custom Shift Length
+                      Fixed Duration
                     </Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Define a custom shift length in hours
+                      Create shifts of a specific duration (e.g., 4 hours). Partial shifts will be created for remainders.
                     </p>
                     {shiftSplitType === 'custom' && (
-                      <div className="mt-3 flex items-center gap-2">
-                        <Label htmlFor="shift-length" className="text-sm">
-                          Shift Length (hours):
-                        </Label>
-                        <Input
-                          id="shift-length"
-                          type="number"
-                          min="1"
-                          max="24"
-                          value={customShiftLength}
-                          onChange={(e) => setCustomShiftLength(parseInt(e.target.value) || 8)}
-                          className="w-24"
-                        />
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="shift-length" className="text-sm">
+                            Shift Length:
+                          </Label>
+                          <Input
+                            id="shift-length"
+                            type="number"
+                            min="0.5"
+                            max="24"
+                            step="0.5"
+                            value={customShiftLength || ''}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              if (!isNaN(value) && value > 0 && value <= 24) {
+                                setCustomShiftLength(value);
+                              } else if (e.target.value === '') {
+                                // Allow empty input for better UX while typing
+                                setCustomShiftLength(0);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              // Ensure a valid value on blur
+                              const value = parseFloat(e.target.value);
+                              if (isNaN(value) || value <= 0) {
+                                setCustomShiftLength(4);
+                              } else if (value > 24) {
+                                setCustomShiftLength(24);
+                              }
+                            }}
+                            className="w-24"
+                            placeholder="4"
+                          />
+                          <span className="text-sm text-muted-foreground">hours</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Shifts will be generated starting from opening time. Any remainder will create a partial final shift.
+                        </p>
                       </div>
                     )}
                   </div>

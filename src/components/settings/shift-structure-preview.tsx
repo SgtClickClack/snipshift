@@ -36,7 +36,14 @@ export default function ShiftStructurePreview({
 
     if (totalMinutes <= 0) return [];
 
-    const segments: Array<{ start: Date; end: Date; label: string; width: number }> = [];
+    const segments: Array<{ 
+      start: Date; 
+      end: Date; 
+      label: string; 
+      width: number;
+      isPartial?: boolean;
+      isProblematic?: boolean;
+    }> = [];
 
     switch (shiftSplitType) {
       case 'halves': {
@@ -87,28 +94,48 @@ export default function ShiftStructurePreview({
       }
 
       case 'custom': {
-        const shiftLengthMinutes = customShiftLength * 60;
+        // Handle decimal hours (e.g., 4.5 hours = 4 hours 30 minutes)
+        const shiftLengthMinutes = Math.round(customShiftLength * 60);
         let currentStart = openTime;
         let segmentIndex = 0;
 
         while (currentStart < closeTime) {
           const segmentEnd = new Date(currentStart.getTime() + shiftLengthMinutes * 60 * 1000);
+          // Option A: Create a shorter final shift (Partial Shift) - Default behavior
           const actualEnd = segmentEnd > closeTime ? closeTime : segmentEnd;
           const segmentMinutes = (actualEnd.getTime() - currentStart.getTime()) / (1000 * 60);
+          
+          // Skip segments shorter than 15 minutes (minimum viable shift)
+          if (segmentMinutes < 15) {
+            break;
+          }
+          
           const width = (segmentMinutes / totalMinutes) * 100;
+          
+          // Check if this is a partial shift (remainder)
+          const isPartial = segmentEnd > closeTime || segmentMinutes < shiftLengthMinutes * 0.95;
+          // Flag as problematic if remainder is:
+          // - Less than 30 minutes, OR
+          // - Less than 50% of intended length AND less than 1 hour
+          const isProblematic = isPartial && (
+            segmentMinutes < 30 || 
+            (segmentMinutes < shiftLengthMinutes * 0.5 && segmentMinutes < 60)
+          );
 
           segments.push({
             start: currentStart,
             end: actualEnd,
-            label: `Shift ${segmentIndex + 1}`,
+            label: isPartial ? `Shift ${segmentIndex + 1} (Partial)` : `Shift ${segmentIndex + 1}`,
             width,
+            isPartial,
+            isProblematic,
           });
 
           currentStart = actualEnd;
           segmentIndex++;
 
           // Prevent infinite loop
-          if (segmentIndex > 10) break;
+          if (segmentIndex > 20) break;
         }
         break;
       }
@@ -198,17 +225,24 @@ export default function ShiftStructurePreview({
             'bg-orange-500',
             'bg-pink-500',
           ];
-          const color = colors[index % colors.length];
+          // Use red for problematic remainders, otherwise use normal colors
+          const color = segment.isProblematic 
+            ? 'bg-red-500' 
+            : segment.isPartial 
+            ? 'bg-amber-500' 
+            : colors[index % colors.length];
 
           return (
             <div
               key={index}
-              className={`absolute top-0 bottom-0 ${color} border-r border-background/50 flex items-center justify-center group hover:opacity-90 transition-opacity`}
+              className={`absolute top-0 bottom-0 ${color} border-r border-background/50 flex items-center justify-center group hover:opacity-90 transition-opacity ${
+                segment.isProblematic ? 'ring-2 ring-red-600 ring-offset-1' : ''
+              }`}
               style={{
                 left: `${shiftSegments.slice(0, index).reduce((sum, s) => sum + s.width, 0)}%`,
                 width: `${segment.width}%`,
               }}
-              title={`${segment.label}: ${segmentStart} - ${segmentEnd}`}
+              title={`${segment.label}: ${segmentStart} - ${segmentEnd}${segment.isProblematic ? ' (Very short remainder!)' : segment.isPartial ? ' (Partial shift)' : ''}`}
             >
               <span className="text-xs font-medium text-white px-1 text-center truncate">
                 {segment.label}
@@ -238,17 +272,37 @@ export default function ShiftStructurePreview({
           const hours = Math.floor(duration / 60);
           const minutes = duration % 60;
           return (
-            <div key={index} className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">
+            <div 
+              key={index} 
+              className={`flex items-center justify-between text-xs ${
+                segment.isProblematic ? 'text-destructive font-medium' : ''
+              }`}
+            >
+              <span className={segment.isProblematic ? 'text-destructive' : 'text-muted-foreground'}>
                 {segment.label}: {format(segment.start, 'h:mm a')} - {format(segment.end, 'h:mm a')}
+                {segment.isProblematic && (
+                  <span className="ml-2 text-destructive">⚠️ Very short!</span>
+                )}
+                {segment.isPartial && !segment.isProblematic && (
+                  <span className="ml-2 text-amber-600">(Partial)</span>
+                )}
               </span>
-              <span className="text-muted-foreground">
+              <span className={segment.isProblematic ? 'text-destructive' : 'text-muted-foreground'}>
                 ({hours}h {minutes > 0 ? `${minutes}m` : ''})
               </span>
             </div>
           );
         })}
       </div>
+      
+      {/* Warning for problematic remainders */}
+      {shiftSegments.some(s => s.isProblematic) && (
+        <div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+          <p className="text-xs text-destructive font-medium">
+            ⚠️ Warning: The final shift is very short. Consider adjusting your opening hours or shift length.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
