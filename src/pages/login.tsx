@@ -73,31 +73,7 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login error:", error);
       
-      // Check for user not found or invalid credentials
-      // auth/user-not-found is the specific error for non-existent user
-      // auth/invalid-credential is the newer generic error which might also be returned
-      // auth/invalid-login-credentials is another variant
-      const errorCode = error.code;
-      const errorMessage = error.message || '';
-      
-      if (
-        errorCode === 'auth/user-not-found' || 
-        errorMessage.includes('user-not-found') ||
-        errorCode === 'auth/invalid-credential' ||
-        errorCode === 'auth/invalid-login-credentials'
-      ) {
-        toast({
-          title: "Account not found or invalid credentials",
-          description: "Redirecting to signup if you don't have an account...",
-        });
-        
-        // Redirect to signup with email
-        setTimeout(() => {
-          navigate(`/signup?email=${encodeURIComponent(formData.email)}`);
-        }, 1500);
-        return;
-      }
-
+      // Show a simple, consistent error message for all authentication failures
       toast({
         title: "Login failed",
         description: "Invalid email or password",
