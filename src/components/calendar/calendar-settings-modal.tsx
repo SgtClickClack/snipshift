@@ -106,12 +106,24 @@ export default function CalendarSettingsModal({
 
   const handleCopyToAll = (sourceDay: string) => {
     const sourceHours = openingHours[sourceDay];
-    const updated = { ...openingHours };
+    if (!sourceHours) {
+      toast({
+        title: "Error",
+        description: "Source day hours not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const updated: OpeningHours = { ...openingHours };
     DAYS_OF_WEEK.forEach(day => {
       if (day.key !== sourceDay) {
+        // Ensure the day exists and preserve its enabled state, or default to true
+        const existingDay = updated[day.key];
         updated[day.key] = {
-          ...sourceHours,
-          enabled: updated[day.key].enabled, // Preserve enabled state
+          open: sourceHours.open,
+          close: sourceHours.close,
+          enabled: existingDay?.enabled !== undefined ? existingDay.enabled : true,
         };
       }
     });
@@ -123,10 +135,21 @@ export default function CalendarSettingsModal({
   };
 
   const handleSave = () => {
+    // Ensure all days are present in openingHours before validation
+    const completeOpeningHours: OpeningHours = {
+      monday: openingHours.monday || { open: '09:00', close: '18:00', enabled: false },
+      tuesday: openingHours.tuesday || { open: '09:00', close: '18:00', enabled: false },
+      wednesday: openingHours.wednesday || { open: '09:00', close: '18:00', enabled: false },
+      thursday: openingHours.thursday || { open: '09:00', close: '18:00', enabled: false },
+      friday: openingHours.friday || { open: '09:00', close: '18:00', enabled: false },
+      saturday: openingHours.saturday || { open: '09:00', close: '17:00', enabled: false },
+      sunday: openingHours.sunday || { open: '09:00', close: '17:00', enabled: false },
+    };
+    
     // Validate that enabled days have valid times
     const invalidDays = DAYS_OF_WEEK.filter(day => {
-      const hours = openingHours[day.key];
-      if (!hours.enabled) return false;
+      const hours = completeOpeningHours[day.key];
+      if (!hours || !hours.enabled) return false;
       if (!hours.open || !hours.close) return true;
       const openTime = new Date(`2000-01-01T${hours.open}`);
       const closeTime = new Date(`2000-01-01T${hours.close}`);
@@ -143,7 +166,7 @@ export default function CalendarSettingsModal({
     }
 
     onSave({
-      openingHours,
+      openingHours: completeOpeningHours,
       shiftPattern,
       defaultShiftLength: shiftPattern === 'custom' ? defaultShiftLength : undefined,
     });

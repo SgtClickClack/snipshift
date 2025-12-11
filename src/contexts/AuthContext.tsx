@@ -27,6 +27,11 @@ export interface User {
   isOnboarded?: boolean;
   averageRating?: number | null;
   reviewCount?: number;
+  businessSettings?: {
+    openingHours: Record<string, { open: string; close: string; enabled: boolean }>;
+    shiftSplitType: 'halves' | 'thirds' | 'custom' | 'full-day';
+    customShiftLength?: number;
+  };
 }
 
 interface AuthContextType {

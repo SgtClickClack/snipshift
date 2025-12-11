@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,11 +16,14 @@ import {
   LogOut,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Building2
 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
+import BusinessSettings from '@/components/settings/business-settings';
+import { apiRequest } from '@/lib/queryClient';
 
-type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification';
+type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business';
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -145,12 +148,20 @@ export default function SettingsPage() {
     });
   };
 
+  // Check if user is a hub/business owner
+  const isBusinessUser = user?.currentRole === 'hub' || user?.currentRole === 'business' || 
+                         (user?.roles && (user.roles.includes('hub') || user.roles.includes('business')));
+
   const categories: Array<{ id: SettingsCategory; label: string; icon: typeof User }> = [
     { id: 'account', label: 'Account', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'verification', label: 'Verification', icon: Shield },
+    ...(isBusinessUser ? [{ id: 'business' as SettingsCategory, label: 'Business Settings', icon: Building2 }] : []),
   ];
+
+  // Load business settings from user profile
+  const businessSettings = user?.businessSettings as any;
 
   return (
     <div className="min-h-screen bg-background">
@@ -484,6 +495,17 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Business Settings Section */}
+            {activeCategory === 'business' && isBusinessUser && (
+              <BusinessSettings
+                initialData={businessSettings}
+                onSave={() => {
+                  // Settings are saved to database via the component
+                  // User will be refreshed automatically
+                }}
+              />
             )}
 
             {/* Verification Section */}

@@ -299,11 +299,26 @@ export default function ProfessionalCalendar({
   
   // Save settings to localStorage
   const handleSaveSettings = useCallback((settings: CalendarSettings) => {
-    setCalendarSettings(settings);
+    console.log('[CALENDAR] Saving settings:', settings);
+    // Ensure all days are present in openingHours
+    const completeSettings: CalendarSettings = {
+      ...settings,
+      openingHours: {
+        monday: settings.openingHours.monday || { open: '09:00', close: '18:00', enabled: false },
+        tuesday: settings.openingHours.tuesday || { open: '09:00', close: '18:00', enabled: false },
+        wednesday: settings.openingHours.wednesday || { open: '09:00', close: '18:00', enabled: false },
+        thursday: settings.openingHours.thursday || { open: '09:00', close: '18:00', enabled: false },
+        friday: settings.openingHours.friday || { open: '09:00', close: '18:00', enabled: false },
+        saturday: settings.openingHours.saturday || { open: '09:00', close: '17:00', enabled: false },
+        sunday: settings.openingHours.sunday || { open: '09:00', close: '17:00', enabled: false },
+      },
+    };
+    setCalendarSettings(completeSettings);
     if (typeof window !== 'undefined') {
       try {
         const key = getSettingsKey();
-        localStorage.setItem(key, JSON.stringify(settings));
+        localStorage.setItem(key, JSON.stringify(completeSettings));
+        console.log('[CALENDAR] Settings saved to localStorage:', completeSettings);
       } catch (error) {
         console.error('Failed to save calendar settings:', error);
       }
@@ -317,7 +332,9 @@ export default function ProfessionalCalendar({
         const key = getSettingsKey();
         const stored = localStorage.getItem(key);
         if (stored) {
-          setCalendarSettings(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          setCalendarSettings(parsed);
+          console.log('[CALENDAR] Settings loaded from localStorage:', parsed);
         } else {
           setCalendarSettings(null);
         }
@@ -326,6 +343,19 @@ export default function ProfessionalCalendar({
       }
     }
   }, [user?.id, getSettingsKey]);
+  
+  // Log when calendarSettings changes to verify re-renders
+  useEffect(() => {
+    if (calendarSettings) {
+      console.log('[CALENDAR] Settings updated, will regenerate events:', {
+        hasOpeningHours: !!calendarSettings.openingHours,
+        enabledDays: Object.entries(calendarSettings.openingHours || {})
+          .filter(([_, hours]) => hours?.enabled)
+          .map(([day]) => day),
+        shiftPattern: calendarSettings.shiftPattern,
+      });
+    }
+  }, [calendarSettings]);
   const [pendingRecurringAction, setPendingRecurringAction] = useState<{
     type: 'delete' | 'move';
     event: CalendarEvent;
@@ -664,10 +694,21 @@ export default function ProfessionalCalendar({
         
         // Generate slots for the range
         const generatedSlots = generateShiftSlotsForRange(rangeStart, rangeEnd, calendarSettings);
+        console.log('[CALENDAR] Generated slots:', {
+          count: generatedSlots.length,
+          range: { start: rangeStart, end: rangeEnd },
+          settings: calendarSettings,
+          slots: generatedSlots.slice(0, 5), // Log first 5 slots
+        });
         
         // Filter out slots that overlap with existing shifts
         const existingShifts = allRealEvents.map(e => ({ start: e.start, end: e.end }));
         const availableSlots = filterOverlappingSlots(generatedSlots, existingShifts);
+        console.log('[CALENDAR] Available slots after filtering:', {
+          total: generatedSlots.length,
+          available: availableSlots.length,
+          filtered: generatedSlots.length - availableSlots.length,
+        });
         
         // Convert generated slots to calendar events
         const autoSlotEvents: CalendarEvent[] = availableSlots.map(slot => {

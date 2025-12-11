@@ -18,6 +18,15 @@ const UpdateProfileSchema = z.object({
   location: z.string().max(255).optional(),
   avatarUrl: z.string().url().optional(),
   bannerUrl: z.string().url().optional(),
+  businessSettings: z.object({
+    openingHours: z.record(z.object({
+      open: z.string(),
+      close: z.string(),
+      enabled: z.boolean(),
+    })),
+    shiftSplitType: z.enum(['halves', 'thirds', 'custom', 'full-day']),
+    customShiftLength: z.number().optional(),
+  }).optional(),
 });
 
 // Validation schema for onboarding completion
@@ -300,7 +309,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     return;
   }
 
-  const { displayName, bio, phone, location, avatarUrl, bannerUrl } = validationResult.data;
+  const { displayName, bio, phone, location, avatarUrl, bannerUrl, businessSettings } = validationResult.data;
 
   // Prepare update object
   const updates: any = {};
@@ -308,6 +317,12 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   if (bio !== undefined) updates.bio = bio;
   if (phone !== undefined) updates.phone = phone;
   if (location !== undefined) updates.location = location;
+  if (businessSettings !== undefined) {
+    // Store businessSettings as JSON in the database
+    // Note: This assumes the database column exists or can be added
+    // For now, we'll store it as a JSON string in a text field or JSON column
+    updates.businessSettings = JSON.stringify(businessSettings);
+  }
   
   // Use processed file URLs if available, otherwise use URLs from body
   if (processedAvatarUrl !== undefined) {
@@ -341,6 +356,18 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     bannerUrl: updatedUser.bannerUrl ? updatedUser.bannerUrl.substring(0, 50) + '...' : null,
   });
 
+  // Parse businessSettings if it exists
+  let businessSettingsParsed = null;
+  if ((updatedUser as any).businessSettings) {
+    try {
+      businessSettingsParsed = typeof (updatedUser as any).businessSettings === 'string'
+        ? JSON.parse((updatedUser as any).businessSettings)
+        : (updatedUser as any).businessSettings;
+    } catch (error) {
+      console.error('[PUT /api/me] Failed to parse businessSettings:', error);
+    }
+  }
+
   // Return updated user object
   res.status(200).json({
     id: updatedUser.id,
@@ -354,7 +381,8 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     bannerUrl: updatedUser.bannerUrl || null,
     roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
     currentRole: updatedUser.role,
-    uid: req.user.uid
+    uid: req.user.uid,
+    businessSettings: businessSettingsParsed,
   });
 }));
 
