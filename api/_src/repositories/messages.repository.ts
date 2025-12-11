@@ -4,7 +4,7 @@
  * Encapsulates database queries for messages
  */
 
-import { eq, and, or, desc, isNull, sql } from 'drizzle-orm';
+import { eq, and, or, desc, isNull, sql, ne } from 'drizzle-orm';
 import { messages, conversations, users } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
@@ -178,7 +178,7 @@ export async function getUnreadCount(userId: string): Promise<number> {
           eq(conversations.participant1Id, userId),
           eq(conversations.participant2Id, userId)
         ),
-        sql`${messages.senderId} != ${userId}`,
+        ne(messages.senderId, userId), // Use ne() instead of raw SQL
         isNull(messages.isRead)
       )
     );
