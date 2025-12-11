@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { eq, and, sql } from 'drizzle-orm';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { CreateApplicationSchema } from '../validation/schemas.js';
@@ -8,6 +9,7 @@ import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as notificationService from '../services/notification.service.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as emailService from '../services/email.service.js';
+import { applications, shifts } from '../db/schema.js';
 
 const router = Router();
 
@@ -166,6 +168,178 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
     id: newApplication.id,
     status: 'applied'
   });
+}));
+
+// Decide on an application (approve or decline)
+router.post('/:id/decide', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const { decision } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (!decision || !['APPROVED', 'DECLINED'].includes(decision)) {
+    res.status(400).json({ message: 'Invalid decision. Must be APPROVED or DECLINED' });
+    return;
+  }
+
+  // Get the application
+  const application = await applicationsRepo.getApplicationById(id);
+  if (!application) {
+    res.status(404).json({ message: 'Application not found' });
+    return;
+  }
+
+  // Verify ownership - check if the application is for a job/shift owned by this user
+  let ownerId: string | null = null;
+  let shiftId: string | null = null;
+  let jobId: string | null = null;
+
+  if (application.shiftId) {
+    const shift = await shiftsRepo.getShiftById(application.shiftId);
+    if (!shift) {
+      res.status(404).json({ message: 'Shift not found' });
+      return;
+    }
+    ownerId = shift.employerId;
+    shiftId = application.shiftId;
+  } else if (application.jobId) {
+    const job = await jobsRepo.getJobById(application.jobId);
+    if (!job) {
+      res.status(404).json({ message: 'Job not found' });
+      return;
+    }
+    ownerId = job.businessId;
+    jobId = application.jobId;
+  }
+
+  if (!ownerId || ownerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You do not own this job/shift' });
+    return;
+  }
+
+  // Get applicant user info
+  const applicant = application.userId ? await usersRepo.getUserById(application.userId) : null;
+  const applicantName = applicant?.name || application.name || 'Applicant';
+
+  if (decision === 'APPROVED') {
+    // Use transaction to ensure atomicity
+    const { getDb } = await import('../db/index.js');
+    const db = getDb();
+    if (!db) {
+      res.status(500).json({ message: 'Database not available' });
+      return;
+    }
+
+    try {
+      await db.transaction(async (tx) => {
+        // 1. Update application status to accepted
+        await tx
+          .update(applications)
+          .set({
+            status: 'accepted',
+            respondedAt: sql`NOW()`,
+          })
+          .where(eq(applications.id, id));
+
+        // 2. If it's a shift, update the shift
+        if (shiftId && application.userId) {
+          await tx
+            .update(shifts)
+            .set({
+              assigneeId: application.userId,
+              status: 'confirmed',
+            })
+            .where(eq(shifts.id, shiftId));
+
+          // 3. Auto-decline other pending applications for this shift
+          const pendingApps = await tx
+            .select()
+            .from(applications)
+            .where(and(
+              eq(applications.shiftId, shiftId),
+              eq(applications.status, 'pending'),
+              sql`${applications.id} != ${id}`
+            ));
+
+          if (pendingApps.length > 0) {
+            await tx
+              .update(applications)
+              .set({
+                status: 'rejected',
+                respondedAt: sql`NOW()`,
+              })
+              .where(and(
+                eq(applications.shiftId, shiftId),
+                eq(applications.status, 'pending'),
+                sql`${applications.id} != ${id}`
+              ));
+          }
+        } else if (jobId) {
+          // For jobs, we might want to update job status or just mark as filled
+          // For now, we'll just update the application status
+          // You can add job status update logic here if needed
+        }
+      });
+
+      // Fetch updated application
+      const updatedApplication = await applicationsRepo.getApplicationById(id);
+
+      // Notify the barber
+      if (application.userId) {
+        try {
+          await notificationService.notifyApplicationApproved(
+            application.userId,
+            shiftId ? (await shiftsRepo.getShiftById(shiftId)) : null,
+            jobId ? (await jobsRepo.getJobById(jobId)) : null
+          );
+        } catch (error) {
+          console.error('[POST /api/applications/:id/decide] Error sending approval notification:', error);
+        }
+      }
+
+      res.status(200).json({
+        message: 'Application approved successfully',
+        application: updatedApplication,
+      });
+    } catch (error: any) {
+      console.error('[POST /api/applications/:id/decide] Error approving application:', {
+        message: error?.message,
+        code: error?.code,
+        detail: error?.detail,
+      });
+      throw error;
+    }
+  } else {
+    // DECLINED
+    const updatedApplication = await applicationsRepo.updateApplicationStatus(id, 'rejected');
+
+    if (!updatedApplication) {
+      res.status(500).json({ message: 'Failed to update application' });
+      return;
+    }
+
+    // Notify the barber
+    if (application.userId) {
+      try {
+        await notificationService.notifyApplicationDeclined(
+          application.userId,
+          shiftId ? (await shiftsRepo.getShiftById(shiftId)) : null,
+          jobId ? (await jobsRepo.getJobById(jobId)) : null
+        );
+      } catch (error) {
+        console.error('[POST /api/applications/:id/decide] Error sending decline notification:', error);
+      }
+    }
+
+    res.status(200).json({
+      message: 'Application declined',
+      application: updatedApplication,
+    });
+  }
 }));
 
 export default router;

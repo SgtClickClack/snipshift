@@ -157,3 +157,49 @@ export async function notifyJobCompleted(
     });
   }
 }
+
+/**
+ * Notify professional when their application is approved
+ */
+export async function notifyApplicationApproved(
+  professionalId: string,
+  shift: any | null,
+  job: any | null
+): Promise<void> {
+  const title = shift?.title || job?.title || 'Position';
+  await createNotification({
+    userId: professionalId,
+    type: 'application_status_change',
+    title: 'Application Approved! 🎉',
+    message: `Congratulations! Your application for "${title}" has been approved.`,
+    link: `/professional-dashboard?view=applications`,
+    metadata: { 
+      shiftId: shift?.id,
+      jobId: job?.id,
+      status: 'accepted'
+    }
+  });
+}
+
+/**
+ * Notify professional when their application is declined
+ */
+export async function notifyApplicationDeclined(
+  professionalId: string,
+  shift: any | null,
+  job: any | null
+): Promise<void> {
+  const title = shift?.title || job?.title || 'Position';
+  await createNotification({
+    userId: professionalId,
+    type: 'application_status_change',
+    title: 'Application Update',
+    message: `Your application for "${title}" was not successful this time.`,
+    link: `/professional-dashboard?view=applications`,
+    metadata: { 
+      shiftId: shift?.id,
+      jobId: job?.id,
+      status: 'rejected'
+    }
+  });
+}

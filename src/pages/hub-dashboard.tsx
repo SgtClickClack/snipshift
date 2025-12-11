@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
@@ -17,8 +18,9 @@ import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
 import { format } from "date-fns";
-import { createShift, fetchShopShifts, updateShiftStatus } from "@/lib/api";
+import { createShift, fetchShopShifts, updateShiftStatus, decideApplication } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
+import { ApplicationCard, Application } from "@/components/applications/ApplicationCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,7 +148,7 @@ export default function HubDashboard() {
     updateProfileMutation.mutate(profileData);
   };
 
-  const { data: applications = [], isLoading: isLoadingApplications } = useQuery({
+  const { data: applications = [], isLoading: isLoadingApplications, refetch: refetchApplications } = useQuery({
     queryKey: ['/api/applications'],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/applications");
@@ -154,6 +156,51 @@ export default function HubDashboard() {
     },
     enabled: activeView === 'applications'
   });
+
+  // Filter to show only pending applications by default
+  const pendingApplications = useMemo(() => {
+    return (applications || []).filter((app: Application) => app.status === 'pending');
+  }, [applications]);
+
+  // Application decision mutation
+  const [processingApplicationId, setProcessingApplicationId] = useState<string | null>(null);
+  const decideMutation = useMutation({
+    mutationFn: ({ applicationId, decision }: { applicationId: string; decision: 'APPROVED' | 'DECLINED' }) =>
+      decideApplication(applicationId, decision),
+    onMutate: async ({ applicationId }) => {
+      setProcessingApplicationId(applicationId);
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: variables.decision === 'APPROVED' ? 'Application Approved' : 'Application Declined',
+        description: data.message,
+      });
+      // Refetch applications to update the list
+      refetchApplications();
+      // Also invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to process application',
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      setProcessingApplicationId(null);
+    },
+  });
+
+  const handleApprove = (applicationId: string) => {
+    decideMutation.mutate({ applicationId, decision: 'APPROVED' });
+  };
+
+  const handleDecline = (applicationId: string) => {
+    decideMutation.mutate({ applicationId, decision: 'DECLINED' });
+  };
 
   const { data: jobs = [], isLoading } = useQuery<any[]>({
     queryKey: ['shop-shifts', user?.id],
@@ -470,7 +517,7 @@ export default function HubDashboard() {
   const stats = {
     ...(dashboardStats?.summary || {}),
     openJobs: openJobsCount, // Override with local calculation
-    totalApplications: dashboardStats?.summary?.totalApplications ?? jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
+    totalApplications: pendingApplications.length,
     unreadMessages: dashboardStats?.summary?.unreadMessages ?? 0,
     monthlyHires: dashboardStats?.summary?.monthlyHires ?? 0
   };

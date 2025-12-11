@@ -292,6 +292,14 @@ export async function applyToShift(shiftId: string): Promise<{ message: string; 
   return res.json();
 }
 
+export async function decideApplication(
+  applicationId: string,
+  decision: 'APPROVED' | 'DECLINED'
+): Promise<{ message: string; application: any }> {
+  const res = await apiRequest('POST', `/api/applications/${applicationId}/decide`, { decision });
+  return res.json();
+}
+
 export interface CreateReviewData {
   revieweeId: string;
   jobId: string;

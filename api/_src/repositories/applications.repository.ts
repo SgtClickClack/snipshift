@@ -387,3 +387,51 @@ export async function deleteApplication(id: string): Promise<boolean> {
   const result = await db.delete(applications).where(eq(applications.id, id)).returning();
   return result.length > 0;
 }
+
+/**
+ * Get all pending applications for a specific shift
+ */
+export async function getPendingApplicationsForShift(shiftId: string): Promise<typeof applications.$inferSelect[]> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  const result = await db
+    .select()
+    .from(applications)
+    .where(and(
+      eq(applications.shiftId, shiftId),
+      eq(applications.status, 'pending')
+    ));
+
+  return result;
+}
+
+/**
+ * Decline all pending applications for a shift except the approved one
+ */
+export async function declinePendingApplicationsForShift(
+  shiftId: string,
+  exceptApplicationId: string
+): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const result = await db
+    .update(applications)
+    .set({
+      status: 'rejected',
+      respondedAt: sql`NOW()`,
+    })
+    .where(and(
+      eq(applications.shiftId, shiftId),
+      eq(applications.status, 'pending'),
+      sql`${applications.id} != ${exceptApplicationId}`
+    ))
+    .returning();
+
+  return result.length;
+}
