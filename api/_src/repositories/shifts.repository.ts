@@ -355,6 +355,8 @@ export async function getShiftsByEmployerInRange(
 export async function updateShift(
   id: string,
   updates: {
+    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
+    attendanceStatus?: 'pending' | 'completed' | 'no_show';
     title?: string;
     description?: string;
     startTime?: Date | string;

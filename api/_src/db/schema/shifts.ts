@@ -4,7 +4,12 @@ import { users } from './users.js';
 /**
  * Shift status enum
  */
-export const shiftStatusEnum = pgEnum('shift_status', ['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled']);
+export const shiftStatusEnum = pgEnum('shift_status', ['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled', 'pending_completion']);
+
+/**
+ * Attendance status enum
+ */
+export const attendanceStatusEnum = pgEnum('attendance_status', ['pending', 'completed', 'no_show']);
 
 /**
  * Shifts table
@@ -20,6 +25,7 @@ export const shifts = pgTable('shifts', {
   endTime: timestamp('end_time').notNull(),
   hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
   status: shiftStatusEnum('status').notNull().default('draft'),
+  attendanceStatus: attendanceStatusEnum('attendance_status').default('pending'),
   location: varchar('location', { length: 512 }),
   isRecurring: boolean('is_recurring').notNull().default(false),
   autoAccept: boolean('auto_accept').notNull().default(false),
@@ -33,6 +39,7 @@ export const shifts = pgTable('shifts', {
   startTimeIdx: index('shifts_start_time_idx').on(table.startTime),
   statusStartTimeIdx: index('shifts_status_start_time_idx').on(table.status, table.startTime),
   parentShiftIdIdx: index('shifts_parent_shift_id_idx').on(table.parentShiftId),
+  attendanceStatusIdx: index('shifts_attendance_status_idx').on(table.attendanceStatus),
 }));
 
 /**
@@ -56,5 +63,31 @@ export const shiftOffers = pgTable('shift_offers', {
   professionalIdIdx: index('shift_offers_professional_id_idx').on(table.professionalId),
   statusIdx: index('shift_offers_status_idx').on(table.status),
   shiftProfessionalIdx: index('shift_offers_shift_professional_idx').on(table.shiftId, table.professionalId),
+}));
+
+/**
+ * Shift review type enum
+ */
+export const shiftReviewTypeEnum = pgEnum('shift_review_type', ['SHOP_REVIEWING_BARBER', 'BARBER_REVIEWING_SHOP']);
+
+/**
+ * Shift Reviews table
+ * Stores reviews/ratings between shops and barbers for completed shifts
+ */
+export const shiftReviews = pgTable('shift_reviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  shiftId: uuid('shift_id').notNull().references(() => shifts.id, { onDelete: 'cascade' }),
+  reviewerId: uuid('reviewer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  revieweeId: uuid('reviewee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: shiftReviewTypeEnum('type').notNull(),
+  rating: decimal('rating', { precision: 1, scale: 0 }).notNull(), // 1-5 integer stored as decimal
+  comment: text('comment'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  shiftIdIdx: index('shift_reviews_shift_id_idx').on(table.shiftId),
+  reviewerIdIdx: index('shift_reviews_reviewer_id_idx').on(table.reviewerId),
+  revieweeIdIdx: index('shift_reviews_reviewee_id_idx').on(table.revieweeId),
+  shiftReviewerUnique: index('shift_reviews_shift_reviewer_unique').on(table.shiftId, table.reviewerId, table.type),
 }));
 

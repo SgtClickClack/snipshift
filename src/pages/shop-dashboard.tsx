@@ -29,6 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Shift } from "@/shared/types";
 import { Plus, Calendar, DollarSign, CreditCard, Wallet, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import PendingReviewNotification from "@/components/shifts/pending-review-notification";
 
 export default function ShopDashboard() {
   const { user } = useAuth();
@@ -185,6 +186,10 @@ export default function ShopDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Pending Review Notification */}
+        <div className="mb-8">
+          <PendingReviewNotification />
+        </div>
         
         {/* Top Section: Stats & Integrations */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

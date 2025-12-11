@@ -277,6 +277,47 @@ export async function fetchShiftOffers(): Promise<ShiftOffer[]> {
   return res.json();
 }
 
+// Shift review functions
+export interface ShiftReview {
+  id: string;
+  shiftId: string;
+  reviewerId: string;
+  revieweeId: string;
+  type: 'SHOP_REVIEWING_BARBER' | 'BARBER_REVIEWING_SHOP';
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
+export async function submitShiftReview(
+  shiftId: string,
+  reviewData: {
+    rating: number;
+    comment?: string;
+    type: 'SHOP_REVIEWING_BARBER' | 'BARBER_REVIEWING_SHOP';
+    markAsNoShow?: boolean;
+  }
+): Promise<ShiftReview> {
+  const res = await apiRequest('POST', `/api/shifts/${shiftId}/review`, reviewData);
+  return res.json();
+}
+
+// Get shifts pending review for the current user
+export async function fetchShiftsPendingReview(): Promise<Array<{
+  id: string;
+  title: string;
+  endTime: string;
+  employerId: string;
+  assigneeId: string;
+  employerName?: string;
+  assigneeName?: string;
+  status: string;
+  attendanceStatus?: string;
+}>> {
+  const res = await apiRequest('GET', '/api/shifts/pending-review');
+  return res.json();
+}
+
 export async function acceptShiftOffer(shiftId: string): Promise<{ id: string; status: string }> {
   const res = await apiRequest('POST', `/api/shifts/${shiftId}/accept`);
   return res.json();

@@ -103,6 +103,16 @@ export const ReviewSchema = z.object({
 });
 
 /**
+ * Schema for shift review creation
+ */
+export const ShiftReviewSchema = z.object({
+  rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
+  comment: z.string().max(1000, 'Comment must be less than 1000 characters').optional(),
+  type: z.enum(['SHOP_REVIEWING_BARBER', 'BARBER_REVIEWING_SHOP']),
+  markAsNoShow: z.boolean().optional(), // Shop side only - mark barber as no-show
+});
+
+/**
  * Schema for shift creation payloads
  * Supports both single date (for frontend compatibility) and separate start/end times
  */

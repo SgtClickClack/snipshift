@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { eq, and, sql } from 'drizzle-orm';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { ShiftSchema, ShiftInviteSchema } from '../validation/schemas.js';
+import { ShiftSchema, ShiftInviteSchema, ShiftReviewSchema } from '../validation/schemas.js';
 import { shiftOffers, shifts } from '../db/schema.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
@@ -10,6 +10,7 @@ import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
+import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
 import { SmartFillSchema } from '../validation/schemas.js';
 import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
 import { createBatchShifts, getShiftsByEmployerInRange } from '../repositories/shifts.repository.js';
@@ -1230,6 +1231,187 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
       instantAccept: false,
     });
   }
+}));
+
+// Submit a review for a shift
+router.post('/:id/review', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const shiftId = req.params.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = ShiftReviewSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validationResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+    });
+    return;
+  }
+
+  const reviewData = validationResult.data;
+
+  // Get the shift
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Verify user is authorized to review this shift
+  const isShop = shift.employerId === userId;
+  const isBarber = shift.assigneeId === userId;
+
+  if (!isShop && !isBarber) {
+    res.status(403).json({ message: 'You are not authorized to review this shift' });
+    return;
+  }
+
+  // Validate review type matches user role
+  if (reviewData.type === 'SHOP_REVIEWING_BARBER' && !isShop) {
+    res.status(403).json({ message: 'Only the shop can submit SHOP_REVIEWING_BARBER reviews' });
+    return;
+  }
+
+  if (reviewData.type === 'BARBER_REVIEWING_SHOP' && !isBarber) {
+    res.status(403).json({ message: 'Only the barber can submit BARBER_REVIEWING_SHOP reviews' });
+    return;
+  }
+
+  // Determine reviewee ID based on review type
+  const revieweeId = reviewData.type === 'SHOP_REVIEWING_BARBER' 
+    ? shift.assigneeId 
+    : shift.employerId;
+
+  if (!revieweeId) {
+    res.status(400).json({ message: 'Cannot review shift without assignee' });
+    return;
+  }
+
+  // Check for duplicate review
+  const hasReviewed = await shiftReviewsRepo.hasUserReviewedShift(shiftId, userId, reviewData.type);
+  if (hasReviewed) {
+    res.status(409).json({ message: 'You have already reviewed this shift' });
+    return;
+  }
+
+  // Handle no-show marking (shop side only)
+  if (reviewData.markAsNoShow && reviewData.type === 'SHOP_REVIEWING_BARBER') {
+    // Update shift attendance status to no_show
+    await shiftsRepo.updateShift(shiftId, {
+      attendanceStatus: 'no_show',
+      status: 'completed', // Mark shift as completed even if no-show
+    });
+  }
+
+  // Create review
+  const newReview = await shiftReviewsRepo.createShiftReview({
+    shiftId,
+    reviewerId: userId,
+    revieweeId,
+    type: reviewData.type,
+    rating: reviewData.rating,
+    comment: reviewData.comment,
+  });
+
+  if (!newReview) {
+    res.status(500).json({ message: 'Failed to create review' });
+    return;
+  }
+
+  // If shop is reviewing barber, mark attendance as completed (unless no-show)
+  if (reviewData.type === 'SHOP_REVIEWING_BARBER' && !reviewData.markAsNoShow) {
+    await shiftsRepo.updateShift(shiftId, {
+      attendanceStatus: 'completed',
+      status: 'completed',
+    });
+  }
+
+  // Recalculate and update reviewee's rating
+  await shiftReviewsRepo.updateUserRating(revieweeId);
+
+  res.status(201).json({
+    id: newReview.id,
+    shiftId: newReview.shiftId,
+    reviewerId: newReview.reviewerId,
+    revieweeId: newReview.revieweeId,
+    type: newReview.type,
+    rating: parseInt(newReview.rating),
+    comment: newReview.comment,
+    createdAt: newReview.createdAt.toISOString(),
+  });
+}));
+
+// Get shifts pending review for the current user
+router.get('/pending-review', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get user to determine role
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Find shifts that need review:
+  // 1. For shops: shifts with status 'pending_completion' or 'completed' where shop hasn't reviewed barber
+  // 2. For barbers: shifts with status 'pending_completion' or 'completed' where barber hasn't reviewed shop
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  // Get shifts where user is employer (shop) and needs to review barber
+  const shopShifts = await shiftsRepo.getShifts({
+    employerId: userId,
+    status: 'pending_completion' as any,
+    limit: 100,
+  });
+
+  // Get shifts where user is assignee (barber) and needs to review shop
+  const barberShifts = await shiftsRepo.getShifts({
+    assigneeId: userId,
+    status: 'pending_completion' as any,
+    limit: 100,
+  });
+
+  // Filter to only include shifts where review hasn't been submitted
+  const pendingReviews = [];
+
+  for (const shift of [...(shopShifts?.data || []), ...(barberShifts?.data || [])]) {
+    if (!shift.assigneeId) continue; // Skip shifts without assignee
+
+    const isShop = shift.employerId === userId;
+    const reviewType = isShop ? 'SHOP_REVIEWING_BARBER' : 'BARBER_REVIEWING_SHOP';
+    
+    // Check if review already exists
+    const hasReviewed = await shiftReviewsRepo.hasUserReviewedShift(shift.id, userId, reviewType);
+    
+    if (!hasReviewed && shift.endTime && new Date(shift.endTime) < oneHourAgo) {
+      // Get names for display
+      const employer = await usersRepo.getUserById(shift.employerId);
+      const assignee = shift.assigneeId ? await usersRepo.getUserById(shift.assigneeId) : null;
+
+      pendingReviews.push({
+        id: shift.id,
+        title: shift.title,
+        endTime: shift.endTime.toISOString(),
+        employerId: shift.employerId,
+        assigneeId: shift.assigneeId,
+        employerName: employer?.name,
+        assigneeName: assignee?.name,
+        status: shift.status,
+        attendanceStatus: shift.attendanceStatus,
+      });
+    }
+  }
+
+  res.status(200).json(pendingReviews);
 }));
 
 export default router;

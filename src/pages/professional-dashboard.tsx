@@ -30,6 +30,7 @@ import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { OfferInbox } from "@/components/shifts/offer-inbox";
 import JobBoard from "@/components/job-board/JobBoard";
+import PendingReviewNotification from "@/components/shifts/pending-review-notification";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -491,6 +492,11 @@ export default function ProfessionalDashboard() {
         {/* Job Requests - Always visible at the top */}
         <div className="mb-8">
           <OfferInbox />
+        </div>
+
+        {/* Pending Review Notification */}
+        <div className="mb-8">
+          <PendingReviewNotification />
         </div>
 
         {/* Overview Tab */}
