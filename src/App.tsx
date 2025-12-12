@@ -54,6 +54,7 @@ const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
 const EditProfilePage = lazy(() => import('@/pages/edit-profile'));
 const JobFeedPage = lazy(() => import('@/pages/job-feed'));
 const JobDetailsPage = lazy(() => import('@/pages/job-details'));
+const TravelPage = lazy(() => import('@/pages/travel'));
 const MyApplicationsPage = lazy(() => import('@/pages/my-applications'));
 const ReviewPage = lazy(() => import('@/pages/review'));
 const PostJobPage = lazy(() => import('@/pages/post-job'));
@@ -247,6 +248,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <JobDetailsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/travel" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <TravelPage />
             </Suspense>
           </ProtectedRoute>
         } />

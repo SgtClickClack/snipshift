@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Wallet, DollarSign, Clock, TrendingUp, ExternalLink, CheckCircle2, ArrowUpRight } from "lucide-react";
+import { Loader2, Wallet, DollarSign, Clock, TrendingUp, ExternalLink, CheckCircle2, ArrowUpRight, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/currency";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -39,9 +40,14 @@ interface PaymentHistory {
   history: PaymentHistoryItem[];
 }
 
-export default function EarningsDashboard() {
+interface EarningsDashboardProps {
+  onNavigateToPayouts?: () => void;
+}
+
+export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashboardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Fetch balance
   const { data: balanceData, isLoading: isLoadingBalance } = useQuery<BalanceData>({
@@ -224,7 +230,7 @@ export default function EarningsDashboard() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap">
         <Button
           onClick={handlePayoutNow}
           disabled={available <= 0}
@@ -232,6 +238,20 @@ export default function EarningsDashboard() {
         >
           <ArrowUpRight className="h-4 w-4 mr-2" />
           Payout Now
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (onNavigateToPayouts) {
+              onNavigateToPayouts();
+            } else {
+              // Default behavior: navigate to professional dashboard payouts tab
+              navigate('/professional-dashboard?view=payouts');
+            }
+          }}
+        >
+          <CreditCard className="h-4 w-4 mr-2" />
+          Stripe Payouts
         </Button>
         <Button
           variant="outline"

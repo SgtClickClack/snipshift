@@ -408,10 +408,7 @@ export default function ProfessionalDashboard() {
                 <span className="inline sm:hidden">Wallet</span>
               </Button>
               <Button
-                onClick={() => {
-                  setActiveView('jobs');
-                  setViewMode('map');
-                }}
+                onClick={() => navigate('/travel')}
                 variant="outline"
                 className="flex-1 md:flex-none"
                 data-testid="button-travel-mode"
@@ -823,7 +820,7 @@ export default function ProfessionalDashboard() {
 
         {/* Earnings Tab */}
         {activeView === 'earnings' && (
-          <EarningsDashboard />
+          <EarningsDashboard onNavigateToPayouts={() => setActiveView('payouts')} />
         )}
 
         {/* Payouts Tab */}
