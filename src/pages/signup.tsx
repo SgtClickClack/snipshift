@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,8 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  // Prevent double execution in React Strict Mode
+  const hasProcessedOAuthCallback = useRef(false);
 
   // Check for email and role in query params (e.g. redirect from login or landing page)
   useEffect(() => {
@@ -46,12 +48,17 @@ export default function SignupPage() {
 
   // Handle OAuth callback (new universal flow)
   useEffect(() => {
+    // Check if we already processed this callback
+    if (hasProcessedOAuthCallback.current) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
     
     // Handle OAuth callback if code is present
     if (code && state) {
+      // Mark as processed immediately to prevent double execution
+      hasProcessedOAuthCallback.current = true;
       try {
         // Create mock Google user with client role (universal signup)
         const mockUser = {

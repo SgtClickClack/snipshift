@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,9 +8,17 @@ export function OAuthCallback() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login } = useAuth();
+  // Prevent double execution in React Strict Mode
+  const hasProcessedCallback = useRef(false);
 
   useEffect(() => {
+    // Check if we already processed this callback
+    if (hasProcessedCallback.current) return;
+
     const handleOAuthCallback = async () => {
+      // Mark as processed immediately to prevent double execution
+      hasProcessedCallback.current = true;
+
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
