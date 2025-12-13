@@ -1,4 +1,43 @@
 
+#### 2025-12-14: Interactive Roster Builder - Auto-Generate Slots from Opening Hours
+
+**Core Components**
+- Shop Schedule page (`src/pages/shop/schedule.tsx`)
+- Business Settings component (`src/components/settings/business-settings.tsx`)
+- Shifts API routes (`api/_src/routes/shifts.ts`)
+- Shifts repository (`api/_src/repositories/shifts.repository.ts`)
+
+**Key Features**
+- **Phase 1: Auto-Generate Slots** - Added `POST /api/shifts/generate-roster` endpoint that creates DRAFT shift slots based on opening hours and shift pattern configuration. When Business Settings are saved, the system automatically generates draft slots for the next month.
+- **Phase 2: Interactive Calendar** - Updated Shop Calendar to render DRAFT slots as "Ghost" blocks (gray, dashed border, subtle opacity) that indicate empty slots ready for assignment. Clicking a ghost slot opens the AssignStaffModal.
+- **Phase 3: Quick Fill Modal** - Wired `AssignStaffModal` to list available professionals. Selecting a professional invites them to the shift (updates status to `invited` and sends notification).
+- **Phase 4: Visual Status Distinction** - Updated shift color coding: DRAFT=gray dashed (ghost), OPEN=blue, PENDING=amber, CONFIRMED=green, COMPLETED=slate, CANCELLED=rose.
+
+**Integration Points**
+- API endpoint: `POST /api/shifts/generate-roster`
+- API endpoint: `POST /api/shifts/:id/invite`
+- Business Settings save → triggers roster generation
+- Calendar click → opens AssignStaffModal for draft slots
+- Validation schema: `GenerateRosterSchema`
+
+**File Paths**
+- `api/_src/routes/shifts.ts` - Added generate-roster endpoint
+- `api/_src/validation/schemas.ts` - Added GenerateRosterSchema
+- `api/_src/repositories/shifts.repository.ts` - Added deleteDraftShiftsInRange
+- `src/lib/api.ts` - Added generateRoster function
+- `src/components/settings/business-settings.tsx` - Wired roster generation on save
+- `src/pages/shop/schedule.tsx` - Added ghost styling, click-to-assign, AssignStaffModal
+
+**Next Priority Task**
+- Test the full workflow: Define Hours → View Slots → Invite Barber → Accept/Decline
+
+**Code Organization & Quality**
+- Leveraged existing `shift-slot-generator.ts` utility for slot calculation
+- Reused existing `AssignStaffModal` component
+- Followed established API patterns and repository structure
+
+---
+
 #### 2025-12-14: Fix Shop Shifts API 500 Error (Missing shift_id Column Fallback)
 
 **Core Components**

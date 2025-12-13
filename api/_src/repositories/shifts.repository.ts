@@ -1034,3 +1034,43 @@ export async function getCompletedShiftsCount(): Promise<number> {
   return Number(result?.count || 0);
 }
 
+/**
+ * Delete unassigned DRAFT shifts for an employer within a date range
+ * Only deletes shifts that have no assignee (empty slots)
+ */
+export async function deleteDraftShiftsInRange(
+  employerId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  try {
+    const result = await db
+      .delete(shifts)
+      .where(
+        and(
+          eq(shifts.employerId, employerId),
+          eq(shifts.status, 'draft'),
+          sql`${shifts.assigneeId} IS NULL`, // Only delete unassigned drafts
+          gte(shifts.startTime, startDate),
+          lte(shifts.startTime, endDate)
+        )
+      );
+
+    return result.rowCount ?? 0;
+  } catch (error: any) {
+    console.error('[deleteDraftShiftsInRange] Database error:', {
+      message: error?.message,
+      code: error?.code,
+      employerId,
+      startDate,
+      endDate,
+    });
+    return 0;
+  }
+}
+

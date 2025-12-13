@@ -13,9 +13,9 @@ import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
 import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
 import * as stripeConnectService from '../services/stripe-connect.service.js';
-import { SmartFillSchema } from '../validation/schemas.js';
+import { SmartFillSchema, GenerateRosterSchema } from '../validation/schemas.js';
 import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
-import { createBatchShifts, getShiftsByEmployerInRange } from '../repositories/shifts.repository.js';
+import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange } from '../repositories/shifts.repository.js';
 
 const router = Router();
 
@@ -1268,6 +1268,131 @@ router.post('/publish-all', authenticateUser, asyncHandler(async (req: Authentic
 
   await Promise.all(draftShifts.map((s) => shiftsRepo.updateShift(s.id, { status: 'open' })));
   res.status(200).json({ success: true, count: draftShifts.length });
+}));
+
+// Generate Roster: Create DRAFT slots from opening hours settings
+// This is the Phase 1 implementation for "Define Hours -> View Slots" workflow
+router.post('/generate-roster', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const validationResult = GenerateRosterSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validationResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+    });
+    return;
+  }
+
+  const { startDate, endDate, calendarSettings, defaultHourlyRate, defaultLocation, clearExistingDrafts } = validationResult.data;
+
+  try {
+    // Parse dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      res.status(400).json({ message: 'Invalid date format' });
+      return;
+    }
+
+    if (start >= end) {
+      res.status(400).json({ message: 'startDate must be before endDate' });
+      return;
+    }
+
+    // Step 1: Optionally clear existing unassigned DRAFT shifts in the range
+    let deletedCount = 0;
+    if (clearExistingDrafts) {
+      deletedCount = await deleteDraftShiftsInRange(userId, start, end);
+      console.log(`[generate-roster] Deleted ${deletedCount} existing draft shifts for user ${userId}`);
+    }
+
+    // Step 2: Generate theoretical slots based on calendar settings
+    const generatedSlots = generateShiftSlotsForRange(start, end, calendarSettings);
+
+    if (generatedSlots.length === 0) {
+      res.status(200).json({
+        success: true,
+        created: 0,
+        deleted: deletedCount,
+        message: 'No slots generated for the specified date range and settings',
+      });
+      return;
+    }
+
+    // Step 3: Fetch existing non-draft shifts to avoid overlapping
+    const existingShifts = await getShiftsByEmployerInRange(userId, start, end);
+    const nonDraftShifts = existingShifts.filter(s => s.status !== 'draft');
+
+    // Step 4: Filter out slots that overlap with existing non-draft shifts
+    const existingShiftRanges = nonDraftShifts.map(shift => ({
+      start: shift.startTime,
+      end: shift.endTime,
+    }));
+    const availableSlots = filterOverlappingSlots(generatedSlots, existingShiftRanges);
+
+    if (availableSlots.length === 0) {
+      res.status(200).json({
+        success: true,
+        created: 0,
+        deleted: deletedCount,
+        message: 'All slots overlap with existing shifts',
+      });
+      return;
+    }
+
+    // Step 5: Prepare DRAFT shift data for batch creation
+    const hourlyRate = typeof defaultHourlyRate === 'string' ? defaultHourlyRate : defaultHourlyRate.toString();
+    const shiftsToCreate = availableSlots.map((slot) => {
+      // Generate title based on pattern and slot index
+      let title = 'Draft Shift';
+      if (slot.pattern === 'half-day') {
+        title = slot.slotIndex === 0 ? 'Morning Shift' : 'Afternoon Shift';
+      } else if (slot.pattern === 'thirds') {
+        const labels = ['Morning Shift', 'Afternoon Shift', 'Close Shift'];
+        title = labels[slot.slotIndex] || 'Draft Shift';
+      } else if (slot.pattern === 'full-day') {
+        title = 'Full Day Shift';
+      }
+
+      return {
+        employerId: userId,
+        title,
+        description: 'Auto-generated from opening hours',
+        startTime: slot.start,
+        endTime: slot.end,
+        hourlyRate,
+        status: 'draft' as const,
+        location: defaultLocation || undefined,
+      };
+    });
+
+    // Step 6: Batch create DRAFT shifts
+    const createdShifts = await createBatchShifts(shiftsToCreate);
+
+    res.status(201).json({
+      success: true,
+      created: createdShifts.length,
+      deleted: deletedCount,
+      message: `${createdShifts.length} draft slot(s) created successfully`,
+      shifts: createdShifts,
+    });
+  } catch (error: any) {
+    console.error('[POST /api/shifts/generate-roster] Error:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      stack: error?.stack,
+      body: req.body,
+    });
+    throw error;
+  }
 }));
 
 // Smart Fill: Batch create shifts for unassigned slots

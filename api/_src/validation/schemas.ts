@@ -209,6 +209,28 @@ export const ShiftOfferAcceptSchema = z.object({
 });
 
 /**
+ * Schema for generating roster (DRAFT slots from opening hours)
+ */
+export const GenerateRosterSchema = z.object({
+  startDate: z.string().datetime('Invalid start date format (ISO 8601)'),
+  endDate: z.string().datetime('Invalid end date format (ISO 8601)'),
+  calendarSettings: z.object({
+    openingHours: OpeningHoursSchema,
+    shiftPattern: z.enum(['half-day', 'thirds', 'full-day', 'custom']),
+    defaultShiftLength: z.number().positive().optional(),
+  }),
+  defaultHourlyRate: z.union([
+    z.number().nonnegative(),
+    z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Hourly rate must be a non-negative number'),
+  ]).optional().default('45'),
+  defaultLocation: z.string().optional(),
+  clearExistingDrafts: z.boolean().optional().default(true), // Whether to delete existing DRAFT slots first
+});
+
+/**
  * Schema for community post creation
  */
 export const PostSchema = z.object({
@@ -248,5 +270,6 @@ export type PurchaseInput = z.infer<typeof PurchaseSchema>;
 export type JobStatusUpdate = z.infer<typeof JobStatusUpdateSchema>;
 export type ReviewInput = z.infer<typeof ReviewSchema>;
 export type ShiftInput = z.infer<typeof ShiftSchema>;
+export type GenerateRosterInput = z.infer<typeof GenerateRosterSchema>;
 export type PostInput = z.infer<typeof PostSchema>;
 export type TrainingModuleInput = z.infer<typeof TrainingModuleSchema>;

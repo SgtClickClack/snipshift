@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { OpeningHours } from '@/components/calendar/calendar-settings-modal';
 import ShiftStructurePreview, { ShiftSplitType } from './shift-structure-preview';
 import { apiRequest } from '@/lib/queryClient';
-import { Clock, Save } from 'lucide-react';
+import { generateRoster, GenerateRosterPayload } from '@/lib/api';
+import { Clock, Save, CalendarDays } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { addMonths, startOfToday, endOfDay } from 'date-fns';
 
 const DAYS_OF_WEEK = [
   { key: 'monday', label: 'Monday' },
@@ -240,10 +242,52 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
         await refreshUser();
       }
 
-      toast({
-        title: 'Settings saved',
-        description: 'Your business settings have been saved successfully.',
-      });
+      // Auto-generate roster slots for the next month based on the new settings
+      try {
+        const today = startOfToday();
+        const oneMonthLater = endOfDay(addMonths(today, 1));
+        
+        // Convert shiftSplitType to shiftPattern format
+        let rosterPattern: 'full-day' | 'half-day' | 'thirds' | 'custom' = 'full-day';
+        if (settingsData.shiftSplitType === 'halves') {
+          rosterPattern = 'half-day';
+        } else if (settingsData.shiftSplitType === 'thirds') {
+          rosterPattern = 'thirds';
+        } else if (settingsData.shiftSplitType === 'custom') {
+          rosterPattern = 'custom';
+        }
+        
+        const rosterPayload: GenerateRosterPayload = {
+          startDate: today.toISOString(),
+          endDate: oneMonthLater.toISOString(),
+          calendarSettings: {
+            openingHours: settingsData.openingHours,
+            shiftPattern: rosterPattern,
+            defaultShiftLength: settingsData.customShiftLength,
+          },
+          defaultHourlyRate: '45', // Default rate
+          clearExistingDrafts: true, // Clear and regenerate
+        };
+        
+        const result = await generateRoster(rosterPayload);
+        
+        toast({
+          title: 'Settings saved & roster updated',
+          description: `${result.created} draft slot(s) generated for the next month. View them in your Shop Schedule.`,
+        });
+        
+        // Dispatch event to refresh the calendar
+        window.dispatchEvent(new CustomEvent('rosterGenerated', {
+          detail: { created: result.created }
+        }));
+      } catch (rosterError: any) {
+        // Don't fail the whole operation if roster generation fails
+        console.error('Failed to generate roster:', rosterError);
+        toast({
+          title: 'Settings saved',
+          description: 'Your business settings have been saved. Roster generation encountered an issue.',
+        });
+      }
 
       onSave?.(settingsData);
     } catch (error: any) {

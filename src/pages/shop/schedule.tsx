@@ -16,8 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { copyPreviousWeekShifts, createShift, fetchEmployerShifts, publishAllDraftShifts, updateShiftTimes } from '@/lib/api';
+import { copyPreviousWeekShifts, createShift, fetchEmployerShifts, fetchProfessionals, publishAllDraftShifts, updateShiftTimes } from '@/lib/api';
+import { apiRequest } from '@/lib/queryClient';
 import type { ShiftDetails } from '@/lib/api';
+import { AssignStaffModal, Professional } from '@/components/calendar/assign-staff-modal';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
@@ -68,23 +70,36 @@ function statusLabel(status: ShiftStatus): string {
 }
 
 function eventStyleForStatus(status: ShiftStatus): React.CSSProperties {
-  // Pastel palette (readable text)
+  // Visual distinction for different shift states
   switch (status) {
     case 'draft':
-      return { backgroundColor: '#DBEAFE', borderColor: '#93C5FD', color: '#0F172A' }; // blue-100
+      // GHOST SLOT: Gray, dashed border - indicates empty slot ready for assignment
+      return { 
+        backgroundColor: '#F3F4F6', 
+        borderColor: '#9CA3AF', 
+        color: '#6B7280',
+        borderStyle: 'dashed',
+        opacity: 0.85,
+      };
     case 'open':
-      return { backgroundColor: '#DCFCE7', borderColor: '#86EFAC', color: '#052E16' }; // green-100
+      // OPEN: Blue tint - posted to job board, awaiting applications
+      return { backgroundColor: '#DBEAFE', borderColor: '#3B82F6', color: '#1E40AF' };
     case 'pending':
     case 'invited':
-      return { backgroundColor: '#FEF3C7', borderColor: '#FCD34D', color: '#451A03' }; // amber-100
+      // PENDING: Amber/yellow - invite sent, awaiting response
+      return { backgroundColor: '#FEF3C7', borderColor: '#F59E0B', color: '#92400E' };
     case 'confirmed':
-      return { backgroundColor: '#E9D5FF', borderColor: '#C4B5FD', color: '#2E1065' }; // purple-200
+      // CONFIRMED: Green - professional accepted, shift is locked in
+      return { backgroundColor: '#D1FAE5', borderColor: '#10B981', color: '#065F46' };
     case 'filled':
-      return { backgroundColor: '#E2E8F0', borderColor: '#CBD5E1', color: '#0F172A' }; // slate-200
+      // FILLED: Teal - shift is fully staffed
+      return { backgroundColor: '#CCFBF1', borderColor: '#14B8A6', color: '#115E59' };
     case 'completed':
-      return { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0', color: '#0F172A' }; // slate-100
+      // COMPLETED: Slate/gray - shift has ended
+      return { backgroundColor: '#F1F5F9', borderColor: '#94A3B8', color: '#475569' };
     case 'cancelled':
-      return { backgroundColor: '#FFE4E6', borderColor: '#FDA4AF', color: '#450A0A' }; // rose-100
+      // CANCELLED: Rose/red - shift was cancelled
+      return { backgroundColor: '#FFE4E6', borderColor: '#F43F5E', color: '#9F1239' };
     default:
       return { backgroundColor: '#E2E8F0', borderColor: '#CBD5E1', color: '#0F172A' };
   }
@@ -126,6 +141,10 @@ export default function ShopSchedulePage() {
   } | null>(null);
   const [moveReason, setMoveReason] = useState('');
 
+  // AssignStaffModal state for clicking on DRAFT slots
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedDraftShift, setSelectedDraftShift] = useState<ShiftDetails | null>(null);
+
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
   const weekEnd = useMemo(() => endOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
 
@@ -133,6 +152,26 @@ export default function ShopSchedulePage() {
     queryKey: ['shop-schedule-shifts', weekStart.toISOString(), weekEnd.toISOString()],
     queryFn: async () => fetchEmployerShifts({ start: weekStart.toISOString(), end: weekEnd.toISOString() }),
     enabled: !!user?.id,
+  });
+
+  // Fetch professionals for the assign modal
+  const { data: professionals = [] } = useQuery<Professional[]>({
+    queryKey: ['professionals-for-assign'],
+    queryFn: async () => {
+      const data = await fetchProfessionals();
+      return data.map((p: any) => ({
+        id: p.id,
+        name: p.name || p.displayName || 'Professional',
+        displayName: p.displayName,
+        email: p.email,
+        photoURL: p.avatarUrl || p.photoURL,
+        skills: p.skills || [],
+        rating: p.rating,
+        lastHired: p.lastHired,
+      }));
+    },
+    enabled: assignModalOpen, // Only fetch when modal is open
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const draftCount = useMemo(() => (shifts || []).filter((s) => s.status === 'draft').length, [shifts]);
@@ -256,6 +295,60 @@ export default function ShopSchedulePage() {
     },
   });
 
+  // Mutation for inviting a professional to a draft shift
+  const inviteProfessionalMutation = useMutation({
+    mutationFn: async ({ shiftId, professionalId }: { shiftId: string; professionalId: string }) => {
+      const res = await apiRequest('POST', `/api/shifts/${shiftId}/invite`, { professionalId });
+      return await res.json();
+    },
+    onSuccess: (data, variables) => {
+      setAssignModalOpen(false);
+      setSelectedDraftShift(null);
+      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      toast({
+        title: 'Invite sent!',
+        description: 'The professional will be notified and can accept or decline the shift.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Invite failed',
+        description: error?.message || 'Unable to send invite',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Handler for clicking on calendar events
+  const handleSelectEvent = (event: CalendarEvent) => {
+    const shift = event.resource;
+    
+    // If it's a DRAFT shift, open the assign modal
+    if (shift.status === 'draft') {
+      setSelectedDraftShift(shift);
+      setAssignModalOpen(true);
+      return;
+    }
+    
+    // For other statuses, could navigate to shift details or show info
+    // For now, just show a toast with the shift info
+    toast({
+      title: shift.title,
+      description: `Status: ${statusLabel(shift.status)} | Rate: $${shift.hourlyRate}/hr`,
+    });
+  };
+
+  // Handler for assigning a professional to a shift
+  const handleAssignProfessional = (professional: Professional) => {
+    if (!selectedDraftShift) return;
+    inviteProfessionalMutation.mutate({
+      shiftId: selectedDraftShift.id,
+      professionalId: professional.id,
+    });
+  };
+
   if (!user || (user.currentRole !== 'hub' && user.currentRole !== 'business')) {
     return <div className="p-6">Access denied</div>;
   }
@@ -325,6 +418,7 @@ export default function ShopSchedulePage() {
                     setSelectedSlot({ start, end });
                     setCreateOpen(true);
                   }}
+                  onSelectEvent={(event) => handleSelectEvent(event as CalendarEvent)}
                   onEventDrop={({ event, start, end }) => {
                     const shift = (event as CalendarEvent).resource;
                     const nextStart = start as Date;
@@ -358,20 +452,24 @@ export default function ShopSchedulePage() {
                   eventPropGetter={(event) => {
                     const shift = (event as CalendarEvent).resource;
                     const colors = eventStyleForStatus(shift.status);
+                    const isDraft = shift.status === 'draft';
                     return {
                       style: {
                         ...colors,
-                        borderWidth: 1,
-                        borderStyle: 'solid',
+                        borderWidth: isDraft ? 2 : 1,
+                        borderStyle: colors.borderStyle || 'solid',
                         borderRadius: 10,
                         padding: 2,
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+                        boxShadow: isDraft ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
+                        cursor: isDraft ? 'pointer' : 'default',
                       },
                     };
                   }}
                   tooltipAccessor={(event) => {
                     const shift = (event as CalendarEvent).resource;
-                    return `${shift.title} • ${statusLabel(shift.status)} • $${shift.hourlyRate}/hr`;
+                    const isDraft = shift.status === 'draft';
+                    const baseInfo = `${shift.title} • ${statusLabel(shift.status)} • $${shift.hourlyRate}/hr`;
+                    return isDraft ? `${baseInfo}\n👆 Click to assign staff` : baseInfo;
                   }}
                 />
               </div>
@@ -561,6 +659,19 @@ export default function ShopSchedulePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Assign Staff Modal - Opens when clicking on a DRAFT slot */}
+      <AssignStaffModal
+        isOpen={assignModalOpen}
+        onClose={() => {
+          setAssignModalOpen(false);
+          setSelectedDraftShift(null);
+        }}
+        onAssign={handleAssignProfessional}
+        professionals={professionals}
+        shiftTitle={selectedDraftShift?.title}
+        shiftDate={selectedDraftShift ? new Date(selectedDraftShift.startTime) : undefined}
+      />
     </div>
   );
 }

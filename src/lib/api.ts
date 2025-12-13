@@ -454,6 +454,46 @@ export async function publishAllDraftShifts(payload: { start: string; end: strin
   }
 }
 
+export interface GenerateRosterPayload {
+  startDate: string;
+  endDate: string;
+  calendarSettings: {
+    openingHours: Record<string, { open: string; close: string; enabled: boolean }>;
+    shiftPattern: 'half-day' | 'thirds' | 'full-day' | 'custom';
+    defaultShiftLength?: number;
+  };
+  defaultHourlyRate?: string | number;
+  defaultLocation?: string;
+  clearExistingDrafts?: boolean;
+}
+
+export interface GenerateRosterResult {
+  success: boolean;
+  created: number;
+  deleted: number;
+  message: string;
+  shifts?: Array<{
+    id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+  }>;
+}
+
+/**
+ * Generate DRAFT roster slots from opening hours settings
+ * This creates ghost slots on the calendar that can be clicked to assign staff
+ */
+export async function generateRoster(payload: GenerateRosterPayload): Promise<GenerateRosterResult> {
+  try {
+    const res = await apiRequest('POST', '/api/shifts/generate-roster', payload);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'generateRoster');
+  }
+}
+
 export async function updateShiftStatus(
   shiftId: string,
   status: 'draft' | 'invited' | 'open' | 'filled' | 'completed'
