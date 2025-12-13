@@ -81,6 +81,24 @@ export const shiftOffers = pgTable('shift_offers', {
 }));
 
 /**
+ * Shift Invitations table
+ * Tracks invitations sent to professionals for "First-to-Accept" pattern
+ * Multiple professionals can be invited to the same shift
+ */
+export const shiftInvitations = pgTable('shift_invitations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  shiftId: uuid('shift_id').notNull().references(() => shifts.id, { onDelete: 'cascade' }),
+  professionalId: uuid('professional_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: varchar('status', { length: 20 }).notNull().default('PENDING'), // 'PENDING', 'EXPIRED', 'DECLINED'
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  shiftIdIdx: index('shift_invitations_shift_id_idx').on(table.shiftId),
+  professionalIdIdx: index('shift_invitations_professional_id_idx').on(table.professionalId),
+  statusIdx: index('shift_invitations_status_idx').on(table.status),
+  shiftProfessionalUnique: index('shift_invitations_shift_professional_unique').on(table.shiftId, table.professionalId),
+}));
+
+/**
  * Shift review type enum
  */
 export const shiftReviewTypeEnum = pgEnum('shift_review_type', ['SHOP_REVIEWING_BARBER', 'BARBER_REVIEWING_SHOP']);

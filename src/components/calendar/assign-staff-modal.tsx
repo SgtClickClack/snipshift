@@ -5,12 +5,14 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, Clock } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, UserPlus, Clock, Users, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Professional {
@@ -29,10 +31,12 @@ interface AssignStaffModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAssign: (professional: Professional) => void;
+  onMultiAssign?: (professionals: Professional[]) => void;
   professionals: Professional[];
   favoriteProfessionals?: Professional[];
   shiftTitle?: string;
   shiftDate?: Date;
+  enableMultiSelect?: boolean;
 }
 
 /**
@@ -41,18 +45,22 @@ interface AssignStaffModalProps {
  * Features:
  * - Search bar to find professionals by name or skill
  * - Recent Hires section
- * - Invite to Shift button for each professional
+ * - Single invite button OR Multi-select with checkboxes
+ * - "Invite X Barbers" button when multiple are selected
  */
 export function AssignStaffModal({
   isOpen,
   onClose,
   onAssign,
+  onMultiAssign,
   professionals,
   favoriteProfessionals,
   shiftTitle,
   shiftDate,
+  enableMultiSelect = true, // Default to multi-select mode
 }: AssignStaffModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Filter professionals based on search query
   const filteredProfessionals = useMemo(() => {
@@ -80,10 +88,62 @@ export function AssignStaffModal({
       .slice(0, 6);
   }, [favoriteProfessionals, professionals]);
 
-  const handleInvite = (professional: Professional) => {
+  const handleToggleSelection = (professional: Professional) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(professional.id)) {
+        next.delete(professional.id);
+      } else {
+        next.add(professional.id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    const currentList = searchQuery ? filteredProfessionals : recentProfessionals;
+    const allSelected = currentList.every((p) => selectedIds.has(p.id));
+    
+    if (allSelected) {
+      // Deselect all
+      setSelectedIds(new Set());
+    } else {
+      // Select all visible
+      setSelectedIds(new Set(currentList.map((p) => p.id)));
+    }
+  };
+
+  const handleInviteSingle = (professional: Professional) => {
     onAssign(professional);
     onClose();
     setSearchQuery('');
+    setSelectedIds(new Set());
+  };
+
+  const handleInviteMultiple = () => {
+    if (selectedIds.size === 0) return;
+    
+    const selectedProfessionals = professionals.filter((p) => selectedIds.has(p.id));
+    
+    if (selectedProfessionals.length === 1 && !onMultiAssign) {
+      // Fall back to single assign if only one selected
+      onAssign(selectedProfessionals[0]);
+    } else if (onMultiAssign) {
+      onMultiAssign(selectedProfessionals);
+    } else {
+      // Legacy: call onAssign for each (not recommended)
+      selectedProfessionals.forEach((p) => onAssign(p));
+    }
+    
+    onClose();
+    setSearchQuery('');
+    setSelectedIds(new Set());
+  };
+
+  const handleClose = () => {
+    onClose();
+    setSearchQuery('');
+    setSelectedIds(new Set());
   };
 
   const getInitials = (name: string) => {
@@ -106,11 +166,94 @@ export function AssignStaffModal({
     return `${Math.floor(daysAgo / 30)} months ago`;
   };
 
+  const currentList = searchQuery ? filteredProfessionals : recentProfessionals;
+  const allCurrentSelected = currentList.length > 0 && currentList.every((p) => selectedIds.has(p.id));
+  const someSelected = selectedIds.size > 0;
+
+  const ProfessionalCard = ({ professional, showCheckbox }: { professional: Professional; showCheckbox: boolean }) => (
+    <div
+      className={cn(
+        "flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors",
+        showCheckbox && selectedIds.has(professional.id) && "border-primary bg-primary/5"
+      )}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {showCheckbox && (
+          <Checkbox
+            checked={selectedIds.has(professional.id)}
+            onCheckedChange={() => handleToggleSelection(professional)}
+            className="h-5 w-5"
+          />
+        )}
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={professional.photoURL || professional.avatar} />
+          <AvatarFallback>
+            {getInitials(professional.name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium truncate">
+            {professional.name}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {professional.rating && (
+              <span>⭐ {professional.rating}</span>
+            )}
+            {professional.lastHired && (
+              <span>• {formatLastHired(professional.lastHired)}</span>
+            )}
+          </div>
+          {professional.skills && professional.skills.length > 0 && (
+            <div className="flex gap-1 mt-1 flex-wrap">
+              {professional.skills.slice(0, 3).map((skill, idx) => (
+                <Badge
+                  key={idx}
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {!showCheckbox && (
+        <Button
+          onClick={() => handleInviteSingle(professional)}
+          size="sm"
+          className="ml-4"
+          data-testid={`invite-button-${professional.name.toLowerCase().replace(/\s+/g, '-')}`}
+        >
+          <UserPlus className="h-4 w-4 mr-1" />
+          Invite
+        </Button>
+      )}
+      {showCheckbox && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-4"
+          onClick={() => handleToggleSelection(professional)}
+        >
+          {selectedIds.has(professional.id) ? (
+            <CheckCircle2 className="h-5 w-5 text-primary" />
+          ) : (
+            <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+          )}
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Assign Staff to Shift</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Assign Staff to Shift
+          </DialogTitle>
           <DialogDescription>
             {shiftTitle && (
               <span className="block mb-1">
@@ -125,6 +268,11 @@ export function AssignStaffModal({
                   month: 'long',
                   day: 'numeric',
                 })}
+              </span>
+            )}
+            {enableMultiSelect && (
+              <span className="block mt-2 text-sm text-muted-foreground">
+                Select one or more barbers to invite. First one to accept gets the shift!
               </span>
             )}
           </DialogDescription>
@@ -142,6 +290,28 @@ export function AssignStaffModal({
             />
           </div>
 
+          {/* Select All toggle (when multi-select is enabled) */}
+          {enableMultiSelect && currentList.length > 0 && (
+            <div className="flex items-center justify-between px-1">
+              <button
+                onClick={handleSelectAll}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Checkbox
+                  checked={allCurrentSelected}
+                  onCheckedChange={handleSelectAll}
+                  className="h-4 w-4"
+                />
+                <span>Select All ({currentList.length})</span>
+              </button>
+              {someSelected && (
+                <span className="text-sm text-primary font-medium">
+                  {selectedIds.size} selected
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto space-y-6">
             {/* Recent Hires Section */}
             {!searchQuery && (
@@ -152,54 +322,11 @@ export function AssignStaffModal({
                 </h3>
                 <div className="space-y-2">
                   {recentProfessionals.map((professional) => (
-                    <div
+                    <ProfessionalCard
                       key={professional.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={professional.photoURL || professional.avatar} />
-                          <AvatarFallback>
-                            {getInitials(professional.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">
-                            {professional.name}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            {professional.rating && (
-                              <span>⭐ {professional.rating}</span>
-                            )}
-                            {professional.lastHired && (
-                              <span>• {formatLastHired(professional.lastHired)}</span>
-                            )}
-                          </div>
-                          {professional.skills && professional.skills.length > 0 && (
-                            <div className="flex gap-1 mt-1 flex-wrap">
-                              {professional.skills.slice(0, 3).map((skill, idx) => (
-                                <Badge
-                                  key={idx}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {skill}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => handleInvite(professional)}
-                        size="sm"
-                        className="ml-4"
-                        data-testid={`invite-button-${professional.name.toLowerCase().replace(/\s+/g, '-')}`}
-                      >
-                        <UserPlus className="h-4 w-4 mr-1" />
-                        Invite
-                      </Button>
-                    </div>
+                      professional={professional}
+                      showCheckbox={enableMultiSelect}
+                    />
                   ))}
                 </div>
               </div>
@@ -218,51 +345,11 @@ export function AssignStaffModal({
                 ) : (
                   <div className="space-y-2">
                     {filteredProfessionals.map((professional) => (
-                      <div
+                      <ProfessionalCard
                         key={professional.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={professional.photoURL || professional.avatar} />
-                            <AvatarFallback>
-                              {getInitials(professional.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">
-                              {professional.name}
-                            </div>
-                            {professional.rating && (
-                              <div className="text-sm text-muted-foreground">
-                                ⭐ {professional.rating}
-                              </div>
-                            )}
-                            {professional.skills && professional.skills.length > 0 && (
-                              <div className="flex gap-1 mt-1 flex-wrap">
-                                {professional.skills.slice(0, 3).map((skill, idx) => (
-                                  <Badge
-                                    key={idx}
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    {skill}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => handleInvite(professional)}
-                          size="sm"
-                          className="ml-4"
-                          data-testid={`invite-button-${professional.name.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          <UserPlus className="h-4 w-4 mr-1" />
-                          Invite
-                        </Button>
-                      </div>
+                        professional={professional}
+                        showCheckbox={enableMultiSelect}
+                      />
                     ))}
                   </div>
                 )}
@@ -270,8 +357,31 @@ export function AssignStaffModal({
             )}
           </div>
         </div>
+
+        {/* Footer with multi-invite button */}
+        {enableMultiSelect && (
+          <DialogFooter className="mt-4 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={handleClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleInviteMultiple}
+              disabled={selectedIds.size === 0}
+              className="min-w-[160px]"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              {selectedIds.size === 0 
+                ? 'Select Barbers' 
+                : selectedIds.size === 1 
+                  ? 'Invite 1 Barber' 
+                  : `Invite ${selectedIds.size} Barbers`}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
-

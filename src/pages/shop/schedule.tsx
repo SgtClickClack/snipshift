@@ -295,13 +295,13 @@ export default function ShopSchedulePage() {
     },
   });
 
-  // Mutation for inviting a professional to a draft shift
+  // Mutation for inviting a professional to a draft shift (single)
   const inviteProfessionalMutation = useMutation({
     mutationFn: async ({ shiftId, professionalId }: { shiftId: string; professionalId: string }) => {
       const res = await apiRequest('POST', `/api/shifts/${shiftId}/invite`, { professionalId });
       return await res.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       setAssignModalOpen(false);
       setSelectedDraftShift(null);
       queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
@@ -316,6 +316,33 @@ export default function ShopSchedulePage() {
       toast({
         title: 'Invite failed',
         description: error?.message || 'Unable to send invite',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Mutation for inviting multiple professionals (First-to-Accept pattern)
+  const multiInviteMutation = useMutation({
+    mutationFn: async ({ shiftId, professionalIds }: { shiftId: string; professionalIds: string[] }) => {
+      const res = await apiRequest('POST', `/api/shifts/${shiftId}/invite`, { professionalIds });
+      return await res.json();
+    },
+    onSuccess: (data, variables) => {
+      setAssignModalOpen(false);
+      setSelectedDraftShift(null);
+      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      const count = variables.professionalIds.length;
+      toast({
+        title: `${count} barber${count > 1 ? 's' : ''} invited!`,
+        description: 'First one to accept gets the shift.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Invite failed',
+        description: error?.message || 'Unable to send invites',
         variant: 'destructive',
       });
     },
@@ -340,13 +367,33 @@ export default function ShopSchedulePage() {
     });
   };
 
-  // Handler for assigning a professional to a shift
+  // Handler for assigning a professional to a shift (single)
   const handleAssignProfessional = (professional: Professional) => {
     if (!selectedDraftShift) return;
     inviteProfessionalMutation.mutate({
       shiftId: selectedDraftShift.id,
       professionalId: professional.id,
     });
+  };
+
+  // Handler for multi-select assignment (First-to-Accept)
+  const handleMultiAssignProfessionals = (professionals: Professional[]) => {
+    if (!selectedDraftShift) return;
+    if (professionals.length === 0) return;
+    
+    if (professionals.length === 1) {
+      // Single invite
+      inviteProfessionalMutation.mutate({
+        shiftId: selectedDraftShift.id,
+        professionalId: professionals[0].id,
+      });
+    } else {
+      // Multi-invite
+      multiInviteMutation.mutate({
+        shiftId: selectedDraftShift.id,
+        professionalIds: professionals.map(p => p.id),
+      });
+    }
   };
 
   if (!user || (user.currentRole !== 'hub' && user.currentRole !== 'business')) {
@@ -661,6 +708,7 @@ export default function ShopSchedulePage() {
       </Dialog>
 
       {/* Assign Staff Modal - Opens when clicking on a DRAFT slot */}
+      {/* Supports multi-select for First-to-Accept pattern */}
       <AssignStaffModal
         isOpen={assignModalOpen}
         onClose={() => {
@@ -668,9 +716,11 @@ export default function ShopSchedulePage() {
           setSelectedDraftShift(null);
         }}
         onAssign={handleAssignProfessional}
+        onMultiAssign={handleMultiAssignProfessionals}
         professionals={professionals}
         shiftTitle={selectedDraftShift?.title}
         shiftDate={selectedDraftShift ? new Date(selectedDraftShift.startTime) : undefined}
+        enableMultiSelect={true}
       />
     </div>
   );

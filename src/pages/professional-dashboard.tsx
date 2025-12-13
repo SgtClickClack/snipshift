@@ -33,7 +33,9 @@ import JobBoard from "@/components/job-board/JobBoard";
 import PendingReviewNotification from "@/components/shifts/pending-review-notification";
 import PayoutSettings from "@/components/payments/payout-settings";
 import EarningsDashboard from "@/components/payments/earnings-dashboard";
+import BulkInvitationReview from "@/components/dashboard/BulkInvitationReview";
 import { fetchShifts } from "@/lib/api";
+import { Mail } from "lucide-react";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -41,9 +43,9 @@ export default function ProfessionalDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewParam = searchParams.get('view');
-  const activeView = (viewParam as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'payouts' | 'earnings') || 'overview';
+  const activeView = (viewParam as 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'payouts' | 'earnings' | 'invitations') || 'overview';
   
-  const setActiveView = (view: 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'payouts' | 'earnings') => {
+  const setActiveView = (view: 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'payouts' | 'earnings' | 'invitations') => {
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
       newParams.set('view', view);
@@ -105,6 +107,17 @@ export default function ProfessionalDashboard() {
     },
     enabled: activeView === 'calendar',
   });
+
+  // Fetch pending invitations count for the tab badge
+  const { data: pendingInvitationsData } = useQuery({
+    queryKey: ['/api/shifts/invitations/pending'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/shifts/invitations/pending');
+      return res.json();
+    },
+    enabled: !!user?.id,
+  });
+  const pendingInvitationsCount = pendingInvitationsData?.totalCount || 0;
 
   // Extract booked dates from bookings for calendar indicators
   const bookedDates = useMemo(() => {
@@ -327,6 +340,9 @@ export default function ProfessionalDashboard() {
       case 'view-calendar':
         setActiveView('calendar');
         break;
+      case 'view-invitations':
+        setActiveView('invitations');
+        break;
       case 'open-messages':
         navigate('/professional-messages');
         break;
@@ -474,6 +490,23 @@ export default function ProfessionalDashboard() {
               <Users className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
               <span className="hidden md:inline">Applications</span>
               <span className="hidden md:inline text-muted-foreground">({stats.activeApplications})</span>
+            </button>
+            <button
+              onClick={() => setActiveView('invitations')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
+                activeView === 'invitations'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-steel-500 hover:text-steel-700'
+              }`}
+              data-testid="tab-invitations"
+            >
+              <Mail className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Invitations</span>
+              {pendingInvitationsCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] flex items-center justify-center text-xs">
+                  {pendingInvitationsCount}
+                </Badge>
+              )}
             </button>
             <button
               onClick={() => setActiveView('calendar')}
@@ -817,6 +850,13 @@ export default function ProfessionalDashboard() {
         {activeView === 'applications' && (
           <div data-testid="applications-view-container">
             <ApplicationsView />
+          </div>
+        )}
+
+        {/* Invitations Tab - Bulk Review for First-to-Accept */}
+        {activeView === 'invitations' && (
+          <div data-testid="invitations-view-container">
+            <BulkInvitationReview />
           </div>
         )}
         

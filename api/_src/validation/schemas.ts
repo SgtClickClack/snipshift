@@ -148,9 +148,21 @@ export const ShiftSchema = z.object({
 
 /**
  * Schema for shift invite (Smart Fill)
+ * Supports both single invite (professionalId) and multi-invite (professionalIds)
  */
 export const ShiftInviteSchema = z.object({
-  professionalId: z.string().uuid('Invalid professional ID'),
+  professionalId: z.string().uuid('Invalid professional ID').optional(),
+  professionalIds: z.array(z.string().uuid('Invalid professional ID')).optional(),
+}).refine(
+  (data) => data.professionalId || (data.professionalIds && data.professionalIds.length > 0),
+  { message: 'Either professionalId or professionalIds must be provided' }
+);
+
+/**
+ * Schema for bulk shift accept
+ */
+export const BulkAcceptSchema = z.object({
+  shiftIds: z.array(z.string().uuid('Invalid shift ID')).min(1, 'At least one shift ID is required'),
 });
 
 /**

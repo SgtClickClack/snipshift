@@ -1615,19 +1615,12 @@ export default function ProfessionalCalendar({
     },
   });
 
-  // Assign staff to shift mutation
+  // Assign staff to shift mutation (single invite - backwards compatible)
   const assignStaffMutation = useMutation({
     mutationFn: async (data: { shiftId: string; professional: Professional }) => {
-      const response = await apiRequest("PUT", `/api/shifts/${data.shiftId}`, {
-        status: "invited",
-        assignedStaffId: data.professional.id,
-        assignedStaff: {
-          id: data.professional.id,
-          name: data.professional.name,
-          displayName: data.professional.displayName,
-          email: data.professional.email,
-          photoURL: data.professional.photoURL || data.professional.avatar,
-        },
+      // Use the new invite endpoint which now supports First-to-Accept pattern
+      const response = await apiRequest("POST", `/api/shifts/${data.shiftId}/invite`, {
+        professionalId: data.professional.id,
       });
       return response.json();
     },
@@ -1650,7 +1643,35 @@ export default function ProfessionalCalendar({
     },
   });
 
-  // Handle staff assignment
+  // Multi-invite mutation (First-to-Accept pattern)
+  const multiInviteMutation = useMutation({
+    mutationFn: async (data: { shiftId: string; professionals: Professional[] }) => {
+      const response = await apiRequest("POST", `/api/shifts/${data.shiftId}/invite`, {
+        professionalIds: data.professionals.map((p) => p.id),
+      });
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      const count = variables.professionals.length;
+      toast({
+        title: `${count} barber${count > 1 ? 's' : ''} invited`,
+        description: `Invitations sent! First one to accept gets the shift.`,
+      });
+      setShowAssignStaffModal(false);
+      setSelectedShiftForAssignment(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send invitations",
+        description: error?.message || "Please try again later",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle staff assignment (single)
   const handleAssignStaff = useCallback((professional: Professional) => {
     if (!selectedShiftForAssignment) return;
     assignStaffMutation.mutate({
@@ -1658,6 +1679,26 @@ export default function ProfessionalCalendar({
       professional,
     });
   }, [selectedShiftForAssignment, assignStaffMutation]);
+
+  // Handle multi-staff assignment (First-to-Accept)
+  const handleMultiAssignStaff = useCallback((professionals: Professional[]) => {
+    if (!selectedShiftForAssignment) return;
+    if (professionals.length === 0) return;
+    
+    if (professionals.length === 1) {
+      // Single invite - use the regular mutation
+      assignStaffMutation.mutate({
+        shiftId: selectedShiftForAssignment.id,
+        professional: professionals[0],
+      });
+    } else {
+      // Multi-invite - use the new mutation
+      multiInviteMutation.mutate({
+        shiftId: selectedShiftForAssignment.id,
+        professionals,
+      });
+    }
+  }, [selectedShiftForAssignment, assignStaffMutation, multiInviteMutation]);
 
   // Handle assignment from auto-generated slot
   const handleAutoSlotAssign = useCallback(async (professional: Professional) => {
@@ -3239,7 +3280,7 @@ export default function ProfessionalCalendar({
         </SheetContent>
       </Sheet>
 
-      {/* Assign Staff Modal */}
+      {/* Assign Staff Modal - Supports Multi-Select for First-to-Accept */}
       {mode === 'business' && selectedShiftForAssignment && (
         <AssignStaffModal
           isOpen={showAssignStaffModal}
@@ -3248,10 +3289,12 @@ export default function ProfessionalCalendar({
             setSelectedShiftForAssignment(null);
           }}
           onAssign={handleAssignStaff}
+          onMultiAssign={handleMultiAssignStaff}
           professionals={allProfessionals}
           favoriteProfessionals={favoriteProfessionals}
           shiftTitle={selectedShiftForAssignment.title}
           shiftDate={selectedShiftForAssignment.start}
+          enableMultiSelect={true}
         />
       )}
 

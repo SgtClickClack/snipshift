@@ -1,4 +1,52 @@
 
+#### 2025-12-14: First-to-Accept Invites and Bulk Accept Roster
+
+**Core Components**
+- Shift Invitations table (`shift_invitations`)
+- Multi-invite API (`POST /api/shifts/:id/invite`)
+- Bulk accept API (`POST /api/shifts/bulk-accept`)
+- Pending invitations API (`GET /api/shifts/invitations/pending`)
+- AssignStaffModal component (multi-select mode)
+- BulkInvitationReview component
+
+**Key Features**
+- **Phase 1: Database Upgrade** - Added `shift_invitations` table to track invitations sent to professionals for the "First-to-Accept" pattern. Multiple professionals can be invited to the same shift.
+- **Phase 2: Multi-Invite Backend** - Updated `POST /api/shifts/:id/invite` to accept `professionalIds` array. Creates invitations for all professionals without setting `assigneeId` until acceptance.
+- **Phase 2: Race-Safe Accept** - Updated `POST /api/shifts/:id/accept` with atomic database update (WHERE assignee_id IS NULL) to prevent race conditions. First professional to accept wins; others get "Already Taken" error.
+- **Phase 2: Bulk Accept** - Created `POST /api/shifts/bulk-accept` endpoint for professionals to accept multiple invitations at once. Returns detailed success/failure counts.
+- **Phase 3: Shop UI Multi-Select** - Updated `AssignStaffModal` to use checkboxes for multi-select. Button dynamically shows "Invite X Barbers".
+- **Phase 4: Roster Review UI** - Created `BulkInvitationReview` component with grouped views (by Shop, by Week), select-all functionality, and bulk accept button.
+
+**Integration Points**
+- API endpoint: `POST /api/shifts/:id/invite` (supports `professionalId` or `professionalIds[]`)
+- API endpoint: `POST /api/shifts/:id/accept` (race-condition safe)
+- API endpoint: `POST /api/shifts/bulk-accept` (accepts `shiftIds[]`)
+- API endpoint: `GET /api/shifts/invitations/pending` (grouped by shop/week)
+- Database migration: `0013_add_shift_invitations.sql`
+
+**File Paths**
+- `api/drizzle/0013_add_shift_invitations.sql` - Migration for shift_invitations table
+- `api/_src/db/schema/shifts.ts` - Added shiftInvitations table definition
+- `api/_src/db/schema.ts` - Export shiftInvitations
+- `api/_src/repositories/shift-invitations.repository.ts` - New repository
+- `api/_src/routes/shifts.ts` - Updated invite/accept, added bulk-accept and pending invitations endpoints
+- `api/_src/validation/schemas.ts` - Added BulkAcceptSchema, updated ShiftInviteSchema
+- `src/components/calendar/assign-staff-modal.tsx` - Multi-select with checkboxes
+- `src/components/calendar/professional-calendar.tsx` - Multi-assign handler
+- `src/pages/shop/schedule.tsx` - Multi-assign handler
+- `src/components/dashboard/BulkInvitationReview.tsx` - New roster review component
+- `src/pages/professional-dashboard.tsx` - Added Invitations tab with count badge
+
+**Next Priority Task**
+- Test the full workflow: Shop invites multiple barbers → Barbers see invitations in dashboard → First barber accepts → Other barbers see "Already Taken".
+
+**Code Organization & Quality**
+- Used atomic database update pattern for race-condition prevention
+- Maintained backwards compatibility with legacy single-invite flow
+- Reused existing notification and shift offer systems alongside new invitations
+
+---
+
 #### 2025-12-14: Audit and Fix Auth Race Conditions
 
 **Core Components**
