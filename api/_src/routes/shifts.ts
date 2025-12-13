@@ -18,6 +18,12 @@ import { createBatchShifts, getShiftsByEmployerInRange } from '../repositories/s
 
 const router = Router();
 
+// Helper function to validate UUID format
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
+
 // Create a shift (authenticated, employer only)
 router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
@@ -258,6 +264,12 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
 router.get('/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
 
+  // Validate UUID format to prevent route conflicts
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
   const shift = await shiftsRepo.getShiftById(id);
 
   if (!shift) {
@@ -276,6 +288,12 @@ router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReque
 
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format to prevent route conflicts
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
     return;
   }
 
@@ -338,6 +356,12 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
     return;
   }
 
+  // Validate UUID format to prevent route conflicts
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
   // Validate status
   if (!['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled'].includes(status)) {
     res.status(400).json({ message: 'Invalid status. Must be one of: draft, pending, invited, open, filled, completed, confirmed, cancelled' });
@@ -373,6 +397,12 @@ router.delete('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRe
 
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format to prevent route conflicts
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
     return;
   }
 
