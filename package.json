@@ -12,6 +12,8 @@
     "build": "vite build",
     "vercel-build": "vite build",
     "lint": "eslint src api --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preflight": "node scripts/preflight.cjs",
+    "preflight:local": "node scripts/preflight.cjs --local",
     "preview": "vite preview",
     "dev:all": "concurrently -n \"FRONTEND,API\" -c \"blue,green\" \"npm run dev\" \"cd api && npm start\"",
     "test:e2e": "playwright test",
