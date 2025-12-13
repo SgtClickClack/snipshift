@@ -94,16 +94,21 @@ export default function JobFeedPage() {
         }
       }
 
+      // Extract lat/lng from shift data
+      let shiftLat: number | undefined = undefined;
+      let shiftLng: number | undefined = undefined;
+      
+      if (shift.lat !== null && shift.lat !== undefined) {
+        shiftLat = typeof shift.lat === 'string' ? parseFloat(shift.lat) : shift.lat;
+      }
+      if (shift.lng !== null && shift.lng !== undefined) {
+        shiftLng = typeof shift.lng === 'string' ? parseFloat(shift.lng) : shift.lng;
+      }
+
       // Calculate distance if we have coordinates
       let distance: number | undefined = undefined;
-      if (userLocation && shift.location) {
-        // Try to extract lat/lng from location or use default
-        // This is a simplified version - in production, you'd geocode the address
-        const lat = parseFloat(shift.location.split(',')[0]) || undefined;
-        const lng = parseFloat(shift.location.split(',')[1]) || undefined;
-        if (lat && lng) {
-          distance = calculateDistance(userLocation, { lat, lng });
-        }
+      if (userLocation && shiftLat !== undefined && shiftLng !== undefined && !isNaN(shiftLat) && !isNaN(shiftLng)) {
+        distance = calculateDistance(userLocation, { lat: shiftLat, lng: shiftLng });
       }
 
       // Calculate hours and estimated pay
@@ -140,9 +145,9 @@ export default function JobFeedPage() {
         locationCity,
         locationState,
         status: shift.status,
-        lat: undefined,
-        lng: undefined,
-        shopName: undefined,
+        lat: shiftLat,
+        lng: shiftLng,
+        shopName: shift.shopName || undefined,
         businessId: shift.employerId,
         distance,
         hours,

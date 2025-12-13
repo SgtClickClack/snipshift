@@ -77,9 +77,10 @@ export default function GoogleMapView({
         setIsLoading(true);
         const google = await loadGoogleMaps();
 
+        // Use centerLocation which should already be userLocation || default
         const map = new google.maps.Map(mapRef.current!, {
           center: centerLocation,
-          zoom: 10,
+          zoom: 12, // Slightly higher zoom for better detail
           mapTypeControl: true,
           streetViewControl: true,
           fullscreenControl: true,
@@ -206,6 +207,12 @@ export default function GoogleMapView({
         // Add job markers using AdvancedMarkerElement
         jobs.forEach((job) => {
           const jobLocation = getJobCoordinates(job);
+          
+          // Skip jobs without valid coordinates
+          if (!jobLocation) {
+            return;
+          }
+          
           const distance = calculateDistance(centerLocation, jobLocation);
 
           // Only show jobs within radius
@@ -234,15 +241,40 @@ export default function GoogleMapView({
                   ? `${job.location.city}, ${job.location.state}` 
                   : 'Location TBD');
               
-              const rateDisplay = job.rate || job.payRate || 'Rate TBD';
+              // Get rate display
+              const rateValue = job.rate || job.payRate;
+              const rateDisplay = rateValue ? `$${rateValue}/hr` : 'Rate TBD';
+              
+              // Get date display
+              let dateDisplay = 'Date TBD';
+              if (job.date || job.startTime) {
+                try {
+                  const dateStr = job.date || job.startTime;
+                  if (dateStr) {
+                    const date = new Date(dateStr);
+                    if (!isNaN(date.getTime())) {
+                      dateDisplay = date.toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                      });
+                    }
+                  }
+                } catch {
+                  // Invalid date
+                }
+              }
               
               const infoContent = `
-                <div style="max-width: 300px; padding: 8px;">
-                  <h3 style="margin: 0 0 8px 0; font-weight: bold; color: ${MAP_THEME.infoWindow.title};">${job.title}</h3>
-                  ${job.shopName ? `<p style="margin: 0 0 4px 0; color: ${MAP_THEME.infoWindow.text};">${job.shopName}</p>` : ''}
-                  <p style="margin: 0 0 4px 0; color: ${MAP_THEME.infoWindow.text};">${locationDisplay}</p>
-                  <p style="margin: 0 0 8px 0; color: ${MAP_THEME.infoWindow.rate}; font-weight: 600;">${rateDisplay}</p>
-                  <p style="margin: 0; color: ${MAP_THEME.infoWindow.text}; font-size: 12px;">${distance.toFixed(1)} km away</p>
+                <div style="max-width: 300px; padding: 12px; font-family: system-ui, -apple-system, sans-serif;">
+                  <h3 style="margin: 0 0 8px 0; font-weight: bold; font-size: 16px; color: ${MAP_THEME.infoWindow.title};">${job.title}</h3>
+                  ${job.shopName ? `<p style="margin: 0 0 6px 0; color: ${MAP_THEME.infoWindow.text}; font-size: 14px; font-weight: 500;">${job.shopName}</p>` : ''}
+                  <p style="margin: 0 0 4px 0; color: ${MAP_THEME.infoWindow.text}; font-size: 13px;">📍 ${locationDisplay}</p>
+                  <p style="margin: 0 0 4px 0; color: ${MAP_THEME.infoWindow.text}; font-size: 13px;">📅 ${dateDisplay}</p>
+                  <p style="margin: 0 0 8px 0; color: ${MAP_THEME.infoWindow.rate}; font-weight: 600; font-size: 14px;">${rateDisplay}</p>
+                  <p style="margin: 0; color: ${MAP_THEME.infoWindow.text}; font-size: 12px;">📍 ${distance.toFixed(1)} km away</p>
                 </div>
               `;
               
@@ -273,12 +305,17 @@ export default function GoogleMapView({
   // Get job coordinates from API data
   const getJobCoordinates = (job: Job) => {
     // Use real coordinates from API if available
-    if (job.lat && job.lng) {
-      return { lat: Number(job.lat), lng: Number(job.lng) };
+    if (job.lat !== null && job.lat !== undefined && job.lng !== null && job.lng !== undefined) {
+      const lat = typeof job.lat === 'string' ? parseFloat(job.lat) : job.lat;
+      const lng = typeof job.lng === 'string' ? parseFloat(job.lng) : job.lng;
+      
+      // Validate coordinates
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
+      }
     }
-    // If no coordinates, use a default location (should not happen with proper API data)
-    console.warn(`Job ${job.id} missing coordinates, using default location`);
-    return { lat: -33.8688, lng: 151.2093 }; // Default to Sydney
+    // Return null if no valid coordinates (will be filtered out)
+    return null;
   };
 
   // Convert lat/lng to SVG coordinates for fallback map
@@ -362,10 +399,12 @@ export default function GoogleMapView({
                 {/* Job markers */}
                 {jobs.filter(job => {
                   const jobLocation = getJobCoordinates(job);
+                  if (!jobLocation) return false;
                   const distance = calculateDistance(centerLocation, jobLocation);
                   return distance <= radius;
                 }).map((job) => {
                   const jobLocation = getJobCoordinates(job);
+                  if (!jobLocation) return null;
                   const svgCoords = coordsToSVG(jobLocation.lat, jobLocation.lng, 800, 600);
                   return (
                     <circle
