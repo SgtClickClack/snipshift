@@ -16,7 +16,7 @@ import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
 import * as stripeConnectService from '../services/stripe-connect.service.js';
 import { SmartFillSchema, GenerateRosterSchema } from '../validation/schemas.js';
 import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
-import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange } from '../repositories/shifts.repository.js';
+import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange, deleteAllShiftsForEmployer } from '../repositories/shifts.repository.js';
 import { getDb } from '../db/index.js';
 
 const router = Router();
@@ -1681,6 +1681,23 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
   res.status(201).json({
     message: 'Invite sent successfully',
     offer,
+  });
+}));
+
+// Clear all shifts for the current user (dangerous - use with caution)
+router.delete('/clear-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const deletedCount = await deleteAllShiftsForEmployer(userId);
+  
+  res.status(200).json({ 
+    success: true, 
+    count: deletedCount,
+    message: `Deleted ${deletedCount} shift(s)` 
   });
 }));
 

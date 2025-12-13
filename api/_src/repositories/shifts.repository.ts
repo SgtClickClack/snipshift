@@ -1074,3 +1074,29 @@ export async function deleteDraftShiftsInRange(
   }
 }
 
+/**
+ * Delete ALL shifts for an employer (use with caution!)
+ * This is for clearing the entire schedule
+ */
+export async function deleteAllShiftsForEmployer(employerId: string): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  try {
+    const result = await db
+      .delete(shifts)
+      .where(eq(shifts.employerId, employerId));
+
+    return result.rowCount ?? 0;
+  } catch (error: any) {
+    console.error('[deleteAllShiftsForEmployer] Database error:', {
+      message: error?.message,
+      code: error?.code,
+      employerId,
+    });
+    return 0;
+  }
+}
+
