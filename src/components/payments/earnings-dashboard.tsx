@@ -100,15 +100,35 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
       .slice(-6); // Last 6 months
   })();
 
-  // Get Stripe Express Dashboard login link
-  const { data: loginLinkData } = useQuery<{ loginUrl: string }>({
-    queryKey: ['stripe-login-link', user?.id],
+  // Check if user has Stripe Connect account
+  const { data: stripeAccountStatus } = useQuery<{
+    hasAccount: boolean;
+    onboardingComplete: boolean;
+    chargesEnabled: boolean;
+  }>({
+    queryKey: ['stripe-account-status', user?.id],
     queryFn: async () => {
-      const res = await apiRequest('POST', '/api/stripe-connect/account/login-link');
+      const res = await apiRequest('GET', '/api/stripe-connect/account/status');
       return res.json();
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Get Stripe Express Dashboard login link (only if user has account)
+  const { data: loginLinkData } = useQuery<{ loginUrl: string }>({
+    queryKey: ['stripe-login-link', user?.id],
+    queryFn: async () => {
+      const res = await apiRequest('POST', '/api/stripe-connect/account/login-link');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to get login link');
+      }
+      return res.json();
+    },
+    enabled: !!user?.id && stripeAccountStatus?.hasAccount === true,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: false, // Don't retry on 404
   });
 
   const handlePayoutNow = async () => {
@@ -258,6 +278,18 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
           onClick={() => {
             if (loginLinkData?.loginUrl) {
               window.open(loginLinkData.loginUrl, '_blank');
+            } else if (!stripeAccountStatus?.hasAccount) {
+              toast({
+                title: "Stripe Account Required",
+                description: "Please set up your Stripe Connect account in Payouts to access the Express Dashboard.",
+                variant: "default",
+              });
+              // Navigate to payouts to set up account
+              if (onNavigateToPayouts) {
+                onNavigateToPayouts();
+              } else {
+                navigate('/professional-dashboard?view=payouts');
+              }
             } else {
               toast({
                 title: "Loading...",
@@ -266,7 +298,8 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
               });
             }
           }}
-          disabled={!loginLinkData?.loginUrl}
+          disabled={!stripeAccountStatus?.hasAccount}
+          title={!stripeAccountStatus?.hasAccount ? "Set up Stripe Connect account in Payouts to access this feature" : undefined}
         >
           <ExternalLink className="h-4 w-4 mr-2" />
           Stripe Express Dashboard

@@ -108,18 +108,21 @@ export default function PayoutSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Payout Settings
+            Bank & Payouts
           </CardTitle>
           <CardDescription>
-            Connect your Stripe account to receive payments for completed shifts
+            Set up your bank account to receive automatic payouts for completed shifts
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {!hasAccount ? (
             <div className="space-y-4">
               <div className="p-4 border border-steel-200 rounded-lg bg-steel-50">
-                <p className="text-sm text-steel-700 mb-4">
-                  To receive payments for shifts, you need to connect a Stripe account. This allows us to securely transfer your earnings directly to your bank account.
+                <p className="text-sm text-steel-700 mb-2">
+                  Securely link your bank account to receive automatic payouts for completed shifts.
+                </p>
+                <p className="text-xs text-steel-600 mb-4">
+                  Your bank details are encrypted and stored securely. Setup takes just a few minutes.
                 </p>
                 <Button
                   onClick={() => createAccountMutation.mutate()}
@@ -134,7 +137,7 @@ export default function PayoutSettings() {
                   ) : (
                     <>
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Connect with Stripe
+                      Set up Direct Deposit
                     </>
                   )}
                 </Button>
@@ -150,7 +153,7 @@ export default function PayoutSettings() {
               </div>
               <div className="p-4 border border-amber-200 rounded-lg bg-amber-50">
                 <p className="text-sm text-steel-700 mb-4">
-                  Your Stripe account is connected but onboarding is not complete. Please finish the setup process to start receiving payments.
+                  Your payout setup is in progress. Please complete the remaining steps to start receiving direct deposits.
                 </p>
                 <Button
                   onClick={() => createOnboardingLinkMutation.mutate()}
@@ -181,7 +184,7 @@ export default function PayoutSettings() {
               </div>
               <div className="p-4 border border-green-200 rounded-lg bg-green-50">
                 <p className="text-sm text-steel-700 mb-2">
-                  Your payout account is set up and ready to receive payments. Funds from completed shifts will be transferred to your connected bank account.
+                  Your bank account is connected and ready to receive payouts. Funds from completed shifts will be automatically deposited to your account.
                 </p>
                 <div className="mt-4 space-y-2 text-sm text-steel-600">
                   <div className="flex items-center gap-2">
@@ -209,11 +212,11 @@ export default function PayoutSettings() {
           )}
 
           <div className="pt-4 border-t border-steel-200">
-            <h4 className="text-sm font-semibold text-steel-900 mb-2">How it works</h4>
+            <h4 className="text-sm font-semibold text-steel-900 mb-2">How payouts work</h4>
             <ul className="space-y-2 text-sm text-steel-600">
               <li className="flex items-start gap-2">
                 <span className="text-steel-400">1.</span>
-                <span>Connect your Stripe account (takes about 5 minutes)</span>
+                <span>Set up your bank account (takes about 5 minutes)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-steel-400">2.</span>
@@ -221,7 +224,7 @@ export default function PayoutSettings() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-steel-400">3.</span>
-                <span>After the shop marks the shift as complete, payment is automatically transferred to your account</span>
+                <span>After the shop marks the shift as complete, payment is automatically deposited to your bank account</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-steel-400">4.</span>
