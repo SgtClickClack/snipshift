@@ -1587,6 +1587,11 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
 
   const { professionalId } = validationResult.data;
 
+  if (!professionalId) {
+    res.status(400).json({ message: 'professionalId is required for single invites' });
+    return;
+  }
+
   // Get shift to check ownership
   const shift = await shiftsRepo.getShiftById(shiftId);
   if (!shift) {
