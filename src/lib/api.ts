@@ -183,12 +183,22 @@ export async function createJob(data: CreateJobData) {
 export interface CreateApplicationData {
   jobId?: string;
   shiftId?: string;
+  /**
+   * Backend expects `message` (CreateApplicationSchema).
+   * `coverLetter` is kept for backward compatibility with older call sites.
+   */
+  message?: string;
   coverLetter?: string;
 }
 
 export async function createApplication(data: CreateApplicationData) {
   try {
-    const res = await apiRequest('POST', '/api/applications', data);
+    const message = (data.message ?? data.coverLetter ?? '').trim();
+    const res = await apiRequest('POST', '/api/applications', {
+      jobId: data.jobId,
+      shiftId: data.shiftId,
+      message,
+    });
     return await res.json();
   } catch (error) {
     throw toApiError(error, 'createApplication');
@@ -646,7 +656,7 @@ export const applyToJob = async (
   try {
     const res = await apiRequest('POST', '/api/applications', {
       jobId,
-      coverLetter: data.coverLetter,
+      message: (data.coverLetter ?? '').trim(),
     });
     return await res.json();
   } catch (error) {
@@ -685,10 +695,16 @@ export async function fetchShiftDetails(id: string): Promise<ShiftDetails> {
   try {
     const res = await apiRequest('GET', `/api/shifts/${id}`);
     const shift = await res.json();
+    const latNum = shift?.lat === null || shift?.lat === undefined ? null : Number(shift.lat);
+    const lngNum = shift?.lng === null || shift?.lng === undefined ? null : Number(shift.lng);
+    const lat = Number.isFinite(latNum as number) ? (latNum as number) : null;
+    const lng = Number.isFinite(lngNum as number) ? (lngNum as number) : null;
 
     // Normalize the shift data for frontend compatibility
     return {
       ...shift,
+      lat,
+      lng,
       rate: shift.hourlyRate,
       payRate: shift.hourlyRate,
       date: shift.startTime,

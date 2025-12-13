@@ -1660,4 +1660,53 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
   });
 }));
 
+// Get a single shift by ID (public read)
+// NOTE: Keep this near the end of the file to avoid shadowing more specific routes like:
+// - /shop/:userId
+// - /offers/me
+// - /pending-review
+router.get('/:id', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Validate UUID format to prevent route conflicts (e.g. "shop", "offers")
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Enrich with employer info for nicer UI
+  const employer = await usersRepo.getUserById(shift.employerId);
+  const latRaw = (shift as any).lat;
+  const lngRaw = (shift as any).lng;
+  const latParsed = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? parseFloat(latRaw) : NaN;
+  const lngParsed = typeof lngRaw === 'number' ? lngRaw : typeof lngRaw === 'string' ? parseFloat(lngRaw) : NaN;
+  const lat = Number.isFinite(latParsed) ? latParsed : null;
+  const lng = Number.isFinite(lngParsed) ? lngParsed : null;
+
+  res.status(200).json({
+    id: shift.id,
+    title: shift.title,
+    description: shift.description,
+    startTime: shift.startTime.toISOString(),
+    endTime: shift.endTime.toISOString(),
+    hourlyRate: shift.hourlyRate,
+    location: shift.location,
+    lat,
+    lng,
+    status: shift.status,
+    employerId: shift.employerId,
+    assigneeId: shift.assigneeId ?? null,
+    shopName: employer?.name ?? null,
+    shopAvatarUrl: employer?.avatarUrl ?? null,
+    createdAt: shift.createdAt.toISOString(),
+    updatedAt: shift.updatedAt.toISOString(),
+  });
+}));
+
 export default router;

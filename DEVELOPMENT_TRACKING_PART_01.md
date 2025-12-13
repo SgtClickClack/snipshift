@@ -1,4 +1,36 @@
 
+#### 2025-12-14: Comprehensive Functional & Wiring Audit (Auth, API Handshake, Map Lat/Lng)
+
+**Core Components**
+- Google OAuth UI wiring (`GoogleAuthButton`)
+- Frontend API wrapper compatibility (`src/lib/api.ts`)
+- Shifts route completeness (`GET /api/shifts/:id`)
+- Shift lat/lng normalization (backend + frontend)
+
+**Key Features**
+- Fixed Google Auth redirect fallback so popup-blocked sign-in still completes backend session + DB user creation, and ensured loading state always clears on success/error.
+- Fixed frontend → backend application payload mismatch by sending `message` (backend zod schema) instead of `coverLetter`.
+- Added missing backend route `GET /api/shifts/:id` required by `fetchShiftDetails`, and normalized lat/lng to numeric values to avoid map type/runtime issues.
+
+**Integration Points**
+- API endpoints: `POST /api/register`, `POST /api/login`, `GET /api/me`
+- API endpoint: `GET /api/shifts/:id`
+- API endpoint: `POST /api/applications` (CreateApplicationSchema expects `message`)
+
+**File Paths**
+- `src/components/auth/google-auth-button.tsx`
+- `src/lib/api.ts`
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/shifts.js`
+
+**Next Priority Task**
+- Resolve remaining “Disconnected Wires” from the audit report (replace no-op handlers with intended navigation/actions, or remove the interaction affordance).
+
+**Code Organization & Quality**
+- Kept fixes tightly scoped to wiring/contract mismatches; avoided introducing new auth patterns beyond existing Firebase + backend session flow.
+
+---
+
 #### 2025-12-13: Public Asset Cleanup (Remove Unused Legacy Large Images)
 
 **Core Components**
