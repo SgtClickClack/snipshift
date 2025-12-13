@@ -1,4 +1,4 @@
-﻿import { QueryClient, QueryFunction, QueryCache, MutationCache } from "@tanstack/react-query";
+import { QueryClient, QueryFunction, QueryCache, MutationCache } from "@tanstack/react-query";
 import { auth } from "./firebase";
 import { toast } from "@/hooks/useToast";
 import { logger } from "@/lib/logger";
@@ -69,7 +69,9 @@ export async function apiRequest(
     } catch (error) {
       logger.error("apiRequest", "Error getting auth token for request:", error);
     }
-    // Removed test bypass - E2E tests need to use proper authentication
+  } else if (import.meta.env.VITE_E2E === '1') {
+    // E2E mode: API auth middleware supports this fixed bypass token.
+    headers['Authorization'] = 'Bearer mock-test-token';
   }
 
   const res = await fetch(url, {
@@ -98,7 +100,8 @@ export const getQueryFn: <T>(options: {
       } catch (error) {
         logger.error("getQueryFn", "Error getting auth token for query:", error);
       }
-    // Removed test bypass - E2E tests need to use proper authentication
+    } else if (import.meta.env.VITE_E2E === '1') {
+      headers['Authorization'] = 'Bearer mock-test-token';
     }
 
     const url = queryKey.join("/") as string;

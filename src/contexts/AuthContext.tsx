@@ -8,8 +8,8 @@ export interface User {
   id: string;
   email: string;
   password?: string;
-  roles: Array<'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin'>;
-  currentRole: 'client' | 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | null;
+  roles: Array<'client' | 'hub' | 'business' | 'professional' | 'brand' | 'trainer' | 'admin'>;
+  currentRole: 'client' | 'hub' | 'business' | 'professional' | 'brand' | 'trainer' | 'admin' | null;
   provider?: 'google' | 'email';
   googleId?: string;
   createdAt?: Date;
@@ -62,6 +62,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const location = useLocation();
 
   useEffect(() => {
+    // E2E mode: bypass Firebase dependency and hydrate user from sessionStorage.
+    // Playwright sets VITE_E2E=1 and provides `snipshift_test_user` session storage.
+    if (import.meta.env.VITE_E2E === '1' && typeof window !== 'undefined') {
+      try {
+        const raw = window.sessionStorage.getItem('snipshift_test_user');
+        if (raw) {
+          const parsed = JSON.parse(raw) as Partial<User>;
+          const roles = Array.isArray(parsed.roles) ? parsed.roles : (parsed.currentRole ? [parsed.currentRole] : []);
+          const currentRole = (parsed.currentRole || roles[0] || null) as User['currentRole'];
+
+          setUser({
+            ...(parsed as User),
+            roles: roles as User['roles'],
+            currentRole,
+            isOnboarded: parsed.isOnboarded ?? true,
+            createdAt: parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
+            updatedAt: parsed.updatedAt ? new Date(parsed.updatedAt) : new Date(),
+          });
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('[AuthContext] Failed to parse E2E session user:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+        setIsAuthReady(true);
+      }
+      return;
+    }
+
     // Wrap listener setup in try-catch to ensure loading states are always set
     let unsubscribe: (() => void) | null = null;
     try {
@@ -222,8 +253,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (auth.currentUser) {
       return auth.currentUser.getIdToken();
     }
-    
-    // Removed test bypass - E2E tests need to use proper authentication
+
+    // E2E mode: use API middleware bypass token.
+    if (import.meta.env.VITE_E2E === '1') {
+      return 'mock-test-token';
+    }
+
     return null;
   };
 
