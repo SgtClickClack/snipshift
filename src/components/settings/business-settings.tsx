@@ -204,8 +204,34 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
 
       // Also save to localStorage as backup
       if (typeof window !== 'undefined') {
-        const key = `business-settings-${user?.id || 'default'}`;
-        localStorage.setItem(key, JSON.stringify(settingsData));
+        const businessKey = `business-settings-${user?.id || 'default'}`;
+        localStorage.setItem(businessKey, JSON.stringify(settingsData));
+        
+        // Also save to calendar-settings localStorage key for calendar component
+        // Convert business settings format to calendar settings format
+        let shiftPattern: 'full-day' | 'half-day' | 'thirds' | 'custom' = 'full-day';
+        if (settingsData.shiftSplitType === 'halves') {
+          shiftPattern = 'half-day';
+        } else if (settingsData.shiftSplitType === 'thirds') {
+          shiftPattern = 'thirds';
+        } else if (settingsData.shiftSplitType === 'custom') {
+          shiftPattern = 'custom';
+        }
+        
+        const calendarSettings = {
+          openingHours: settingsData.openingHours,
+          shiftPattern,
+          defaultShiftLength: settingsData.customShiftLength,
+        };
+        
+        const calendarKey = `calendar-settings-${user?.id || 'default'}`;
+        localStorage.setItem(calendarKey, JSON.stringify(calendarSettings));
+        console.log('[BUSINESS SETTINGS] Saved to both business-settings and calendar-settings localStorage');
+        
+        // Dispatch a custom event to notify the calendar component
+        window.dispatchEvent(new CustomEvent('calendarSettingsUpdated', {
+          detail: { settings: calendarSettings }
+        }));
       }
 
       // Refresh user to get updated data

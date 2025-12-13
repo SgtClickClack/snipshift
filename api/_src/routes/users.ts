@@ -19,14 +19,14 @@ const UpdateProfileSchema = z.object({
   avatarUrl: z.string().url().optional(),
   bannerUrl: z.string().url().optional(),
   businessSettings: z.object({
-    openingHours: z.record(z.object({
+    openingHours: z.record(z.string(), z.object({
       open: z.string(),
       close: z.string(),
       enabled: z.boolean(),
-    })),
+    }).passthrough()), // Use passthrough to allow extra fields
     shiftSplitType: z.enum(['halves', 'thirds', 'custom', 'full-day']),
     customShiftLength: z.number().optional(),
-  }).optional(),
+  }).passthrough().optional(), // Use passthrough to allow extra fields
 });
 
 // Validation schema for onboarding completion
@@ -319,9 +319,28 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     }
   }
 
+  // Parse request body - handle both JSON and FormData
+  let requestBody = req.body;
+  
+  // If businessSettings is a string (from FormData), parse it
+  if (requestBody.businessSettings && typeof requestBody.businessSettings === 'string') {
+    try {
+      requestBody = {
+        ...requestBody,
+        businessSettings: JSON.parse(requestBody.businessSettings),
+      };
+    } catch (error) {
+      console.error('[PUT /api/me] Failed to parse businessSettings string:', error);
+      res.status(400).json({ 
+        message: 'Invalid businessSettings format: ' + (error instanceof Error ? error.message : 'Unknown error')
+      });
+      return;
+    }
+  }
+
   // Validate request body (files are handled separately, body contains other fields)
   // If files were uploaded, we'll use those URLs instead of body URLs
-  const validationResult = UpdateProfileSchema.safeParse(req.body);
+  const validationResult = UpdateProfileSchema.safeParse(requestBody);
   if (!validationResult.success) {
     console.error('[PUT /api/me] Validation error:', validationResult.error.errors);
     res.status(400).json({ 

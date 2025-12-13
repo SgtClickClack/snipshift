@@ -309,9 +309,42 @@ export default function ProfessionalCalendar({
     return `calendar-settings-${user?.id || 'default'}`;
   }, [user?.id]);
   
+  // Helper function to convert business settings to calendar settings format
+  const convertBusinessSettingsToCalendarSettings = useCallback((businessSettings: any): CalendarSettings | null => {
+    if (!businessSettings || !businessSettings.openingHours) {
+      return null;
+    }
+    
+    // Convert shiftSplitType to shiftPattern
+    let shiftPattern: ShiftPattern = 'full-day';
+    if (businessSettings.shiftSplitType === 'halves') {
+      shiftPattern = 'half-day';
+    } else if (businessSettings.shiftSplitType === 'thirds') {
+      shiftPattern = 'thirds';
+    } else if (businessSettings.shiftSplitType === 'custom') {
+      shiftPattern = 'custom';
+    } else {
+      shiftPattern = 'full-day';
+    }
+    
+    return {
+      openingHours: businessSettings.openingHours,
+      shiftPattern,
+      defaultShiftLength: businessSettings.customShiftLength,
+    };
+  }, []);
+  
   const [calendarSettings, setCalendarSettings] = useState<CalendarSettings | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
+      // First try to load from user.businessSettings
+      if (user?.businessSettings) {
+        const converted = convertBusinessSettingsToCalendarSettings(user.businessSettings);
+        if (converted) {
+          return converted;
+        }
+      }
+      // Fallback to localStorage
       const key = `calendar-settings-${user?.id || 'default'}`;
       const stored = localStorage.getItem(key);
       return stored ? JSON.parse(stored) : null;
@@ -348,10 +381,24 @@ export default function ProfessionalCalendar({
     }
   }, [getSettingsKey]);
   
-  // Reload settings when user changes
+  // Reload settings when user changes or businessSettings updates
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
+        // Priority 1: Load from user.businessSettings (from database)
+        if (user?.businessSettings) {
+          const converted = convertBusinessSettingsToCalendarSettings(user.businessSettings);
+          if (converted) {
+            setCalendarSettings(converted);
+            // Also save to localStorage for consistency
+            const key = getSettingsKey();
+            localStorage.setItem(key, JSON.stringify(converted));
+            console.log('[CALENDAR] Settings loaded from user.businessSettings:', converted);
+            return;
+          }
+        }
+        
+        // Priority 2: Load from localStorage
         const key = getSettingsKey();
         const stored = localStorage.getItem(key);
         if (stored) {
@@ -361,13 +408,44 @@ export default function ProfessionalCalendar({
         } else {
           setCalendarSettings(null);
         }
-      } catch {
+      } catch (error) {
+        console.error('[CALENDAR] Error loading settings:', error);
         setCalendarSettings(null);
       }
     }
-    // Only depend on user?.id - getSettingsKey is already memoized and will update when user?.id changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings]);
+  
+  // Listen for storage events and custom events to sync settings when they're updated from other components
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === getSettingsKey() && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setCalendarSettings(parsed);
+          console.log('[CALENDAR] Settings synced from storage event:', parsed);
+        } catch (error) {
+          console.error('[CALENDAR] Failed to parse settings from storage event:', error);
+        }
+      }
+    };
+    
+    const handleCustomEvent = (e: CustomEvent) => {
+      if (e.detail?.settings) {
+        setCalendarSettings(e.detail.settings);
+        console.log('[CALENDAR] Settings synced from custom event:', e.detail.settings);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('calendarSettingsUpdated', handleCustomEvent as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('calendarSettingsUpdated', handleCustomEvent as EventListener);
+    };
+  }, [getSettingsKey]);
   
   // Log when calendarSettings changes to verify re-renders
   useEffect(() => {
