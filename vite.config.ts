@@ -149,7 +149,7 @@ export default defineConfig({
 
           // Extract package name from node_modules path.
           // Handles both scoped and unscoped packages.
-          const match = id.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+          const match = id.match(/node_modules[\\/]+(@[^\\/]+[\\/][^\\/]+|[^\\/]+)/);
           const pkg = match?.[1];
           if (!pkg) {
             return 'vendor';
@@ -169,9 +169,10 @@ export default defineConfig({
             return 'vendor-react';
           }
 
-          // UI primitives + icons.
+          // UI primitives + icons: keep these with React to avoid runtime ordering edge-cases
+          // (some Radix bundles assume React exports are immediately available).
           if (pkg.startsWith('@radix-ui/') || pkg === 'lucide-react') {
-            return 'vendor-ui';
+            return 'vendor-react';
           }
 
           // Firebase is large; isolate it for better caching.
