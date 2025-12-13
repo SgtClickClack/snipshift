@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, momentLocalizer, View } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import moment from 'moment';
-import { addWeeks, endOfWeek, format, startOfWeek, subWeeks } from 'date-fns';
+import { addWeeks, endOfWeek, format, parse, startOfWeek, subWeeks, getDay } from 'date-fns';
+import enUS from 'date-fns/locale/en-US';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -22,7 +22,17 @@ import type { ShiftDetails } from '@/lib/api';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
-const localizer = momentLocalizer(moment);
+const locales = {
+  'en-US': enUS,
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
 const DnDCalendar = withDragAndDrop(Calendar);
 
 type ShiftStatus = ShiftDetails['status'];

@@ -109,9 +109,9 @@ export function authenticateUser(
       token = req.query.token;
     }
 
-    // Bypass for E2E Testing - Allow mock token regardless of NODE_ENV if token matches exactly
-    // This is a pragmatic choice for E2E reliability where passing NODE_ENV can be flaky
-    if (token === 'mock-test-token') {
+    // Bypass for E2E Testing - Only allow in test environment for security
+    // This prevents production exploitation while maintaining E2E test reliability
+    if (token === 'mock-test-token' && process.env.NODE_ENV === 'test') {
       const mockUserId = '00000000-0000-0000-0000-000000000001';
       const mockEmail = 'test@snipshift.com';
       
@@ -215,8 +215,9 @@ export function authenticateUser(
       return;
     }
 
-    // Bypass for E2E Testing - Allow specific E2E test users to be auto-authenticated
-    if (token && token.startsWith('mock-token-e2e_test_')) {
+    // Bypass for E2E Testing - Only allow in test environment for security
+    // Allow specific E2E test users to be auto-authenticated
+    if (token && token.startsWith('mock-token-e2e_test_') && process.env.NODE_ENV === 'test') {
         const email = token.replace('mock-token-', '');
         console.debug('[AUTH E2E] Attempting auth for email:', email);
         

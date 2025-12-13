@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchMyApplications, createConversation } from '@/lib/api';
@@ -11,6 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MapPin, Clock, DollarSign, Briefcase, MessageSquare, Eye, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
+import { useWithdrawApplication } from '@/pages/professional-dashboard/useWithdrawApplication';
 
 export type ApplicationStatus = 
   | 'pending' 
@@ -125,6 +126,7 @@ export default function MyApplicationsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
+  const withdrawMutation = useWithdrawApplication();
 
   const { data: applications, isLoading, error } = useQuery({
     queryKey: ['my-applications'],
@@ -151,11 +153,7 @@ export default function MyApplicationsPage() {
 
   const handleWithdraw = async (applicationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    // TODO: Implement withdraw API call
-    toast({
-      title: 'Application Withdrawn',
-      description: 'Your application has been withdrawn successfully.',
-    });
+    withdrawMutation.mutate(applicationId);
   };
 
   const handleMessageSalon = async (application: Application, e: React.MouseEvent) => {

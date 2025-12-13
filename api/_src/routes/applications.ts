@@ -245,8 +245,23 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
           })
           .where(eq(applications.id, id));
 
-        // 2. If it's a shift, update the shift
+        // 2. If it's a shift, update the shift with row-level locking to prevent race conditions
         if (shiftId && application.userId) {
+          // Lock the shift row first to prevent concurrent accepts
+          const [lockedShift] = await tx.execute(
+            sql`SELECT * FROM shifts WHERE id = ${shiftId} FOR UPDATE`
+          ) as any[];
+
+          if (!lockedShift) {
+            throw new Error('Shift not found');
+          }
+
+          // Check if shift is already assigned
+          if (lockedShift.assignee_id) {
+            throw new Error('Shift has already been filled by another applicant');
+          }
+
+          // Now safely update the shift
           await tx
             .update(shifts)
             .set({

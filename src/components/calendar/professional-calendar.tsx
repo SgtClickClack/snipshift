@@ -1,17 +1,19 @@
 import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
-import { Calendar, momentLocalizer, View, Event } from "react-big-calendar";
-import moment from "moment";
+import { Calendar, dateFnsLocalizer, View, Event } from "react-big-calendar";
 import {
   format,
+  parse,
+  startOfWeek,
+  getDay,
   isPast,
   isToday,
-  startOfWeek,
   endOfWeek,
   eachDayOfInterval,
   isSameDay,
   addWeeks,
   subWeeks,
 } from "date-fns";
+import enUS from "date-fns/locale/en-US";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -84,19 +86,26 @@ import {
 import { AutoSlotAssignmentModal } from "./auto-slot-assignment-modal";
 import { fetchProfessionals, ProfessionalListItem } from "@/lib/api";
 import { ShiftAssignmentModal } from "./shift-assignment-modal";
+import { CalendarToolbar } from "./CalendarToolbar";
 
 // Import react-big-calendar CSS
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 // Initialize localizer with error handling
-let localizer: ReturnType<typeof momentLocalizer> | null = null;
+const locales = {
+  'en-US': enUS,
+};
+
+let localizer: ReturnType<typeof dateFnsLocalizer> | null = null;
 try {
-  if (moment && typeof moment === 'function') {
-    localizer = momentLocalizer(moment);
-    console.log('[CALENDAR INIT] Localizer initialized successfully');
-  } else {
-    console.error('[CALENDAR INIT] Moment.js is not available');
-  }
+  localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales,
+  });
+  console.log('[CALENDAR INIT] Localizer initialized successfully');
 } catch (error) {
   console.error('[CALENDAR INIT] Failed to initialize localizer:', error);
 }
@@ -1440,8 +1449,8 @@ export default function ProfessionalCalendar({
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
       // Format: Day name (e.g., "Mon") and Date (e.g., "12")
-      const dayName = moment(date).format('ddd');
-      const dayNumber = moment(date).format('DD');
+      const dayName = format(date, 'EEE', { locale: enUS });
+      const dayNumber = format(date, 'dd');
       
       return (
         <div
@@ -2386,90 +2395,15 @@ export default function ProfessionalCalendar({
       {/* Main Calendar Area - 75% */}
       <div className="flex-1 lg:w-3/4" data-testid="calendar-main-area">
         <Card className="h-full flex flex-col bg-background">
-          <CardHeader className="border-b bg-gradient-to-r from-background via-purple-50/5 to-blue-50/5 dark:from-background dark:via-purple-950/10 dark:to-blue-950/10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-xl bg-gradient-to-r from-foreground via-purple-600 to-blue-600 dark:from-foreground dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent" data-testid="calendar-schedule-title">Schedule</CardTitle>
-              <div className="flex items-center gap-2">
-                {/* Calendar Settings Button - Only show in business mode */}
-                {mode === 'business' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowCalendarSettings(true)}
-                    title="Calendar Settings"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                )}
-                
-                {/* View Switcher */}
-                <div className="flex gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
-                  <Button
-                    variant={view === "month" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => handleViewChange("month")}
-                    data-testid="button-view-month"
-                  >
-                    Month
-                  </Button>
-                  <Button
-                    variant={view === "week" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => handleViewChange("week")}
-                    data-testid="button-view-week"
-                  >
-                    Week
-                  </Button>
-                  <Button
-                    variant={view === "day" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => handleViewChange("day")}
-                    data-testid="button-view-day"
-                  >
-                    Day
-                  </Button>
-                </div>
-                
-                {/* Smart Fill Button - Only show in business mode, aligned with view switcher */}
-                {mode === 'business' && (
-                  <AutoFillButton
-                    onClick={handleSmartFillClick}
-                    isLoading={isCalculatingMatches}
-                  />
-                )}
-
-                {/* Navigation */}
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("PREV")}
-                    data-testid="button-nav-prev"
-                    aria-label="Previous"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("TODAY")}
-                    data-testid="button-nav-today"
-                  >
-                    Today
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("NEXT")}
-                    data-testid="button-nav-next"
-                    aria-label="Next"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
+          <CalendarToolbar
+            mode={mode}
+            view={view}
+            onViewChange={handleViewChange}
+            onNavigate={navigate}
+            onSettingsClick={() => setShowCalendarSettings(true)}
+            onSmartFillClick={handleSmartFillClick}
+            isCalculatingMatches={isCalculatingMatches}
+          />
           <CardContent className="flex-1 p-4 overflow-hidden" style={{ minHeight: '650px', height: '100%' }}>
             {isLoading ? (
               <div className="flex items-center justify-center h-full min-h-[600px]">
@@ -2534,15 +2468,7 @@ export default function ProfessionalCalendar({
                       );
                     }
                     
-                    // Validate moment.js
-                    if (!moment || typeof moment !== 'function') {
-                      console.error('[CALENDAR ERROR] Moment.js not available:', typeof moment);
-                      return (
-                        <div className="flex items-center justify-center h-full min-h-[600px]" data-testid="calendar-error-moment">
-                          <div className="text-muted-foreground">Calendar initialization error: Moment.js not available</div>
-                        </div>
-                      );
-                    }
+                    // Localizer is already validated above, no need for additional checks
                     
                     // Validate currentDate
                     if (!currentDate || !(currentDate instanceof Date) || isNaN(currentDate.getTime())) {
@@ -2582,7 +2508,6 @@ export default function ProfessionalCalendar({
                     console.log('[CALENDAR DEBUG] Props validated:', {
                       eventsCount: safeEvents.length,
                       localizerType: typeof localizer,
-                      momentType: typeof moment,
                       currentDate: currentDate.toISOString(),
                       view: view
                     });
@@ -2676,39 +2601,39 @@ export default function ProfessionalCalendar({
                               const status = event.resource?.status || shift?.status || "DRAFT";
                               const statusText = isAssigned ? "Booked" : (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") ? "Open" : "Draft";
                               const workerName = assignedStaff?.name || assignedStaff?.displayName;
-                              return `${event.title} - ${moment(event.start).format('h:mm A')} - ${statusText}${workerName ? ` (${workerName})` : ''}`;
+                              return `${event.title} - ${format(event.start, 'h:mm a')} - ${statusText}${workerName ? ` (${workerName})` : ''}`;
                             }}
                             formats={{
                               dayFormat: (date: Date, culture?: string, localizer?: any) => {
                                 try {
-                                  // Use moment format for week/day view headers: "Mon 12/10"
-                                  return moment(date).format("ddd D/M");
+                                  // Use date-fns format for week/day view headers: "Mon 12/10"
+                                  return format(date, "EEE d/M", { locale: enUS });
                                 } catch (e) {
                                   console.error('[CALENDAR ERROR] dayFormat error:', e);
-                                  return format(date, "EEE M/d");
+                                  return format(date, "EEE M/d", { locale: enUS });
                                 }
                               },
                               weekdayFormat: (date: Date, culture?: string, localizer?: any) => {
                                 try {
                                   // Format for month view weekday headers: "Mon"
-                                  return moment(date).format("ddd");
+                                  return format(date, "EEE", { locale: enUS });
                                 } catch (e) {
                                   console.error('[CALENDAR ERROR] weekdayFormat error:', e);
-                                  return format(date, "EEE");
+                                  return format(date, "EEE", { locale: enUS });
                                 }
                               },
                               dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
                                 try {
                                   // Week view day headers: "Mon 12/10"
-                                  return moment(date).format("ddd D/M");
+                                  return format(date, "EEE d/M", { locale: enUS });
                                 } catch (e) {
                                   console.error('[CALENDAR ERROR] dayHeaderFormat error:', e);
-                                  return format(date, "EEE M/d");
+                                  return format(date, "EEE M/d", { locale: enUS });
                                 }
                               },
                               dayRangeHeaderFormat: ({ start, end }) => {
                                 try {
-                                  return `${moment(start).format("MMM D")} - ${moment(end).format("MMM D, YYYY")}`;
+                                  return `${format(start, "MMM d", { locale: enUS })} - ${format(end, "MMM d, yyyy", { locale: enUS })}`;
                                 } catch (e) {
                                   console.error('[CALENDAR ERROR] dayRangeHeaderFormat error:', e);
                                   return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
