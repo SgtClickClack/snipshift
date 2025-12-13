@@ -182,16 +182,16 @@ export function generateShiftSlotsForRange(
   const currentDate = new Date(startDate);
 
   while (currentDate <= endDate) {
-    // Skip past dates (only generate for today and future)
-    if (!isPast(currentDate) || isToday(currentDate)) {
-      const daySlots = calculateShiftSlotsForDay(
-        currentDate,
-        settings.openingHours,
-        settings.shiftPattern,
-        settings.defaultShiftLength
-      );
-      slots.push(...daySlots);
-    }
+    // UI: generate slots for the entire visible range (including past days),
+    // so the calendar shows the configured opening-hours segments "all over" the view.
+    // Slot actions (invite/post) can still be blocked for past dates at the UI layer.
+    const daySlots = calculateShiftSlotsForDay(
+      currentDate,
+      settings.openingHours,
+      settings.shiftPattern,
+      settings.defaultShiftLength
+    );
+    slots.push(...daySlots);
 
     currentDate.setDate(currentDate.getDate() + 1);
   }

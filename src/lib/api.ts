@@ -150,6 +150,30 @@ export async function fetchEmployerShifts(params: { start?: string; end?: string
   }
 }
 
+export interface ProfessionalListItem {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  averageRating: number | null;
+  reviewCount: number;
+  location: string | null;
+}
+
+export async function fetchProfessionals(params: { search?: string; limit?: number; offset?: number } = {}): Promise<ProfessionalListItem[]> {
+  try {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.limit) query.append('limit', String(params.limit));
+    if (params.offset) query.append('offset', String(params.offset));
+    const res = await apiRequest('GET', `/api/professionals?${query.toString()}`);
+    const data = await safeJson<any>(res, []);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    throw toApiError(error, 'fetchProfessionals');
+  }
+}
+
 export interface JobDetails {
   id: string;
   title: string;

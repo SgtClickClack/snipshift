@@ -220,6 +220,33 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
   }
 }));
 
+/**
+ * GET /api/professionals
+ *
+ * Returns a lightweight list of professionals for business scheduling/invites.
+ * Auth is required to avoid public scraping.
+ *
+ * Query Parameters:
+ * - search: optional free-text search (name/email)
+ * - limit: max results (default 100, max 200)
+ * - offset: pagination offset (default 0)
+ */
+router.get('/professionals', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+  const limitRaw = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 100;
+  const offsetRaw = typeof req.query.offset === 'string' ? parseInt(req.query.offset, 10) : 0;
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 100;
+  const offset = Number.isFinite(offsetRaw) ? Math.max(offsetRaw, 0) : 0;
+
+  const result = await usersRepo.listProfessionals({
+    search: search.length > 0 ? search : undefined,
+    limit,
+    offset,
+  });
+
+  res.status(200).json(result);
+}));
+
 // Update current user profile
 router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {

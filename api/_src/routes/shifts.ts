@@ -52,6 +52,11 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   }
 
   const shiftData = validationResult.data;
+  const assignedStaffIdRaw = (req.body as any)?.assignedStaffId;
+  const assignedStaffId =
+    typeof assignedStaffIdRaw === 'string' && isValidUUID(assignedStaffIdRaw)
+      ? assignedStaffIdRaw
+      : undefined;
   
   // Handle frontend compatibility mapping
   // If date provided but not startTime/endTime, construct them
@@ -134,11 +139,13 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       startTime,
       endTime,
       hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
-      status: shiftData.status || 'draft',
+      // If a staff member is selected, create an invited shift
+      status: assignedStaffId ? 'invited' : (shiftData.status || 'draft'),
       location: shiftData.location,
       lat: lat !== undefined ? (typeof lat === 'string' ? parseFloat(lat) : lat) : undefined,
       lng: lng !== undefined ? (typeof lng === 'string' ? parseFloat(lng) : lng) : undefined,
       isRecurring: isRecurring,
+      assigneeId: assignedStaffId,
     };
     
     const newShift = await shiftsRepo.createShift(shiftPayload);
@@ -167,6 +174,37 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
         databaseAvailable: dbAvailable
       });
       return;
+    }
+
+    // If shift is invited to a specific professional, also create an offer + notify them.
+    if (assignedStaffId) {
+      try {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        await shiftOffersRepo.createShiftOffer({
+          shiftId: newShift.id,
+          professionalId: assignedStaffId,
+          expiresAt,
+        });
+      } catch (error) {
+        // Don’t fail shift creation if the offer table isn’t available yet.
+        console.error('[POST /api/shifts] Failed to create shift offer for invited shift:', error);
+      }
+
+      try {
+        await notificationsService.notifyProfessionalOfInvite(assignedStaffId, {
+          id: newShift.id,
+          title: newShift.title,
+          startTime: (newShift as any).startTime,
+          endTime: (newShift as any).endTime,
+          location: (newShift as any).location,
+          hourlyRate: (newShift as any).hourlyRate,
+          employerId: newShift.employerId,
+        });
+      } catch (error) {
+        console.error('[POST /api/shifts] Failed to notify invited professional:', error);
+      }
     }
 
     res.status(201).json(newShift);

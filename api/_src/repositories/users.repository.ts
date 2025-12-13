@@ -223,6 +223,62 @@ export async function getActiveUserCountByRole(role: 'professional' | 'business'
   return Number(result?.count || 0);
 }
 
+export async function listProfessionals(params: {
+  search?: string;
+  limit: number;
+  offset: number;
+}): Promise<Array<{
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  averageRating: number | null;
+  reviewCount: number;
+  location: string | null;
+}>> {
+  const db = getDb();
+  if (!db) {
+    // Database not configured: return empty list (avoid mock users in runtime features)
+    return [];
+  }
+
+  const search = (params.search ?? '').trim();
+  const where = and(
+    // Include anyone with professional as primary role or included in roles array.
+    sql`(${users.role} = 'professional' OR 'professional' = ANY(${users.roles}))`,
+    // Active users only
+    sql`(${users.isActive} IS NULL OR ${users.isActive} = true)`,
+    search
+      ? sql`(${users.name} ILIKE ${'%' + search + '%'} OR ${users.email} ILIKE ${'%' + search + '%'})`
+      : sql`true`
+  );
+
+  const rows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      avatarUrl: users.avatarUrl,
+      averageRating: users.averageRating,
+      reviewCount: users.reviewCount,
+      location: users.location,
+    })
+    .from(users)
+    .where(where)
+    .limit(params.limit)
+    .offset(params.offset);
+
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    avatarUrl: r.avatarUrl ?? null,
+    averageRating: r.averageRating ? Number(r.averageRating) : null,
+    reviewCount: r.reviewCount ? Number(r.reviewCount) : 0,
+    location: r.location ?? null,
+  }));
+}
+
 /**
  * Ban a user (set isActive to false)
  */

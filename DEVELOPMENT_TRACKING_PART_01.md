@@ -1,4 +1,50 @@
 
+#### 2025-12-14: Fix Smart Fill Roster 500 + Real Professional Picker (No Mock Data)
+
+**Core Components**
+- Smart Fill batch shift creation (`POST /api/shifts/smart-fill`)
+- Shift creation with direct invite (`POST /api/shifts` + `assignedStaffId`)
+- Professional discovery endpoint for scheduling (`GET /api/professionals`)
+- Calendar slot assignment UI (unassigned slots → favourites/search → invite/post)
+- Legacy DB schema compatibility for shifts inserts (missing `lat`/`lng`)
+
+**Key Features**
+- Fixed **Smart Fill Roster** failing with a 500 by adding repository fallbacks when the `shifts` table is missing newer columns (observed: missing `lat`/`lng`).
+- Added a forward migration to bring older DBs up to parity (`lat`/`lng` + index) without breaking existing installs.
+- Replaced calendar **mock professionals** with real data:
+  - Added `GET /api/professionals` and a frontend `fetchProfessionals()` helper.
+  - Updated calendar assignment modals to use the real list for **favorites** + **manual search**.
+- Fixed slot assignment invite wiring so selecting a professional creates an **invited** shift and triggers the invite notification flow (offer creation + notify).
+
+**Integration Points**
+- API endpoint: `POST /api/shifts/smart-fill`
+- API endpoint: `GET /api/professionals`
+- API endpoint: `POST /api/shifts` (supports `assignedStaffId` for invite-style creation)
+- Frontend: `ProfessionalCalendar` unassigned-slot click → `ShiftAssignmentModal`
+
+**File Paths**
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/repositories/shifts.repository.js`
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/shifts.js`
+- `api/_src/repositories/users.repository.ts`
+- `api/_src/repositories/users.repository.js`
+- `api/_src/routes/users.ts`
+- `api/_src/routes/users.js`
+- `api/drizzle/0012_add_shift_lat_lng.sql`
+- `src/components/calendar/professional-calendar.tsx`
+- `src/components/calendar/assign-staff-modal.tsx`
+- `src/lib/api.ts`
+
+**Next Priority Task**
+- Replace remaining non-test mock “professional” data patterns (if any) and ensure calendar assignment uses real availability + acceptance sync end-to-end (invite → accept → both calendars reflect confirmed).
+
+**Code Organization & Quality**
+- Kept DB compatibility logic in the repository layer (routes/UI stay focused on behavior).
+- Avoided introducing new UI patterns; reused existing modals and React Query patterns.
+
+---
+
 #### 2025-12-14: Fix Shop Shifts 500 + Prevent Calendar Settings Render Loop
 
 **Core Components**

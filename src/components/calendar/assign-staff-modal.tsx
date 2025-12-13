@@ -29,82 +29,11 @@ interface AssignStaffModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAssign: (professional: Professional) => void;
+  professionals: Professional[];
+  favoriteProfessionals?: Professional[];
   shiftTitle?: string;
   shiftDate?: Date;
 }
-
-// Mock data for Recent Hires (as requested)
-const MOCK_RECENT_HIRES: Professional[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    displayName: 'Sarah J.',
-    email: 'sarah@example.com',
-    photoURL: undefined,
-    skills: ['Haircutting', 'Coloring', 'Styling'],
-    rating: 4.8,
-    lastHired: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    displayName: 'Michael C.',
-    email: 'michael@example.com',
-    photoURL: undefined,
-    skills: ['Barbering', 'Beard Trim', 'Fade'],
-    rating: 4.9,
-    lastHired: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days ago
-  },
-  {
-    id: '3',
-    name: 'Emma Williams',
-    displayName: 'Emma W.',
-    email: 'emma@example.com',
-    photoURL: undefined,
-    skills: ['Hair Styling', 'Extensions', 'Color'],
-    rating: 4.7,
-    lastHired: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(), // 21 days ago
-  },
-  {
-    id: '4',
-    name: 'James Taylor',
-    displayName: 'James T.',
-    email: 'james@example.com',
-    photoURL: undefined,
-    skills: ['Barbering', 'Hot Towel Shave'],
-    rating: 4.6,
-    lastHired: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-  },
-];
-
-// Mock data for all professionals (for search)
-const MOCK_ALL_PROFESSIONALS: Professional[] = [
-  ...MOCK_RECENT_HIRES,
-  {
-    id: '5',
-    name: 'Olivia Brown',
-    displayName: 'Olivia B.',
-    email: 'olivia@example.com',
-    skills: ['Haircutting', 'Highlights'],
-    rating: 4.5,
-  },
-  {
-    id: '6',
-    name: 'David Martinez',
-    displayName: 'David M.',
-    email: 'david@example.com',
-    skills: ['Barbering', 'Fade', 'Line-up'],
-    rating: 4.8,
-  },
-  {
-    id: '7',
-    name: 'Sophia Anderson',
-    displayName: 'Sophia A.',
-    email: 'sophia@example.com',
-    skills: ['Hair Styling', 'Bridal', 'Updos'],
-    rating: 4.9,
-  },
-];
 
 /**
  * AssignStaffModal Component
@@ -118,6 +47,8 @@ export function AssignStaffModal({
   isOpen,
   onClose,
   onAssign,
+  professionals,
+  favoriteProfessionals,
   shiftTitle,
   shiftDate,
 }: AssignStaffModalProps) {
@@ -126,11 +57,11 @@ export function AssignStaffModal({
   // Filter professionals based on search query
   const filteredProfessionals = useMemo(() => {
     if (!searchQuery.trim()) {
-      return MOCK_ALL_PROFESSIONALS;
+      return professionals;
     }
 
     const query = searchQuery.toLowerCase();
-    return MOCK_ALL_PROFESSIONALS.filter((prof) => {
+    return professionals.filter((prof) => {
       const nameMatch = prof.name.toLowerCase().includes(query) ||
         prof.displayName?.toLowerCase().includes(query);
       const skillMatch = prof.skills?.some((skill) =>
@@ -138,7 +69,16 @@ export function AssignStaffModal({
       );
       return nameMatch || skillMatch;
     });
-  }, [searchQuery]);
+  }, [searchQuery, professionals]);
+
+  const recentProfessionals = useMemo(() => {
+    if (favoriteProfessionals && favoriteProfessionals.length > 0) {
+      return favoriteProfessionals.slice(0, 6);
+    }
+    return [...professionals]
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 6);
+  }, [favoriteProfessionals, professionals]);
 
   const handleInvite = (professional: Professional) => {
     onAssign(professional);
@@ -208,10 +148,10 @@ export function AssignStaffModal({
               <div>
                 <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  Recent Hires
+                  {favoriteProfessionals && favoriteProfessionals.length > 0 ? 'Favorites' : 'Top Professionals'}
                 </h3>
                 <div className="space-y-2">
-                  {MOCK_RECENT_HIRES.map((professional) => (
+                  {recentProfessionals.map((professional) => (
                     <div
                       key={professional.id}
                       className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"

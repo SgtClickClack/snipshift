@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2025-12-14 - Smart Fill Roster + Calendar Slot Assignment Reliability
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Fixed the **Smart Fill Roster** 500 by adding legacy-schema fallbacks for shift inserts and adding a migration to restore missing `shifts.lat/lng` columns.
+- Replaced calendar **mock professional lists** with a real authenticated endpoint (`GET /api/professionals`) and wired calendar slot assignment to create **invited** shifts and send invites.
+
+**Impact:**
+- **Scheduling UX:** Opening-hours segments can be generated and filled without server errors.
+- **Invites:** Slot assignment now targets real professionals and triggers the invite flow.
+
+---
+
 ### Update: 2025-12-14 - Deployment Preparation: Automated Pre-Flight Checks Added
 
 **Status:** ✅ **READY FOR LAUNCH QA**

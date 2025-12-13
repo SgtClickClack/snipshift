@@ -9,6 +9,37 @@ import { shifts } from '../db/schema/shifts.js';
 import { users } from '../db/schema/users.js';
 import { getDb } from '../db/index.js';
 
+function isMissingColumnError(err: any, column: string): boolean {
+  const code = err?.code ?? err?.cause?.code ?? err?.originalError?.code ?? err?.error?.code;
+  if (String(code) !== '42703') return false;
+  const msg = `${err?.message ?? ''} ${err?.cause?.message ?? ''} ${err?.originalError?.message ?? ''}`.toLowerCase();
+  return msg.includes(`column "${column.toLowerCase()}"`) && msg.includes('does not exist');
+}
+
+function shouldFallbackToLegacyShiftSchema(err: any): boolean {
+  // We’ve observed production DBs that are missing the newer `lat`/`lng` columns on `shifts`.
+  // Drizzle inserts/selects reference all schema columns and will 500 on these environments.
+  return isMissingColumnError(err, 'lat') || isMissingColumnError(err, 'lng');
+}
+
+function hydrateLegacyShiftRow(row: any): typeof shifts.$inferSelect {
+  return {
+    ...row,
+    assigneeId: row?.assigneeId ?? null,
+    attendanceStatus: 'pending',
+    paymentStatus: 'UNPAID',
+    paymentIntentId: null,
+    stripeChargeId: null,
+    applicationFeeAmount: null,
+    transferAmount: null,
+    lat: null,
+    lng: null,
+    isRecurring: false,
+    autoAccept: false,
+    parentShiftId: null,
+  } as any;
+}
+
 
 export interface ShiftFilters {
   employerId?: string;
@@ -242,6 +273,107 @@ export async function createShift(shiftData: {
 
     return newShift || null;
   } catch (error: any) {
+    if (shouldFallbackToLegacyShiftSchema(error)) {
+      console.warn('[createShift] Falling back to legacy insert (missing lat/lng columns):', {
+        message: error?.message,
+        code: error?.code ?? error?.cause?.code,
+      });
+
+      const start = typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime;
+      const end = typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime;
+
+      const insertWithoutAssignee = async () => {
+        return await (db as any).execute(sql`
+          INSERT INTO shifts (
+            employer_id,
+            title,
+            description,
+            start_time,
+            end_time,
+            hourly_rate,
+            status,
+            location
+          ) VALUES (
+            ${shiftData.employerId},
+            ${shiftData.title},
+            ${shiftData.description},
+            ${start},
+            ${end},
+            ${shiftData.hourlyRate},
+            ${shiftData.status || 'draft'},
+            ${shiftData.location || null}
+          )
+          RETURNING
+            id,
+            employer_id AS "employerId",
+            title,
+            description,
+            start_time AS "startTime",
+            end_time AS "endTime",
+            hourly_rate AS "hourlyRate",
+            status,
+            location,
+            created_at AS "createdAt",
+            updated_at AS "updatedAt"
+        `);
+      };
+
+      let raw: any;
+      if (shiftData.assigneeId) {
+        try {
+          raw = await (db as any).execute(sql`
+            INSERT INTO shifts (
+              employer_id,
+              assignee_id,
+              title,
+              description,
+              start_time,
+              end_time,
+              hourly_rate,
+              status,
+              location
+            ) VALUES (
+              ${shiftData.employerId},
+              ${shiftData.assigneeId},
+              ${shiftData.title},
+              ${shiftData.description},
+              ${start},
+              ${end},
+              ${shiftData.hourlyRate},
+              ${shiftData.status || 'draft'},
+              ${shiftData.location || null}
+            )
+            RETURNING
+              id,
+              employer_id AS "employerId",
+              assignee_id AS "assigneeId",
+              title,
+              description,
+              start_time AS "startTime",
+              end_time AS "endTime",
+              hourly_rate AS "hourlyRate",
+              status,
+              location,
+              created_at AS "createdAt",
+              updated_at AS "updatedAt"
+          `);
+        } catch (e: any) {
+          // If the environment is missing assignee_id too, retry without it.
+          if (isMissingColumnError(e, 'assignee_id')) {
+            raw = await insertWithoutAssignee();
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        raw = await insertWithoutAssignee();
+      }
+
+      const rows = (raw as any)?.rows ?? raw;
+      const row = (rows as any[])?.[0];
+      return row ? hydrateLegacyShiftRow(row) : null;
+    }
+
     console.error('[createShift] Database error:', {
       message: error?.message,
       code: error?.code,
@@ -337,6 +469,69 @@ export async function createRecurringShifts(
       return [parentShift, ...allChildShifts];
     });
   } catch (error: any) {
+    if (shouldFallbackToLegacyShiftSchema(error)) {
+      console.warn('[createRecurringShifts] Falling back to legacy insert (missing lat/lng columns):', {
+        message: error?.message,
+        code: error?.code ?? error?.cause?.code,
+      });
+
+      return await db.transaction(async (tx) => {
+        const insertOne = async (startTime: Date, endTime: Date) => {
+          const raw = await (tx as any).execute(sql`
+            INSERT INTO shifts (
+              employer_id,
+              title,
+              description,
+              start_time,
+              end_time,
+              hourly_rate,
+              status,
+              location
+            ) VALUES (
+              ${parentShiftData.employerId},
+              ${parentShiftData.title},
+              ${parentShiftData.description},
+              ${startTime},
+              ${endTime},
+              ${parentShiftData.hourlyRate},
+              ${parentShiftData.status || 'draft'},
+              ${parentShiftData.location || null}
+            )
+            RETURNING
+              id,
+              employer_id AS "employerId",
+              title,
+              description,
+              start_time AS "startTime",
+              end_time AS "endTime",
+              hourly_rate AS "hourlyRate",
+              status,
+              location,
+              created_at AS "createdAt",
+              updated_at AS "updatedAt"
+          `);
+          const rows = (raw as any)?.rows ?? raw;
+          const row = (rows as any[])?.[0];
+          return row ? hydrateLegacyShiftRow(row) : null;
+        };
+
+        const parentStart = typeof parentShiftData.startTime === 'string' ? new Date(parentShiftData.startTime) : parentShiftData.startTime;
+        const parentEnd = typeof parentShiftData.endTime === 'string' ? new Date(parentShiftData.endTime) : parentShiftData.endTime;
+        const createdParent = await insertOne(parentStart, parentEnd);
+        if (!createdParent) throw new Error('Failed to create parent shift (legacy fallback)');
+
+        const createdChildren: typeof shifts.$inferSelect[] = [];
+        for (const child of recurringShiftsData) {
+          const childStart = typeof child.startTime === 'string' ? new Date(child.startTime) : child.startTime;
+          const childEnd = typeof child.endTime === 'string' ? new Date(child.endTime) : child.endTime;
+          const created = await insertOne(childStart, childEnd);
+          if (created) createdChildren.push(created);
+        }
+
+        return [createdParent, ...createdChildren];
+      });
+    }
+
     console.error('[createRecurringShifts] Database error:', {
       message: error?.message,
       code: error?.code,
@@ -402,6 +597,114 @@ export async function createBatchShifts(
       return createdShifts.map(([shift]) => shift).filter(Boolean);
     });
   } catch (error: any) {
+    if (shouldFallbackToLegacyShiftSchema(error)) {
+      console.warn('[createBatchShifts] Falling back to legacy batch insert (missing lat/lng columns):', {
+        message: error?.message,
+        code: error?.code ?? error?.cause?.code,
+        count: shiftsData.length,
+      });
+
+      return await db.transaction(async (tx) => {
+        const created: typeof shifts.$inferSelect[] = [];
+        for (const shiftData of shiftsData) {
+          const startTime = typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime;
+          const endTime = typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime;
+
+          const insertWithoutAssignee = async () => {
+            return await (tx as any).execute(sql`
+              INSERT INTO shifts (
+                employer_id,
+                title,
+                description,
+                start_time,
+                end_time,
+                hourly_rate,
+                status,
+                location
+              ) VALUES (
+                ${shiftData.employerId},
+                ${shiftData.title},
+                ${shiftData.description},
+                ${startTime},
+                ${endTime},
+                ${shiftData.hourlyRate},
+                ${shiftData.status || 'draft'},
+                ${shiftData.location || null}
+              )
+              RETURNING
+                id,
+                employer_id AS "employerId",
+                title,
+                description,
+                start_time AS "startTime",
+                end_time AS "endTime",
+                hourly_rate AS "hourlyRate",
+                status,
+                location,
+                created_at AS "createdAt",
+                updated_at AS "updatedAt"
+            `);
+          };
+
+          let raw: any;
+          if (shiftData.assigneeId) {
+            try {
+              raw = await (tx as any).execute(sql`
+                INSERT INTO shifts (
+                  employer_id,
+                  assignee_id,
+                  title,
+                  description,
+                  start_time,
+                  end_time,
+                  hourly_rate,
+                  status,
+                  location
+                ) VALUES (
+                  ${shiftData.employerId},
+                  ${shiftData.assigneeId},
+                  ${shiftData.title},
+                  ${shiftData.description},
+                  ${startTime},
+                  ${endTime},
+                  ${shiftData.hourlyRate},
+                  ${shiftData.status || 'draft'},
+                  ${shiftData.location || null}
+                )
+                RETURNING
+                  id,
+                  employer_id AS "employerId",
+                  assignee_id AS "assigneeId",
+                  title,
+                  description,
+                  start_time AS "startTime",
+                  end_time AS "endTime",
+                  hourly_rate AS "hourlyRate",
+                  status,
+                  location,
+                  created_at AS "createdAt",
+                  updated_at AS "updatedAt"
+              `);
+            } catch (e: any) {
+              if (isMissingColumnError(e, 'assignee_id')) {
+                raw = await insertWithoutAssignee();
+              } else {
+                throw e;
+              }
+            }
+          } else {
+            raw = await insertWithoutAssignee();
+          }
+
+          const rows = (raw as any)?.rows ?? raw;
+          const row = (rows as any[])?.[0];
+          if (row) created.push(hydrateLegacyShiftRow(row));
+        }
+
+        return created;
+      });
+    }
+
     console.error('[createBatchShifts] Database error:', {
       message: error?.message,
       code: error?.code,
@@ -440,6 +743,36 @@ export async function getShiftsByEmployerInRange(
 
     return result;
   } catch (error: any) {
+    if (shouldFallbackToLegacyShiftSchema(error)) {
+      console.warn('[getShiftsByEmployerInRange] Falling back to legacy range query (missing lat/lng columns):', {
+        employerId,
+        message: error?.message,
+        code: error?.code ?? error?.cause?.code,
+      });
+
+      const raw = await (db as any).execute(sql`
+        SELECT
+          id,
+          employer_id AS "employerId",
+          title,
+          description,
+          start_time AS "startTime",
+          end_time AS "endTime",
+          hourly_rate AS "hourlyRate",
+          status,
+          location,
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM shifts
+        WHERE employer_id = ${employerId}
+          AND start_time >= ${startDate}
+          AND start_time <= ${endDate}
+      `);
+
+      const rows = (raw as any)?.rows ?? raw;
+      return (rows as any[]).map((r) => hydrateLegacyShiftRow(r));
+    }
+
     console.error('[getShiftsByEmployerInRange] Database error:', {
       message: error?.message,
       code: error?.code,
