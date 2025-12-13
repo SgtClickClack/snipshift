@@ -1,4 +1,43 @@
 
+#### 2025-12-14: Audit and Fix Auth Race Conditions
+
+**Core Components**
+- AuthContext provider (`src/contexts/AuthContext.tsx`)
+- GoogleAuthButton component (`src/components/auth/google-auth-button.tsx`)
+- Landing page (`src/pages/landing.tsx`)
+- Auth guard system (`src/components/auth/auth-guard.tsx`)
+
+**Key Features**
+- **Phase 1: Auth Gatekeeper** - Fixed `AuthContext` to prevent double-firing in React Strict Mode by:
+  - Removing `location.search` dependency that caused auth listener to re-subscribe on URL changes
+  - Adding `isProcessingAuth` ref to prevent concurrent profile fetches for the same user
+  - Adding `currentAuthUid` ref to skip redundant fetches when user hasn't changed
+  - Adding `hasInitialized` ref to prevent double initialization in Strict Mode
+- **Phase 2: Router Verification** - Verified App.tsx already correctly shows `LoadingScreen` while `isLoading` is true, preventing flash of wrong content
+- **Phase 3: Landing Page Cleanup** - Added localStorage/sessionStorage cleanup on landing page load to clear stale `onboarding_step`, `redirect_url`, and `signupRolePreference` that could cause race conditions
+- **Phase 4: GoogleAuthButton Protection** - Added `isAuthInProgress` ref to prevent double-click/double-fire issues and clear stale localStorage before starting new auth
+
+**Integration Points**
+- Firebase `onAuthStateChange` listener - now properly debounced
+- Profile fetch from `/api/me` - protected against duplicate calls
+- Google popup auth flow - protected against rapid clicks
+- Logout flow - now clears stale redirect/onboarding data
+
+**File Paths**
+- `src/contexts/AuthContext.tsx` - Core auth race condition fixes
+- `src/components/auth/google-auth-button.tsx` - Double-click protection
+- `src/pages/landing.tsx` - Stale data cleanup on page load
+
+**Next Priority Task**
+- Test the full Google OAuth flow: Landing → Signup → Google Popup → Profile Fetch → Redirect to appropriate dashboard without flashes or double redirects
+
+**Code Organization & Quality**
+- Used `useRef` for mutable tracking state (avoids re-renders)
+- Maintained backward compatibility with existing auth flow
+- Added debug logging via existing `logger` utility for troubleshooting
+
+---
+
 #### 2025-12-14: Interactive Roster Builder - Auto-Generate Slots from Opening Hours
 
 **Core Components**

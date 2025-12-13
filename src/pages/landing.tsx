@@ -6,11 +6,34 @@ import Pricing from "@/components/landing/Pricing";
 import { SEO } from "@/components/seo/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAuthReady } = useAuth();
   const navigate = useNavigate();
+  const hasCleanedUp = useRef(false);
+  
+  // Clear stale auth-related localStorage/sessionStorage data on landing page load
+  // This prevents race conditions from old redirects or onboarding states
+  useEffect(() => {
+    // Only run once and only for unauthenticated users
+    if (hasCleanedUp.current) return;
+    if (!isAuthReady) return;
+    
+    if (!isAuthenticated) {
+      hasCleanedUp.current = true;
+      // Clear stale redirect/onboarding data that could cause race conditions
+      try {
+        localStorage.removeItem('onboarding_step');
+        localStorage.removeItem('redirect_url');
+        localStorage.removeItem('pending_redirect');
+        sessionStorage.removeItem('signupRolePreference');
+        sessionStorage.removeItem('oauth_state');
+      } catch (e) {
+        // Ignore storage errors (e.g., private browsing mode)
+      }
+    }
+  }, [isAuthenticated, isAuthReady]);
   
   // If authenticated, redirect to dashboard
   useEffect(() => {

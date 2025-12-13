@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { onAuthStateChange, signOutUser, auth } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
-import { useLocation } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 
 export interface User {
@@ -59,9 +58,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const location = useLocation();
+  
+  // Refs to prevent Strict Mode double-firing and race conditions
+  const isProcessingAuth = useRef(false);
+  const currentAuthUid = useRef<string | null>(null);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization in Strict Mode
+    if (hasInitialized.current) {
+      return;
+    }
+    hasInitialized.current = true;
+
     // E2E mode: bypass Firebase dependency and hydrate user from sessionStorage.
     // Playwright sets VITE_E2E=1 and provides `snipshift_test_user` session storage.
     if (import.meta.env.VITE_E2E === '1' && typeof window !== 'undefined') {
@@ -97,6 +106,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     let unsubscribe: (() => void) | null = null;
     try {
       unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
+        // GATEKEEPER: Prevent concurrent profile fetches for the same user
+        const newUid = firebaseUser?.uid || null;
+        
+        // If we're already processing the same user, skip
+        if (isProcessingAuth.current && currentAuthUid.current === newUid) {
+          logger.debug('AuthContext', 'Skipping duplicate auth state change for same user');
+          return;
+        }
+        
+        // If the user hasn't changed and we already have auth ready, skip redundant fetches
+        if (isAuthReady && currentAuthUid.current === newUid && newUid !== null) {
+          logger.debug('AuthContext', 'Skipping redundant profile fetch - user unchanged');
+          return;
+        }
+        
+        // Mark as processing and track current user
+        isProcessingAuth.current = true;
+        currentAuthUid.current = newUid;
+        
         try {
           if (firebaseUser) {
             try {
@@ -169,6 +197,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } finally {
           // CRITICAL: Always set loading states, even if there's an error
           // This prevents the "Flash of Doom" where the app renders before auth check completes
+          isProcessingAuth.current = false;
           setIsLoading(false);
           setIsAuthReady(true);
         }
@@ -176,6 +205,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       // If listener setup fails, still set loading states to prevent infinite loading
       console.error('Error setting up auth state listener:', error);
+      isProcessingAuth.current = false;
       setIsLoading(false);
       setIsAuthReady(true);
     }
@@ -184,8 +214,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (unsubscribe) {
         unsubscribe();
       }
+      // Reset refs on cleanup (for HMR or unmount)
+      hasInitialized.current = false;
+      isProcessingAuth.current = false;
+      currentAuthUid.current = null;
     };
-  }, [location.search]);
+  }, []); // No dependencies - listener should only be set up once
 
   const login = (userData: User) => {
     // With Firebase, login is handled by the auth state change listener.
@@ -203,7 +237,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
         localStorage.removeItem('authToken');
+        // Clear stale redirect/onboarding state that could cause race conditions
+        localStorage.removeItem('onboarding_step');
+        localStorage.removeItem('redirect_url');
+        sessionStorage.removeItem('signupRolePreference');
       }
+      
+      // Reset tracking refs before sign out
+      currentAuthUid.current = null;
       
       // Sign out from Firebase
       await signOutUser();
@@ -218,6 +259,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (e) {
       console.error('Logout error', e);
       // Even if there's an error, clear state and navigate
+      currentAuthUid.current = null;
       setUser(null);
       if (typeof window !== 'undefined') {
         window.location.href = '/login';

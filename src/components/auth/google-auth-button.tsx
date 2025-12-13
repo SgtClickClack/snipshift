@@ -20,6 +20,8 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
   const { login } = useAuth();
   const navigate = useNavigate();
   const hasHandledRedirect = useRef(false);
+  // Prevent double-click/double-fire in Strict Mode
+  const isAuthInProgress = useRef(false);
 
   const completeGoogleAuth = async (firebaseUser: any) => {
     const email = firebaseUser.email;
@@ -134,10 +136,21 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     hasHandledRedirect.current = true;
 
     const run = async () => {
+      // Check if auth is already in progress (e.g., from another button click)
+      if (isAuthInProgress.current) {
+        logger.debug('GoogleAuthButton', 'Auth already in progress, skipping redirect check');
+        return;
+      }
+      
       try {
-        setIsLoading(true);
+        // Don't set loading immediately - only if there's actually a redirect result
         const firebaseUser = await handleGoogleRedirectResult();
         if (!firebaseUser) return;
+        
+        // Now that we have a result, lock and set loading
+        isAuthInProgress.current = true;
+        setIsLoading(true);
+        
         await completeGoogleAuth(firebaseUser);
       } catch (error: any) {
         // If there's no redirect result, Firebase returns null; avoid noisy errors.
@@ -150,6 +163,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
           });
         }
       } finally {
+        isAuthInProgress.current = false;
         setIsLoading(false);
       }
     };
@@ -158,13 +172,33 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
   }, [toast]); // navigate/login are stable enough; we only want this once per mount
 
   const handleGoogleAuth = async () => {
+    // GATEKEEPER: Prevent double-clicks and concurrent auth attempts
+    if (isAuthInProgress.current || isLoading) {
+      logger.debug('GoogleAuthButton', 'Auth already in progress, ignoring click');
+      return;
+    }
+    
+    // Lock immediately before any async operations
+    isAuthInProgress.current = true;
     setIsLoading(true);
+    
+    // Clear any stale auth-related localStorage before starting new auth
+    try {
+      localStorage.removeItem('onboarding_step');
+      localStorage.removeItem('redirect_url');
+      localStorage.removeItem('pending_redirect');
+    } catch (e) {
+      // Ignore storage errors
+    }
     
     try {
       const firebaseUser = await signInWithGoogle();
       
       if (!firebaseUser) {
-        return; // Popup closed or redirect happened
+        // Popup closed or redirect happened - keep lock for redirect case
+        // Unlock only if popup was closed (no redirect)
+        isAuthInProgress.current = false;
+        return;
       }
       await completeGoogleAuth(firebaseUser);
       
@@ -178,6 +212,9 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
           description: "Please allow popups for this site to sign in with Google.",
           variant: "destructive",
         });
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        // User closed popup - silently ignore, no toast needed
+        logger.debug('GoogleAuthButton', 'User closed Google auth popup');
       } else if (error.code === 'auth/unauthorized-domain') {
         toast({
           title: "Configuration Error",
@@ -193,6 +230,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         });
       }
     } finally {
+      isAuthInProgress.current = false;
       setIsLoading(false);
     }
   };
