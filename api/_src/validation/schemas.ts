@@ -138,7 +138,7 @@ export const ShiftSchema = z.object({
     }, 'Pay rate must be a positive number'),
   ]).optional(),
   location: z.string().optional(),
-  status: z.enum(['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled']).optional(),
+  status: z.enum(['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled', 'pending_completion']).optional(),
   isRecurring: z.boolean().optional(),
   recurringShifts: z.array(z.object({
     startTime: z.string(),

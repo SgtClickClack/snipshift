@@ -64,6 +64,8 @@ function statusLabel(status: ShiftStatus): string {
       return 'COMPLETED';
     case 'cancelled':
       return 'CANCELLED';
+    case 'pending_completion':
+      return 'PENDING COMPLETION';
     default:
       return String(status).toUpperCase();
   }
@@ -100,6 +102,9 @@ function eventStyleForStatus(status: ShiftStatus): React.CSSProperties {
     case 'cancelled':
       // CANCELLED: Rose/red - shift was cancelled
       return { backgroundColor: '#FFE4E6', borderColor: '#F43F5E', color: '#9F1239' };
+    case 'pending_completion':
+      // PENDING COMPLETION: Purple - shift ended, awaiting review/confirmation
+      return { backgroundColor: '#F3E8FF', borderColor: '#A855F7', color: '#7E22CE' };
     default:
       return { backgroundColor: '#E2E8F0', borderColor: '#CBD5E1', color: '#0F172A' };
   }

@@ -1,4 +1,36 @@
 
+#### 2025-12-14: Fix 500 Error on Calendar Load (Missing Status Enums)
+
+**Core Components**
+- Zod validation schemas (`api/_src/validation/schemas.ts`)
+- PostgreSQL enum migration (`api/drizzle/0014_fix_shift_status_enum.sql`)
+- Frontend event styling (`src/pages/shop/schedule.tsx`)
+
+**Key Features**
+- **Zod Schema Update**: Added missing `pending_completion` status to the `ShiftSchema` z.enum definition to prevent Zod validation from throwing errors when DB returns shifts with this status.
+- **PostgreSQL Migration**: Created comprehensive migration `0014_fix_shift_status_enum.sql` that adds all required status values (`draft`, `pending`, `invited`, `open`, `filled`, `completed`, `confirmed`, `cancelled`, `pending_completion`) using `ADD VALUE IF NOT EXISTS` to ensure idempotent execution.
+- **Frontend Event Styling**: Added `pending_completion` case to both `statusLabel()` and `eventStyleForStatus()` functions in the Shop Schedule calendar. Renders with purple styling to indicate shifts awaiting review/confirmation.
+
+**Integration Points**
+- API endpoint: `GET /api/shifts` (now returns shifts with all status values without Zod validation errors)
+- Database migration: Run via `drizzle-kit push` or manual SQL execution
+- Calendar UI: `eventPropGetter` now handles all shift statuses
+
+**File Paths**
+- `api/_src/validation/schemas.ts` - Added `pending_completion` to ShiftSchema status enum
+- `api/drizzle/0014_fix_shift_status_enum.sql` - New migration for enum completeness
+- `src/pages/shop/schedule.tsx` - Added styling for `pending_completion` status
+
+**Next Priority Task**
+- Run the migration on production database and verify the calendar loads without 500 errors.
+
+**Code Organization & Quality**
+- Migration is idempotent (safe to run multiple times)
+- Kept Drizzle schema, Zod schema, and frontend visuals in sync
+- Used established color patterns for new status (purple for pending states)
+
+---
+
 #### 2025-12-14: First-to-Accept Invites and Bulk Accept Roster
 
 **Core Components**
