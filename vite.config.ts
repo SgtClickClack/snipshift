@@ -12,7 +12,7 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand-logo.png', 'logo.png', 'logo-white.png'],
+      includeAssets: ['brand-logo.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg', 'herobarber (2).webp', 'herobarber (2).jpg'],
       manifest: {
         name: 'Snipshift',
         short_name: 'Snipshift',
@@ -25,13 +25,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/brand-logo.png',
+            src: '/brand-logo-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: '/brand-logo.png',
+            src: '/brand-logo-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
@@ -39,8 +39,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        globIgnores: ['**/logoblackback.png'], // Exclude large logo from precaching
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,webp}'],
+        globIgnores: ['**/herobarber (2).png'], // Exclude remaining legacy large PNG from precaching
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MB limit (to accommodate herobarber images)
         cleanupOutdatedCaches: true,
         clientsClaim: true,

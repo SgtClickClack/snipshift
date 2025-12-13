@@ -11,7 +11,7 @@ interface SEOProps {
 
 const defaultTitle = 'SnipShift - Connect Barbers, Stylists & Creative Professionals';
 const defaultDescription = 'Connect barbers, stylists, and beauticians with flexible work opportunities. Find gigs, post jobs, and build your professional network.';
-const defaultImage = '/brand-logo.png';
+const defaultImage = '/og-image.jpg';
 const defaultUrl = 'https://snipshift.com';
 const defaultSiteName = 'SnipShift';
 

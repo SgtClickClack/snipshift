@@ -1,4 +1,101 @@
 
+#### 2025-12-13: Public Asset Cleanup (Remove Unused Legacy Large Images)
+
+**Core Components**
+- Public static assets (`public/`)
+- PWA Workbox precache ignore list (cleanup)
+
+**Key Features**
+- Removed unused legacy multi‑MB images from `public/` after confirming no runtime references outside tracking/config notes.
+- Simplified Workbox `globIgnores` to only exclude the single remaining legacy large file (`herobarber (2).png`).
+
+**Integration Points**
+- Workbox precache config (`vite-plugin-pwa`)
+
+**File Paths**
+- `public/hero-background.png` (deleted)
+- `public/herobarber (1).png` (deleted)
+- `public/herobarber (3).png` (deleted)
+- `public/logoblackback.png` (deleted)
+- `public/nobackgroundlogo.png` (deleted)
+- `public/og-image.png` (deleted)
+- `vite.config.ts`
+
+**Next Priority Task**
+- Consider generating a smaller PNG fallback for the hero (or removing the PNG entirely once legacy browsers/support requirements are confirmed).
+
+**Code Organization & Quality**
+- Kept deletions tightly scoped to assets verified as unreferenced; avoided refactors outside asset + config hygiene.
+
+---
+
+#### 2025-12-13: Landing Assets Optimization (OG Image + PWA Icons + Hero Fallback)
+
+**Core Components**
+- Social/SEO image defaults (`SEO`, `index.html` OG/Twitter tags)
+- PWA manifest + icon assets (PWA plugin manifest + `public/manifest.json`)
+- Service worker precache filtering for legacy large PNGs
+- Landing hero image fallback format
+
+**Key Features**
+- **OG/Twitter image optimization**: generated `public/og-image.jpg` and updated tags/default SEO image to use it (much smaller than the previous PNG).
+- **PWA icon optimization**: added properly-sized `brand-logo-192.png` and `brand-logo-512.png`, updated both manifests to point at them, and resized `brand-logo.png` to a small favicon-friendly size.
+- **Hero fallback optimization**: added `public/herobarber (2).jpg` and switched non-WebP fallback from PNG → JPG to reduce worst-case downloads.
+- **Precache safety**: excluded legacy oversized PNGs from Workbox precaching to prevent SW updates from downloading unused multi‑MB assets.
+
+**Integration Points**
+- PWA: `vite-plugin-pwa` / Workbox precache configuration
+- Document metadata: `index.html` + `src/components/seo/SEO.tsx`
+
+**File Paths**
+- `index.html`
+- `public/manifest.json`
+- `public/brand-logo.png`
+- `public/brand-logo-192.png`
+- `public/brand-logo-512.png`
+- `public/og-image.png`
+- `public/og-image.jpg`
+- `public/herobarber (2).jpg`
+- `vite.config.ts`
+- `src/components/seo/SEO.tsx`
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+
+**Next Priority Task**
+- Remove or archive unused legacy PNGs in `public/` (after confirming they’re not referenced anywhere) to reduce repo/deploy size further.
+
+**Code Organization & Quality**
+- Kept changes scoped to static assets + their direct references; avoided new runtime dependencies by using one-off CLI tooling for image conversion.
+
+---
+
+#### 2025-12-13: Landing Page Hero Asset Optimization (WebP + Priority Loading)
+
+**Core Components**
+- Landing hero rendering (prioritized LCP image via `<picture>`)
+- Public hero asset optimization (`public/herobarber (2).webp`)
+
+**Key Features**
+- Replaced the hero CSS background image with a real `<picture>` element using **WebP + PNG fallback** to cut transfer size for the landing hero (6.31MB → 0.19MB).
+- Added `loading="eager"` + `fetchPriority="high"` + `decoding="async"` for the hero image to improve LCP.
+- Kept the original PNG as a legacy fallback without changing routing or introducing new runtime dependencies.
+
+**Integration Points**
+- Static asset served from `public/` at `/herobarber (2).webp`
+
+**File Paths**
+- `public/herobarber (2).webp`
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+
+**Next Priority Task**
+- Convert remaining oversized `public/*.{png,jpg}` (e.g. `og-image.png`, `nobackgroundlogo.png`) to WebP/AVIF and ensure any below-the-fold `<img>` elements use `loading="lazy"`.
+
+**Code Organization & Quality**
+- Kept changes localized to the landing hero; preserved the semantic z-index layering system (`z-base`/`z-elevated`) and avoided new patterns beyond standard `<picture>` usage.
+
+---
+
 #### 2025-12-13: Vercel Build Fixes (API TS Lib + Script Type Safety)
 
 **Core Components**

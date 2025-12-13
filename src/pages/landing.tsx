@@ -35,13 +35,20 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section 
         className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-center"
-        style={{
-          backgroundImage: `url('/herobarber (2).png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
       >
+        {/* Hero image (replaces CSS background for better loading priority) */}
+        <picture className="absolute inset-0 z-base" aria-hidden="true">
+          <source type="image/webp" srcSet={encodeURI("/herobarber (2).webp")} />
+          <img
+            src={encodeURI("/herobarber (2).jpg")}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
+        </picture>
+
         {/* Dark Overlay for text readability - reduced opacity to show image */}
         <div className="absolute inset-0 bg-black/30 dark:bg-black/40 z-base" />
         

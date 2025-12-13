@@ -5,7 +5,8 @@ import { getDashboardRoute } from "@/lib/roles";
 
 export default function Hero() {
   const { user, isAuthenticated } = useAuth();
-  const heroImageUrl = encodeURI('/herobarber (2).png');
+  const heroJpgUrl = encodeURI("/herobarber (2).jpg");
+  const heroWebpUrl = encodeURI("/herobarber (2).webp");
   
   // Determine dashboard route based on user role
   const getDashboardLink = () => {
@@ -18,13 +19,20 @@ export default function Hero() {
   return (
     <div 
       className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-center"
-      style={{
-        backgroundImage: `url('${heroImageUrl}')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
     >
+      {/* Hero image (replaces CSS background for better loading priority) */}
+      <picture className="absolute inset-0 z-base" aria-hidden="true">
+        <source type="image/webp" srcSet={heroWebpUrl} />
+        <img
+          src={heroJpgUrl}
+          alt=""
+          className="h-full w-full object-cover"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+        />
+      </picture>
+
       {/* Dark Overlay for text readability - reduced opacity to show image */}
       <div className="absolute inset-0 bg-black/30 dark:bg-black/40 z-base" />
 
