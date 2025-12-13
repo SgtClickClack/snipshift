@@ -660,9 +660,10 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
   
   try {
     // Fetch both shifts and legacy jobs for this user
+    // Note: We pass excludeExpired: false to include past jobs for calendar/history display
     const [shifts, jobsResult] = await Promise.all([
       shiftsRepo.getShiftsByEmployer(userId),
-      jobsRepo.getJobs({ businessId: userId })
+      jobsRepo.getJobs({ businessId: userId, excludeExpired: false })
     ]);
 
     const jobs = jobsResult?.data || [];

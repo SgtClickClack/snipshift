@@ -73,26 +73,96 @@ export async function getApplications(
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const [data, totalResult] = await Promise.all([
-    db
-      .select()
-      .from(applications)
-      .where(whereClause)
-      .orderBy(desc(applications.appliedAt))
-      .limit(limit)
-      .offset(offset),
-    db
-      .select({ count: count() })
-      .from(applications)
-      .where(whereClause),
-  ]);
+  try {
+    const [data, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(applications)
+        .where(whereClause)
+        .orderBy(desc(applications.appliedAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: count() })
+        .from(applications)
+        .where(whereClause),
+    ]);
 
-  return {
-    data,
-    total: totalResult[0]?.count || 0,
-    limit,
-    offset,
-  };
+    return {
+      data,
+      total: totalResult[0]?.count || 0,
+      limit,
+      offset,
+    };
+  } catch (error: any) {
+    if (!shouldFallbackToJobsOnly(error)) {
+      throw error;
+    }
+
+    console.warn('[getApplications] Falling back to jobs-only query (shift columns/table missing).', {
+      filters,
+      code: error?.code ?? error?.cause?.code,
+      message: error?.message ?? error?.cause?.message,
+    });
+
+    // Fallback: don't reference shift_id column (older DBs might not have it).
+    // If filtering by shiftId was requested, return empty since we can't query it.
+    if (shiftId) {
+      return { data: [], total: 0, limit, offset };
+    }
+
+    const fallbackConditions = [];
+    if (jobId) {
+      fallbackConditions.push(sql`job_id = ${jobId}`);
+    }
+    if (userId) {
+      fallbackConditions.push(sql`user_id = ${userId}`);
+    }
+    if (status) {
+      fallbackConditions.push(sql`status = ${status}`);
+    }
+
+    const fallbackWhere = fallbackConditions.length > 0 
+      ? sql`WHERE ${sql.join(fallbackConditions, sql` AND `)}`
+      : sql``;
+
+    const [dataRaw, countRaw] = await Promise.all([
+      (db as any).execute(sql`
+        SELECT
+          id,
+          job_id AS "jobId",
+          NULL AS "shiftId",
+          user_id AS "userId",
+          name,
+          email,
+          cover_letter AS "coverLetter",
+          status,
+          applied_at AS "appliedAt",
+          responded_at AS "respondedAt"
+        FROM applications
+        ${fallbackWhere}
+        ORDER BY applied_at DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `),
+      (db as any).execute(sql`
+        SELECT COUNT(*) as count FROM applications ${fallbackWhere}
+      `),
+    ]);
+
+    const rows = (dataRaw as any)?.rows ?? dataRaw ?? [];
+    const countRows = (countRaw as any)?.rows ?? countRaw ?? [];
+
+    return {
+      data: rows.map((r: any) => ({
+        ...r,
+        shiftId: null,
+      })),
+      total: Number(countRows[0]?.count ?? 0),
+      limit,
+      offset,
+    };
+  }
 }
 
 /**

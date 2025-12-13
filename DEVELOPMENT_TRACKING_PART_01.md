@@ -1,4 +1,35 @@
 
+#### 2025-12-14: Fix Shop Shifts API 500 Error (Missing shift_id Column Fallback)
+
+**Core Components**
+- Applications repository (`getApplications` function)
+- Shop shifts route (`GET /api/shifts/shop/:userId`)
+
+**Key Features**
+- Fixed `GET /api/shifts/shop/:userId` returning **500** when the production database is missing the `shift_id` column in the `applications` table by adding a fallback query in `getApplications()`.
+- Added `excludeExpired: false` to the jobs query in the shop shifts route to ensure past jobs are included for calendar/history display.
+- Applied the same fix to both `.ts` and `.js` versions of the affected files.
+
+**Integration Points**
+- API endpoint: `GET /api/shifts/shop/:userId`
+- Applications repository: `getApplications()`
+- Calendar component: `ProfessionalCalendar`
+
+**File Paths**
+- `api/_src/repositories/applications.repository.ts`
+- `api/_src/repositories/applications.repository.js`
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/shifts.js`
+
+**Next Priority Task**
+- Deploy the fix to production and verify the calendar loads shifts correctly.
+
+**Code Organization & Quality**
+- Kept DB compatibility logic in the repository layer, matching the fallback patterns already in place for other functions.
+- Used the existing `shouldFallbackToJobsOnly` helper for consistency.
+
+---
+
 #### 2025-12-14: Fix Professional Calendar Production Crash (Missing React Query Import)
 
 **Core Components**
