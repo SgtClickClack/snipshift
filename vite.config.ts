@@ -142,33 +142,82 @@ export default defineConfig({
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         // Manual chunk splitting strategy
-        // Keep React in vendor chunk with other dependencies to ensure it's available
         manualChunks: (id) => {
-          // Group all vendor dependencies together to ensure React is available when needed
-          // Vite will handle proper loading order based on import dependencies
-          if (id.includes('node_modules')) {
-            // Ensure lucide-react is in vendor chunk to prevent code-splitting issues
-            // This is critical for lazy-loaded components that use icons
-            if (id.includes('lucide-react')) {
-              return 'vendor';
-            }
-            // Check if it's a React-related package
-            if (id.includes('react') || id.includes('react-dom') || 
-                id.includes('react-router') || id.includes('react-helmet') ||
-                id.includes('@tanstack/react-query') || id.includes('@radix-ui')) {
-              // Put React and React-related libs in vendor chunk together
-              // This ensures React is available when other React libs need it
-              return 'vendor';
-            }
-            // All other node_modules also go to vendor
+          if (!id.includes('node_modules')) {
+            return;
+          }
+
+          // Extract package name from node_modules path.
+          // Handles both scoped and unscoped packages.
+          const match = id.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+          const pkg = match?.[1];
+          if (!pkg) {
             return 'vendor';
           }
+
+          // Keep React + router + query together for maximum stability.
+          if (
+            pkg === 'react' ||
+            pkg === 'react-dom' ||
+            pkg === 'scheduler' ||
+            pkg === 'use-sync-external-store' ||
+            pkg === 'react-router' ||
+            pkg === 'react-router-dom' ||
+            pkg === 'react-helmet-async' ||
+            pkg.startsWith('@tanstack/')
+          ) {
+            return 'vendor-react';
+          }
+
+          // UI primitives + icons.
+          if (pkg.startsWith('@radix-ui/') || pkg === 'lucide-react') {
+            return 'vendor-ui';
+          }
+
+          // Firebase is large; isolate it for better caching.
+          if (pkg === 'firebase' || pkg.startsWith('firebase/')) {
+            return 'vendor-firebase';
+          }
+
+          // Maps + places autocomplete are heavy and not needed everywhere.
+          if (
+            pkg === '@react-google-maps/api' ||
+            pkg === '@googlemaps/js-api-loader' ||
+            pkg === 'use-places-autocomplete'
+          ) {
+            return 'vendor-maps';
+          }
+
+          // Payments.
+          if (pkg.startsWith('@stripe/') || pkg === 'stripe') {
+            return 'vendor-payments';
+          }
+
+          // Charts can be very large (recharts + d3*).
+          if (pkg === 'recharts' || pkg.startsWith('d3-')) {
+            return 'vendor-charts';
+          }
+
+          // Calendar + date-related UI dependencies.
+          if (
+            pkg === 'react-big-calendar' ||
+            pkg === 'moment' ||
+            pkg === 'react-day-picker' ||
+            pkg === 'date-fns'
+          ) {
+            return 'vendor-calendar';
+          }
+
+          // Real-time client.
+          if (pkg === 'socket.io-client' || pkg === 'engine.io-client') {
+            return 'vendor-realtime';
+          }
+
+          return 'vendor';
         },
       },
       // Ensure external dependencies are properly resolved
       external: [],
-      // Preserve module structure to prevent tree-shaking issues
-      preserveModules: false,
     },
     chunkSizeWarningLimit: 1000,
     commonjsOptions: {

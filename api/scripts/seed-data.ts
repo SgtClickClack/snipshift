@@ -141,17 +141,18 @@ async function seedJobsForUser(
   const { daysAhead = 30 } = options;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const toDateString = (d: Date) => d.toISOString().slice(0, 10);
 
   const jobsToCreate: Array<{
     businessId: string;
     title: string;
     payRate: string;
     description: string;
-    date: Date;
+    date: string;
     startTime: string;
     endTime: string;
     status: 'open' | 'filled';
-    role: 'barber' | 'stylist' | 'colorist';
+    role: 'barber' | 'hairdresser' | 'stylist' | 'other';
     shopName?: string;
     address?: string;
     city?: string;
@@ -171,7 +172,7 @@ async function seedJobsForUser(
       title: 'Weekend Cover Needed',
       payRate: '45.00',
       description: 'Looking for an experienced barber for Saturday shift. Must have 2+ years experience. Great team environment.',
-      date: jobDate,
+      date: toDateString(jobDate),
       startTime: '09:00:00',
       endTime: '17:00:00',
       status: 'open',
@@ -315,6 +316,9 @@ async function seedData(options: SeedOptions = {}) {
 
     let totalShifts = 0;
     let totalJobs = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayDateString = today.toISOString().slice(0, 10);
 
     for (const user of businessUsers) {
       console.log(`👤 Seeding data for: ${user.email} (${user.id})`);
@@ -346,7 +350,7 @@ async function seedData(options: SeedOptions = {}) {
         .where(
           and(
             eq(jobs.businessId, user.id),
-            gte(jobs.date, new Date())
+            gte(jobs.date, todayDateString)
           )
         )
         .limit(1);

@@ -493,11 +493,17 @@ async function geocodeCity(cityName: string): Promise<{ lat: number; lng: number
       return null;
     }
     
-    const data = await response.json();
-    if (data && data.length > 0) {
+    const data: unknown = await response.json();
+    if (
+      Array.isArray(data) &&
+      data.length > 0 &&
+      typeof (data[0] as { lat?: unknown }).lat === 'string' &&
+      typeof (data[0] as { lon?: unknown }).lon === 'string'
+    ) {
+      const first = data[0] as { lat: string; lon: string };
       return {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
+        lat: parseFloat(first.lat),
+        lng: parseFloat(first.lon),
       };
     }
     

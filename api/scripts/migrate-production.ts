@@ -80,6 +80,7 @@ if (!pool) {
   console.error('❌ Database connection failed. Check DATABASE_URL.');
   process.exit(1);
 }
+const dbPool = pool as NonNullable<typeof pool>;
 
 async function applyMigrations() {
   console.log('🚀 Starting migration process...');
@@ -135,7 +136,7 @@ async function applyMigrations() {
         if (!stmt) continue;
         
         try {
-          await pool.query(stmt);
+          await dbPool.query(stmt);
         } catch (error: any) {
           // Skip if already exists
           if (error?.code === '42P07' || error?.code === '42710' || error?.code === '42723' ||

@@ -1,4 +1,95 @@
 
+#### 2025-12-13: Vercel Build Fixes (API TS Lib + Script Type Safety)
+
+**Core Components**
+- Vercel local build pipeline (`vercel pull`, `vercel build`)
+- API TypeScript configuration (`api/tsconfig.json`)
+- API jobs geocoding helper typing
+- DB utility scripts typing (migration + seeding)
+
+**Key Features**
+- **Vercel build reproducibility**: pulled project settings locally and reproduced the failing step(s) in the same pipeline Vercel uses.
+- **API TS compile fix**: moved API TS target/lib to ES2021 to support modern String APIs (e.g. `replaceAll`) under strict typing.
+- **Safe geocoding parsing**: added runtime/TS guards around Nominatim JSON response before indexing.
+- **Script typing fixes**:
+  - Eliminated nullable pool usage warnings in `migrate-production`.
+  - Updated `seed-data` to use ISO date strings for Drizzle `date` columns (and date comparisons).
+
+**Integration Points**
+- `vercel pull --yes`
+- `vercel build`
+- `api` `postinstall` (`tsc && node fix-imports.js`)
+
+**File Paths**
+- `api/tsconfig.json`
+- `api/_src/index.ts`
+- `api/scripts/migrate-production.ts`
+- `api/scripts/seed-data.ts`
+
+**Next Priority Task**
+- Reduce Vite build output chunk size (vendor chunk > 1MB) to improve caching/performance.
+
+**Code Organization & Quality**
+- Kept changes scoped to build correctness; avoided new patterns and added runtime guards where external JSON is consumed.
+
+---
+
+#### 2025-12-13: Vite/Rollup Build Warning Fix (preserveModules)
+
+**Core Components**
+- Vite build configuration
+- Rollup options wiring
+
+**Key Features**
+- Removed invalid Rollup input option `preserveModules` from Vite’s `build.rollupOptions` to eliminate the build warning.
+- Confirmed warning is gone in both `npm run vercel-build` and full `vercel build`.
+
+**Integration Points**
+- `npm run vercel-build`
+- `vercel build`
+
+**File Paths**
+- `vite.config.ts`
+
+**Next Priority Task**
+- Reduce Vite build output chunk size (vendor chunk > 1MB) to improve caching/performance.
+
+**Code Organization & Quality**
+- Kept config change minimal (no behavior change intended since `preserveModules` was `false` / default).
+
+---
+
+#### 2025-12-13: Vite Chunk Splitting (Reduce Vendor Chunk Size)
+
+**Core Components**
+- Vite build chunking (`manualChunks`)
+- Vendor bundle organization for caching/performance
+
+**Key Features**
+- Split the previous single large `vendor` bundle into stable domain chunks:
+  - `vendor-react` (React + router + TanStack Query)
+  - `vendor-ui` (Radix UI + lucide icons)
+  - `vendor-firebase` (Firebase SDK)
+  - `vendor-maps` (Google Maps loader + maps helpers)
+  - `vendor-calendar` (calendar/date UI dependencies)
+  - `vendor-charts` (recharts + d3*)
+  - `vendor-realtime` (socket.io-client)
+- Reduced the remaining generic `vendor` chunk to well below the 1MB warning threshold.
+
+**Integration Points**
+- `npm run vercel-build` (verified chunk sizes; no >1MB warning)
+
+**File Paths**
+- `vite.config.ts`
+
+**Next Priority Task**
+- Investigate the remaining local build warnings (`EBADENGINE` + npm `--unsafe-perm`) to keep logs clean and future-proof.
+
+**Code Organization & Quality**
+- Used deterministic package-based chunk naming to improve long-term caching and avoid fragile path-based heuristics.
+
+---
+
 #### 2025-12-13: Phase 4 Final Polish (Structure, Naming, Import Hygiene, README)
 
 **Core Components Implemented:**
