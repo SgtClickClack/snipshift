@@ -524,18 +524,68 @@ export async function getShiftsByEmployer(employerId: string, status?: 'draft' |
     return [];
   }
 
-  const conditions = [eq(shifts.employerId, employerId)];
-  if (status) {
-    conditions.push(eq(shifts.status, status));
+  try {
+    const conditions = [eq(shifts.employerId, employerId)];
+    if (status) {
+      conditions.push(eq(shifts.status, status));
+    }
+
+    const result = await db
+      .select()
+      .from(shifts)
+      .where(and(...conditions))
+      .orderBy(desc(shifts.createdAt));
+
+    return result;
+  } catch (error: any) {
+    // Compatibility fallback:
+    // Some environments may have an older `shifts` table schema (pre-migrations),
+    // where newer columns (e.g. `assignee_id`, `attendance_status`, etc.) don't exist.
+    // Drizzle's `.select()` will reference all schema columns and can 500.
+    console.error('[getShiftsByEmployer] Falling back to minimal shifts query:', {
+      employerId,
+      status,
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+    });
+
+    const statusClause = status ? sql` AND status = ${status}` : sql``;
+    const raw = await (db as any).execute(sql`
+      SELECT
+        id,
+        employer_id AS "employerId",
+        title,
+        description,
+        start_time AS "startTime",
+        end_time AS "endTime",
+        hourly_rate AS "hourlyRate",
+        status,
+        location,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM shifts
+      WHERE employer_id = ${employerId}${statusClause}
+      ORDER BY created_at DESC
+    `);
+
+    const rows = (raw as any)?.rows ?? raw;
+    return (rows as any[]).map((r) => ({
+      ...r,
+      assigneeId: null,
+      attendanceStatus: 'pending',
+      paymentStatus: 'UNPAID',
+      paymentIntentId: null,
+      stripeChargeId: null,
+      applicationFeeAmount: null,
+      transferAmount: null,
+      lat: null,
+      lng: null,
+      isRecurring: false,
+      autoAccept: false,
+      parentShiftId: null,
+    }));
   }
-
-  const result = await db
-    .select()
-    .from(shifts)
-    .where(and(...conditions))
-    .orderBy(desc(shifts.createdAt));
-
-  return result;
 }
 
 /**

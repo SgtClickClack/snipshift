@@ -731,7 +731,14 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
         status,
         location,
         applicationCount,
-        createdAt: job.createdAt.toISOString(),
+        // `jobsRepo.getJobs()` can return `createdAt` as a string in some environments.
+        // Normalize defensively to avoid runtime 500s in `/api/shifts/shop/:userId`.
+        createdAt: (() => {
+          const raw: any = (job as any).createdAt;
+          if (raw && typeof raw.toISOString === 'function') return raw.toISOString();
+          const d = new Date(raw ?? Date.now());
+          return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+        })(),
         businessId: job.businessId,
         // Add type indicator for debugging (optional)
         _type: 'job'

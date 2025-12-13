@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
 import { Calendar, momentLocalizer, View, Event } from "react-big-calendar";
 import moment from "moment";
 import { format, isPast, isToday, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
@@ -244,11 +244,22 @@ export default function ProfessionalCalendar({
     };
   }, []); // Only log on mount/unmount
   
-  // Track re-renders to debug infinite loops
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-  if (renderCountRef.current > 10) {
-    console.warn('[CALENDAR COMPONENT] Excessive re-renders detected:', renderCountRef.current);
+  // Track re-renders to debug *true* loops (avoid false positives from expected timers)
+  const renderRateRef = useRef<{ windowStart: number; count: number }>({
+    windowStart: Date.now(),
+    count: 0,
+  });
+  {
+    const now = Date.now();
+    const elapsed = now - renderRateRef.current.windowStart;
+    if (elapsed > 1000) {
+      renderRateRef.current.windowStart = now;
+      renderRateRef.current.count = 0;
+    }
+    renderRateRef.current.count += 1;
+    if (renderRateRef.current.count > 10) {
+      console.warn('[CALENDAR COMPONENT] Excessive re-renders detected (within 1s):', renderRateRef.current.count);
+    }
   }
   
   const { toast } = useToast();
@@ -352,6 +363,40 @@ export default function ProfessionalCalendar({
       return null;
     }
   });
+
+  const normalizeCalendarSettingsForCompare = useCallback((settings: CalendarSettings | null) => {
+    if (!settings) return null;
+
+    // Ensure stable key order + presence for JSON comparisons (prevents render loops
+    // when upstream objects get recreated with the same values).
+    const openingHours = settings.openingHours || ({} as CalendarSettings['openingHours']);
+    const fallbackWeekday = { open: '09:00', close: '18:00', enabled: false };
+    const fallbackWeekend = { open: '09:00', close: '17:00', enabled: false };
+
+    return {
+      shiftPattern: settings.shiftPattern,
+      defaultShiftLength: settings.defaultShiftLength,
+      openingHours: {
+        monday: openingHours.monday || fallbackWeekday,
+        tuesday: openingHours.tuesday || fallbackWeekday,
+        wednesday: openingHours.wednesday || fallbackWeekday,
+        thursday: openingHours.thursday || fallbackWeekday,
+        friday: openingHours.friday || fallbackWeekday,
+        saturday: openingHours.saturday || fallbackWeekend,
+        sunday: openingHours.sunday || fallbackWeekend,
+      },
+    };
+  }, []);
+
+  const areCalendarSettingsEqual = useCallback(
+    (a: CalendarSettings | null, b: CalendarSettings | null) => {
+      return (
+        JSON.stringify(normalizeCalendarSettingsForCompare(a)) ===
+        JSON.stringify(normalizeCalendarSettingsForCompare(b))
+      );
+    },
+    [normalizeCalendarSettingsForCompare]
+  );
   
   // Save settings to localStorage
   const handleSaveSettings = useCallback((settings: CalendarSettings) => {
@@ -389,7 +434,7 @@ export default function ProfessionalCalendar({
         if (user?.businessSettings) {
           const converted = convertBusinessSettingsToCalendarSettings(user.businessSettings);
           if (converted) {
-            setCalendarSettings(converted);
+            setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, converted) ? prev : converted));
             // Also save to localStorage for consistency
             const key = getSettingsKey();
             localStorage.setItem(key, JSON.stringify(converted));
@@ -403,18 +448,18 @@ export default function ProfessionalCalendar({
         const stored = localStorage.getItem(key);
         if (stored) {
           const parsed = JSON.parse(stored);
-          setCalendarSettings(parsed);
+          setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
           console.log('[CALENDAR] Settings loaded from localStorage:', parsed);
         } else {
-          setCalendarSettings(null);
+          setCalendarSettings((prev) => (prev === null ? prev : null));
         }
       } catch (error) {
         console.error('[CALENDAR] Error loading settings:', error);
-        setCalendarSettings(null);
+        setCalendarSettings((prev) => (prev === null ? prev : null));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings]);
+  }, [user?.id, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings, areCalendarSettingsEqual]);
   
   // Listen for storage events and custom events to sync settings when they're updated from other components
   useEffect(() => {
@@ -424,7 +469,7 @@ export default function ProfessionalCalendar({
       if (e.key === getSettingsKey() && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue);
-          setCalendarSettings(parsed);
+          setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
           console.log('[CALENDAR] Settings synced from storage event:', parsed);
         } catch (error) {
           console.error('[CALENDAR] Failed to parse settings from storage event:', error);
@@ -434,7 +479,8 @@ export default function ProfessionalCalendar({
     
     const handleCustomEvent = (e: CustomEvent) => {
       if (e.detail?.settings) {
-        setCalendarSettings(e.detail.settings);
+        const nextSettings = e.detail.settings as CalendarSettings;
+        setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, nextSettings) ? prev : nextSettings));
         console.log('[CALENDAR] Settings synced from custom event:', e.detail.settings);
       }
     };
@@ -445,7 +491,7 @@ export default function ProfessionalCalendar({
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('calendarSettingsUpdated', handleCustomEvent as EventListener);
     };
-  }, [getSettingsKey]);
+  }, [getSettingsKey, areCalendarSettingsEqual]);
   
   // Log when calendarSettings changes to verify re-renders
   useEffect(() => {

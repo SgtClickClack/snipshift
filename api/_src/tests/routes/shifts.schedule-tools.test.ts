@@ -119,6 +119,41 @@ describe('Shifts Routes - shop schedule tools', () => {
     expect(typeof res.body[0].startTime).toBe('string');
   });
 
+  it('GET /api/shifts/shop/:userId does not 500 when legacy jobs createdAt is a string', async () => {
+    mockShiftsRepo.getShiftsByEmployer.mockResolvedValue([]);
+
+    const mockJobsRepo = await import('../../repositories/jobs.repository.js');
+    vi.mocked(mockJobsRepo.getJobs).mockResolvedValue({
+      data: [
+        {
+          id: 'job-1',
+          title: 'Legacy Job',
+          shopName: 'Legacy Shop',
+          payRate: '50',
+          status: 'open',
+          date: new Date('2025-12-01T00:00:00.000Z'),
+          startTime: '09:00:00',
+          endTime: '17:00:00',
+          address: '123 Main St',
+          city: 'Test City',
+          state: 'TS',
+          createdAt: '2025-12-01T00:00:00.000Z',
+          businessId: 'user-123',
+        },
+      ],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    } as any);
+
+    const res = await supertest(app).get('/api/shifts/shop/user-123').expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0]).toMatchObject({ id: 'job-1', _type: 'job' });
+    expect(typeof res.body[0].createdAt).toBe('string');
+  });
+
   it('POST /api/shifts/copy-previous-week copies last week shifts into this week as drafts', async () => {
     const baseStart = new Date('2025-12-08T00:00:00.000Z');
     const baseEnd = new Date('2025-12-14T23:59:59.999Z');

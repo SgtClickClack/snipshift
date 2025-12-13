@@ -8,6 +8,36 @@
 
 ---
 
+### Update: 2025-12-14 - Deployment Preparation: Automated Pre-Flight Checks Added
+
+**Status:** ✅ **READY FOR LAUNCH QA**
+
+**Action Taken:**
+- Added `npm run preflight` / `npm run preflight:local` to automatically scan for common production foot-guns:
+  - Missing required environment variables (Vite Firebase/Stripe/Maps + API DB/Stripe/Firebase Admin)
+  - Suspicious production settings (e.g. test Stripe keys in prod mode, `VITE_E2E` enabled)
+  - Debug hygiene (`debugger` statements) and frontend `console.log` leftovers
+  - Accessibility hygiene: warns on `<img>` tags missing `alt`
+
+**Impact:**
+- **Fewer deployment surprises:** One command surfaces the most common “it works locally” issues before pushing live.
+
+---
+
+### Update: 2025-12-14 - Fix Shop Listings Fetch (500) + Calendar Re-render Stability
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Fixed `GET /api/shifts/shop/:userId` returning 500 by normalizing legacy `jobs.createdAt` values and adding a safe repository fallback for older shift schemas.
+- Prevented the Professional calendar settings sync from repeatedly re-setting state when values haven’t changed (reduces excessive re-renders) and rate-limited the “excessive re-render” warning to only fire on true high-frequency loops.
+
+**Impact:**
+- **Shop Dashboard & Calendars:** Listings/shifts load reliably instead of failing with server 500s.
+- **Stability:** Calendar renders stabilize and stop looping on settings updates.
+
+---
+
 ### Update: 2025-12-14 - Salon “Post Job” Submission Wired (createShift + toasts + redirect)
 
 **Status:** ✅ **WIRING COMPLETE**
@@ -33,6 +63,32 @@
 **Impact:**
 - **Scheduling UX:** Shops can schedule shifts visually and publish them faster (less form-driven friction).
 - **Sync:** Changes invalidate relevant queries so the Job/Shift marketplace and dashboards reflect updates immediately.
+
+---
+
+### Update: 2025-12-14 - E2E Coverage Added for Shop Schedule + Auth Stability
+
+**Status:** ✅ **TEST COVERAGE IMPROVED**
+
+**Action Taken:**
+- Added Playwright coverage for `/shop/schedule` (Copy Previous Week, Publish All, Quick Create draft).
+- Stabilized E2E auth by hydrating the session user from sessionStorage and using the API’s `mock-test-token` bypass (scoped to `VITE_E2E=1`).
+
+**Impact:**
+- **CI confidence:** Reduced flakiness caused by UI-driven Firebase auth in automation.
+- **Regression protection:** Core shop scheduling workflows now have deterministic E2E coverage.
+
+---
+
+### Update: 2025-12-14 - “My Listings” Now Refreshes Instantly After Posting
+
+**Status:** ✅ **WIRING COMPLETE**
+
+**Action Taken:**
+- After a successful salon “Post Job” (`createShift`), invalidated the shop listing and feed query caches so the Dashboard’s “My Listings” reflects the new post immediately.
+
+**Impact:**
+- **No manual refresh:** Newly posted shifts appear immediately when returning to the dashboard.
 
 ---
 

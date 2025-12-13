@@ -1,4 +1,127 @@
 
+#### 2025-12-14: Fix Shop Shifts 500 + Prevent Calendar Settings Render Loop
+
+**Core Components**
+- Shop shifts aggregation route (`/api/shifts/shop/:userId`)
+- Shifts repository employer query fallback (legacy schema compatibility)
+- Professional calendar settings sync (re-render loop prevention)
+
+**Key Features**
+- Fixed `GET /api/shifts/shop/:userId` returning **500** by:
+  - Normalizing legacy `jobs.createdAt` values that may arrive as strings.
+  - Adding a **safe fallback query** in `getShiftsByEmployer` when the underlying DB schema is older than the current Drizzle model (avoids crashes from missing columns).
+- Prevented the Professional calendar from entering a settings-driven render loop by only updating `calendarSettings` when the values actually change (stable normalization + equality guard).
+- Adjusted the calendar’s “excessive re-render” detector to only warn on **high render rate** (within 1s), avoiding false positives from expected timer-driven updates.
+
+**Integration Points**
+- API endpoint: `GET /api/shifts/shop/:userId`
+- Frontend component: `ProfessionalCalendar` (settings storage + sync)
+- Tests: `vitest` route coverage for shop shifts normalization behavior
+
+**File Paths**
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/shifts.js`
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/repositories/shifts.repository.js`
+- `api/_src/tests/routes/shifts.schedule-tools.test.ts`
+- `src/components/calendar/professional-calendar.tsx`
+
+**Next Priority Task**
+- Fix the failing API integration test in `api/_src/tests/repositories/jobs.repository.test.ts` (filters returning empty set unexpectedly).
+
+**Code Organization & Quality**
+- Kept compatibility logic isolated to the repository layer (route stays focused on response shaping).
+- Added a targeted regression test and avoided introducing new patterns or dependencies.
+
+---
+
+#### 2025-12-14: Deployment Preflight Script (Env + Production Hygiene Checks)
+
+**Core Components**
+- Deployment readiness automation (`preflight` CLI)
+- Production environment verification (frontend + API env keys)
+
+**Key Features**
+- Added a `preflight` script that checks for commonly missed production settings:
+  - Missing required environment variables (Vite Firebase/Stripe/Maps + API DB/Stripe/Firebase Admin)
+  - Suspicious production settings (e.g. Stripe test keys in prod mode, `VITE_E2E` enabled)
+  - Debug hygiene (`debugger` statements) and frontend `console.log` leftovers
+  - Accessibility hygiene: warns if any `<img>` tags are missing `alt`
+- Supports `--local` mode to report issues without failing when running on a dev machine.
+
+**Integration Points**
+- npm scripts: `npm run preflight`, `npm run preflight:local`
+
+**File Paths**
+- `scripts/preflight.cjs`
+- `package.json`
+
+**Next Priority Task**
+- Run `npm run preflight` in a production-like environment (CI/Vercel) with production env vars set to validate “live” readiness.
+
+**Code Organization & Quality**
+- Kept the script dependency-free (Node + existing `dotenv`), scoped scans to `src/` and `api/_src`, and avoided reading/printing secret values.
+
+---
+
+#### 2025-12-14: Invalidate “My Listings” Queries After Salon Post Job (Immediate Dashboard Sync)
+
+**Core Components**
+- Salon create job submit flow (`SalonCreateJobPage`)
+- React Query cache invalidation for shop listings and feeds
+
+**Key Features**
+- After a successful `createShift`, invalidates employer listing queries so the shop dashboard “My Listings” updates instantly without a hard refresh.
+- Also invalidates shift/job feed queries to keep marketplace views in sync.
+
+**Integration Points**
+- UI route: `/salon/create-job` → `/dashboard`
+- API endpoint: `POST /api/shifts`
+- React Query keys: `['shop-shifts', userId]`, `['shop-shifts']`, `['shop-schedule-shifts']`, `['/api/shifts']`, `['/api/jobs']`
+
+**File Paths**
+- `src/pages/salon-create-job.tsx`
+
+**Next Priority Task**
+- Fix the current repo `npm run lint` errors (it currently fails due to pre-existing API lint issues like `prefer-const` in `api/_src/index.ts`).
+
+**Code Organization & Quality**
+- Kept changes scoped to the post-submit success path; reused existing query key patterns already used in dashboards/calendars.
+
+---
+
+#### 2025-12-14: Playwright Coverage for Shop Schedule + E2E Auth Reliability (SessionStorage + Mock Token)
+
+**Core Components**
+- Playwright global auth setup (`tests/auth.setup.ts`)
+- E2E session hydration (AuthContext)
+- E2E API auth token support (React Query `apiRequest` / `getQueryFn`)
+- Shop schedule E2E coverage (`/shop/schedule`)
+
+**Key Features**
+- Stabilized E2E auth by hydrating the user from `sessionStorage['snipshift_test_user']` when `VITE_E2E=1` (no brittle Firebase UI login in automation).
+- Added E2E API auth fallback token (`Bearer mock-test-token`) so API routes work in Playwright runs.
+- Added a Playwright spec that covers `/shop/schedule` core workflows: **Copy Previous Week**, **Publish All**, and **Quick Create (Draft)**.
+
+**Integration Points**
+- Playwright: `npm run test:e2e`
+- E2E env: `VITE_E2E=1` (webServer config)
+- API auth bypass: `Bearer mock-test-token`
+
+**File Paths**
+- `tests/auth.setup.ts`
+- `tests/e2e/shop-schedule.spec.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/lib/queryClient.ts`
+
+**Next Priority Task**
+- Invalidate employer listing queries after successful salon job post so “My Listings” reflects the new post instantly.
+
+**Code Organization & Quality**
+- Kept the E2E bypass strictly behind `VITE_E2E` so dev/prod auth behavior remains Firebase-driven.
+
+---
+
 #### 2025-12-14: Fix Map Interaction Wiring on Details Pages (Static Marker Mode)
 
 **Core Components**
@@ -61,7 +184,7 @@
 - `api/_src/tests/routes/shifts.schedule-tools.test.ts`
 
 **Next Priority Task**
-- Add Playwright coverage for `/shop/schedule` (quick create, drag/drop, copy/publish).
+- Invalidate employer listing queries after successful salon job post so “My Listings” reflects the new post instantly.
 
 **Code Organization & Quality**
 - Kept changes localized to scheduling surfaces + shift routes; reused existing React Query patterns for instant UI sync.
