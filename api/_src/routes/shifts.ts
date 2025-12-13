@@ -236,14 +236,14 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
   // Get shifts where user is employer (shop) and needs to review barber
   const shopShifts = await shiftsRepo.getShifts({
     employerId: userId,
-    status: 'pending_completion' as any,
+    status: 'pending_completion',
     limit: 100,
   });
 
   // Get shifts where user is assignee (barber) and needs to review shop
   const barberShifts = await shiftsRepo.getShifts({
     assigneeId: userId,
-    status: 'pending_completion' as any,
+    status: 'pending_completion',
     limit: 100,
   });
 

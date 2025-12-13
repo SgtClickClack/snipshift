@@ -13,7 +13,7 @@ import { getDb } from '../db/index.js';
 export interface ShiftFilters {
   employerId?: string;
   assigneeId?: string;
-  status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+  status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
   startTimeAfter?: Date | string;
   limit?: number;
   offset?: number;
@@ -68,59 +68,85 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
   // Build query
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  // Get total count
-  const countResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(shifts)
-    .where(whereClause);
-  
-  const total = Number(countResult[0]?.count || 0);
+  try {
+    // Get total count
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(shifts)
+      .where(whereClause);
+    
+    const total = Number(countResult[0]?.count || 0);
 
-  // Get paginated data with employer (shop) information
-  const data = await db
-    .select({
-      // Shift fields
-      id: shifts.id,
-      employerId: shifts.employerId,
-      assigneeId: shifts.assigneeId,
-      title: shifts.title,
-      description: shifts.description,
-      startTime: shifts.startTime,
-      endTime: shifts.endTime,
-      hourlyRate: shifts.hourlyRate,
-      status: shifts.status,
-      attendanceStatus: shifts.attendanceStatus,
-      paymentStatus: shifts.paymentStatus,
-      paymentIntentId: shifts.paymentIntentId,
-      stripeChargeId: shifts.stripeChargeId,
-      applicationFeeAmount: shifts.applicationFeeAmount,
-      transferAmount: shifts.transferAmount,
-      location: shifts.location,
-      isRecurring: shifts.isRecurring,
-      autoAccept: shifts.autoAccept,
-      parentShiftId: shifts.parentShiftId,
-      createdAt: shifts.createdAt,
-      updatedAt: shifts.updatedAt,
-      // Employer (shop) fields
-      shopName: users.name,
-      shopAvatarUrl: users.avatarUrl,
-      // Location coordinates
-      lat: shifts.lat,
-      lng: shifts.lng,
-    })
-    .from(shifts)
-    .leftJoin(users, eq(shifts.employerId, users.id))
-    .where(whereClause)
-    .orderBy(desc(shifts.createdAt))
-    .limit(limit)
-    .offset(offset);
+    // Get paginated data with employer (shop) information
+    const data = await db
+      .select({
+        // Shift fields
+        id: shifts.id,
+        employerId: shifts.employerId,
+        assigneeId: shifts.assigneeId,
+        title: shifts.title,
+        description: shifts.description,
+        startTime: shifts.startTime,
+        endTime: shifts.endTime,
+        hourlyRate: shifts.hourlyRate,
+        status: shifts.status,
+        attendanceStatus: shifts.attendanceStatus,
+        paymentStatus: shifts.paymentStatus,
+        paymentIntentId: shifts.paymentIntentId,
+        stripeChargeId: shifts.stripeChargeId,
+        applicationFeeAmount: shifts.applicationFeeAmount,
+        transferAmount: shifts.transferAmount,
+        location: shifts.location,
+        isRecurring: shifts.isRecurring,
+        autoAccept: shifts.autoAccept,
+        parentShiftId: shifts.parentShiftId,
+        createdAt: shifts.createdAt,
+        updatedAt: shifts.updatedAt,
+        // Employer (shop) fields
+        shopName: users.name,
+        shopAvatarUrl: users.avatarUrl,
+        // Location coordinates
+        lat: shifts.lat,
+        lng: shifts.lng,
+      })
+      .from(shifts)
+      .leftJoin(users, eq(shifts.employerId, users.id))
+      .where(whereClause)
+      .orderBy(desc(shifts.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-  return {
-    data,
-    total,
-    limit,
-    offset,
-  };
+    return {
+      data,
+      total,
+      limit,
+      offset,
+    };
+  } catch (error: any) {
+    // Extract detailed error information
+    const errorDetails = {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      hint: error?.hint,
+      constraint: error?.constraint,
+      table: error?.table,
+      column: error?.column,
+      cause: error?.cause,
+      nestedMessage: error?.cause?.message,
+      nestedCode: error?.cause?.code,
+      nestedDetail: error?.cause?.detail,
+    };
+
+    console.error('[getShifts] Database query error:', {
+      filters,
+      error: errorDetails,
+      stack: error?.stack,
+    });
+
+    // Re-throw to be caught by error handler middleware
+    throw error;
+  }
 }
 
 /**
@@ -492,7 +518,7 @@ export async function deleteShift(id: string): Promise<boolean> {
 /**
  * Get shifts created by a specific employer
  */
-export async function getShiftsByEmployer(employerId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled'): Promise<typeof shifts.$inferSelect[]> {
+export async function getShiftsByEmployer(employerId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion'): Promise<typeof shifts.$inferSelect[]> {
   const db = getDb();
   if (!db) {
     return [];
@@ -515,7 +541,7 @@ export async function getShiftsByEmployer(employerId: string, status?: 'draft' |
 /**
  * Get shifts assigned to a specific professional (assignee)
  */
-export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled'): Promise<typeof shifts.$inferSelect[]> {
+export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion'): Promise<typeof shifts.$inferSelect[]> {
   const db = getDb();
   if (!db) {
     return [];
