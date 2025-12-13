@@ -78,7 +78,7 @@ export function OfferInbox() {
           <CardTitle>Job Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-4">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             <span className="ml-2 text-muted-foreground">Loading offers...</span>
           </div>
@@ -94,9 +94,9 @@ export function OfferInbox() {
           <CardTitle>Job Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-6 md:py-12 text-center">
-            <Inbox className="w-12 h-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium text-foreground mb-2">
+          <div className="flex flex-col items-center justify-center py-4 text-center">
+            <Inbox className="w-10 h-10 text-muted-foreground mb-3" />
+            <p className="text-base font-medium text-foreground mb-1">
               You're all caught up!
             </p>
             <p className="text-sm text-muted-foreground">
