@@ -237,7 +237,7 @@ export async function createShift(shiftData: {
   startTime: Date | string;
   endTime: Date | string;
   hourlyRate: string;
-  status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+  status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
   assigneeId?: string;
   location?: string;
   lat?: string | number;
@@ -399,7 +399,7 @@ export async function createRecurringShifts(
     startTime: Date | string;
     endTime: Date | string;
     hourlyRate: string;
-    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
     location?: string;
     lat?: string | number;
     lng?: string | number;
@@ -555,7 +555,7 @@ export async function createBatchShifts(
     startTime: Date | string;
     endTime: Date | string;
     hourlyRate: string;
-    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+    status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
     location?: string;
     assigneeId?: string;
   }>
