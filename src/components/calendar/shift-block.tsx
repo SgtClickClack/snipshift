@@ -58,11 +58,19 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
   
   const shiftLabel = getShiftLabel(event);
 
+  // Handle click with proper event handling
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    if (onClick) {
+      onClick();
+    }
+  };
+
   // State A: UNASSIGNED (Auto-generated slot) - Clean amber style, no dashed border
   if (isUnassigned) {
     return (
       <div
-        onClick={onClick}
+        onClick={handleClick}
         data-testid="shift-block-unassigned-slot"
         className={cn(
           "shift-block shift-block-unassigned",
@@ -87,7 +95,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
   if (status === 'draft') {
     return (
       <div
-        onClick={onClick}
+        onClick={handleClick}
         data-testid="shift-block-ghost-slot"
         className={cn(
           "shift-block shift-block-draft",
@@ -116,7 +124,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
 
     return (
       <div
-        onClick={onClick}
+        onClick={handleClick}
         data-testid="shift-block-pending"
         className={cn(
           "shift-block shift-block-invited",
@@ -142,7 +150,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
   if (status === 'pending' || status === 'open' || status === 'OPEN' || status === 'PUBLISHED') {
     return (
       <div
-        onClick={onClick}
+        onClick={handleClick}
         data-testid="shift-block-open"
         className={cn(
           "shift-block shift-block-open",
@@ -171,7 +179,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
 
     return (
       <div
-        onClick={onClick}
+        onClick={handleClick}
         data-testid="shift-block-confirmed"
         className={cn(
           "shift-block shift-block-confirmed",
@@ -200,7 +208,7 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
   // Fallback: Default rendering for other statuses (past, etc.)
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "shift-block shift-block-default",
         "w-full h-full rounded-md",

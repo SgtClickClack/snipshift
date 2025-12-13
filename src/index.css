@@ -574,6 +574,19 @@ button:active, a:active, [role="button"]:active {
   min-height: 20px !important;
   max-height: 22px !important;
   overflow: hidden;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Ensure shift blocks inside events are clickable */
+.rbc-month-view .rbc-event .shift-block {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Event wrapper should not block clicks */
+.rbc-month-view .rbc-event-content {
+  pointer-events: auto !important;
 }
 
 .rbc-month-view .rbc-event-content {
