@@ -247,10 +247,13 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
 
         // 2. If it's a shift, update the shift with row-level locking to prevent race conditions
         if (shiftId && application.userId) {
-          // Lock the shift row first to prevent concurrent accepts
-          const [lockedShift] = await tx.execute(
+          // Lock the shift row first to prevent concurrent accepts using FOR UPDATE
+          const result = await (tx as any).execute(
             sql`SELECT * FROM shifts WHERE id = ${shiftId} FOR UPDATE`
-          ) as any[];
+          );
+          
+          // Handle different result formats (rows array or result object)
+          const lockedShift = Array.isArray(result) ? result[0] : result?.rows?.[0] || result?.[0];
 
           if (!lockedShift) {
             throw new Error('Shift not found');
