@@ -228,24 +228,43 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
     return;
   }
 
+  // Role-aware fetching:
+  // - Professionals only need shifts where they are the assignee
+  // - Businesses only need shifts where they are the employer
+  // Avoid querying both unconditionally (prevents unnecessary DB work and reduces risk of role-mismatched queries).
+  const roleSet = new Set<string>();
+  if ((user as any).role) roleSet.add((user as any).role);
+  if (Array.isArray((user as any).roles)) {
+    for (const r of (user as any).roles) {
+      if (typeof r === 'string') roleSet.add(r);
+    }
+  }
+  const isBusiness = roleSet.has('business');
+  const isProfessional = roleSet.has('professional');
+  const isAdmin = roleSet.has('admin');
+
   // Find shifts that need review:
   // 1. For shops: shifts with status 'pending_completion' or 'completed' where shop hasn't reviewed barber
   // 2. For barbers: shifts with status 'pending_completion' or 'completed' where barber hasn't reviewed shop
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
   // Get shifts where user is employer (shop) and needs to review barber
-  const shopShifts = await shiftsRepo.getShifts({
-    employerId: userId,
-    status: 'pending_completion',
-    limit: 100,
-  });
+  const shopShifts = (isBusiness || isAdmin)
+    ? await shiftsRepo.getShifts({
+      employerId: userId,
+      status: 'pending_completion',
+      limit: 100,
+    })
+    : null;
 
   // Get shifts where user is assignee (barber) and needs to review shop
-  const barberShifts = await shiftsRepo.getShifts({
-    assigneeId: userId,
-    status: 'pending_completion',
-    limit: 100,
-  });
+  const barberShifts = (isProfessional || isAdmin)
+    ? await shiftsRepo.getShifts({
+      assigneeId: userId,
+      status: 'pending_completion',
+      limit: 100,
+    })
+    : null;
 
   // Filter to only include shifts where review hasn't been submitted
   const pendingReviews = [];

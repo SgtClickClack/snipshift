@@ -49,6 +49,36 @@
 
 ---
 
+#### 2025-12-13: Fix Professional Dashboard 500 (Pending Review Query Scope)
+
+**Core Components**
+- `/api/shifts/pending-review` role-aware query scoping
+- Route regression tests for pending-review behavior
+
+**Key Features**
+- **Role-aware pending review fetch**: `/api/shifts/pending-review` now queries only the relevant shift set:
+  - Professionals: `assigneeId = currentUser`
+  - Businesses: `employerId = currentUser`
+  - Admin: both
+- **Reduced error surface**: avoids unnecessary employer-side queries for professionals (matches the production 500 signature shown in the dashboard error toast).
+
+**Integration Points**
+- API endpoint: `GET /api/shifts/pending-review`
+- Tests: `api/_src/tests/routes/shifts.pending-review.test.ts`
+
+**File Paths**
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/shifts.js`
+- `api/_src/tests/routes/shifts.pending-review.test.ts`
+
+**Next Priority Task**
+- Fix the remaining lint **errors** so `npm run lint` is green again (then address warnings in smaller follow-up passes).
+
+**Code Organization & Quality**
+- Kept changes localized to the route; added targeted tests without introducing new patterns.
+
+---
+
 #### 2025-12-13: Bulletproof Protocol (API Safety, Empty States, Image Resilience)
 
 **Core Components Implemented:**
