@@ -196,7 +196,8 @@ export default defineConfig({
 
           // Charts can be very large (recharts + d3*).
           if (pkg === 'recharts' || pkg.startsWith('d3-')) {
-            return 'vendor-charts';
+            // Keep with React to avoid runtime ordering edge-cases.
+            return 'vendor-react';
           }
 
           // Calendar + date-related UI dependencies.
@@ -206,7 +207,8 @@ export default defineConfig({
             pkg === 'react-day-picker' ||
             pkg === 'date-fns'
           ) {
-            return 'vendor-calendar';
+            // Keep with React to avoid runtime ordering edge-cases.
+            return 'vendor-react';
           }
 
           // Real-time client.
