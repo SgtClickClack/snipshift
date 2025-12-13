@@ -727,10 +727,6 @@ export default function ProfessionalCalendar({
     // Start with optimistic shifts (newly created, not yet in bookings)
     const optimisticEvents: CalendarEvent[] = optimisticShifts;
 
-    if (bookingsArray.length === 0) {
-      return optimisticEvents;
-    }
-
     try {
       const bookingEvents = bookingsArray
         .map((booking: any) => {

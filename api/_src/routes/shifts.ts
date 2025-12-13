@@ -680,21 +680,37 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
       // Build location string
       const location = shift.location || null;
 
+      // Helper to safely convert to ISO string (handles Date objects and strings)
+      const toISOStringSafe = (value: any): string => {
+        if (!value) return new Date().toISOString();
+        if (typeof value === 'string') {
+          const d = new Date(value);
+          return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+        }
+        if (typeof value.toISOString === 'function') {
+          return value.toISOString();
+        }
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+      };
+
       // Convert startTime to date string for compatibility
-      const startTimeDate = new Date(shift.startTime);
-      const dateStr = startTimeDate.toISOString().split('T')[0];
+      const startTimeISO = toISOStringSafe(shift.startTime);
+      const endTimeISO = toISOStringSafe(shift.endTime);
+      const createdAtISO = toISOStringSafe(shift.createdAt);
+      const dateStr = startTimeISO.split('T')[0];
 
       return {
         id: shift.id,
         title: shift.title,
         payRate: shift.hourlyRate,
         date: dateStr,
-        startTime: shift.startTime.toISOString(),
-        endTime: shift.endTime.toISOString(),
+        startTime: startTimeISO,
+        endTime: endTimeISO,
         status: shift.status,
         location,
         applicationCount,
-        createdAt: shift.createdAt.toISOString(),
+        createdAt: createdAtISO,
         employerId: shift.employerId,
         // Add type indicator for debugging (optional)
         _type: 'shift'
