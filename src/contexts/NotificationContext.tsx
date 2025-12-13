@@ -51,17 +51,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Mock notification after 5 seconds on mount (for demo)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      addNotification(
-        'offer',
-        'New Request: Ace Barbers has invited you to a shift ($240)'
-      );
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [addNotification]);
+  // Note: Real notifications are fetched via useNotifications hook from the API
+  // The NotificationContext is used for local state management and transient notifications
+  // Shift invites are polled from /api/notifications by the useNotifications hook
 
   return (
     <NotificationContext.Provider

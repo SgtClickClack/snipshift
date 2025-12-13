@@ -1,9 +1,10 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { fetchShiftOffers, acceptShiftOffer, declineShiftOffer, ShiftOffer } from "@/lib/api";
 import { ShiftOfferCard } from "./shift-offer-card";
 import { useToast } from "@/hooks/useToast";
-import { Inbox, Loader2 } from "lucide-react";
+import { Inbox, Loader2, BellRing } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 
@@ -109,9 +110,19 @@ export function OfferInbox() {
   }
 
   return (
-    <Card data-testid="offer-inbox">
-      <CardHeader>
-        <CardTitle>Job Requests ({offers.length})</CardTitle>
+    <Card data-testid="offer-inbox" className="border-2 border-teal-500/50 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 rounded-t-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-teal-500 rounded-full">
+              <BellRing className="w-5 h-5 text-white animate-pulse" />
+            </div>
+            <CardTitle className="text-lg">New Shift Invitations</CardTitle>
+          </div>
+          <Badge variant="default" className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 text-sm font-semibold">
+            {offers.length} Pending
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
