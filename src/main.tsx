@@ -4,7 +4,7 @@ import App from "./App";
 import "./index.css";
 // Import react-big-calendar CSS globally to ensure it loads
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { StartupErrorBoundary } from "./components/startup-error-boundary";
+import { StartupErrorBoundary } from "@/components/error/StartupErrorBoundary";
 
 // Version indicator removed for production
 

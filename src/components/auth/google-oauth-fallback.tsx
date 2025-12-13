@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+﻿import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/useToast';
 // Removed legacy auth import; this component just redirects to Google
 import { useNavigate } from 'react-router-dom';
 

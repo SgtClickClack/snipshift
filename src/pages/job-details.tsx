@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { ReportButton } from '@/components/report/report-button';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
@@ -130,6 +130,20 @@ export default function JobDetailsPage() {
         variant: 'destructive',
       });
       navigate('/login');
+      return;
+    }
+
+    // Validate critical job fields before submitting to the API
+    const hasRate = !!(job?.payRate || (job as any)?.rate);
+    const hasDate = !!(job?.date || (job as any)?.startTime);
+    const hasLocation = !!job?.location || (!!(job as any)?.city && !!(job as any)?.state);
+
+    if (!hasRate || !hasDate || !hasLocation) {
+      toast({
+        title: 'Unable to apply',
+        description: 'This job is missing required details (rate, date, or location).',
+        variant: 'destructive',
+      });
       return;
     }
 

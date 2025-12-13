@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { OpeningHours } from '@/components/calendar/calendar-settings-modal';
 import ShiftStructurePreview, { ShiftSplitType } from './shift-structure-preview';
 import { apiRequest } from '@/lib/queryClient';
 import { Clock, Save } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 const DAYS_OF_WEEK = [
   { key: 'monday', label: 'Monday' },
@@ -226,7 +227,7 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
         
         const calendarKey = `calendar-settings-${user?.id || 'default'}`;
         localStorage.setItem(calendarKey, JSON.stringify(calendarSettings));
-        console.log('[BUSINESS SETTINGS] Saved to both business-settings and calendar-settings localStorage');
+        logger.debug("BusinessSettings", "Saved to business-settings and calendar-settings localStorage");
         
         // Dispatch a custom event to notify the calendar component
         window.dispatchEvent(new CustomEvent('calendarSettingsUpdated', {

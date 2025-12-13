@@ -1,5 +1,48 @@
 import { apiRequest } from './queryClient';
 
+export class ApiError extends Error {
+  status?: number;
+  details?: unknown;
+
+  constructor(message: string, opts?: { status?: number; details?: unknown }) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = opts?.status;
+    this.details = opts?.details;
+  }
+}
+
+function parseStatus(message: string): number | undefined {
+  const match = message.match(/^(\d{3}):/);
+  if (!match) return undefined;
+  const status = Number(match[1]);
+  return Number.isFinite(status) ? status : undefined;
+}
+
+function toApiError(error: unknown, context?: string): ApiError {
+  if (error instanceof ApiError) return error;
+
+  if (error instanceof Error) {
+    const status = parseStatus(error.message);
+    const message = context ? `${context}: ${error.message}` : error.message;
+    const apiError = new ApiError(message, { status });
+    // Preserve auth signaling flags used by queryClient.ts
+    (apiError as any).isAuthError = (error as any).isAuthError;
+    (apiError as any).shouldNotReload = (error as any).shouldNotReload;
+    return apiError;
+  }
+
+  return new ApiError(context ? `${context}: Unknown error` : 'Unknown error');
+}
+
+async function safeJson<T>(res: Response, fallback: T): Promise<T> {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export interface UpdateProfileData {
   displayName?: string;
   bio?: string;
@@ -31,13 +74,12 @@ export interface JobFilterParams {
  * @returns Promise resolving to the updated user object
  */
 export async function updateUserProfile(data: UpdateProfileData | FormData) {
-  // Check if data is FormData
-  const isFormData = data instanceof FormData;
-  
-  // If FormData, use it directly. Otherwise, use the data as-is (will be JSON stringified)
-  const response = await apiRequest('PUT', '/api/me', data);
-  // apiRequest already throws on non-OK responses, so we can safely parse JSON
-  return response.json();
+  try {
+    const response = await apiRequest('PUT', '/api/me', data);
+    return await safeJson(response, null);
+  } catch (error) {
+    throw toApiError(error, 'updateUserProfile');
+  }
 }
 
 export interface UpdateBusinessProfileData {
@@ -56,35 +98,42 @@ export interface UpdateBusinessProfileData {
  * @returns Promise resolving to the updated user object
  */
 export async function updateBusinessProfile(data: UpdateBusinessProfileData | FormData) {
-  // Check if data is FormData
-  const isFormData = data instanceof FormData;
-  
-  // If FormData, use it directly. Otherwise, use the data as-is (will be JSON stringified)
-  const response = await apiRequest('PUT', '/api/me', data);
-  // apiRequest already throws on non-OK responses, so we can safely parse JSON
-  return response.json();
+  try {
+    const response = await apiRequest('PUT', '/api/me', data);
+    return await safeJson(response, null);
+  } catch (error) {
+    throw toApiError(error, 'updateBusinessProfile');
+  }
 }
 
 export async function fetchJobs(params: JobFilterParams = {}) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      query.append(key, String(value));
-    }
-  });
-  const res = await apiRequest('GET', `/api/jobs?${query.toString()}`);
-  const data = await res.json();
-  return Array.isArray(data) ? data : (data.data || []);
+  try {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        query.append(key, String(value));
+      }
+    });
+    const res = await apiRequest('GET', `/api/jobs?${query.toString()}`);
+    const data = await safeJson<any>(res, []);
+    return Array.isArray(data) ? data : (data?.data || []);
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchShifts(params: { status?: 'open' | 'filled' | 'completed'; limit?: number; offset?: number } = {}) {
-  const query = new URLSearchParams();
-  if (params.status) query.append('status', params.status);
-  if (params.limit) query.append('limit', params.limit.toString());
-  if (params.offset) query.append('offset', params.offset.toString());
-  const res = await apiRequest('GET', `/api/shifts?${query.toString()}`);
-  const data = await res.json();
-  return Array.isArray(data) ? data : (data.data || []);
+  try {
+    const query = new URLSearchParams();
+    if (params.status) query.append('status', params.status);
+    if (params.limit) query.append('limit', params.limit.toString());
+    if (params.offset) query.append('offset', params.offset.toString());
+    const res = await apiRequest('GET', `/api/shifts?${query.toString()}`);
+    const data = await safeJson<any>(res, []);
+    return Array.isArray(data) ? data : (data?.data || []);
+  } catch {
+    return [];
+  }
 }
 
 export interface JobDetails {
@@ -102,8 +151,12 @@ export interface JobDetails {
 }
 
 export async function getJobDetails(jobId: string): Promise<JobDetails> {
-  const res = await apiRequest('GET', `/api/jobs/${jobId}`);
-  return res.json();
+  try {
+    const res = await apiRequest('GET', `/api/jobs/${jobId}`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'getJobDetails');
+  }
 }
 
 export interface CreateJobData {
@@ -119,8 +172,12 @@ export interface CreateJobData {
 }
 
 export async function createJob(data: CreateJobData) {
-  const res = await apiRequest('POST', '/api/jobs', data);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', '/api/jobs', data);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'createJob');
+  }
 }
 
 export interface CreateApplicationData {
@@ -130,8 +187,12 @@ export interface CreateApplicationData {
 }
 
 export async function createApplication(data: CreateApplicationData) {
-  const res = await apiRequest('POST', '/api/applications', data);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', '/api/applications', data);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'createApplication');
+  }
 }
 
 export interface Application {
@@ -147,12 +208,16 @@ export interface Application {
 }
 
 export async function getApplications(params: { status?: string; jobId?: string; shiftId?: string } = {}) {
-  const query = new URLSearchParams();
-  if (params.status) query.append('status', params.status);
-  if (params.jobId) query.append('jobId', params.jobId);
-  if (params.shiftId) query.append('shiftId', params.shiftId);
-  const res = await apiRequest('GET', `/api/applications?${query.toString()}`);
-  return res.json();
+  try {
+    const query = new URLSearchParams();
+    if (params.status) query.append('status', params.status);
+    if (params.jobId) query.append('jobId', params.jobId);
+    if (params.shiftId) query.append('shiftId', params.shiftId);
+    const res = await apiRequest('GET', `/api/applications?${query.toString()}`);
+    return await safeJson(res, []);
+  } catch {
+    return [];
+  }
 }
 
 export interface MyJob {
@@ -170,31 +235,40 @@ export interface MyJob {
 }
 
 export async function fetchMyJobs(): Promise<MyJob[]> {
-  const res = await apiRequest('GET', '/api/me/jobs');
-  return res.json();
+  try {
+    const res = await apiRequest('GET', '/api/me/jobs');
+    return await safeJson(res, [] as MyJob[]);
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchShopShifts(userId: string): Promise<MyJob[]> {
-  const res = await apiRequest('GET', `/api/shifts/shop/${userId}`);
-  const listings = await res.json();
-  return listings.map((item: any) => ({
-    id: item.id,
-    title: item.title,
-    shopName: item.shopName,
-    payRate: item.payRate,
-    date: item.date,
-    startTime: item.startTime,
-    endTime: item.endTime,
-    status: item.status,
-    location: item.location,
-    applicationCount: item.applicationCount || 0,
-    createdAt: item.createdAt || new Date().toISOString(),
-    _type: item._type,
-    employerId: item.employerId,
-    businessId: item.businessId,
-    description: item.description || item.requirements,
-    skillsRequired: item.skillsRequired || []
-  }));
+  try {
+    const res = await apiRequest('GET', `/api/shifts/shop/${userId}`);
+    const listings = await safeJson<any>(res, []);
+    const arr = Array.isArray(listings) ? listings : [];
+    return arr.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      shopName: item.shopName,
+      payRate: item.payRate,
+      date: item.date,
+      startTime: item.startTime,
+      endTime: item.endTime,
+      status: item.status,
+      location: item.location,
+      applicationCount: item.applicationCount || 0,
+      createdAt: item.createdAt || new Date().toISOString(),
+      _type: item._type,
+      employerId: item.employerId,
+      businessId: item.businessId,
+      description: item.description || item.requirements,
+      skillsRequired: item.skillsRequired || [],
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export interface JobApplication {
@@ -206,8 +280,12 @@ export interface JobApplication {
 }
 
 export async function getJobApplications(jobId: string): Promise<JobApplication[]> {
-  const res = await apiRequest('GET', `/api/jobs/${jobId}/applications`);
-  return res.json();
+  try {
+    const res = await apiRequest('GET', `/api/jobs/${jobId}/applications`);
+    return await safeJson(res, [] as JobApplication[]);
+  } catch {
+    return [];
+  }
 }
 
 export interface ShiftApplication {
@@ -230,32 +308,52 @@ export interface ShiftApplication {
 }
 
 export async function getShiftApplications(shiftId: string): Promise<ShiftApplication[]> {
-  const res = await apiRequest('GET', `/api/shifts/${shiftId}/applications`);
-  return res.json();
+  try {
+    const res = await apiRequest('GET', `/api/shifts/${shiftId}/applications`);
+    return await safeJson(res, [] as ShiftApplication[]);
+  } catch {
+    return [];
+  }
 }
 
 export async function updateApplicationStatus(
   applicationId: string,
   status: 'pending' | 'accepted' | 'rejected'
 ): Promise<{ id: string; status: string }> {
-  const res = await apiRequest('PUT', `/api/applications/${applicationId}/status`, { status });
-  return res.json();
+  try {
+    const res = await apiRequest('PUT', `/api/applications/${applicationId}/status`, { status });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'updateApplicationStatus');
+  }
 }
 
 export async function deleteJob(jobId: string): Promise<void> {
-  await apiRequest('DELETE', `/api/jobs/${jobId}`);
+  try {
+    await apiRequest('DELETE', `/api/jobs/${jobId}`);
+  } catch (error) {
+    throw toApiError(error, 'deleteJob');
+  }
 }
 
 export async function deleteShift(shiftId: string): Promise<void> {
-  await apiRequest('DELETE', `/api/shifts/${shiftId}`);
+  try {
+    await apiRequest('DELETE', `/api/shifts/${shiftId}`);
+  } catch (error) {
+    throw toApiError(error, 'deleteShift');
+  }
 }
 
 export async function updateJobStatus(
   jobId: string,
   status: 'open' | 'filled' | 'closed' | 'completed'
 ): Promise<{ id: string; status: string }> {
-  const res = await apiRequest('PATCH', `/api/jobs/${jobId}/status`, { status });
-  return res.json();
+  try {
+    const res = await apiRequest('PATCH', `/api/jobs/${jobId}/status`, { status });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'updateJobStatus');
+  }
 }
 
 export async function createShift(shiftData: {
@@ -270,16 +368,24 @@ export async function createShift(shiftData: {
   lng?: number;
   assigneeId?: string;
 }) {
-  const res = await apiRequest('POST', '/api/shifts', shiftData);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', '/api/shifts', shiftData);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'createShift');
+  }
 }
 
 export async function updateShiftStatus(
   shiftId: string,
   status: 'draft' | 'invited' | 'open' | 'filled' | 'completed'
 ): Promise<{ id: string; status: string }> {
-  const res = await apiRequest('PATCH', `/api/shifts/${shiftId}`, { status });
-  return res.json();
+  try {
+    const res = await apiRequest('PATCH', `/api/shifts/${shiftId}`, { status });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'updateShiftStatus');
+  }
 }
 
 // Shift offer functions
@@ -299,8 +405,12 @@ export interface ShiftOffer {
 }
 
 export async function fetchShiftOffers(): Promise<ShiftOffer[]> {
-  const res = await apiRequest('GET', '/api/shifts/offers/me');
-  return res.json();
+  try {
+    const res = await apiRequest('GET', '/api/shifts/offers/me');
+    return await safeJson(res, [] as ShiftOffer[]);
+  } catch {
+    return [];
+  }
 }
 
 // Shift review functions
@@ -324,8 +434,12 @@ export async function submitShiftReview(
     markAsNoShow?: boolean;
   }
 ): Promise<ShiftReview> {
-  const res = await apiRequest('POST', `/api/shifts/${shiftId}/review`, reviewData);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/review`, reviewData);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'submitShiftReview');
+  }
 }
 
 // Get shifts pending review for the current user
@@ -340,31 +454,51 @@ export async function fetchShiftsPendingReview(): Promise<Array<{
   status: string;
   attendanceStatus?: string;
 }>> {
-  const res = await apiRequest('GET', '/api/shifts/pending-review');
-  return res.json();
+  try {
+    const res = await apiRequest('GET', '/api/shifts/pending-review');
+    return await safeJson(res, []);
+  } catch {
+    return [];
+  }
 }
 
 export async function acceptShiftOffer(shiftId: string): Promise<{ id: string; status: string }> {
-  const res = await apiRequest('POST', `/api/shifts/${shiftId}/accept`);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/accept`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'acceptShiftOffer');
+  }
 }
 
 export async function declineShiftOffer(shiftId: string): Promise<{ id: string; status: string }> {
-  const res = await apiRequest('POST', `/api/shifts/${shiftId}/decline`);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/decline`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'declineShiftOffer');
+  }
 }
 
 export async function applyToShift(shiftId: string): Promise<{ message: string; shift?: any; application?: any; instantAccept: boolean }> {
-  const res = await apiRequest('POST', `/api/shifts/${shiftId}/apply`);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/apply`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'applyToShift');
+  }
 }
 
 export async function decideApplication(
   applicationId: string,
   decision: 'APPROVED' | 'DECLINED'
 ): Promise<{ message: string; application: any }> {
-  const res = await apiRequest('POST', `/api/applications/${applicationId}/decide`, { decision });
-  return res.json();
+  try {
+    const res = await apiRequest('POST', `/api/applications/${applicationId}/decide`, { decision });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'decideApplication');
+  }
 }
 
 export interface CreateReviewData {
@@ -394,8 +528,12 @@ export interface Review {
 }
 
 export async function createReview(data: CreateReviewData): Promise<Review> {
-  const res = await apiRequest('POST', '/api/reviews', data);
-  return res.json();
+  try {
+    const res = await apiRequest('POST', '/api/reviews', data);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'createReview');
+  }
 }
 
 export interface CheckoutSessionResponse {
@@ -404,19 +542,32 @@ export interface CheckoutSessionResponse {
 }
 
 export async function createCheckoutSession(priceId: string): Promise<CheckoutSessionResponse> {
-  const res = await apiRequest('POST', '/api/stripe/create-checkout-session', { priceId });
-  return res.json();
+  try {
+    // Backend endpoint: POST /api/subscriptions/checkout { planId }
+    const res = await apiRequest('POST', '/api/subscriptions/checkout', { planId: priceId });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'createCheckoutSession');
+  }
 }
 
 export async function createPortalSession(): Promise<{ url: string }> {
-  const res = await apiRequest('POST', '/api/stripe/create-portal-session');
-  return res.json();
+  // No portal endpoint is currently implemented in the API package.
+  // Keep a standardized error so UI can surface a friendly message if/when used.
+  throw new ApiError('createPortalSession: Not implemented', { status: 501 });
 }
 
 // --- Stubs for E2E Testing & Future Implementation ---
 
 // Type alias for ApplicationData (used in job-details.tsx)
-export type ApplicationData = CreateApplicationData;
+export interface ApplicationData {
+  /** Optional cover letter sent with the application */
+  coverLetter?: string;
+  /** Legacy/UI-only fields (backend derives identity from auth) */
+  name?: string;
+  email?: string;
+  type?: string;
+}
 
 // Notifications
 export interface Notification {
@@ -425,7 +576,7 @@ export interface Notification {
   title: string;
   message: string;
   link: string | null;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   isRead: boolean;
   createdAt: string;
 }
@@ -435,10 +586,14 @@ export interface Notification {
  * @param limit - Maximum number of notifications to return (default: 50)
  */
 export const fetchNotifications = async (limit: number = 50): Promise<Notification[]> => {
-  const query = new URLSearchParams();
-  if (limit) query.append('limit', limit.toString());
-  const res = await apiRequest('GET', `/api/notifications?${query.toString()}`);
-  return res.json();
+  try {
+    const query = new URLSearchParams();
+    if (limit) query.append('limit', limit.toString());
+    const res = await apiRequest('GET', `/api/notifications?${query.toString()}`);
+    return await safeJson(res, [] as Notification[]);
+  } catch {
+    return [];
+  }
 };
 
 /**
@@ -446,34 +601,57 @@ export const fetchNotifications = async (limit: number = 50): Promise<Notificati
  * @param id - Notification ID
  */
 export const markNotificationAsRead = async (id: string): Promise<{ id: string; isRead: boolean }> => {
-  const res = await apiRequest('PATCH', `/api/notifications/${id}/read`);
-  return res.json();
+  try {
+    const res = await apiRequest('PATCH', `/api/notifications/${id}/read`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'markNotificationAsRead');
+  }
 };
 
 /**
  * Mark all notifications as read for the current user
  */
 export const markAllNotificationsAsRead = async (): Promise<{ count: number }> => {
-  const res = await apiRequest('PATCH', '/api/notifications/read-all');
-  return res.json();
+  try {
+    const res = await apiRequest('PATCH', '/api/notifications/read-all');
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'markAllNotificationsAsRead');
+  }
 };
 
 /**
  * Get unread notification count
  */
 export const fetchUnreadNotificationCount = async (): Promise<number> => {
-  const res = await apiRequest('GET', '/api/notifications/unread-count');
-  const data = await res.json();
-  return data.count || 0;
+  try {
+    const res = await apiRequest('GET', '/api/notifications/unread-count');
+    const data = await safeJson<any>(res, {});
+    return data?.count || 0;
+  } catch {
+    return 0;
+  }
 };
 
 // Job Board
-export const fetchJobDetails = async (id: string): Promise<JobDetails> => { 
-  return {} as JobDetails; 
+export const fetchJobDetails = async (id: string): Promise<JobDetails> => {
+  return await getJobDetails(id);
 };
 
-export const applyToJob = async (id: string, data: ApplicationData): Promise<{ id: string; status: string }> => { 
-  return { id: 'mock-application-id', status: 'pending' }; 
+export const applyToJob = async (
+  jobId: string,
+  data: ApplicationData
+): Promise<{ id: string; status: string }> => {
+  try {
+    const res = await apiRequest('POST', '/api/applications', {
+      jobId,
+      coverLetter: data.coverLetter,
+    });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'applyToJob');
+  }
 };
 
 // Shift Details
@@ -504,36 +682,70 @@ export interface ShiftDetails {
 }
 
 export async function fetchShiftDetails(id: string): Promise<ShiftDetails> {
-  const res = await apiRequest('GET', `/api/shifts/${id}`);
-  const shift = await res.json();
-  
-  // Normalize the shift data for frontend compatibility
-  return {
-    ...shift,
-    rate: shift.hourlyRate,
-    payRate: shift.hourlyRate,
-    date: shift.startTime,
-    businessId: shift.employerId,
-    requirements: shift.description ? [shift.description] : [],
-  };
+  try {
+    const res = await apiRequest('GET', `/api/shifts/${id}`);
+    const shift = await res.json();
+
+    // Normalize the shift data for frontend compatibility
+    return {
+      ...shift,
+      rate: shift.hourlyRate,
+      payRate: shift.hourlyRate,
+      date: shift.startTime,
+      businessId: shift.employerId,
+      requirements: shift.description ? [shift.description] : [],
+    };
+  } catch (error) {
+    throw toApiError(error, 'fetchShiftDetails');
+  }
 }
 
 export const fetchMyApplications = async (): Promise<Application[]> => {
-  const res = await apiRequest('GET', '/api/applications');
-  return res.json();
+  try {
+    const res = await apiRequest('GET', '/api/applications');
+    return await safeJson(res, [] as Application[]);
+  } catch {
+    return [];
+  }
 };
 
-export const fetchJobApplications = async (): Promise<JobApplication[]> => { return []; };
+export const fetchJobApplications = async (jobId: string): Promise<JobApplication[]> => {
+  return await getJobApplications(jobId);
+};
 
 // Social / Community
-export const createConversation = async (userId: string): Promise<{ id: string }> => { 
-  return { id: 'mock-conv-id' }; 
+export const createConversation = async (data: {
+  participant2Id: string;
+  jobId?: string | null;
+  shiftId?: string | null;
+}): Promise<{ id: string }> => {
+  try {
+    const res = await apiRequest('POST', '/api/conversations', {
+      participant2Id: data.participant2Id,
+      ...(data.jobId ? { jobId: data.jobId } : {}),
+      ...(data.shiftId ? { shiftId: data.shiftId } : {}),
+    });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'createConversation');
+  }
 };
 
 export async function fetchUserReviews(userId: string): Promise<Review[]> {
-  const res = await apiRequest('GET', `/api/reviews/${userId}`);
-  return res.json();
+  try {
+    const res = await apiRequest('GET', `/api/reviews/${userId}`);
+    return await safeJson(res, [] as Review[]);
+  } catch {
+    return [];
+  }
 }
 
 // Subscription
-export const cancelSubscription = async (): Promise<boolean> => { return true; };
+export const cancelSubscription = async (): Promise<boolean> => {
+  try {
+    await apiRequest('POST', '/api/subscriptions/cancel');
+    return true;
+  } catch (error) {
+    throw toApiError(error, 'cancelSubscription');
+  }
+};

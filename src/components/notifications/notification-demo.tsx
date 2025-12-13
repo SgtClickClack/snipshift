@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useNotifications } from "@/hooks/use-notifications";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Bell, Zap, Users, MessageSquare, Heart, Briefcase } from "lucide-react";
 
 export default function NotificationDemo() {
@@ -285,23 +285,23 @@ export default function NotificationDemo() {
             <div>
               <h4 className="font-semibold text-steel-900 mb-3">Core Features</h4>
               <ul className="space-y-2 text-sm text-steel-600">
-                <li>✓ Real-time notification badge with unread count</li>
-                <li>✓ Interactive dropdown with notification list</li>
-                <li>✓ Mark individual or all notifications as read</li>
-                <li>✓ Visual indicators for read/unread status</li>
-                <li>✓ Auto-simulation for demo purposes</li>
-                <li>✓ Responsive design for all devices</li>
+                <li>âœ“ Real-time notification badge with unread count</li>
+                <li>âœ“ Interactive dropdown with notification list</li>
+                <li>âœ“ Mark individual or all notifications as read</li>
+                <li>âœ“ Visual indicators for read/unread status</li>
+                <li>âœ“ Auto-simulation for demo purposes</li>
+                <li>âœ“ Responsive design for all devices</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-steel-900 mb-3">Notification Triggers</h4>
               <ul className="space-y-2 text-sm text-steel-600">
-                <li>→ New job applications received</li>
-                <li>→ Incoming direct messages</li>
-                <li>→ Social post likes and comments</li>
-                <li>→ New job postings in your area</li>
-                <li>→ Profile views and interactions</li>
-                <li>→ System announcements and updates</li>
+                <li>â†’ New job applications received</li>
+                <li>â†’ Incoming direct messages</li>
+                <li>â†’ Social post likes and comments</li>
+                <li>â†’ New job postings in your area</li>
+                <li>â†’ Profile views and interactions</li>
+                <li>â†’ System announcements and updates</li>
               </ul>
             </div>
           </div>

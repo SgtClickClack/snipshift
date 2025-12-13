@@ -7,6 +7,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { logger } from '@/lib/logger';
 
 interface Message {
   id: string;
@@ -67,44 +68,44 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     });
 
     newSocket.on('connect', () => {
-      console.log('[SOCKET] Connected to server');
+      logger.debug('SOCKET', 'Connected to server');
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('[SOCKET] Disconnected from server');
+      logger.debug('SOCKET', 'Disconnected from server');
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('[SOCKET] Connection error:', error);
+      logger.error('SOCKET', 'Connection error:', error);
       setIsConnected(false);
     });
 
     newSocket.on('joined_room', (data: { conversationId: string }) => {
-      console.log('[SOCKET] Joined room:', data.conversationId);
+      logger.debug('SOCKET', 'Joined room:', data.conversationId);
     });
 
     newSocket.on('new_message', (message: Message) => {
-      console.log('[SOCKET] New message received:', message);
+      logger.debug('SOCKET', 'New message received:', message);
       // Notify all registered callbacks
       messageCallbacksRef.current.forEach((callback) => {
         try {
           callback(message);
         } catch (error) {
-          console.error('[SOCKET] Error in message callback:', error);
+          logger.error('SOCKET', 'Error in message callback:', error);
         }
       });
     });
 
     newSocket.on('error', (error: { message: string }) => {
-      console.error('[SOCKET] Error:', error);
+      logger.error('SOCKET', 'Socket error:', error);
       // Notify all registered error callbacks
       errorCallbacksRef.current.forEach((callback) => {
         try {
           callback(error);
         } catch (err) {
-          console.error('[SOCKET] Error in error callback:', err);
+          logger.error('SOCKET', 'Error in error callback:', err);
         }
       });
     });
@@ -134,7 +135,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     if (socket && isConnected) {
       socket.emit('send_message', { conversationId, content });
     } else {
-      console.error('[SOCKET] Cannot send message: not connected');
+      logger.error('SOCKET', 'Cannot send message: not connected');
     }
   }, [socket, isConnected]);
 

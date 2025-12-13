@@ -123,7 +123,7 @@ export const DesignSystemShowcase = () => {
                 type="email"
               />
               <textarea 
-                className="input-chrome min-h-[100px] resize-none"
+                className="input-chrome min-h-24 resize-none"
                 placeholder="Tell us about your barbershop needs..."
               />
               <div className="flex gap-3">

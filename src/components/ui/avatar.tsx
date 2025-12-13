@@ -21,17 +21,28 @@ Avatar.displayName = AvatarPrimitive.Root.displayName
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, src, alt, ...props }, ref) => {
-  // Use OptimizedImage for better performance, but render as img for Radix UI compatibility
-  // Radix UI Avatar handles fallback, so we just optimize the image loading
+>(({ className, src, alt, onError, ...props }, ref) => {
+  // Ensure broken image URLs reliably fall back to <AvatarFallback />.
+  const [effectiveSrc, setEffectiveSrc] = React.useState(src);
+
+  React.useEffect(() => {
+    setEffectiveSrc(src);
+  }, [src]);
+
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    setEffectiveSrc(undefined);
+    onError?.(e);
+  };
+
   return (
     <AvatarPrimitive.Image
       ref={ref}
       className={cn("aspect-square h-full w-full", className)}
-      src={src}
+      src={effectiveSrc}
       alt={alt}
       loading={props.loading ?? "lazy"}
       decoding="async"
+      onError={handleError}
       {...props}
     />
   );

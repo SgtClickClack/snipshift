@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -414,7 +414,7 @@ export default function SalonCreateJobPage() {
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {watchedValues.hourlyRate && totalHours > 0
-                              ? `$${watchedValues.hourlyRate}/hr × ${totalHours}h`
+                              ? `$${watchedValues.hourlyRate}/hr Ã— ${totalHours}h`
                               : 'Enter rate and hours'}
                           </p>
                         </div>

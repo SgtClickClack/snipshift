@@ -1,6 +1,7 @@
-import { QueryClient, QueryFunction, QueryCache, MutationCache } from "@tanstack/react-query";
+﻿import { QueryClient, QueryFunction, QueryCache, MutationCache } from "@tanstack/react-query";
 import { auth } from "./firebase";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/useToast";
+import { logger } from "@/lib/logger";
 
 async function throwIfResNotOk(res: Response, url?: string) {
   if (!res.ok) {
@@ -66,7 +67,7 @@ export async function apiRequest(
       const token = await auth.currentUser.getIdToken();
       headers['Authorization'] = `Bearer ${token}`;
     } catch (error) {
-      console.error("Error getting auth token for request:", error);
+      logger.error("apiRequest", "Error getting auth token for request:", error);
     }
     // Removed test bypass - E2E tests need to use proper authentication
   }
@@ -95,7 +96,7 @@ export const getQueryFn: <T>(options: {
         const token = await auth.currentUser.getIdToken();
         headers['Authorization'] = `Bearer ${token}`;
       } catch (error) {
-        console.error("Error getting auth token for query:", error);
+        logger.error("getQueryFn", "Error getting auth token for query:", error);
       }
     // Removed test bypass - E2E tests need to use proper authentication
     }

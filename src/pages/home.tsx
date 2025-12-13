@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Store, UserCheck, Award, GraduationCap, Scissors } from "lucide-react";
 import { authService } from "@/lib/auth";
 import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function HomePage() {

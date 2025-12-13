@@ -1,4 +1,5 @@
 import { Loader } from '@googlemaps/js-api-loader';
+import { logger } from '@/lib/logger';
 
 let googleMapsPromise: Promise<any> | null = null;
 
@@ -13,7 +14,7 @@ export const loadGoogleMaps = async (retries = 3): Promise<any> => {
   }
 
   if (!apiKey) {
-    console.warn('Google Maps API key missing. Map features will be disabled.');
+    logger.error('GoogleMaps', 'Google Maps API key missing. Map features will be disabled.');
     return Promise.reject('Google Maps API key is missing');
   }
 
@@ -44,13 +45,13 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; ln
             lng: location.lng()
           });
         } else {
-          console.warn('Geocoding failed:', status);
+          logger.warn('GoogleMaps', 'Geocoding failed:', status);
           resolve(null);
         }
       });
     });
   } catch (error) {
-    console.error('Failed to load Google Maps:', error);
+    logger.error('GoogleMaps', 'Failed to load Google Maps:', error);
     return null;
   }
 };
@@ -65,13 +66,13 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<string |
         if (status === 'OK' && results && results[0]) {
           resolve(results[0].formatted_address);
         } else {
-          console.warn('Reverse geocoding failed:', status);
+          logger.warn('GoogleMaps', 'Reverse geocoding failed:', status);
           resolve(null);
         }
       });
     });
   } catch (error) {
-    console.error('Failed to load Google Maps:', error);
+    logger.error('GoogleMaps', 'Failed to load Google Maps:', error);
     return null;
   }
 };

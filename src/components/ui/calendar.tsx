@@ -66,7 +66,7 @@ function Calendar({
         className={cn("p-2 md:p-3 rounded-md", className)}
         classNames={{
           months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-          month: "space-y-2 md:space-y-4 min-w-[280px]",
+          month: "space-y-2 md:space-y-4 min-w-72",
           caption: "flex justify-center pt-1 relative items-center px-1",
           caption_label: "text-xs md:text-sm font-medium",
           nav: "space-x-1 flex items-center",
@@ -79,7 +79,7 @@ function Calendar({
           table: "w-full border-collapse space-y-1",
           head_row: "grid grid-cols-7 w-full gap-0",
           head_cell:
-            "text-muted-foreground font-normal text-[0.8rem] flex items-center justify-center w-9 h-9",
+            "text-muted-foreground font-normal text-xs flex items-center justify-center w-9 h-9",
           row: "flex w-full mt-1 md:mt-2",
           cell: "h-8 w-8 md:h-9 md:w-9 text-center text-xs md:text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-badge",
           day: "h-8 w-8 md:h-9 md:w-9 p-0 font-normal aria-selected:opacity-100 text-xs md:text-sm rounded-md",

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateRecurringShifts, RecurringShiftConfig } from "@/utils/recurring-shifts";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 
 interface CreateShiftModalProps {
   isOpen: boolean;

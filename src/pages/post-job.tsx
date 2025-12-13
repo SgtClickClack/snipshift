@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createShift } from '@/lib/api';
@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { LocationInput } from '@/components/ui/location-input';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { ArrowLeft } from 'lucide-react';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { useAuth } from '@/contexts/AuthContext';
 import { geocodeAddress } from '@/lib/google-maps';
+import { logger } from '@/lib/logger';
 
 export default function PostJobPage() {
   const navigate = useNavigate();
@@ -137,7 +138,8 @@ export default function PostJobPage() {
         }
       }
     } catch (error) {
-      console.error('Geocoding failed:', error);
+      // Non-blocking: continue without coordinates if geocoding fails
+      logger.debug('PostJob', 'Geocoding failed (continuing without coords):', error);
       // Continue without coordinates
     } finally {
       setIsGeocoding(false);
@@ -199,6 +201,7 @@ export default function PostJobPage() {
                 <Input
                   id="title"
                   type="text"
+                  required
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   placeholder="e.g., Hair Stylist Needed"
@@ -232,6 +235,7 @@ export default function PostJobPage() {
                   <Input
                     id="date"
                     type="date"
+                    required
                     value={formData.date}
                     onChange={(e) => handleChange('date', e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
@@ -248,6 +252,7 @@ export default function PostJobPage() {
                   <Input
                     id="startTime"
                     type="time"
+                    required
                     value={formData.startTime}
                     onChange={(e) => handleChange('startTime', e.target.value)}
                     className={errors.startTime ? 'border-red-500' : ''}
@@ -263,6 +268,7 @@ export default function PostJobPage() {
                   <Input
                     id="endTime"
                     type="time"
+                    required
                     value={formData.endTime}
                     onChange={(e) => handleChange('endTime', e.target.value)}
                     className={errors.endTime ? 'border-red-500' : ''}
@@ -281,6 +287,7 @@ export default function PostJobPage() {
                 <Input
                   id="payRate"
                   type="number"
+                  required
                   step="0.01"
                   min="0"
                   value={formData.payRate}
@@ -319,6 +326,7 @@ export default function PostJobPage() {
                 </Label>
                 <Textarea
                   id="description"
+                  required
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   placeholder="Describe the role, responsibilities, and what you're looking for..."

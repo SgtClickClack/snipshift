@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Upload, X, Plus, Save, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import ProfileHeader from "./profile-header";
 
 interface PortfolioItem {
@@ -397,9 +398,10 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
               {formData.portfolio?.map((item) => (
                 <div key={item.id} className="border rounded-lg p-3" data-testid={`portfolio-item-${item.id}`}>
                   <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2">
-                    <img
+                    <OptimizedImage
                       src={item.imageURL}
                       alt={item.caption}
+                      fallbackType="image"
                       className="w-full h-full object-cover"
                     />
                   </div>

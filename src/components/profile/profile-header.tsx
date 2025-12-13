@@ -1,15 +1,16 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Camera, Loader2 } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
-import { useImageUpload } from "@/hooks/use-image-upload";
+import { useImageUpload } from "@/hooks/useImageUpload";
 import { apiRequest } from "@/lib/queryClient";
+import { logger } from "@/lib/logger";
 
 interface ProfileHeaderProps {
   /** Banner image URL */
@@ -90,7 +91,7 @@ export default function ProfileHeader({
       if (typeof bannerUrl === 'string') {
         propUrlString = bannerUrl;
       } else if (bannerUrl && typeof bannerUrl === 'object') {
-        console.warn('Banner useEffect - bannerUrl prop is an object, extracting URL:', bannerUrl);
+        logger.debug("ProfileHeader", "bannerUrl prop is an object, extracting URL:", bannerUrl);
         propUrlString = extractUrlString(bannerUrl);
         if (!propUrlString) {
           console.error('Banner useEffect - Could not extract URL from object, keeping current:', bannerUrl);

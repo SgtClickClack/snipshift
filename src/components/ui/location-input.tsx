@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import {
   Command,
   CommandEmpty,
@@ -73,7 +74,7 @@ const PlacesAutocompleteInternal = ({
         const { lat, lng } = await getLatLng(results[0]);
         onSelect({ lat, lng, address });
       } catch (error) {
-        console.error('Error: ', error);
+        logger.debug('LocationInput', 'Places geocode failed (selection kept):', error);
       }
     }
   };
@@ -101,7 +102,7 @@ const PlacesAutocompleteInternal = ({
         </div>
       </PopoverTrigger>
       <PopoverContent 
-        className="p-0 w-full max-w-[300px] bg-card border border-border shadow-lg z-[100]"
+        className="p-0 w-full max-w-xs bg-card border border-border shadow-lg z-[100]"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
@@ -141,7 +142,7 @@ export function LocationInput(props: LocationInputProps) {
     loadGoogleMaps()
       .then(() => setIsScriptLoaded(true))
       .catch((err) => {
-        console.error("Failed to load Google Maps API", err);
+        logger.error('LocationInput', 'Failed to load Google Maps API', err);
         setLoadError("Failed to load location services");
       });
   }, []);

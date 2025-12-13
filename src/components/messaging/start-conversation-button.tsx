@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Start Conversation Button Component
  * 
  * Creates or opens a conversation with a target user and redirects to messages page
@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MessageCircle } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface StartConversationButtonProps {

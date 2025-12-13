@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
+﻿import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
 import { Calendar, momentLocalizer, View, Event } from "react-big-calendar";
 import moment from "moment";
 import { format, isPast, isToday, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
@@ -52,7 +52,7 @@ import {
 import { UserPlus } from "lucide-react";
 // Store reference to prevent tree-shaking in production builds
 const UserPlusIcon = UserPlus;
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -2641,9 +2641,9 @@ export default function ProfessionalCalendar({
                                     <div className="font-semibold truncate">{event.title}</div>
                                     <div className="flex items-center gap-1 opacity-90">
                                       {isAssigned ? (
-                                        <span>👤 {assignedStaff?.name || assignedStaff?.displayName || "Assigned"}</span>
+                                        <span>ðŸ‘¤ {assignedStaff?.name || assignedStaff?.displayName || "Assigned"}</span>
                                       ) : (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") ? (
-                                        <span>⚠️ Open</span>
+                                        <span>âš ï¸ Open</span>
                                       ) : null}
                                     </div>
                                   </div>
@@ -3073,7 +3073,7 @@ export default function ProfessionalCalendar({
                                     )}
                                   </div>
                                   {selectedProfessional.rating && (
-                                    <div className="text-sm text-muted-foreground">⭐ {selectedProfessional.rating}</div>
+                                    <div className="text-sm text-muted-foreground">â­ {selectedProfessional.rating}</div>
                                   )}
                                 </div>
                               </div>
@@ -3135,7 +3135,7 @@ export default function ProfessionalCalendar({
                                                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 flex-shrink-0" />
                                               </div>
                                               {professional.rating && (
-                                                <div className="text-sm text-muted-foreground">⭐ {professional.rating}</div>
+                                                <div className="text-sm text-muted-foreground">â­ {professional.rating}</div>
                                               )}
                                               {professional.skills && professional.skills.length > 0 && (
                                                 <div className="flex gap-1 mt-1 flex-wrap">
@@ -3201,7 +3201,7 @@ export default function ProfessionalCalendar({
                                             <div className="flex-1 min-w-0">
                                               <div className="font-medium truncate">{professional.name}</div>
                                               {professional.rating && (
-                                                <div className="text-sm text-muted-foreground">⭐ {professional.rating}</div>
+                                                <div className="text-sm text-muted-foreground">â­ {professional.rating}</div>
                                               )}
                                               {professional.skills && professional.skills.length > 0 && (
                                                 <div className="flex gap-1 mt-1 flex-wrap">

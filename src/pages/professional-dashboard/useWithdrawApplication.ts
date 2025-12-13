@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useWithdrawApplication Hook
  * 
  * Custom mutation hook for withdrawing a pending job application
@@ -6,7 +6,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * Custom hook to withdraw a pending application

@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
@@ -635,7 +635,7 @@ export default function ProfessionalDashboard() {
                       </CardTitle>
                       {filteredJobs.length !== jobs.length && (
                         <div className="text-sm text-muted-foreground">
-                          Showing filtered results • <Button 
+                          Showing filtered results â€¢ <Button 
                             variant="link" 
                             className="p-0 h-auto text-sm" 
                             onClick={handleClearFilters}

@@ -65,7 +65,7 @@ export function NotificationToast() {
     <div className="fixed bottom-4 right-4 z-[9999] animate-in slide-in-from-bottom-5 fade-in-0 duration-300">
       <div
         className={cn(
-          'flex items-start gap-3 p-4 rounded-lg border shadow-lg max-w-md min-w-[320px]',
+          'flex items-start gap-3 p-4 rounded-lg border shadow-lg max-w-md min-w-80',
           getStyles(latestUnread.type)
         )}
       >

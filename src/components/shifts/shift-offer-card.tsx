@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, DollarSign, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ShiftOffer } from "@/lib/api";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface ShiftOfferCardProps {
   offer: ShiftOffer;
@@ -35,10 +36,12 @@ export function ShiftOfferCard({
           {/* Business Logo */}
           <div className="flex-shrink-0">
             {offer.businessLogo ? (
-              <img
+              <OptimizedImage
                 src={offer.businessLogo}
                 alt={offer.businessName}
+                fallbackType="image"
                 className="w-16 h-16 rounded-lg object-cover border-2 border-teal-200"
+                containerClassName="rounded-lg"
               />
             ) : (
               <div className="w-16 h-16 rounded-lg bg-teal-100 flex items-center justify-center border-2 border-teal-200">

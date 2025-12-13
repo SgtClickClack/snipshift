@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, Notification as APINotification } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 // Transform API notification to component notification format
 function transformNotification(apiNotif: APINotification): any {
@@ -31,10 +32,7 @@ export function useNotifications() {
       } catch (error) {
         // Silently handle errors during background polling to prevent disrupting the user
         // Return empty array instead of throwing to prevent error boundaries from triggering
-        // Only log in development to avoid console noise in production
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[useNotifications] Polling error (silently handled):', error);
-        }
+        logger.debug("useNotifications", "Polling error (silently handled):", error);
         return [];
       }
     },

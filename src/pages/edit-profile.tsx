@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { LocationInput } from '@/components/ui/location-input';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { updateUserProfile } from '@/lib/api';
 import { ImageUpload } from '@/components/ui/image-upload';
 
@@ -138,7 +138,7 @@ export default function EditProfilePage() {
                   value={formData.bio}
                   onChange={handleChange}
                   placeholder="Tell us about yourself..."
-                  className="bg-card border-border focus:border-primary focus:ring-primary min-h-[100px]"
+                  className="bg-card border-border focus:border-primary focus:ring-primary min-h-24"
                 />
               </div>
 

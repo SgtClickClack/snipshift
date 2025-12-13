@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -76,7 +76,7 @@ export function OAuthCallback() {
         navigate('/role-selection');
         
       } catch (error) {
-        console.error('❌ OAuth callback error:', error);
+        console.error('âŒ OAuth callback error:', error);
         toast({
           title: "Authentication failed",
           description: "There was an error processing your Google authentication. Please try again.",

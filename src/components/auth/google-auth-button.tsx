@@ -1,12 +1,13 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { signInWithGoogle } from "@/lib/firebase";
 import { Chrome } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getDashboardRoute } from "@/lib/roles";
+import { logger } from "@/lib/logger";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -64,7 +65,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         // If it's a 409 (user already exists), that's fine - continue to login
         // Otherwise, log the error but continue - the login endpoint will create the user if needed
         if (e.message && !e.message.includes('already exists') && !e.message.includes('409')) {
-          console.warn('Registration attempt failed, continuing with login:', e.message);
+          logger.debug("GoogleAuthButton", "Registration attempt failed, continuing with login:", e.message);
         }
       }
 

@@ -1,4 +1,172 @@
 
+#### 2025-12-13: Phase 4 Final Polish (Structure, Naming, Import Hygiene, README)
+
+**Core Components Implemented:**
+- Component folder organization (`src/components/*`)
+- Hook naming conventions (`src/hooks/*`)
+- Import path hygiene (`@/*` aliases)
+- Root documentation (`README.md`)
+
+**Key Features**
+- **Component Organization:**
+  - Moved previously “loose” root components into clear domain folders (e.g. `layout/`, `landing/`, `theme/`, `error/`, `shifts/`).
+- **Naming Conventions:**
+  - Standardized moved component filenames to **PascalCase**.
+  - Renamed hook files to **camelCase** (`useToast`, `useNotifications`, etc.) and updated all imports.
+- **Import Hygiene:**
+  - Removed remaining deep/relative component imports in key entrypoints, favoring `@/…` aliases.
+  - Cleaned up a duplicate import in `Navbar` while updating paths.
+- **Documentation:**
+  - Updated `README.md` with a concise **Project Structure** overview and clarified **Getting Started** commands.
+
+**Integration Points**
+- `npm run build` (verified after moves/renames)
+
+**File Paths**
+- `src/components/layout/Navbar.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/landing/Pricing.tsx`
+- `src/components/landing/Hero.tsx`
+- `src/components/theme/ThemeProvider.tsx`
+- `src/components/theme/ModeToggle.tsx`
+- `src/components/error/StartupErrorBoundary.tsx`
+- `src/components/shifts/ShiftCard.tsx`
+- `src/hooks/useToast.ts`
+- `src/hooks/useNotifications.ts`
+- `src/hooks/useImageUpload.ts`
+- `src/hooks/useInstallPrompt.ts`
+- `src/hooks/useMobile.tsx`
+- `src/App.tsx`
+- `src/pages/landing.tsx`
+- `src/main.tsx`
+- `README.md`
+
+**Next Priority Task**
+- Fix the remaining lint **errors** so `npm run lint` is green again (then address warnings in smaller follow-up passes).
+
+**Code Organization & Quality**
+- Focused on high-signal structural polish without expanding scope to full repo-wide renames.
+
+---
+
+#### 2025-12-13: Bulletproof Protocol (API Safety, Empty States, Image Resilience)
+
+**Core Components Implemented:**
+- Frontend API wrapper (`src/lib/api.ts`)
+- Image resilience via shared UI components (`AvatarImage`, `OptimizedImage` consumers)
+- Form and action validation in key flows (Post Job, Shift/Job apply)
+
+**Key Features**
+- **API Safety & Catch Blocks:**
+  - Introduced a standardized `ApiError` and centralized safe JSON parsing in `src/lib/api.ts`.
+  - Wrapped exported API calls in `try/catch` to either **throw a standardized error** (detail/actions) or **return safe fallbacks** (lists/counts) to avoid blank screens.
+  - Replaced previously-stubbed endpoints that were actively used in UI (`fetchJobDetails`, `applyToJob`, `fetchJobApplications`, `cancelSubscription`) with real API calls and safe failure behavior.
+- **Empty State Handling:**
+  - Verified key list views already render explicit empty states (Messages, Notifications, Dashboards, Job/Shift feeds) to prevent “blank whitespace” UX.
+- **Image Resilience:**
+  - Hardened `AvatarImage` to reliably fall back when an image URL 404s/errors.
+  - Replaced remaining dynamic `<img>` usages with `OptimizedImage` in high-traffic surfaces (feeds, dashboards, portfolios, moderation, uploads) to ensure consistent fallbacks.
+- **Input Validation:**
+  - Added HTML `required` attributes to critical Post Job fields and retained runtime validation.
+  - Added pre-submit guards for applying to jobs/shifts when critical listing fields are missing (rate/date/location).
+
+**Integration Points**
+- `npm run build` (verified production build succeeds after changes)
+- API endpoints: `/api/applications`, `/api/jobs/:id`, `/api/jobs/:id/applications`, `/api/subscriptions/checkout`, `/api/subscriptions/cancel`
+
+**File Paths**
+- `src/lib/api.ts`
+- `src/lib/queryClient.ts`
+- `src/pages/post-job.tsx`
+- `src/pages/shift-details.tsx`
+- `src/pages/job-details.tsx`
+- `src/pages/wallet.tsx`
+- `src/pages/manage-jobs.tsx`
+- `src/pages/hub-dashboard.tsx`
+- `src/components/ui/avatar.tsx`
+- `src/components/ui/image-upload.tsx`
+- `src/components/ui/location-input.tsx`
+- `src/components/social/post-card.tsx`
+- `src/components/social/post-creation-form.tsx`
+- `src/components/social/social-feed.tsx`
+- `src/components/shifts/shift-offer-card.tsx`
+- `src/components/profile/profile-edit-form.tsx`
+- `src/components/profile/professional-digital-resume.tsx`
+- `src/components/profile/portfolio-lightbox.tsx`
+- `src/components/training/training-hub.tsx`
+- `src/components/admin/content-moderation.tsx`
+- `src/components/auth/google-signup-modal.tsx`
+- `src/pages/my-applications.tsx`
+
+**Next Priority Task**
+- Phase 4: Final Polish (directory organization + config hygiene).
+
+**Code Organization & Quality**
+- Centralized resilience behavior in shared utilities/components to avoid repetitive one-off fallbacks.
+
+---
+
+#### 2025-12-13: Visual Unification Pass (Tailwind Normalization)
+
+**Core Components Implemented:**
+- UI Components (shadcn/ui wrappers)
+- Dashboard + Job Feed layout polish
+- Modal sizing standardization
+
+**Key Features**
+- **Spacing Standardization:**
+  - Replaced safe Tailwind arbitrary pixel values with nearest standard scale classes (e.g., `sm:w-[180px]` → `sm:w-44`, `w-[240px]` → `w-60`, `min-w-[320px]` → `min-w-80`, `p-[1px]` → `p-px`).
+  - Standardized common min-height values used for textareas and empty states (e.g., `min-h-[100px]` → `min-h-24`, `min-h-[200px]` → `min-h-48`).
+- **Typography:**
+  - Removed remaining hard-coded font-size token in `Calendar` day header (`text-[0.8rem]` → `text-xs`).
+- **Mobile Responsiveness:**
+  - Removed a few fixed-width control widths in key flows (Find Shifts sort controls) while preserving responsive behavior.
+- **Interactive States:**
+  - Confirmed global `:active` feedback exists in `src/index.css`; existing hover states are preserved and shared Button styles remain the primary source of interaction styling.
+- **Build/Tooling Hygiene:**
+  - Scoped `npm run lint` to `src/` + `api/` to avoid unrelated legacy directories breaking lint.
+
+**Integration Points**
+- `npm run lint`
+
+**File Paths**
+- `package.json`
+- `src/pages/job-feed.tsx`
+- `src/pages/travel.tsx`
+- `src/pages/shop-dashboard.tsx`
+- `src/pages/brand-dashboard.tsx`
+- `src/pages/trainer-dashboard.tsx`
+- `src/pages/edit-profile.tsx`
+- `src/components/navbar.tsx`
+- `src/components/ui/location-input.tsx`
+- `src/components/ui/scroll-area.tsx`
+- `src/components/ui/sidebar.tsx`
+- `src/components/ui/toast.tsx`
+- `src/components/ui/calendar.tsx`
+- `src/components/ui/textarea.tsx`
+- `src/components/ui/separator.tsx`
+- `src/components/ui/navigation-menu.tsx`
+- `src/components/ui/command.tsx`
+- `src/components/ui/drawer.tsx`
+- `src/components/ui/image-upload.tsx`
+- `src/components/loading/loading-spinner.tsx`
+- `src/components/ui/error-boundary.tsx`
+- `src/components/job-board/JobBoard.tsx`
+- `src/components/notifications/notification-bell.tsx`
+- `src/components/notifications/notification-toast.tsx`
+- `src/components/auth/google-signup-modal.tsx`
+- `src/components/report/report-button.tsx`
+- `src/components/shifts/offer-inbox.tsx`
+- `src/components/demo/design-system-showcase.tsx`
+
+**Next Priority Task**
+- Phase 3: Bulletproof Protocol (API safety, empty states, image fallbacks).
+
+**Code Organization & Quality**
+- Limited changes to value-safe Tailwind token replacements; avoided large refactors in oversized files.
+
+---
+
 #### 2025-12-04: Vercel Build Warnings Fix
 
 **Core Components Implemented:**

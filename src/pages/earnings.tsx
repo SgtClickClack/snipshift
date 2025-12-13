@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { 
   Wallet, 
   DollarSign, 
@@ -458,7 +458,7 @@ export default function EarningsPage() {
                               <span className="sr-only">Download invoice</span>
                             </Button>
                           ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
+                            <span className="text-muted-foreground text-sm">â€”</span>
                           )}
                         </TableCell>
                       </TableRow>

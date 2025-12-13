@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, ArrowRight, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger } from "@/lib/logger";
 
 interface TutorialStep {
   id: string;
@@ -176,17 +177,19 @@ export function TutorialOverlay() {
   
   // E2E DEBUG: Log environment variable and visibility state (development/E2E only)
   if (import.meta.env.DEV || import.meta.env.VITE_E2E === '1') {
-    console.log('E2E DEBUG: VITE_E2E value:', import.meta.env.VITE_E2E);
-    console.log('E2E DEBUG: MODE value:', import.meta.env.MODE);
-    console.log('E2E DEBUG: isE2EMode:', isE2EMode);
-    console.log('E2E DEBUG: isVisible state:', isVisible);
-    console.log('E2E DEBUG: currentStepData:', currentStepData);
-    console.log('E2E DEBUG: userRole:', userRole);
+    logger.debug("TutorialOverlay", "E2E env:", {
+      VITE_E2E: import.meta.env.VITE_E2E,
+      MODE: import.meta.env.MODE,
+      isE2EMode,
+      isVisible,
+      currentStepData,
+      userRole,
+    });
   }
   
   if (isE2EMode) {
     if (import.meta.env.DEV || import.meta.env.VITE_E2E === '1') {
-      console.log('E2E DEBUG: Returning null due to E2E mode detection');
+      logger.debug("TutorialOverlay", "Returning null due to E2E mode detection");
     }
     return null;
   }

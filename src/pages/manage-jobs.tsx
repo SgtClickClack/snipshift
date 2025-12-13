@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchMyJobs, fetchJobApplications, updateApplicationStatus, updateJobStatus, MyJob, JobApplication } from '@/lib/api';
@@ -24,9 +24,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { Clock, DollarSign, Users, Briefcase, CheckCircle2, XCircle, CheckCircle, MessageSquare } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { logger } from '@/lib/logger';
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -244,7 +245,7 @@ export default function ManageJobsPage() {
                             <span>{formatDate(job.date)}</span>
                             {job.startTime && job.endTime && (
                               <span className="text-steel-500">
-                                • {job.startTime} - {job.endTime}
+                                â€¢ {job.startTime} - {job.endTime}
                               </span>
                             )}
                           </div>
@@ -400,7 +401,12 @@ export default function ManageJobsPage() {
                                 navigate(`/messages?conversation=${data.id}`);
                                 setIsDialogOpen(false);
                               } catch (error) {
-                                console.error('Failed to create conversation:', error);
+                                logger.error('ManageJobs', 'Failed to create conversation:', error);
+                                toast({
+                                  title: 'Error',
+                                  description: 'Failed to start conversation. Please try again.',
+                                  variant: 'destructive',
+                                });
                               }
                             }}
                             variant="outline"

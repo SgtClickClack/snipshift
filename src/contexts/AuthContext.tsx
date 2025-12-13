@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { onAuthStateChange, signOutUser, auth } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
+import { logger } from '@/lib/logger';
 
 export interface User {
   id: string;
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   setUser(null);
                 }
               } else {
-                console.warn('User authenticated in Firebase but profile fetch failed', res.status);
+                logger.error('AuthContext', 'User authenticated in Firebase but profile fetch failed', res.status);
                 // Optional: Set a minimal user or redirect to signup completion?
                 // For now, we logout if we can't identify the user in our system
                 setUser(null);
@@ -287,7 +288,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(null);
         }
       } else {
-        console.warn('Failed to refresh user profile', res.status);
+        logger.error('AuthContext', 'Failed to refresh user profile', res.status);
       }
     } catch (error) {
       console.error('Error refreshing user profile:', error);

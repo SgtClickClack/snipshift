@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Image, Send, X } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface PostCreationFormProps {
   userRole: "professional" | "hub" | "brand" | "trainer";
@@ -121,7 +122,7 @@ export default function PostCreationForm({
               placeholder={`What's happening in the ${userRole === 'brand' ? 'brand' : 'training'} world?`}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[100px] resize-none border-0 bg-muted focus:bg-card transition-colors"
+              className="min-h-24 resize-none border-0 bg-muted focus:bg-card transition-colors"
               data-testid="textarea-post-content"
             />
 
@@ -131,9 +132,10 @@ export default function PostCreationForm({
                 {images.map((image, index) => (
                   <div key={index} className="relative group">
                     <div className="aspect-square bg-steel-200 rounded-lg overflow-hidden">
-                      <img
+                      <OptimizedImage
                         src={image}
                         alt={`Upload ${index + 1}`}
+                        fallbackType="image"
                         className="w-full h-full object-cover"
                       />
                     </div>

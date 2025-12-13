@@ -10,6 +10,8 @@ import { format } from "date-fns";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import { Post } from "@/shared/types";
 import { apiRequest } from "@/lib/queryClient";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import { logger } from "@/lib/logger";
 
 interface PostCardProps {
   post: Post;
@@ -27,16 +29,22 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
   const { data: fetchedComments = [], isLoading: isLoadingComments, refetch: refetchComments } = useQuery({
     queryKey: [`/api/community/${post.id}/comments`],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/community/${post.id}/comments`);
-      const data = await res.json();
-      // Map backend comment structure to frontend expectation if needed
-      return data.map((c: any) => ({
-        id: c.id,
-        author: c.authorName || "Unknown",
-        authorAvatar: c.authorAvatar,
-        text: c.content,
-        timestamp: c.createdAt
-      }));
+      try {
+        const res = await apiRequest("GET", `/api/community/${post.id}/comments`);
+        const data = await res.json();
+        // Map backend comment structure to frontend expectation if needed
+        return (Array.isArray(data) ? data : []).map((c: any) => ({
+          id: c.id,
+          author: c.authorName || "Unknown",
+          authorAvatar: c.authorAvatar,
+          text: c.content,
+          timestamp: c.createdAt,
+        }));
+      } catch (error) {
+        // Non-blocking: keep UI usable if comments fetch fails
+        logger.debug("PostCard", "Failed to fetch comments:", error);
+        return [];
+      }
     },
     enabled: showComments,
   });
@@ -77,7 +85,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
       setNewComment("");
       refetchComments(); // Refresh comments after posting
     } catch (error) {
-      console.error("Failed to post comment:", error);
+      logger.error("PostCard", "Failed to post comment:", error);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -185,9 +193,10 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
               {post.images.slice(0, 4).map((image, index) => (
                 <div key={`${image}-${index}`} className="aspect-square bg-muted rounded-lg overflow-hidden">
-                  <img
+                  <OptimizedImage
                     src={image}
                     alt={`Post image ${index + 1}`}
+                    fallbackType="image"
                     className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
                     data-testid={`post-image-${post.id}-${index}`}
                   />

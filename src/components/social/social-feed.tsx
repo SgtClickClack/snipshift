@@ -1,11 +1,12 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Heart, MessageCircle, Share, Tag, ExternalLink, Calendar, MapPin, Filter } from "lucide-react";
 import { format } from "date-fns";
 
@@ -212,9 +213,10 @@ export default function SocialFeed() {
                 {/* Post Image */}
                 {post.imageUrl && (
                   <div className="rounded-lg overflow-hidden">
-                    <img 
-                      src={post.imageUrl} 
+                    <OptimizedImage
+                      src={post.imageUrl}
                       alt="Post content"
+                      fallbackType="image"
                       className="w-full h-64 object-cover"
                       data-testid={`image-${post.id}`}
                     />

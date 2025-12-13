@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { fetchShifts, applyToShift } from '@/lib/api';
 import { Shift } from '@/shared/types';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
@@ -107,7 +107,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, distance }: O
             onClick={() => onApply(shift.id)}
             disabled={isApplying || hasApplied}
             variant={hasApplied ? 'outline' : 'default'}
-            className="min-w-[120px]"
+            className="min-w-32"
           >
             {isApplying ? (
               <>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Scissors, Eye, EyeOff } from "lucide-react";
@@ -85,7 +85,7 @@ export default function SignupPage() {
         // Navigate to home (role selection)
         navigate('/home');
       } catch (error) {
-        console.error('❌ OAuth callback error:', error);
+        console.error('âŒ OAuth callback error:', error);
         toast({
           title: "Authentication Error",
           description: "There was an issue processing your Google authentication.",

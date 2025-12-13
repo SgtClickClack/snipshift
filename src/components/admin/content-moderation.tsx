@@ -1,11 +1,12 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Check, X, Eye, Shield, AlertTriangle, Clock, Filter } from "lucide-react";
 import { format } from "date-fns";
 
@@ -211,9 +212,10 @@ export default function ContentModeration() {
 
                     {post.imageUrl && (
                       <div className="rounded-lg overflow-hidden max-w-md">
-                        <img 
-                          src={post.imageUrl} 
+                        <OptimizedImage
+                          src={post.imageUrl}
                           alt="Post content"
+                          fallbackType="image"
                           className="w-full h-48 object-cover"
                         />
                       </div>
@@ -288,9 +290,10 @@ export default function ContentModeration() {
                 <Card key={content.id} className="overflow-hidden" data-testid={`pending-training-${content.id}`}>
                   <div className="aspect-video bg-neutral-100 relative">
                     {content.thumbnailUrl ? (
-                      <img 
-                        src={content.thumbnailUrl} 
+                      <OptimizedImage
+                        src={content.thumbnailUrl}
                         alt={content.title}
+                        fallbackType="banner"
                         className="w-full h-full object-cover"
                       />
                     ) : (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shift } from "@/shared/types";
@@ -358,7 +358,7 @@ export default function ShopDashboard() {
                             <div className="flex justify-between items-start mb-3">
                               <h4 className="font-semibold text-neutral-900">{shift.title}</h4>
                               <div className="flex items-center gap-2">
-                                <div className="w-full sm:w-[130px]">
+                                <div className="w-full sm:w-32">
                                   <Select
                                     defaultValue={shift.status}
                                     disabled={updateStatusMutation.isPending && updateStatusMutation.variables?.id === shift.id}

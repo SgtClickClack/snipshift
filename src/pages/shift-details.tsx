@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { ReportButton } from '@/components/report/report-button';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { SEO } from "@/components/seo/SEO";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 export default function ShiftDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -112,6 +113,19 @@ export default function ShiftDetailsPage() {
       toast({
         title: 'Error',
         description: 'Shift ID is missing.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate critical shift fields before submitting to the API
+    const missingCritical =
+      !shift?.hourlyRate || !shift?.startTime || !shift?.endTime || !shift?.location;
+
+    if (missingCritical) {
+      toast({
+        title: 'Unable to apply',
+        description: 'This shift is missing required details (rate, date/time, or location).',
         variant: 'destructive',
       });
       return;
@@ -425,10 +439,12 @@ export default function ShiftDetailsPage() {
                 <h2 className="text-xl font-bold text-foreground mb-4">About {shift.shopName}</h2>
                 {shift.shopAvatarUrl && (
                   <div className="mb-4">
-                    <img 
-                      src={shift.shopAvatarUrl} 
-                      alt={shift.shopName} 
+                    <OptimizedImage
+                      src={shift.shopAvatarUrl}
+                      alt={shift.shopName}
+                      fallbackType="user"
                       className="w-20 h-20 rounded-full object-cover"
+                      containerClassName="rounded-full"
                     />
                   </div>
                 )}

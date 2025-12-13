@@ -92,11 +92,17 @@ SnipShift is an "Uber for Barbers" marketplace platform that connects barbershop
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 22.x and npm
 - PostgreSQL database
 - Firebase project (for authentication and storage)
 - Stripe account (for payments)
 - Resend account (for emails)
+
+## 🗂️ Project Structure
+
+- **`src/pages/`**: Route-level pages (each file is a top-level view mounted by React Router).
+- **`src/components/`**: Reusable UI + domain components organized by feature area (e.g. `layout/`, `landing/`, `theme/`, `shifts/`, `payments/`, and `ui/` for shadcn/ui primitives).
+- **`api/`**: Express backend (routes, services, repositories, DB schema/migrations) and supporting scripts.
 
 ### Installation
 
@@ -152,6 +158,11 @@ SnipShift is an "Uber for Barbers" marketplace platform that connects barbershop
 
 6. **Start the development server**
    
+   Frontend only:
+   ```bash
+   npm run dev
+   ```
+
    To run both frontend and backend together:
    ```bash
    npm run dev:all

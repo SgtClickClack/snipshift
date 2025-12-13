@@ -7,7 +7,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { SocketProvider } from '@/contexts/SocketContext';
@@ -21,8 +21,8 @@ import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { PwaUpdateHandler } from '@/components/pwa/pwa-update-handler';
 import { RouteProgressBar } from '@/components/ui/route-progress-bar';
-import Navbar from '@/components/navbar';
-import { Footer } from '@/components/layout/footer';
+import Navbar from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
 
 // Core pages - load immediately for fast initial render (critical for FCP/LCP)
 import LandingPage from '@/pages/landing';

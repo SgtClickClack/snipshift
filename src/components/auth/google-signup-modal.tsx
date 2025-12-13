@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Users, Package, GraduationCap } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface GoogleSignupModalProps {
   isOpen: boolean;
@@ -67,16 +68,18 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="w-[95vw] sm:max-w-[500px] bg-card max-h-[85vh] overflow-y-auto" 
+        className="w-[95vw] sm:max-w-lg bg-card max-h-[85vh] overflow-y-auto" 
         data-testid="google-signup-modal"
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             {userData.picture && (
-              <img
+              <OptimizedImage
                 src={userData.picture}
                 alt={userData.name}
-                className="w-10 h-10 rounded-full"
+                fallbackType="user"
+                className="w-10 h-10 rounded-full object-cover"
+                containerClassName="rounded-full"
               />
             )}
             Welcome, {userData.name}!

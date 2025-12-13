@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchMyApplications, createConversation } from '@/lib/api';
@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MapPin, Clock, DollarSign, Briefcase, MessageSquare, Eye, X, Search } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
+import { logger } from '@/lib/logger';
 
 export type ApplicationStatus = 
   | 'pending' 
@@ -175,7 +176,7 @@ export default function MyApplicationsPage() {
       });
       navigate(`/messages?conversation=${conversation.id}`);
     } catch (error) {
-      console.error('Failed to create conversation:', error);
+      logger.error('MyApplications', 'Failed to create conversation:', error);
       toast({
         title: 'Error',
         description: 'Failed to start conversation. Please try again.',

@@ -1,10 +1,10 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu, RefreshCw, Briefcase, User, Settings } from "lucide-react";
-import NotificationBell from "./notifications/notification-bell";
+import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -25,7 +25,6 @@ import {
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
-import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute, mapRoleToApiRole } from "@/lib/roles";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { InstallButton } from "@/components/pwa/install-button";
@@ -124,7 +123,7 @@ export default function Navbar() {
               <img 
                 src={logo} 
                 alt="Snipshift Logo" 
-                className="h-10 w-auto object-contain max-w-[120px] sm:max-w-none logo-sharp invert contrast-[1.3] brightness-[1.08] saturate-[1.15] dark:invert-0" 
+                className="h-10 w-auto object-contain max-w-32 sm:max-w-none logo-sharp invert contrast-[1.3] brightness-[1.08] saturate-[1.15] dark:invert-0" 
                 loading="eager"
                 width={120}
                 height={40}
@@ -148,13 +147,13 @@ export default function Navbar() {
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="w-full max-w-[200px] justify-between bg-white/10 text-navbar-foreground border-white/20 hover:bg-white/20 z-floating relative"
+                        className="w-full max-w-48 justify-between bg-white/10 text-navbar-foreground border-white/20 hover:bg-white/20 z-floating relative"
                       >
                         {currentRoleLabel}
                         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[240px] max-w-[calc(100vw-2rem)] bg-popover dark:bg-steel-800 border-border dark:border-steel-600 text-popover-foreground dark:text-white z-floating" align="end">
+                    <DropdownMenuContent className="w-60 max-w-[calc(100vw-2rem)] bg-popover dark:bg-steel-800 border-border dark:border-steel-600 text-popover-foreground dark:text-white z-floating" align="end">
                       
                       <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Current View</DropdownMenuLabel>
                       <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground dark:focus:bg-steel-700 dark:focus:text-white justify-between font-bold bg-accent/50 dark:bg-steel-700/50">

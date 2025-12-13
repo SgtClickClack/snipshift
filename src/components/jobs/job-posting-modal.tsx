@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -229,7 +229,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Describe the role, responsibilities, and what you're looking for..."
-                  className="min-h-[100px]"
+                  className="min-h-24"
                   required
                   data-testid="textarea-job-description"
                 />
@@ -241,7 +241,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
                   value={formData.requirements}
                   onChange={(e) => setFormData(prev => ({ ...prev, requirements: e.target.value }))}
                   placeholder="Any specific requirements, certifications, or preferences..."
-                  className="min-h-[80px]"
+                  className="min-h-20"
                   data-testid="textarea-requirements"
                 />
               </div>
@@ -280,7 +280,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
                       data-testid={`badge-skill-${skill.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       {skill}
-                      {formData.skillsRequired.includes(skill) && " ✓"}
+                      {formData.skillsRequired.includes(skill) && " âœ“"}
                     </Badge>
                   ))}
                 </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+﻿import { useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,14 +27,14 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import PortfolioLightbox from './portfolio-lightbox';
 import { apiRequest } from '@/lib/queryClient';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth } from '@/lib/firebase';
 import { ImageCropper } from '@/components/ui/image-cropper';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { useImageUpload } from '@/hooks/use-image-upload';
+import { useImageUpload } from '@/hooks/useImageUpload';
 import { compressImage } from '@/lib/image-compression';
 
 interface PortfolioItem {
@@ -761,7 +761,7 @@ export default function ProfessionalDigitalResume({
                       <p className="text-2xl font-bold">
                         {profile.jobSuccessScore != null && profile.jobSuccessScore > 0 
                           ? `${profile.jobSuccessScore}%` 
-                          : '—'}
+                          : 'â€”'}
                       </p>
                     </div>
                   </div>
@@ -787,7 +787,7 @@ export default function ProfessionalDigitalResume({
                       <p className="text-2xl font-bold">
                         {profile.onTimeRate != null && profile.onTimeRate > 0 
                           ? `${profile.onTimeRate}%` 
-                          : '—'}
+                          : 'â€”'}
                       </p>
                     </div>
                   </div>
@@ -837,9 +837,10 @@ export default function ProfessionalDigitalResume({
                         className="group relative aspect-square cursor-pointer rounded-lg overflow-hidden bg-muted"
                         onClick={() => setSelectedImageIndex(index)}
                       >
-                        <img
+                        <OptimizedImage
                           src={item.imageURL}
                           alt={item.caption || 'Portfolio image'}
+                          fallbackType="image"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                         {isEditing && (
@@ -1071,7 +1072,7 @@ export default function ProfessionalDigitalResume({
                           <p className="font-medium text-sm">{cert.type}</p>
                           <p className="text-xs text-muted-foreground">{cert.issuer}</p>
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(cert.date), 'MMM yyyy')} •{' '}
+                            {format(new Date(cert.date), 'MMM yyyy')} â€¢{' '}
                             <Badge
                               variant={
                                 cert.status === 'active'

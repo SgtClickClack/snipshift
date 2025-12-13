@@ -93,7 +93,7 @@ export default function ApplicationsView() {
               // Loading State
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8">
                     <LoadingSpinner size="lg" />
                     <p className="text-center text-muted-foreground mt-4">
                       Loading your applications...
@@ -105,7 +105,7 @@ export default function ApplicationsView() {
               // Error State
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8 text-center">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
                     <div className="bg-destructive/10 rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-destructive" />
                     </div>
@@ -125,7 +125,7 @@ export default function ApplicationsView() {
               // Empty State
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8 text-center">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
                     <div className="bg-muted rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-muted-foreground" />
                     </div>
@@ -161,7 +161,7 @@ export default function ApplicationsView() {
             {isLoading ? (
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8">
                     <LoadingSpinner size="lg" />
                     <p className="text-center text-muted-foreground mt-4">
                       Loading your applications...
@@ -172,7 +172,7 @@ export default function ApplicationsView() {
             ) : error ? (
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8 text-center">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
                     <div className="bg-destructive/10 rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-destructive" />
                     </div>
@@ -191,7 +191,7 @@ export default function ApplicationsView() {
             ) : filteredApplications.length === 0 ? (
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8 text-center">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
                     <div className="bg-muted rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-muted-foreground" />
                     </div>
@@ -222,7 +222,7 @@ export default function ApplicationsView() {
             {isLoading ? (
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8">
                     <LoadingSpinner size="lg" />
                     <p className="text-center text-muted-foreground mt-4">
                       Loading your applications...
@@ -233,7 +233,7 @@ export default function ApplicationsView() {
             ) : error ? (
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8 text-center">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
                     <div className="bg-destructive/10 rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-destructive" />
                     </div>
@@ -252,7 +252,7 @@ export default function ApplicationsView() {
             ) : filteredApplications.length === 0 ? (
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center min-h-[200px] py-8 text-center">
+                  <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
                     <div className="bg-muted rounded-full p-4 mb-4">
                       <FileText className="h-12 w-12 text-muted-foreground" />
                     </div>

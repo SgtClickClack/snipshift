@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Plus, Play, DollarSign, Users, Clock, BookOpen, Video, Award, Upload, Edit, Eye } from "lucide-react";
 import { TrainingModule } from "@/shared/types";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
@@ -263,7 +264,7 @@ export default function TrainerDashboard() {
                     <div className="ml-4">
                       <p className="text-sm font-medium text-neutral-600">Avg Rating</p>
                       <p className="text-2xl font-bold text-neutral-900" data-testid="stat-rating">
-                        {stats.avgRating}★
+                        {stats.avgRating}â˜…
                       </p>
                     </div>
                   </div>
@@ -342,9 +343,10 @@ export default function TrainerDashboard() {
                   <Card key={item.id} className="overflow-hidden" data-testid={`content-card-${item.id}`}>
                     <div className="aspect-video bg-neutral-100 relative">
                       {item.thumbnailUrl ? (
-                        <img 
-                          src={item.thumbnailUrl} 
+                        <OptimizedImage
+                          src={item.thumbnailUrl}
                           alt={item.title}
+                          fallbackType="banner"
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -409,7 +411,7 @@ export default function TrainerDashboard() {
                   <Textarea
                     id="bio"
                     placeholder="Tell people about your experience and expertise..."
-                    className="min-h-[100px]"
+                    className="min-h-24"
                     data-testid="textarea-bio"
                   />
                 </div>
@@ -485,7 +487,7 @@ export default function TrainerDashboard() {
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Describe what students will learn..."
-                className="min-h-[100px]"
+                className="min-h-24"
                 required
                 data-testid="textarea-content-description"
               />

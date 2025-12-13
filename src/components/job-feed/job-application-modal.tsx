@@ -1,11 +1,11 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job, Shift } from "@shared/firebase-schema";
@@ -308,10 +308,10 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-900 mb-2">Application Tips:</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Mention your relevant experience and skills</li>
-                  <li>• Highlight your availability for the scheduled date/time</li>
-                  <li>• Show enthusiasm for the opportunity</li>
-                  <li>• Keep it professional but personable</li>
+                  <li>â€¢ Mention your relevant experience and skills</li>
+                  <li>â€¢ Highlight your availability for the scheduled date/time</li>
+                  <li>â€¢ Show enthusiasm for the opportunity</li>
+                  <li>â€¢ Keep it professional but personable</li>
                 </ul>
               </div>
 

@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardRoute } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { logger } from '@/lib/logger';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -63,7 +64,7 @@ export function AuthGuard({
   if (requiredRole && user && user.currentRole !== requiredRole) {
     // Debug logging for E2E tests
     if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
-      console.log('[AuthGuard] Role mismatch:', {
+      logger.debug('AuthGuard', 'Role mismatch:', {
         requiredRole,
         userCurrentRole: user.currentRole,
         userRoles: user.roles,
@@ -76,7 +77,7 @@ export function AuthGuard({
   
   // Debug: Log successful role check
   if (requiredRole && (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1')) {
-    console.log('[AuthGuard] Role check passed:', {
+    logger.debug('AuthGuard', 'Role check passed:', {
       requiredRole,
       userCurrentRole: user?.currentRole,
       userRoles: user?.roles

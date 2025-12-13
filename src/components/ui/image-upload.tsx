@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useImageUpload } from '@/hooks/use-image-upload';
-import { useToast } from '@/hooks/use-toast';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { useToast } from '@/hooks/useToast';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface ImageUploadProps {
   /** Current image URL (for preview) */
@@ -162,7 +163,7 @@ export function ImageUpload({
     'flex items-center justify-center overflow-hidden',
     'transition-all hover:border-steel-500 hover:bg-steel-800',
     shape === 'circle' && 'aspect-square rounded-full w-32 h-32',
-    shape === 'rect' && 'aspect-video min-h-[200px]',
+    shape === 'rect' && 'aspect-video min-h-48',
     className
   );
 
@@ -180,10 +181,12 @@ export function ImageUpload({
         <div className={containerClass}>
           {previewUrl ? (
             <>
-              <img
+              <OptimizedImage
                 src={previewUrl}
                 alt="Preview"
+                fallbackType="image"
                 className="w-full h-full object-cover rounded-full"
+                containerClassName="rounded-full"
               />
               {!uploading && (
                 <button
@@ -278,9 +281,10 @@ export function ImageUpload({
       <div className={containerClass}>
         {previewUrl ? (
           <>
-            <img
+            <OptimizedImage
               src={previewUrl}
               alt="Preview"
+              fallbackType="image"
               className="w-full h-full object-cover"
             />
             {!uploading && (

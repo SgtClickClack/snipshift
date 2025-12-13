@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button';
+﻿import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { useInstallPrompt } from '@/hooks/use-install-prompt';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 interface InstallButtonProps {
   variant?: 'default' | 'outline' | 'ghost' | 'secondary';

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, CreditCard, Plus, Trash2 } from "lucide-react";
@@ -226,7 +226,7 @@ export default function BillingSettings() {
                       {method.card && (
                         <>
                           <div className="font-medium capitalize">
-                            {method.card.brand} •••• {method.card.last4}
+                            {method.card.brand} â€¢â€¢â€¢â€¢ {method.card.last4}
                           </div>
                           <div className="text-sm text-steel-500">
                             Expires {method.card.exp_month}/{method.card.exp_year}

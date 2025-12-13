@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface PortfolioItem {
   id: string;
@@ -87,9 +88,10 @@ export default function PortfolioLightbox({
 
           {/* Image */}
           <div className="flex flex-col items-center justify-center w-full h-full p-8">
-            <img
+            <OptimizedImage
               src={currentImage.imageURL}
               alt={currentImage.caption || 'Portfolio image'}
+              fallbackType="image"
               className="max-w-full max-h-[80vh] object-contain"
             />
             {currentImage.caption && (

@@ -1,18 +1,19 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
-import { useImageUpload } from "@/hooks/use-image-upload";
+import { useImageUpload } from "@/hooks/useImageUpload";
 import { apiRequest } from "@/lib/queryClient";
 import { updateBusinessProfile, updateUserProfile } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@/contexts/AuthContext";
+import { logger } from "@/lib/logger";
 
 interface DashboardHeaderProps {
   // New API props
@@ -126,7 +127,7 @@ export default function DashboardHeader({
       if (typeof bannerImage === 'string') {
         propUrlString = bannerImage;
       } else if (bannerImage && typeof bannerImage === 'object') {
-        console.warn('Banner useEffect - bannerImage prop is an object, extracting URL:', bannerImage);
+        logger.debug("DashboardHeader", "bannerImage prop is an object, extracting URL:", bannerImage);
         propUrlString = extractUrlString(bannerImage);
         if (!propUrlString) {
           console.error('Banner useEffect - Could not extract URL from object, keeping current:', bannerImage);

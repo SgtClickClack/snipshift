@@ -1,11 +1,12 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Play, Clock, BookOpen, Star, Users, ShoppingCart, CreditCard } from "lucide-react";
 import { TrainingModule } from "@/shared/types";
@@ -63,7 +64,7 @@ function PaymentModal({ content, isOpen, onClose, onSuccess }: PaymentModalProps
             <div>
               <label className="text-sm font-medium text-neutral-700">Card Number</label>
               <div className="mt-1 p-3 border rounded-lg bg-neutral-50 text-neutral-600">
-                •••• •••• •••• 4242
+                â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ 4242
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -269,9 +270,10 @@ export default function TrainingHub() {
               {/* Video Thumbnail */}
               <div className="aspect-video bg-neutral-100 relative overflow-hidden">
                 {item.thumbnailUrl ? (
-                  <img 
-                    src={item.thumbnailUrl} 
+                  <OptimizedImage
+                    src={item.thumbnailUrl}
                     alt={item.title}
+                    fallbackType="banner"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                 ) : (

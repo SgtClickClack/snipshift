@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchShiftOffers, acceptShiftOffer, declineShiftOffer, ShiftOffer } from "@/lib/api";
 import { ShiftOfferCard } from "./shift-offer-card";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { Inbox, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -94,7 +94,7 @@ export function OfferInbox() {
           <CardTitle>Job Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center min-h-[200px] py-8 text-center">
+          <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
             <Inbox className="w-10 h-10 text-muted-foreground mb-3" />
             <p className="text-base font-medium text-foreground mb-1">
               You're all caught up!

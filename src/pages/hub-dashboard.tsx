@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+﻿import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ApplicationCard, Application } from "@/components/applications/ApplicationCard";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -686,7 +687,7 @@ export default function HubDashboard() {
                       <div>
                         <h4 className="font-medium">{job.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {job.applicants?.length || 0} applications • Posted {format(new Date(job.createdAt), "MMM d")}
+                          {job.applicants?.length || 0} applications â€¢ Posted {format(new Date(job.createdAt), "MMM d")}
                         </p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -768,7 +769,7 @@ export default function HubDashboard() {
                           onClick={() => setShowForm(false)}
                           data-testid="button-close-job-form"
                         >
-                          ✕
+                          âœ•
                         </Button>
                       </div>
                     </CardHeader>
@@ -1093,7 +1094,7 @@ export default function HubDashboard() {
                                     Applying for: <span className="font-medium text-foreground break-words">{app.job?.title || app.shift?.title || 'Unknown Position'}</span>
                                  </div>
                                  {(!app.job && !app.shift) && (
-                                   <p className="text-xs text-amber-600 mt-1">⚠️ Original job/shift may have been deleted</p>
+                                   <p className="text-xs text-amber-600 mt-1">âš ï¸ Original job/shift may have been deleted</p>
                                  )}
                               </div>
                               <div className="flex items-center gap-2">
@@ -1424,10 +1425,12 @@ function CandidatesDialog({
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start gap-3 flex-1">
                       {application.applicant?.avatarUrl ? (
-                        <img
+                        <OptimizedImage
                           src={application.applicant.avatarUrl}
                           alt={application.applicant.displayName}
+                          fallbackType="user"
                           className="w-12 h-12 rounded-full object-cover"
+                          containerClassName="rounded-full"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
