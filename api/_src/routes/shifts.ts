@@ -184,6 +184,76 @@ router.get('/', asyncHandler(async (req, res) => {
   res.status(200).json(result.data);
 }));
 
+// Get shifts pending review for the current user
+// IMPORTANT: This route must come BEFORE /:id to avoid route conflicts
+router.get('/pending-review', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get user to determine role
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Find shifts that need review:
+  // 1. For shops: shifts with status 'pending_completion' or 'completed' where shop hasn't reviewed barber
+  // 2. For barbers: shifts with status 'pending_completion' or 'completed' where barber hasn't reviewed shop
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  // Get shifts where user is employer (shop) and needs to review barber
+  const shopShifts = await shiftsRepo.getShifts({
+    employerId: userId,
+    status: 'pending_completion' as any,
+    limit: 100,
+  });
+
+  // Get shifts where user is assignee (barber) and needs to review shop
+  const barberShifts = await shiftsRepo.getShifts({
+    assigneeId: userId,
+    status: 'pending_completion' as any,
+    limit: 100,
+  });
+
+  // Filter to only include shifts where review hasn't been submitted
+  const pendingReviews = [];
+
+  for (const shift of [...(shopShifts?.data || []), ...(barberShifts?.data || [])]) {
+    if (!shift.assigneeId) continue; // Skip shifts without assignee
+
+    const isShop = shift.employerId === userId;
+    const reviewType = isShop ? 'SHOP_REVIEWING_BARBER' : 'BARBER_REVIEWING_SHOP';
+    
+    // Check if review already exists
+    const hasReviewed = await shiftReviewsRepo.hasUserReviewedShift(shift.id, userId, reviewType);
+    
+    if (!hasReviewed && shift.endTime && new Date(shift.endTime) < oneHourAgo) {
+      // Get names for display
+      const employer = await usersRepo.getUserById(shift.employerId);
+      const assignee = shift.assigneeId ? await usersRepo.getUserById(shift.assigneeId) : null;
+
+      pendingReviews.push({
+        id: shift.id,
+        title: shift.title,
+        endTime: shift.endTime.toISOString(),
+        employerId: shift.employerId,
+        assigneeId: shift.assigneeId,
+        employerName: employer?.name,
+        assigneeName: assignee?.name,
+        status: shift.status,
+        attendanceStatus: shift.attendanceStatus,
+      });
+    }
+  }
+
+  res.status(200).json(pendingReviews);
+}));
+
 // Get shift by ID (public read)
 router.get('/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -1472,75 +1542,6 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
     comment: newReview.comment,
     createdAt: newReview.createdAt.toISOString(),
   });
-}));
-
-// Get shifts pending review for the current user
-router.get('/pending-review', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  // Get user to determine role
-  const user = await usersRepo.getUserById(userId);
-  if (!user) {
-    res.status(404).json({ message: 'User not found' });
-    return;
-  }
-
-  // Find shifts that need review:
-  // 1. For shops: shifts with status 'pending_completion' or 'completed' where shop hasn't reviewed barber
-  // 2. For barbers: shifts with status 'pending_completion' or 'completed' where barber hasn't reviewed shop
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-
-  // Get shifts where user is employer (shop) and needs to review barber
-  const shopShifts = await shiftsRepo.getShifts({
-    employerId: userId,
-    status: 'pending_completion' as any,
-    limit: 100,
-  });
-
-  // Get shifts where user is assignee (barber) and needs to review shop
-  const barberShifts = await shiftsRepo.getShifts({
-    assigneeId: userId,
-    status: 'pending_completion' as any,
-    limit: 100,
-  });
-
-  // Filter to only include shifts where review hasn't been submitted
-  const pendingReviews = [];
-
-  for (const shift of [...(shopShifts?.data || []), ...(barberShifts?.data || [])]) {
-    if (!shift.assigneeId) continue; // Skip shifts without assignee
-
-    const isShop = shift.employerId === userId;
-    const reviewType = isShop ? 'SHOP_REVIEWING_BARBER' : 'BARBER_REVIEWING_SHOP';
-    
-    // Check if review already exists
-    const hasReviewed = await shiftReviewsRepo.hasUserReviewedShift(shift.id, userId, reviewType);
-    
-    if (!hasReviewed && shift.endTime && new Date(shift.endTime) < oneHourAgo) {
-      // Get names for display
-      const employer = await usersRepo.getUserById(shift.employerId);
-      const assignee = shift.assigneeId ? await usersRepo.getUserById(shift.assigneeId) : null;
-
-      pendingReviews.push({
-        id: shift.id,
-        title: shift.title,
-        endTime: shift.endTime.toISOString(),
-        employerId: shift.employerId,
-        assigneeId: shift.assigneeId,
-        employerName: employer?.name,
-        assigneeName: assignee?.name,
-        status: shift.status,
-        attendanceStatus: shift.attendanceStatus,
-      });
-    }
-  }
-
-  res.status(200).json(pendingReviews);
 }));
 
 export default router;
