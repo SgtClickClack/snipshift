@@ -19,10 +19,10 @@ export interface ShiftFilters {
   offset?: number;
 }
 
-export interface ShiftWithShop extends typeof shifts.$inferSelect {
+export type ShiftWithShop = typeof shifts.$inferSelect & {
   shopName: string | null;
   shopAvatarUrl: string | null;
-}
+};
 
 export interface PaginatedShifts {
   data: ShiftWithShop[];
@@ -104,6 +104,9 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
       // Employer (shop) fields
       shopName: users.name,
       shopAvatarUrl: users.avatarUrl,
+      // Location coordinates
+      lat: shifts.lat,
+      lng: shifts.lng,
     })
     .from(shifts)
     .leftJoin(users, eq(shifts.employerId, users.id))
@@ -148,6 +151,8 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       applicationFeeAmount: shifts.applicationFeeAmount,
       transferAmount: shifts.transferAmount,
       location: shifts.location,
+      lat: shifts.lat,
+      lng: shifts.lng,
       isRecurring: shifts.isRecurring,
       autoAccept: shifts.autoAccept,
       parentShiftId: shifts.parentShiftId,
@@ -178,6 +183,8 @@ export async function createShift(shiftData: {
   status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
   assigneeId?: string;
   location?: string;
+  lat?: string | number;
+  lng?: string | number;
   isRecurring?: boolean;
   parentShiftId?: string;
 }): Promise<typeof shifts.$inferSelect | null> {
@@ -200,6 +207,8 @@ export async function createShift(shiftData: {
         status: shiftData.status || 'draft',
         assigneeId: shiftData.assigneeId || null,
         location: shiftData.location || null,
+        lat: shiftData.lat ? (typeof shiftData.lat === 'string' ? shiftData.lat : shiftData.lat.toString()) : null,
+        lng: shiftData.lng ? (typeof shiftData.lng === 'string' ? shiftData.lng : shiftData.lng.toString()) : null,
         isRecurring: shiftData.isRecurring || false,
         parentShiftId: shiftData.parentShiftId || null,
       })
@@ -234,6 +243,8 @@ export async function createRecurringShifts(
     hourlyRate: string;
     status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
     location?: string;
+    lat?: string | number;
+    lng?: string | number;
   },
   recurringShiftsData: Array<{
     startTime: Date | string;
@@ -260,6 +271,8 @@ export async function createRecurringShifts(
           hourlyRate: parentShiftData.hourlyRate,
           status: parentShiftData.status || 'draft',
           location: parentShiftData.location || null,
+          lat: parentShiftData.lat ? (typeof parentShiftData.lat === 'string' ? parentShiftData.lat : parentShiftData.lat.toString()) : null,
+          lng: parentShiftData.lng ? (typeof parentShiftData.lng === 'string' ? parentShiftData.lng : parentShiftData.lng.toString()) : null,
           isRecurring: true,
           parentShiftId: null, // Parent has no parent
         })
@@ -283,6 +296,8 @@ export async function createRecurringShifts(
               hourlyRate: parentShiftData.hourlyRate,
               status: parentShiftData.status || 'draft',
               location: parentShiftData.location || null,
+              lat: parentShiftData.lat ? (typeof parentShiftData.lat === 'string' ? parentShiftData.lat : parentShiftData.lat.toString()) : null,
+              lng: parentShiftData.lng ? (typeof parentShiftData.lng === 'string' ? parentShiftData.lng : parentShiftData.lng.toString()) : null,
               isRecurring: true,
               parentShiftId: parentShift.id,
             })

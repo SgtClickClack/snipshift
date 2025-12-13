@@ -242,6 +242,8 @@ export async function createShift(shiftData: {
   hourlyRate: string | number;
   status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
   location?: string;
+  lat?: number;
+  lng?: number;
   assigneeId?: string;
 }) {
   const res = await apiRequest('POST', '/api/shifts', shiftData);

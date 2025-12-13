@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { createJob, CreateJobData } from '@/lib/api';
+import { createShift } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ export default function PostJobPage() {
 
   const [isGeocoding, setIsGeocoding] = useState(false);
 
-  const [formData, setFormData] = useState<CreateJobData>({
+  const [formData, setFormData] = useState({
     title: '',
     payRate: '',
     description: '',
@@ -40,7 +40,23 @@ export default function PostJobPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createJobMutation = useMutation({
-    mutationFn: createJob,
+    mutationFn: async (data: any) => {
+      // Combine date and time into ISO timestamps
+      const startDateTime = new Date(`${data.date}T${data.startTime}`);
+      const endDateTime = new Date(`${data.date}T${data.endTime}`);
+      
+      return createShift({
+        title: data.title,
+        description: data.description,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        hourlyRate: data.payRate,
+        location: data.location,
+        lat: data.lat,
+        lng: data.lng,
+        status: 'open',
+      });
+    },
     onSuccess: () => {
       toast({
         title: 'Shift posted successfully!',
@@ -140,7 +156,7 @@ export default function PostJobPage() {
     });
   };
 
-  const handleChange = (field: keyof CreateJobData, value: string) => {
+  const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field when user starts typing
     if (errors[field]) {

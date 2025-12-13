@@ -25,6 +25,10 @@ export interface Shift {
   // Shop branding fields
   shopName?: string | null; // Shop's business name
   shopAvatarUrl?: string | null; // Shop's profile picture URL
+  
+  // Location coordinates for distance filtering
+  lat?: string | number | null; // Latitude
+  lng?: string | number | null; // Longitude
 }
 
 export interface Post {

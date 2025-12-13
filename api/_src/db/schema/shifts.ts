@@ -37,6 +37,8 @@ export const shifts = pgTable('shifts', {
   applicationFeeAmount: integer('application_fee_amount'), // Snipshift commission in cents
   transferAmount: integer('transfer_amount'), // Amount sent to barber in cents
   location: varchar('location', { length: 512 }),
+  lat: decimal('lat', { precision: 10, scale: 7 }), // Latitude for distance filtering
+  lng: decimal('lng', { precision: 10, scale: 7 }), // Longitude for distance filtering
   isRecurring: boolean('is_recurring').notNull().default(false),
   autoAccept: boolean('auto_accept').notNull().default(false),
   parentShiftId: uuid('parent_shift_id').references((): any => shifts.id, { onDelete: 'cascade' }),
@@ -52,6 +54,7 @@ export const shifts = pgTable('shifts', {
   attendanceStatusIdx: index('shifts_attendance_status_idx').on(table.attendanceStatus),
   paymentStatusIdx: index('shifts_payment_status_idx').on(table.paymentStatus),
   paymentIntentIdIdx: index('shifts_payment_intent_id_idx').on(table.paymentIntentId),
+  latLngIdx: index('shifts_lat_lng_idx').on(table.lat, table.lng),
 }));
 
 /**

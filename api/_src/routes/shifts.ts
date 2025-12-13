@@ -74,6 +74,10 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 
     // If recurring and we have recurring shifts data, create multiple shifts in a transaction
     if (isRecurring && recurringShifts.length > 0) {
+      // Extract lat/lng from request body
+      const lat = (req.body as any).lat;
+      const lng = (req.body as any).lng;
+      
       const parentShiftData = {
         employerId: userId,
         title: shiftData.title,
@@ -83,6 +87,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
         hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
         status: shiftData.status || 'draft',
         location: shiftData.location,
+        lat: lat !== undefined ? (typeof lat === 'string' ? parseFloat(lat) : lat) : undefined,
+        lng: lng !== undefined ? (typeof lng === 'string' ? parseFloat(lng) : lng) : undefined,
       };
 
       const createdShifts = await shiftsRepo.createRecurringShifts(
@@ -108,6 +114,10 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
     }
 
     // Single shift creation
+    // Extract lat/lng from request body
+    const lat = (req.body as any).lat;
+    const lng = (req.body as any).lng;
+    
     const shiftPayload = {
       employerId: userId,
       title: shiftData.title,
@@ -117,6 +127,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
       status: shiftData.status || 'draft',
       location: shiftData.location,
+      lat: lat !== undefined ? (typeof lat === 'string' ? parseFloat(lat) : lat) : undefined,
+      lng: lng !== undefined ? (typeof lng === 'string' ? parseFloat(lng) : lng) : undefined,
       isRecurring: isRecurring,
     };
     
