@@ -203,6 +203,50 @@
       <div class="loader-text">Loading...</div>
     </div>
     <div id="root"></div>
+    <script>
+      // Recovery: If a stale PWA/service worker cache is serving broken chunks (black screen),
+      // do a ONE-TIME unregister + cache cleanup before loading the app bundle.
+      (function () {
+        try {
+          var KEY = 'snipshift_sw_recovery_v2';
+          if (localStorage.getItem(KEY) === '1') return;
+          if (!('serviceWorker' in navigator) || !('caches' in window)) return;
+
+          Promise.all([
+            navigator.serviceWorker.getRegistrations().catch(function () { return []; }),
+            caches.keys().catch(function () { return []; }),
+          ]).then(function (res) {
+            var regs = res[0] || [];
+            var keys = res[1] || [];
+
+            var relevantKeys = keys.filter(function (k) {
+              return (
+                k.indexOf('workbox-') === 0 ||
+                k.indexOf('snipshift') !== -1 ||
+                k === 'api-cache' ||
+                k === 'google-fonts-cache' ||
+                k === 'google-fonts-static-cache'
+              );
+            });
+
+            // If there's nothing to clean, don't reload.
+            if (regs.length === 0 && relevantKeys.length === 0) return;
+
+            localStorage.setItem(KEY, '1');
+
+            return Promise.all([
+              Promise.all(regs.map(function (r) { return r.unregister(); })),
+              Promise.all(relevantKeys.map(function (k) { return caches.delete(k); })),
+            ]).then(function () {
+              // Hard reload after cleanup so fresh assets are fetched.
+              window.location.reload();
+            });
+          });
+        } catch (e) {
+          // Never block startup if recovery fails.
+        }
+      })();
+    </script>
     <script type="module" src="./src/main.tsx"></script>
     <script>
       // Expose removeSplash function for React to call after successful mount

@@ -89,6 +89,30 @@
 
 ---
 
+#### 2025-12-13: PWA Cache Recovery (Production Black Screen Mitigation)
+
+**Core Components**
+- App shell (`index.html`)
+- Service worker runtime behavior (client-side recovery)
+
+**Key Features**
+- Added a **one-time** service-worker + cache cleanup script that runs **before** loading the app bundle.
+- Mitigates situations where an older Workbox precache continues serving broken/stale chunks (symptom: black screen + `forwardRef` undefined in vendor chunk).
+
+**Integration Points**
+- Runs automatically in the browser (no server changes).
+
+**File Paths**
+- `index.html`
+
+**Next Priority Task**
+- Confirm Vercel deployment no longer serves stale chunks after this recovery and monitor for repeat occurrences.
+
+**Code Organization & Quality**
+- Guarded to run only once per browser profile (localStorage key) and only when SW/caches actually exist.
+
+---
+
 #### 2025-12-13: Phase 4 Final Polish (Structure, Naming, Import Hygiene, README)
 
 **Core Components Implemented:**
