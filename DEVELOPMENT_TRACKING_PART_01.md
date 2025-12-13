@@ -1,4 +1,102 @@
 
+#### 2025-12-14: Fix Map Interaction Wiring on Details Pages (Static Marker Mode)
+
+**Core Components**
+- Details pages map usage (`ShiftDetailsPage`, `JobDetailsPage`)
+- Shared map component interaction affordance (`GoogleMapView`)
+
+**Key Features**
+- Removed misleading no-op marker handler on Details pages by setting `interactive={false}` for the single-pin map.
+- Added explicit static/non-interactive support to `GoogleMapView` (optional `onJobSelect`, guarded selection UI, non-pointer cursor when disabled).
+
+**Integration Points**
+- UI routes: `/shifts/:id`, `/jobs/:id` (Details pages)
+
+**File Paths**
+- `src/components/job-feed/google-map-view.tsx`
+- `src/pages/shift-details.tsx`
+- `src/pages/job-details.tsx`
+
+**Next Priority Task**
+- Invalidate employer listing queries after successful salon job post so “My Listings” reflects the new post instantly.
+
+**Code Organization & Quality**
+- Kept the change localized to the map component contract + Details page usage; preserved existing interactive behavior for feed/map browsing.
+
+---
+
+#### 2025-12-14: Shop Scheduling Command Center (Weekly Calendar + Bulk Actions + Confirmed Shift Safety)
+
+**Core Components**
+- Shop schedule page (`ShopSchedulePage`)
+- Shift API extensions (employer-scoped fetch + bulk actions)
+- Confirmed shift safety + professional notifications
+- Professional dashboard calendar commitments/opportunities separation
+
+**Key Features**
+- Added `/shop/schedule` weekly calendar with **click-to-create DRAFT shifts** and **drag-and-drop rescheduling**.
+- Added status-aware styling (pastel event colors) for `DRAFT`, `OPEN`, `PENDING`, `CONFIRMED`, etc.
+- Implemented **Copy Previous Week** (duplicates last week’s shifts into the current week as `draft`).
+- Implemented **Publish All** (bulk changes current week’s `draft` shifts to `open`).
+- Safety guard: modifying a `confirmed` shift now requires a **change reason** and triggers a **notification to the assigned Professional**.
+- Professional dashboard calendar now strictly filters **ACCEPTED/accepted** applications for “My Commitments” and shows `open` shifts separately as “Opportunities”.
+
+**Integration Points**
+- Frontend route: `GET /shop/schedule`
+- API endpoint: `GET /api/shifts?employer_id=me&start=<iso>&end=<iso>`
+- API endpoint: `POST /api/shifts/copy-previous-week`
+- API endpoint: `POST /api/shifts/publish-all`
+- API endpoint: `PUT /api/shifts/:id` (supports `changeReason` guard for confirmed reschedules)
+- Notification: `notifyProfessionalOfShiftChange` (in-app + email mock)
+
+**File Paths**
+- `src/pages/shop/schedule.tsx`
+- `src/App.tsx`
+- `src/lib/api.ts`
+- `src/pages/professional-dashboard.tsx`
+- `api/_src/routes/shifts.js`
+- `api/_src/routes/shifts.ts`
+- `api/_src/lib/notifications-service.js`
+- `api/_src/lib/notifications-service.ts`
+- `api/_src/tests/routes/shifts.schedule-tools.test.ts`
+
+**Next Priority Task**
+- Add Playwright coverage for `/shop/schedule` (quick create, drag/drop, copy/publish).
+
+**Code Organization & Quality**
+- Kept changes localized to scheduling surfaces + shift routes; reused existing React Query patterns for instant UI sync.
+- Added server-side validation for confirmed shift changes and targeted API route tests for schedule actions.
+
+---
+
+#### 2025-12-14: Wire Up Salon “Post Job” Submission (createShift + toasts + redirect)
+
+**Core Components**
+- Salon job post page submit handler (`SalonCreateJobPage`)
+- Frontend API integration (`createShift`)
+- Toast feedback + navigation redirect (React Router)
+
+**Key Features**
+- Wired `salon-create-job` submit handler to call `createShift(payload)` with `try/catch`.
+- Added success toast ("Job Posted!") and redirected to the Dashboard (role-based routing via `/dashboard`).
+- Added error toast ("Failed to post job") and logged the error for debugging.
+- Ensured payload includes required `description` field for the shift create API.
+
+**Integration Points**
+- API endpoint: `POST /api/shifts` (via `createShift` in `src/lib/api.ts`)
+- UI routes: `/salon/create-job` → `/dashboard`
+
+**File Paths**
+- `src/pages/salon-create-job.tsx`
+
+**Next Priority Task**
+- Invalidate employer listing queries after successful salon job post so “My Listings” reflects the new post instantly.
+
+**Code Organization & Quality**
+- Kept changes scoped to wiring + UX feedback; reused existing API/toast/router patterns without introducing new abstractions.
+
+---
+
 #### 2025-12-14: Comprehensive Functional & Wiring Audit (Auth, API Handshake, Map Lat/Lng)
 
 **Core Components**

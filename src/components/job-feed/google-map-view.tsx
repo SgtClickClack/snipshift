@@ -42,11 +42,16 @@ const MAP_THEME = {
 
 interface GoogleMapViewProps {
   jobs: Job[];
-  onJobSelect: (job: Job | null) => void;
-  selectedJob: Job | null;
+  onJobSelect?: (job: Job | null) => void;
+  selectedJob?: Job | null;
   centerLocation: { lat: number; lng: number };
   radius: number;
   searchLocation: string;
+  /**
+   * When false, markers are non-clickable (no hover cursor / no selection UI).
+   * Useful for single-item "Details" pages where marker clicks are redundant.
+   */
+  interactive?: boolean;
 }
 
 export default function GoogleMapView({
@@ -55,7 +60,8 @@ export default function GoogleMapView({
   selectedJob,
   centerLocation,
   radius,
-  searchLocation
+  searchLocation,
+  interactive = true,
 }: GoogleMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -67,6 +73,7 @@ export default function GoogleMapView({
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usesFallback, setUsesFallback] = useState(false);
+  const isInteractive = interactive && typeof onJobSelect === 'function';
 
   // Initialize Google Map with proper API (only once)
   useEffect(() => {
@@ -103,7 +110,12 @@ export default function GoogleMapView({
         });
 
         // Add center marker using AdvancedMarkerElement
-        const centerMarkerContent = createMarkerElement(MAP_THEME.markers.center.color, '📍', 'center');
+        const centerMarkerContent = createMarkerElement(
+          MAP_THEME.markers.center.color,
+          '📍',
+          'center',
+          false
+        );
         centerMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
           position: centerLocation,
           map,
@@ -165,7 +177,12 @@ export default function GoogleMapView({
   }, [centerLocation, radius, searchLocation, usesFallback]);
 
   // Helper function to create marker elements
-  const createMarkerElement = (color: string, emoji: string, type: 'job' | 'center') => {
+  const createMarkerElement = (
+    color: string,
+    emoji: string,
+    type: 'job' | 'center',
+    clickable: boolean
+  ) => {
     const markerDiv = document.createElement('div');
     markerDiv.style.cssText = `
       display: flex;
@@ -177,7 +194,7 @@ export default function GoogleMapView({
       border: 2px solid white;
       border-radius: 50%;
       font-size: ${type === 'center' ? '12px' : '16px'};
-      cursor: pointer;
+      cursor: ${clickable ? 'pointer' : 'default'};
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     `;
     markerDiv.textContent = emoji;
@@ -217,7 +234,12 @@ export default function GoogleMapView({
 
           // Only show jobs within radius
           if (distance <= radius) {
-            const markerElement = createMarkerElement(MAP_THEME.markers.job.color, '💼', 'job');
+            const markerElement = createMarkerElement(
+              MAP_THEME.markers.job.color,
+              '💼',
+              'job',
+              isInteractive
+            );
             
             const marker = new google.maps.marker.AdvancedMarkerElement({
               position: jobLocation,
@@ -230,9 +252,10 @@ export default function GoogleMapView({
             bounds.extend(jobLocation);
             hasValidMarkers = true;
 
-            // Add click listener for marker
-            markerElement.addEventListener('click', () => {
-              onJobSelect(job);
+            // Add click listener for marker (interactive mode only)
+            if (isInteractive) {
+              markerElement.addEventListener('click', () => {
+                onJobSelect?.(job);
               
               // Get location display string
               const locationDisplay = typeof job.location === 'string' 
@@ -280,7 +303,8 @@ export default function GoogleMapView({
               
               infoWindowRef.current?.setContent(infoContent);
               infoWindowRef.current?.open(mapInstanceRef.current, marker);
-            });
+              });
+            }
 
             markersRef.current.push(marker);
           }
@@ -300,7 +324,7 @@ export default function GoogleMapView({
     };
 
     updateMarkers();
-  }, [jobs, centerLocation, radius, onJobSelect, usesFallback]);
+  }, [jobs, centerLocation, radius, isInteractive, onJobSelect, usesFallback]);
 
   // Get job coordinates from API data
   const getJobCoordinates = (job: Job) => {
@@ -340,6 +364,7 @@ export default function GoogleMapView({
             <p className="text-sm text-muted-foreground">
               Showing {jobs.filter(job => {
                 const jobLocation = getJobCoordinates(job);
+                if (!jobLocation) return false;
                 const distance = calculateDistance(centerLocation, jobLocation);
                 return distance <= radius;
               }).length} jobs within {radius}km of {searchLocation}
@@ -415,8 +440,8 @@ export default function GoogleMapView({
                       fill={MAP_THEME.fallback.job}
                       stroke="#ffffff"
                       strokeWidth="2"
-                      className="cursor-pointer hover:r-8 transition-all"
-                      onClick={() => onJobSelect(job)}
+                      className={isInteractive ? 'cursor-pointer hover:r-8 transition-all' : 'transition-all'}
+                      onClick={isInteractive ? () => onJobSelect?.(job) : undefined}
                     />
                   );
                 })}
@@ -426,7 +451,7 @@ export default function GoogleMapView({
         </Card>
 
         {/* Selected Job Details */}
-        {selectedJob && (
+        {isInteractive && selectedJob && (
           <Card className="border-steel-200 bg-steel-50">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
@@ -439,7 +464,7 @@ export default function GoogleMapView({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onJobSelect(null)}
+                  onClick={() => onJobSelect?.(null)}
                   data-testid="button-close-job-details"
                 >
                   <X className="h-4 w-4" />
@@ -498,6 +523,7 @@ export default function GoogleMapView({
               <p className="text-sm text-muted-foreground">
                 Showing {jobs.filter(job => {
                   const jobLocation = getJobCoordinates(job);
+                  if (!jobLocation) return false;
                   const distance = calculateDistance(centerLocation, jobLocation);
                   return distance <= radius;
                 }).length} jobs within {radius}km of {searchLocation}
@@ -534,7 +560,7 @@ export default function GoogleMapView({
       </Card>
 
       {/* Selected Job Details */}
-      {selectedJob && (
+      {isInteractive && selectedJob && (
         <Card className="border-steel-200 bg-steel-50">
           <CardHeader className="pb-3">
             <div className="flex justify-between items-start">
@@ -547,7 +573,7 @@ export default function GoogleMapView({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onJobSelect(null)}
+                onClick={() => onJobSelect?.(null)}
                 data-testid="button-close-job-details"
               >
                 <X className="h-4 w-4" />

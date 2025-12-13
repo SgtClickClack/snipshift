@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { eq, and, sql } from 'drizzle-orm';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -17,6 +18,14 @@ import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shi
 import { createBatchShifts, getShiftsByEmployerInRange } from '../repositories/shifts.repository.js';
 
 const router = Router();
+
+const authenticateIfEmployerQuery = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.query?.employer_id) {
+    next();
+    return;
+  }
+  authenticateUser(req, res, next);
+};
 
 // Helper function to validate UUID format
 function isValidUUID(id: string): boolean {
@@ -175,8 +184,57 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   }
 }));
 
-// Get all open shifts (public read)
-router.get('/', asyncHandler(async (req, res) => {
+// Get shifts (public feed by default; authenticated employer view when employer_id is provided)
+router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const employerIdParam = req.query.employer_id as string | undefined;
+  if (employerIdParam) {
+    type EmployerShiftStatus =
+      | 'draft'
+      | 'pending'
+      | 'invited'
+      | 'open'
+      | 'filled'
+      | 'completed'
+      | 'confirmed'
+      | 'cancelled'
+      | 'pending_completion';
+
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+    if (employerIdParam !== 'me') {
+      res.status(400).json({ message: 'Invalid employer_id. Use employer_id=me.' });
+      return;
+    }
+
+    const startRaw = req.query.start as string | undefined;
+    const endRaw = req.query.end as string | undefined;
+    const status = req.query.status as EmployerShiftStatus | undefined;
+    const start = startRaw ? new Date(startRaw) : null;
+    const end = endRaw ? new Date(endRaw) : null;
+
+    const employerShifts = start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())
+      ? await getShiftsByEmployerInRange(userId, start, end)
+      : await shiftsRepo.getShiftsByEmployer(userId);
+
+    const filtered = status ? employerShifts.filter((s) => s.status === status) : employerShifts;
+
+    const transformed = filtered.map((shift) => ({
+      ...shift,
+      startTime: shift.startTime instanceof Date ? shift.startTime.toISOString() : shift.startTime,
+      endTime: shift.endTime instanceof Date ? shift.endTime.toISOString() : shift.endTime,
+      createdAt: shift.createdAt instanceof Date ? shift.createdAt.toISOString() : shift.createdAt,
+      updatedAt: shift.updatedAt instanceof Date ? shift.updatedAt.toISOString() : shift.updatedAt,
+      date: shift.startTime ? new Date(shift.startTime).toISOString() : undefined,
+      pay: shift.hourlyRate ? String(shift.hourlyRate) : undefined,
+      requirements: shift.description,
+    }));
+
+    res.status(200).json(transformed);
+    return;
+  }
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
   const status = req.query.status as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | undefined;
@@ -370,7 +428,7 @@ router.get('/:id/applications', authenticateUser, asyncHandler(async (req: Authe
 router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const userId = req.user?.id;
-  const { title, description, startTime, endTime, hourlyRate, status, location } = req.body;
+  const { title, description, startTime, endTime, hourlyRate, status, location, changeReason } = req.body as any;
 
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
@@ -393,6 +451,26 @@ router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReque
   if (existingShift.employerId !== userId) {
     res.status(403).json({ message: 'Forbidden: You can only update your own shifts' });
     return;
+  }
+
+  // Safety: modifying a CONFIRMED shift requires a reason and notifies the professional.
+  const requestedStart = startTime !== undefined ? new Date(startTime) : null;
+  const requestedEnd = endTime !== undefined ? new Date(endTime) : null;
+  const isTimeUpdateRequested = requestedStart !== null || requestedEnd !== null;
+  const oldStart = existingShift.startTime ? new Date(existingShift.startTime as any) : null;
+  const oldEnd = existingShift.endTime ? new Date(existingShift.endTime as any) : null;
+  const nextStart = requestedStart && !isNaN(requestedStart.getTime()) ? requestedStart : oldStart;
+  const nextEnd = requestedEnd && !isNaN(requestedEnd.getTime()) ? requestedEnd : oldEnd;
+  const timeChanged =
+    (!!(nextStart && oldStart && nextStart.getTime() !== oldStart.getTime())) ||
+    (!!(nextEnd && oldEnd && nextEnd.getTime() !== oldEnd.getTime()));
+
+  if (existingShift.status === 'confirmed' && existingShift.assigneeId && isTimeUpdateRequested && timeChanged) {
+    const reason = typeof changeReason === 'string' ? changeReason.trim() : '';
+    if (!reason || reason.length < 5) {
+      res.status(400).json({ message: 'A changeReason (min 5 chars) is required to modify a confirmed shift.' });
+      return;
+    }
   }
 
   // Build update object with only provided fields
@@ -426,6 +504,24 @@ router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReque
   if (!updatedShift) {
     res.status(500).json({ message: 'Failed to update shift' });
     return;
+  }
+
+  if (existingShift.status === 'confirmed' && existingShift.assigneeId && isTimeUpdateRequested && timeChanged) {
+    const reason = typeof changeReason === 'string' ? changeReason.trim() : '';
+    try {
+      await notificationsService.notifyProfessionalOfShiftChange(existingShift.assigneeId, {
+        shiftId: existingShift.id,
+        title: (updatedShift as any).title || existingShift.title,
+        oldStartTime: existingShift.startTime,
+        oldEndTime: existingShift.endTime,
+        newStartTime: (updatedShift as any).startTime,
+        newEndTime: (updatedShift as any).endTime,
+        reason,
+        employerId: existingShift.employerId,
+      });
+    } catch (error) {
+      console.error('[PUT /api/shifts/:id] Error sending shift change notification:', error);
+    }
   }
 
   res.status(200).json(updatedShift);
@@ -1056,6 +1152,76 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
     message: 'Invite sent successfully',
     offer,
   });
+}));
+
+// Copy previous week shifts into the current week (as drafts)
+router.post('/copy-previous-week', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { start, end } = (req.body || {}) as { start?: string; end?: string };
+  const startDate = start ? new Date(start) : null;
+  const endDate = end ? new Date(end) : null;
+  if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    res.status(400).json({ message: 'Invalid start/end. Expected ISO date strings.' });
+    return;
+  }
+
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const prevStart = new Date(startDate.getTime() - weekMs);
+  const prevEnd = new Date(endDate.getTime() - weekMs);
+
+  const previousWeekShifts = await getShiftsByEmployerInRange(userId, prevStart, prevEnd);
+  if (!previousWeekShifts || previousWeekShifts.length === 0) {
+    res.status(200).json({ success: true, count: 0 });
+    return;
+  }
+
+  const shiftsToCreate = previousWeekShifts
+    .filter((s) => s.status !== 'cancelled' && s.status !== 'completed')
+    .map((s) => ({
+      employerId: userId,
+      title: s.title,
+      description: s.description,
+      startTime: new Date(s.startTime.getTime() + weekMs),
+      endTime: new Date(s.endTime.getTime() + weekMs),
+      hourlyRate: String(s.hourlyRate),
+      status: 'draft' as const,
+      location: s.location || undefined,
+    }));
+
+  const created = await createBatchShifts(shiftsToCreate);
+  res.status(201).json({ success: true, count: created.length });
+}));
+
+// Publish all draft shifts in a date range (draft -> open)
+router.post('/publish-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { start, end } = (req.body || {}) as { start?: string; end?: string };
+  const startDate = start ? new Date(start) : null;
+  const endDate = end ? new Date(end) : null;
+  if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    res.status(400).json({ message: 'Invalid start/end. Expected ISO date strings.' });
+    return;
+  }
+
+  const shiftsInRange = await getShiftsByEmployerInRange(userId, startDate, endDate);
+  const draftShifts = (shiftsInRange || []).filter((s) => s.status === 'draft');
+  if (draftShifts.length === 0) {
+    res.status(200).json({ success: true, count: 0 });
+    return;
+  }
+
+  await Promise.all(draftShifts.map((s) => shiftsRepo.updateShift(s.id, { status: 'open' })));
+  res.status(200).json({ success: true, count: draftShifts.length });
 }));
 
 // Smart Fill: Batch create shifts for unassigned slots

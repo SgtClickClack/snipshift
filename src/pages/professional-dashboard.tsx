@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import JobBoard from "@/components/job-board/JobBoard";
 import PendingReviewNotification from "@/components/shifts/pending-review-notification";
 import PayoutSettings from "@/components/payments/payout-settings";
 import EarningsDashboard from "@/components/payments/earnings-dashboard";
+import { fetchShifts } from "@/lib/api";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -88,7 +89,22 @@ export default function ProfessionalDashboard() {
   });
 
   // Memoize bookings to prevent unnecessary Calendar re-renders
-  const bookings = useMemo(() => bookingsData || [], [bookingsData]);
+  const bookings = useMemo(() => {
+    const list = Array.isArray(bookingsData) ? bookingsData : [];
+    // Strict commitments: only ACCEPTED/accepted applications should appear as "My Commitments"
+    return list.filter((b: any) => {
+      const raw = (b?.application_status ?? b?.applicationStatus ?? b?.status ?? '').toString();
+      return raw.toLowerCase() === 'accepted';
+    });
+  }, [bookingsData]);
+
+  const { data: openShiftOpportunities = [], isLoading: isLoadingOpenShifts } = useQuery<any[]>({
+    queryKey: ['open-shift-opportunities'],
+    queryFn: async () => {
+      return await fetchShifts({ status: 'open', limit: 50 });
+    },
+    enabled: activeView === 'calendar',
+  });
 
   // Extract booked dates from bookings for calendar indicators
   const bookedDates = useMemo(() => {
@@ -806,11 +822,55 @@ export default function ProfessionalDashboard() {
         
         {/* Calendar Tab */}
         {activeView === 'calendar' && (
-          <ProfessionalCalendar
-            bookings={bookings}
-            isLoading={isLoadingBookings}
-            onDateSelect={setDate}
-          />
+          <div className="space-y-6">
+            <ProfessionalCalendar
+              bookings={bookings}
+              isLoading={isLoadingBookings}
+              onDateSelect={setDate}
+            />
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Opportunities (OPEN shifts)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingOpenShifts ? (
+                  <div className="text-sm text-muted-foreground">Loading opportunities…</div>
+                ) : openShiftOpportunities.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">No open shifts right now.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {openShiftOpportunities.slice(0, 12).map((s: any) => (
+                      <div
+                        key={s.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border p-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{s.title}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {(() => {
+                              try {
+                                const start = new Date(s.startTime || s.date);
+                                return isNaN(start.getTime()) ? 'Time TBD' : format(start, "EEE, MMM d • h:mm a");
+                              } catch {
+                                return 'Time TBD';
+                              }
+                            })()}
+                            {s.hourlyRate || s.pay ? ` • $${s.hourlyRate || s.pay}/hr` : ''}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => navigate(`/shifts/${s.id}`)}>
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
         
         {/* Profile Tab */}

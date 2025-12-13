@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -472,16 +472,7 @@ export default function ShiftDetailsPage() {
                         rate: shift.hourlyRate,
                         date: shift.startTime,
                       }]}
-                      onJobSelect={() => {}}
-                      selectedJob={{
-                        id: shift.id,
-                        title: shift.title,
-                        location: shift.location || '',
-                        lat: Number(shift.lat),
-                        lng: Number(shift.lng),
-                        rate: shift.hourlyRate,
-                        date: shift.startTime,
-                      }}
+                      interactive={false}
                       centerLocation={{ lat: Number(shift.lat), lng: Number(shift.lng) }}
                       radius={50}
                       searchLocation={shift.location || ''}

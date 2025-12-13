@@ -136,6 +136,20 @@ export async function fetchShifts(params: { status?: 'open' | 'filled' | 'comple
   }
 }
 
+export async function fetchEmployerShifts(params: { start?: string; end?: string } = {}): Promise<ShiftDetails[]> {
+  try {
+    const query = new URLSearchParams();
+    query.append('employer_id', 'me');
+    if (params.start) query.append('start', params.start);
+    if (params.end) query.append('end', params.end);
+    const res = await apiRequest('GET', `/api/shifts?${query.toString()}`);
+    const data = await safeJson<any>(res, []);
+    return Array.isArray(data) ? data : (data?.data || []);
+  } catch (error) {
+    throw toApiError(error, 'fetchEmployerShifts');
+  }
+}
+
 export interface JobDetails {
   id: string;
   title: string;
@@ -383,6 +397,36 @@ export async function createShift(shiftData: {
     return await res.json();
   } catch (error) {
     throw toApiError(error, 'createShift');
+  }
+}
+
+export async function updateShiftTimes(
+  shiftId: string,
+  payload: { startTime: string; endTime: string; changeReason?: string }
+): Promise<ShiftDetails> {
+  try {
+    const res = await apiRequest('PUT', `/api/shifts/${shiftId}`, payload);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'updateShiftTimes');
+  }
+}
+
+export async function copyPreviousWeekShifts(payload: { start: string; end: string }): Promise<{ success: boolean; count: number }> {
+  try {
+    const res = await apiRequest('POST', '/api/shifts/copy-previous-week', payload);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'copyPreviousWeekShifts');
+  }
+}
+
+export async function publishAllDraftShifts(payload: { start: string; end: string }): Promise<{ success: boolean; count: number }> {
+  try {
+    const res = await apiRequest('POST', '/api/shifts/publish-all', payload);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'publishAllDraftShifts');
   }
 }
 

@@ -161,6 +161,87 @@ Snipshift Team
 }
 
 /**
+ * Notify a professional when a confirmed shift they accepted is modified by the shop.
+ * Used for safety when rescheduling a CONFIRMED shift.
+ */
+export async function notifyProfessionalOfShiftChange(
+  professionalId: string,
+  payload: {
+    shiftId: string;
+    title: string;
+    oldStartTime: Date | string;
+    oldEndTime: Date | string;
+    newStartTime: Date | string;
+    newEndTime: Date | string;
+    reason: string;
+    employerId?: string;
+  }
+): Promise<void> {
+  try {
+    let businessName = 'Business';
+    if (payload.employerId) {
+      const employer = await usersRepo.getUserById(payload.employerId);
+      businessName = employer?.name || 'Business';
+    }
+
+    const oldStart = new Date(payload.oldStartTime);
+    const oldEnd = new Date(payload.oldEndTime);
+    const nextStart = new Date(payload.newStartTime);
+    const nextEnd = new Date(payload.newEndTime);
+
+    const title = 'Shift Updated';
+    const message = `${businessName} updated your confirmed shift: ${nextStart.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })}`;
+
+    await createInAppNotification(professionalId, 'SYSTEM', title, message, {
+      shiftId: payload.shiftId,
+      type: 'shift_changed',
+      reason: payload.reason,
+      oldStartTime: oldStart.toISOString(),
+      oldEndTime: oldEnd.toISOString(),
+      newStartTime: nextStart.toISOString(),
+      newEndTime: nextEnd.toISOString(),
+      link: '/professional-dashboard?view=calendar',
+    });
+
+    const professional = await usersRepo.getUserById(professionalId);
+    if (professional?.email) {
+      const emailBody = `
+Hello ${professional.name || 'Professional'},
+
+Your confirmed shift has been updated by ${businessName}.
+
+Old time:
+- ${oldStart.toLocaleString('en-US')} → ${oldEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+
+New time:
+- ${nextStart.toLocaleString('en-US')} → ${nextEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+
+Reason provided by the shop:
+${payload.reason}
+
+Please log in to review the updated shift details.
+
+Best regards,
+Snipshift Team
+      `.trim();
+
+      await sendEmailMock(professional.email, title, emailBody);
+    }
+  } catch (error: any) {
+    console.error('[notifyProfessionalOfShiftChange] Error:', {
+      message: error?.message,
+      professionalId,
+      shiftId: payload.shiftId,
+    });
+  }
+}
+
+/**
  * Notify a business when a professional accepts their shift
  */
 export async function notifyBusinessOfAcceptance(

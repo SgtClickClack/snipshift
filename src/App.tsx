@@ -62,6 +62,7 @@ const PostJobPage = lazy(() => import('@/pages/post-job'));
 const ManageJobsPage = lazy(() => import('@/pages/manage-jobs'));
 const NotificationsPage = lazy(() => import('@/pages/notifications'));
 const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
+const ShopSchedulePage = lazy(() => import('@/pages/shop/schedule'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
 const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
 const TrainerDashboard = lazy(() => import('@/pages/trainer-dashboard'));
@@ -313,6 +314,14 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['hub', 'business']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <HubDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/shop/schedule" element={
+          <ProtectedRoute allowedRoles={['hub', 'business']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ShopSchedulePage />
             </Suspense>
           </ProtectedRoute>
         } />

@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -481,8 +481,7 @@ export default function JobDetailsPage() {
                   <ErrorBoundary>
                     <GoogleMapView
                       jobs={[job]}
-                      onJobSelect={() => {}}
-                      selectedJob={job}
+                      interactive={false}
                       centerLocation={{ lat: job.lat!, lng: job.lng! }}
                       radius={50}
                       searchLocation={job.location || ''}

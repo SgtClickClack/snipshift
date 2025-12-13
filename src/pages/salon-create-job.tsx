@@ -1,9 +1,11 @@
-﻿import { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { createShift } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +83,7 @@ const REQUIREMENTS_OPTIONS = [
 export default function SalonCreateJobPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -196,6 +199,8 @@ export default function SalonCreateJobPage() {
 
     const payload = {
       title: data.jobTitle,
+      description:
+        data.notes?.trim() || (data.requirements || []).join('\n') || 'Shift details',
       jobTypes: data.jobTypes,
       date: dateStr,
       startTime: startTimeStr,
@@ -205,9 +210,26 @@ export default function SalonCreateJobPage() {
       notes: data.notes || '',
       totalHours: totalHours,
       estimatedTotalPay: estimatedTotalPay,
+      status: 'open' as const,
+      location: user?.location,
     };
 
-    // Payload prepared for submission
+    try {
+      await createShift(payload);
+      toast({
+        title: 'Job Posted!',
+        description: 'Your job listing is now live.',
+      });
+      navigate('/dashboard', { replace: true });
+    } catch (error: any) {
+      // Keep an explicit console log for debugging / error reporting tooling
+      console.error('SalonCreateJobPage: createShift failed', error);
+      toast({
+        title: 'Failed to post job',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const onSaveDraft = () => {
