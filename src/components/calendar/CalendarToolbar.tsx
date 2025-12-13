@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
 import { View } from "react-big-calendar";
-import { AutoFillButton } from "./auto-fill-button";
 
 interface CalendarToolbarProps {
   mode: 'professional' | 'business';
@@ -10,8 +9,9 @@ interface CalendarToolbarProps {
   onViewChange: (view: View) => void;
   onNavigate: (action: 'PREV' | 'NEXT' | 'TODAY') => void;
   onSettingsClick: () => void;
-  onSmartFillClick: () => void;
-  isCalculatingMatches: boolean;
+  // Legacy props - no longer used but kept for compatibility
+  onSmartFillClick?: () => void;
+  isCalculatingMatches?: boolean;
 }
 
 export function CalendarToolbar({
@@ -20,8 +20,6 @@ export function CalendarToolbar({
   onViewChange,
   onNavigate,
   onSettingsClick,
-  onSmartFillClick,
-  isCalculatingMatches,
 }: CalendarToolbarProps) {
   return (
     <CardHeader className="border-b bg-gradient-to-r from-background via-purple-50/5 to-blue-50/5 dark:from-background dark:via-purple-950/10 dark:to-blue-950/10">
@@ -73,14 +71,6 @@ export function CalendarToolbar({
             </Button>
           </div>
           
-          {/* Smart Fill Button - Only show in business mode, aligned with view switcher */}
-          {mode === 'business' && (
-            <AutoFillButton
-              onClick={onSmartFillClick}
-              isLoading={isCalculatingMatches}
-            />
-          )}
-
           {/* Navigation */}
           <div className="flex items-center gap-1">
             <Button

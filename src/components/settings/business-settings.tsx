@@ -269,7 +269,15 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
           clearExistingDrafts: true, // Clear and regenerate
         };
         
+        console.log('[BusinessSettings] Generating Roster...', {
+          startDate: rosterPayload.startDate,
+          endDate: rosterPayload.endDate,
+          shiftPattern: rosterPattern,
+          openingHours: settingsData.openingHours,
+        });
+        
         const result = await generateRoster(rosterPayload);
+        console.log('[BusinessSettings] Roster generation result:', result);
         
         toast({
           title: 'Settings saved & roster updated',
