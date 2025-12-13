@@ -1,7 +1,17 @@
 import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
 import { Calendar, momentLocalizer, View, Event } from "react-big-calendar";
 import moment from "moment";
-import { format, isPast, isToday, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
+import {
+  format,
+  isPast,
+  isToday,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameDay,
+  addWeeks,
+  subWeeks,
+} from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,13 +64,12 @@ import { UserPlus } from "lucide-react";
 const UserPlusIcon = UserPlus;
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/contexts/NotificationContext";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import { ShiftBlock } from "./shift-block";
 import { AssignStaffModal, Professional } from "./assign-staff-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import CalendarSettingsModal, { CalendarSettings, ShiftPattern, OpeningHours } from "./calendar-settings-modal";
 import { AutoFillButton } from "./auto-fill-button";
@@ -72,7 +81,6 @@ import {
   filterOverlappingSlots, 
   GeneratedShiftSlot 
 } from "@/utils/shift-slot-generator";
-import { startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { AutoSlotAssignmentModal } from "./auto-slot-assignment-modal";
 import { fetchProfessionals, ProfessionalListItem } from "@/lib/api";
 import { ShiftAssignmentModal } from "./shift-assignment-modal";

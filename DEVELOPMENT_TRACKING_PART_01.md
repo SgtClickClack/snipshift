@@ -1,4 +1,27 @@
 
+#### 2025-12-14: Fix Professional Calendar Production Crash (Missing React Query Import)
+
+**Core Components**
+- Professional calendar UI (`ProfessionalCalendar`)
+- React Query hook usage in calendar data fetch (professionals list)
+
+**Key Features**
+- Fixed a production runtime crash (`ReferenceError: useQuery is not defined`) by importing `useQuery` from TanStack React Query where it is used.
+- Removed duplicate import declarations in the same module to ensure the calendar bundle parses cleanly and remains tree-shake safe.
+
+**Integration Points**
+- TanStack React Query (`useQuery`)
+- Calendar bundle chunk (`professional-calendar.*.js`)
+
+**File Paths**
+- `src/components/calendar/professional-calendar.tsx`
+
+**Next Priority Task**
+- Verify `npm run build` and a production deployment load the Professional Calendar without runtime errors (no `useQuery` crash).
+
+**Code Organization & Quality**
+- Kept the fix localized to the calendar module imports; avoided introducing new patterns or dependencies.
+
 #### 2025-12-14: Fix Smart Fill Roster 500 + Real Professional Picker (No Mock Data)
 
 **Core Components**

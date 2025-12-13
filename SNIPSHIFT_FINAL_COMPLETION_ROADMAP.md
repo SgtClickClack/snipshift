@@ -8,6 +8,19 @@
 
 ---
 
+### Update: 2025-12-14 - Fix Professional Calendar Crash in Production (React Query Hook Import)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Fixed `ReferenceError: useQuery is not defined` in the Professional Calendar bundle by importing `useQuery` where it’s used.
+- Removed duplicate import declarations in the calendar module to keep the calendar chunk parse-safe and stable in production builds.
+
+**Impact:**
+- **Calendar Stability:** Professional Calendar loads without crashing at runtime.
+
+---
+
 ### Update: 2025-12-14 - Smart Fill Roster + Calendar Slot Assignment Reliability
 
 **Status:** ✅ **FIXED**
