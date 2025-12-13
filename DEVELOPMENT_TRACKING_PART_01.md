@@ -68,11 +68,10 @@
 **Key Features**
 - Split the previous single large `vendor` bundle into stable domain chunks:
   - `vendor-react` (React + router + TanStack Query)
-  - `vendor-ui` (Radix UI + lucide icons)
+  - `vendor-react` also includes React-dependent UI libs (Radix UI + lucide icons) to avoid runtime ordering issues
   - `vendor-firebase` (Firebase SDK)
   - `vendor-maps` (Google Maps loader + maps helpers)
-  - `vendor-calendar` (calendar/date UI dependencies)
-  - `vendor-charts` (recharts + d3*)
+  - `vendor-react` also includes calendar/charts libs (recharts + d3*, react-big-calendar/date-fns/moment) to avoid runtime ordering issues
   - `vendor-realtime` (socket.io-client)
 - Reduced the remaining generic `vendor` chunk to well below the 1MB warning threshold.
 
