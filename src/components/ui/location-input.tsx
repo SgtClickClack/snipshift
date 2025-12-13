@@ -25,6 +25,7 @@ interface LocationInputProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  'data-testid'?: string;
 }
 
 const PlacesAutocompleteInternal = ({
@@ -34,6 +35,7 @@ const PlacesAutocompleteInternal = ({
   placeholder,
   className,
   disabled,
+  'data-testid': dataTestId,
 }: LocationInputProps) => {
   const {
     ready,
@@ -93,6 +95,7 @@ const PlacesAutocompleteInternal = ({
             placeholder={placeholder}
             className={cn("pr-10", className)}
             autoComplete="off"
+            data-testid={dataTestId}
           />
           <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         </div>
@@ -151,6 +154,7 @@ export function LocationInput(props: LocationInputProps) {
         placeholder={props.placeholder}
         className={props.className}
         disabled={props.disabled}
+        data-testid={props['data-testid']}
        />
     )
   }
@@ -161,6 +165,7 @@ export function LocationInput(props: LocationInputProps) {
         disabled
         placeholder="Loading location services..."
         className={props.className}
+        data-testid={props['data-testid']}
       />
     );
   }

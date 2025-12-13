@@ -108,7 +108,10 @@ export async function getApplicationsForJob(
  */
 export async function getApplicationsForShift(
   shiftId: string
-): Promise<Array<typeof applications.$inferSelect & { shift: typeof shifts.$inferSelect }> | null> {
+): Promise<Array<typeof applications.$inferSelect & { 
+  shift: typeof shifts.$inferSelect;
+  user: typeof users.$inferSelect | null;
+}> | null> {
   const db = getDb();
   if (!db) {
     return null;
@@ -118,15 +121,18 @@ export async function getApplicationsForShift(
     .select({
       application: applications,
       shift: shifts,
+      user: users,
     })
     .from(applications)
     .innerJoin(shifts, eq(applications.shiftId, shifts.id))
+    .leftJoin(users, eq(applications.userId, users.id))
     .where(eq(applications.shiftId, shiftId))
     .orderBy(desc(applications.appliedAt));
 
   return result.map((row) => ({
     ...row.application,
     shift: row.shift,
+    user: row.user,
   })) as any;
 }
 

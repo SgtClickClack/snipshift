@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { LocationInput } from '@/components/ui/location-input';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { ChevronLeft, ChevronRight, Scissors, Building2, GraduationCap, Briefcase } from 'lucide-react';
@@ -375,10 +376,9 @@ export default function OnboardingPage() {
                 <Label htmlFor="location" className="text-gray-300">
                   City/Suburb *
                 </Label>
-                <Input
-                  id="location"
+                <LocationInput
                   value={formData.location}
-                  onChange={(e) => updateFormData({ location: e.target.value })}
+                  onChange={(val) => updateFormData({ location: val })}
                   placeholder="Enter your city or suburb"
                   className="w-full"
                   data-testid="input-location"

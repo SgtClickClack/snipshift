@@ -340,7 +340,8 @@ export default function JobFeedPage() {
                           onQuickApply={handleQuickApply}
                           onViewDetails={(e) => {
                             e.stopPropagation();
-                            navigate(`/jobs/${job.id}`);
+                            // Navigate to shift details page since job feed shows shifts
+                            navigate(`/shifts/${job.id}`);
                           }}
                         />
                       ))}

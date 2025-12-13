@@ -281,24 +281,70 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
   res.status(200).json(pendingReviews);
 }));
 
-// Get shift by ID (public read)
-router.get('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+// Get applications for a specific shift (authenticated, employer only)
+// NOTE: This route must come BEFORE /:id to be matched correctly
+router.get('/:id/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
 
-  // Validate UUID format to prevent route conflicts
-  if (!isValidUUID(id)) {
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
     res.status(404).json({ message: 'Shift not found' });
     return;
   }
 
-  const shift = await shiftsRepo.getShiftById(id);
-
+  // Verify shift exists and user owns it
+  const shift = await shiftsRepo.getShiftById(shiftId);
   if (!shift) {
     res.status(404).json({ message: 'Shift not found' });
     return;
   }
 
-  res.status(200).json(shift);
+  // Strict ownership check
+  if (shift.employerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You do not own this shift' });
+    return;
+  }
+
+  // Get applications with user profile data
+  const applications = await applicationsRepo.getApplicationsForShift(shiftId);
+  
+  if (!applications) {
+    res.status(200).json([]);
+    return;
+  }
+
+  // Transform to include applicant profile information
+  const transformed = applications.map((app) => {
+    const user = app.user;
+    return {
+      id: app.id,
+      name: app.name,
+      email: app.email,
+      coverLetter: app.coverLetter,
+      status: app.status,
+      appliedAt: app.appliedAt.toISOString(),
+      respondedAt: app.respondedAt ? app.respondedAt.toISOString() : null,
+      userId: app.userId || undefined,
+      // User profile data
+      applicant: user ? {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        displayName: user.displayName || user.name,
+        // Rating can be calculated from reviews if needed
+        rating: null, // TODO: Calculate from reviews
+      } : null,
+    };
+  });
+
+  res.status(200).json(transformed);
 }));
 
 // Update shift (full update - for drag-and-drop rescheduling) (authenticated, employer only)

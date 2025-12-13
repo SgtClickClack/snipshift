@@ -54,6 +54,7 @@ const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
 const EditProfilePage = lazy(() => import('@/pages/edit-profile'));
 const JobFeedPage = lazy(() => import('@/pages/job-feed'));
 const JobDetailsPage = lazy(() => import('@/pages/job-details'));
+const ShiftDetailsPage = lazy(() => import('@/pages/shift-details'));
 const TravelPage = lazy(() => import('@/pages/travel'));
 const MyApplicationsPage = lazy(() => import('@/pages/my-applications'));
 const ReviewPage = lazy(() => import('@/pages/review'));
@@ -248,6 +249,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <JobDetailsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/shifts/:id" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ShiftDetailsPage />
             </Suspense>
           </ProtectedRoute>
         } />

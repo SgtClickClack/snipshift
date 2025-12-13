@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -18,8 +18,15 @@ import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
 import { format } from "date-fns";
-import { createShift, fetchShopShifts, updateShiftStatus, decideApplication } from "@/lib/api";
+import { createShift, fetchShopShifts, updateShiftStatus, decideApplication, getShiftApplications, updateApplicationStatus, ShiftApplication } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { ApplicationCard, Application } from "@/components/applications/ApplicationCard";
 import {
   DropdownMenu,
@@ -61,6 +68,8 @@ export default function HubDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [showCreateShiftModal, setShowCreateShiftModal] = useState(false);
   const [selectedDateForShift, setSelectedDateForShift] = useState<Date | undefined>();
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+  const [isCandidatesDialogOpen, setIsCandidatesDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -1009,6 +1018,22 @@ export default function HubDashboard() {
                                   </span>
                                 </div>
                               </div>
+                              {isShift && (job.applicationCount || 0) > 0 && (
+                                <div className="mb-3">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedShiftId(job.id);
+                                      setIsCandidatesDialogOpen(true);
+                                    }}
+                                    className="w-full"
+                                  >
+                                    <Users className="mr-2 h-4 w-4" />
+                                    View Candidates
+                                  </Button>
+                                </div>
+                              )}
                               <p className="text-sm text-muted-foreground mb-2" data-testid={`text-job-description-${job.id}`}>
                                 {job.description}
                               </p>
@@ -1245,6 +1270,241 @@ export default function HubDashboard() {
           endTime: job.endTime || new Date(new Date(job.startTime || job.date).getTime() + 8 * 60 * 60 * 1000).toISOString(),
         })) || []}
       />
+
+      {/* Candidates Dialog */}
+      {selectedShiftId && (
+        <CandidatesDialog
+          shiftId={selectedShiftId}
+          isOpen={isCandidatesDialogOpen}
+          onClose={() => {
+            setIsCandidatesDialogOpen(false);
+            setSelectedShiftId(null);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// Candidates Dialog Component
+function CandidatesDialog({ 
+  shiftId, 
+  isOpen, 
+  onClose 
+}: { 
+  shiftId: string | null; 
+  isOpen: boolean; 
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const { data: applications, isLoading } = useQuery({
+    queryKey: ['shift-applications', shiftId],
+    queryFn: () => getShiftApplications(shiftId!),
+    enabled: !!shiftId && isOpen,
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ applicationId, status }: { applicationId: string; status: 'accepted' | 'rejected' }) =>
+      updateApplicationStatus(applicationId, status),
+    onSuccess: (_, variables) => {
+      toast({
+        title: 'Application status updated',
+        description: variables.status === 'accepted' 
+          ? 'The candidate has been accepted and notified.' 
+          : 'The candidate has been rejected and notified.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['shift-applications', shiftId] });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to update status',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleAccept = (applicationId: string) => {
+    updateStatusMutation.mutate({ applicationId, status: 'accepted' });
+  };
+
+  const handleReject = (applicationId: string) => {
+    updateStatusMutation.mutate({ applicationId, status: 'rejected' });
+  };
+
+  const handleMessage = async (application: ShiftApplication) => {
+    if (!application.userId) {
+      toast({
+        title: 'Error',
+        description: 'Unable to message candidate. User information not available.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const res = await apiRequest('POST', '/api/conversations', {
+        participant2Id: application.userId,
+        shiftId: shiftId,
+      });
+      const data = await res.json();
+      navigate(`/messages?conversation=${data.id}`);
+      onClose();
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to start conversation. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  function getApplicationStatusBadge(status: ShiftApplication['status']) {
+    switch (status) {
+      case 'pending':
+        return (
+          <Badge className="bg-amber-50 text-amber-700 border-amber-200">
+            Pending
+          </Badge>
+        );
+      case 'accepted':
+        return (
+          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+            Accepted
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge className="bg-red-50 text-red-700 border-red-200">
+            Rejected
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Candidates</DialogTitle>
+          <DialogDescription>
+            Review and manage applications for this shift
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="py-8 text-center text-muted-foreground">Loading candidates...</div>
+        ) : !applications || applications.length === 0 ? (
+          <div className="py-8 text-center">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+            <p className="text-muted-foreground">No applicants yet</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {(applications || []).map((application) => (
+              <Card key={application.id} className="border border-border">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      {application.applicant?.avatarUrl ? (
+                        <img
+                          src={application.applicant.avatarUrl}
+                          alt={application.applicant.displayName}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-6 w-6 text-primary" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground mb-1">
+                          {application.applicant?.displayName || application.name}
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-1">{application.email}</p>
+                        {application.applicant?.rating !== null && application.applicant?.rating !== undefined && (
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            <span>{application.applicant.rating.toFixed(1)}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>Applied {formatDate(application.appliedAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      {getApplicationStatusBadge(application.status)}
+                    </div>
+                  </div>
+
+                  {application.coverLetter && (
+                    <div className="mb-4">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words bg-muted p-3 rounded border border-border">
+                        {application.coverLetter}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    {application.status === 'pending' && (
+                      <>
+                        <Button
+                          onClick={() => handleAccept(application.id)}
+                          disabled={updateStatusMutation.isPending}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          size="sm"
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Accept
+                        </Button>
+                        <Button
+                          onClick={() => handleReject(application.id)}
+                          disabled={updateStatusMutation.isPending}
+                          variant="destructive"
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    {application.userId && (
+                      <Button
+                        onClick={() => handleMessage(application)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Message
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

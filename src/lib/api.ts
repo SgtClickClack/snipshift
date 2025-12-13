@@ -210,6 +210,30 @@ export async function getJobApplications(jobId: string): Promise<JobApplication[
   return res.json();
 }
 
+export interface ShiftApplication {
+  id: string;
+  name: string;
+  email: string;
+  coverLetter: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  appliedAt: string;
+  respondedAt: string | null;
+  userId?: string;
+  applicant?: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    displayName: string;
+    rating: number | null;
+  } | null;
+}
+
+export async function getShiftApplications(shiftId: string): Promise<ShiftApplication[]> {
+  const res = await apiRequest('GET', `/api/shifts/${shiftId}/applications`);
+  return res.json();
+}
+
 export async function updateApplicationStatus(
   applicationId: string,
   status: 'pending' | 'accepted' | 'rejected'
@@ -452,7 +476,52 @@ export const applyToJob = async (id: string, data: ApplicationData): Promise<{ i
   return { id: 'mock-application-id', status: 'pending' }; 
 };
 
-export const fetchMyApplications = async (): Promise<Application[]> => { return []; };
+// Shift Details
+export interface ShiftDetails {
+  id: string;
+  title: string;
+  description: string;
+  hourlyRate: string;
+  startTime: string;
+  endTime: string;
+  location?: string | null;
+  lat?: string | number | null;
+  lng?: string | number | null;
+  status: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+  employerId: string;
+  assigneeId?: string | null;
+  shopName?: string | null;
+  shopAvatarUrl?: string | null;
+  requirements?: string[];
+  createdAt: string;
+  updatedAt: string;
+  // Frontend compatibility fields
+  rate?: string;
+  payRate?: string;
+  date?: string;
+  businessId?: string;
+  hubId?: string;
+}
+
+export async function fetchShiftDetails(id: string): Promise<ShiftDetails> {
+  const res = await apiRequest('GET', `/api/shifts/${id}`);
+  const shift = await res.json();
+  
+  // Normalize the shift data for frontend compatibility
+  return {
+    ...shift,
+    rate: shift.hourlyRate,
+    payRate: shift.hourlyRate,
+    date: shift.startTime,
+    businessId: shift.employerId,
+    requirements: shift.description ? [shift.description] : [],
+  };
+}
+
+export const fetchMyApplications = async (): Promise<Application[]> => {
+  const res = await apiRequest('GET', '/api/applications');
+  return res.json();
+};
 
 export const fetchJobApplications = async (): Promise<JobApplication[]> => { return []; };
 

@@ -1159,7 +1159,7 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
     }
   } else if (application.shiftId) {
     // Verify shift ownership
-    const shift = await shiftsRepo.getShiftById(application.shiftId);
+    shift = await shiftsRepo.getShiftById(application.shiftId);
     if (!shift) {
       res.status(404).json({ message: 'Shift not found' });
       return;
@@ -1194,15 +1194,15 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
       }
       
       // Notify in-app notification
-      const jobTitle = job ? job.title : 'Job';
-      const jobIdStr = job ? job.id : '';
+      const positionTitle = job ? job.title : (shift ? shift.title : 'Position');
+      const positionId = job ? job.id : (shift ? shift.id : '');
       
       await notificationService.notifyApplicationStatusChange(
         candidateUserId,
         candidateEmail,
-        jobTitle,
+        positionTitle,
         status,
-        jobIdStr
+        positionId
       );
       
       // Send email notification
@@ -1210,8 +1210,8 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
         await emailService.sendApplicationStatusEmail(
           candidateEmail,
           candidateName,
-          jobTitle,
-          job ? job.shopName || undefined : undefined,
+          positionTitle,
+          job ? job.shopName : (shift ? (shift as any).shopName : undefined),
           status,
           application.appliedAt.toISOString()
         );
