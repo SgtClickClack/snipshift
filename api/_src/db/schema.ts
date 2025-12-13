@@ -9,12 +9,16 @@ import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, i
 import { relations } from 'drizzle-orm';
 import { users, userRoleEnum } from './schema/users.js';
 import { notifications, notificationTypeEnum } from './schema/notifications.js';
-import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, paymentStatusEnum } from './schema/shifts.js';
+import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum } from './schema/shifts.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
 import { comments } from './schema/comments.js';
 import { trainingModules, trainingLevelEnum } from './schema/training-modules.js';
 import { trainingPurchases } from './schema/training-purchases.js';
+
+// Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
+// This avoids ESM import resolution issues with drizzle-kit
+export const paymentStatusEnum = pgEnum('payment_status', ['UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED', 'PAYMENT_FAILED']);
 
 export { 
   users, userRoleEnum, 
@@ -23,7 +27,6 @@ export {
   shiftOffers, shiftOfferStatusEnum,
   attendanceStatusEnum,
   shiftReviews, shiftReviewTypeEnum,
-  paymentStatusEnum,
   posts, postTypeEnum,
   postLikes,
   comments,

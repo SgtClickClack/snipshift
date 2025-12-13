@@ -21,6 +21,10 @@ export interface Shift {
   recurringSeriesId?: string; // ID to group shifts in the same recurring series
   isRecurring?: boolean; // Flag to indicate if this shift is part of a recurring series
   recurringIndex?: number; // Index in the recurring series (0-based)
+  
+  // Shop branding fields
+  shopName?: string | null; // Shop's business name
+  shopAvatarUrl?: string | null; // Shop's profile picture URL
 }
 
 export interface Post {

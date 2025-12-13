@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Shift } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, DollarSign, MapPin } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Calendar, Clock, DollarSign, MapPin, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
 
@@ -34,12 +35,34 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
     businessId: shift.employerId, // Map employer to business
   };
 
+  // Get shop name and avatar, with fallbacks
+  const shopName = shift.shopName || 'Shop';
+  const shopAvatarUrl = shift.shopAvatarUrl;
+  const shopInitials = shopName
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <>
       <Card className="hover:shadow-md transition-shadow">
         <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <h4 className="font-semibold text-neutral-900 text-lg">{shift.title}</h4>
+          {/* Shop Branding Header */}
+          <div className="flex items-center gap-3 mb-4">
+            <Avatar className="h-12 w-12">
+              {shopAvatarUrl && (
+                <AvatarImage src={shopAvatarUrl} alt={shopName} />
+              )}
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {shopInitials || <Building2 className="h-6 w-6" />}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h3 className="font-bold text-neutral-900 text-lg">{shopName}</h3>
+              <h4 className="font-semibold text-neutral-700 text-base">{shift.title}</h4>
+            </div>
           </div>
           
           <div className="grid md:grid-cols-2 gap-4 mb-4 text-sm">

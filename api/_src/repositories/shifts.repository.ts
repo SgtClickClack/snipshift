@@ -5,7 +5,8 @@
  */
 
 import { eq, and, desc, sql, gte, lte } from 'drizzle-orm';
-import { shifts } from '../db/schema.js';
+import { shifts } from '../db/schema/shifts.js';
+import { users } from '../db/schema/users.js';
 import { getDb } from '../db/index.js';
 
 
@@ -18,8 +19,13 @@ export interface ShiftFilters {
   offset?: number;
 }
 
+export interface ShiftWithShop extends typeof shifts.$inferSelect {
+  shopName: string | null;
+  shopAvatarUrl: string | null;
+}
+
 export interface PaginatedShifts {
-  data: typeof shifts.$inferSelect[];
+  data: ShiftWithShop[];
   total: number;
   limit: number;
   offset: number;
@@ -70,16 +76,41 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
   
   const total = Number(countResult[0]?.count || 0);
 
-  // Get paginated data
-  let query = db
-    .select()
+  // Get paginated data with employer (shop) information
+  const data = await db
+    .select({
+      // Shift fields
+      id: shifts.id,
+      employerId: shifts.employerId,
+      assigneeId: shifts.assigneeId,
+      title: shifts.title,
+      description: shifts.description,
+      startTime: shifts.startTime,
+      endTime: shifts.endTime,
+      hourlyRate: shifts.hourlyRate,
+      status: shifts.status,
+      attendanceStatus: shifts.attendanceStatus,
+      paymentStatus: shifts.paymentStatus,
+      paymentIntentId: shifts.paymentIntentId,
+      stripeChargeId: shifts.stripeChargeId,
+      applicationFeeAmount: shifts.applicationFeeAmount,
+      transferAmount: shifts.transferAmount,
+      location: shifts.location,
+      isRecurring: shifts.isRecurring,
+      autoAccept: shifts.autoAccept,
+      parentShiftId: shifts.parentShiftId,
+      createdAt: shifts.createdAt,
+      updatedAt: shifts.updatedAt,
+      // Employer (shop) fields
+      shopName: users.name,
+      shopAvatarUrl: users.avatarUrl,
+    })
     .from(shifts)
+    .leftJoin(users, eq(shifts.employerId, users.id))
     .where(whereClause)
     .orderBy(desc(shifts.createdAt))
     .limit(limit)
     .offset(offset);
-
-  const data = await query;
 
   return {
     data,
@@ -90,17 +121,44 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
 }
 
 /**
- * Get a single shift by ID
+ * Get a single shift by ID with shop information
  */
-export async function getShiftById(id: string): Promise<typeof shifts.$inferSelect | null> {
+export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
   const db = getDb();
   if (!db) {
     return null;
   }
 
   const [shift] = await db
-    .select()
+    .select({
+      // Shift fields
+      id: shifts.id,
+      employerId: shifts.employerId,
+      assigneeId: shifts.assigneeId,
+      title: shifts.title,
+      description: shifts.description,
+      startTime: shifts.startTime,
+      endTime: shifts.endTime,
+      hourlyRate: shifts.hourlyRate,
+      status: shifts.status,
+      attendanceStatus: shifts.attendanceStatus,
+      paymentStatus: shifts.paymentStatus,
+      paymentIntentId: shifts.paymentIntentId,
+      stripeChargeId: shifts.stripeChargeId,
+      applicationFeeAmount: shifts.applicationFeeAmount,
+      transferAmount: shifts.transferAmount,
+      location: shifts.location,
+      isRecurring: shifts.isRecurring,
+      autoAccept: shifts.autoAccept,
+      parentShiftId: shifts.parentShiftId,
+      createdAt: shifts.createdAt,
+      updatedAt: shifts.updatedAt,
+      // Employer (shop) fields
+      shopName: users.name,
+      shopAvatarUrl: users.avatarUrl,
+    })
     .from(shifts)
+    .leftJoin(users, eq(shifts.employerId, users.id))
     .where(eq(shifts.id, id))
     .limit(1);
 

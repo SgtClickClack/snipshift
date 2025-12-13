@@ -187,7 +187,16 @@ router.get('/', asyncHandler(async (req, res) => {
     return;
   }
 
-  res.status(200).json(result.data);
+  // Transform shifts to include frontend compatibility fields
+  const transformedData = result.data.map((shift) => ({
+    ...shift,
+    // Frontend compatibility: add date and pay aliases
+    date: shift.startTime ? new Date(shift.startTime).toISOString() : undefined,
+    pay: shift.hourlyRate ? String(shift.hourlyRate) : undefined,
+    requirements: shift.description, // Alias for description
+  }));
+
+  res.status(200).json(transformedData);
 }));
 
 // Get shifts pending review for the current user
