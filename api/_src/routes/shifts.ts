@@ -337,7 +337,7 @@ router.get('/:id/applications', authenticateUser, asyncHandler(async (req: Authe
         name: user.name,
         email: user.email,
         avatarUrl: user.avatarUrl,
-        displayName: user.displayName || user.name,
+        displayName: user.name, // Use name as displayName
         // Rating can be calculated from reviews if needed
         rating: null, // TODO: Calculate from reviews
       } : null,
