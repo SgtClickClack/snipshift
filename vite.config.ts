@@ -143,80 +143,30 @@ export default defineConfig({
         assetFileNames: 'assets/[name].[hash].[ext]',
         // Manual chunk splitting strategy
         manualChunks: (id) => {
-          if (!id.includes('node_modules')) {
-            return;
-          }
+          if (!id.includes('node_modules')) return;
 
-          // Extract package name from node_modules path.
-          // Handles both scoped and unscoped packages.
-          const match = id.match(/node_modules[\\/]+(@[^\\/]+[\\/][^\\/]+|[^\\/]+)/);
-          const pkg = match?.[1];
-          if (!pkg) {
-            return 'vendor';
-          }
-
-          // Keep React + router + query together for maximum stability.
-          if (
-            pkg === 'react' ||
-            pkg === 'react-dom' ||
-            pkg === 'scheduler' ||
-            pkg === 'use-sync-external-store' ||
-            pkg === 'react-router' ||
-            pkg === 'react-router-dom' ||
-            pkg === 'react-helmet-async' ||
-            pkg.startsWith('@tanstack/')
-          ) {
-            return 'vendor-react';
-          }
-
-          // UI primitives + icons: keep these with React to avoid runtime ordering edge-cases
-          // (some Radix bundles assume React exports are immediately available).
-          if (pkg.startsWith('@radix-ui/') || pkg === 'lucide-react') {
-            return 'vendor-react';
-          }
+          // Keep chunking conservative to avoid React runtime ordering issues.
+          // Only split a few known-heavy libraries; let Vite/Rollup decide the rest.
 
           // Firebase is large; isolate it for better caching.
-          if (pkg === 'firebase' || pkg.startsWith('firebase/')) {
-            return 'vendor-firebase';
-          }
+          if (id.includes('node_modules/firebase')) return 'vendor-firebase';
 
           // Maps + places autocomplete are heavy and not needed everywhere.
           if (
-            pkg === '@react-google-maps/api' ||
-            pkg === '@googlemaps/js-api-loader' ||
-            pkg === 'use-places-autocomplete'
+            id.includes('node_modules/@react-google-maps/api') ||
+            id.includes('node_modules/@googlemaps/js-api-loader') ||
+            id.includes('node_modules/use-places-autocomplete')
           ) {
             return 'vendor-maps';
           }
 
           // Payments.
-          if (pkg.startsWith('@stripe/') || pkg === 'stripe') {
+          if (id.includes('node_modules/@stripe/') || id.includes('node_modules/stripe')) {
             return 'vendor-payments';
           }
 
-          // Charts can be very large (recharts + d3*).
-          if (pkg === 'recharts' || pkg.startsWith('d3-')) {
-            // Keep with React to avoid runtime ordering edge-cases.
-            return 'vendor-react';
-          }
-
-          // Calendar + date-related UI dependencies.
-          if (
-            pkg === 'react-big-calendar' ||
-            pkg === 'moment' ||
-            pkg === 'react-day-picker' ||
-            pkg === 'date-fns'
-          ) {
-            // Keep with React to avoid runtime ordering edge-cases.
-            return 'vendor-react';
-          }
-
-          // Real-time client.
-          if (pkg === 'socket.io-client' || pkg === 'engine.io-client') {
-            return 'vendor-realtime';
-          }
-
-          return 'vendor';
+          // Otherwise, let Rollup determine optimal shared chunks.
+          return;
         },
       },
       // Ensure external dependencies are properly resolved

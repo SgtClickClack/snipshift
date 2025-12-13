@@ -113,6 +113,34 @@
 
 ---
 
+#### 2025-12-13: Vite Chunking Rollback (Fix React Undefined Runtime Crash)
+
+**Core Components**
+- Vite Rollup chunk strategy (`vite.config.ts`)
+- PWA recovery trigger versioning (`index.html`)
+
+**Key Features**
+- Switched from aggressive package-based vendor chunking to a **conservative** strategy:
+  - Only isolates known-heavy libs (`firebase`, maps, Stripe)
+  - Leaves all other chunking decisions to Vite/Rollup to preserve correct dependency ordering
+- Bumped the SW recovery key to re-run cleanup for clients still pinned to stale/broken chunks.
+
+**Integration Points**
+- `npm run vercel-build`
+- `vercel build`
+
+**File Paths**
+- `vite.config.ts`
+- `index.html`
+
+**Next Priority Task**
+- Validate production no longer hits `useLayoutEffect`/`forwardRef` undefined crashes and remove recovery script once the user base is fully off stale caches.
+
+**Code Organization & Quality**
+- Prioritized runtime correctness over micro-optimizing vendor chunk sizes.
+
+---
+
 #### 2025-12-13: Phase 4 Final Polish (Structure, Naming, Import Hygiene, README)
 
 **Core Components Implemented:**
