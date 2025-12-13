@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { createShift } from '@/lib/api';
@@ -84,6 +85,7 @@ export default function SalonCreateJobPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -216,6 +218,12 @@ export default function SalonCreateJobPage() {
 
     try {
       await createShift(payload);
+      // Ensure "My Listings" and feeds refresh immediately after posting.
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       toast({
         title: 'Job Posted!',
         description: 'Your job listing is now live.',
