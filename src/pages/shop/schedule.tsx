@@ -150,6 +150,19 @@ export default function ShopSchedulePage() {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedDraftShift, setSelectedDraftShift] = useState<ShiftDetails | null>(null);
 
+  // ShiftDetailsModal state for viewing CONFIRMED shifts
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedConfirmedShift, setSelectedConfirmedShift] = useState<ShiftDetails | null>(null);
+
+  // EditShiftModal state for editing OPEN shifts
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedOpenShift, setSelectedOpenShift] = useState<ShiftDetails | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    hourlyRate: '',
+    description: '',
+  });
+
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
   const weekEnd = useMemo(() => endOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
 
@@ -300,6 +313,37 @@ export default function ShopSchedulePage() {
     },
   });
 
+  // Mutation for updating an OPEN shift's details
+  const updateShiftDetailsMutation = useMutation({
+    mutationFn: async (payload: { id: string; title: string; hourlyRate: number; description: string }) => {
+      const res = await apiRequest('PATCH', `/api/shifts/${payload.id}`, {
+        title: payload.title,
+        hourlyRate: payload.hourlyRate,
+        description: payload.description,
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      setEditModalOpen(false);
+      setSelectedOpenShift(null);
+      setEditForm({ title: '', hourlyRate: '', description: '' });
+      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+      toast({
+        title: 'Shift updated',
+        description: 'Shift details have been saved.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Update failed',
+        description: error?.message || 'Unable to update shift',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Mutation for inviting a professional to a draft shift (single)
   const inviteProfessionalMutation = useMutation({
     mutationFn: async ({ shiftId, professionalId }: { shiftId: string; professionalId: string }) => {
@@ -357,15 +401,42 @@ export default function ShopSchedulePage() {
   const handleSelectEvent = (event: CalendarEvent) => {
     const shift = event.resource;
     
-    // If it's a DRAFT shift, open the assign modal
+    // DRAFT: Open the AssignStaffModal to invite a barber
     if (shift.status === 'draft') {
       setSelectedDraftShift(shift);
       setAssignModalOpen(true);
       return;
     }
     
-    // For other statuses, could navigate to shift details or show info
-    // For now, just show a toast with the shift info
+    // CONFIRMED: Open ShiftDetailsModal to view who is working
+    if (shift.status === 'confirmed') {
+      setSelectedConfirmedShift(shift);
+      setDetailsModalOpen(true);
+      return;
+    }
+    
+    // OPEN: Open EditShiftModal to change shift details
+    if (shift.status === 'open') {
+      setSelectedOpenShift(shift);
+      setEditForm({
+        title: shift.title || '',
+        hourlyRate: String(shift.hourlyRate || '45'),
+        description: shift.description || '',
+      });
+      setEditModalOpen(true);
+      return;
+    }
+
+    // PENDING/INVITED: Show info about pending invite
+    if (shift.status === 'pending' || shift.status === 'invited') {
+      toast({
+        title: shift.title,
+        description: `Invite sent — awaiting response. Rate: $${shift.hourlyRate}/hr`,
+      });
+      return;
+    }
+
+    // Default fallback for other statuses (completed, cancelled, etc.)
     toast({
       title: shift.title,
       description: `Status: ${statusLabel(shift.status)} | Rate: $${shift.hourlyRate}/hr`,
@@ -707,6 +778,150 @@ export default function ShopSchedulePage() {
               disabled={updateTimesMutation.isPending}
             >
               {updateTimesMutation.isPending ? 'Updating…' : 'Proceed'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shift Details Modal - Opens when clicking on a CONFIRMED shift */}
+      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedConfirmedShift?.title || 'Shift Details'}</DialogTitle>
+            <DialogDescription>
+              This shift is confirmed and assigned.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedConfirmedShift && (
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground text-sm">Status</Label>
+                  <div className="font-medium text-green-600">✓ CONFIRMED</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Hourly Rate</Label>
+                  <div className="font-medium">${selectedConfirmedShift.hourlyRate}/hr</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground text-sm">Start</Label>
+                  <div className="font-medium">
+                    {format(new Date(selectedConfirmedShift.startTime), 'EEE, MMM d • h:mm a')}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">End</Label>
+                  <div className="font-medium">
+                    {format(new Date(selectedConfirmedShift.endTime), 'h:mm a')}
+                  </div>
+                </div>
+              </div>
+
+              {selectedConfirmedShift.assigneeId && (
+                <div>
+                  <Label className="text-muted-foreground text-sm">Assigned Professional</Label>
+                  <div className="font-medium">Staff member confirmed</div>
+                </div>
+              )}
+
+              {selectedConfirmedShift.description && (
+                <div>
+                  <Label className="text-muted-foreground text-sm">Notes</Label>
+                  <div className="text-sm">{selectedConfirmedShift.description}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setDetailsModalOpen(false);
+              setSelectedConfirmedShift(null);
+            }}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Shift Modal - Opens when clicking on an OPEN shift */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Shift</DialogTitle>
+            <DialogDescription>
+              {selectedOpenShift
+                ? `Update details for ${format(new Date(selectedOpenShift.startTime), 'EEE, MMM d • h:mm a')}`
+                : 'Modify shift details'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={editForm.title}
+                onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                placeholder="e.g. Weekend Barber"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-rate">Hourly Rate ($)</Label>
+              <Input
+                id="edit-rate"
+                inputMode="decimal"
+                value={editForm.hourlyRate}
+                onChange={(e) => setEditForm((p) => ({ ...p, hourlyRate: e.target.value }))}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-desc">Notes (optional)</Label>
+              <Textarea
+                id="edit-desc"
+                value={editForm.description}
+                onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                placeholder="Add any details for this shift…"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setEditModalOpen(false);
+              setSelectedOpenShift(null);
+              setEditForm({ title: '', hourlyRate: '', description: '' });
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!selectedOpenShift) return;
+                const hourlyRate = Number(editForm.hourlyRate);
+                if (!Number.isFinite(hourlyRate) || hourlyRate <= 0) {
+                  toast({
+                    title: 'Invalid rate',
+                    description: 'Hourly rate must be a valid number.',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                updateShiftDetailsMutation.mutate({
+                  id: selectedOpenShift.id,
+                  title: editForm.title.trim() || selectedOpenShift.title,
+                  hourlyRate,
+                  description: editForm.description.trim(),
+                });
+              }}
+              disabled={updateShiftDetailsMutation.isPending}
+            >
+              {updateShiftDetailsMutation.isPending ? 'Saving…' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>

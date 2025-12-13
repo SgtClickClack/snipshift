@@ -173,13 +173,16 @@ export default function CalendarSettingsModal({
       const result = await clearAllShifts();
       toast({
         title: "Schedule cleared",
-        description: result.message || `Deleted ${result.count} shift(s).`,
+        description: result.message || `Deleted ${result.count} item(s).`,
       });
-      // Invalidate all shift-related queries
+      // Invalidate all shift and job-related queries
       queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
       queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
     } catch (error: any) {
       toast({
         title: "Failed to clear schedule",

@@ -288,6 +288,33 @@ export async function deleteJob(id: string): Promise<boolean> {
 }
 
 /**
+ * Delete ALL jobs for a business (use with caution!)
+ * This is for clearing the entire schedule
+ * Applications will be cascade deleted due to foreign key constraint
+ */
+export async function deleteAllJobsForBusiness(businessId: string): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 0;
+  }
+
+  try {
+    const result = await db
+      .delete(jobs)
+      .where(eq(jobs.businessId, businessId));
+
+    return result.rowCount ?? 0;
+  } catch (error: any) {
+    console.error('[deleteAllJobsForBusiness] Database error:', {
+      message: error?.message,
+      code: error?.code,
+      businessId,
+    });
+    return 0;
+  }
+}
+
+/**
  * Get jobs with application counts (avoids N+1 queries)
  */
 export async function getJobsWithApplicationCounts(

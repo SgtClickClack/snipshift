@@ -1684,7 +1684,7 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
   });
 }));
 
-// Clear all shifts for the current user (dangerous - use with caution)
+// Clear all shifts AND jobs for the current user (dangerous - use with caution)
 router.delete('/clear-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   if (!userId) {
@@ -1692,12 +1692,19 @@ router.delete('/clear-all', authenticateUser, asyncHandler(async (req: Authentic
     return;
   }
 
-  const deletedCount = await deleteAllShiftsForEmployer(userId);
-  
-  res.status(200).json({ 
-    success: true, 
-    count: deletedCount,
-    message: `Deleted ${deletedCount} shift(s)` 
+  // Delete both shifts (employerId) and jobs (businessId)
+  const deletedShiftsCount = await deleteAllShiftsForEmployer(userId);
+  const deletedJobsCount = await jobsRepo.deleteAllJobsForBusiness(userId);
+  const totalDeleted = deletedShiftsCount + deletedJobsCount;
+
+  console.log(`[DELETE /api/shifts/clear-all] User ${userId}: Deleted ${deletedShiftsCount} shifts and ${deletedJobsCount} jobs`);
+
+  res.status(200).json({
+    success: true,
+    count: totalDeleted,
+    shiftsDeleted: deletedShiftsCount,
+    jobsDeleted: deletedJobsCount,
+    message: `Deleted ${deletedShiftsCount} shift(s) and ${deletedJobsCount} job(s)`
   });
 }));
 
