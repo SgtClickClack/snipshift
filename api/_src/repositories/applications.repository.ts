@@ -24,6 +24,26 @@ export interface PaginatedApplications {
   offset: number;
 }
 
+const PG_UNDEFINED_COLUMN = '42703';
+const PG_UNDEFINED_TABLE = '42P01';
+
+function shouldFallbackToJobsOnly(error: any): boolean {
+  const code = error?.code ?? error?.cause?.code;
+  if (code !== PG_UNDEFINED_COLUMN && code !== PG_UNDEFINED_TABLE) return false;
+
+  const message = String(error?.message ?? error?.cause?.message ?? '');
+  const column = String(error?.column ?? error?.cause?.column ?? '');
+  const table = String(error?.table ?? error?.cause?.table ?? '');
+
+  // Heuristic: if the failure is related to shift support (missing column/table),
+  // retry without referencing shifts/applications.shift_id to keep dashboards alive.
+  return (
+    message.toLowerCase().includes('shift') ||
+    column.toLowerCase().includes('shift') ||
+    table.toLowerCase().includes('shift')
+  );
+}
+
 /**
  * Get paginated list of applications with optional filters
  */
@@ -156,23 +176,81 @@ export async function getApplicationsForUser(
   const whereClause = and(...conditions);
 
   // Use leftJoin to get job OR shift details
-  const result = await db
-    .select({
-      application: applications,
-      job: jobs,
-      shift: shifts,
-    })
-    .from(applications)
-    .leftJoin(jobs, eq(applications.jobId, jobs.id))
-    .leftJoin(shifts, eq(applications.shiftId, shifts.id))
-    .where(whereClause)
-    .orderBy(desc(applications.appliedAt));
+  try {
+    const result = await db
+      .select({
+        application: applications,
+        job: jobs,
+        shift: shifts,
+      })
+      .from(applications)
+      .leftJoin(jobs, eq(applications.jobId, jobs.id))
+      .leftJoin(shifts, eq(applications.shiftId, shifts.id))
+      .where(whereClause)
+      .orderBy(desc(applications.appliedAt));
 
-  return result.map((row) => ({
-    ...row.application,
-    job: row.job,
-    shift: row.shift,
-  })) as any;
+    return result.map((row) => ({
+      ...row.application,
+      job: row.job,
+      shift: row.shift,
+    })) as any;
+  } catch (error: any) {
+    if (!shouldFallbackToJobsOnly(error)) {
+      throw error;
+    }
+
+    console.warn('[getApplicationsForUser] Falling back to jobs-only query (shift columns/table missing).', {
+      userId,
+      status: filters.status,
+      code: error?.code ?? error?.cause?.code,
+      message: error?.message ?? error?.cause?.message,
+      column: error?.column ?? error?.cause?.column,
+      table: error?.table ?? error?.cause?.table,
+    });
+
+    // Fallback: do not reference shifts nor applications.shift_id (older DBs might not have shift support yet).
+    const jobOnlyResult = await db
+      .select({
+        application: {
+          id: applications.id,
+          jobId: applications.jobId,
+          shiftId: sql<string | null>`NULL`.as('shift_id'),
+          userId: applications.userId,
+          name: applications.name,
+          email: applications.email,
+          coverLetter: applications.coverLetter,
+          status: applications.status,
+          appliedAt: applications.appliedAt,
+          respondedAt: applications.respondedAt,
+        },
+        job: {
+          id: jobs.id,
+          businessId: jobs.businessId,
+          title: jobs.title,
+          payRate: jobs.payRate,
+          date: jobs.date,
+          startTime: jobs.startTime,
+          endTime: jobs.endTime,
+          shopName: jobs.shopName,
+          address: jobs.address,
+          city: jobs.city,
+          state: jobs.state,
+        },
+      })
+      .from(applications)
+      .leftJoin(jobs, eq(applications.jobId, jobs.id))
+      .where(whereClause)
+      .orderBy(desc(applications.appliedAt));
+
+    return jobOnlyResult.map((row: any) => {
+      const job = row.job?.id ? row.job : null;
+      return {
+        ...row.application,
+        job,
+        shift: null,
+      };
+    }) as any;
+  }
 }
 
 /**
@@ -227,6 +305,74 @@ export async function getApplicationsForBusiness(
       user: row.user
     })) as any;
   } catch (error: any) {
+    if (shouldFallbackToJobsOnly(error)) {
+      console.warn('[getApplicationsForBusiness] Falling back to jobs-only query (shift columns/table missing).', {
+        businessId,
+        status: filters.status,
+        code: error?.code ?? error?.cause?.code,
+        message: error?.message ?? error?.cause?.message,
+        column: error?.column ?? error?.cause?.column,
+        table: error?.table ?? error?.cause?.table,
+      });
+
+      const conditions = [eq(jobs.businessId, businessId)];
+      if (filters.status) {
+        conditions.push(eq(applications.status, filters.status));
+      }
+      const whereClause = and(...conditions);
+
+      const jobOnlyResult = await db
+        .select({
+          application: {
+            id: applications.id,
+            jobId: applications.jobId,
+            shiftId: sql<string | null>`NULL`.as('shift_id'),
+            userId: applications.userId,
+            name: applications.name,
+            email: applications.email,
+            coverLetter: applications.coverLetter,
+            status: applications.status,
+            appliedAt: applications.appliedAt,
+            respondedAt: applications.respondedAt,
+          },
+          job: {
+            id: jobs.id,
+            businessId: jobs.businessId,
+            title: jobs.title,
+            payRate: jobs.payRate,
+            date: jobs.date,
+            startTime: jobs.startTime,
+            endTime: jobs.endTime,
+            shopName: jobs.shopName,
+            address: jobs.address,
+            city: jobs.city,
+            state: jobs.state,
+          },
+          user: {
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            avatarUrl: users.avatarUrl,
+          },
+        })
+        .from(applications)
+        .innerJoin(jobs, eq(applications.jobId, jobs.id))
+        .leftJoin(users, eq(applications.userId, users.id))
+        .where(whereClause)
+        .orderBy(desc(applications.appliedAt));
+
+      return jobOnlyResult.map((row: any) => {
+        const job = row.job?.id ? row.job : null;
+        const user = row.user?.id ? row.user : null;
+        return {
+          ...row.application,
+          job,
+          shift: null,
+          user,
+        };
+      }) as any;
+    }
+
     // Extract detailed error information
     const errorDetails = {
       message: error?.message,

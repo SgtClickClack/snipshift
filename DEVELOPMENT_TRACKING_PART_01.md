@@ -49,6 +49,34 @@
 
 ---
 
+#### 2025-12-13: Fix Professional Dashboard 500 (Applications Query Fallback + Test DB Schema Sync)
+
+**Core Components**
+- `/api/professional/applications` query hardening in `applicationsRepo.getApplicationsForUser`
+- Test DB schema sync via ordered SQL migrations (instead of `drizzle-kit push`)
+- Regression tests for jobs-only fallback behavior when shift support is missing
+
+**Key Features**
+- **Resilient applications fetch**: if the database is missing shift-related columns/tables (common in partially-migrated prod DBs), the API now retries with a jobs-only query and returns `shift: null` instead of 500.
+- **Deterministic test DB setup**: Vitest global setup now resets the test schema and applies `api/drizzle/*.sql` in order (skipping Supabase-only RLS/policy statements), making integration tests reliable.
+
+**Integration Points**
+- API endpoint: `GET /api/professional/applications`
+- Tests: `api npm run test`
+
+**File Paths**
+- `api/_src/repositories/applications.repository.ts`
+- `api/_src/tests/repositories/applications.repository.fallback.test.ts`
+- `api/_src/tests/globalSetup.ts`
+
+**Next Priority Task**
+- Resolve Vercel config validation error (“should NOT have additional property `rootDirectory`”) by removing that setting from the Vercel Project configuration / ensuring the deployment is building the latest `main`.
+
+**Code Organization & Quality**
+- Kept behavior change localized to repository functions; added fallback-specific tests and improved test infra without introducing new runtime dependencies.
+
+---
+
 #### 2025-12-13: Fix Professional Dashboard 500 (Pending Review Query Scope)
 
 **Core Components**
