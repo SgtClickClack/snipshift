@@ -49,6 +49,7 @@ interface CalendarSettingsModalProps {
   onClose: () => void;
   onSave: (settings: CalendarSettings) => void;
   initialSettings?: CalendarSettings;
+  onClear?: () => void; // Optional callback when schedule is cleared
 }
 
 const DAYS_OF_WEEK = [
@@ -107,6 +108,7 @@ export default function CalendarSettingsModal({
   onClose,
   onSave,
   initialSettings,
+  onClear,
 }: CalendarSettingsModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -171,22 +173,42 @@ export default function CalendarSettingsModal({
     setIsClearing(true);
     try {
       const result = await clearAllShifts();
+      
+      // Show detailed result to user
+      const successMessage = result.count > 0
+        ? `Successfully deleted ${result.shiftsDeleted || 0} shift(s) and ${result.jobsDeleted || 0} job(s).`
+        : "No shifts or jobs found to delete.";
+      
       toast({
         title: "Schedule cleared",
-        description: result.message || `Deleted ${result.count} item(s).`,
+        description: successMessage,
       });
-      // Invalidate all shift and job-related queries
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-      queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
+      
+      // Invalidate and refetch all shift and job-related queries
+      // Use refetchType: 'all' to ensure data is refetched immediately
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['/api/shifts'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['shop-shifts'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['bookings'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['/api/jobs'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['jobs'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['my-jobs'], refetchType: 'all' }),
+        // Also invalidate employer shifts query used by professional calendar
+        queryClient.invalidateQueries({ queryKey: ['employer-shifts'], refetchType: 'all' }),
+      ]);
+      
+      // Force a small delay to ensure refetch completes before UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Notify parent component that clear completed (for clearing optimistic state)
+      if (onClear) {
+        onClear();
+      }
     } catch (error: any) {
       toast({
         title: "Failed to clear schedule",
-        description: error?.message || "An error occurred.",
+        description: error?.message || "An error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

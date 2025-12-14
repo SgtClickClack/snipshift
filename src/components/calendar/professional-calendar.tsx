@@ -3094,6 +3094,12 @@ export default function ProfessionalCalendar({
           onClose={() => setShowCalendarSettings(false)}
           onSave={handleSaveSettings}
           initialSettings={calendarSettings || undefined}
+          onClear={() => {
+            // Clear optimistic shifts when schedule is cleared
+            setOptimisticShifts([]);
+            // Close the modal after clearing
+            setShowCalendarSettings(false);
+          }}
         />
       )}
 

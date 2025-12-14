@@ -454,7 +454,13 @@ export async function publishAllDraftShifts(payload: { start: string; end: strin
   }
 }
 
-export async function clearAllShifts(): Promise<{ success: boolean; count: number; message: string }> {
+export async function clearAllShifts(): Promise<{ 
+  success: boolean; 
+  count: number; 
+  shiftsDeleted: number;
+  jobsDeleted: number;
+  message: string;
+}> {
   try {
     const res = await apiRequest('DELETE', '/api/shifts/clear-all');
     return await res.json();
