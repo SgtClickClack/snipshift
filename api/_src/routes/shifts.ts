@@ -613,6 +613,8 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
 }));
 
 // Delete shift (authenticated, employer only)
+// Uses a transaction to first delete related records (shift_invitations, applications, shift_offers)
+// to avoid foreign key constraint errors
 router.delete('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const userId = req.user?.id;
@@ -640,14 +642,85 @@ router.delete('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     return;
   }
 
-  const deleted = await shiftsRepo.deleteShift(id);
-
-  if (!deleted) {
-    res.status(500).json({ message: 'Failed to delete shift' });
+  // Use a transaction to delete related records first, then the shift
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ message: 'Database not available' });
     return;
   }
 
-  res.status(200).json({ message: 'Shift deleted successfully' });
+  try {
+    await db.transaction(async (tx) => {
+      const normalizeRows = (result: any): any[] => {
+        if (!result) return [];
+        if (Array.isArray(result)) return result;
+        if (Array.isArray(result.rows)) return result.rows;
+        return [];
+      };
+
+      const tableExists = async (tableName: string): Promise<boolean> => {
+        const result = await tx.execute(
+          sql`SELECT to_regclass(${`public.${tableName}`}) IS NOT NULL AS exists`
+        );
+        const rows = normalizeRows(result);
+        const value = rows?.[0]?.exists;
+        return value === true || value === 't' || value === 1;
+      };
+
+      const columnExists = async (tableName: string, columnName: string): Promise<boolean> => {
+        const result = await tx.execute(sql`
+          SELECT 1 AS exists
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = ${tableName}
+            AND column_name = ${columnName}
+          LIMIT 1
+        `);
+        const rows = normalizeRows(result);
+        return rows.length > 0;
+      };
+
+      // 1) shift_invitations (new multi-invite system) - might not exist on legacy DBs
+      if (await tableExists('shift_invitations')) {
+        await tx.execute(sql`DELETE FROM shift_invitations WHERE shift_id = ${id}`);
+      }
+
+      // 2) shift_offers (legacy invite system) - might not exist on some DBs
+      if (await tableExists('shift_offers')) {
+        await tx.execute(sql`DELETE FROM shift_offers WHERE shift_id = ${id}`);
+      }
+
+      // 3) applications linkage - shift_id column may not exist on older installs
+      if (await tableExists('applications')) {
+        if (await columnExists('applications', 'shift_id')) {
+          await tx.execute(sql`DELETE FROM applications WHERE shift_id = ${id}`);
+        }
+        // Legacy compatibility: some installs may still store shift references in job_id
+        // (older unified listing flows / migrations). If job_id exists, delete those too.
+        if (await columnExists('applications', 'job_id')) {
+          await tx.execute(sql`DELETE FROM applications WHERE job_id = ${id}`);
+        }
+      }
+
+      // 4) Finally delete the shift itself
+      await tx.delete(shifts).where(eq(shifts.id, id));
+    });
+
+    console.log(`[DELETE /api/shifts/:id] Successfully deleted shift ${id} and related records`);
+    res.status(200).json({ message: 'Shift deleted successfully' });
+  } catch (error: any) {
+    console.error('[DELETE /api/shifts/:id] Error deleting shift:', {
+      shiftId: id,
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      constraint: error?.constraint,
+    });
+    res.status(500).json({ 
+      message: 'Failed to delete shift',
+      error: error?.message || 'Unknown error'
+    });
+  }
 }));
 
 // Get shifts by employer (authenticated, owner only or public?)

@@ -38,6 +38,7 @@ const localizer = dateFnsLocalizer({
 const DnDCalendar = withDragAndDrop(Calendar);
 
 type ShiftStatus = ShiftDetails['status'];
+type ManagedShiftStatus = Extract<ShiftStatus, 'draft' | 'open' | 'invited' | 'confirmed'>;
 
 type CalendarEvent = {
   id: string;
@@ -46,6 +47,12 @@ type CalendarEvent = {
   end: Date;
   resource: ShiftDetails;
 };
+
+const MANAGED_SHIFT_STATUSES: readonly ManagedShiftStatus[] = ['draft', 'open', 'invited', 'confirmed'] as const;
+
+function isManagedShiftStatus(status: ShiftStatus): status is ManagedShiftStatus {
+  return (MANAGED_SHIFT_STATUSES as readonly ShiftStatus[]).includes(status);
+}
 
 function statusLabel(status: ShiftStatus): string {
   switch (status) {
@@ -196,6 +203,9 @@ export default function ShopSchedulePage() {
 
   const events: CalendarEvent[] = useMemo(() => {
     return (shifts || [])
+      // Identity check: this calendar is for roster "Shifts" (not legacy Jobs)
+      // and we only manage a tight set of statuses here to avoid cross-feature confusion.
+      .filter((shift) => isManagedShiftStatus(shift.status))
       .map((shift) => {
         const start = new Date(shift.startTime);
         const end = new Date(shift.endTime);
@@ -478,16 +488,18 @@ export default function ShopSchedulePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card>
-          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle>Shop Schedule</CardTitle>
-              <div className="text-sm text-muted-foreground">
-                Week of {format(weekStart, 'MMM d')} – {format(weekEnd, 'MMM d')}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        <Card className="w-full">
+          <CardHeader className="flex flex-col gap-3">
+            {/* Top row: Title + Controls */}
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Shop Schedule</CardTitle>
+                <div className="text-sm text-muted-foreground">
+                  Week of {format(weekStart, 'MMM d')} – {format(weekEnd, 'MMM d')}
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 onClick={() => setCopyConfirmOpen(true)}
@@ -521,6 +533,25 @@ export default function ShopSchedulePage() {
                   <SelectItem value="agenda">List</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Legend (moved into the top header row for visibility) */}
+              <div className="hidden md:block h-6 w-px bg-border mx-1" />
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <span className="font-medium text-muted-foreground">Legend:</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-4 rounded border-2 border-dashed border-gray-400 bg-gray-100" />
+                  <span>Draft</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-4 rounded border border-blue-500 bg-blue-100" />
+                  <span>Open</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-4 rounded border border-green-500 bg-green-100" />
+                  <span>Confirmed</span>
+                </div>
+              </div>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

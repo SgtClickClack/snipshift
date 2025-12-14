@@ -5,6 +5,7 @@ This index tracks all development tracking files used to document progress on th
 ## Tracking Files
 
 - [DEVELOPMENT_TRACKING_PART_01.md](./DEVELOPMENT_TRACKING_PART_01.md) - Core development log (2025-11-17 onwards)
+- [DEVELOPMENT_TRACKING_PART_02.md](./DEVELOPMENT_TRACKING_PART_02.md) - Core development log (2025-12-14 onwards)
 
 ## Format
 

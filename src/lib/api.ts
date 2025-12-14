@@ -798,7 +798,16 @@ export interface ShiftDetails {
   location?: string | null;
   lat?: string | number | null;
   lng?: string | number | null;
-  status: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled';
+  status:
+    | 'draft'
+    | 'pending'
+    | 'invited'
+    | 'open'
+    | 'filled'
+    | 'completed'
+    | 'confirmed'
+    | 'cancelled'
+    | 'pending_completion';
   employerId: string;
   assigneeId?: string | null;
   shopName?: string | null;

@@ -93,6 +93,21 @@
 
 ---
 
+### Update: 2025-12-14 - Shop Calendar Whack-a-Mole Fixes (Clean UI + Reliable Shift Deletes)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Removed calendar “identity confusion” by tightening the Shop Schedule event mapping to only render managed roster **Shifts** (with valid Date objects + intended statuses).
+- Moved the status Legend into the top calendar header controls for constant visibility and ensured the calendar layout remains full-width.
+- Fixed shift deletion 500s by updating `DELETE /api/shifts/:id` to transactionally delete dependent records (`shift_invitations`, `shift_offers`, `applications.shift_id` when present) before deleting the shift, with schema-existence guards for legacy DBs.
+
+**Impact:**
+- **Cleaner schedule UI:** Less clutter and clearer status meaning while scheduling.
+- **Deletion reliability:** Shifts can be deleted without FK/missing-column 500s across partially-migrated environments.
+
+---
+
 ### Update: 2025-12-14 - E2E Coverage Added for Shop Schedule + Auth Stability
 
 **Status:** ✅ **TEST COVERAGE IMPROVED**
