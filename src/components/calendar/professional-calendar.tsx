@@ -8,7 +8,6 @@ import {
   isPast,
   isToday,
   endOfWeek,
-  eachDayOfInterval,
   isSameDay,
   addWeeks,
   subWeeks,
@@ -17,7 +16,7 @@ import enUS from "date-fns/locale/en-US";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+// Calendar mini component removed - sidebar was eliminated
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,7 +50,6 @@ import {
   Clock,
   MapPin,
   DollarSign,
-  Filter,
   ChevronLeft,
   ChevronRight,
   Repeat,
@@ -1099,13 +1097,6 @@ export default function ProfessionalCalendar({
     [onDateSelect, toast, calendarSettings, mode, getShiftTimesFromSettings]
   );
 
-  // Handle date change from mini calendar
-  const handleMiniCalendarSelect = useCallback((date: Date | undefined) => {
-    if (date && !isNaN(date.getTime())) {
-      setCurrentDate(date);
-      setSelectedDate(date);
-    }
-  }, []);
 
   // Handle navigation from react-big-calendar (receives Date object)
   const handleNavigate = useCallback((newDate: Date | string) => {
@@ -2217,162 +2208,9 @@ export default function ProfessionalCalendar({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full">
-      {/* Left Sidebar - 25% */}
-      <div className="w-full lg:w-1/4 space-y-4 bg-gradient-to-br from-slate-900/50 via-purple-900/20 to-blue-900/20 dark:from-slate-800/80 dark:via-purple-900/30 dark:to-blue-900/30 dark:border-slate-700/60 p-4 rounded-lg border border-slate-800/50">
-        {/* Mini Calendar */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg" data-testid="quick-navigation-title">Quick Navigation</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <CalendarComponent
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleMiniCalendarSelect}
-              className="w-full"
-              modifiersClassNames={{
-                today: "font-semibold bg-accent",
-              }}
-            />
-            {/* Quick Day Navigation */}
-            <div className="mt-4 pt-4 border-t">
-              <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day, idx) => (
-                  <div key={day} className="text-muted-foreground font-medium py-1">
-                    {day}
-                  </div>
-                ))}
-                {eachDayOfInterval({
-                  start: startOfWeek(new Date(), { weekStartsOn: 0 }),
-                  end: endOfWeek(new Date(), { weekStartsOn: 0 }),
-                }).map((day, idx) => {
-                  const isSelected = selectedDate && isSameDay(day, selectedDate);
-                  const isCurrentDay = isSameDay(day, new Date());
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => handleMiniCalendarSelect(day)}
-                      className={`
-                        aspect-square rounded-md text-xs font-medium transition-colors
-                        ${isSelected ? "bg-primary text-primary-foreground" : ""}
-                        ${isCurrentDay && !isSelected ? "bg-accent text-accent-foreground border border-primary/20" : ""}
-                        ${!isSelected && !isCurrentDay ? "hover:bg-accent" : ""}
-                      `}
-                    >
-                      {format(day, "d")}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Create Availability/Shift Button */}
-        <Card>
-          <CardContent className="pt-6">
-            <Button
-              onClick={() => {
-                if (mode === 'business' && onCreateShift) {
-                  // Business mode: Open Create New Shift modal
-                  onCreateShift();
-                } else {
-                  // Professional mode: Open Create Availability modal
-                  const today = new Date();
-                  setSelectedDate(today);
-                  setSelectedSlot(null); // Clear slot selection for manual creation
-                  setNewEventTitle("");
-                  // Initialize form with today's date and default times
-                  setShiftFormData({
-                    title: "",
-                    description: "",
-                    date: format(today, "yyyy-MM-dd"),
-                    startTime: "09:00",
-                    endTime: "17:00",
-                    hourlyRate: "45",
-                    location: "",
-                  });
-                  setShowCreateModal(true);
-                }
-              }}
-              className="w-full"
-              size="lg"
-              data-testid={mode === 'business' ? "button-create-shift" : "button-create-availability"}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {mode === 'business' ? 'Create New Shift' : 'Create Availability'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Empty State Message */}
-        {!isLoading && filteredEvents.length === 0 && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center space-y-2">
-                <CalendarIcon className="h-8 w-8 text-muted-foreground mx-auto" />
-                <p className="text-sm font-medium text-foreground">
-                  {mode === 'business' ? 'No shifts scheduled' : 'No shifts scheduled'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {mode === 'business' 
-                    ? 'Create a new shift to get started' 
-                    : 'Create availability to start booking shifts'}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Job Status</label>
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as JobStatus)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Legend - Traffic Light System */}
-            <div className="space-y-2 pt-4 border-t">
-              <p className="text-sm font-medium">Legend</p>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                  <span>Confirmed</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-yellow-500"></div>
-                  <span>Open Slot</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-zinc-500"></div>
-                  <span>Past</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Calendar Area - 75% */}
-      <div className="flex-1 lg:w-3/4" data-testid="calendar-main-area">
+    <div className="w-full h-full">
+      {/* Main Calendar Area - Full Width */}
+      <div className="w-full" data-testid="calendar-main-area">
         <Card className="h-full flex flex-col bg-background">
           <CalendarToolbar
             mode={mode}
@@ -2382,6 +2220,8 @@ export default function ProfessionalCalendar({
             onSettingsClick={() => setShowCalendarSettings(true)}
             onSmartFillClick={handleSmartFillClick}
             isCalculatingMatches={isCalculatingMatches}
+            statusFilter={statusFilter}
+            onStatusFilterChange={(value) => setStatusFilter(value)}
           />
           <CardContent className="flex-1 p-4 overflow-hidden" style={{ minHeight: '650px', height: '100%' }}>
             {isLoading ? (
