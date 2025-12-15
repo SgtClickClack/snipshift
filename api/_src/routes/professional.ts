@@ -366,7 +366,7 @@ router.get('/applications', authenticateUser, asyncHandler(async (req: Authentic
 
     // Map application status: database uses 'accepted', UI uses 'accepted' (we'll keep it as is)
     // The frontend ApplicationCard expects 'accepted' not 'confirmed'
-    let applicationStatus: 'pending' | 'accepted' | 'rejected' = app.status;
+    const applicationStatus: 'pending' | 'accepted' | 'rejected' = app.status;
 
     // Format applied date
     let appliedAtStr: string;
