@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import { addWeeks, endOfWeek, format, parse, startOfWeek, subWeeks, getDay } from 'date-fns';
+import { addWeeks, endOfDay, endOfWeek, format, parse, startOfDay, startOfWeek, subWeeks, getDay } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -125,6 +125,13 @@ export default function ShopSchedulePage() {
 
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [view, setView] = useState<View>(() => 'week');
+  const [currentRange, setCurrentRange] = useState<{ start: Date; end: Date }>(() => {
+    const now = new Date();
+    return {
+      start: startOfWeek(now, { weekStartsOn: 1 }),
+      end: endOfWeek(now, { weekStartsOn: 1 }),
+    };
+  });
 
   useEffect(() => {
     // Keep the calendar usable on mobile: default to Day view.
@@ -173,9 +180,46 @@ export default function ShopSchedulePage() {
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
   const weekEnd = useMemo(() => endOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
 
+  const handleRangeChange = useCallback((range: Date[] | { start: Date; end: Date }) => {
+    const toValidDate = (d: unknown): Date | null => {
+      if (!(d instanceof Date)) return null;
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+
+    if (Array.isArray(range) && range.length > 0) {
+      const dates = range.map((d) => toValidDate(d)).filter((d): d is Date => d !== null);
+      if (dates.length === 0) return;
+      const min = new Date(Math.min(...dates.map((d) => d.getTime())));
+      const max = new Date(Math.max(...dates.map((d) => d.getTime())));
+      setCurrentRange({ start: startOfDay(min), end: endOfDay(max) });
+      return;
+    }
+
+    const start = toValidDate((range as any).start);
+    const end = toValidDate((range as any).end);
+    if (!start || !end) return;
+    setCurrentRange({ start: startOfDay(start), end: endOfDay(end) });
+  }, []);
+
+  const handleNavigate = useCallback((nextDate: Date) => {
+    setCurrentDate(nextDate);
+
+    // Fallback: if RBC doesn't emit onRangeChange for some nav path, keep range sane.
+    if (view === 'day') {
+      setCurrentRange({ start: startOfDay(nextDate), end: endOfDay(nextDate) });
+      return;
+    }
+
+    // Default week range (our primary shop scheduling surface).
+    setCurrentRange({
+      start: startOfWeek(nextDate, { weekStartsOn: 1 }),
+      end: endOfWeek(nextDate, { weekStartsOn: 1 }),
+    });
+  }, [view]);
+
   const { data: shifts = [], isLoading } = useQuery<ShiftDetails[]>({
-    queryKey: ['shop-schedule-shifts', weekStart.toISOString(), weekEnd.toISOString()],
-    queryFn: async () => fetchEmployerShifts({ start: weekStart.toISOString(), end: weekEnd.toISOString() }),
+    queryKey: ['shop-schedule-shifts', currentRange.start.toISOString(), currentRange.end.toISOString()],
+    queryFn: async () => fetchEmployerShifts({ start: currentRange.start.toISOString(), end: currentRange.end.toISOString() }),
     enabled: !!user?.id,
   });
 
@@ -408,7 +452,7 @@ export default function ShopSchedulePage() {
   });
 
   // Handler for clicking on calendar events
-  const handleSelectEvent = (event: CalendarEvent) => {
+  const handleSelectEvent = useCallback((event: CalendarEvent) => {
     const shift = event.resource;
     
     // DRAFT: Open the AssignStaffModal to invite a barber
@@ -451,19 +495,19 @@ export default function ShopSchedulePage() {
       title: shift.title,
       description: `Status: ${statusLabel(shift.status)} | Rate: $${shift.hourlyRate}/hr`,
     });
-  };
+  }, [toast]);
 
   // Handler for assigning a professional to a shift (single)
-  const handleAssignProfessional = (professional: Professional) => {
+  const handleAssignProfessional = useCallback((professional: Professional) => {
     if (!selectedDraftShift) return;
     inviteProfessionalMutation.mutate({
       shiftId: selectedDraftShift.id,
       professionalId: professional.id,
     });
-  };
+  }, [inviteProfessionalMutation, selectedDraftShift]);
 
   // Handler for multi-select assignment (First-to-Accept)
-  const handleMultiAssignProfessionals = (professionals: Professional[]) => {
+  const handleMultiAssignProfessionals = useCallback((professionals: Professional[]) => {
     if (!selectedDraftShift) return;
     if (professionals.length === 0) return;
     
@@ -480,7 +524,43 @@ export default function ShopSchedulePage() {
         professionalIds: professionals.map(p => p.id),
       });
     }
-  };
+  }, [inviteProfessionalMutation, multiInviteMutation, selectedDraftShift]);
+
+  const eventPropGetter = useCallback((event: unknown) => {
+    const shift = (event as CalendarEvent).resource;
+    const colors = eventStyleForStatus(shift.status);
+    const isDraft = shift.status === 'draft';
+    return {
+      style: {
+        ...colors,
+        borderWidth: isDraft ? 2 : 1,
+        borderStyle: colors.borderStyle || 'solid',
+        borderRadius: 10,
+        padding: 2,
+        boxShadow: isDraft ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
+        cursor: isDraft ? 'pointer' : 'default',
+      },
+    };
+  }, []);
+
+  const tooltipAccessor = useCallback((event: unknown) => {
+    const shift = (event as CalendarEvent).resource;
+    const isDraft = shift.status === 'draft';
+    const baseInfo = `${shift.title} • ${statusLabel(shift.status)} • $${shift.hourlyRate}/hr`;
+    return isDraft ? `${baseInfo}\n👆 Click to assign staff` : baseInfo;
+  }, []);
+
+  const draggableAccessor = useCallback((event: unknown) => {
+    const shift = (event as CalendarEvent).resource;
+    if (!shift) return false;
+    // Allow dragging OPEN or CONFIRMED (confirmed requires reason modal)
+    return shift.status === 'open' || shift.status === 'confirmed';
+  }, []);
+
+  const handleSelectSlot = useCallback(({ start, end }: { start: Date; end: Date }) => {
+    setSelectedSlot({ start, end });
+    setCreateOpen(true);
+  }, []);
 
   if (!user || (user.currentRole !== 'hub' && user.currentRole !== 'business')) {
     return <div className="p-6">Access denied</div>;
@@ -513,13 +593,13 @@ export default function ShopSchedulePage() {
               >
                 {publishAllMutation.isPending ? 'Publishing…' : `Publish All${draftCount ? ` (${draftCount})` : ''}`}
               </Button>
-              <Button variant="outline" onClick={() => setCurrentDate(subWeeks(currentDate, 1))}>
+              <Button variant="outline" onClick={() => handleNavigate(subWeeks(currentDate, 1))}>
                 Prev week
               </Button>
-              <Button variant="outline" onClick={() => setCurrentDate(new Date())}>
+              <Button variant="outline" onClick={() => handleNavigate(new Date())}>
                 Today
               </Button>
-              <Button variant="outline" onClick={() => setCurrentDate(addWeeks(currentDate, 1))}>
+              <Button variant="outline" onClick={() => handleNavigate(addWeeks(currentDate, 1))}>
                 Next week
               </Button>
               <div className="w-full md:w-auto" />
@@ -564,15 +644,13 @@ export default function ShopSchedulePage() {
                   endAccessor="end"
                   view={view}
                   date={currentDate}
-                  onNavigate={setCurrentDate}
+                  onNavigate={handleNavigate}
                   onView={(v) => setView(v)}
+                  onRangeChange={handleRangeChange as any}
                   selectable
                   resizable
-                  onSelectSlot={({ start, end }) => {
-                    setSelectedSlot({ start, end });
-                    setCreateOpen(true);
-                  }}
-                  onSelectEvent={(event) => handleSelectEvent(event as CalendarEvent)}
+                  onSelectSlot={handleSelectSlot as any}
+                  onSelectEvent={handleSelectEvent as any}
                   onEventDrop={({ event, start, end }) => {
                     const shift = (event as CalendarEvent).resource;
                     const nextStart = start as Date;
@@ -597,34 +675,9 @@ export default function ShopSchedulePage() {
                       variant: 'destructive',
                     });
                   }}
-                  draggableAccessor={(event) => {
-                    const shift = (event as CalendarEvent).resource;
-                    if (!shift) return false;
-                    // Allow dragging OPEN or CONFIRMED (confirmed requires reason modal)
-                    return shift.status === 'open' || shift.status === 'confirmed';
-                  }}
-                  eventPropGetter={(event) => {
-                    const shift = (event as CalendarEvent).resource;
-                    const colors = eventStyleForStatus(shift.status);
-                    const isDraft = shift.status === 'draft';
-                    return {
-                      style: {
-                        ...colors,
-                        borderWidth: isDraft ? 2 : 1,
-                        borderStyle: colors.borderStyle || 'solid',
-                        borderRadius: 10,
-                        padding: 2,
-                        boxShadow: isDraft ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
-                        cursor: isDraft ? 'pointer' : 'default',
-                      },
-                    };
-                  }}
-                  tooltipAccessor={(event) => {
-                    const shift = (event as CalendarEvent).resource;
-                    const isDraft = shift.status === 'draft';
-                    const baseInfo = `${shift.title} • ${statusLabel(shift.status)} • $${shift.hourlyRate}/hr`;
-                    return isDraft ? `${baseInfo}\n👆 Click to assign staff` : baseInfo;
-                  }}
+                  draggableAccessor={draggableAccessor as any}
+                  eventPropGetter={eventPropGetter as any}
+                  tooltipAccessor={tooltipAccessor as any}
                 />
               </div>
             </div>

@@ -119,6 +119,15 @@ describe('Shifts Routes - shop schedule tools', () => {
     expect(typeof res.body[0].startTime).toBe('string');
   });
 
+  it('GET /api/shifts?employer_id=me requires start/end (prevents accidental fetch-all)', async () => {
+    await supertest(app)
+      .get('/api/shifts?employer_id=me')
+      .expect(400);
+
+    expect(mockShiftsRepo.getShiftsByEmployerInRange).toHaveBeenCalledTimes(0);
+    expect(mockShiftsRepo.getShiftsByEmployer).toHaveBeenCalledTimes(0);
+  });
+
   it('GET /api/shifts/shop/:userId does not 500 when legacy jobs createdAt is a string', async () => {
     mockShiftsRepo.getShiftsByEmployer.mockResolvedValue([]);
 

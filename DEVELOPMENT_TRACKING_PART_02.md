@@ -108,3 +108,37 @@
 **Code Organization & Quality**
 - Minimal change (route declaration order), no behavior changes to shift deletion logic.
 
+---
+
+#### 2025-12-15: Optimize Shop Schedule Calendar Performance (Windowed Fetching + Fewer Re-Renders)
+
+**Core Components**
+- Shifts API (employer windowing) (`api/_src/routes/shifts.ts`, `api/_src/routes/shifts.js`)
+- Shifts repository range query (`api/_src/repositories/shifts.repository.ts`, `api/_src/repositories/shifts.repository.js`)
+- Shop schedule calendar page (`src/pages/shop/schedule.tsx`)
+- API route tests (`api/_src/tests/routes/shifts.schedule-tools.test.ts`)
+
+**Key Features**
+- **Windowed Fetching enforced (employer view)**: `GET /api/shifts?employer_id=me` now requires `start` and `end` query params to prevent accidental “fetch all shifts”.
+- **Server-side filtering tightened**: Employer range query now filters shifts within the window using `start_time >= start` and `end_time <= end`.
+- **Calendar range-driven queries**: Shop Schedule now tracks a `currentRange` (from `onRangeChange`) and uses it in the React Query key + fetch params.
+- **Reduced re-renders**: Memoized calendar handlers (`useCallback`) and event style/tooltip getters to avoid recreating functions on every render.
+
+**Integration Points**
+- API endpoint: `GET /api/shifts?employer_id=me&start=<iso>&end=<iso>`
+- Frontend data: `fetchEmployerShifts({ start, end })` (Shop Schedule)
+- Tests: `cd api && npm test`
+
+**File Paths**
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/shifts.js`
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/repositories/shifts.repository.js`
+- `api/_src/tests/routes/shifts.schedule-tools.test.ts`
+- `src/pages/shop/schedule.tsx`
+
+**Next Priority Task**
+- Add a shop-side “Load previous/next range” UX for history (e.g. month/week jump) if needed, without reintroducing unbounded shift fetches.
+
+**Code Organization & Quality**
+- Kept changes localized to the schedule page and the employer shifts endpoint; no new patterns introduced.

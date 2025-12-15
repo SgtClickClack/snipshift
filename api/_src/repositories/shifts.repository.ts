@@ -737,7 +737,8 @@ export async function getShiftsByEmployerInRange(
         and(
           eq(shifts.employerId, employerId),
           gte(shifts.startTime, startDate),
-          lte(shifts.startTime, endDate)
+          lte(shifts.startTime, endDate),
+          lte(shifts.endTime, endDate)
         )
       );
 
@@ -767,6 +768,7 @@ export async function getShiftsByEmployerInRange(
         WHERE employer_id = ${employerId}
           AND start_time >= ${startDate}
           AND start_time <= ${endDate}
+          AND end_time <= ${endDate}
       `);
 
       const rows = (raw as any)?.rows ?? raw;

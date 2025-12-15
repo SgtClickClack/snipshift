@@ -252,12 +252,23 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
     const startRaw = req.query.start as string | undefined;
     const endRaw = req.query.end as string | undefined;
     const status = req.query.status as EmployerShiftStatus | undefined;
-    const start = startRaw ? new Date(startRaw) : null;
-    const end = endRaw ? new Date(endRaw) : null;
+    if (!startRaw || !endRaw) {
+      res.status(400).json({ message: 'start and end query params are required when employer_id=me' });
+      return;
+    }
 
-    const employerShifts = start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())
-      ? await getShiftsByEmployerInRange(userId, start, end)
-      : await shiftsRepo.getShiftsByEmployer(userId);
+    const start = new Date(startRaw);
+    const end = new Date(endRaw);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      res.status(400).json({ message: 'Invalid start/end. Expected ISO date strings.' });
+      return;
+    }
+    if (start >= end) {
+      res.status(400).json({ message: 'start must be before end.' });
+      return;
+    }
+
+    const employerShifts = await getShiftsByEmployerInRange(userId, start, end);
 
     const filtered = status ? employerShifts.filter((s) => s.status === status) : employerShifts;
 

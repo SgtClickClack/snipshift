@@ -35,6 +35,20 @@
 
 ---
 
+### Update: 2025-12-15 - Optimize Shop Schedule Calendar Performance (Windowed Fetching)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Enforced windowed fetching for employer shift reads: `GET /api/shifts?employer_id=me` now requires `start` and `end` query params and queries only that range.
+- Tightened the backend range filter to constrain shifts within the requested window and verified DB indexing (`shifts_start_time_idx`).
+- Updated the Shop Schedule calendar to derive its fetch range from the visible calendar range and memoized key handlers to reduce re-render churn.
+
+**Impact:**
+- **Much faster calendar loads:** Shop Schedule no longer pulls “all shifts” payloads and avoids needless re-renders while navigating.
+
+---
+
 ### Update: 2025-12-15 - Fix Business Calendar Slot Times (Date-Only UTC Parsing)
 
 **Status:** ✅ **FIXED**
