@@ -44,13 +44,16 @@ export function calculateShiftSlotsForDay(
     return [];
   }
 
-  const totalMinutes = (closeTime.getTime() - openTime.getTime()) / (1000 * 60);
+  // Use integer-minute math to avoid floating ms drift (can show up as “random” 10:00 labels in month view)
+  // and to make thirds/halves splits stable across the entire month.
+  const totalMinutes = Math.round((closeTime.getTime() - openTime.getTime()) / (1000 * 60));
   const slots: GeneratedShiftSlot[] = [];
 
   switch (pattern) {
     case 'half-day': {
-      const halfPoint = totalMinutes / 2;
-      const midTime = new Date(openTime.getTime() + halfPoint * 60 * 1000);
+      const halfMinutes = Math.round(totalMinutes / 2);
+      const midTime = new Date(openTime);
+      midTime.setMinutes(midTime.getMinutes() + halfMinutes);
       
       slots.push({
         id: `auto-${format(date, 'yyyy-MM-dd')}-0`,
@@ -77,9 +80,13 @@ export function calculateShiftSlotsForDay(
     }
 
     case 'thirds': {
-      const third = totalMinutes / 3;
-      const firstThird = new Date(openTime.getTime() + third * 60 * 1000);
-      const secondThird = new Date(openTime.getTime() + (third * 2) * 60 * 1000);
+      // If open/close aligns to a clean 3-way split (e.g. 09:00–18:00),
+      // enforce exact boundaries to keep month-view times consistent.
+      const thirdMinutes = Math.round(totalMinutes / 3);
+      const firstThird = new Date(openTime);
+      firstThird.setMinutes(firstThird.getMinutes() + thirdMinutes);
+      const secondThird = new Date(openTime);
+      secondThird.setMinutes(secondThird.getMinutes() + (thirdMinutes * 2));
       
       slots.push({
         id: `auto-${format(date, 'yyyy-MM-dd')}-0`,

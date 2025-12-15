@@ -69,7 +69,8 @@ export function calculateShiftSlotsForDay(
     return [];
   }
 
-  const totalMinutes = (closeTime.getTime() - openTime.getTime()) / (1000 * 60);
+  // Use integer-minute math to avoid floating ms drift and keep splits stable
+  const totalMinutes = Math.round((closeTime.getTime() - openTime.getTime()) / (1000 * 60));
   const slots: GeneratedShiftSlot[] = [];
 
   const formatDate = (d: Date) => {
@@ -81,8 +82,9 @@ export function calculateShiftSlotsForDay(
 
   switch (pattern) {
     case 'half-day': {
-      const halfPoint = totalMinutes / 2;
-      const midTime = new Date(openTime.getTime() + halfPoint * 60 * 1000);
+      const halfMinutes = Math.round(totalMinutes / 2);
+      const midTime = new Date(openTime);
+      midTime.setMinutes(midTime.getMinutes() + halfMinutes);
       
       slots.push({
         id: `auto-${formatDate(date)}-0`,
@@ -109,9 +111,11 @@ export function calculateShiftSlotsForDay(
     }
 
     case 'thirds': {
-      const third = totalMinutes / 3;
-      const firstThird = new Date(openTime.getTime() + third * 60 * 1000);
-      const secondThird = new Date(openTime.getTime() + (third * 2) * 60 * 1000);
+      const thirdMinutes = Math.round(totalMinutes / 3);
+      const firstThird = new Date(openTime);
+      firstThird.setMinutes(firstThird.getMinutes() + thirdMinutes);
+      const secondThird = new Date(openTime);
+      secondThird.setMinutes(secondThird.getMinutes() + (thirdMinutes * 2));
       
       slots.push({
         id: `auto-${formatDate(date)}-0`,
