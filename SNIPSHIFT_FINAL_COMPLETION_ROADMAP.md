@@ -21,6 +21,20 @@
 
 ---
 
+### Update: 2025-12-15 - Fix Hub Dashboard Calendar Bottom Cut-Off (Month View)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Adjusted the shared `ProfessionalCalendar` layout to avoid clipping the month grid by:
+  - Removing `overflow-hidden` on the calendar container (scrolls instead of clipping)
+  - Increasing the month/week/day calendar height constants to ensure full rendering
+
+**Impact:**
+- **Scheduling UX:** The Hub Dashboard calendar no longer cuts off the bottom of the month view.
+
+---
+
 ### Update: 2025-12-14 - Smart Fill Roster + Calendar Slot Assignment Reliability
 
 **Status:** ✅ **FIXED**

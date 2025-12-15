@@ -31,3 +31,30 @@
 - Kept the schedule surface focused on roster management by filtering statuses, reducing “mixed model” confusion.
 - Implemented deletion as a transaction with schema-existence guards to prevent whack-a-mole failures across partially-migrated environments.
 
+---
+
+#### 2025-12-15: Fix Hub Dashboard Calendar Bottom Clipping (Month View)
+
+**Core Components**
+- Hub dashboard calendar view (`src/pages/hub-dashboard.tsx`)
+- Shared calendar component (`src/components/calendar/professional-calendar.tsx`)
+
+**Key Features**
+- **No more clipped bottom row**: Removed an `overflow-hidden` container and increased the calendar’s month/week/day height so the month grid cannot be cut off.
+- **Safe scrolling behavior**: Calendar area now scrolls when content exceeds the available space instead of hiding overflow.
+- **Text hygiene**: Replaced corrupted/irregular whitespace characters in the calendar event “Open” label to avoid lint failures.
+
+**Integration Points**
+- Hub view route param: `/hub-dashboard?view=calendar` (uses `ProfessionalCalendar`)
+- Build: `npm run build` (verified)
+- API tests: `cd api && npm test` (verified)
+
+**File Paths**
+- `src/components/calendar/professional-calendar.tsx`
+
+**Next Priority Task**
+- Refactor `ProfessionalCalendar` to remove fixed inline sizing and reduce ESLint/TS noise (unused imports, inline styles) while preserving current scheduling behavior.
+
+**Code Organization & Quality**
+- Kept the fix localized to calendar layout sizing/overflow, avoiding new UI patterns or cross-cutting refactors.
+

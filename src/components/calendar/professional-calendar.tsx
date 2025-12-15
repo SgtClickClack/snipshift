@@ -1514,18 +1514,11 @@ export default function ProfessionalCalendar({
   // Update event mutation for drag-and-drop and resize
   const updateEventMutation = useMutation({
     mutationFn: async (data: { id: string; start: Date; end: Date }) => {
-      // Try to update via PUT endpoint (full update) or PATCH if PUT doesn't exist
-      try {
-        const response = await apiRequest("PUT", `/api/shifts/${data.id}`, {
-          startTime: data.start.toISOString(),
-          endTime: data.end.toISOString(),
-        });
-        return response.json();
-      } catch (error: any) {
-        // Fallback: if PUT doesn't work, we might need to handle this differently
-        // For now, we'll throw the error and handle it in onError
-        throw error;
-      }
+      const response = await apiRequest("PUT", `/api/shifts/${data.id}`, {
+        startTime: data.start.toISOString(),
+        endTime: data.end.toISOString(),
+      });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
@@ -2211,7 +2204,7 @@ export default function ProfessionalCalendar({
     <div className="w-full h-full">
       {/* Main Calendar Area - Full Width */}
       <div className="w-full" data-testid="calendar-main-area">
-        <Card className="h-full flex flex-col bg-background">
+        <Card className="w-full flex flex-col bg-background">
           <CalendarToolbar
             mode={mode}
             view={view}
@@ -2223,7 +2216,7 @@ export default function ProfessionalCalendar({
             statusFilter={statusFilter}
             onStatusFilterChange={(value) => setStatusFilter(value)}
           />
-          <CardContent className="flex-1 p-4 overflow-hidden" style={{ minHeight: '650px', height: '100%' }}>
+          <CardContent className="flex-1 p-4 overflow-auto" style={{ minHeight: '750px' }}>
             {isLoading ? (
               <div className="flex items-center justify-center h-full min-h-[600px]">
                 <div className="text-muted-foreground">Loading calendar...</div>
@@ -2233,8 +2226,6 @@ export default function ProfessionalCalendar({
                 className="relative" 
                 ref={calendarRef} 
                 style={{ 
-                  minHeight: view === 'month' ? '600px' : view === 'week' ? '700px' : '600px',
-                  height: view === 'month' ? '600px' : view === 'week' ? '700px' : '600px',
                   width: '100%'
                 }}
               >
@@ -2331,8 +2322,10 @@ export default function ProfessionalCalendar({
                       view: view
                     });
                     
-                    // Calculate height based on view for stable rendering
-                    const calendarHeight = view === 'month' ? 600 : view === 'week' ? 700 : 600;
+                    // Calculate height based on view for stable rendering.
+                    // Important: the legend + date range live above the calendar inside this CardContent,
+                    // so the calendar itself needs enough vertical space to avoid clipping in month view.
+                    const calendarHeight = view === 'month' ? 780 : view === 'week' ? 800 : 720;
                     
                     // Render Calendar with error boundary
                     return (
@@ -2406,7 +2399,7 @@ export default function ProfessionalCalendar({
                                       {isAssigned ? (
                                         <span>ðŸ‘¤ {assignedStaff?.name || assignedStaff?.displayName || "Assigned"}</span>
                                       ) : (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") ? (
-                                        <span>âš ï¸ Open</span>
+                                        <span>Open</span>
                                       ) : null}
                                     </div>
                                   </div>
