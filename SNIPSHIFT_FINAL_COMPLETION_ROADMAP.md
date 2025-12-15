@@ -35,6 +35,19 @@
 
 ---
 
+### Update: 2025-12-15 - Fix Business Calendar Slot Times (Date-Only UTC Parsing)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Fixed a bug where records with `date: "YYYY-MM-DD"` were being parsed as **UTC** by the browser, rendering as **10:00am** local in AU timezones.
+- Updated calendar event mapping to prefer ISO `startTime/endTime` and to correctly combine `date + HH:mm` into local `Date` objects.
+
+**Impact:**
+- **Consistent schedule slots:** Month view now shows the expected slot times consistently across the whole month (no “10:00am drift”).
+
+---
+
 ### Update: 2025-12-14 - Smart Fill Roster + Calendar Slot Assignment Reliability
 
 **Status:** ✅ **FIXED**

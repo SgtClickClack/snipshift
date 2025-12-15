@@ -726,6 +726,59 @@ export default function ProfessionalCalendar({
     const optimisticEvents: CalendarEvent[] = optimisticShifts;
 
     try {
+      const parseLocalDateOnly = (dateStr: string): Date | null => {
+        // IMPORTANT: `new Date('YYYY-MM-DD')` is parsed as UTC by browsers, which becomes
+        // 10:00/11:00 local time in AU. We want a stable *local* date baseline.
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+        if (!match) return null;
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        if (!year || !month || !day) return null;
+        return new Date(year, month - 1, day, 0, 0, 0, 0);
+      };
+
+      const isIsoDateTimeString = (value: string) => /^\d{4}-\d{2}-\d{2}T/.test(value);
+
+      const parseDateTime = (dateOrDateTime: unknown): Date | null => {
+        if (!dateOrDateTime) return null;
+        if (dateOrDateTime instanceof Date) return isNaN(dateOrDateTime.getTime()) ? null : dateOrDateTime;
+        if (typeof dateOrDateTime !== 'string') return null;
+
+        // Prefer ISO datetime parsing.
+        if (isIsoDateTimeString(dateOrDateTime)) {
+          const d = new Date(dateOrDateTime);
+          return isNaN(d.getTime()) ? null : d;
+        }
+
+        // Date-only string: parse as LOCAL midnight to avoid UTC offset drift.
+        const localDate = parseLocalDateOnly(dateOrDateTime);
+        if (localDate) return localDate;
+
+        // Last resort: let Date parse it (can still be useful for legacy formats).
+        const fallback = new Date(dateOrDateTime);
+        return isNaN(fallback.getTime()) ? null : fallback;
+      };
+
+      const combineDateAndTime = (dateStr: unknown, timeStr: unknown): Date | null => {
+        if (typeof dateStr !== 'string' || typeof timeStr !== 'string') return null;
+
+        const base = parseLocalDateOnly(dateStr);
+        if (!base) return null;
+
+        // Accept "HH:mm" or "HH:mm:ss"
+        const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(timeStr);
+        if (!match) return null;
+        const hours = Number(match[1]);
+        const minutes = Number(match[2]);
+        const seconds = match[3] ? Number(match[3]) : 0;
+        if (Number.isNaN(hours) || Number.isNaN(minutes) || Number.isNaN(seconds)) return null;
+
+        const d = new Date(base);
+        d.setHours(hours, minutes, seconds, 0);
+        return isNaN(d.getTime()) ? null : d;
+      };
+
       const bookingEvents = bookingsArray
         .map((booking: any) => {
           // Skip invalid bookings
@@ -735,22 +788,23 @@ export default function ProfessionalCalendar({
             const job = booking.job || booking.shift;
             if (!job) return null;
 
-            // Determine date from job/shift
-            const dateStr = job.date || job.startTime || booking.appliedAt;
-            if (!dateStr) return null;
+            // Determine start/end dates robustly.
+            // Common shapes we see in the wild:
+            // - startTime/endTime as ISO strings
+            // - date as "YYYY-MM-DD" + startTime/endTime as "HH:mm"
+            // - legacy date-only records (avoid UTC parsing drift)
+            const startDate =
+              parseDateTime(job.startTime) ||
+              combineDateAndTime(job.date, job.startTime) ||
+              parseDateTime(job.date) ||
+              parseDateTime(booking.appliedAt);
+            if (!startDate) return null;
 
-            const startDate = new Date(dateStr);
-            if (isNaN(startDate.getTime())) return null;
-
-            // Determine end date (default to 8 hours later if not specified)
-            let endDate: Date;
-            if (job.endTime) {
-              endDate = new Date(job.endTime);
-              // Validate endDate
-              if (isNaN(endDate.getTime())) {
-                endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000);
-              }
-            } else {
+            let endDate =
+              parseDateTime(job.endTime) ||
+              combineDateAndTime(job.date, job.endTime) ||
+              null;
+            if (!endDate) {
               endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000);
             }
 

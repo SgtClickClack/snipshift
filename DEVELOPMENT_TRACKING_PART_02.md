@@ -58,3 +58,27 @@
 **Code Organization & Quality**
 - Kept the fix localized to calendar layout sizing/overflow, avoiding new UI patterns or cross-cutting refactors.
 
+---
+
+#### 2025-12-15: Fix Business Calendar Slot Time Drift (Date-Only → 10:00am Bug)
+
+**Core Components**
+- Shared calendar component (`src/components/calendar/professional-calendar.tsx`)
+
+**Key Features**
+- **Consistent slot times**: Fixed a timezone parsing bug where `job.date` (e.g. `YYYY-MM-DD`) was parsed as UTC and rendered as `10:00am` local in AU timezones.
+- **Robust start/end parsing**: Calendar now prefers ISO `startTime/endTime` and can combine `date + HH:mm` into a local `Date`, preventing “random” time drift and inconsistent slot labels across the month.
+
+**Integration Points**
+- Hub view route param: `/hub-dashboard?view=calendar` (business mode uses `ProfessionalCalendar`)
+- Build: `npm run build` (verified)
+
+**File Paths**
+- `src/components/calendar/professional-calendar.tsx`
+
+**Next Priority Task**
+- Reduce month-view clutter by tuning business-mode event rendering (ensure 3 daily slots remain visible without `+more` when possible).
+
+**Code Organization & Quality**
+- Kept the change isolated to date/time parsing in the calendar event mapping logic.
+
