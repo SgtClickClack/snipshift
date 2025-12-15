@@ -48,6 +48,18 @@
 
 ---
 
+### Update: 2025-12-15 - Fix “Clear All Shifts” 404 (API Route Conflict)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Fixed API route ordering so `DELETE /api/shifts/clear-all` is matched correctly (instead of being treated as `DELETE /api/shifts/:id` with `id="clear-all"`).
+
+**Impact:**
+- **Cleanup available:** Businesses can now clear old generated/shifted roster items directly from Calendar Settings without hitting a 404.
+
+---
+
 ### Update: 2025-12-14 - Smart Fill Roster + Calendar Slot Assignment Reliability
 
 **Status:** ✅ **FIXED**

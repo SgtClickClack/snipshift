@@ -82,3 +82,29 @@
 **Code Organization & Quality**
 - Kept the change isolated to date/time parsing in the calendar event mapping logic.
 
+---
+
+#### 2025-12-15: Fix “Clear All Shifts” 404 (Route Order: /clear-all vs /:id)
+
+**Core Components**
+- Shifts API routes (`api/_src/routes/shifts.ts`)
+- Calendar settings danger zone (`src/components/calendar/calendar-settings-modal.tsx`)
+
+**Key Features**
+- **Clear All Shifts works again**: Fixed Express route ordering so `DELETE /api/shifts/clear-all` no longer gets swallowed by `DELETE /api/shifts/:id` (where `id="clear-all"` caused a 404).
+- **Supports legacy cleanup**: Enables wiping old timezone-shifted/generated roster shifts so the calendar can return to consistent slot times.
+
+**Integration Points**
+- API endpoint: `DELETE /api/shifts/clear-all`
+- UI: Calendar Settings → Danger Zone → “Clear All Shifts”
+- Tests: `cd api && npm test` (verified)
+
+**File Paths**
+- `api/_src/routes/shifts.ts`
+
+**Next Priority Task**
+- Add a safer “Clear generated roster shifts for selected month” action (date-range scoped) to avoid accidental deletion of historical shifts/jobs.
+
+**Code Organization & Quality**
+- Minimal change (route declaration order), no behavior changes to shift deletion logic.
+

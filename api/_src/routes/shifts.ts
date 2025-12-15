@@ -612,6 +612,31 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
   res.status(200).json(updatedShift);
 }));
 
+// Clear all shifts AND jobs for the current user (dangerous - use with caution)
+// IMPORTANT: This route MUST be declared before `DELETE /:id` or it will be treated as id="clear-all".
+router.delete('/clear-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Delete both shifts (employerId) and jobs (businessId)
+  const deletedShiftsCount = await deleteAllShiftsForEmployer(userId);
+  const deletedJobsCount = await jobsRepo.deleteAllJobsForBusiness(userId);
+  const totalDeleted = deletedShiftsCount + deletedJobsCount;
+
+  console.log(`[DELETE /api/shifts/clear-all] User ${userId}: Deleted ${deletedShiftsCount} shifts and ${deletedJobsCount} jobs`);
+
+  res.status(200).json({
+    success: true,
+    count: totalDeleted,
+    shiftsDeleted: deletedShiftsCount,
+    jobsDeleted: deletedJobsCount,
+    message: `Deleted ${deletedShiftsCount} shift(s) and ${deletedJobsCount} job(s)`,
+  });
+}));
+
 // Delete shift (authenticated, employer only)
 // Uses a transaction to first delete related records (shift_invitations, applications, shift_offers)
 // to avoid foreign key constraint errors
@@ -1754,30 +1779,6 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
   res.status(201).json({
     message: 'Invite sent successfully',
     offer,
-  });
-}));
-
-// Clear all shifts AND jobs for the current user (dangerous - use with caution)
-router.delete('/clear-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  // Delete both shifts (employerId) and jobs (businessId)
-  const deletedShiftsCount = await deleteAllShiftsForEmployer(userId);
-  const deletedJobsCount = await jobsRepo.deleteAllJobsForBusiness(userId);
-  const totalDeleted = deletedShiftsCount + deletedJobsCount;
-
-  console.log(`[DELETE /api/shifts/clear-all] User ${userId}: Deleted ${deletedShiftsCount} shifts and ${deletedJobsCount} jobs`);
-
-  res.status(200).json({
-    success: true,
-    count: totalDeleted,
-    shiftsDeleted: deletedShiftsCount,
-    jobsDeleted: deletedJobsCount,
-    message: `Deleted ${deletedShiftsCount} shift(s) and ${deletedJobsCount} job(s)`
   });
 }));
 
