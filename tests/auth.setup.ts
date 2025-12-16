@@ -19,40 +19,36 @@ async function globalSetup(config: FullConfig) {
   const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
   const testEmail = process.env.TEST_EMAIL || 'test@snipshift.com';
 
-  // Wait for servers to be ready before starting
-  console.log('⏳ Waiting for servers to be ready...');
+  // Wait for frontend to be ready before starting
+  // Note: Tests use mocked API routes via Playwright's page.route(), so we only need the frontend
+  console.log('⏳ Waiting for frontend to be ready...');
   const maxWaitTime = 120000; // 2 minutes
   const startTime = Date.now();
-  let serversReady = false;
+  let frontendReady = false;
 
-  while (Date.now() - startTime < maxWaitTime && !serversReady) {
+  while (Date.now() - startTime < maxWaitTime && !frontendReady) {
     try {
       const frontendResponse = await fetch(`${baseURL}/`, {
         method: 'HEAD',
         signal: AbortSignal.timeout(5000),
       }).catch(() => null);
 
-      const apiResponse = await fetch('http://localhost:5000/health', {
-        method: 'GET',
-        signal: AbortSignal.timeout(5000),
-      }).catch(() => null);
-
-      if (frontendResponse?.ok && apiResponse?.ok) {
-        console.log('✅ Servers are ready!');
-        serversReady = true;
+      if (frontendResponse?.ok) {
+        console.log('✅ Frontend is ready!');
+        frontendReady = true;
         break;
       }
 
-      console.log('⏳ Waiting for servers...');
+      console.log('⏳ Waiting for frontend...');
       await new Promise((resolve) => setTimeout(resolve, 2000));
     } catch {
-      console.log('⏳ Servers not ready, retrying...');
+      console.log('⏳ Frontend not ready, retrying...');
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
 
-  if (!serversReady) {
-    throw new Error('Servers did not become ready within timeout period');
+  if (!frontendReady) {
+    throw new Error('Frontend did not become ready within timeout period');
   }
 
   const browser = await chromium.launch();
@@ -83,26 +79,32 @@ async function globalSetup(config: FullConfig) {
       );
     }, testEmail);
 
-    await page.reload({ waitUntil: 'networkidle' });
-
     // Save storage state to file
     const storageStatePath = path.join(__dirname, 'storageState.json');
-    const storageState = await context.storageState();
-
-    // Manually add sessionStorage to storageState (Playwright doesn't include it by default)
+    
+    // Get sessionStorage BEFORE reload (to avoid access issues)
     const sessionStorageItems = await page.evaluate(() => {
-      const items: Array<{ name: string; value: string }> = [];
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
-        if (key) {
-          items.push({
-            name: key,
-            value: sessionStorage.getItem(key) || '',
-          });
+      try {
+        const items: Array<{ name: string; value: string }> = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (key) {
+            items.push({
+              name: key,
+              value: sessionStorage.getItem(key) || '',
+            });
+          }
         }
+        return items;
+      } catch (error) {
+        console.error('Error accessing sessionStorage:', error);
+        return [];
       }
-      return items;
     });
+
+    await page.reload({ waitUntil: 'networkidle' });
+
+    const storageState = await context.storageState();
 
     const enhancedStorageState = {
       ...storageState,

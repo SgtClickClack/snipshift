@@ -56,3 +56,13 @@ api/drizzle/*.sql
 # Test output files
 *_output.txt
 test_output.txt
+
+# Recursive/Backup folders (CRITICAL - contains nested copies causing performance issues)
+snipshift/
+
+# Coverage reports
+coverage/
+
+# Test results
+test-results/
+playwright-report/
