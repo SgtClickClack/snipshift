@@ -8,6 +8,22 @@
 
 ---
 
+### Update: 2025-12-15 - Security Hygiene (Secret Scanning Remediation + Audit Fixes + CI Stabilization)
+
+**Status:** ✅ **IMPROVED**
+
+**Action Taken:**
+- Removed committed secret-bearing files (including a tracked `.env` file) and eliminated secret-like patterns from docs/tests.
+- Enabled GitHub **Dependabot Security Updates** to keep dependency patches flowing via PRs.
+- Enabled GitHub **CodeQL** code scanning for JavaScript/TypeScript on PRs, pushes, and a weekly schedule.
+- Resolved `npm audit` findings in both root + API via targeted overrides (no forced major toolchain upgrade).
+- Stabilized the Playwright CI workflow by aligning Node version to `22.x` and installing API dependencies before E2E runs.
+
+**Notes:**
+- Two GitHub Secret Scanning alerts remain open for **Google API keys** that were previously committed; these must be **rotated/revoked** externally, then the alerts can be marked resolved.
+
+---
+
 ### Update: 2025-12-14 - Fix Professional Calendar Crash in Production (React Query Hook Import)
 
 **Status:** ✅ **FIXED**
@@ -32,6 +48,20 @@
 
 **Impact:**
 - **Scheduling UX:** The Hub Dashboard calendar no longer cuts off the bottom of the month view.
+
+---
+
+### Update: 2025-12-16 - Fix Business Calendar Mobile Horizontal Overflow
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Updated the shared calendar toolbar to wrap controls on small screens (prevents the header from forcing a wider-than-viewport layout).
+- Hardened the calendar container overflow behavior so mobile screens don’t get horizontal page scroll (“blow out”).
+- Added a Playwright regression check to ensure `/shop/schedule` does not introduce horizontal overflow at mobile viewport widths.
+
+**Impact:**
+- **Mobile scheduling UX:** Business calendar stays within the viewport on mobile without widening the page.
 
 ---
 

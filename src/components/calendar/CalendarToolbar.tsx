@@ -46,7 +46,7 @@ export function CalendarToolbar({
           >
             Schedule
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Calendar Settings Button - Only show in business mode */}
             {mode === 'business' && (
               <Button
@@ -60,7 +60,7 @@ export function CalendarToolbar({
             )}
             
             {/* View Switcher */}
-            <div className="flex gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
+            <div className="shrink-0 flex gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
               <Button
                 variant={view === "month" ? "default" : "ghost"}
                 size="sm"
@@ -88,7 +88,7 @@ export function CalendarToolbar({
             </div>
             
             {/* Navigation */}
-            <div className="flex items-center gap-1">
+            <div className="shrink-0 flex items-center gap-1">
               <Button
                 variant="outline"
                 size="sm"

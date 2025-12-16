@@ -51,6 +51,59 @@ function addDays(date: Date, days: number): Date {
 }
 
 test.describe('Shop Schedule E2E Tests', () => {
+  test('mobile: does not cause horizontal page overflow', async ({ page }) => {
+    test.setTimeout(60000);
+
+    await page.setViewportSize({ width: 390, height: 844 }); // iPhone 14-ish
+
+    // Ensure we're in a shop role for this test
+    await page.addInitScript(() => {
+      sessionStorage.setItem(
+        'snipshift_test_user',
+        JSON.stringify({
+          id: 'e2e-shop-0001',
+          email: 'shop-e2e@snipshift.com',
+          name: 'E2E Shop User',
+          roles: ['business'],
+          currentRole: 'business',
+          isOnboarded: true,
+        })
+      );
+    });
+
+    // Minimal schedule data for a stable render
+    await page.route('**/api/shifts?**employer_id=me**', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.goto('/shop/schedule', { waitUntil: 'domcontentloaded' });
+
+    // Wait for the schedule page + calendar to render
+    await expect(page.getByText('Shop Schedule', { exact: false })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
+
+    // If something tries to "blow out" width on mobile, scrollWidth will exceed viewport width.
+    const metrics = await page.evaluate(() => {
+      const docEl = document.documentElement;
+      const body = document.body;
+      const width = window.innerWidth;
+      const docScrollWidth = docEl ? docEl.scrollWidth : 0;
+      const bodyScrollWidth = body ? body.scrollWidth : 0;
+      return { width, docScrollWidth, bodyScrollWidth };
+    });
+
+    expect(metrics.docScrollWidth).toBeLessThanOrEqual(metrics.width + 2);
+    expect(metrics.bodyScrollWidth).toBeLessThanOrEqual(metrics.width + 2);
+  });
+
   test('quick create + bulk actions + confirmed shift safety', async ({ page }) => {
     test.setTimeout(120000);
 

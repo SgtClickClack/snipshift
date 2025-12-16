@@ -2270,17 +2270,17 @@ export default function ProfessionalCalendar({
             statusFilter={statusFilter}
             onStatusFilterChange={(value) => setStatusFilter(value)}
           />
-          <CardContent className="flex-1 p-4 overflow-auto" style={{ minHeight: '750px' }}>
+          <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden" style={{ minHeight: '750px' }}>
             {isLoading ? (
               <div className="flex items-center justify-center h-full min-h-[600px]">
                 <div className="text-muted-foreground">Loading calendar...</div>
               </div>
             ) : (
               <div 
-                className="relative" 
+                className="relative max-w-full min-w-0 overflow-x-auto" 
                 ref={calendarRef} 
                 style={{ 
-                  width: '100%'
+                  width: '100%',
                 }}
               >
                 {/* Legend - Traffic Light System */}
@@ -2385,6 +2385,7 @@ export default function ProfessionalCalendar({
                     return (
                       <div 
                         data-testid="react-big-calendar-container" 
+                        className="max-w-full min-w-0"
                         style={{ 
                           height: `${calendarHeight}px`, 
                           minHeight: `${calendarHeight}px`,
@@ -2401,7 +2402,7 @@ export default function ProfessionalCalendar({
                             style={{ 
                               height: `${calendarHeight}px`, 
                               minHeight: `${calendarHeight}px`,
-                              width: '100%'
+                              width: '100%',
                             }}
                             view={view}
                             onView={handleViewChange}

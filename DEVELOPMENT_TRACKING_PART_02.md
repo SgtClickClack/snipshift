@@ -142,3 +142,85 @@
 
 **Code Organization & Quality**
 - Kept changes localized to the schedule page and the employer shifts endpoint; no new patterns introduced.
+
+---
+
+#### 2025-12-15: Security Hygiene (Secret Scanning Remediation + Audit Fixes + CI Stabilization)
+
+**Core Components**
+- GitHub security automation (Secret Scanning, Dependabot Security Updates)
+- Code scanning (CodeQL workflow)
+- Playwright CI workflow (`.github/workflows/playwright.yml`)
+- Frontend dependency security overrides (`package.json`, `package-lock.json`)
+- API dependency security overrides (`api/package.json`, `api/package-lock.json`)
+- Firebase configuration loader (`src/lib/firebase.ts`)
+- Security documentation & env templates (`docs/STRIPE_WEBHOOKS_SETUP.md`, `docs/env.vercel.example`)
+
+**Key Features**
+- **Secret scanning remediation**: Removed committed secret-bearing files and stripped secret-like patterns from docs/tests to prevent future leaks.
+- **Dependabot security updates enabled**: Turned on repo-level Dependabot Security Updates to keep vulnerable dependencies patched via PRs.
+- **CI reliability fixed (Playwright)**: Updated the Playwright workflow to use Node 22 (matches `engines`) and install API dependencies before running E2E tests.
+- **Code scanning enabled (CodeQL)**: Added a standard CodeQL workflow for JavaScript/TypeScript security scanning on PRs, pushes, and a weekly schedule.
+- **Audit vulnerabilities resolved**: Added targeted `npm` overrides to remediate the `esbuild` advisory without forcing a major toolchain upgrade; verified `npm audit` is clean for both root and API.
+- **Env hygiene**: Hardened `.gitignore` to ignore `.env.*` (including `.env.vercel`) and added a safe example template under `docs/`.
+
+**Integration Points**
+- GitHub API (via `gh api`):
+  - `PATCH /repos/:owner/:repo` (security_and_analysis settings)
+  - `PATCH /repos/:owner/:repo/secret-scanning/alerts/:number` (resolve false-positive doc alert)
+- CI: `.github/workflows/playwright.yml` (installs root + `api/` dependencies)
+- Validation:
+  - Root: `npm ci`, `npm run lint`, `npm run build`, `npm audit`
+  - API: `cd api && npm ci`, `npm test`, `npm run build`, `npm audit`
+
+**File Paths**
+- `.github/workflows/codeql.yml`
+- `.github/workflows/playwright.yml`
+- `.gitignore`
+- `package.json`
+- `package-lock.json`
+- `api/package.json`
+- `api/package-lock.json`
+- `src/lib/firebase.ts`
+- `src/lib/firebase-fallback.ts` (removed)
+- `.env.vercel` (removed)
+- `api/_src/tests/webhooks.test.ts`
+- `docs/STRIPE_WEBHOOKS_SETUP.md`
+- `PRODUCTION_DEPLOYMENT.md`
+- `docs/env.vercel.example` (added)
+
+**Next Priority Task**
+- Rotate/revoke the leaked Google API keys and then resolve the remaining open GitHub Secret Scanning alerts as **revoked/rotated**.
+
+**Code Organization & Quality**
+- Kept security fixes minimal and localized (overrides + CI step fix), avoiding breaking toolchain upgrades.
+- Removed committed env files and documented safe patterns to prevent reintroducing secrets.
+
+---
+
+#### 2025-12-16: Fix Business Calendar Mobile Horizontal Overflow (“Blow Out”)
+
+**Core Components**
+- Shared calendar toolbar (`src/components/calendar/CalendarToolbar.tsx`)
+- Shared calendar container (`src/components/calendar/professional-calendar.tsx`)
+- Shop schedule E2E coverage (`tests/e2e/shop-schedule.spec.ts`)
+
+**Key Features**
+- **Mobile-safe toolbar wrapping**: Allowed the business calendar header controls (settings + view switcher + nav) to wrap onto multiple lines on small screens instead of forcing a single-row layout that can overflow the viewport.
+- **Contained calendar overflow**: Hardened the calendar container to prevent horizontal overflow from “blowing out” the page width on mobile, while preserving desktop behavior.
+- **Regression protection**: Added an E2E assertion on mobile viewport to ensure the schedule page does not introduce horizontal page overflow.
+
+**Integration Points**
+- Shop schedule route: `/shop/schedule` (business calendar surface)
+- Playwright: `npm run test:e2e` (covers mobile overflow check)
+
+**File Paths**
+- `src/components/calendar/CalendarToolbar.tsx`
+- `src/components/calendar/professional-calendar.tsx`
+- `tests/e2e/shop-schedule.spec.ts`
+
+**Next Priority Task**
+- Reduce `ProfessionalCalendar` size and remove remaining layout inline styles by extracting focused subcomponents (keep behavior unchanged).
+
+**Code Organization & Quality**
+- Kept the fix localized to layout/overflow behavior without introducing new patterns or touching business logic.
