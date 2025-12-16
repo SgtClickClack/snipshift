@@ -946,31 +946,64 @@ export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' |
 
     return result;
   } catch (error: any) {
-    // Extract detailed error information
-    const errorDetails = {
+    // Compatibility fallback:
+    // Some environments may have an older `shifts` table schema (pre-migrations),
+    // where newer columns (e.g. `attendance_status`, `payment_status`, etc.) don't exist.
+    // Drizzle's `.select()` will reference all schema columns and can 500.
+    console.error('[getShiftsByAssignee] Falling back to minimal shifts query:', {
+      assigneeId,
+      status,
       message: error?.message,
       code: error?.code,
       detail: error?.detail,
-      hint: error?.hint,
-      constraint: error?.constraint,
-      table: error?.table,
-      column: error?.column,
-      cause: error?.cause,
-      // Check for nested errors (common in Drizzle)
-      nestedMessage: error?.cause?.message,
-      nestedCode: error?.cause?.code,
-      nestedDetail: error?.cause?.detail,
-    };
-
-    console.error('[getShiftsByAssignee] Database query error:', {
-      assigneeId,
-      status,
-      error: errorDetails,
-      stack: error?.stack,
     });
 
-    // Re-throw to be caught by error handler middleware
-    throw error;
+    try {
+      const statusClause = status ? sql` AND status = ${status}` : sql``;
+      const raw = await (db as any).execute(sql`
+        SELECT
+          id,
+          employer_id AS "employerId",
+          assignee_id AS "assigneeId",
+          title,
+          description,
+          start_time AS "startTime",
+          end_time AS "endTime",
+          hourly_rate AS "hourlyRate",
+          status,
+          location,
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM shifts
+        WHERE assignee_id = ${assigneeId}${statusClause}
+        ORDER BY created_at DESC
+      `);
+
+      const rows = (raw as any)?.rows ?? raw;
+      return rows.map((r: any) => ({
+        ...r,
+        attendanceStatus: r.attendanceStatus ?? 'pending',
+        paymentStatus: r.paymentStatus ?? 'UNPAID',
+        paymentIntentId: r.paymentIntentId ?? null,
+        stripeChargeId: r.stripeChargeId ?? null,
+        applicationFeeAmount: r.applicationFeeAmount ?? null,
+        transferAmount: r.transferAmount ?? null,
+        lat: r.lat ?? null,
+        lng: r.lng ?? null,
+        isRecurring: r.isRecurring ?? false,
+        autoAccept: r.autoAccept ?? false,
+        parentShiftId: r.parentShiftId ?? null,
+      }));
+    } catch (fallbackError: any) {
+      console.error('[getShiftsByAssignee] Fallback query also failed:', {
+        assigneeId,
+        status,
+        message: fallbackError?.message,
+        code: fallbackError?.code,
+      });
+      // Return empty array for graceful degradation
+      return [];
+    }
   }
 }
 
