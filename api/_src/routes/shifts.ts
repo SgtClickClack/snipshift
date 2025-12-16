@@ -18,6 +18,7 @@ import { SmartFillSchema, GenerateRosterSchema } from '../validation/schemas.js'
 import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
 import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange, deleteAllShiftsForEmployer } from '../repositories/shifts.repository.js';
 import { getDb } from '../db/index.js';
+import { toISOStringSafe } from '../lib/date.js';
 
 const router = Router();
 
@@ -274,11 +275,11 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
 
     const transformed = filtered.map((shift) => ({
       ...shift,
-      startTime: shift.startTime instanceof Date ? shift.startTime.toISOString() : shift.startTime,
-      endTime: shift.endTime instanceof Date ? shift.endTime.toISOString() : shift.endTime,
-      createdAt: shift.createdAt instanceof Date ? shift.createdAt.toISOString() : shift.createdAt,
-      updatedAt: shift.updatedAt instanceof Date ? shift.updatedAt.toISOString() : shift.updatedAt,
-      date: shift.startTime ? new Date(shift.startTime).toISOString() : undefined,
+      startTime: toISOStringSafe((shift as any).startTime),
+      endTime: toISOStringSafe((shift as any).endTime),
+      createdAt: toISOStringSafe((shift as any).createdAt),
+      updatedAt: toISOStringSafe((shift as any).updatedAt),
+      date: (shift as any).startTime ? toISOStringSafe((shift as any).startTime) : undefined,
       pay: shift.hourlyRate ? String(shift.hourlyRate) : undefined,
       requirements: shift.description,
     }));
@@ -312,7 +313,7 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
   const transformedData = result.data.map((shift) => ({
     ...shift,
     // Frontend compatibility: add date and pay aliases
-    date: shift.startTime ? new Date(shift.startTime).toISOString() : undefined,
+    date: (shift as any).startTime ? toISOStringSafe((shift as any).startTime) : undefined,
     pay: shift.hourlyRate ? String(shift.hourlyRate) : undefined,
     requirements: shift.description, // Alias for description
   }));
@@ -395,7 +396,7 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
       pendingReviews.push({
         id: shift.id,
         title: shift.title,
-        endTime: shift.endTime.toISOString(),
+        endTime: toISOStringSafe((shift as any).endTime),
         employerId: shift.employerId,
         assigneeId: shift.assigneeId,
         employerName: employer?.name,
@@ -789,20 +790,6 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
       // Build location string
       const location = shift.location || null;
 
-      // Helper to safely convert to ISO string (handles Date objects and strings)
-      const toISOStringSafe = (value: any): string => {
-        if (!value) return new Date().toISOString();
-        if (typeof value === 'string') {
-          const d = new Date(value);
-          return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-        }
-        if (typeof value.toISOString === 'function') {
-          return value.toISOString();
-        }
-        const d = new Date(value);
-        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-      };
-
       // Convert startTime to date string for compatibility
       const startTimeISO = toISOStringSafe(shift.startTime);
       const endTimeISO = toISOStringSafe(shift.endTime);
@@ -976,15 +963,15 @@ router.get('/offers/me', authenticateUser, asyncHandler(async (req: Authenticate
         id: shift.id,
         title: shift.title,
         description: shift.description,
-        startTime: shift.startTime.toISOString(),
-        endTime: shift.endTime.toISOString(),
+        startTime: toISOStringSafe((shift as any).startTime),
+        endTime: toISOStringSafe((shift as any).endTime),
         hourlyRate: shift.hourlyRate,
         location: shift.location,
         status: shift.status,
         employerId: shift.employerId,
         businessName: employer?.name || 'Unknown Business',
         businessLogo: employer?.avatarUrl || null,
-        createdAt: shift.createdAt.toISOString(),
+        createdAt: toISOStringSafe((shift as any).createdAt),
       };
     })
   );
@@ -1042,16 +1029,16 @@ router.get('/invitations/pending', authenticateUser, asyncHandler(async (req: Au
       invitationId: invitation.id,
       title: shift.title,
       description: shift.description,
-      startTime: shift.startTime.toISOString(),
-      endTime: shift.endTime.toISOString(),
+      startTime: toISOStringSafe((shift as any).startTime),
+      endTime: toISOStringSafe((shift as any).endTime),
       hourlyRate: shift.hourlyRate,
       location: shift.location,
       status: shift.status,
       employerId: shift.employerId,
       businessName: employer?.name || 'Unknown Business',
       businessLogo: employer?.avatarUrl || null,
-      createdAt: shift.createdAt.toISOString(),
-      invitedAt: invitation.createdAt.toISOString(),
+      createdAt: toISOStringSafe((shift as any).createdAt),
+      invitedAt: toISOStringSafe((invitation as any).createdAt),
       invitationType: 'multi', // First-to-Accept style
     });
   }
@@ -1066,16 +1053,16 @@ router.get('/invitations/pending', authenticateUser, asyncHandler(async (req: Au
         invitationId: null,
         title: shift.title,
         description: shift.description,
-        startTime: shift.startTime.toISOString(),
-        endTime: shift.endTime.toISOString(),
+        startTime: toISOStringSafe((shift as any).startTime),
+        endTime: toISOStringSafe((shift as any).endTime),
         hourlyRate: shift.hourlyRate,
         location: shift.location,
         status: shift.status,
         employerId: shift.employerId,
         businessName: employer?.name || 'Unknown Business',
         businessLogo: employer?.avatarUrl || null,
-        createdAt: shift.createdAt.toISOString(),
-        invitedAt: shift.createdAt.toISOString(),
+        createdAt: toISOStringSafe((shift as any).createdAt),
+        invitedAt: toISOStringSafe((shift as any).createdAt),
         invitationType: 'direct', // Legacy direct assignment
       });
     }
@@ -2646,8 +2633,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
     id: shift.id,
     title: shift.title,
     description: shift.description,
-    startTime: shift.startTime.toISOString(),
-    endTime: shift.endTime.toISOString(),
+    startTime: toISOStringSafe((shift as any).startTime),
+    endTime: toISOStringSafe((shift as any).endTime),
     hourlyRate: shift.hourlyRate,
     location: shift.location,
     lat,
@@ -2657,8 +2644,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
     assigneeId: shift.assigneeId ?? null,
     shopName: employer?.name ?? null,
     shopAvatarUrl: employer?.avatarUrl ?? null,
-    createdAt: shift.createdAt.toISOString(),
-    updatedAt: shift.updatedAt.toISOString(),
+    createdAt: toISOStringSafe((shift as any).createdAt),
+    updatedAt: toISOStringSafe((shift as any).updatedAt),
   });
 }));
 

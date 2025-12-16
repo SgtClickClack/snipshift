@@ -414,17 +414,25 @@ export default function HubDashboard() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'open' | 'filled' | 'completed' }) => {
-      return updateShiftStatus(id, status);
+    mutationFn: async ({ id, status, type }: { id: string; status: 'open' | 'filled' | 'completed'; type: 'shift' | 'job' }) => {
+      // Hub dashboard can show a mixed list (jobs + shifts). Route to the correct API.
+      if (type === 'shift') {
+        return updateShiftStatus(id, status);
+      }
+      return updateJobStatus(id, status);
     },
     onSuccess: () => {
       toast({
         title: "Status Updated",
-        description: "Shift status has been updated successfully."
+        description: "Status has been updated successfully."
       });
+      // Mixed surfaces can be backed by both the unified shop listing and jobs queries.
       queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to update status.",
@@ -468,6 +476,15 @@ export default function HubDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const today = format(new Date(), 'yyyy-MM-dd');
+    if (formData.date && formData.date < today) {
+      toast({
+        title: 'Invalid date',
+        description: 'Please select a date from today onwards.',
+        variant: 'destructive',
+      });
+      return;
+    }
     createJobMutation.mutate(formData);
   };
 
@@ -815,6 +832,7 @@ export default function HubDashboard() {
                               required
                               value={formData.date}
                               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                              min={format(new Date(), 'yyyy-MM-dd')}
                               data-testid="input-job-date"
                             />
                           </div>
@@ -930,7 +948,7 @@ export default function HubDashboard() {
                                 <h4 
                                   className="font-semibold text-foreground hover:text-primary cursor-pointer transition-colors" 
                                   data-testid={`text-job-title-${job.id}`}
-                                  onClick={() => navigate(`/jobs/${job.id}`)}
+                                  onClick={() => navigate(isShift ? `/shifts/${job.id}` : `/jobs/${job.id}`)}
                                 >
                                   {job.title}
                                 </h4>
@@ -951,13 +969,13 @@ export default function HubDashboard() {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'open' })}>
+                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'open', type: jobType as 'shift' | 'job' })}>
                                         Mark as Open
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'filled' })}>
+                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'filled', type: jobType as 'shift' | 'job' })}>
                                         Mark as Filled
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'completed' })}>
+                                      <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: job.id, status: 'completed', type: jobType as 'shift' | 'job' })}>
                                         Mark as Completed
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>

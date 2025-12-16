@@ -75,11 +75,18 @@ export default function MultiStepJobForm({
   };
 
   const canProceedToStep = (step: number) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
     switch (step) {
       case 1:
         return formData.title.trim() !== '' && formData.description.trim() !== '';
       case 2:
-        return formData.date !== '' && formData.startTime !== '' && formData.payRate !== '' && formData.location.city !== '';
+        return (
+          formData.date !== '' &&
+          formData.date >= today &&
+          formData.startTime !== '' &&
+          formData.payRate !== '' &&
+          formData.location.city !== ''
+        );
       case 3:
         return true;
       default:
@@ -234,6 +241,7 @@ export default function MultiStepJobForm({
                   type="date"
                   value={formData.date}
                   onChange={(e) => updateFormData({ date: e.target.value })}
+                  min={format(new Date(), 'yyyy-MM-dd')}
                   data-testid="input-job-date"
                 />
               </div>

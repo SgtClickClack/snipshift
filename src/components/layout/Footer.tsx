@@ -42,9 +42,9 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/#pricing" className="text-steel-400 hover:text-white transition-colors text-sm">
+                <a href="/#pricing" className="text-steel-400 hover:text-white transition-colors text-sm">
                   Pricing
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -105,7 +105,7 @@ export function Footer() {
                 Twitter
               </a>
               <a 
-                href="https://linkedin.com/company/snipshift" 
+                href="https://www.linkedin.com/company/snipshift/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-steel-400 hover:text-white transition-colors text-sm"

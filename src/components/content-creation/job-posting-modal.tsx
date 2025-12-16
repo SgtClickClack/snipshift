@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { X, Plus, MapPin, DollarSign, Calendar, Clock } from "lucide-react";
+import { format } from "date-fns";
 
 interface JobPostingModalProps {
   isOpen: boolean;
@@ -76,6 +77,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+    const today = format(new Date(), "yyyy-MM-dd");
 
     if (!formData.title.trim()) newErrors.title = "Job title is required";
     
@@ -97,7 +99,11 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
       }
     }
     
-    if (!formData.date) newErrors.date = "Date is required";
+    if (!formData.date) {
+      newErrors.date = "Date is required";
+    } else if (formData.date < today) {
+      newErrors.date = "Please select a date from today onwards";
+    }
     if (!formData.time) newErrors.time = "Time is required";
 
     setErrors(newErrors);
@@ -306,6 +312,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  min={format(new Date(), "yyyy-MM-dd")}
                   data-testid="input-job-date"
                   className={errors.date ? "border-red-500" : ""}
                 />

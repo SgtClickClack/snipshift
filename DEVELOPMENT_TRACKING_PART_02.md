@@ -1,4 +1,116 @@
 
+#### 2025-12-16: Final UX and SEO Cleanup (Date Guards, Footer Links, Contact Form, Verification UX, Landing H1)
+
+**Core Components**
+- Job posting date inputs (Hub dashboard + multi-step job form + job posting modal)
+- Footer navigation (`Footer`)
+- Contact page (`ContactPage`)
+- Professional profile verification UX (`ProfessionalDigitalResume`)
+- Landing page SEO heading (`LandingPage`)
+
+**Key Features**
+- **Block past dates**: Prevented selecting/publishing job dates in the past (UI `min` + guardrails for submit/progression).
+- **Footer link repairs**: Fixed “Pricing” to jump correctly to the landing pricing section and updated the LinkedIn URL to a valid company link.
+- **Contact form UX**: Replaced `mailto:` behavior with an in-app submit handler that shows a responsive “Message sent” toast and clears the form.
+- **Verification logic corrected**: “Verify Identity” and “Verify License” no longer instantly toggle to verified; verification now only flips to `true` after selecting an upload file.
+- **SEO H1 restored**: Added a visually hidden H1 for the landing page and demoted the hero heading to H2 to preserve a single-page H1.
+
+**Integration Points**
+- UI routes: `/` (Landing), `/contact` (Contact), `/hub-dashboard` (job posting), Hub job creation flows
+- Client toasts: `useToast`
+
+**File Paths**
+- `src/pages/hub-dashboard.tsx`
+- `src/components/hub/multi-step-job-form.tsx`
+- `src/components/content-creation/job-posting-modal.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/pages/company/contact.tsx`
+- `src/components/profile/professional-digital-resume.tsx`
+- `src/pages/landing.tsx`
+
+**Next Priority Task**
+- Run a quick pre-launch UX smoke pass on job posting (date selection), profile verification uploads, and the contact form.
+
+**Code Organization & Quality**
+- Kept changes localized to the affected UX surfaces and reused existing date formatting/toast utilities (no new patterns introduced).
+
+---
+
+#### 2025-12-16: Fix Critical API Date Parsing Crash (`shift.startTime.toISOString`)
+
+**Core Components**
+- API date utility (`api/_src/lib/date.ts`)
+- Shifts routes (date shaping + offers + invitations + details) (`api/_src/routes/shifts.ts`)
+- Payments routes (earnings history shaping) (`api/_src/routes/payments.ts`)
+- Cursor ignore config (allow tracking files to be maintained) (`.cursorignore`)
+
+**Key Features**
+- **Crash prevention**: Removed unsafe calls like `shift.startTime.toISOString()` that crash when DB timestamps arrive as **strings**.
+- **Centralized safety**: Introduced `toISOStringSafe()` and reused it across shift/job API response shaping.
+- **Earnings unblocked**: Hardened the payments history mapping so the Earnings UI can render even when `startTime` isn’t a `Date`.
+- **Safer shift surfaces**: Covered shift details, offers, pending invitations, and pending review payloads (common high-traffic endpoints).
+
+**Integration Points**
+- API endpoints:
+  - `GET /api/shifts/:id`
+  - `GET /api/shifts/offers/me`
+  - `GET /api/shifts/invitations/pending`
+  - `GET /api/shifts/pending-review`
+  - `GET /api/payments/history/:userId`
+- Tests: `cd api && npm test`
+- Dev: `npm run dev:all` (frontend at `http://localhost:3000/`)
+
+**File Paths**
+- `api/_src/lib/date.ts`
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/payments.ts`
+- `.cursorignore`
+
+**Next Priority Task**
+- Fix the “Job Not Found” 404 by verifying the Job Card link uses the correct id and that `GET /api/jobs/:id` matches the same identifier.
+
+**Code Organization & Quality**
+- Avoided copy/paste date guards by centralizing date normalization in a shared API utility and keeping changes tightly scoped to the failing routes.
+
+---
+
+#### 2025-12-16: Fix Job/Shift 404 + Status Update Mismatch (Hub Dashboard + Shift Feeds)
+
+**Core Components**
+- Hub dashboard mixed listings actions (`src/pages/hub-dashboard.tsx`)
+- Shift marketplace quick-apply navigation (`src/pages/job-feed.tsx`, `src/pages/travel.tsx`)
+
+**Key Features**
+- **Job/Shift routing fixed**: Hub dashboard now routes listing actions by `_type`:
+  - `shift` → `/shifts/:id` and shift status update
+  - `job` → `/jobs/:id` and job status update
+- **404 eliminated**: Clicking a listing title no longer sends shift ids to `/jobs/:id` (which returned “Job not found”).
+- **Status updates corrected**: “Open → Filled/Completed” now targets the correct API based on listing type.
+- **Shift feeds fixed**: “Quick Apply” on the shift-based Job Feed and Travel Mode now routes to `/shifts/:id` (previously `/jobs/:id/apply`).
+
+**Integration Points**
+- UI routes: `/hub-dashboard`, `/job-feed`, `/travel`, `/shifts/:id`, `/jobs/:id`
+- API endpoints:
+  - `PATCH /api/shifts/:id`
+  - `PATCH /api/jobs/:id/status`
+- Verification:
+  - `cd api && npm test`
+  - `npm run build`
+  - `npm run dev:all`
+
+**File Paths**
+- `src/pages/hub-dashboard.tsx`
+- `src/pages/job-feed.tsx`
+- `src/pages/travel.tsx`
+
+**Next Priority Task**
+- Block past-date selection in the job/shift creation calendar UI to prevent invalid postings.
+
+**Code Organization & Quality**
+- Kept the fix localized to action routing logic without introducing new patterns; reused existing `_type` detection already present for deletes/ownership.
+
+---
+
 #### 2025-12-16: Add Forgot Password Flow (Firebase Password Reset Email)
 
 **Core Components**

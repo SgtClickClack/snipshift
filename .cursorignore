@@ -33,7 +33,9 @@ e2e-results/
 playwright-report/
 
 # Documentation tracking files (large markdown files)
-DEVELOPMENT_TRACKING_PART_*.md
+# NOTE: We keep these *included* so we can append required dev log entries after each task.
+# (They’re markdown, not generated artifacts.)
+# DEVELOPMENT_TRACKING_PART_*.md
 
 # Tree/structure dumps
 tree_*.json

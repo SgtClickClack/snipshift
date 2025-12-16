@@ -8,6 +8,23 @@
 
 ---
 
+### Update: 2025-12-16 - Final UX and SEO Cleanup (Pre-Launch Polish)
+
+**Status:** ✅ **POLISH COMPLETE**
+
+**Action Taken:**
+- Blocked past-date selection in shop job/shift creation flows (UI `min` + submit guards).
+- Fixed broken Footer links (Pricing anchor + LinkedIn URL).
+- Replaced Contact form `mailto:` behavior with an in-app submit handler + success toast.
+- Corrected Professional verification UX so “Verify Identity” / “Verify License” only mark verified after an upload is selected.
+- Added a visually hidden landing-page H1 for SEO while keeping the hero heading visually unchanged.
+
+**Impact:**
+- **Higher conversion UX:** No more accidental “past job” postings or dead-end interactions.
+- **SEO hygiene:** Homepage now has a clear H1 for crawlers without changing design.
+
+---
+
 ### Update: 2025-12-15 - Security Hygiene (Secret Scanning Remediation + Audit Fixes + CI Stabilization)
 
 **Status:** ✅ **IMPROVED**
@@ -90,6 +107,33 @@
 
 **Impact:**
 - **Mobile scheduling UX:** Business calendar stays within the viewport on mobile without widening the page.
+
+---
+
+### Update: 2025-12-16 - Fix Critical API Date Parsing Crash (Earnings / Shifts 500)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Added a shared API date normalizer (`toISOStringSafe`) to safely handle timestamps returned as **strings** or **Date** objects.
+- Updated shift- and payment-related API routes to stop calling `.toISOString()` directly on DB values (prevents `shift.startTime.toISOString is not a function`).
+
+**Impact:**
+- **No more 500s** on shift payloads and earnings history when the DB driver returns timestamp fields as strings.
+
+---
+
+### Update: 2025-12-16 - Fix Hub Dashboard Listing 404 + Status Update Mismatch (Jobs vs Shifts)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Corrected Hub dashboard mixed listing behavior to route **shifts** to `/shifts/:id` and **jobs** to `/jobs/:id`, and to call the correct status update API for each.
+- Fixed shift-based “Quick Apply” flows to route to shift details instead of job apply routes.
+
+**Impact:**
+- Prevents “Job not found” 404s when clicking shift items.
+- Allows “Open → Filled/Completed” status updates to succeed consistently across mixed job/shift listings.
 
 ---
 

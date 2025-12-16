@@ -259,7 +259,8 @@ export default function TravelPage() {
       title: 'Application Started',
       description: `Applying to ${job.title}`,
     });
-    navigate(`/jobs/${job.id}/apply`);
+    // Travel Mode is shift-based (feed comes from /api/shifts), so route to shift details.
+    navigate(`/shifts/${job.id}`);
   };
 
   // Show loading state if query is loading or data is not yet available

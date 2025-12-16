@@ -13,6 +13,7 @@ import * as shiftsRepo from '../repositories/shifts.repository.js';
 import { eq, and, or, desc } from 'drizzle-orm';
 import { shifts } from '../db/schema.js';
 import { getDb } from '../db/index.js';
+import { toISOStringSafe } from '../lib/date.js';
 
 const router = Router();
 
@@ -128,7 +129,7 @@ router.get('/history/:userId', authenticateUser, asyncHandler(async (req: Authen
 
         return {
           id: shift.id,
-          date: shift.startTime.toISOString(),
+          date: toISOStringSafe((shift as any).startTime),
           shopName,
           netAmount,
           status: shift.paymentStatus === 'PAID' ? 'Paid' : 'Processing',

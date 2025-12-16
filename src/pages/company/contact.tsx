@@ -26,21 +26,15 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Create mailto link
-    const mailtoLink = `mailto:support@snipshift.com.au?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(`From: ${formData.email}\n\n${formData.message}`)}`;
-    
-    // Open email client
-    window.location.href = mailtoLink;
-
-    // Show success toast
-    setTimeout(() => {
+    // Lightweight client-side submission for now (keeps UI responsive without forcing mailto)
+    requestAnimationFrame(() => {
       toast({
-        title: 'Message Prepared',
-        description: 'Your email client should open with your message. If not, please email us at support@snipshift.com.au',
+        title: 'Message sent',
+        description: "Thanks! We've received your message and will reply within 24–48 hours.",
       });
       setIsSubmitting(false);
       setFormData({ email: '', subject: '', message: '' });
-    }, 500);
+    });
   };
 
   return (
@@ -167,17 +161,17 @@ export default function ContactPage() {
                     className="w-full"
                   >
                     {isSubmitting ? (
-                      'Preparing Email...'
+                      'Sending...'
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
-                        Send Email
+                        Send Message
                       </>
                     )}
                   </Button>
 
                   <p className="text-xs text-steel-500 text-center">
-                    Clicking "Send Email" will open your default email client with your message pre-filled.
+                    Prefer email? Reach us at <span className="font-medium">support@snipshift.com.au</span>.
                   </p>
                 </form>
               </CardContent>

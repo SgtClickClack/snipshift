@@ -341,7 +341,8 @@ export default function JobFeedPage() {
       title: 'Application Started',
       description: `Applying to ${job.title}`,
     });
-    navigate(`/jobs/${job.id}/apply`);
+    // This page is shift-based (feed comes from /api/shifts), so route to shift details.
+    navigate(`/shifts/${job.id}`);
   };
 
   // Show loading state if query is loading or data is not yet available

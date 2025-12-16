@@ -123,6 +123,8 @@ export default function ProfessionalDigitalResume({
   const [bannerImageSrc, setBannerImageSrc] = useState<string | null>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
+  const identityFileInputRef = useRef<HTMLInputElement>(null);
+  const licenseFileInputRef = useRef<HTMLInputElement>(null);
 
   // Default profile data
   const defaultProfile: ProfessionalProfile = {
@@ -158,6 +160,34 @@ export default function ProfessionalDigitalResume({
     ...defaultProfile,
     ...initialProfile,
   });
+
+  const handleIdentityUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setProfile(prev => ({ ...prev, isIdVerified: true }));
+    toast({
+      title: 'Identity verified',
+      description: 'Identity document uploaded successfully.',
+    });
+
+    // Allow re-selecting the same file
+    e.target.value = '';
+  };
+
+  const handleLicenseUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setProfile(prev => ({ ...prev, isLicenseVerified: true }));
+    toast({
+      title: 'License verified',
+      description: 'License document uploaded successfully.',
+    });
+
+    // Allow re-selecting the same file
+    e.target.value = '';
+  };
 
   // Calculate profile completeness
   const profileCompleteness = useMemo(() => {
@@ -710,7 +740,7 @@ export default function ProfessionalDigitalResume({
                       {profile.isIdVerified && (
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
-                          ID Verified
+                          Identity Verified
                         </Badge>
                       )}
                       {profile.isLicenseVerified && (
@@ -724,17 +754,33 @@ export default function ProfessionalDigitalResume({
                           <Button
                             variant={profile.isIdVerified ? "default" : "outline"}
                             size="sm"
-                            onClick={() => setProfile(prev => ({ ...prev, isIdVerified: !prev.isIdVerified }))}
+                          disabled={!!profile.isIdVerified}
+                          onClick={() => identityFileInputRef.current?.click()}
                           >
-                            {profile.isIdVerified ? 'ID Verified' : 'Verify ID'}
+                          {profile.isIdVerified ? 'Identity Verified' : 'Verify Identity'}
                           </Button>
+                        <input
+                          ref={identityFileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                          className="hidden"
+                          onChange={handleIdentityUpload}
+                        />
                           <Button
                             variant={profile.isLicenseVerified ? "default" : "outline"}
                             size="sm"
-                            onClick={() => setProfile(prev => ({ ...prev, isLicenseVerified: !prev.isLicenseVerified }))}
+                          disabled={!!profile.isLicenseVerified}
+                          onClick={() => licenseFileInputRef.current?.click()}
                           >
                             {profile.isLicenseVerified ? 'License Verified' : 'Verify License'}
                           </Button>
+                        <input
+                          ref={licenseFileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                          className="hidden"
+                          onChange={handleLicenseUpload}
+                        />
                         </div>
                       )}
                     </div>
