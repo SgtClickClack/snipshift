@@ -91,18 +91,20 @@ export function OfferInbox() {
   if (offers.length === 0) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle>Job Requests</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center min-h-48 py-8 text-center">
-            <Inbox className="w-10 h-10 text-muted-foreground mb-3" />
-            <p className="text-base font-medium text-foreground mb-1">
-              You're all caught up!
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Update your availability to get more offers
-            </p>
+        <CardContent className="pt-2 pb-4">
+          <div className="flex items-center gap-3 py-2 text-center">
+            <Inbox className="w-6 h-6 text-muted-foreground flex-shrink-0" />
+            <div className="text-left">
+              <p className="text-sm font-medium text-foreground">
+                You're all caught up!
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Update your availability to get more offers
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
