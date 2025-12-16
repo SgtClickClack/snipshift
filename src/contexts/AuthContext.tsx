@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { onAuthStateChange, signOutUser, auth } from '../lib/firebase';
+import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 
@@ -111,23 +111,77 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    // Handle Google OAuth redirect result at app level
+    // This ensures redirect is processed regardless of which page user lands on
+    const processRedirectResult = async () => {
+      try {
+        const redirectUser = await handleGoogleRedirectResult();
+        if (redirectUser) {
+          logger.debug('AuthContext', 'Processed Google redirect result for user:', redirectUser.uid);
+          
+          // IMPORTANT: Ensure user exists in database BEFORE onAuthStateChange tries to fetch profile
+          // This prevents race conditions where /api/me fails because user doesn't exist yet
+          try {
+            const token = await redirectUser.getIdToken();
+            const registerRes = await fetch("/api/register", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                email: redirectUser.email,
+                name: redirectUser.displayName || redirectUser.email?.split("@")[0] || "Google User",
+                password: "", // Passwordless/OAuth
+              }),
+            });
+            
+            // 201 = created, 409 = already exists - both are fine
+            if (!registerRes.ok && registerRes.status !== 409) {
+              logger.error('AuthContext', 'Failed to register redirect user in database');
+            }
+          } catch (registerError) {
+            logger.error('AuthContext', 'Error registering redirect user:', registerError);
+          }
+          
+          // The auth state listener will pick up this user and fetch their profile
+        }
+      } catch (error) {
+        // Silently handle - redirect result errors are non-critical
+        // User can retry sign-in manually
+        logger.debug('AuthContext', 'No redirect result or error processing redirect:', error);
+      }
+    };
+    
+    // Process redirect result (non-blocking)
+    processRedirectResult();
+
     // Wrap listener setup in try-catch to ensure loading states are always set
     let unsubscribe: (() => void) | null = null;
     try {
       unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
         // GATEKEEPER: Prevent concurrent profile fetches for the same user
         const newUid = firebaseUser?.uid || null;
+        const previousUid = currentAuthUid.current;
         
         // If we're already processing the same user, skip
-        if (isProcessingAuth.current && currentAuthUid.current === newUid) {
+        if (isProcessingAuth.current && previousUid === newUid) {
           logger.debug('AuthContext', 'Skipping duplicate auth state change for same user');
           return;
         }
         
         // If the user hasn't changed and we already have auth ready, skip redundant fetches
-        if (isAuthReady && currentAuthUid.current === newUid && newUid !== null) {
+        if (isAuthReady && previousUid === newUid && newUid !== null) {
           logger.debug('AuthContext', 'Skipping redundant profile fetch - user unchanged');
           return;
+        }
+        
+        // CRITICAL: If transitioning from no-user to user (sign-in happening),
+        // set loading to true to show loading screen and prevent login page flash
+        const isNewSignIn = previousUid === null && newUid !== null;
+        if (isNewSignIn) {
+          logger.debug('AuthContext', 'New sign-in detected, showing loading screen');
+          setIsLoading(true);
         }
         
         // Mark as processing and track current user

@@ -11,7 +11,8 @@ import { EnhancedJobCard } from '@/components/job-feed/enhanced-job-card';
 import { JobCardData } from '@/components/job-feed/JobCard';
 import { LocationInput } from '@/components/ui/location-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation, SlidersHorizontal } from 'lucide-react';
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import { calculateDistance, reverseGeocodeToCity } from '@/lib/google-maps';
@@ -28,6 +29,7 @@ export default function JobFeedPage() {
   const [sortBy, setSortBy] = useState<SortOption>('soonest');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
   // Dynamic location state (no more hardcoded defaults)
   // Default to Sydney, Australia as fallback when GPS is denied
@@ -412,12 +414,32 @@ export default function JobFeedPage() {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {/* Mobile Filter Button */}
+            <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="md:hidden flex items-center gap-2"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span className="hidden xs:inline">Filters</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>Filter Shifts</SheetTitle>
+                </SheetHeader>
+                <EnhancedJobFilters className="block border-0 shadow-none" />
+              </SheetContent>
+            </Sheet>
+
             {/* Sort By */}
             <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-full sm:w-44">
+                <SelectTrigger className="w-28 sm:w-44">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -429,22 +451,24 @@ export default function JobFeedPage() {
             </div>
 
             {/* View Toggle */}
-            <div className="flex items-center gap-2 bg-card p-1 rounded-lg border border-border">
+            <div className="flex items-center gap-1 sm:gap-2 bg-card p-1 rounded-lg border border-border">
               <Button 
                 variant={viewMode === 'list' ? 'default' : 'ghost'} 
                 size="sm"
                 onClick={() => setViewMode('list')}
+                className="px-2 sm:px-3"
               >
-                <List className="h-4 w-4 mr-2" />
-                List
+                <List className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">List</span>
               </Button>
               <Button 
                 variant={viewMode === 'map' ? 'default' : 'ghost'} 
                 size="sm"
                 onClick={() => setViewMode('map')}
+                className="px-2 sm:px-3"
               >
-                <Map className="h-4 w-4 mr-2" />
-                Map
+                <Map className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Map</span>
               </Button>
             </div>
           </div>

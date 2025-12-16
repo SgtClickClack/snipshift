@@ -1,6 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Button } from './button';
-import { Card, CardContent } from './card';
+import { ErrorFallback } from '@/components/ErrorFallback';
 
 interface Props {
   children: ReactNode;
@@ -12,6 +11,14 @@ interface State {
   error: Error | null;
 }
 
+/**
+ * ErrorBoundary Component
+ * 
+ * Catches JavaScript errors anywhere in the child component tree,
+ * logs them, and displays a fallback UI instead of crashing the whole app.
+ * 
+ * This prevents the "White Screen of Death" when a page crashes.
+ */
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -23,35 +30,30 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    console.error('[ErrorBoundary] Uncaught error:', error);
+    console.error('[ErrorBoundary] Error info:', errorInfo);
+    
+    // In production, you might want to send this to an error tracking service
+    // e.g., Sentry, LogRocket, etc.
   }
+
+  private resetErrorBoundary = () => {
+    this.setState({ hasError: false, error: null });
+  };
 
   public render() {
     if (this.state.hasError) {
+      // If a custom fallback is provided, use it
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      // Otherwise, use the default ErrorFallback component
       return (
-        <div className="min-h-96 flex items-center justify-center p-6">
-          <Card className="max-w-md w-full">
-            <CardContent className="pt-6 text-center space-y-4">
-              <h2 className="text-xl font-semibold text-red-600">Something went wrong</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                We encountered an error while displaying this content.
-              </p>
-              <div className="bg-gray-100 dark:bg-steel-800 p-4 rounded text-left text-xs overflow-auto max-h-32">
-                <code>{this.state.error?.message}</code>
-              </div>
-              <Button 
-                onClick={() => this.setState({ hasError: false })}
-                variant="outline"
-              >
-                Try again
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <ErrorFallback 
+          error={this.state.error}
+          resetErrorBoundary={this.resetErrorBoundary}
+        />
       );
     }
 

@@ -17,6 +17,8 @@ export interface ShiftBlockProps {
   };
   onClick?: () => void;
   isRecurring?: boolean;
+  /** Optional className to override or extend default styles */
+  className?: string;
 }
 
 /**
@@ -46,7 +48,7 @@ function getShiftLabel(event: ShiftBlockProps['event']): string {
  * 
  * Optimized for month view readability with minimal clutter
  */
-export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
+export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBlockProps) {
   const status = event.resource?.status || 'draft';
   const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
   const assignedStaff = shift?.assignedStaff || shift?.professional;
@@ -76,7 +78,8 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
           "bg-amber-500/90 dark:bg-amber-600/90 cursor-pointer",
           "flex items-center gap-1.5 px-2 py-1",
           "hover:bg-amber-500 dark:hover:bg-amber-600 transition-colors",
-          "text-white relative overflow-hidden"
+          "text-white relative overflow-hidden",
+          className
         )}
         style={{ minHeight: '22px' }}
       >
@@ -102,7 +105,8 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
           "border-slate-300 dark:border-slate-600",
           "flex items-center gap-1.5 px-2 py-1",
           "hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors",
-          "text-slate-600 dark:text-slate-300 relative overflow-hidden"
+          "text-slate-600 dark:text-slate-300 relative overflow-hidden",
+          className
         )}
         style={{ minHeight: '22px' }}
       >
@@ -129,7 +133,8 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
           "w-full h-full rounded-md",
           "bg-orange-500/90 dark:bg-orange-600/90",
           "cursor-pointer hover:bg-orange-500 dark:hover:bg-orange-600 transition-colors",
-          "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden"
+          "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
+          className
         )}
         style={{ minHeight: '22px' }}
       >
@@ -155,7 +160,8 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
           "w-full h-full rounded-md",
           "bg-amber-500/90 dark:bg-amber-600/90",
           "cursor-pointer hover:bg-amber-500 dark:hover:bg-amber-600 transition-colors",
-          "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden"
+          "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
+          className
         )}
         style={{ minHeight: '22px' }}
       >
@@ -184,7 +190,8 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
           "w-full h-full rounded-md",
           "bg-emerald-600 dark:bg-emerald-700",
           "cursor-pointer hover:bg-emerald-700 dark:hover:bg-emerald-800 transition-colors",
-          "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden"
+          "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
+          className
         )}
         style={{ minHeight: '22px' }}
       >
@@ -213,7 +220,8 @@ export function ShiftBlock({ event, onClick, isRecurring }: ShiftBlockProps) {
         "bg-slate-400/80 dark:bg-slate-600/80",
         "cursor-pointer hover:bg-slate-500 dark:hover:bg-slate-700 transition-colors",
         "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
-        "text-white text-xs font-medium"
+        "text-white text-xs font-medium",
+        className
       )}
       style={{ minHeight: '22px' }}
     >

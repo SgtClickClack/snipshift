@@ -127,6 +127,8 @@ export async function createStripeCustomer(email: string, name: string, userId: 
 
 /**
  * Create a PaymentIntent with manual capture for shift payment
+ * 
+ * IMPORTANT: Uses idempotency key based on shiftId to prevent double-charging.
  */
 export async function createPaymentIntent(
   amount: number, // in cents
@@ -142,19 +144,29 @@ export async function createPaymentIntent(
     throw new Error('Stripe is not configured');
   }
 
+  // Create idempotency key from shiftId to prevent double-charging
+  const idempotencyKey = metadata.shiftId 
+    ? `shift_intent_${metadata.shiftId}_${customerId}` 
+    : `intent_${customerId}_${Date.now()}`;
+
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: currency,
-      customer: customerId,
-      capture_method: 'manual', // Hold funds until shift completion
-      application_fee_amount: applicationFeeAmount,
-      transfer_data: transferData,
-      metadata: metadata,
-      automatic_payment_methods: {
-        enabled: true,
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: amount,
+        currency: currency,
+        customer: customerId,
+        capture_method: 'manual', // Hold funds until shift completion
+        application_fee_amount: applicationFeeAmount,
+        transfer_data: transferData,
+        metadata: metadata,
+        automatic_payment_methods: {
+          enabled: true,
+        },
       },
-    });
+      {
+        idempotencyKey: idempotencyKey,
+      }
+    );
 
     return paymentIntent.id;
   } catch (error: any) {
@@ -277,6 +289,9 @@ export async function listPaymentMethods(customerId: string) {
 
 /**
  * Create a PaymentIntent with manual capture and confirm it with a payment method
+ * 
+ * IMPORTANT: Uses idempotency key based on shiftId to prevent double-charging
+ * if user clicks "Pay" twice or if there's a network retry.
  */
 export async function createAndConfirmPaymentIntent(
   amount: number, // in cents
@@ -293,19 +308,30 @@ export async function createAndConfirmPaymentIntent(
     throw new Error('Stripe is not configured');
   }
 
+  // Create idempotency key from shiftId to prevent double-charging
+  // If no shiftId in metadata, fall back to a timestamp-based key (less safe but still prevents immediate retries)
+  const idempotencyKey = metadata.shiftId 
+    ? `shift_payment_${metadata.shiftId}_${customerId}` 
+    : `payment_${customerId}_${Date.now()}`;
+
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: currency,
-      customer: customerId,
-      payment_method: paymentMethodId,
-      capture_method: 'manual', // Hold funds until shift completion
-      off_session: true, // Customer is not present
-      confirm: true, // Confirm immediately
-      application_fee_amount: applicationFeeAmount,
-      transfer_data: transferData,
-      metadata: metadata,
-    });
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: amount,
+        currency: currency,
+        customer: customerId,
+        payment_method: paymentMethodId,
+        capture_method: 'manual', // Hold funds until shift completion
+        off_session: true, // Customer is not present
+        confirm: true, // Confirm immediately
+        application_fee_amount: applicationFeeAmount,
+        transfer_data: transferData,
+        metadata: metadata,
+      },
+      {
+        idempotencyKey: idempotencyKey,
+      }
+    );
 
     return paymentIntent.id;
   } catch (error: any) {

@@ -8,6 +8,8 @@ import {
   onAuthStateChanged,
   signOut,
   sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
   type User as FirebaseAuthUser,
 } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
@@ -60,6 +62,10 @@ googleProvider.addScope('profile');
 // Google sign-in methods
 export const signInWithGoogle = async () => {
   try {
+    // CRITICAL: Set persistence BEFORE signing in to prevent logout on refresh
+    // browserLocalPersistence stores auth state in localStorage, surviving page reloads
+    await setPersistence(auth, browserLocalPersistence);
+    
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: unknown) {
@@ -69,6 +75,7 @@ export const signInWithGoogle = async () => {
         : '';
     // If popup is blocked, fallback to redirect
     if (code === 'auth/popup-blocked') {
+      // Persistence is already set above, so redirect will also persist
       await signInWithRedirect(auth, googleProvider);
       return null; // Will be handled by redirect result
     }

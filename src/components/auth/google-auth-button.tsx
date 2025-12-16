@@ -1,12 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
-import { handleGoogleRedirectResult, signInWithGoogle } from "@/lib/firebase";
+import { signInWithGoogle } from "@/lib/firebase";
 import { Chrome } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { getDashboardRoute } from "@/lib/roles";
 import { logger } from "@/lib/logger";
 
 interface GoogleAuthButtonProps {
@@ -17,159 +13,43 @@ interface GoogleAuthButtonProps {
 export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const hasHandledRedirect = useRef(false);
   // Prevent double-click/double-fire in Strict Mode
   const isAuthInProgress = useRef(false);
 
-  const completeGoogleAuth = async (firebaseUser: any) => {
+  /**
+   * Ensures the Google user exists in our database.
+   * This is called BEFORE AuthContext fetches the profile to avoid race conditions.
+   */
+  const ensureUserInDatabase = async (firebaseUser: any) => {
     const email = firebaseUser.email;
-    const googleId = firebaseUser.uid;
-
     if (!email) {
       throw new Error("No email provided by Google");
     }
 
-    // Get Firebase token for authentication
     const token = await firebaseUser.getIdToken();
 
-    // 1. Try to register (idempotent - ignore if exists)
-    try {
-      const registerRes = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          email,
-          name: firebaseUser.displayName || email.split("@")[0],
-          password: "", // Passwordless/OAuth
-        }),
-      });
-
-      // Only throw if it's not a 409 (user already exists) or 201 (created)
-      if (!registerRes.ok && registerRes.status !== 409) {
-        const errorData = await registerRes.json().catch(() => ({}));
-        throw new Error(errorData.message || "Registration failed");
-      }
-    } catch (e: any) {
-      // If it's a 409 (user already exists), that's fine - continue to login
-      // Otherwise, log the error but continue - the login endpoint can create the user if needed
-      if (e?.message && !e.message.includes("already exists") && !e.message.includes("409")) {
-        logger.debug("GoogleAuthButton", "Registration attempt failed, continuing with login:", e.message);
-      }
-    }
-
-    // 2. Login to establish server session using Firebase token
-    const loginRes = await fetch("/api/login", {
+    // Register user in our database (idempotent - 409 if exists is OK)
+    const registerRes = await fetch("/api/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+      body: JSON.stringify({
+        email,
+        name: firebaseUser.displayName || email.split("@")[0],
+        password: "", // Passwordless/OAuth
+      }),
     });
 
-    if (!loginRes.ok) {
-      const errorData = await loginRes.json().catch(() => ({}));
-      throw new Error(errorData.message || "Login failed");
+    // 201 = created, 409 = already exists - both are fine
+    if (!registerRes.ok && registerRes.status !== 409) {
+      const errorData = await registerRes.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to create user account");
     }
-
-    const userData = await loginRes.json();
-
-    // Fetch full user profile from /api/me to get all user data
-    const profileRes = await fetch("/api/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    let fullUserData = userData;
-    if (profileRes.ok) {
-      fullUserData = await profileRes.json();
-    }
-
-    login({
-      id: fullUserData.id,
-      email: fullUserData.email,
-      password: "",
-      roles: Array.isArray(fullUserData.roles)
-        ? fullUserData.roles
-        : [fullUserData.role || "professional"],
-      currentRole: fullUserData.currentRole || fullUserData.role || "professional",
-      provider: "google",
-      googleId,
-      createdAt: fullUserData.createdAt ? new Date(fullUserData.createdAt) : new Date(),
-      updatedAt: fullUserData.updatedAt ? new Date(fullUserData.updatedAt) : new Date(),
-      displayName: fullUserData.displayName || fullUserData.name || firebaseUser.displayName || "Google User",
-      profileImage: fullUserData.profileImage || fullUserData.avatarUrl || firebaseUser.photoURL || "",
-      isOnboarded: fullUserData.isOnboarded ?? false,
-      uid: firebaseUser.uid,
-    });
-
-    toast({
-      title: "Welcome!",
-      description: "Successfully signed in with Google!",
-    });
-
-    if (onSuccess) {
-      onSuccess();
-      return;
-    }
-
-    // Role-based redirection: check user's current role and onboarding status
-    if (userData.isOnboarded === false) {
-      navigate("/onboarding", { replace: true });
-    } else if (userData.currentRole && userData.currentRole !== "client") {
-      const dashboardRoute = getDashboardRoute(userData.currentRole);
-      navigate(dashboardRoute, { replace: true });
-    } else {
-      navigate("/role-selection", { replace: true });
-    }
+    
+    logger.debug("GoogleAuthButton", "User ensured in database", { email });
   };
-
-  // Handle popup-blocked redirect flow: Firebase completes auth after redirect,
-  // but we still need to establish backend session + DB user.
-  useEffect(() => {
-    if (hasHandledRedirect.current) return;
-    hasHandledRedirect.current = true;
-
-    const run = async () => {
-      // Check if auth is already in progress (e.g., from another button click)
-      if (isAuthInProgress.current) {
-        logger.debug('GoogleAuthButton', 'Auth already in progress, skipping redirect check');
-        return;
-      }
-      
-      try {
-        // Don't set loading immediately - only if there's actually a redirect result
-        const firebaseUser = await handleGoogleRedirectResult();
-        if (!firebaseUser) return;
-        
-        // Now that we have a result, lock and set loading
-        isAuthInProgress.current = true;
-        setIsLoading(true);
-        
-        await completeGoogleAuth(firebaseUser);
-      } catch (error: any) {
-        // If there's no redirect result, Firebase returns null; avoid noisy errors.
-        // Only toast on real failures.
-        if (error?.code || error?.message) {
-          toast({
-            title: "Authentication failed",
-            description: error.message || "There was an error signing in with Google.",
-            variant: "destructive",
-          });
-        }
-      } finally {
-        isAuthInProgress.current = false;
-        setIsLoading(false);
-      }
-    };
-
-    run();
-  }, [toast]); // navigate/login are stable enough; we only want this once per mount
 
   const handleGoogleAuth = async () => {
     // GATEKEEPER: Prevent double-clicks and concurrent auth attempts
@@ -192,15 +72,39 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     }
     
     try {
+      // Step 1: Firebase authentication (opens popup)
       const firebaseUser = await signInWithGoogle();
       
       if (!firebaseUser) {
-        // Popup closed or redirect happened - keep lock for redirect case
-        // Unlock only if popup was closed (no redirect)
+        // Popup closed or redirect happened
         isAuthInProgress.current = false;
+        setIsLoading(false);
         return;
       }
-      await completeGoogleAuth(firebaseUser);
+      
+      // Step 2: Ensure user exists in our database BEFORE AuthContext tries to fetch profile
+      // This prevents race conditions where /api/me fails because user doesn't exist yet
+      await ensureUserInDatabase(firebaseUser);
+      
+      // Step 3: Show success toast - AuthContext will handle profile fetching
+      // and LoginPage/AuthGuard will handle navigation
+      toast({
+        title: "Welcome!",
+        description: "Successfully signed in with Google!",
+      });
+      
+      // Call onSuccess if provided (for custom handling)
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // NOTE: We intentionally do NOT navigate here.
+      // AuthContext's onAuthStateChange will:
+      // 1. Detect the new sign-in and set isLoading=true (shows loading screen)
+      // 2. Fetch user profile from /api/me
+      // 3. Set isLoading=false, update user state
+      // Then LoginPage's useEffect will redirect to the appropriate dashboard.
+      // This single flow is faster and less janky than having multiple components race to navigate.
       
     } catch (error: any) {
       console.error("Google auth error:", error);

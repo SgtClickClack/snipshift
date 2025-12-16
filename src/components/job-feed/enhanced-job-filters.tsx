@@ -100,8 +100,15 @@ export function EnhancedJobFilters({ className, onFiltersChange }: EnhancedJobFi
     dateRange.to || 
     jobType !== 'all';
 
+  // When className contains "block", don't apply hidden (for mobile sheet usage)
+  const isForceVisible = className?.includes('block');
+  
   return (
-    <Card className={cn("hidden md:block sticky top-4 z-sticky bg-card rounded-lg border shadow-sm", className)}>
+    <Card className={cn(
+      "sticky top-4 z-sticky bg-card rounded-lg border shadow-sm",
+      !isForceVisible && "hidden md:block",
+      className
+    )}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Filters</span>

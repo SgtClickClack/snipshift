@@ -80,6 +80,7 @@ const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
 
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
+const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 
 function AppRoutes() {
   const location = useLocation();
@@ -456,6 +457,13 @@ function AppRoutes() {
               <SettingsPage />
             </Suspense>
           </ProtectedRoute>
+        } />
+
+        {/* Unauthorized - shown when user tries to access restricted route */}
+        <Route path="/unauthorized" element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <UnauthorizedPage />
+          </Suspense>
         } />
 
         {/* Catch all - 404 */}

@@ -34,6 +34,26 @@ export function AuthGuard({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // PRIORITY 1: If user is authenticated and on login/signup, redirect them immediately
+  // This prevents the "flicker" where users see login/signup page after Google auth
+  const authPages = ['/login', '/signup'];
+  if (isAuthenticated && user && authPages.includes(location.pathname)) {
+    logger.debug('AuthGuard', 'Authenticated user on auth page, redirecting', {
+      isOnboarded: user.isOnboarded,
+      currentRole: user.currentRole,
+    });
+    
+    // Redirect based on onboarding/role status
+    if (user.isOnboarded === false) {
+      return <Navigate to="/onboarding" replace />;
+    }
+    if (!user.currentRole || user.currentRole === 'client') {
+      return <Navigate to="/role-selection" replace />;
+    }
+    const userDashboard = getDashboardRoute(user.currentRole);
+    return <Navigate to={userDashboard} replace />;
+  }
+
   // If user is authenticated but not onboarded, redirect to onboarding
   // Exception: Allow access to onboarding page itself, landing page, legal pages, and other public routes
   const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
@@ -64,15 +84,16 @@ export function AuthGuard({
   if (requiredRole && user && user.currentRole !== requiredRole) {
     // Debug logging for E2E tests
     if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
-      logger.debug('AuthGuard', 'Role mismatch:', {
+      logger.debug('AuthGuard', 'Role mismatch - redirecting to unauthorized:', {
         requiredRole,
         userCurrentRole: user.currentRole,
         userRoles: user.roles,
-        redirectingTo: getDashboardRoute(user.currentRole)
+        attemptedPath: location.pathname
       });
     }
-    const userDashboard = getDashboardRoute(user.currentRole);
-    return <Navigate to={userDashboard} replace />;
+    // Redirect to unauthorized page instead of silently redirecting to dashboard
+    // This makes it clear to users they don't have access
+    return <Navigate to="/unauthorized" state={{ from: location, requiredRole }} replace />;
   }
   
   // Debug: Log successful role check
@@ -86,17 +107,15 @@ export function AuthGuard({
 
   // If multiple roles are allowed, check if user's role is in the allowed list
   if (allowedRoles && user && user.currentRole && !allowedRoles.includes(user.currentRole as typeof allowedRoles[number])) {
-    const userDashboard = getDashboardRoute(user.currentRole as any);
-    return <Navigate to={userDashboard} replace />;
-  }
-
-  // If user is authenticated and on login/signup, redirect to their dashboard
-  if (isAuthenticated && user && user.currentRole && user.currentRole !== 'client') {
-    const currentPath = location.pathname;
-    if (currentPath === '/login' || currentPath === '/signup' || currentPath === '/role-selection') {
-      const userDashboard = getDashboardRoute(user.currentRole);
-      return <Navigate to={userDashboard} replace />;
+    // Debug logging
+    if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
+      logger.debug('AuthGuard', 'Role not in allowed list - redirecting to unauthorized:', {
+        allowedRoles,
+        userCurrentRole: user.currentRole,
+        attemptedPath: location.pathname
+      });
     }
+    return <Navigate to="/unauthorized" state={{ from: location, allowedRoles }} replace />;
   }
 
   // If custom redirect is specified
