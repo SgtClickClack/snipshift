@@ -87,6 +87,10 @@ export default function ForgotPasswordPage() {
               Reset your password
             </CardTitle>
             <p className="text-muted-foreground">We’ll email you a secure reset link.</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Signed up with Google? Use <span className="font-medium">Sign in with Google</span> — password reset emails
+              only apply to email/password accounts.
+            </p>
           </CardHeader>
           <CardContent>
             {submitState.status === 'success' && (

@@ -8,7 +8,6 @@ import {
   onAuthStateChanged,
   signOut,
   sendPasswordResetEmail,
-  type ActionCodeSettings,
   type User as FirebaseAuthUser,
 } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
@@ -103,7 +102,9 @@ export const onAuthStateChange = (callback: (user: FirebaseAuthUser | null) => v
  *
  * Notes:
  * - In E2E runs (VITE_E2E=1), this resolves immediately to avoid external network dependency.
- * - We provide an in-app redirect URL so Firebase can return users to the app after reset.
+ * - We intentionally do NOT pass a custom continue URL by default. Passing an unauthorized URL
+ *   can cause Firebase to reject the request (e.g. `auth/unauthorized-continue-uri`) and the email
+ *   will not be sent. Firebase’s default reset handler is the most compatible.
  */
 export const sendPasswordReset = async (email: string) => {
   const cleanEmail = email.trim();
@@ -113,17 +114,5 @@ export const sendPasswordReset = async (email: string) => {
     return;
   }
 
-  const origin =
-    typeof window !== "undefined" && window.location?.origin
-      ? window.location.origin
-      : undefined;
-
-  const actionCodeSettings: ActionCodeSettings | undefined = origin
-    ? {
-        url: `${origin}/login`,
-        handleCodeInApp: false,
-      }
-    : undefined;
-
-  await sendPasswordResetEmail(auth, cleanEmail, actionCodeSettings);
+  await sendPasswordResetEmail(auth, cleanEmail);
 };

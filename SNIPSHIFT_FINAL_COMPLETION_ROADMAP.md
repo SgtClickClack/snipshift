@@ -66,6 +66,19 @@
 
 ---
 
+### Update: 2025-12-16 - Fix Password Reset Email Delivery (Firebase Continue URL Misconfig Guard)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Removed the custom reset-email “continue URL” parameter so Firebase uses its default reset handler (prevents silent failures when the URL/domain isn’t authorized in Firebase).
+- Added a small UI hint clarifying that password reset emails only apply to email/password accounts (Google-only signups should use Google sign-in).
+
+**Impact:**
+- **Higher success rate:** Password reset emails are much less likely to be blocked by Firebase console configuration.
+
+---
+
 ### Update: 2025-12-16 - Fix Business Calendar Mobile Horizontal Overflow
 
 **Status:** ✅ **FIXED**

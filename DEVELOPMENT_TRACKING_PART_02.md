@@ -37,6 +37,31 @@
 
 ---
 
+#### 2025-12-16: Fix Password Reset Email Delivery (Remove Continue URL + Google Account Hint)
+
+**Core Components**
+- Firebase auth helper (`src/lib/firebase.ts`)
+- Forgot password UI (`src/pages/forgot-password.tsx`)
+
+**Key Features**
+- **Improved deliverability**: Removed the custom password-reset continue URL argument so Firebase uses its default reset handler (avoids `auth/unauthorized-continue-uri` misconfig blocking email sends).
+- **User guidance**: Added a short note clarifying that password reset emails apply to **email/password** accounts (Google-only signups won’t receive reset emails).
+
+**Integration Points**
+- Firebase Auth: `sendPasswordResetEmail(auth, email)` (no custom ActionCodeSettings)
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/pages/forgot-password.tsx`
+
+**Next Priority Task**
+- Verify password reset email delivery in production (and check spam/promotions folders) for a known email/password account.
+
+**Code Organization & Quality**
+- Kept changes tightly scoped to auth helper + auth page; no backend changes required.
+
+---
+
 #### 2025-12-14: Comprehensive Shop Calendar Audit & Fix (Clean UI + Reliable Deletes)
 
 **Core Components**
