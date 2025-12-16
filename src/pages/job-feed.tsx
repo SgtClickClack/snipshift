@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchShifts } from '@/lib/api';
@@ -9,8 +9,9 @@ import GoogleMapView from '@/components/job-feed/google-map-view';
 import { EnhancedJobFilters } from '@/components/job-feed/enhanced-job-filters';
 import { EnhancedJobCard } from '@/components/job-feed/enhanced-job-card';
 import { JobCardData } from '@/components/job-feed/JobCard';
+import { LocationInput } from '@/components/ui/location-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, Map, SearchX, ArrowUpDown, Loader2 } from 'lucide-react';
+import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation } from 'lucide-react';
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import { calculateDistance, reverseGeocodeToCity } from '@/lib/google-maps';
@@ -36,6 +37,8 @@ export default function JobFeedPage() {
   const [centerLocation, setCenterLocation] = useState<{ lat: number; lng: number }>(DEFAULT_LOCATION);
   const [radius] = useState(50);
   const [searchLocation, setSearchLocation] = useState<string>('Locating...');
+  const [locationSearchValue, setLocationSearchValue] = useState<string>('');
+  const [showLocationSearch, setShowLocationSearch] = useState(false);
 
   // Get user location with HIGH ACCURACY GPS
   useEffect(() => {
@@ -91,6 +94,74 @@ export default function JobFeedPage() {
     
     getUserLocation();
   }, []);
+
+  // Handle manual location selection from search
+  const handleLocationSelect = useCallback((location: { lat: number; lng: number; address: string }) => {
+    setUserLocation(location);
+    setCenterLocation(location);
+    setSearchLocation(location.address.split(',')[0] || location.address);
+    setShowLocationSearch(false);
+    setLocationSearchValue('');
+    toast({
+      title: 'Location Updated',
+      description: `Showing shifts near ${location.address.split(',')[0]}`,
+    });
+  }, [toast]);
+
+  // Handle "Use My Location" button click
+  const handleUseMyLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      toast({
+        title: 'Location Unavailable',
+        description: 'Geolocation is not supported by your browser.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLocating(true);
+    setShowLocationSearch(false);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        
+        setUserLocation(coords);
+        setCenterLocation(coords);
+        
+        try {
+          const cityName = await reverseGeocodeToCity(coords.lat, coords.lng);
+          setSearchLocation(cityName || 'Current Location');
+          toast({
+            title: 'Location Updated',
+            description: `Using your current location${cityName ? ` (${cityName})` : ''}`,
+          });
+        } catch (error) {
+          console.error('Reverse geocoding failed:', error);
+          setSearchLocation('Current Location');
+        }
+        
+        setIsLocating(false);
+      },
+      (error) => {
+        console.warn('Geolocation error:', error.message);
+        setIsLocating(false);
+        toast({
+          title: 'Location Error',
+          description: 'Could not get your location. Please search for a location manually.',
+          variant: 'destructive',
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }, [toast]);
 
   // Build filter params from URL search params
   const status = (searchParams.get('status') as 'open' | 'filled' | 'completed') || 'open';
@@ -292,18 +363,53 @@ export default function JobFeedPage() {
         <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Find Shifts</h1>
-            <p className="text-muted-foreground mt-1 flex items-center gap-2">
+            <div className="mt-1">
               {isLocating ? (
-                <>
+                <p className="text-muted-foreground flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Locating you...</span>
-                </>
+                </p>
+              ) : showLocationSearch ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="w-64">
+                    <LocationInput
+                      value={locationSearchValue}
+                      onChange={setLocationSearchValue}
+                      onSelect={handleLocationSelect}
+                      placeholder="Search city or suburb..."
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUseMyLocation}
+                    className="flex items-center gap-1"
+                  >
+                    <Navigation className="h-3 w-3" />
+                    Use GPS
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowLocationSearch(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               ) : (
-                <>
-                  Browse available shifts near <span className="font-medium text-foreground">{searchLocation}</span>
-                </>
+                <button
+                  onClick={() => setShowLocationSearch(true)}
+                  className="text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors group"
+                >
+                  <span>Browse available shifts near</span>
+                  <span className="font-medium text-foreground flex items-center gap-1 group-hover:text-primary">
+                    <MapPin className="h-3 w-3" />
+                    {searchLocation}
+                  </span>
+                  <span className="text-xs text-muted-foreground group-hover:text-primary">(change)</span>
+                </button>
               )}
-            </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">

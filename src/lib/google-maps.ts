@@ -78,10 +78,11 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<string |
 };
 
 /**
- * Reverse geocode coordinates to extract just the city name
+ * Reverse geocode coordinates to extract the city/region name
+ * Prioritizes broader geographic areas over suburbs for better UX
  * @param lat Latitude
  * @param lng Longitude
- * @returns City name or null if not found
+ * @returns City/region name or null if not found
  */
 export const reverseGeocodeToCity = async (lat: number, lng: number): Promise<string | null> => {
   try {
@@ -91,26 +92,70 @@ export const reverseGeocodeToCity = async (lat: number, lng: number): Promise<st
     return new Promise((resolve) => {
       geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
         if (status === 'OK' && results && results.length > 0) {
-          // Search through all results to find the city (locality)
+          // In Australia, suburbs are often returned as "locality" but we want the broader city
+          // Priority: administrative_area_level_2 (LGA/city) > colloquial_area > locality > sublocality
+          
+          let locality: string | null = null;
+          let adminLevel2: string | null = null;
+          let colloquialArea: string | null = null;
+          let sublocality: string | null = null;
+          
+          // Search through all results to find the best match
           for (const result of results) {
             for (const component of result.address_components || []) {
-              // Look for locality (city) first
-              if (component.types.includes('locality')) {
-                resolve(component.long_name);
-                return;
+              // administrative_area_level_2 is typically the LGA/city in Australia
+              if (component.types.includes('administrative_area_level_2') && !adminLevel2) {
+                adminLevel2 = component.long_name;
+              }
+              // Colloquial area can be broader city names like "Gold Coast"
+              if (component.types.includes('colloquial_area') && !colloquialArea) {
+                colloquialArea = component.long_name;
+              }
+              // locality is often a suburb in Australia
+              if (component.types.includes('locality') && !locality) {
+                locality = component.long_name;
+              }
+              if (component.types.includes('sublocality') && !sublocality) {
+                sublocality = component.long_name;
               }
             }
           }
           
-          // Fallback: try to find sublocality or administrative_area_level_2
-          for (const result of results) {
-            for (const component of result.address_components || []) {
-              if (component.types.includes('sublocality') || 
-                  component.types.includes('administrative_area_level_2')) {
-                resolve(component.long_name);
-                return;
-              }
-            }
+          // For Australian cities, prefer the broader area name
+          // Check if locality looks like a suburb (common patterns: Beach, Park, Hills, Heights, etc.)
+          const suburbPatterns = /\b(Beach|Park|Hills|Heights|Point|Bay|Waters|Grove|Glen|Vale|Creek|West|East|North|South|Central|City|CBD)\b/i;
+          const looksLikeSuburb = locality && suburbPatterns.test(locality);
+          
+          // Priority order for best user experience:
+          // 1. colloquial_area (e.g., "Gold Coast", "Sunshine Coast")
+          // 2. administrative_area_level_2 if locality looks like a suburb
+          // 3. locality (if it's a real city name, not a suburb)
+          // 4. administrative_area_level_2 as fallback
+          // 5. sublocality as last resort
+          
+          if (colloquialArea) {
+            resolve(colloquialArea);
+            return;
+          }
+          
+          if (looksLikeSuburb && adminLevel2) {
+            resolve(adminLevel2);
+            return;
+          }
+          
+          if (locality) {
+            resolve(locality);
+            return;
+          }
+          
+          if (adminLevel2) {
+            resolve(adminLevel2);
+            return;
+          }
+          
+          if (sublocality) {
+            resolve(sublocality);
+            return;
           }
           
           // Last fallback: use the first result's formatted address (shortened)
