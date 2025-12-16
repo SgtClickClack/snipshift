@@ -1,5 +1,16 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut,
+  sendPasswordResetEmail,
+  type ActionCodeSettings,
+  type User as FirebaseAuthUser,
+} from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
 import { fallbackConfig } from "./firebase-fallback";
@@ -52,9 +63,13 @@ export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const code =
+      typeof error === 'object' && error && 'code' in error
+        ? String((error as { code: unknown }).code)
+        : '';
     // If popup is blocked, fallback to redirect
-    if (error.code === 'auth/popup-blocked') {
+    if (code === 'auth/popup-blocked') {
       await signInWithRedirect(auth, googleProvider);
       return null; // Will be handled by redirect result
     }
@@ -79,6 +94,36 @@ export const signOutUser = async () => {
 };
 
 // Auth state listener
-export const onAuthStateChange = (callback: (user: any) => void) => {
+export const onAuthStateChange = (callback: (user: FirebaseAuthUser | null) => void) => {
   return onAuthStateChanged(auth, callback);
+};
+
+/**
+ * Send a password reset email via Firebase Auth.
+ *
+ * Notes:
+ * - In E2E runs (VITE_E2E=1), this resolves immediately to avoid external network dependency.
+ * - We provide an in-app redirect URL so Firebase can return users to the app after reset.
+ */
+export const sendPasswordReset = async (email: string) => {
+  const cleanEmail = email.trim();
+
+  // E2E mode: avoid hitting Firebase network in automation.
+  if (import.meta.env.VITE_E2E === "1") {
+    return;
+  }
+
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : undefined;
+
+  const actionCodeSettings: ActionCodeSettings | undefined = origin
+    ? {
+        url: `${origin}/login`,
+        handleCodeInApp: false,
+      }
+    : undefined;
+
+  await sendPasswordResetEmail(auth, cleanEmail, actionCodeSettings);
 };

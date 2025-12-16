@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -29,6 +29,7 @@ import LandingPage from '@/pages/landing';
 import HomePage from '@/pages/home';
 import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
+import ForgotPasswordPage from '@/pages/forgot-password';
 import { OAuthCallback } from '@/pages/oauth-callback';
 import NotFound from '@/pages/not-found';
 
@@ -68,9 +69,7 @@ const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
 const TrainerDashboard = lazy(() => import('@/pages/trainer-dashboard'));
 
 // Feature pages - lazy load for better performance
-const DemoPage = lazy(() => import('@/pages/demo'));
 const ProfilePage = lazy(() => import('@/pages/profile'));
-const CommunityPage = lazy(() => import('@/pages/community'));
 const WalletPage = lazy(() => import('@/pages/wallet'));
 const EarningsPage = lazy(() => import('@/pages/earnings'));
 const MessagesPage = lazy(() => import('@/pages/messages'));
@@ -79,10 +78,6 @@ const SalonCreateJobPage = lazy(() => import('@/pages/salon-create-job'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
 
-// Complex components - lazy load to reduce bundle size
-const SocialFeed = lazy(() => import('@/components/social/social-feed'));
-const TrainingHub = lazy(() => import('@/components/training/training-hub'));
-const ContentModeration = lazy(() => import('@/components/admin/content-moderation'));
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
 
@@ -90,7 +85,7 @@ function AppRoutes() {
   const location = useLocation();
   const { isLoading } = useAuth();
   const hideNavbar = location.pathname === '/onboarding';
-  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection'].includes(location.pathname);
+  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/forgot-password'].includes(location.pathname);
   
   // Show loading screen while auth is initializing to prevent errors
   if (isLoading) {
@@ -133,6 +128,12 @@ function AppRoutes() {
         <Route path="/signup" element={
           <AuthGuard>
             <SignupPage />
+          </AuthGuard>
+        } />
+
+        <Route path="/forgot-password" element={
+          <AuthGuard>
+            <ForgotPasswordPage />
           </AuthGuard>
         } />
 

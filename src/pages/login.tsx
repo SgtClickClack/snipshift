@@ -10,14 +10,14 @@ import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-import { useAuth, User } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, user, isAuthReady, isAuthenticated } = useAuth();
+  const { user, isAuthReady, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -90,15 +90,20 @@ export default function LoginPage() {
       // Set flag to wait for auth state to sync and user profile to load
       // The useEffect above will handle the role-based redirection
       setPendingRedirect(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
       
       let errorTitle = "Login failed";
       let errorDescription = "Invalid email or password";
       
       // Handle Firebase auth errors
-      if (error?.code) {
-        switch (error.code) {
+      const code =
+        typeof error === 'object' && error && 'code' in error
+          ? String((error as { code: unknown }).code)
+          : '';
+
+      if (code) {
+        switch (code) {
           case 'auth/network-request-failed':
             errorTitle = "Network error";
             errorDescription = "Please check your connection and try again";
@@ -125,9 +130,10 @@ export default function LoginPage() {
             // For unknown Firebase errors, show generic message
             errorDescription = "Something went wrong. Please try again";
         }
-      } else if (!error?.code && error?.message) {
+      } else if (!code && typeof error === 'object' && error && 'message' in error) {
+        const message = String((error as { message: unknown }).message || '');
         // Handle non-Firebase errors (e.g., network errors without code)
-        if (error.message.includes('network') || error.message.includes('fetch')) {
+        if (message.includes('network') || message.includes('fetch')) {
           errorTitle = "Network error";
           errorDescription = "Please check your connection and try again";
         } else {
@@ -211,9 +217,17 @@ export default function LoginPage() {
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Created account with Google? Click 'Sign in with Google' below.
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    Created account with Google? Click 'Sign in with Google' below.
+                  </p>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-primary hover:underline font-medium whitespace-nowrap ml-3"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
               
               <Button 

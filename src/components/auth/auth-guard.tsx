@@ -36,7 +36,7 @@ export function AuthGuard({
 
   // If user is authenticated but not onboarded, redirect to onboarding
   // Exception: Allow access to onboarding page itself, landing page, legal pages, and other public routes
-  const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/contact', '/about'];
+  const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
   if (isAuthenticated && user && user.isOnboarded === false) {
     // Avoid redirect loop when already on a public route
     if (!publicRoutes.includes(location.pathname)) {

@@ -1,4 +1,42 @@
 
+#### 2025-12-16: Add Forgot Password Flow (Firebase Password Reset Email)
+
+**Core Components**
+- Password reset UI page (`src/pages/forgot-password.tsx`)
+- Login screen navigation (`src/pages/login.tsx`)
+- Firebase auth helper (`src/lib/firebase.ts`)
+- Route registration (`src/App.tsx`)
+- Auth public-route allowlist (`src/components/auth/auth-guard.tsx`)
+- E2E coverage (`tests/e2e/forgot-password.spec.ts`)
+
+**Key Features**
+- **Forgot Password route + page**: Added `/forgot-password` with a simple email form and clear success/error states.
+- **Neutral success messaging**: Success UI is intentionally neutral (“If an account exists…”) to reduce account enumeration risk.
+- **Firebase integration**: Wired the form to Firebase Auth `sendPasswordResetEmail`, with an app redirect URL back to `/login`.
+- **E2E-safe behavior**: In `VITE_E2E=1`, the reset action resolves without calling external Firebase, keeping tests deterministic.
+- **Login entry point**: Added a “Forgot password?” link from the login screen.
+
+**Integration Points**
+- UI route: `GET /forgot-password`
+- Firebase Auth: `sendPasswordResetEmail(...)`
+- Playwright: `npx playwright test --grep "Forgot Password"`
+
+**File Paths**
+- `src/pages/forgot-password.tsx`
+- `src/pages/login.tsx`
+- `src/lib/firebase.ts`
+- `src/App.tsx`
+- `src/components/auth/auth-guard.tsx`
+- `tests/e2e/forgot-password.spec.ts`
+
+**Next Priority Task**
+- Verify the reset email link behavior end-to-end in production (Firebase console Action URL settings + redirect back to `/login`).
+
+**Code Organization & Quality**
+- Kept all logic localized to auth utilities and auth-related pages/routes; avoided introducing new patterns beyond existing Firebase + E2E gating.
+
+---
+
 #### 2025-12-14: Comprehensive Shop Calendar Audit & Fix (Clean UI + Reliable Deletes)
 
 **Core Components**

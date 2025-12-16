@@ -51,6 +51,21 @@
 
 ---
 
+### Update: 2025-12-16 - Add Forgot Password Flow (Firebase Password Reset Email)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added a new `/forgot-password` page that sends a Firebase password reset email for the provided address.
+- Added a “Forgot password?” link on the Login screen for quick access.
+- Implemented neutral success messaging (“If an account exists…”) to reduce account enumeration risk.
+- Added Playwright coverage for the forgot-password flow (and made the reset call E2E-safe behind `VITE_E2E=1`).
+
+**Impact:**
+- **Auth UX:** Users can recover access to email/password accounts without support intervention.
+
+---
+
 ### Update: 2025-12-16 - Fix Business Calendar Mobile Horizontal Overflow
 
 **Status:** ✅ **FIXED**
