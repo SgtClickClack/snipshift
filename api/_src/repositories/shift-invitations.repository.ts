@@ -167,22 +167,45 @@ export async function getPendingInvitationsWithShiftDetails(professionalId: stri
     return [];
   }
 
-  const result = await db
-    .select({
-      invitation: shiftInvitations,
-      shift: shifts,
-    })
-    .from(shiftInvitations)
-    .innerJoin(shifts, eq(shiftInvitations.shiftId, shifts.id))
-    .where(and(
-      eq(shiftInvitations.professionalId, professionalId),
-      eq(shiftInvitations.status, 'PENDING'),
-      // Only include shifts that haven't been taken yet
-      sql`${shifts.assigneeId} IS NULL`
-    ))
-    .orderBy(desc(shiftInvitations.createdAt));
+  try {
+    const result = await db
+      .select({
+        invitation: shiftInvitations,
+        shift: shifts,
+      })
+      .from(shiftInvitations)
+      .innerJoin(shifts, eq(shiftInvitations.shiftId, shifts.id))
+      .where(and(
+        eq(shiftInvitations.professionalId, professionalId),
+        eq(shiftInvitations.status, 'PENDING'),
+        // Only include shifts that haven't been taken yet
+        sql`${shifts.assigneeId} IS NULL`
+      ))
+      .orderBy(desc(shiftInvitations.createdAt));
 
-  return result;
+    return result;
+  } catch (error: any) {
+    // Check if this is a "relation does not exist" error (table not created yet)
+    const errorCode = error?.code ?? error?.cause?.code ?? error?.originalError?.code;
+    const errorMessage = `${error?.message ?? ''} ${error?.cause?.message ?? ''}`.toLowerCase();
+    
+    if (errorCode === '42P01' || errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+      console.warn('[getPendingInvitationsWithShiftDetails] shift_invitations table may not exist yet. Returning empty array.');
+      return [];
+    }
+    
+    // Log error details for debugging but don't expose to client
+    console.error('[getPendingInvitationsWithShiftDetails] Database query error:', {
+      professionalId,
+      message: error?.message,
+      code: errorCode,
+      detail: error?.detail ?? error?.cause?.detail,
+      hint: error?.hint ?? error?.cause?.hint,
+    });
+    
+    // Return empty array for graceful degradation instead of crashing
+    return [];
+  }
 }
 
 /**
