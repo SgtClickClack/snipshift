@@ -185,26 +185,26 @@ export function ApplicationCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-4 border-t border-border">
+        <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
           {onViewDetails && (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="flex-1 min-w-[120px]"
               onClick={() => onViewDetails(application.jobId)}
             >
-              <Eye className="h-4 w-4 mr-2" />
-              View Details
+              <Eye className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
+              <span className="truncate">View Details</span>
             </Button>
           )}
           {application.status === 'pending' && (
             <Button
               variant="default"
               size="sm"
-              className="flex-1"
+              className="flex-1 min-w-[120px]"
               onClick={() => setShowStatusModal(true)}
             >
-              View Status Update
+              <span className="truncate">View Status</span>
             </Button>
           )}
           {canMessage && application.businessId && (
@@ -212,10 +212,10 @@ export function ApplicationCard({
               targetUserId={application.businessId}
               variant="default"
               size="sm"
-              className="flex-1"
+              className="flex-1 min-w-[100px]"
             >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Message
+              <MessageSquare className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
+              <span className="truncate">Message</span>
             </StartConversationButton>
           )}
           {canWithdraw && (
@@ -223,13 +223,13 @@ export function ApplicationCard({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 min-w-[100px]"
                 onClick={handleWithdrawClick}
                 disabled={withdrawMutation.isPending}
                 data-testid={`button-withdraw-application-${application.id}`}
               >
-                <X className="h-4 w-4 mr-2" />
-                {withdrawMutation.isPending ? 'Withdrawing...' : 'Withdraw'}
+                <X className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
+                <span className="truncate">{withdrawMutation.isPending ? 'Withdrawing...' : 'Withdraw'}</span>
               </Button>
               
               <AlertDialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>

@@ -59,12 +59,12 @@ export default function ApplicationsView() {
   };
 
   return (
-    <div className="min-h-screen bg-background" data-testid="applications-view">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-background overflow-x-hidden" data-testid="applications-view">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Main Title */}
-        <header className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground" data-testid="applications-title">My Applications</h1>
-          <p className="text-muted-foreground mt-2">
+        <header className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="applications-title">My Applications</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
             View and manage the status of shifts you have applied for
           </p>
         </header>
@@ -75,15 +75,17 @@ export default function ApplicationsView() {
           onValueChange={(value) => setActiveTab(value as 'pending' | 'confirmed' | 'rejected')}
           className="w-full"
         >
-          <TabsList className="mb-6">
-            <TabsTrigger value="pending" data-testid="tab-pending">
+          <TabsList className="mb-6 w-full flex flex-wrap sm:inline-flex sm:w-auto h-auto gap-1 p-1">
+            <TabsTrigger value="pending" data-testid="tab-pending" className="flex-1 sm:flex-initial whitespace-normal text-xs sm:text-sm py-2">
               Pending ({statusCounts.pending})
             </TabsTrigger>
-            <TabsTrigger value="confirmed" data-testid="tab-confirmed">
+            <TabsTrigger value="confirmed" data-testid="tab-confirmed" className="flex-1 sm:flex-initial whitespace-normal text-xs sm:text-sm py-2">
               Confirmed ({statusCounts.confirmed})
             </TabsTrigger>
-            <TabsTrigger value="rejected" data-testid="tab-rejected">
-              Rejected/Archived ({statusCounts.rejected})
+            <TabsTrigger value="rejected" data-testid="tab-rejected" className="flex-1 sm:flex-initial whitespace-normal text-xs sm:text-sm py-2">
+              <span className="hidden sm:inline">Rejected/Archived</span>
+              <span className="sm:hidden">Rejected</span>
+              {' '}({statusCounts.rejected})
             </TabsTrigger>
           </TabsList>
 
