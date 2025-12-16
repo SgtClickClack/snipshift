@@ -262,6 +262,40 @@ button:active, a:active, [role="button"]:active {
   background-color: hsl(var(--background));
 }
 
+/* Week/Day view header z-index fix for mobile - ensures headers stay on top when scrolling */
+.rbc-time-view .rbc-time-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: hsl(var(--background));
+}
+
+.rbc-time-header-gutter,
+.rbc-time-header-content {
+  position: relative;
+  z-index: 11;
+  background-color: hsl(var(--background));
+}
+
+/* Ensure header row stays on top of content */
+.rbc-time-view .rbc-row {
+  position: relative;
+  z-index: 5;
+}
+
+/* Row containing day headers in week view */
+.rbc-time-header-content .rbc-row {
+  z-index: 11;
+  background-color: hsl(var(--background));
+}
+
+/* Individual headers within the row */
+.rbc-time-header-content .rbc-header {
+  position: relative;
+  z-index: 12;
+  background-color: hsl(var(--background));
+}
+
 /* Dark mode time gutter - better contrast with gradient */
 .dark .rbc-time-header-gutter {
   background: linear-gradient(to right, hsl(var(--muted) / 0.8), hsl(var(--muted) / 0.75)) !important;
@@ -272,6 +306,24 @@ button:active, a:active, [role="button"]:active {
 
 .dark .rbc-time-header-content {
   border-left-color: hsl(var(--border) / 0.9) !important;
+}
+
+/* Dark mode header z-index fix */
+.dark .rbc-time-view .rbc-time-header {
+  background-color: hsl(var(--background));
+}
+
+.dark .rbc-time-header-gutter,
+.dark .rbc-time-header-content {
+  background-color: hsl(var(--background));
+}
+
+.dark .rbc-time-header-content .rbc-row {
+  background-color: hsl(var(--background));
+}
+
+.dark .rbc-time-header-content .rbc-header {
+  background-color: hsl(var(--background));
 }
 
 /* Current day column styling in week/day view - Google Calendar style */
