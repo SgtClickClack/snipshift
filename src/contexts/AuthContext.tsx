@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { onAuthStateChange, signOutUser, auth } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
@@ -18,6 +18,7 @@ export interface User {
   profileImageURL?: string; // Todo: standardize on profileImage
   avatarUrl?: string;      // Todo: standardize on profileImage
   bannerUrl?: string;      // Profile banner/cover photo URL
+  bannerImage?: string;    // Alias for bannerUrl
   photoURL?: string;       // Firebase property
   bio?: string;
   phone?: string;
@@ -27,6 +28,14 @@ export interface User {
   isOnboarded?: boolean;
   averageRating?: number | null;
   reviewCount?: number;
+  // Brand/Business profile fields
+  companyName?: string;
+  description?: string;
+  website?: string;
+  // Professional profile fields
+  skills?: string[];
+  experience?: string;
+  isRoamingNomad?: boolean;
   businessSettings?: {
     openingHours: Record<string, { open: string; close: string; enabled: boolean }>;
     shiftSplitType: 'halves' | 'thirds' | 'custom' | 'full-day';

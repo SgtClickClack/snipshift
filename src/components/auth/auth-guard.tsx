@@ -85,8 +85,8 @@ export function AuthGuard({
   }
 
   // If multiple roles are allowed, check if user's role is in the allowed list
-  if (allowedRoles && user && user.currentRole && !allowedRoles.includes(user.currentRole)) {
-    const userDashboard = getDashboardRoute(user.currentRole);
+  if (allowedRoles && user && user.currentRole && !allowedRoles.includes(user.currentRole as typeof allowedRoles[number])) {
+    const userDashboard = getDashboardRoute(user.currentRole as any);
     return <Navigate to={userDashboard} replace />;
   }
 

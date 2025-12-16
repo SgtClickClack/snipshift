@@ -360,17 +360,18 @@ export function AssignStaffModal({
 
         {/* Footer with multi-invite button */}
         {enableMultiSelect && (
-          <DialogFooter className="mt-4 pt-4 border-t">
+          <DialogFooter className="mt-4 pt-4 border-t flex-col-reverse sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={handleClose}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               onClick={handleInviteMultiple}
               disabled={selectedIds.size === 0}
-              className="min-w-[160px]"
+              className="w-full sm:w-auto sm:min-w-[160px]"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               {selectedIds.size === 0 

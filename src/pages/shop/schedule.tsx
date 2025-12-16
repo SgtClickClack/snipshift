@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { addWeeks, endOfDay, endOfWeek, format, parse, startOfDay, startOfWeek, subWeeks, getDay } from 'date-fns';
-import enUS from 'date-fns/locale/en-US';
+import { enUS } from 'date-fns/locale';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -430,7 +430,7 @@ export default function ShopSchedulePage() {
       const res = await apiRequest('POST', `/api/shifts/${shiftId}/invite`, { professionalIds });
       return await res.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       setAssignModalOpen(false);
       setSelectedDraftShift(null);
       queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
@@ -536,7 +536,9 @@ export default function ShopSchedulePage() {
         borderWidth: isDraft ? 2 : 1,
         borderStyle: colors.borderStyle || 'solid',
         borderRadius: 10,
-        padding: 2,
+        padding: '4px 8px',
+        // Apple's minimum touch target is 44px - enforce for mobile accessibility
+        minHeight: '44px',
         boxShadow: isDraft ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
         cursor: isDraft ? 'pointer' : 'default',
       },
@@ -640,8 +642,8 @@ export default function ShopSchedulePage() {
                 <DnDCalendar
                   localizer={localizer}
                   events={events}
-                  startAccessor="start"
-                  endAccessor="end"
+                  startAccessor={(e: CalendarEvent) => e.start}
+                  endAccessor={(e: CalendarEvent) => e.end}
                   view={view}
                   date={currentDate}
                   onNavigate={handleNavigate}

@@ -6,8 +6,10 @@ export interface Job {
   id: string;
   title: string;
   shopName?: string;
-  rate?: string;
-  payRate?: string;
+  rate?: string | number;
+  payRate?: string | number;
+  hourlyRate?: string | number; // Alias for rate/payRate (shift compatibility)
+  pay?: string | number; // Alias for rate/payRate
   date: string;
   lat?: number;
   lng?: number;
@@ -21,7 +23,7 @@ export interface Job {
   hubId?: string;
   skillsRequired?: string[];
   businessId?: string;
-  status?: 'open' | 'filled' | 'closed';
+  status?: 'open' | 'filled' | 'closed' | 'completed';
   createdAt?: string;
   payType?: string;
   applicants?: string[];
@@ -41,8 +43,11 @@ export interface User {
 export interface Chat {
   id: string;
   participants: string[];
-  lastMessage?: Message;
+  lastMessage?: string | Message;
   lastMessageAt?: string;
+  lastMessageTimestamp?: string;
+  lastMessageSender?: string;
+  unreadCount?: number;
   createdAt: string;
 }
 
@@ -72,9 +77,15 @@ export interface Shift {
   hourlyRate?: string | number;
   requirements?: string; // Description/requirements (alias for description)
   description?: string;
-  status?: 'open' | 'filled' | 'completed';
+  status?: 'open' | 'filled' | 'completed' | 'draft' | 'invited' | 'confirmed';
   employerId?: string;
   createdAt?: string;
   updatedAt?: string;
+  // Shop branding fields
+  shopName?: string | null;
+  shopAvatarUrl?: string | null;
+  // Location coordinates
+  lat?: string | number | null;
+  lng?: string | number | null;
 }
 

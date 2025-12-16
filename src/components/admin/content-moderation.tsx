@@ -1,13 +1,13 @@
 ﻿import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OptimizedImage } from "@/components/ui/optimized-image";
-import { Check, X, Eye, Shield, AlertTriangle, Clock, Filter } from "lucide-react";
+import { Check, X, Eye, Shield, AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
 
 interface PendingPost {
@@ -47,7 +47,7 @@ interface PendingContent {
 export default function ContentModeration() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "posts" | "training">("all");
+  const [_filter, _setFilter] = useState<"all" | "posts" | "training">("all"); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const { data: pendingPosts = [], isLoading: loadingPosts } = useQuery<PendingPost[]>({
     queryKey: ["/api/admin/pending-posts"],

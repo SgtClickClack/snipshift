@@ -22,12 +22,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useNavigate } from "react-router-dom";
 import { Job } from "@shared/firebase-schema";
-import { MyApplication } from "@/lib/api";
+// Application type not needed - Booking is defined locally
 
-interface Booking extends MyApplication {
+interface Booking {
+  id: string;
+  userId: string;
+  jobId?: string;
+  shiftId?: string;
+  coverLetter?: string;
+  appliedAt: string;
   job?: Job;
   shift?: Job;
-  status: 'pending' | 'accepted' | 'rejected' | 'confirmed';
+  status: 'pending' | 'accepted' | 'rejected' | 'confirmed' | 'completed';
 }
 
 interface ProfessionalOverviewProps {

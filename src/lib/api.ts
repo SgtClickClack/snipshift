@@ -179,13 +179,27 @@ export interface JobDetails {
   title: string;
   description: string;
   payRate: string | number;
+  rate?: string | number;
+  hourlyRate?: string | number;
   date: string;
+  startTime?: string;
+  endTime?: string;
   location: string | { city: string; state: string };
+  city?: string;
+  state?: string;
+  address?: string;
+  lat?: number | string | null;
+  lng?: number | string | null;
   skillsRequired?: string[];
+  requirements?: string[] | string;
   payType: 'hourly' | 'daily' | 'fixed';
   businessId: string;
+  businessName?: string;
+  shopName?: string;
+  type?: string;
   hubId?: string;
   applicants?: string[];
+  status?: 'open' | 'filled' | 'closed' | 'completed';
 }
 
 export async function getJobDetails(jobId: string): Promise<JobDetails> {
@@ -323,7 +337,9 @@ export interface JobApplication {
   id: string;
   name: string;
   email: string;
+  userId?: string;
   status: 'pending' | 'accepted' | 'rejected';
+  coverLetter?: string;
   appliedAt: string;
 }
 

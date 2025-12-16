@@ -1,9 +1,8 @@
-﻿import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+﻿import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown, Plus, Check, PlusCircle, Menu, RefreshCw, Briefcase, User, Settings } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown, Check, PlusCircle, Menu, RefreshCw, User, Settings } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -25,8 +24,7 @@ import {
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
-import { getDashboardRoute, mapRoleToApiRole } from "@/lib/roles";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { getDashboardRoute, mapRoleToApiRole, AppRole } from "@/lib/roles";
 import { InstallButton } from "@/components/pwa/install-button";
 import logo from "@/assets/logo-processed.png";
 
@@ -86,7 +84,7 @@ export default function Navbar() {
   
   const availableRoles = (user?.roles || []).filter(r => r !== user?.currentRole);
   // Filter out roles the user already has from the potential missing roles
-  const missingRoles = ['professional', 'hub'].filter(r => !(user?.roles || []).includes(r) && !(user?.roles || []).includes(r === 'hub' ? 'business' : r));
+  const missingRoles: AppRole[] = (['professional', 'hub'] as AppRole[]).filter(r => !(user?.roles || []).includes(r) && !(user?.roles || []).includes(r === 'hub' ? 'business' : r));
 
   const getInitials = (name?: string, email?: string) => {
     if (name) {
