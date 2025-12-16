@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -10,32 +10,40 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
-import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet } from "lucide-react";
+import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2 } from "lucide-react";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
-import ProfessionalOverview from "@/components/dashboard/professional-overview";
-import ProfileForm from "@/components/profile/profile-form";
-import ProfessionalDigitalResume from "@/components/profile/professional-digital-resume";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/advanced-job-filters";
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
-import GoogleMapView from "@/components/job-feed/google-map-view";
-import LocationSearch from "@/components/job-feed/location-search";
-import ProfessionalCalendar from "@/components/calendar/professional-calendar";
-import ApplicationsView from "./professional-dashboard/ApplicationsView";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
-import { OfferInbox } from "@/components/shifts/offer-inbox";
-import JobBoard from "@/components/job-board/JobBoard";
-import PendingReviewNotification from "@/components/shifts/pending-review-notification";
-import PayoutSettings from "@/components/payments/payout-settings";
-import EarningsDashboard from "@/components/payments/earnings-dashboard";
-import BulkInvitationReview from "@/components/dashboard/BulkInvitationReview";
 import { fetchShifts } from "@/lib/api";
 import { Mail } from "lucide-react";
+
+// Lazy load heavy view components to reduce initial bundle size
+const ProfessionalOverview = lazy(() => import("@/components/dashboard/professional-overview"));
+const ProfessionalDigitalResume = lazy(() => import("@/components/profile/professional-digital-resume"));
+const ProfessionalCalendar = lazy(() => import("@/components/calendar/professional-calendar"));
+const ApplicationsView = lazy(() => import("./professional-dashboard/ApplicationsView"));
+const JobBoard = lazy(() => import("@/components/job-board/JobBoard"));
+const PayoutSettings = lazy(() => import("@/components/payments/payout-settings"));
+const EarningsDashboard = lazy(() => import("@/components/payments/earnings-dashboard"));
+const BulkInvitationReview = lazy(() => import("@/components/dashboard/BulkInvitationReview"));
+const OfferInbox = lazy(() => import("@/components/shifts/offer-inbox").then(m => ({ default: m.OfferInbox })));
+const PendingReviewNotification = lazy(() => import("@/components/shifts/pending-review-notification"));
+const GoogleMapView = lazy(() => import("@/components/job-feed/google-map-view"));
+const LocationSearch = lazy(() => import("@/components/job-feed/location-search"));
+
+// Loading fallback component
+const ViewLoader = () => (
+  <div className="flex items-center justify-center py-12">
+    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  </div>
+);
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -77,17 +85,24 @@ export default function ProfessionalDashboard() {
     dateRange: "all"
   });
 
+  // Only fetch jobs when needed for jobs view or overview
+  const shouldFetchJobs = activeView === 'jobs' || activeView === 'overview';
   const { data: jobs = [], isLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
+    enabled: shouldFetchJobs,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  // Only fetch bookings when needed for calendar or overview
+  const shouldFetchBookings = activeView === 'calendar' || activeView === 'overview';
   const { data: bookingsData, isLoading: isLoadingBookings } = useQuery({
     queryKey: ['/api/applications', { status: 'accepted' }],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/applications?status=accepted");
       return res.json();
     },
-    enabled: !!user?.id
+    enabled: !!user?.id && shouldFetchBookings,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Memoize bookings to prevent unnecessary Calendar re-renders
@@ -108,14 +123,16 @@ export default function ProfessionalDashboard() {
     enabled: activeView === 'calendar',
   });
 
-  // Fetch pending invitations count for the tab badge
+  // Fetch pending invitations count - only when on invitations/overview tab
+  const shouldFetchInvitations = activeView === 'invitations' || activeView === 'overview';
   const { data: pendingInvitationsData } = useQuery({
     queryKey: ['/api/shifts/invitations/pending'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/shifts/invitations/pending');
       return res.json();
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && shouldFetchInvitations,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
   const pendingInvitationsCount = pendingInvitationsData?.totalCount || 0;
 
@@ -145,8 +162,15 @@ export default function ProfessionalDashboard() {
       .filter((d): d is Date => d !== null)
   }, [bookings]);
 
-  // Get user's current location on mount
+  // Get user's current location only when viewing jobs (map view may need it)
+  // Deferred until actually needed to avoid blocking initial render
   useEffect(() => {
+    // Only get location if on jobs view and we haven't already got coordinates
+    if (activeView !== 'jobs' || locationCoordinates !== null) {
+      setIsLocating(false);
+      return;
+    }
+
     if (!navigator.geolocation) {
       // Fallback to Sydney if geolocation not supported
       setLocationCoordinates({ lat: -33.8688, lng: 151.2093 });
@@ -198,7 +222,7 @@ export default function ProfessionalDashboard() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, []);
+  }, [activeView, locationCoordinates]);
 
   // Advanced job filtering with all criteria
   const filteredJobs = useMemo(() => {
@@ -370,13 +394,15 @@ export default function ProfessionalDashboard() {
     }
   };
 
+  // Only fetch dashboard stats when on overview
   const { data: dashboardStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/analytics/dashboard");
       return res.json();
     },
-    enabled: !!user,
+    enabled: !!user && activeView === 'overview',
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Stats
@@ -561,29 +587,41 @@ export default function ProfessionalDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Job Requests - Always visible at the top */}
-        <div className="mb-8">
-          <OfferInbox />
-        </div>
+        {/* Job Requests - Only show on overview and invitations views */}
+        {(activeView === 'overview' || activeView === 'invitations') && (
+          <div className="mb-8">
+            <Suspense fallback={<ViewLoader />}>
+              <OfferInbox />
+            </Suspense>
+          </div>
+        )}
 
-        {/* Pending Review Notification */}
-        <div className="mb-8">
-          <PendingReviewNotification />
-        </div>
+        {/* Pending Review Notification - Only show on overview */}
+        {activeView === 'overview' && (
+          <div className="mb-8">
+            <Suspense fallback={null}>
+              <PendingReviewNotification />
+            </Suspense>
+          </div>
+        )}
 
         {/* Overview Tab */}
         {activeView === 'overview' && (
-          <ProfessionalOverview
-            bookings={bookings}
-            jobs={jobs}
-            onViewChange={setActiveView}
-          />
+          <Suspense fallback={<ViewLoader />}>
+            <ProfessionalOverview
+              bookings={bookings}
+              jobs={jobs}
+              onViewChange={setActiveView}
+            />
+          </Suspense>
         )}
         
         {/* Jobs Tab */}
         {activeView === 'jobs' && (
           <div className="space-y-6">
-            <JobBoard />
+            <Suspense fallback={<ViewLoader />}>
+              <JobBoard />
+            </Suspense>
           </div>
         )}
         
@@ -849,25 +887,31 @@ export default function ProfessionalDashboard() {
         {/* Applications Tab */}
         {activeView === 'applications' && (
           <div data-testid="applications-view-container">
-            <ApplicationsView />
+            <Suspense fallback={<ViewLoader />}>
+              <ApplicationsView />
+            </Suspense>
           </div>
         )}
 
         {/* Invitations Tab - Bulk Review for First-to-Accept */}
         {activeView === 'invitations' && (
           <div data-testid="invitations-view-container">
-            <BulkInvitationReview />
+            <Suspense fallback={<ViewLoader />}>
+              <BulkInvitationReview />
+            </Suspense>
           </div>
         )}
         
         {/* Calendar Tab */}
         {activeView === 'calendar' && (
           <div className="space-y-6">
-            <ProfessionalCalendar
-              bookings={bookings}
-              isLoading={isLoadingBookings}
-              onDateSelect={setDate}
-            />
+            <Suspense fallback={<ViewLoader />}>
+              <ProfessionalCalendar
+                bookings={bookings}
+                isLoading={isLoadingBookings}
+                onDateSelect={setDate}
+              />
+            </Suspense>
 
             <Card>
               <CardHeader>
@@ -915,17 +959,23 @@ export default function ProfessionalDashboard() {
         
         {/* Profile Tab */}
         {activeView === 'profile' && (
-          <ProfessionalDigitalResume />
+          <Suspense fallback={<ViewLoader />}>
+            <ProfessionalDigitalResume />
+          </Suspense>
         )}
 
         {/* Earnings Tab */}
         {activeView === 'earnings' && (
-          <EarningsDashboard onNavigateToPayouts={() => setActiveView('payouts')} />
+          <Suspense fallback={<ViewLoader />}>
+            <EarningsDashboard onNavigateToPayouts={() => setActiveView('payouts')} />
+          </Suspense>
         )}
 
         {/* Payouts Tab */}
         {activeView === 'payouts' && (
-          <PayoutSettings />
+          <Suspense fallback={<ViewLoader />}>
+            <PayoutSettings />
+          </Suspense>
         )}
       </div>
       

@@ -21,7 +21,9 @@ export default function PendingReviewNotification() {
     queryKey: ['shifts-pending-review', user?.id],
     queryFn: fetchShiftsPendingReview,
     enabled: !!user?.id,
-    refetchInterval: 60000, // Refetch every minute
+    staleTime: 5 * 60 * 1000, // Data fresh for 5 minutes
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 1 minute
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading || !pendingShifts || pendingShifts.length === 0) {

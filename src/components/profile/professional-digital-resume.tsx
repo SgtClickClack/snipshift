@@ -773,7 +773,7 @@ export default function ProfessionalDigitalResume({
                       <p className="text-2xl font-bold">
                         {profile.jobSuccessScore != null && profile.jobSuccessScore > 0 
                           ? `${profile.jobSuccessScore}%` 
-                          : 'â€”'}
+                          : '—'}
                       </p>
                     </div>
                   </div>
@@ -799,7 +799,7 @@ export default function ProfessionalDigitalResume({
                       <p className="text-2xl font-bold">
                         {profile.onTimeRate != null && profile.onTimeRate > 0 
                           ? `${profile.onTimeRate}%` 
-                          : 'â€”'}
+                          : '—'}
                       </p>
                     </div>
                   </div>

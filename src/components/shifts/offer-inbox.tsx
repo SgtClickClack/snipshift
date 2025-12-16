@@ -14,11 +14,13 @@ export function OfferInbox() {
   const queryClient = useQueryClient();
   const { addNotification } = useNotification();
 
-  // Fetch shift offers
+  // Fetch shift offers - with caching to prevent excessive requests
   const { data: offers = [], isLoading } = useQuery<ShiftOffer[]>({
     queryKey: ['/api/shifts/offers/me'],
     queryFn: fetchShiftOffers,
     enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // Data fresh for 2 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Accept mutation

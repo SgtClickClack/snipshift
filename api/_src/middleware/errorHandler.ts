@@ -191,12 +191,33 @@ export const errorHandler = (
   // Generic error response (masks internal errors)
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
   
-  // In development, include detailed error information for database errors
+  // In production, mask database errors to not expose SQL queries or schema details
+  // In development, include detailed information for debugging
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  
+  let errorMessage = err.message || 'An error occurred processing your request';
+  
+  // Sanitize error messages in production to not expose SQL queries
+  if (isProduction && isDatabaseError) {
+    // Check if the message contains SQL query indicators
+    if (
+      errorMessage.toLowerCase().includes('failed query:') ||
+      errorMessage.toLowerCase().includes('select ') ||
+      errorMessage.toLowerCase().includes('insert ') ||
+      errorMessage.toLowerCase().includes('update ') ||
+      errorMessage.toLowerCase().includes('delete ') ||
+      errorMessage.includes('FROM ') ||
+      errorMessage.includes('WHERE ')
+    ) {
+      errorMessage = 'A database error occurred. Please try again later.';
+    }
+  }
+  
   const response: any = {
-    error: err.message || 'An error occurred processing your request',
+    error: errorMessage,
   };
   
-  if (process.env.NODE_ENV === 'development') {
+  if (!isProduction) {
     response.stack = err.stack;
     // Include detailed database error information in development
     if (isDatabaseError) {

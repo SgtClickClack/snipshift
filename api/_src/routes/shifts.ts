@@ -1001,11 +1001,34 @@ router.get('/invitations/pending', authenticateUser, asyncHandler(async (req: Au
     return;
   }
 
-  // Fetch pending invitations with shift details
-  const invitations = await shiftInvitationsRepo.getPendingInvitationsWithShiftDetails(userId);
+  // Wrap database calls in try-catch for graceful degradation
+  // Some production environments may have older DB schemas
+  let invitations: Awaited<ReturnType<typeof shiftInvitationsRepo.getPendingInvitationsWithShiftDetails>> = [];
+  let legacyShifts: Awaited<ReturnType<typeof shiftsRepo.getShiftsByAssignee>> = [];
 
-  // Also include legacy invited shifts (assigned directly to user)
-  const legacyShifts = await shiftsRepo.getShiftsByAssignee(userId, 'invited');
+  try {
+    // Fetch pending invitations with shift details
+    invitations = await shiftInvitationsRepo.getPendingInvitationsWithShiftDetails(userId);
+  } catch (error: any) {
+    console.error('[GET /invitations/pending] Failed to fetch new-style invitations:', {
+      userId,
+      message: error?.message,
+      code: error?.code || error?.cause?.code,
+    });
+    // Continue with empty invitations - don't fail the whole request
+  }
+
+  try {
+    // Also include legacy invited shifts (assigned directly to user)
+    legacyShifts = await shiftsRepo.getShiftsByAssignee(userId, 'invited');
+  } catch (error: any) {
+    console.error('[GET /invitations/pending] Failed to fetch legacy shifts:', {
+      userId,
+      message: error?.message,
+      code: error?.code || error?.cause?.code,
+    });
+    // Continue with empty legacy shifts - don't fail the whole request
+  }
 
   // Combine and enrich with business information
   const shiftMap = new Map<string, any>();

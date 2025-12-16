@@ -10,10 +10,10 @@ import { EnhancedJobFilters } from '@/components/job-feed/enhanced-job-filters';
 import { EnhancedJobCard } from '@/components/job-feed/enhanced-job-card';
 import { JobCardData } from '@/components/job-feed/JobCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, Map, SearchX, ArrowUpDown } from 'lucide-react';
+import { List, Map, SearchX, ArrowUpDown, Loader2 } from 'lucide-react';
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
-import { calculateDistance } from '@/lib/google-maps';
+import { calculateDistance, reverseGeocodeToCity } from '@/lib/google-maps';
 
 type SortOption = 'highest-rate' | 'closest' | 'soonest';
 
@@ -24,31 +24,71 @@ export default function TravelPage() {
   const [selectedJob, setSelectedJob] = useState<JobCardData | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('soonest');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(true);
   
-  // Default center (New York - matching mock data)
-  const [centerLocation] = useState({ lat: 40.7128, lng: -74.0060 });
+  // Dynamic location state (no more hardcoded defaults)
+  // Default to Sydney, Australia as fallback when GPS is denied
+  const DEFAULT_LOCATION = { lat: -33.8688, lng: 151.2093 };
+  const DEFAULT_CITY = 'Sydney';
+  
+  const [centerLocation, setCenterLocation] = useState<{ lat: number; lng: number }>(DEFAULT_LOCATION);
   const [radius] = useState(50);
-  const [searchLocation] = useState('New York');
+  const [searchLocation, setSearchLocation] = useState<string>('Locating...');
 
-  // Get user location
+  // Get user location with HIGH ACCURACY GPS
   useEffect(() => {
-    if (navigator.geolocation) {
+    const getUserLocation = async () => {
+      setIsLocating(true);
+      
+      if (!navigator.geolocation) {
+        // Geolocation not supported - use default
+        setUserLocation(DEFAULT_LOCATION);
+        setCenterLocation(DEFAULT_LOCATION);
+        setSearchLocation(DEFAULT_CITY);
+        setIsLocating(false);
+        return;
+      }
+      
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
+        async (position) => {
+          const coords = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
+          };
+          
+          setUserLocation(coords);
+          setCenterLocation(coords);
+          
+          // Reverse geocode to get city name
+          try {
+            const cityName = await reverseGeocodeToCity(coords.lat, coords.lng);
+            setSearchLocation(cityName || 'Current Location');
+          } catch (error) {
+            console.error('Reverse geocoding failed:', error);
+            setSearchLocation('Current Location');
+          }
+          
+          setIsLocating(false);
         },
-        () => {
-          // Use default location if geolocation fails
-          setUserLocation(centerLocation);
+        (error) => {
+          // GPS permission denied or error - use default fallback
+          console.warn('Geolocation error:', error.message);
+          setUserLocation(DEFAULT_LOCATION);
+          setCenterLocation(DEFAULT_LOCATION);
+          setSearchLocation(DEFAULT_CITY);
+          setIsLocating(false);
+        },
+        // HIGH ACCURACY GPS OPTIONS
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
-    } else {
-      setUserLocation(centerLocation);
-    }
-  }, [centerLocation]);
+    };
+    
+    getUserLocation();
+  }, []);
 
   // Build filter params from URL search params
   const status = (searchParams.get('status') as 'open' | 'filled' | 'completed') || 'open';

@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef, Component, ReactNode } from "react";
 import { Calendar, dateFnsLocalizer, View, Event } from "react-big-calendar";
+import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import {
   format,
   parse,
@@ -109,6 +111,10 @@ interface CalendarEvent extends Event {
     generatedSlot?: GeneratedShiftSlot;
   };
 }
+
+// Create drag-and-drop enabled Calendar component
+// Cast to any to include all Calendar props since DnD types are incomplete
+const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar) as React.ComponentType<any>;
 
 interface ProfessionalCalendarProps {
   bookings?: any[] | null;
@@ -1959,7 +1965,11 @@ export default function ProfessionalCalendar({
 
   // Handle event drop (drag-and-drop)
   const handleEventDrop = useCallback(
-    ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
+    ({ event, start: rawStart, end: rawEnd }: { event: CalendarEvent; start: Date | string; end: Date | string }) => {
+      // Convert to Date objects (react-big-calendar DnD can pass stringOrDate)
+      const start = typeof rawStart === 'string' ? new Date(rawStart) : rawStart;
+      const end = typeof rawEnd === 'string' ? new Date(rawEnd) : rawEnd;
+      
       // Validate dates
       if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
         toast({
@@ -2034,7 +2044,11 @@ export default function ProfessionalCalendar({
 
   // Handle event resize
   const handleEventResize = useCallback(
-    ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
+    ({ event, start: rawStart, end: rawEnd }: { event: CalendarEvent; start: Date | string; end: Date | string }) => {
+      // Convert to Date objects (react-big-calendar DnD can pass stringOrDate)
+      const start = typeof rawStart === 'string' ? new Date(rawStart) : rawStart;
+      const end = typeof rawEnd === 'string' ? new Date(rawEnd) : rawEnd;
+      
       // Validate dates
       if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
         toast({
@@ -2377,7 +2391,7 @@ export default function ProfessionalCalendar({
                         }}
                       >
                         <CalendarErrorBoundary>
-                          <Calendar
+                          <DnDCalendar
                             localizer={localizer}
                             events={safeEvents}
                             startAccessor="start"
@@ -2481,7 +2495,7 @@ export default function ProfessionalCalendar({
                                   return format(date, "EEE M/d", { locale: enUS });
                                 }
                               },
-                              dayRangeHeaderFormat: ({ start, end }) => {
+                              dayRangeHeaderFormat: ({ start, end }: { start: Date; end: Date }) => {
                                 try {
                                   return `${format(start, "MMM d", { locale: enUS })} - ${format(end, "MMM d, yyyy", { locale: enUS })}`;
                                 } catch (e) {
@@ -2491,7 +2505,7 @@ export default function ProfessionalCalendar({
                               },
                               monthHeaderFormat: "MMMM yyyy",
                               timeGutterFormat: "h:mm a",
-                              eventTimeRangeFormat: ({ start, end }) => {
+                              eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) => {
                                 try {
                                   return `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`;
                                 } catch (e) {

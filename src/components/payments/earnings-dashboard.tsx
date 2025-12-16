@@ -8,8 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, Wallet, DollarSign, Clock, TrendingUp, ExternalLink, CheckCircle2, ArrowUpRight, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/currency";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
+import { lazy, Suspense, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -18,6 +18,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+// Lazy load the chart component to reduce initial bundle
+const EarningsChart = lazy(() => import("recharts").then(module => ({
+  default: ({ data }: { data: { month: string; earnings: number }[] }) => {
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = module;
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis
+            dataKey="month"
+            className="text-xs"
+            tick={{ fill: 'currentColor' }}
+          />
+          <YAxis
+            className="text-xs"
+            tick={{ fill: 'currentColor' }}
+            tickFormatter={(value) => `$${value.toFixed(0)}`}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '8px',
+            }}
+            formatter={(value: number) => formatCurrency(value)}
+            labelFormatter={(label) => `Month: ${label}`}
+          />
+          <Bar
+            dataKey="earnings"
+            fill="hsl(var(--primary))"
+            radius={[8, 8, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }
+})));
 
 interface BalanceData {
   available: number;
@@ -49,7 +87,7 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Fetch balance
+  // Fetch balance - with longer staleTime to prevent excessive requests
   const { data: balanceData, isLoading: isLoadingBalance } = useQuery<BalanceData>({
     queryKey: ['payment-balance', user?.id],
     queryFn: async () => {
@@ -57,10 +95,12 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
       return res.json();
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 2 * 60 * 1000, // Data fresh for 2 minutes
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 30 seconds
+    refetchOnWindowFocus: false, // Don't refetch on tab focus
   });
 
-  // Fetch payment history
+  // Fetch payment history - cache longer since history doesn't change often
   const { data: historyData, isLoading: isLoadingHistory } = useQuery<PaymentHistory>({
     queryKey: ['payment-history', user?.id],
     queryFn: async () => {
@@ -68,15 +108,20 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
       return res.json();
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Data fresh for 5 minutes
+    refetchOnWindowFocus: false,
   });
 
-  // Calculate total earnings (sum of all paid amounts)
-  const totalEarnings = historyData?.history
-    .filter(item => item.paymentStatus === 'PAID')
-    .reduce((sum, item) => sum + item.netAmount, 0) || 0;
+  // Calculate total earnings (sum of all paid amounts) - memoized
+  const totalEarnings = useMemo(() => 
+    historyData?.history
+      .filter(item => item.paymentStatus === 'PAID')
+      .reduce((sum, item) => sum + item.netAmount, 0) || 0,
+    [historyData?.history]
+  );
 
-  // Calculate monthly earnings for chart
-  const monthlyEarnings = (() => {
+  // Calculate monthly earnings for chart - memoized to prevent recalculation
+  const monthlyEarnings = useMemo(() => {
     if (!historyData?.history) return [];
     
     const paidItems = historyData.history.filter(item => item.paymentStatus === 'PAID');
@@ -98,7 +143,7 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
         return dateA.getTime() - dateB.getTime();
       })
       .slice(-6); // Last 6 months
-  })();
+  }, [historyData?.history]);
 
   // Check if user has Stripe Connect account
   const { data: stripeAccountStatus } = useQuery<{
@@ -306,7 +351,7 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
         </Button>
       </div>
 
-      {/* Monthly Earnings Chart */}
+      {/* Monthly Earnings Chart - Lazy loaded */}
       {monthlyEarnings.length > 0 && (
         <Card>
           <CardHeader>
@@ -318,35 +363,13 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
           </CardHeader>
           <CardContent>
             <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyEarnings}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    dataKey="month"
-                    className="text-xs"
-                    tick={{ fill: 'currentColor' }}
-                  />
-                  <YAxis
-                    className="text-xs"
-                    tick={{ fill: 'currentColor' }}
-                    tickFormatter={(value) => `$${value.toFixed(0)}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={(label) => `Month: ${label}`}
-                  />
-                  <Bar
-                    dataKey="earnings"
-                    fill="hsl(var(--primary))"
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              }>
+                <EarningsChart data={monthlyEarnings} />
+              </Suspense>
             </div>
           </CardContent>
         </Card>

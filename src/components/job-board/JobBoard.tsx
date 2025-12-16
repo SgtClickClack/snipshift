@@ -139,7 +139,7 @@ export default function JobBoard() {
   const [appliedShiftIds, setAppliedShiftIds] = useState<Set<string>>(new Set());
   const [applyingShiftId, setApplyingShiftId] = useState<string | null>(null);
 
-  // Get user location
+  // Get user location with HIGH ACCURACY GPS
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -151,6 +151,12 @@ export default function JobBoard() {
         },
         () => {
           // Silently fail - location is optional
+        },
+        // HIGH ACCURACY GPS OPTIONS
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     }
