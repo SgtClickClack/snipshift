@@ -81,11 +81,11 @@ export default function LandingPage() {
         <div className="relative z-elevated w-full py-12 md:py-20 flex flex-col items-center justify-center text-center px-4">
           <div className="max-w-5xl mx-auto flex flex-col items-center gap-8 md:gap-10">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground max-w-4xl mx-auto leading-tight drop-shadow-lg">
-              The On-Demand Marketplace for Barbers & Shops.
+              The Roster That Never Quits.
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto drop-shadow-md font-medium">
-              Fill empty chairs or find extra shifts instantly. No contracts, just coverage.
+              Instant coverage for shops. Instant work for barbers. The marketplace that keeps your business moving.
             </p>
             
             {!isAuthenticated && (
