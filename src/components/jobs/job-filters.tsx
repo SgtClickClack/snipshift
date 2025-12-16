@@ -65,7 +65,7 @@ export function JobFilters({ className }: JobFiltersProps) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Get user location
+  // Get user location with HIGH ACCURACY GPS
   useEffect(() => {
     if (nearbyOnly && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -78,6 +78,12 @@ export function JobFilters({ className }: JobFiltersProps) {
         (error) => {
           console.error('Error getting location:', error);
           setNearbyOnly(false);
+        },
+        // HIGH ACCURACY GPS OPTIONS
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     }

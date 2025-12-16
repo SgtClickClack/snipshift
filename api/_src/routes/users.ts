@@ -391,21 +391,37 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     updates.businessSettings = JSON.stringify(businessSettings);
   }
   
+  // Helper to validate URL is non-empty and looks like a valid URL
+  // This prevents accidental overwrites with empty/null values (the "disappearing data" bug)
+  const isValidUrl = (url: unknown): url is string => {
+    if (typeof url !== 'string' || url.trim() === '') return false;
+    // Basic URL format check - must start with http/https
+    return url.startsWith('http://') || url.startsWith('https://');
+  };
+  
   // Use processed file URLs if available, otherwise use URLs from body
-  if (processedAvatarUrl !== undefined) {
+  // CRITICAL: Only update URL fields if the new value is a valid non-empty URL
+  // This prevents accidental overwrites when forms send stale/empty values
+  if (processedAvatarUrl !== undefined && isValidUrl(processedAvatarUrl)) {
     updates.avatarUrl = processedAvatarUrl;
     console.log('[PUT /api/me] Updating avatarUrl from uploaded file:', processedAvatarUrl.substring(0, 50) + '...');
-  } else if (avatarUrl !== undefined) {
+  } else if (avatarUrl !== undefined && isValidUrl(avatarUrl)) {
     updates.avatarUrl = avatarUrl;
     console.log('[PUT /api/me] Updating avatarUrl from body:', avatarUrl.substring(0, 50) + '...');
+  } else if (avatarUrl !== undefined) {
+    // Received invalid/empty avatarUrl - intentionally NOT updating to prevent data loss
+    console.log('[PUT /api/me] Skipping avatarUrl update - received invalid/empty value:', avatarUrl);
   }
   
-  if (processedBannerUrl !== undefined) {
+  if (processedBannerUrl !== undefined && isValidUrl(processedBannerUrl)) {
     updates.bannerUrl = processedBannerUrl;
     console.log('[PUT /api/me] Updating bannerUrl from uploaded file:', processedBannerUrl.substring(0, 50) + '...');
-  } else if (bannerUrl !== undefined) {
+  } else if (bannerUrl !== undefined && isValidUrl(bannerUrl)) {
     updates.bannerUrl = bannerUrl;
     console.log('[PUT /api/me] Updating bannerUrl from body:', bannerUrl.substring(0, 50) + '...');
+  } else if (bannerUrl !== undefined) {
+    // Received invalid/empty bannerUrl - intentionally NOT updating to prevent data loss
+    console.log('[PUT /api/me] Skipping bannerUrl update - received invalid/empty value:', bannerUrl);
   }
 
   // Update user in database

@@ -96,9 +96,20 @@ export default function ForgotPasswordPage() {
             {submitState.status === 'success' && (
               <Alert className="mb-6" data-testid="alert-success">
                 <AlertTitle>Check your email</AlertTitle>
-                <AlertDescription>
-                  If an account exists for <span className="font-medium">{email.trim()}</span>, you’ll receive a
-                  reset link shortly.
+                <AlertDescription className="space-y-2">
+                  <p>
+                    If an account exists for <span className="font-medium">{email.trim()}</span>, you'll receive a
+                    reset link shortly.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Didn't receive the email?</strong>
+                    <br />
+                    • Check your <strong>spam/junk folder</strong> — the email comes from noreply@snipshift-75b04.firebaseapp.com
+                    <br />
+                    • If you signed up with Google, use "Sign in with Google" instead
+                    <br />
+                    • Make sure you entered the correct email address
+                  </p>
                 </AlertDescription>
               </Alert>
             )}

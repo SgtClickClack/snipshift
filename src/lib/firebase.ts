@@ -104,15 +104,25 @@ export const onAuthStateChange = (callback: (user: FirebaseAuthUser | null) => v
  * - In E2E runs (VITE_E2E=1), this resolves immediately to avoid external network dependency.
  * - We intentionally do NOT pass a custom continue URL by default. Passing an unauthorized URL
  *   can cause Firebase to reject the request (e.g. `auth/unauthorized-continue-uri`) and the email
- *   will not be sent. Firebase’s default reset handler is the most compatible.
+ *   will not be sent. Firebase's default reset handler is the most compatible.
  */
 export const sendPasswordReset = async (email: string) => {
   const cleanEmail = email.trim();
 
   // E2E mode: avoid hitting Firebase network in automation.
   if (import.meta.env.VITE_E2E === "1") {
+    console.log('[Password Reset] E2E mode - skipping Firebase call');
     return;
   }
 
-  await sendPasswordResetEmail(auth, cleanEmail);
+  console.log('[Password Reset] Attempting to send reset email to:', cleanEmail);
+  console.log('[Password Reset] Firebase project:', auth.app.options.projectId);
+  
+  try {
+    await sendPasswordResetEmail(auth, cleanEmail);
+    console.log('[Password Reset] Firebase accepted the request successfully');
+  } catch (error) {
+    console.error('[Password Reset] Firebase rejected the request:', error);
+    throw error;
+  }
 };

@@ -112,7 +112,14 @@ export default function BrandDashboard() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
-      const res = await apiRequest("PUT", "/api/me", data);
+      // IMPORTANT: Only send URL fields if they contain valid URLs
+      // This prevents accidental overwrites when the form has stale/empty values
+      const cleanedData = {
+        ...data,
+        avatarUrl: data.avatarUrl && data.avatarUrl.startsWith('http') ? data.avatarUrl : undefined,
+        bannerUrl: data.bannerUrl && data.bannerUrl.startsWith('http') ? data.bannerUrl : undefined,
+      };
+      const res = await apiRequest("PUT", "/api/me", cleanedData);
       return res.json();
     },
     onSuccess: async () => {

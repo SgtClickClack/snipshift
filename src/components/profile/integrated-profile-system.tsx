@@ -133,14 +133,23 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: UserProfile) => {
       // Transform profile data to match backend /api/me endpoint expectations
+      // IMPORTANT: Only send URL fields if they contain valid URLs
+      // This prevents accidental overwrites when the form has stale/empty values
+      const avatarUrl = profileData.profileImageURL && profileData.profileImageURL.startsWith('http') 
+        ? profileData.profileImageURL 
+        : undefined;
+      const bannerUrl = profileData.bannerImageURL && profileData.bannerImageURL.startsWith('http') 
+        ? profileData.bannerImageURL 
+        : undefined;
+      
       const payload = {
         displayName: profileData.displayName,
         bio: profileData.bio,
         location: profileData.location 
           ? `${profileData.location.city}, ${profileData.location.state}` 
           : undefined,
-        avatarUrl: profileData.profileImageURL,
-        bannerUrl: profileData.bannerImageURL,
+        avatarUrl,
+        bannerUrl,
         // Note: phone is not in UserProfile interface, but backend accepts it
       };
       const response = await apiRequest("PUT", `/api/me`, payload);

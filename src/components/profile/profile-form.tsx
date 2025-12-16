@@ -138,13 +138,22 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     
     try {
       // Update profile via API
+      // IMPORTANT: Only send URL fields if they contain valid URLs
+      // This prevents accidental overwrites when the form has stale/empty values
+      const avatarUrlToSend = formData.avatarUrl && formData.avatarUrl.startsWith('http') 
+        ? formData.avatarUrl 
+        : undefined;
+      const bannerUrlToSend = formData.bannerUrl && formData.bannerUrl.startsWith('http') 
+        ? formData.bannerUrl 
+        : undefined;
+      
       await apiRequest('PUT', '/api/me', {
         displayName: formData.displayName,
         bio: formData.bio,
         phone: formData.phone,
         location: formData.homeLocation.city ? `${formData.homeLocation.city}, ${formData.homeLocation.state}` : undefined,
-        avatarUrl: formData.avatarUrl,
-        bannerUrl: formData.bannerUrl,
+        avatarUrl: avatarUrlToSend,
+        bannerUrl: bannerUrlToSend,
       });
       
       toast({

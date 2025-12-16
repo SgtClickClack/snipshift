@@ -77,6 +77,59 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<string |
   }
 };
 
+/**
+ * Reverse geocode coordinates to extract just the city name
+ * @param lat Latitude
+ * @param lng Longitude
+ * @returns City name or null if not found
+ */
+export const reverseGeocodeToCity = async (lat: number, lng: number): Promise<string | null> => {
+  try {
+    const google = await loadGoogleMaps();
+    const geocoder = new google.maps.Geocoder();
+    
+    return new Promise((resolve) => {
+      geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+        if (status === 'OK' && results && results.length > 0) {
+          // Search through all results to find the city (locality)
+          for (const result of results) {
+            for (const component of result.address_components || []) {
+              // Look for locality (city) first
+              if (component.types.includes('locality')) {
+                resolve(component.long_name);
+                return;
+              }
+            }
+          }
+          
+          // Fallback: try to find sublocality or administrative_area_level_2
+          for (const result of results) {
+            for (const component of result.address_components || []) {
+              if (component.types.includes('sublocality') || 
+                  component.types.includes('administrative_area_level_2')) {
+                resolve(component.long_name);
+                return;
+              }
+            }
+          }
+          
+          // Last fallback: use the first result's formatted address (shortened)
+          const firstResult = results[0].formatted_address;
+          // Take just the first part before the comma
+          const shortAddress = firstResult.split(',')[0];
+          resolve(shortAddress);
+        } else {
+          logger.warn('GoogleMaps', 'Reverse geocoding to city failed:', status);
+          resolve(null);
+        }
+      });
+    });
+  } catch (error) {
+    logger.error('GoogleMaps', 'Failed to load Google Maps for city lookup:', error);
+    return null;
+  }
+};
+
 export const calculateDistance = (
   from: { lat: number; lng: number },
   to: { lat: number; lng: number }

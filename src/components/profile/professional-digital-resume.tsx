@@ -181,9 +181,21 @@ export default function ProfessionalDigitalResume({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Save to API
+      // IMPORTANT: Only send URL fields if they contain valid URLs
+      // This prevents accidental overwrites when the form has stale/empty values
+      const avatarUrl = profile.avatarUrl && profile.avatarUrl.startsWith('http') 
+        ? profile.avatarUrl 
+        : undefined;
+      const bannerUrl = profile.bannerUrl && profile.bannerUrl.startsWith('http') 
+        ? profile.bannerUrl 
+        : undefined;
+      
+      // Save to API (exclude URL fields from spread, add them back with validation)
+      const { avatarUrl: _avatar, bannerUrl: _banner, ...profileWithoutUrls } = profile;
       await apiRequest('PUT', '/api/me', {
-        ...profile,
+        ...profileWithoutUrls,
+        avatarUrl,
+        bannerUrl,
         role: 'professional',
       });
 

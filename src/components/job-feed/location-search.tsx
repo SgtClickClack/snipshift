@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Navigation, Heart, X, Search } from "lucide-react";
-import { geocodeAddress } from "@/lib/google-maps";
+import { MapPin, Navigation, Heart, X, Search, Loader2 } from "lucide-react";
+import { geocodeAddress, reverseGeocodeToCity } from "@/lib/google-maps";
 import { cn } from "@/lib/utils";
 
 interface LocationSearchProps {
@@ -58,6 +58,7 @@ export default function LocationSearch({
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCities, setFilteredCities] = useState(AUSTRALIAN_CITIES);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     if (searchQuery) {
@@ -113,33 +114,47 @@ export default function LocationSearch({
   };
 
   const handleCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          // Try to get address name using reverse geocoding
-          try {
-            // Use reverse geocoding when Google Maps is available
-            const address = "Current Location";
-            onLocationChange(address || "Current Location", coords);
-          } catch {
-            onLocationChange("Current Location", coords);
-          }
-        },
-        () => {
-          // Fallback to Sydney if geolocation fails
-          const fallbackLocation = { lat: -33.8688, lng: 151.2093 };
-          onLocationChange("Sydney", fallbackLocation);
-        }
-      );
-    } else {
+    if (!navigator.geolocation) {
       // Fallback to Sydney if geolocation not supported
       const fallbackLocation = { lat: -33.8688, lng: 151.2093 };
       onLocationChange("Sydney", fallbackLocation);
+      return;
     }
+    
+    setIsLocating(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        
+        // Try to get city name using reverse geocoding
+        try {
+          const cityName = await reverseGeocodeToCity(coords.lat, coords.lng);
+          onLocationChange(cityName || "Current Location", coords);
+        } catch (error) {
+          console.error('Reverse geocoding failed:', error);
+          onLocationChange("Current Location", coords);
+        }
+        
+        setIsLocating(false);
+      },
+      (error) => {
+        // Fallback to Sydney if geolocation fails
+        console.warn('Geolocation error:', error.message);
+        const fallbackLocation = { lat: -33.8688, lng: 151.2093 };
+        onLocationChange("Sydney", fallbackLocation);
+        setIsLocating(false);
+      },
+      // HIGH ACCURACY GPS OPTIONS
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   };
 
   const toggleFavorite = (location: string) => {
@@ -167,10 +182,20 @@ export default function LocationSearch({
             onClick={handleCurrentLocation}
             variant="outline"
             className="w-full justify-start"
+            disabled={isLocating}
             data-testid="button-use-current-location"
           >
-            <Navigation className="mr-2 h-4 w-4" />
-            Use Current Location
+            {isLocating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Locating...
+              </>
+            ) : (
+              <>
+                <Navigation className="mr-2 h-4 w-4" />
+                Use Current Location
+              </>
+            )}
           </Button>
         </div>
 
