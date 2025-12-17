@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,7 @@ import { LocationInput } from '@/components/ui/location-input';
 import { useToast } from '@/hooks/useToast';
 import { updateUserProfile } from '@/lib/api';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { AlertTriangle } from 'lucide-react';
 
 export default function EditProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -183,6 +184,53 @@ export default function EditProfilePage() {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone - Account Deletion */}
+        <Card className="card-chrome border-red-200 dark:border-red-900 mt-8">
+          <CardHeader className="border-b border-red-100 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <CardTitle className="text-xl text-red-700 dark:text-red-400">Danger Zone</CardTitle>
+            </div>
+            <CardDescription className="text-red-600/80 dark:text-red-400/80">
+              Irreversible and destructive actions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="font-medium text-steel-900 dark:text-steel-100">Delete Account</h3>
+                <p className="text-sm text-steel-600 dark:text-steel-400 mt-1">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                className="bg-red-600 hover:bg-red-700 text-white shrink-0"
+                onClick={() => {
+                  const confirmed = window.confirm(
+                    'Are you sure you want to delete your account?\n\n' +
+                    'To proceed with account deletion, please contact our support team at:\n\n' +
+                    'support@snipshift.com.au\n\n' +
+                    'Our team will verify your identity and process your request within 48 hours.'
+                  );
+                  if (confirmed) {
+                    toast({
+                      title: "Deletion Request",
+                      description: "Please email support@snipshift.com.au to complete your account deletion request.",
+                      variant: "default",
+                    });
+                  }
+                }}
+                data-testid="button-delete-account"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Delete Account
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

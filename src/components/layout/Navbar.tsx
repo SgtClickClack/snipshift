@@ -215,12 +215,6 @@ export default function Navbar() {
                     <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10" data-testid="link-find-shifts-desktop">Find Shifts</Button>
                   </Link>
 
-                  {/* Install App Button */}
-                  <InstallButton 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-navbar-foreground hover:bg-white/10"
-                  />
                 </div>
 
                 {/* Common Items (Visible on Mobile & Desktop) */}

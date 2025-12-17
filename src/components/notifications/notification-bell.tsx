@@ -68,7 +68,7 @@ export default function NotificationBell({
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative z-40 ${className}`}>
       <Button
         ref={bellRef}
         variant="ghost"

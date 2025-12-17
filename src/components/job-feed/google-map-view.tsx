@@ -534,11 +534,35 @@ export default function GoogleMapView({
         
         <CardContent className="p-0 flex-1 relative min-h-[500px]">
           <div className="absolute inset-0 bg-muted">
+            {/* Skeleton Loader - Shows while map is initializing */}
             {isLoading && (
-              <div className="absolute inset-0 bg-white/80 dark:bg-steel-900/80 backdrop-blur-sm flex items-center justify-center z-elevated">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">Loading map...</p>
+              <div className="absolute inset-0 z-elevated" data-testid="map-skeleton-loader">
+                {/* Pulsing skeleton background */}
+                <div className="absolute inset-0 bg-steel-200 dark:bg-steel-700 animate-pulse" />
+                
+                {/* Fake map elements for visual skeleton */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                  {/* Skeleton circle for center marker */}
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full bg-steel-300 dark:bg-steel-600 animate-pulse" />
+                    <div className="absolute inset-2 rounded-full bg-steel-400 dark:bg-steel-500 animate-pulse" />
+                  </div>
+                  
+                  {/* Loading text */}
+                  <div className="bg-white/90 dark:bg-steel-800/90 rounded-lg px-4 py-3 shadow-sm backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="h-5 w-5 rounded-full border-2 border-t-transparent border-primary animate-spin" />
+                      <span className="text-sm font-medium text-muted-foreground">Loading map...</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Skeleton grid lines to simulate map */}
+                <div className="absolute inset-0 opacity-20">
+                  <div className="w-full h-full" style={{
+                    backgroundImage: 'linear-gradient(to right, var(--steel-400) 1px, transparent 1px), linear-gradient(to bottom, var(--steel-400) 1px, transparent 1px)',
+                    backgroundSize: '60px 60px'
+                  }} />
                 </div>
               </div>
             )}
