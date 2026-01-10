@@ -161,6 +161,9 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+  .neon-glow {
+    text-shadow: 0 0 5px rgba(186, 255, 57, 0.8), 0 0 10px rgba(186, 255, 57, 0.5);
+  }
   .logo-sharp {
     /* Deprecated: avoid image filters on logos (can look blurry on some displays). */
     image-rendering: auto;

@@ -1,3 +1,39 @@
+#### 2026-01-10: Refine Global Color Palette (Brand Tokens + Landing CTA Buttons)
+
+**Core Components**
+- Tailwind theme tokens (`tailwind.config.js`)
+- Landing page hero CTAs (`src/pages/LandingPage.tsx`, `src/pages/landing.tsx`)
+- Global CSS utilities (`src/index.css`)
+
+**Key Features**
+- Added explicit HospoGo brand palette tokens in Tailwind:
+  - `brand-neon`: `#BAFF39`
+  - `brand-dark`: `#0B0E11`
+  - `brand-accent`: `#8B5CF6`
+  - `brand-surface`: `#1A1D21`
+- Updated Landing hero CTAs to use the new tokens:
+  - **Find Staff**: `bg-brand-neon text-brand-dark` + neon glow shadow + hover scale
+  - **Find Shifts**: neon outline + neon hover fill with dark text
+- Added a reusable `.neon-glow` text utility for consistent neon highlight styling.
+
+**Integration Points**
+- Tailwind: `bg-brand-neon`, `text-brand-dark`, `border-brand-neon`
+- Build: `npm run build`
+
+**File Paths**
+- `tailwind.config.js`
+- `src/pages/LandingPage.tsx`
+- `src/pages/landing.tsx`
+- `src/index.css`
+
+**Next Priority Task**
+- Swap remaining landing “red-accent” visuals (badges/icons) to `brand-neon` for full palette consistency.
+
+**Code Organization & Quality**
+- Kept routing stable by making `src/pages/landing.tsx` a thin re-export of `src/pages/LandingPage.tsx`.
+
+---
+
 #### 2026-01-10: Fix Vercel Build Failure (Missing Refund Policy Page Import)
 
 **Core Components**

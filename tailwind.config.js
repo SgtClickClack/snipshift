@@ -26,6 +26,10 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        'brand-neon': '#BAFF39',
+        'brand-dark': '#0B0E11',
+        'brand-accent': '#8B5CF6',
+        'brand-surface': '#1A1D21',
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

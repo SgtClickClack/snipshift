@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-10 - Refine Global Color Palette (Brand Neon Tokens)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added explicit brand palette tokens to Tailwind: `brand-neon` (`#BAFF39`), `brand-dark` (`#0B0E11`), `brand-accent` (`#8B5CF6`), `brand-surface` (`#1A1D21`).
+- Updated the Landing hero CTAs to use the new `brand-neon` styling (neon fill primary + neon outline secondary).
+- Added a reusable `.neon-glow` text utility for consistent neon highlight styling.
+
+**Impact:**
+- Establishes a consistent, reusable neon-forward HospoGo palette and applies it to the highest-traffic conversion CTAs.
+
+---
+
 ### Update: 2026-01-10 - Manual Payout Tracking (Payout Status Enum)
 
 **Status:** ✅ **IMPLEMENTED**
