@@ -72,6 +72,53 @@
 
 ---
 
+#### 2026-01-10: Landing Hero Top Edge Trim (Remove Green Artifact Line)
+
+**Core Components**
+- Landing hero section (`src/pages/landing.tsx`)
+- Shared hero component (`src/components/landing/Hero.tsx`)
+
+**Key Features**
+- **Removed residual top-edge artifact**: Applied a tiny pixel-level “trim” to the hero image render (slight negative Y translate + small scale) so the remaining thin green line at the very top is no longer visible.
+- **No asset regeneration needed**: Kept the existing `public/hospogohero.*` outputs unchanged; this is a rendering-only adjustment.
+
+**Integration Points**
+- Vite HMR (landing hero refresh)
+
+**File Paths**
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+
+**Next Priority Task**
+- Verify the hero crop/composition on desktop + mobile breakpoints in production (no top-edge artifacts, wordmark still framed well).
+
+**Code Organization & Quality**
+- Kept the change minimal and localized to the hero image element (no navbar/theme changes).
+
+---
+
+#### 2026-01-10: Landing Hero Overlay Removed (Preserve Brand Green Drink Highlight)
+
+**Core Components**
+- Landing hero section (`src/pages/landing.tsx`)
+- Shared hero component (`src/components/landing/Hero.tsx`)
+
+**Key Features**
+- **Removed hero dimming overlays**: Dropped the dark overlay + gradient filter layers so the hero image’s bright green drink stays vivid and matches the HospoGo logo color.
+
+**Integration Points**
+- Vite HMR (landing hero refresh)
+
+**File Paths**
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+
+**Next Priority Task**
+- Quick readability check on desktop/mobile to ensure hero text remains legible without overlays.
+
+**Code Organization & Quality**
+- Kept the change scoped to overlay elements only; no asset changes required.
+
 #### 2026-01-10: Landing Hero Layout Polish (Reduce Clutter / Improve Readability)
 
 **Core Components**

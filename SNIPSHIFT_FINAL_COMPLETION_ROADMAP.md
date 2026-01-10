@@ -29,6 +29,7 @@
 **Action Taken:**
 - Replaced the old landing hero background image with the new HospoGo hero asset (`/hospogohero.webp` with JPG fallback).
 - Cropped the embedded navbar off the top of the source hero image and generated optimized outputs in `public/`.
+- Added a tiny render-level top-edge trim so no residual green artifact line shows at the very top of the hero.
 
 **Impact:**
 - **Cleaner landing visuals**: the hero background no longer includes a visible navbar baked into the image.
@@ -41,7 +42,7 @@
 
 **Action Taken:**
 - Repositioned the landing hero copy/CTAs lower while keeping the original “text over image” style (no opaque panel), so it doesn’t compete with the hero’s baked-in HospoGo wordmark.
-- Tuned overlay/gradient strength and responsive sizing to improve legibility across desktop and mobile.
+- Removed the overlay/gradient filter so the hero image stays fully vivid (keeps the bright green drink matching the logo).
 
 **Impact:**
 - **Cleaner conversion surface**: hero content is easier to read and no longer visually clashes with the background branding.

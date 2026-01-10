@@ -26,18 +26,14 @@ export default function Hero() {
         <img
           src={heroJpgUrl}
           alt=""
-          className="h-full w-full object-cover object-[center_35%]"
+          className="h-full w-full object-cover object-[center_35%] -translate-y-[3px] scale-[1.01]"
           loading="eager"
           fetchPriority="high"
           decoding="async"
         />
       </picture>
 
-      {/* Dark Overlay for text readability - reduced opacity to show image */}
-      <div className="absolute inset-0 bg-black/20 dark:bg-black/30 z-base" />
-
-      {/* Bottom Gradient Overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent z-elevated" />
+      {/* No overlays: keep hero image colors fully intact */}
 
       {/* Content Wrapper */}
       <div className="relative z-elevated w-full pt-40 md:pt-52 pb-12 md:pb-16 flex items-end justify-center text-center px-4">
