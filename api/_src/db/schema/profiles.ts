@@ -12,6 +12,9 @@ export const profiles = pgTable('profiles', {
   rsaExpiry: date('rsa_expiry'),
   rsaStateOfIssue: varchar('rsa_state_of_issue', { length: 10 }),
   rsaCertUrl: text('rsa_cert_url'),
+  // Identity verification (Government ID)
+  idDocumentUrl: text('id_document_url'),
+  idVerifiedStatus: varchar('id_verified_status', { length: 20 }),
   reliabilityStrikes: integer('reliability_strikes').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

@@ -2,10 +2,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown, Check, PlusCircle, Menu, RefreshCw, User, Settings } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown, Check, PlusCircle, Menu, RefreshCw, User, Settings, AlertCircle } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -37,6 +38,7 @@ export default function Navbar() {
   const { user, logout, setCurrentRole } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const verification = useVerificationStatus({ enableRedirect: false, protectedPaths: [] });
   
   // Fetch unread message count
   const { data: unreadData } = useQuery({
@@ -250,7 +252,18 @@ export default function Navbar() {
                   <DropdownMenuContent className="w-56 bg-popover dark:bg-steel-800 border-border dark:border-steel-600 text-popover-foreground dark:text-white z-floating" align="end">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-2 md:space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+                        <p className="text-sm font-medium leading-none flex items-center gap-2">
+                          <span>{user.displayName || 'User'}</span>
+                          {verification.isPendingAudit ? (
+                            <span
+                              className="inline-flex items-center text-amber-500"
+                              title="Verification Pending"
+                              aria-label="Verification Pending"
+                            >
+                              <AlertCircle className="h-4 w-4" />
+                            </span>
+                          ) : null}
+                        </p>
                         <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                       </div>
                     </DropdownMenuLabel>
@@ -298,7 +311,18 @@ export default function Navbar() {
                            <div className="flex items-center gap-3 mb-3">
                              <UserAvatar className="h-10 w-10" />
                              <div className="overflow-hidden">
-                               <p className="font-medium truncate text-foreground dark:text-steel-100">{user.displayName || user.name || 'User'}</p>
+                             <p className="font-medium truncate text-foreground dark:text-steel-100 flex items-center gap-2">
+                               <span className="truncate">{user.displayName || user.name || 'User'}</span>
+                               {verification.isPendingAudit ? (
+                                 <span
+                                   className="inline-flex items-center text-amber-500 flex-shrink-0"
+                                   title="Verification Pending"
+                                   aria-label="Verification Pending"
+                                 >
+                                   <AlertCircle className="h-4 w-4" />
+                                 </span>
+                               ) : null}
+                             </p>
                                <p className="text-xs text-muted-foreground dark:text-steel-300 truncate">{user.email}</p>
                              </div>
                            </div>

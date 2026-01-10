@@ -80,7 +80,8 @@ router.post('/register', asyncHandler(async (req, res) => {
       return;
     }
 
-    let { email, name, password, role } = validationResult.data;
+    const { email, password, role } = validationResult.data;
+    let { name } = validationResult.data;
 
     // E2E Test Hook - If running in E2E mode, check for special test emails
     // This allows tests to "register" without needing a real backend cleanup
@@ -301,6 +302,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     hasLogo: !!(files && files.logo),
     hasBanner: !!(files && files.banner),
     hasAvatar: !!(files && files.avatar),
+    hasGovernmentId: !!(files && (files as any).governmentId),
     avatarUrl: req.body.avatarUrl ? req.body.avatarUrl.substring(0, 50) + '...' : undefined,
     bannerUrl: req.body.bannerUrl ? req.body.bannerUrl.substring(0, 50) + '...' : undefined,
   });
@@ -309,6 +311,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   let processedAvatarUrl: string | undefined = undefined;
   let processedBannerUrl: string | undefined = undefined;
   let processedRsaCertificateUrl: string | undefined = undefined;
+  let processedGovernmentIdUrl: string | undefined = undefined;
 
   if (files) {
     console.log('[PUT /api/me] Files received:', {
@@ -316,6 +319,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
       banner: files.banner ? files.banner[0]?.originalname : undefined,
       avatar: files.avatar ? files.avatar[0]?.originalname : undefined,
       rsaCertificate: files.rsaCertificate ? files.rsaCertificate[0]?.originalname : undefined,
+      governmentId: files.governmentId ? files.governmentId[0]?.originalname : undefined,
     });
 
     try {
@@ -394,6 +398,28 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
 
         processedRsaCertificateUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
         console.log('[PUT /api/me] Uploaded RSA certificate to Firebase Storage:', processedRsaCertificateUrl.substring(0, 50) + '...');
+      }
+
+      // Process Government ID file (PDF or image)
+      const governmentIdFile = files.governmentId?.[0];
+      if (governmentIdFile) {
+        const isPdf = governmentIdFile.mimetype === 'application/pdf';
+        const fileExtension = isPdf
+          ? 'pdf'
+          : (governmentIdFile.originalname.split('.').pop() || 'jpg');
+        const fileName = `users/${req.user.uid}/government-id.${fileExtension}`;
+        const file = bucket.file(fileName);
+
+        await file.save(governmentIdFile.buffer, {
+          metadata: {
+            contentType: governmentIdFile.mimetype,
+          },
+        });
+
+        await file.makePublic();
+
+        processedGovernmentIdUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        console.log('[PUT /api/me] Uploaded Government ID to Firebase Storage:', processedGovernmentIdUrl.substring(0, 50) + '...');
       }
     } catch (error: any) {
       console.error('[PUT /api/me] Error uploading files to Firebase Storage:', error);
@@ -530,6 +556,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
       rsa_expiry?: string;
       rsa_state_of_issue?: string;
       rsa_cert_url?: string;
+      id_document_url?: string;
     } = {};
     if (rsaExpiry !== undefined) profileUpdates.rsa_expiry = rsaExpiry;
     if (rsaStateOfIssue !== undefined) profileUpdates.rsa_state_of_issue = rsaStateOfIssue;
@@ -537,6 +564,9 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
       profileUpdates.rsa_cert_url = processedRsaCertificateUrl;
     } else if (rsaCertificateUrl !== undefined && isValidUrl(rsaCertificateUrl)) {
       profileUpdates.rsa_cert_url = rsaCertificateUrl;
+    }
+    if (processedGovernmentIdUrl !== undefined && isValidUrl(processedGovernmentIdUrl)) {
+      profileUpdates.id_document_url = processedGovernmentIdUrl;
     }
     if (Object.keys(profileUpdates).length > 0) {
       await profilesRepo.upsertProfileCompliance(req.user.id, profileUpdates);

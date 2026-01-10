@@ -42,6 +42,7 @@ const ProfessionalOnboardingPage = lazy(() => import('@/pages/onboarding/profess
 // Legal & Company pages - lazy load (less critical)
 const TermsPage = lazy(() => import('@/pages/legal/terms'));
 const PrivacyPage = lazy(() => import('@/pages/legal/privacy'));
+const RefundPolicyPage = lazy(() => import('@/pages/RefundPolicy'));
 const SitemapPage = lazy(() => import('@/pages/legal/sitemap'));
 const AboutPage = lazy(() => import('@/pages/company/about'));
 const ContactPage = lazy(() => import('@/pages/company/contact'));
@@ -54,6 +55,7 @@ const ComingSoonPage = lazy(() => import('@/pages/coming-soon'));
 const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
 const EditProfilePage = lazy(() => import('@/pages/edit-profile'));
 const JobFeedPage = lazy(() => import('@/pages/job-feed'));
+const BrowseShiftsPage = lazy(() => import('@/pages/BrowseShifts'));
 const JobDetailsPage = lazy(() => import('@/pages/job-details'));
 const ShiftDetailsPage = lazy(() => import('@/pages/shift-details'));
 const TravelPage = lazy(() => import('@/pages/travel'));
@@ -190,6 +192,14 @@ function AppRoutes() {
           </AuthGuard>
         } />
 
+        <Route path="/refunds" element={
+          <AuthGuard>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <RefundPolicyPage />
+            </Suspense>
+          </AuthGuard>
+        } />
+
         <Route path="/sitemap" element={
           <AuthGuard>
             <Suspense fallback={<PageLoadingFallback />}>
@@ -244,6 +254,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>
               <JobFeedPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/browse-shifts" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <BrowseShiftsPage />
             </Suspense>
           </ProtectedRoute>
         } />

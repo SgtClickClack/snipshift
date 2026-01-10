@@ -85,6 +85,7 @@ export async function setup() {
         path.join(apiRoot, '_src', 'db', 'migrations', '0015_add_shift_hospitality_fields.sql'),
         path.join(apiRoot, '_src', 'db', 'migrations', '0016_add_shift_cancellation_fields.sql'),
         path.join(apiRoot, '_src', 'db', 'migrations', '0017_add_profiles_reliability_strikes.sql'),
+        path.join(apiRoot, '_src', 'db', 'migrations', '0018_add_profiles_id_verification.sql'),
       ];
 
       for (const migrationPath of optionalMigrationPaths) {

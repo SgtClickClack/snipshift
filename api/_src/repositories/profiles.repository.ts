@@ -50,6 +50,8 @@ export type ProfileCompliance = {
   rsa_expiry: string | null;
   rsa_state_of_issue: string | null;
   rsa_cert_url: string | null;
+  id_document_url: string | null;
+  id_verified_status: string | null;
   reliability_strikes: number;
 };
 
@@ -63,6 +65,8 @@ export async function getProfileCompliance(userId: string): Promise<ProfileCompl
       rsa_expiry AS rsa_expiry,
       rsa_state_of_issue AS rsa_state_of_issue,
       rsa_cert_url AS rsa_cert_url,
+      id_document_url AS id_document_url,
+      id_verified_status AS id_verified_status,
       COALESCE(reliability_strikes, 0) AS reliability_strikes
     FROM profiles
     WHERE user_id = ${userId}
@@ -77,6 +81,8 @@ export async function getProfileCompliance(userId: string): Promise<ProfileCompl
       rsa_expiry: null,
       rsa_state_of_issue: null,
       rsa_cert_url: null,
+      id_document_url: null,
+      id_verified_status: null,
       reliability_strikes: 0,
     };
   }
@@ -86,6 +92,8 @@ export async function getProfileCompliance(userId: string): Promise<ProfileCompl
     rsa_expiry: row.rsa_expiry ?? null,
     rsa_state_of_issue: row.rsa_state_of_issue ?? null,
     rsa_cert_url: row.rsa_cert_url ?? null,
+    id_document_url: row.id_document_url ?? null,
+    id_verified_status: row.id_verified_status ?? null,
     reliability_strikes: typeof row.reliability_strikes === 'number'
       ? row.reliability_strikes
       : Number.parseInt(String(row.reliability_strikes ?? 0), 10) || 0,
@@ -99,6 +107,7 @@ export async function upsertProfileCompliance(
     rsa_expiry?: string;
     rsa_state_of_issue?: string;
     rsa_cert_url?: string;
+    id_document_url?: string;
   }
 ): Promise<void> {
   const db = getDb();
@@ -108,17 +117,32 @@ export async function upsertProfileCompliance(
   const rsaExpiry = updates.rsa_expiry ?? null;
   const rsaStateOfIssue = updates.rsa_state_of_issue ?? null;
   const rsaCertUrl = updates.rsa_cert_url ?? null;
+  const idDocumentUrl = updates.id_document_url ?? null;
 
   // Use UPSERT so profiles exist even for older users.
   await (db as any).execute(sql`
-    INSERT INTO profiles (user_id, rsa_verified, rsa_expiry, rsa_state_of_issue, rsa_cert_url, updated_at)
-    VALUES (${userId}, COALESCE(${rsaVerified}, false), ${rsaExpiry}, ${rsaStateOfIssue}, ${rsaCertUrl}, NOW())
+    INSERT INTO profiles (user_id, rsa_verified, rsa_expiry, rsa_state_of_issue, rsa_cert_url, id_document_url, id_verified_status, updated_at)
+    VALUES (
+      ${userId},
+      COALESCE(${rsaVerified}, false),
+      ${rsaExpiry},
+      ${rsaStateOfIssue},
+      ${rsaCertUrl},
+      ${idDocumentUrl},
+      CASE WHEN ${idDocumentUrl} IS NOT NULL THEN 'PENDING' ELSE NULL END,
+      NOW()
+    )
     ON CONFLICT (user_id)
     DO UPDATE SET
       rsa_verified = CASE WHEN EXCLUDED.rsa_verified = true THEN true ELSE profiles.rsa_verified END,
       rsa_expiry = COALESCE(EXCLUDED.rsa_expiry, profiles.rsa_expiry),
       rsa_state_of_issue = COALESCE(EXCLUDED.rsa_state_of_issue, profiles.rsa_state_of_issue),
       rsa_cert_url = COALESCE(EXCLUDED.rsa_cert_url, profiles.rsa_cert_url),
+      id_document_url = COALESCE(EXCLUDED.id_document_url, profiles.id_document_url),
+      id_verified_status = CASE
+        WHEN EXCLUDED.id_document_url IS NOT NULL THEN 'PENDING'
+        ELSE profiles.id_verified_status
+      END,
       updated_at = NOW()
   `);
 }
@@ -133,6 +157,25 @@ export async function setRsaVerified(userId: string, verified: boolean): Promise
     ON CONFLICT (user_id)
     DO UPDATE SET
       rsa_verified = ${verified},
+      updated_at = NOW()
+  `);
+
+  return true;
+}
+
+export async function setIdVerifiedStatus(
+  userId: string,
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+
+  await (db as any).execute(sql`
+    INSERT INTO profiles (user_id, id_verified_status, updated_at)
+    VALUES (${userId}, ${status}, NOW())
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+      id_verified_status = ${status},
       updated_at = NOW()
   `);
 

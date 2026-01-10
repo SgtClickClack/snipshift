@@ -1,3 +1,161 @@
+#### 2026-01-10: Staff Onboarding Wizard + Government ID Verification Gate (RSA + ID)
+
+**Core Components**
+- Staff onboarding wizard (`src/pages/Onboarding.tsx`, `src/pages/onboarding/index.tsx`)
+- Staff verification hook + browse redirect (`src/hooks/useVerificationStatus.ts`, `src/pages/BrowseShifts.tsx`, `src/App.tsx`)
+- Government ID upload UI (`src/components/profile/GovernmentIDLocker.tsx`)
+- Navbar verification pending indicator (`src/components/layout/Navbar.tsx`, `src/contexts/AuthContext.tsx`)
+- Profiles schema (ID verification fields) (`api/_src/db/schema/profiles.ts`, `api/_src/db/schema/profiles.js`)
+- Profile uploads middleware (Government ID field) (`api/_src/middleware/upload.ts`, `api/_src/middleware/upload.js`)
+- `/api/me` upload + profile sync (Government ID → profiles) (`api/_src/routes/users.ts`, `api/_src/routes/users.js`)
+- Profiles repository (compliance shape extended) (`api/_src/repositories/profiles.repository.ts`, `api/_src/repositories/profiles.repository.js`)
+- Test DB optional migration wiring (`api/_src/db/migrations/0018_add_profiles_id_verification.sql`, `api/_src/tests/globalSetup.ts`)
+
+**Key Features**
+- **Multi-step staff onboarding**: Implemented a 4-step wizard:
+  - Step 1: Personal Details + Profile Photo
+  - Step 2: Document Upload (RSA + Government ID)
+  - Step 3: Role & Experience Selection (hospitality role + rate preference + experience summary)
+  - Step 4: Stripe Payout Account Setup (reuses existing `PayoutSettings`)
+- **Government ID verification tracking**: Added `profiles.id_document_url` and `profiles.id_verified_status`, and automatically sets status to **`PENDING`** whenever a Government ID is uploaded/re-uploaded.
+- **Browse verification gate**: `/browse-shifts` now redirects to `/onboarding` until `profiles.rsa_cert_url` is present and `profiles.id_verified_status === 'APPROVED'`.
+- **Navbar verification badge**: Shows a “Verification Pending” icon next to the user name when documents are uploaded but not yet fully audited.
+
+**Integration Points**
+- API: `PUT /api/me` now accepts multipart upload field `governmentId` (PDF/image) and persists URL + sets `profiles.id_verified_status = PENDING`.
+- UI Routes: Added `/browse-shifts` alias route for shift browsing verification gate.
+- DB/Test: Added an idempotent optional SQL migration to keep test schema deterministic when using `vitest` integration setup.
+
+**File Paths**
+- `src/pages/Onboarding.tsx`
+- `src/pages/onboarding/index.tsx`
+- `src/hooks/useVerificationStatus.ts`
+- `src/pages/BrowseShifts.tsx`
+- `src/App.tsx`
+- `src/components/profile/GovernmentIDLocker.tsx`
+- `src/components/layout/Navbar.tsx`
+- `src/contexts/AuthContext.tsx`
+- `api/_src/db/schema/profiles.ts`
+- `api/_src/db/schema/profiles.js`
+- `api/_src/middleware/upload.ts`
+- `api/_src/middleware/upload.js`
+- `api/_src/routes/users.ts`
+- `api/_src/routes/users.js`
+- `api/_src/repositories/profiles.repository.ts`
+- `api/_src/repositories/profiles.repository.js`
+- `api/_src/db/migrations/0018_add_profiles_id_verification.sql`
+- `api/_src/tests/globalSetup.ts`
+
+**Next Priority Task**
+- Add an Admin review workflow for Government ID (list pending uploads + approve/reject to set `profiles.id_verified_status`) and surface clearer “pending review / rejected” messaging in onboarding.
+
+**Code Organization & Quality**
+- Reused established patterns (`RSALocker`, `/api/me` upload middleware, Stripe Connect `PayoutSettings`) instead of introducing a new upload or payout system.
+- Kept schema changes additive and made test migrations idempotent to avoid cross-environment drift.
+
+---
+
+#### 2026-01-10: Manual Payout State Tracking (PENDING/RELEASED/DISPUTED) + Support Contact Standardization
+
+**Core Components**
+- Shifts schema (payout status enum + column) (`api/_src/db/schema/shifts.ts`, `api/_src/db/schema/shifts.js`)
+- Drizzle schema barrel exports (`api/_src/db/schema.ts`, `api/_src/db/schema.js`)
+- Shifts repository (selects + legacy fallback hydration) (`api/_src/repositories/shifts.repository.ts`, `api/_src/repositories/shifts.repository.js`)
+- Repository integration test (`api/_src/tests/repositories/shifts.repository.payout-status.test.ts`)
+- Support contact surfaces (Footer + account deletion prompt) (`src/components/layout/Footer.tsx`, `src/pages/edit-profile.tsx`)
+
+**Key Features**
+- **Payout lifecycle state**: Added `payout_status` enum and `shifts.payoutStatus` column with default **`PENDING`** to align with Manual Payout strategy (separate from `payment_status` / Stripe intent state).
+- **API contract stays consistent**: Threaded `payoutStatus` through repository reads and legacy-schema hydration to avoid runtime 500s on partially-migrated DBs.
+- **Test coverage**: Added an integration test asserting newly-created shifts default to `payoutStatus = PENDING`.
+- **Support contact**: Standardized support contact details to **`info@hospogo.com`** and **`+61 478 430 822`** on key UI support surfaces.
+
+**Integration Points**
+- DB schema sync: `cd api && npm run db:push` (drizzle-kit) to apply the new enum + column to the target DB.
+- API: Shift read endpoints indirectly include the new `payoutStatus` field via the repository layer.
+
+**File Paths**
+- `api/_src/db/schema/shifts.ts`
+- `api/_src/db/schema/shifts.js`
+- `api/_src/db/schema.ts`
+- `api/_src/db/schema.js`
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/repositories/shifts.repository.js`
+- `api/_src/tests/repositories/shifts.repository.payout-status.test.ts`
+- `src/components/layout/Footer.tsx`
+- `src/pages/edit-profile.tsx`
+
+**Next Priority Task**
+- Add an admin/business workflow to mark a shift payout as **RELEASED** (and set **DISPUTED** when a dispute is opened), then surface this status on the Professional Earnings/Payouts UI.
+
+**Code Organization & Quality**
+- Kept payout state as a dedicated enum/column to avoid overloading `payment_status` with manual payout semantics.
+- Maintained legacy-DB compatibility by extending existing “missing column” fallback patterns in the shifts repository.
+
+---
+
+#### 2026-01-10: Landing Visual Polish (Navbar Logo Blend + Hero De-Clutter)
+
+**Core Components**
+- Theme tokens (navbar background) (`src/index.css`)
+- Landing hero layout (`src/pages/landing.tsx`, `src/components/landing/Hero.tsx`)
+
+**Key Features**
+- **Navbar logo blend**: Updated the navbar background token to match the wordmark asset’s base charcoal so the logo no longer reads as a “boxed” rectangle on the header.
+- **Logo edge cleanup**: Reduced the aggressive `logo-sharp` filter so it doesn’t amplify the baked-in dark background edges.
+- **Hero de-clutter**: Adjusted hero spacing so the content sits lower and the background image reads cleaner.
+
+**Integration Points**
+- Frontend build: `npm run build`
+- Lint:
+  - `npm run lint` (reports warnings but does not fail)
+  - `npm run lint:strict` (fails on warnings; use when tackling the warning backlog)
+
+**File Paths**
+- `src/index.css`
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+- `package.json`
+
+**Next Priority Task**
+- Replace the wordmark/nav asset with a true transparent-background PNG (or SVG) so it blends on any header color without relying on token alignment.
+
+**Code Organization & Quality**
+- Kept changes scoped to theme tokens and landing layout only; no routing/auth logic touched.
+
+#### 2026-01-10: Refund & Dispute Policy Page (Refunds + Kill Fee)
+
+**Core Components**
+- Refund policy content page (`src/pages/RefundPolicy.tsx`)
+- App routing (legal pages) (`src/App.tsx`)
+- Footer legal navigation (`src/components/layout/Footer.tsx`)
+- Contact/support email alignment (`src/pages/company/contact.tsx`, `src/pages/edit-profile.tsx`, `src/pages/legal/sitemap.tsx`)
+
+**Key Features**
+- Added a dedicated **Refund & Dispute Policy** page with the provided HospoGo policy text and updated contact details (email + phone).
+- Registered the new route at **`/refunds`** and added a **Refund Policy** link in the site footer.
+- Aligned “support” email references in-app to **`info@hospogo.com`** (per branding/contact requirements) and added Refund Policy to the Sitemap legal section.
+
+**Integration Points**
+- Route: `react-router-dom` route registered in `src/App.tsx` (`/refunds`)
+- SEO: `SEO` component used for metadata (`title`, `description`, `url`)
+- Navigation: Footer and Sitemap link to `/refunds`
+
+**File Paths**
+- `src/pages/RefundPolicy.tsx`
+- `src/App.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/pages/company/contact.tsx`
+- `src/pages/edit-profile.tsx`
+- `src/pages/legal/sitemap.tsx`
+
+**Next Priority Task**
+- Verify `/refunds` renders correctly across authenticated/unauthenticated sessions and appears in Footer/Sitemap on production.
+
+**Code Organization & Quality**
+- Followed the existing “legal page” UI pattern (SEO + `card-chrome` + prose typography) to keep styling consistent and avoid new one-off layouts.
+
+---
 
 #### 2026-01-10: Staff Penalty Persistence (Reliability Strikes + Auto Suspension)
 
@@ -461,28 +619,28 @@
 - App shell metadata (`index.html`)
 - React Helmet defaults (`src/components/seo/SEO.tsx`)
 - Landing page SEO overrides (`src/pages/landing.tsx`)
-- Social preview image asset (`public/hospogo-og.png`)
+- Social preview image asset (`public/og-image.jpg`)
 
 **Key Features**
 - Updated homepage `<title>` and description to match the Brisbane/RSA positioning.
 - Aligned OpenGraph + Twitter card tags to the requested copy and canonical URL (`https://hospogo.com/`).
-- Standardized OG/Twitter image URL to `https://hospogo.com/hospogo-og.png` and added a real `public/hospogo-og.png` asset.
+- Standardized OG/Twitter image URL to `https://hospogo.com/og-image.jpg`.
 - Removed the “double HospoGo” title issue on the landing page by using shared defaults and only overriding the social share title.
 
 **Integration Points**
 - Browser metadata + social previews: `<meta property="og:*">`, `twitter:*` tags in `index.html`
 - React Helmet: `SEO` component defaults/overrides
-- Static asset served from `/hospogo-og.png`
+- Static asset served from `/og-image.jpg`
 
 **File Paths**
 - `index.html`
 - `src/components/seo/SEO.tsx`
 - `src/pages/landing.tsx`
-- `public/hospogo-og.png`
+- `public/og-image.jpg`
 - `vercel.json`
 
 **Next Priority Task**
-- Verify social previews render correctly on `hospogo.com` (Facebook/Twitter/X/LinkedIn caches) using the new `https://hospogo.com/hospogo-og.png`.
+- Verify social previews render correctly on `hospogo.com` (Facebook/Twitter/X/LinkedIn caches) using `https://hospogo.com/og-image.jpg`.
 
 **Code Organization & Quality**
 - Kept changes scoped to metadata + SEO defaults; avoided touching unrelated UI/business logic.
@@ -534,6 +692,37 @@
 
 **Code Organization & Quality**
 - Copy-only edits; no component logic changes.
+
+---
+
+#### 2026-01-10: Asset Cleanup (Remove Snipshift-Era Hero Asset)
+
+**Core Components**
+- Public static assets (`public/`)
+- PWA precache include list (`vite.config.ts`)
+- Social preview defaults (`index.html`, `src/components/seo/SEO.tsx`)
+
+**Key Features**
+- **Removed legacy (non-HospoGo) asset**: Deleted `public/herobarber (2).webp` (barber-era imagery) to reduce brand confusion.
+- **PWA precache cleaned**: Removed `herobarber (2).*` from `VitePWA.includeAssets` and removed the Workbox ignore for the old legacy PNG.
+- **Social previews fixed**: Ensured OpenGraph/Twitter images point to `https://hospogo.com/og-image.jpg` and set `SEO` default image to `/og-image.jpg` (avoids missing `/hospogo-og.png`).
+- **Meta lint hygiene**: Added `apple-touch-icon`, removed `maximum-scale/user-scalable` from viewport meta, and replaced the splash fallback inline styles with a CSS class.
+
+**Integration Points**
+- Build: `npm run build`
+- Lint (changed files): `npx eslint vite.config.ts src/components/seo/SEO.tsx --max-warnings 0`
+
+**File Paths**
+- `public/herobarber (2).webp` (deleted)
+- `vite.config.ts`
+- `index.html`
+- `src/components/seo/SEO.tsx`
+
+**Next Priority Task**
+- Remove/rename remaining legacy “Snipshift” references in docs/scripts that are no longer relevant to HospoGo (copy-only cleanup; no behavior changes).
+
+**Code Organization & Quality**
+- Kept the cleanup strictly scoped to static assets + SEO defaults (no app logic touched).
 
 ---
 

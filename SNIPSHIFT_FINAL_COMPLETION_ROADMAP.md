@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-10 - Manual Payout Tracking (Payout Status Enum)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added a dedicated `payout_status` enum with states **PENDING / RELEASED / DISPUTED** and wired it into the `shifts` model as `payoutStatus` (default **PENDING**).
+- Updated the shifts repository to return `payoutStatus` and to safely fall back on legacy DBs missing the new column.
+- Added an integration test to lock the default payout status behavior.
+
+**Impact:**
+- Enables a **Manual Payout strategy** by tracking payout lifecycle separately from `payment_status` / Stripe intent state, with safe behavior across partially-migrated environments.
+
+---
+
 ### Update: 2026-01-10 - RSA Compliance Browse Lock (Verification Gate)
 
 **Status:** ✅ **IMPLEMENTED**
@@ -23,13 +37,32 @@
 
 ---
 
+### Update: 2026-01-10 - Staff Onboarding Wizard (RSA + Government ID + Stripe Payout Setup)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Replaced `/onboarding` with a staff-focused 4-step wizard:
+  - Personal Details + Profile Photo
+  - RSA + Government ID document uploads
+  - Role & Experience selection
+  - Stripe payout setup (Connect onboarding)
+- Added Government ID upload support and persisted verification state on `profiles` (`id_document_url`, `id_verified_status`), setting status to **PENDING** on upload/re-upload.
+- Added `/browse-shifts` route alias with a verification gate that redirects to `/onboarding` until required verification conditions are met.
+- Added a Navbar “Verification Pending” indicator next to the user name when documents are uploaded but not yet fully audited.
+
+**Impact:**
+- Staff onboarding now captures the compliance and payout requirements in a guided flow, reducing drop-off and ensuring verification state is visible throughout the app.
+
+---
+
 ### Update: 2026-01-10 - SEO & Metadata Brand Transformation (HospoGo)
 
 **Status:** ✅ **UPDATED**
 
 **Action Taken:**
 - Updated the app shell title/description to match the HospoGo positioning (“On-Demand Hospitality Staff” + RSA-verified messaging).
-- Updated OpenGraph/Twitter metadata to use canonical `https://hospogo.com/` + the new share image path `/hospogo-og.png` (1200x630).
+- Updated OpenGraph/Twitter metadata to use canonical `https://hospogo.com/` + the share image path `/og-image.jpg` (1200x630).
 - Updated PWA manifest branding (app name + dark theme/background) and added a dedicated `public/favicon.ico`.
 
 **Impact:**
@@ -94,6 +127,25 @@
 
 **Impact:**
 - Legal pages now match the hospitality marketplace model and the platform’s implemented cancellation/penalty concepts.
+
+---
+
+### Update: 2026-01-10 - Refund & Dispute Policy Page
+
+**Status:** ✅ **ADDED**
+
+**Action Taken:**
+- Added a dedicated Refund & Dispute Policy page at `/refunds` with clear rules for:
+  - Venue cancellations (>4 hours)
+  - Late venue cancellations (Kill Fee = 1 hour)
+  - Staff cancellations (automatic Emergency Fill re-listing)
+  - Refunds for staff no-shows and the dispute submission window
+- Added a Footer link for “Refund Policy” and ensured support contact details match:
+  - Email: `info@hospogo.com`
+  - Phone: `+61 478 430 822`
+
+**Impact:**
+- Clear, centralized policy reference for venues and staff, improving dispute handling expectations and reducing support ambiguity.
 
 ---
 

@@ -7,6 +7,7 @@ const storage = multer.memoryStorage();
 // File filter:
 // - Profile images: images only
 // - RSA certificate uploads: image or PDF
+// - Government ID uploads: image or PDF
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const isImage = file.mimetype.startsWith('image/');
   const isPdf = file.mimetype === 'application/pdf';
@@ -17,6 +18,15 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
       return;
     }
     cb(new Error('RSA certificate must be an image or PDF'));
+    return;
+  }
+
+  if (file.fieldname === 'governmentId') {
+    if (isImage || isPdf) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Government ID must be an image or PDF'));
     return;
   }
 
@@ -43,6 +53,7 @@ export const uploadProfileImages = upload.fields([
   { name: 'banner', maxCount: 1 },
   { name: 'avatar', maxCount: 1 }, // Also support 'avatar' for compatibility
   { name: 'rsaCertificate', maxCount: 1 },
+  { name: 'governmentId', maxCount: 1 },
 ]);
 
 // Middleware for single file upload (for backward compatibility)

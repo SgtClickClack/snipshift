@@ -42,6 +42,15 @@ export interface User {
   rsaExpiry?: string | null;
   rsaStateOfIssue?: string | null;
   rsaCertificateUrl?: string | null;
+  profile?: {
+    rsa_verified?: boolean;
+    rsa_expiry?: string | null;
+    rsa_state_of_issue?: string | null;
+    rsa_cert_url?: string | null;
+    id_document_url?: string | null;
+    id_verified_status?: string | null;
+    reliability_strikes?: number;
+  } | null;
   hospitalityRole?: 'Bartender' | 'Waitstaff' | 'Barista' | 'Kitchen Hand' | 'Manager' | null;
   hourlyRatePreference?: number | null;
   businessSettings?: {
