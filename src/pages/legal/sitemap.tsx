@@ -22,27 +22,27 @@ export default function SitemapPage() {
                   <h2 className="text-xl font-semibold text-steel-900 dark:text-white mb-4">Main Pages</h2>
                   <ul className="space-y-2">
                     <li>
-                      <Link to="/" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Home
                       </Link>
                     </li>
                     <li>
-                      <Link to="/login" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/login" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Login
                       </Link>
                     </li>
                     <li>
-                      <Link to="/signup" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/signup" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Sign Up
                       </Link>
                     </li>
                     <li>
-                      <Link to="/jobs" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/jobs" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Find Shifts
                       </Link>
                     </li>
                     <li>
-                      <Link to="/post-job" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/post-job" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Post a Job
                       </Link>
                     </li>
@@ -54,14 +54,14 @@ export default function SitemapPage() {
                   <h2 className="text-xl font-semibold text-steel-900 dark:text-white mb-4">Company</h2>
                   <ul className="space-y-2">
                     <li>
-                      <Link to="/about" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/about" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         About
                       </Link>
                     </li>
                     <li>
                       <a 
                         href="mailto:support@hospogo.com" 
-                        className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors"
+                        className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors"
                       >
                         Contact
                       </a>
@@ -74,17 +74,17 @@ export default function SitemapPage() {
                   <h2 className="text-xl font-semibold text-steel-900 dark:text-white mb-4">Legal</h2>
                   <ul className="space-y-2">
                     <li>
-                      <Link to="/terms" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/terms" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Terms of Service
                       </Link>
                     </li>
                     <li>
-                      <Link to="/privacy" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/privacy" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Privacy Policy
                       </Link>
                     </li>
                     <li>
-                      <Link to="/sitemap" className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors">
+                      <Link to="/sitemap" className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors">
                         Sitemap
                       </Link>
                     </li>
@@ -100,7 +100,7 @@ export default function SitemapPage() {
                         href="/sitemap.xml" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors"
+                        className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors"
                       >
                         XML Sitemap
                       </a>
@@ -110,7 +110,7 @@ export default function SitemapPage() {
                         href="https://twitter.com/hospogo" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors"
+                        className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors"
                       >
                         Twitter
                       </a>
@@ -120,7 +120,7 @@ export default function SitemapPage() {
                         href="https://linkedin.com/company/hospogo" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors"
+                        className="text-steel-600 dark:text-steel-300 hover:text-brand-neon dark:hover:text-brand-neon transition-colors"
                       >
                         LinkedIn
                       </a>

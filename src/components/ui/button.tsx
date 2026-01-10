@@ -21,7 +21,8 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         chrome: "bg-gradient-to-br from-chrome-light via-chrome-medium to-chrome-light border-2 border-steel-300 text-steel-900 font-semibold hover:-translate-y-0.5 shadow-sm",
-        accent: "bg-gradient-to-br from-red-accent to-red-accent-dark text-white font-semibold hover:-translate-y-0.5 shadow-md border border-steel-800 hover:shadow-lg",
+        accent:
+          "bg-brand-neon text-brand-dark font-bold shadow-neon-realistic hover:bg-brand-neon/90 hover:-translate-y-0.5 border border-brand-neon/40 hover:shadow-[0_0_5px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.7),0_0_40px_rgba(186,255,57,0.4)]",
         charcoal: "bg-gradient-to-b from-steel-800 to-steel-900 border-2 border-steel-700 text-white font-semibold hover:from-steel-700 hover:to-steel-800 hover:-translate-y-0.5 shadow-lg",
         steel: "bg-gradient-to-b from-steel-400 to-steel-500 border border-steel-600 text-white hover:from-steel-300 hover:to-steel-400 hover:-translate-y-0.5 shadow-md",
       },

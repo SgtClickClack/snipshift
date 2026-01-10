@@ -71,8 +71,8 @@ export default function HomePage() {
       <div className="py-8 md:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex justify-center mb-8">
-            <div className="p-4 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full shadow-xl">
-              <FastForward className="h-12 w-12 text-white" />
+            <div className="p-4 bg-brand-neon rounded-full shadow-neon-realistic">
+              <FastForward className="h-12 w-12 text-brand-dark" />
             </div>
           </div>
           

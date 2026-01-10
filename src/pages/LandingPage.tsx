@@ -147,14 +147,14 @@ export default function LandingPage() {
               {/* Keep overflow-visible to prevent badge clipping */}
               <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
                 <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge"
+                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
                   data-testid="step-badge-1"
                 >
                   1
                 </div>
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <UserPlus className="text-white h-8 w-8" />
+                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
+                    <UserPlus className="text-brand-dark h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-semibold mb-3 text-card-foreground">Create Your Profile</h3>
                   <p className="text-muted-foreground text-sm">
@@ -167,14 +167,14 @@ export default function LandingPage() {
               {/* Keep overflow-visible to prevent badge clipping */}
               <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
                 <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge"
+                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
                   data-testid="step-badge-2"
                 >
                   2
                 </div>
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <FileText className="text-white h-8 w-8" />
+                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
+                    <FileText className="text-brand-dark h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-semibold mb-3 text-card-foreground">
                     Post or Browse Opportunities
@@ -189,14 +189,14 @@ export default function LandingPage() {
               {/* Keep overflow-visible to prevent badge clipping */}
               <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
                 <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge"
+                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
                   data-testid="step-badge-3"
                 >
                   3
                 </div>
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Handshake className="text-white h-8 w-8" />
+                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
+                    <Handshake className="text-brand-dark h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-semibold mb-3 text-card-foreground">Connect & Apply</h3>
                   <p className="text-muted-foreground text-sm">
@@ -209,14 +209,14 @@ export default function LandingPage() {
               {/* Keep overflow-visible to prevent badge clipping */}
               <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
                 <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-accent text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-badge"
+                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
                   data-testid="step-badge-4"
                 >
                   4
                 </div>
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <CheckCircle className="text-white h-8 w-8" />
+                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
+                    <CheckCircle className="text-brand-dark h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-semibold mb-3 text-card-foreground">Work Together</h3>
                   <p className="text-muted-foreground text-sm">
@@ -243,11 +243,11 @@ export default function LandingPage() {
 
             <div className="grid md:grid-cols-2 gap-8 md:gap-12">
               {/* For Shops */}
-              <Card className="p-8 bg-card shadow-lg border-2 border-border hover:shadow-xl hover:border-red-accent/50 transition-all duration-300">
+              <Card className="p-8 bg-card shadow-lg border-2 border-border hover:shadow-xl hover:border-brand-neon/50 transition-all duration-300">
                 <CardContent className="pt-0">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center shadow-lg">
-                      <Store className="h-8 w-8 text-white" />
+                    <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center shadow-neon-realistic">
+                      <Store className="h-8 w-8 text-brand-dark" />
                     </div>
                     <h3 className="text-2xl font-bold text-card-foreground">For Shops</h3>
                   </div>
@@ -256,15 +256,15 @@ export default function LandingPage() {
                   </p>
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-neon mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">Verified professionals with ratings</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-neon mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">Instant booking for last-minute coverage</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-neon mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">No long-term contracts required</span>
                     </li>
                   </ul>
@@ -279,11 +279,11 @@ export default function LandingPage() {
               </Card>
 
               {/* For Staff */}
-              <Card className="p-8 bg-card shadow-lg border-2 border-border hover:shadow-xl hover:border-red-accent/50 transition-all duration-300">
+              <Card className="p-8 bg-card shadow-lg border-2 border-border hover:shadow-xl hover:border-brand-neon/50 transition-all duration-300">
                 <CardContent className="pt-0">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center shadow-lg">
-                      <UserCheck className="h-8 w-8 text-white" />
+                    <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center shadow-neon-realistic">
+                      <UserCheck className="h-8 w-8 text-brand-dark" />
                     </div>
                     <h3 className="text-2xl font-bold text-card-foreground">For Staff</h3>
                   </div>
@@ -292,15 +292,15 @@ export default function LandingPage() {
                   </p>
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-neon mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">Flexible shifts that fit your schedule</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-neon mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">Secure payments processed through Stripe</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-red-accent mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-neon mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">Build your reputation with ratings</span>
                     </li>
                   </ul>
@@ -322,11 +322,11 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
               <div className="flex items-center gap-3">
-                <Shield className="h-6 w-6 text-red-accent" />
+                <Shield className="h-6 w-6 text-brand-neon" />
                 <span className="text-lg font-semibold text-foreground">Verified Professionals</span>
               </div>
               <div className="flex items-center gap-3">
-                <CreditCard className="h-6 w-6 text-red-accent" />
+                <CreditCard className="h-6 w-6 text-brand-neon" />
                 <span className="text-lg font-semibold text-foreground">Secure Payments by Stripe</span>
               </div>
             </div>

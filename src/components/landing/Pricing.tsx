@@ -90,13 +90,13 @@ export default function Pricing() {
                 key={tier.name}
                 className={`relative flex flex-col overflow-visible ${
                 tier.highlighted
-                  ? "border-2 border-red-accent/50 shadow-2xl shadow-red-accent/20 md:scale-105 z-elevated bg-card"
+                  ? "border-2 border-brand-neon/50 shadow-2xl shadow-[0_0_40px_rgba(186,255,57,0.15)] md:scale-105 z-elevated bg-card"
                   : "border border-border hover:shadow-lg hover:border-border/80 bg-card"
               } transition-all duration-300`}
             >
               {tier.badge && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-badge" data-testid="pricing-badge">
-                  <span className="bg-red-accent text-white text-sm font-bold px-4 py-1 rounded-full shadow-md">
+                  <span className="bg-brand-neon text-brand-dark text-sm font-bold px-4 py-1 rounded-full shadow-neon-realistic">
                     {tier.badge}
                   </span>
                 </div>
@@ -132,7 +132,7 @@ export default function Pricing() {
                 <ul className="space-y-3">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start">
-                      <Check className="h-5 w-5 text-red-accent mr-2 flex-shrink-0 mt-0.5" />
+                      <Check className="h-5 w-5 text-brand-neon mr-2 flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground text-sm">{feature}</span>
                     </li>
                   ))}
@@ -157,7 +157,8 @@ export default function Pricing() {
                   </Link>
                 ) : (
                   <Button
-                    className="w-full font-semibold py-6 bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white"
+                    variant="accent"
+                    className="w-full font-semibold py-6"
                     onClick={() => {
                       toast({
                         title: "Coming soon!",

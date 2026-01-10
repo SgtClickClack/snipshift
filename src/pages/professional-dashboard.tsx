@@ -448,7 +448,8 @@ export default function ProfessionalDashboard() {
               </Button>
               <Button 
                 onClick={() => setActiveView('jobs')}
-                className="flex-1 md:flex-none bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                variant="accent"
+                className="flex-1 md:flex-none shadow-neon-realistic"
                 data-testid="button-browse-jobs"
               >
                 <Search className="mr-2 h-4 w-4" />

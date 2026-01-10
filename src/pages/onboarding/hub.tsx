@@ -107,8 +107,8 @@ export default function HubOnboardingPage() {
         <div className="w-full max-w-xl">
           <Card className="card-chrome">
             <CardHeader className="text-center">
-               <div className="mx-auto w-12 h-12 bg-red-accent rounded-full flex items-center justify-center mb-4">
-                  <Building2 className="h-6 w-6 text-white" />
+               <div className="mx-auto w-12 h-12 bg-brand-neon rounded-full flex items-center justify-center mb-4 shadow-neon-realistic">
+                  <Building2 className="h-6 w-6 text-brand-dark" />
                </div>
               <CardTitle className="text-2xl text-steel-900">Create Shop Profile</CardTitle>
               <CardDescription>
@@ -158,7 +158,8 @@ export default function HubOnboardingPage() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-red-accent hover:bg-red-accent-hover text-white"
+                  variant="accent"
+                  className="w-full"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Creating Profile...' : 'Create Shop Profile'}

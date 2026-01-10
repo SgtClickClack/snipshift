@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { getDashboardRoute, mapRoleToApiRole, AppRole } from "@/lib/roles";
 import { InstallButton } from "@/components/pwa/install-button";
-const logoUrl = '/hospogoappicon-navbar.png';
+const logoUrl = '/hospogo-navbar-banner.png';
 
 async function fetchUnreadCount(): Promise<{ unreadCount: number }> {
   const res = await apiRequest('GET', '/api/conversations/unread-count');
@@ -114,7 +114,7 @@ export default function Navbar() {
   return (
     <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="flex justify-between items-center h-16 min-w-0">
+        <div className="flex justify-between items-center h-20 min-w-0">
           <Link
             to={!user ? "/" : "/dashboard"}
             className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 min-w-0 bg-transparent"
@@ -123,17 +123,10 @@ export default function Navbar() {
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-14 sm:h-[60px] w-auto object-contain"
+                className="h-16 sm:h-[70px] w-auto object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)]"
                 loading="eager"
-                width={220}
-                height={60}
-                style={{
-                  imageRendering: 'auto',
-                  WebkitFontSmoothing: 'antialiased',
-                  display: 'block',
-                  // Keep it bright and "neon" without blurring the icon itself
-                  filter: 'drop-shadow(0 0 14px rgba(50,205,50,0.45))',
-                }}
+                width={360}
+                height={70}
               />
             </div>
           </Link>
@@ -236,7 +229,7 @@ export default function Navbar() {
                   >
                     <MessageCircle className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" data-testid="unread-badge">
+                      <span className="absolute -top-1 -right-1 bg-brand-neon text-brand-dark text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-[0_0_10px_rgba(186,255,57,0.35)]" data-testid="unread-badge">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -412,7 +405,7 @@ export default function Navbar() {
                             {(user.roles || []).includes('admin') && (
                               <SheetClose asChild>
                                 <Link to="/admin">
-                                  <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-destructive/10 dark:hover:bg-red-700">
+                                  <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-brand-neon/10">
                                     <Shield className="h-4 w-4 mr-2" />
                                     Admin Dashboard
                                   </Button>
@@ -438,7 +431,9 @@ export default function Navbar() {
                   <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10">Login</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button className="bg-red-accent hover:bg-red-accent-hover">Sign Up</Button>
+                  <Button className="bg-brand-neon text-brand-dark hover:bg-brand-neon/90 shadow-[0_0_10px_rgba(186,255,57,0.35)] hover:shadow-[0_0_14px_rgba(186,255,57,0.45)]">
+                    Sign Up
+                  </Button>
                 </Link>
               </>
             )}

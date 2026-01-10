@@ -26,8 +26,8 @@ export default function AboutPage() {
           <Card className="card-chrome mb-8">
             <CardContent className="p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-red-accent rounded-lg">
-                  <Target className="h-6 w-6 text-white" />
+                <div className="p-3 bg-brand-neon rounded-lg shadow-neon-realistic">
+                  <Target className="h-6 w-6 text-brand-dark" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-steel-900 mb-3">Our Mission</h2>
@@ -117,7 +117,7 @@ export default function AboutPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
                   href="/signup"
-                  className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-red-accent to-red-accent-dark text-white font-semibold rounded-md hover:shadow-lg transition-all"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-brand-neon text-brand-dark font-bold rounded-md shadow-neon-realistic hover:bg-brand-neon/90 transition-all"
                 >
                   Get Started
                 </a>

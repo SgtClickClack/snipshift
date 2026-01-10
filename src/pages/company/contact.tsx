@@ -30,7 +30,7 @@ export default function ContactPage() {
     requestAnimationFrame(() => {
       toast({
         title: 'Message sent',
-        description: "Thanks! We've received your message and will reply within 24–48 hours.",
+        description: "Thanks! We've received your message and will reply within 24ï¿½48 hours.",
       });
       setIsSubmitting(false);
       setFormData({ email: '', subject: '', message: '' });
@@ -64,14 +64,14 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-red-accent rounded-lg">
-                    <Mail className="h-5 w-5 text-white" />
+                  <div className="p-3 bg-brand-neon rounded-lg shadow-neon-realistic">
+                    <Mail className="h-5 w-5 text-brand-dark" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-steel-900 mb-1">Email</h3>
                     <a 
                       href="mailto:support@hospogo.com" 
-                      className="text-steel-600 hover:text-red-accent transition-colors"
+                      className="text-steel-600 hover:text-brand-neon transition-colors"
                     >
                       support@hospogo.com
                     </a>

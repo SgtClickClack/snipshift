@@ -362,7 +362,7 @@ export default function Onboarding() {
             </div>
             <div className="w-full bg-zinc-800 rounded-full h-2">
               <div
-                className="bg-red-accent h-2 rounded-full transition-all duration-300"
+                className="bg-brand-neon h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progressPct}%` }}
               />
             </div>

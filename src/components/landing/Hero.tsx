@@ -49,7 +49,8 @@ export default function Hero() {
                   <Link to={getDashboardLink()}>
                     <Button
                       size="lg"
-                      className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-base md:text-lg px-10 py-4 shadow-xl h-auto"
+                      variant="accent"
+                      className="h-auto px-10 py-4 text-base md:text-lg shadow-neon-realistic"
                       data-testid="button-go-to-dashboard"
                     >
                       Go to Dashboard
@@ -61,7 +62,8 @@ export default function Hero() {
                   <Link to="/signup">
                     <Button
                       size="lg"
-                      className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-base md:text-lg px-10 py-4 shadow-xl h-auto"
+                      variant="accent"
+                      className="h-auto px-10 py-4 text-base md:text-lg shadow-neon-realistic"
                       data-testid="button-get-started"
                     >
                       Get Started

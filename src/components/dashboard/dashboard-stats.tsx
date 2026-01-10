@@ -186,20 +186,20 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
         // Map variants to distinct brand-aligned styles
         const getVariantStyles = (variant: string | undefined) => {
           switch (variant) {
-            case 'accent': // Red Action - Solid Red
+            case 'accent': // Brand Neon - Solid Neon
               return {
-                icon: 'text-white',
-                bg: 'bg-red-accent border-red-accent shadow-sm'
+                icon: 'text-brand-dark',
+                bg: 'bg-brand-neon border-brand-neon shadow-neon-realistic'
               };
             case 'steel': // Charcoal/Steel Base - Solid Chrome Dark
               return {
                 icon: 'text-white',
                 bg: 'bg-chrome-dark border-chrome-dark shadow-sm'
               };
-            case 'accent-secondary': // Red/Charcoal Mix - Solid Dark Red
+            case 'accent-secondary': // Brand Neon - Slightly muted neon
               return {
-                icon: 'text-white',
-                bg: 'bg-red-accent-dark border-red-accent-dark shadow-sm'
+                icon: 'text-brand-dark',
+                bg: 'bg-brand-neon/80 border-brand-neon/60 shadow-neon-realistic'
               };
             case 'chrome': // Metallic - Solid Chrome Medium
             default:

@@ -619,7 +619,8 @@ export default function HubDashboard() {
               <Button 
                 id="post-job-btn"
                 onClick={() => handleQuickAction('post-job')}
-                className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                variant="accent"
+                className="shadow-neon-realistic"
                 data-testid="button-post-job"
               >
                 <Plus className="mr-2 h-4 w-4" />

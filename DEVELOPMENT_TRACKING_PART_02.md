@@ -1,3 +1,77 @@
+#### 2026-01-10: Branded Venue Welcome Email (Stripe Connect Onboarding Completion Trigger)
+
+**Core Components**
+- Email template (HTML) (`api/_src/templates/emails/venue-welcome.html`)
+- Email template loader + variable injection (`api/_src/services/email-templates.ts`)
+- Email send helper + sender defaults (`api/_src/services/email.service.ts`)
+- Stripe webhook onboarding completion trigger (`api/_src/routes/webhooks.ts`)
+- Users repository lookup helper (`api/_src/repositories/users.repository.ts`)
+- Webhook tests (`api/_src/tests/webhooks.test.ts`)
+
+**Key Features**
+- Added a HospoGo-branded **venue welcome** email template using:
+  - Deep Charcoal `#0B0E11` background
+  - Neon Green `#BAFF39` header + primary CTA button (50px pill radius)
+  - Electric Purple `#8B5CF6` accent divider
+  - Footer includes `info@hospogo.com` and an unsubscribe link
+- Triggered `venue-welcome` **immediately after Stripe Connect onboarding completion** is confirmed via `account.updated`, and guarded it to send **only once** on the first `false → true` completion transition.
+- Standardized sender metadata defaults to **HospoGo Support** `<info@hospogo.com>` (env override still supported via `RESEND_FROM_EMAIL`).
+
+**Integration Points**
+- Stripe: `account.updated` webhook → updates `users.stripeOnboardingComplete` and fires welcome email on first completion
+- Resend: `RESEND_FROM_EMAIL` (optional override), `RESEND_API_KEY` (send vs mock/log mode)
+- Tests: `cd api && npm run test:integration`
+
+**File Paths**
+- `api/_src/templates/emails/venue-welcome.html`
+- `api/_src/services/email-templates.ts`
+- `api/_src/services/email.service.ts`
+- `api/_src/routes/webhooks.ts`
+- `api/_src/repositories/users.repository.ts`
+- `api/_src/tests/webhooks.test.ts`
+
+**Next Priority Task**
+- Add an `/unsubscribe` handling page/endpoint (and preference persistence) so the footer link has a canonical destination.
+
+**Code Organization & Quality**
+- Kept webhook logic thin by reusing repository helpers and a dedicated email service method; added an idempotent “send once” guard to avoid webhook re-delivery spam.
+
+---
+
+#### 2026-01-10: Propagate Brand Neon Palette Across App Buttons (Global Tokens + Button Variants)
+
+**Core Components**
+- Theme tokens (`src/index.css`, `tailwind.config.js`)
+- Shared Button variants (`src/components/ui/button.tsx`)
+- High-traffic CTA surfaces (Navbar + Landing + Onboarding hub) (`src/components/layout/Navbar.tsx`, `src/components/landing/Hero.tsx`, `src/pages/LandingPage.tsx`, `src/pages/onboarding/hub.tsx`)
+
+**Key Features**
+- **Global primary token migrated**: updated `--primary` and `--ring` to match HospoGo `brand-neon` so any `bg-primary` / `text-primary` buttons automatically adopt the new palette.
+- **Accent button variant migrated**: changed `Button` `variant="accent"` from `red-accent` styling to **brand neon** (with correct dark foreground + glow) so existing usages update without per-page edits.
+- **Hardcoded red-accent buttons removed**: updated Navbar + landing CTAs + hub onboarding submit button to use semantic variants/tokens instead of inline `bg-red-accent` classes.
+
+**Integration Points**
+- Theme variables: `--primary`, `--primary-foreground`, `--ring`
+- UI components: `Button` (`variant="default"` + `variant="accent"`)
+- Build verification: `npm run build`
+
+**File Paths**
+- `src/index.css`
+- `src/components/ui/button.tsx`
+- `src/components/layout/Navbar.tsx`
+- `src/components/landing/Hero.tsx`
+- `src/pages/LandingPage.tsx`
+- `src/pages/onboarding/hub.tsx`
+- `src/components/demo/design-system-showcase.tsx`
+
+**Next Priority Task**
+- Convert remaining non-button `red-accent` visuals (badges/icons) to the new `brand-neon` palette for full brand consistency.
+
+**Code Organization & Quality**
+- Centralized button color changes into theme tokens + shared `Button` variants to avoid repeated inline Tailwind class strings.
+
+---
+
 #### 2026-01-10: Apply Neon Glow & Pulse Styling (CTA Button System)
 
 **Core Components**
@@ -1840,3 +1914,31 @@
 
 **Code Organization & Quality**
 - Kept routing stable by updating the existing `src/pages/legal/*` route targets and adding lightweight wrapper exports to satisfy alternate file path expectations.
+
+---
+
+#### 2026-01-10: Navbar Logo Banner Crop (Keep Existing Neon Mark) + Enlarge
+
+**Core Components**
+- Navbar logo crop pipeline (`scripts/crop-hospogo-logo.mjs`)
+- Global navigation branding (`src/components/layout/Navbar.tsx`)
+- Public navbar banner asset (`public/hospogo-navbar-banner.png`)
+
+**Key Features**
+- **Banner-shaped navbar logo**: Generated `public/hospogo-navbar-banner.png` by cropping the existing `hospogoappicon.png` around the “HospoGo” wordmark (keeps the same neon mark) and keying out the dark background to blend with the navbar.
+- **Larger navbar logo**: Updated the navbar to render the banner logo larger and kept the existing green drop-shadow glow effect.
+
+**Integration Points**
+- Asset generation: `node scripts/crop-hospogo-logo.mjs`
+- Dev verification: `npm run dev -- --port 3002`
+
+**File Paths**
+- `scripts/crop-hospogo-logo.mjs`
+- `public/hospogo-navbar-banner.png`
+- `src/components/layout/Navbar.tsx`
+
+**Next Priority Task**
+- Tune the crop box/background key thresholds if any edge artifacts show on certain displays, and verify the logo still fits cleanly on small mobile widths.
+
+**Code Organization & Quality**
+- Reused the existing logo crop script (no new tooling/patterns introduced); kept changes localized to branding assets + navbar.

@@ -227,8 +227,8 @@ export default function SignupPage() {
         <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm">
           <CardHeader className="text-center bg-gradient-to-b from-muted/50 to-card rounded-t-lg border-b border-border/50">
             <div className="flex justify-center mb-4">
-              <div className="p-3 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full shadow-lg">
-                <FastForward className="h-8 w-8 text-white" />
+              <div className="p-3 bg-brand-neon rounded-full shadow-neon-realistic">
+                <FastForward className="h-8 w-8 text-brand-dark" />
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-card-foreground" data-testid="heading-signup">Join HospoGo</CardTitle>
@@ -337,7 +337,8 @@ export default function SignupPage() {
               
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                variant="accent"
+                className="w-full font-medium shadow-neon-realistic"
                 disabled={isLoading || !agreedToTerms}
                 data-testid="button-signup"
               >

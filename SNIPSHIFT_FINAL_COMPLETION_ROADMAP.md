@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-10 - Branded Venue Welcome Email (Stripe Connect Completion Trigger)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added a HospoGo-branded venue welcome email template (`api/_src/templates/emails/venue-welcome.html`) using Deep Charcoal `#0B0E11`, Neon Green `#BAFF39`, and Electric Purple `#8B5CF6`.
+- Wired a one-time trigger off Stripe `account.updated` so the `venue-welcome` email is sent immediately after Stripe Connect onboarding is confirmed complete (first `false → true` transition).
+- Standardized default sender metadata to **HospoGo Support** `<info@hospogo.com>` (env override supported).
+
+**Impact:**
+- Provides a polished post-onboarding “first touch” and reduces drop-off after Stripe Connect setup by sending immediate next-step guidance.
+
+---
+
 ### Update: 2026-01-10 - Refine Global Color Palette (Brand Neon Tokens)
 
 **Status:** ✅ **UPDATED**
@@ -16,6 +30,7 @@
 - Added explicit brand palette tokens to Tailwind: `brand-neon` (`#BAFF39`), `brand-dark` (`#0B0E11`), `brand-accent` (`#8B5CF6`), `brand-surface` (`#1A1D21`).
 - Updated the Landing hero CTAs to use the new `brand-neon` styling (neon fill primary + neon outline secondary).
 - Added a reusable `.neon-glow` text utility for consistent neon highlight styling.
+- Updated global theme `--primary` / `--ring` and the shared `Button` `accent` variant so app-wide primary actions inherit the new palette consistently.
 
 **Impact:**
 - Establishes a consistent, reusable neon-forward HospoGo palette and applies it to the highest-traffic conversion CTAs.

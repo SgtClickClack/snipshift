@@ -439,7 +439,7 @@ export default function PostJobPage() {
                   onChange={(e) => handleChange('description', e.target.value)}
                   placeholder="Describe the shift requirements (e.g., busy service, venue type, duties)."
                   rows={6}
-                  className={`border-2 border-steel-400 focus-visible:border-red-accent ${errors.description ? 'border-red-500' : ''}`}
+                  className={`border-2 border-steel-400 focus-visible:border-brand-neon ${errors.description ? 'border-red-500' : ''}`}
                 />
                 {errors.description && (
                   <p className="text-red-500 text-sm mt-1">{errors.description}</p>

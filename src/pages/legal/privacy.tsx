@@ -117,15 +117,15 @@ export default function PrivacyPage() {
                   <li>Tax identification information</li>
                 </ul>
                 <p className="text-steel-700 mb-4">
-                  For more information about Stripe's privacy practices, please visit: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">https://stripe.com/privacy</a>
+                  For more information about Stripe's privacy practices, please visit: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-neon hover:underline">https://stripe.com/privacy</a>
                 </p>
                 <h3 className="text-xl font-semibold text-steel-800 mb-3">4.2 Google Services</h3>
                 <p className="text-steel-700 mb-4">
                   We use various Google services to enhance the Platform:
                 </p>
                 <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
-                  <li><strong>Google Analytics:</strong> We use Google Analytics to understand how users interact with the Platform. Google Analytics collects usage data, device information, and IP addresses. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">Google Privacy Policy</a></li>
-                  <li><strong>Google Maps:</strong> We use Google Maps API to provide location services, address autocomplete, and mapping features. When you use location-based features, your location data may be shared with Google. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">Google Privacy Policy</a></li>
+                  <li><strong>Google Analytics:</strong> We use Google Analytics to understand how users interact with the Platform. Google Analytics collects usage data, device information, and IP addresses. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-neon hover:underline">Google Privacy Policy</a></li>
+                  <li><strong>Google Maps:</strong> We use Google Maps API to provide location services, address autocomplete, and mapping features. When you use location-based features, your location data may be shared with Google. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-neon hover:underline">Google Privacy Policy</a></li>
                   <li><strong>Google OAuth:</strong> If you choose to sign in with Google, Google authenticates your identity and shares your basic profile information (name, email) with us.</li>
                   <li><strong>Firebase Authentication:</strong> We use Firebase Authentication to authenticate users and manage login sessions.</li>
                   <li><strong>Firebase Storage:</strong> We may use Firebase Storage to store user-uploaded files (including RSA/ID documents) securely.</li>
@@ -166,7 +166,7 @@ export default function PrivacyPage() {
                   <li>Stripe Connect enables direct payments between businesses and professionals</li>
                 </ul>
                 <p className="text-steel-700 mb-4">
-                  For more information about Stripe's privacy practices, please visit: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">https://stripe.com/privacy</a>
+                  For more information about Stripe's privacy practices, please visit: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-neon hover:underline">https://stripe.com/privacy</a>
                 </p>
               </section>
 
