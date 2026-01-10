@@ -88,8 +88,8 @@
 **Status:** ✅ **UPDATED**
 
 **Action Taken:**
-- Repositioned the landing hero copy/CTAs lower while keeping the original “text over image” style (no opaque panel), so it doesn’t compete with the hero’s baked-in HospoGo wordmark.
-- Removed the overlay/gradient filter so the hero image stays fully vivid (keeps the bright green drink matching the logo).
+- Repositioned the landing hero copy/CTAs using a bottom-anchored layout and refined spacing so the background image reads cleaner.
+- Added a subtle readability scrim and a lightweight blurred content panel so text remains legible without cluttering the hero photography.
 
 **Impact:**
 - **Cleaner conversion surface**: hero content is easier to read and no longer visually clashes with the background branding.

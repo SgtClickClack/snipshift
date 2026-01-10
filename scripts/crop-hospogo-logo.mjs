@@ -13,8 +13,10 @@
  * If the source image changes, update the crop boxes below.
  */
 
+import { Buffer } from 'node:buffer';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 import sharp from 'sharp';
 
 const INPUT = path.resolve('hospogologo.png');
@@ -26,6 +28,56 @@ function clampCrop({ left, top, width, height }, meta) {
   const w = Math.max(1, Math.min(width, meta.width - l));
   const h = Math.max(1, Math.min(height, meta.height - t));
   return { left: l, top: t, width: w, height: h };
+}
+
+function clamp01(n) {
+  return Math.max(0, Math.min(1, n));
+}
+
+/**
+ * Convert a dark-background PNG into a transparent-background PNG by keying out pixels close to the given background color.
+ *
+ * This is intentionally conservative: it removes the "box" while preserving neon glow edges.
+ */
+async function makeBackgroundTransparent(pngBuffer, bgRgb, options = {}) {
+  const { width, height } = await sharp(pngBuffer).metadata();
+  if (!width || !height) throw new Error('Unable to read image dimensions for transparency processing');
+
+  const {
+    // Distance thresholds in RGB space
+    near = 18, // fully transparent at/under this distance
+    far = 55, // fully opaque at/over this distance
+  } = options;
+
+  const { data, info } = await sharp(pngBuffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  if (info.channels !== 4) throw new Error(`Expected RGBA (4 channels), got ${info.channels}`);
+
+  const out = Buffer.from(data);
+  const [br, bg, bb] = bgRgb;
+
+  for (let i = 0; i < out.length; i += 4) {
+    const r = out[i];
+    const g = out[i + 1];
+    const b = out[i + 2];
+
+    const dr = r - br;
+    const dg = g - bg;
+    const db = b - bb;
+    const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+
+    // Map dist -> alpha multiplier: 0 at near, 1 at far
+    const t = clamp01((dist - near) / (far - near));
+    const mult = t;
+
+    // Apply multiplier to alpha (preserves any existing alpha)
+    out[i + 3] = Math.round(out[i + 3] * mult);
+  }
+
+  return sharp(out, { raw: { width, height, channels: 4 } }).png().toBuffer();
 }
 
 async function main() {
@@ -65,11 +117,21 @@ async function main() {
     .toFile(path.join(OUT_DIR, 'brand-logo.png'));
 
   // Wordmark (right mark)
-  await sharp(INPUT)
+  const wordmarkPng = await sharp(INPUT)
     .extract(wordmarkCrop)
     .trim({ threshold: 10 })
     .png()
-    .toFile(path.join(OUT_DIR, 'brand-wordmark.png'));
+    .toBuffer();
+
+  await sharp(wordmarkPng).toFile(path.join(OUT_DIR, 'brand-wordmark.png'));
+
+  // Wordmark (right mark) with transparent background for navbar/footer usage.
+  // Background color matches the composite source (#141A20-ish).
+  const wordmarkTransparent = await makeBackgroundTransparent(wordmarkPng, [20, 26, 32], {
+    near: 18,
+    far: 60,
+  });
+  await sharp(wordmarkTransparent).toFile(path.join(OUT_DIR, 'brand-wordmark-transparent.png'));
 
   // Icon (middle mark) -> trimmed and padded to square for consistent app icons
   const iconBuffer = await sharp(INPUT)

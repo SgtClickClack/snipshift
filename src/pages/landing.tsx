@@ -59,7 +59,7 @@ export default function LandingPage() {
       <div className="min-h-screen">
       {/* Hero Section */}
       <section 
-        className="relative w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-center"
+        className="relative isolate w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-end"
       >
         {/* Hero image (replaces CSS background for better loading priority) */}
         <picture className="absolute inset-0 z-base" aria-hidden="true">
@@ -74,24 +74,27 @@ export default function LandingPage() {
           />
         </picture>
 
-        {/* No overlays: keep hero image colors fully intact */}
+        {/* Professional readability: subtle scrim + content panel (prevents clutter over photography) */}
+        <div className="absolute inset-0 z-base pointer-events-none bg-gradient-to-t from-black/70 via-black/15 to-black/45" aria-hidden="true" />
         
-        <div className="relative z-elevated w-full pt-24 md:pt-32 pb-4 md:pb-8 flex items-end justify-center text-center px-4">
-          <div className="max-w-5xl mx-auto flex flex-col items-center gap-6 md:gap-7">
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
-              The Roster That Never Quits.
-            </h2>
-            
-            <p className="text-lg md:text-2xl text-white/80 drop-shadow-[0_6px_18px_rgba(0,0,0,0.85)] font-medium max-w-3xl">
-              Instant coverage for venues. Instant work for staff. The marketplace that keeps your business moving.
-            </p>
+        <div className="relative z-elevated w-full pb-10 md:pb-16 pt-24 md:pt-28">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl text-left">
+              <div className="rounded-2xl border border-white/10 bg-black/30 backdrop-blur-md p-6 md:p-8 shadow-2xl">
+                <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+                  The Roster That Never Quits.
+                </h2>
+                
+                <p className="mt-4 text-base md:text-xl text-white/85 leading-relaxed">
+                  Instant coverage for venues. Instant work for staff. The marketplace that keeps your business moving.
+                </p>
             
             {!isAuthenticated && (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-2">
+              <div className="mt-6 flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                 <Link to="/signup?role=hub">
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-10 py-5 shadow-xl h-auto" 
+                    className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-base md:text-lg px-8 py-4 shadow-xl h-auto" 
                     data-testid="button-find-staff"
                   >
                     Find Staff
@@ -102,7 +105,7 @@ export default function LandingPage() {
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="bg-white/10 border-2 border-white/25 text-white hover:bg-white/20 text-lg px-10 py-5 h-auto font-semibold" 
+                    className="bg-white/10 border-2 border-white/25 text-white hover:bg-white/20 text-base md:text-lg px-8 py-4 h-auto font-semibold" 
                     data-testid="button-find-shifts"
                   >
                     Find Shifts
@@ -115,13 +118,15 @@ export default function LandingPage() {
               <Link to={getDashboardRoute(user.currentRole)}>
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-5 shadow-xl h-auto" 
+                  className="mt-6 bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-base md:text-lg px-10 py-4 shadow-xl h-auto" 
                   data-testid="button-go-to-dashboard"
                 >
                   Go to Dashboard
                 </Button>
               </Link>
             )}
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-const logoUrl = '/brand-wordmark.png';
+const logoUrl = '/brand-wordmark-transparent.png';
 
 export function Footer() {
   return (
@@ -9,10 +9,10 @@ export function Footer() {
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center mb-4">
-              <img 
+              <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-8 w-auto logo-sharp"
+                className="h-8 w-auto object-contain"
                 loading="eager"
                 width={96}
                 height={32}

@@ -162,18 +162,8 @@
     display: none;
   }
   .logo-sharp {
-    image-rendering: -webkit-optimize-contrast;
+    /* Deprecated: avoid image filters on logos (can look blurry on some displays). */
     image-rendering: auto;
-    /* Keep the neon wordmark vivid without amplifying its baked-in background edges */
-    filter: brightness(1.06) saturate(1.12);
-    transform: translateZ(0);
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* Force subpixel rendering for sharper edges */
-    -webkit-transform: translateZ(0);
-    -moz-transform: translateZ(0);
   }
 }
 

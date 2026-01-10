@@ -194,6 +194,42 @@
 **Code Organization & Quality**
 - Kept changes scoped to theme tokens and landing layout only; no routing/auth logic touched.
 
+---
+
+#### 2026-01-10: Landing Hero + Navbar Brand Polish (Transparent Wordmark + Professional Hero Panel)
+
+**Core Components**
+- Brand asset pipeline (transparent wordmark export) (`scripts/crop-hospogo-logo.mjs`)
+- Public brand asset (`public/brand-wordmark-transparent.png`)
+- Global navigation branding (`src/components/layout/Navbar.tsx`, `src/components/layout/Footer.tsx`, `src/components/ui/loading-screen.tsx`)
+- Landing hero layout (`src/pages/landing.tsx`, `src/components/landing/Hero.tsx`)
+- Global styling utilities (`src/index.css`)
+
+**Key Features**
+- **Logo clarity**: Removed “sharpening” filters from logo rendering and switched navbar/footer/loading to a **transparent-background** wordmark asset to prevent blur/box artifacts.
+- **Hero cleanup**: Rebuilt the hero using a subtle **gradient scrim** plus a **backdrop-blur content panel**, improving legibility and reducing visual clutter over photography.
+- **Layout best practices**: Switched hero content to a left-aligned, bottom-anchored composition with tighter typographic scale for a more premium feel.
+
+**Integration Points**
+- Asset generation: `node scripts/crop-hospogo-logo.mjs`
+- Frontend build: `npm run build`
+
+**File Paths**
+- `scripts/crop-hospogo-logo.mjs`
+- `public/brand-wordmark-transparent.png`
+- `src/components/layout/Navbar.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/ui/loading-screen.tsx`
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+- `src/index.css`
+
+**Next Priority Task**
+- Replace the PNG wordmark with an SVG (or a true transparent export from source design) for perfect scaling across all DPIs.
+
+**Code Organization & Quality**
+- Kept the transparency conversion in the existing asset pipeline script to avoid one-off manual image editing and keep branding repeatable.
+
 #### 2026-01-10: Refund & Dispute Policy Page (Refunds + Kill Fee)
 
 **Core Components**
