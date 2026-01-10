@@ -230,6 +230,27 @@
 **Code Organization & Quality**
 - Kept the transparency conversion in the existing asset pipeline script to avoid one-off manual image editing and keep branding repeatable.
 
+---
+
+#### 2026-01-10: Hero Brand Color Preservation (Remove Global Scrim)
+
+**Core Components**
+- Landing hero readability layers (`src/pages/landing.tsx`, `src/components/landing/Hero.tsx`)
+
+**Key Features**
+- Removed the full-image darkening scrim that was muting the hero’s greens.
+- Kept a lighter **left-side-only** readability gradient + text shadows so brand colors stay vivid while copy remains readable.
+
+**Integration Points**
+- Frontend build: `npm run build`
+
+**File Paths**
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+
+**Next Priority Task**
+- Add a quick visual regression check for hero color vibrancy across breakpoints (desktop + mobile).
+
 #### 2026-01-10: Refund & Dispute Policy Page (Refunds + Kill Fee)
 
 **Core Components**

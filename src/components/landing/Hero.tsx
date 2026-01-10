@@ -31,13 +31,9 @@ export default function Hero() {
         />
       </picture>
 
-      {/* Professional readability (no “box”): subtle scrims for legibility without covering the photo */}
+      {/* Keep hero colors vivid: no full-image darkening scrim; only a light left-side readability gradient */}
       <div
-        className="absolute inset-0 z-base pointer-events-none bg-gradient-to-t from-black/65 via-black/10 to-black/40"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 z-base pointer-events-none bg-gradient-to-r from-black/65 via-black/20 to-transparent"
+        className="absolute inset-0 z-base pointer-events-none bg-gradient-to-r from-black/35 via-black/10 to-transparent"
         aria-hidden="true"
       />
 
