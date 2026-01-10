@@ -31,14 +31,20 @@ export default function Hero() {
         />
       </picture>
 
-      {/* Professional readability: subtle scrim + content panel */}
-      <div className="absolute inset-0 z-base pointer-events-none bg-gradient-to-t from-black/70 via-black/15 to-black/45" aria-hidden="true" />
+      {/* Professional readability (no “box”): subtle scrims for legibility without covering the photo */}
+      <div
+        className="absolute inset-0 z-base pointer-events-none bg-gradient-to-t from-black/65 via-black/10 to-black/40"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 z-base pointer-events-none bg-gradient-to-r from-black/65 via-black/20 to-transparent"
+        aria-hidden="true"
+      />
 
       <div className="relative z-elevated w-full pb-10 md:pb-16 pt-24 md:pt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl text-left">
-            <div className="rounded-2xl border border-white/10 bg-black/30 backdrop-blur-md p-6 md:p-8 shadow-2xl">
-              <p className="text-base md:text-xl text-white/85 leading-relaxed font-medium">
+              <p className="text-base md:text-xl text-white/85 leading-relaxed font-medium drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)]">
                 Connect verified hospitality staff with venues for fast, flexible shift work
               </p>
           
@@ -79,10 +85,9 @@ export default function Hero() {
                 </div>
               )}
           
-              <p className="mt-4 text-sm text-white/70">
+              <p className="mt-4 text-sm text-white/70 drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]">
                 Join thousands of professionals already on HospoGo
               </p>
-            </div>
           </div>
         </div>
       </div>
