@@ -60,6 +60,28 @@
 
 ---
 
+#### 2026-01-10: Remove Landing Hero Darkening Overlay
+
+**Core Components**
+- Landing hero background layering (`src/pages/LandingPage.tsx`)
+
+**Key Features**
+- Removed the full-screen dark overlay so the hero background image renders without darkening.
+
+**Integration Points**
+- Build verification: `npm run build`
+
+**File Paths**
+- `src/pages/LandingPage.tsx`
+
+**Next Priority Task**
+- If readability needs it, add back a *non-global* readability scrim (e.g. behind copy only) instead of darkening the entire hero image.
+
+**Code Organization & Quality**
+- Kept the change scoped to the Landing hero layer stack only.
+
+---
+
 #### 2026-01-10: Refine Global Color Palette (Brand Tokens + Landing CTA Buttons)
 
 **Core Components**

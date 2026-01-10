@@ -82,12 +82,6 @@ export default function LandingPage() {
             />
           </picture>
 
-          {/* Dark overlay to make neon CTAs pop */}
-          <div
-            className="absolute inset-0 z-base pointer-events-none bg-black/40"
-            aria-hidden="true"
-          />
-
           <div className="relative z-elevated w-full pb-10 md:pb-16 pt-24 md:pt-28">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="max-w-2xl text-left">

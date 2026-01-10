@@ -49,6 +49,18 @@
 
 ---
 
+### Update: 2026-01-10 - Remove Landing Hero Darkening Overlay
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Removed the full-hero dark overlay layer so the background image is not darkened.
+
+**Impact:**
+- Restores the original hero image brightness while keeping the neon CTA styling unchanged.
+
+---
+
 ### Update: 2026-01-10 - Manual Payout Tracking (Payout Status Enum)
 
 **Status:** ✅ **IMPLEMENTED**
