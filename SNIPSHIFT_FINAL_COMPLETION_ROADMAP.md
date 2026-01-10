@@ -104,6 +104,42 @@
 
 ---
 
+### Update: 2026-01-10 - Landing Audience Card Copy (For Staff)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated the landing audience card heading/CTA from “For Barbers” / “Get Started as Barber” to **“For Staff”** / **“Get Started as Staff”**.
+
+**Impact:**
+- **Reduced brand mismatch** on the landing page while keeping onboarding routes/roles unchanged.
+
+---
+
+### Update: 2026-01-10 - Pricing Tier Terminology (Venue Starter / Venue Unlimited)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated landing pricing tier names from “Salon Starter” / “Salon Unlimited” to **“Venue Starter”** / **“Venue Unlimited”**.
+
+**Impact:**
+- **Cleaner hospitality-first positioning** in the pricing section without changing the underlying plans/pricing behavior.
+
+---
+
+### Update: 2026-01-10 - Landing Final CTA Copy (Venues/Staff)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated the landing “Ready to Get Started?” CTA section to use **venues/staff** terminology and updated the two signup button labels accordingly.
+
+**Impact:**
+- **Consistent hospitality-first messaging** through the bottom-of-page conversion CTA.
+
+---
+
 ### Update: 2025-12-25 - Google Auth Resilience When DB Is Paused/Over-Quota
 
 **Status:** ✅ **HARDENED**

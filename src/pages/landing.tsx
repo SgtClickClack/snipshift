@@ -244,14 +244,14 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             
-            {/* For Barbers */}
+            {/* For Staff */}
             <Card className="p-8 bg-card shadow-lg border-2 border-border hover:shadow-xl hover:border-red-accent/50 transition-all duration-300">
               <CardContent className="pt-0">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-16 h-16 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center shadow-lg">
                     <UserCheck className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-card-foreground">For Barbers</h3>
+                  <h3 className="text-2xl font-bold text-card-foreground">For Staff</h3>
                 </div>
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
                   Earn extra income on your schedule. Guaranteed payments via Stripe.
@@ -273,7 +273,7 @@ export default function LandingPage() {
                 {!isAuthenticated && (
                   <Link to="/signup?role=professional">
                     <Button className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white">
-                      Get Started as Barber
+                      Get Started as Staff
                     </Button>
                   </Link>
                 )}
@@ -310,18 +310,18 @@ export default function LandingPage() {
               Ready to Get Started?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join the marketplace that's reshaping how barbers and shops connect
+              Join the marketplace that's reshaping how venues and staff connect
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/signup?role=hub">
-                <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-8 py-6 shadow-xl" data-testid="button-join-shop">
-                  Shop Owner Sign Up
+                <Button size="lg" className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-8 py-6 shadow-xl" data-testid="button-join-venue">
+                  Venue Sign Up
                 </Button>
               </Link>
               <Link to="/signup?role=professional">
-                <Button size="lg" variant="outline" className="bg-background/80 dark:bg-white/10 border-2 border-border dark:border-white/30 text-foreground dark:text-white hover:bg-muted dark:hover:bg-white/20 text-lg px-8 py-6 font-semibold" data-testid="button-join-barber">
-                  Barber Sign Up
+                <Button size="lg" variant="outline" className="bg-background/80 dark:bg-white/10 border-2 border-border dark:border-white/30 text-foreground dark:text-white hover:bg-muted dark:hover:bg-white/20 text-lg px-8 py-6 font-semibold" data-testid="button-join-staff">
+                  Staff Sign Up
                 </Button>
               </Link>
             </div>

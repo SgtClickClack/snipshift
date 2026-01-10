@@ -1,4 +1,4 @@
-﻿import { Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +33,7 @@ export default function Pricing() {
       badge: null,
     },
     {
-      name: "Salon Starter",
+      name: "Venue Starter",
       description: "Perfect for emergency cover.",
       price: "$0",
       duration: "month",
@@ -50,7 +50,7 @@ export default function Pricing() {
       badge: null,
     },
     {
-      name: "Salon Unlimited",
+      name: "Venue Unlimited",
       description: "For venues that need regular reliable cover.",
       price: "$49",
       duration: "month",

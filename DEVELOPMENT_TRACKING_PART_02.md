@@ -241,6 +241,80 @@
 
 ---
 
+#### 2026-01-10: Landing “For Staff” Card Copy (Hospitality Pivot)
+
+**Core Components**
+- Landing page audience cards (`src/pages/landing.tsx`)
+
+**Key Features**
+- Updated the landing audience card heading from “For Barbers” to **“For Staff”**.
+- Updated the associated CTA button copy from “Get Started as Barber” to **“Get Started as Staff”**.
+
+**Integration Points**
+- Route: `/` (Landing)
+- Signup entry: `/signup?role=professional` (staff onboarding)
+
+**File Paths**
+- `src/pages/landing.tsx`
+
+**Next Priority Task**
+- Continue the landing content sweep: replace remaining “shop owner” / “shops” terminology where user-facing on the landing page (copy-only), keeping routes/roles unchanged.
+
+**Code Organization & Quality**
+- Copy-only edits; no component logic changes.
+
+---
+
+#### 2026-01-10: Pricing Tier Copy (Venue Starter / Venue Unlimited)
+
+**Core Components**
+- Landing pricing component (`src/components/landing/Pricing.tsx`)
+
+**Key Features**
+- Updated pricing tier names from “Salon Starter” / “Salon Unlimited” to **“Venue Starter”** / **“Venue Unlimited”** to match HospoGo hospitality terminology.
+- Kept pricing, fees, features, and CTAs unchanged (copy-only rename).
+
+**Integration Points**
+- Landing pricing section (`/` → `#pricing`)
+
+**File Paths**
+- `src/components/landing/Pricing.tsx`
+
+**Next Priority Task**
+- Continue the landing copy sweep for remaining “salon/shop/barber” terminology in marketing components (copy-only), keeping routes/roles unchanged.
+
+**Code Organization & Quality**
+- Minimal string-only change; no new components/patterns introduced.
+
+---
+
+#### 2026-01-10: Landing Final CTA Copy (Ready to Get Started - Venue/Staff)
+
+**Core Components**
+- Landing final CTA section (`src/pages/landing.tsx`)
+
+**Key Features**
+- Updated the “Ready to Get Started?” card copy to hospitality-first wording:
+  - “barbers and shops” → “venues and staff”
+  - “Shop Owner Sign Up” → “Venue Sign Up”
+  - “Barber Sign Up” → “Staff Sign Up”
+- Updated test ids accordingly (`button-join-shop` → `button-join-venue`, `button-join-barber` → `button-join-staff`) after confirming no repo references.
+
+**Integration Points**
+- Route: `/` (Landing)
+- Signup entry: `/signup?role=hub` and `/signup?role=professional`
+
+**File Paths**
+- `src/pages/landing.tsx`
+
+**Next Priority Task**
+- Continue the landing sweep: update remaining “shop owner” copy in the earlier “For Venues” card CTA (copy-only) if you want all employer-facing language to standardize on “venue”.
+
+**Code Organization & Quality**
+- Copy-only edits; no behavior/routing changes.
+
+---
+
 #### 2026-01-09: HospoGo Pivot (Brand, RSA Compliance Gate, User Schema Extensions)
 
 **Core Components**
