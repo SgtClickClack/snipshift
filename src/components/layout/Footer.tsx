@@ -12,7 +12,7 @@ export function Footer() {
               <img 
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-8 w-auto logo-sharp invert dark:invert-0 dark:contrast-[1.3] dark:brightness-[1.08] dark:saturate-[1.15]"
+                className="h-8 w-auto logo-sharp"
                 loading="eager"
                 width={96}
                 height={32}

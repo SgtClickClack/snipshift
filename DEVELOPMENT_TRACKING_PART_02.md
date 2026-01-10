@@ -1010,3 +1010,37 @@
 
 **Code Organization & Quality**
 - Kept changes scoped to configuration + domain references (no new patterns introduced).
+
+---
+
+#### 2026-01-10: Swap Navbar + Splash/Loading to Neon HospoGo Wordmark
+
+**Core Components**
+- App shell splash screen branding (`index.html`)
+- Global navigation branding (`src/components/layout/Navbar.tsx`)
+- Global footer branding (`src/components/layout/Footer.tsx`)
+- In-app loading state branding (`src/components/ui/loading-screen.tsx`)
+- Public brand asset (`public/brand-wordmark.png`)
+
+**Key Features**
+- **Neon wordmark applied**: Replaced the public wordmark asset with the new neon HospoGo logo so the primary brand mark is consistent across the app.
+- **Navbar color correctness**: Removed the prior invert/brightness filters on the Navbar logo so the neon colors render accurately.
+- **Footer color correctness**: Removed the prior invert/brightness filters on the Footer logo so it matches the Navbar.
+- **Splash/loading alignment**: Updated the pre-hydration splash logo and in-app loading screen to use the wordmark asset for consistent first-paint branding.
+
+**Integration Points**
+- Static asset served from `public/` at `/brand-wordmark.png`
+- App shell splash rendered before React hydration (`index.html`)
+
+**File Paths**
+- `public/brand-wordmark.png`
+- `index.html`
+- `src/components/layout/Navbar.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/ui/loading-screen.tsx`
+
+**Next Priority Task**
+- Review the wordmark sizing on small mobile widths and adjust only if needed (keep it crisp; avoid heavy filters).
+
+**Code Organization & Quality**
+- Kept changes localized to asset + direct consumers; no new components or patterns introduced.

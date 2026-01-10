@@ -1,4 +1,4 @@
-﻿import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
@@ -121,7 +121,7 @@ export default function Navbar() {
               <img 
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-10 w-auto object-contain max-w-32 sm:max-w-none logo-sharp invert contrast-[1.3] brightness-[1.08] saturate-[1.15] dark:invert-0" 
+                className="h-10 w-auto object-contain max-w-32 sm:max-w-none logo-sharp" 
                 loading="eager"
                 width={120}
                 height={40}

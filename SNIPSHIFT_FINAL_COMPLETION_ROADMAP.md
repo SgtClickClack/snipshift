@@ -62,6 +62,20 @@
 
 ---
 
+### Update: 2026-01-10 - Neon Logo Applied (Navbar + Splash/Loading)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Replaced the header/footer wordmark asset with the new neon HospoGo logo.
+- Removed the prior invert/brightness filters so the logo renders with correct colors.
+- Updated the app splash screen and in-app loading screen to match the wordmark branding.
+
+**Impact:**
+- **Consistent first-paint branding**: users see the same neon wordmark from initial load through the app shell.
+
+---
+
 ### Update: 2026-01-10 - Hospitality Shift Model & UI (Roles + Uniform/RSA/Pax + Hourly Pricing)
 
 **Status:** ✅ **IMPLEMENTED**

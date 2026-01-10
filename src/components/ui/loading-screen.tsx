@@ -1,5 +1,4 @@
-import React from 'react';
-const logoUrl = '/brand-logo.png';
+const logoUrl = '/brand-wordmark.png';
 
 export function LoadingScreen() {
   return (
@@ -8,10 +7,10 @@ export function LoadingScreen() {
         <img 
           src={logoUrl} 
           alt="HospoGo" 
-          className="w-64 h-auto object-contain animate-pulse logo-sharp"
+          className="w-72 max-w-[85vw] h-auto object-contain animate-pulse logo-sharp"
           style={{
             imageRendering: 'auto',
-            filter: 'brightness(2.5) contrast(2.0) saturate(1.2) drop-shadow(0 0 15px rgba(255,255,255,0.5))',
+            filter: 'drop-shadow(0 0 18px rgba(255,255,255,0.25))',
             WebkitFontSmoothing: 'antialiased',
           }}
           loading="eager"
