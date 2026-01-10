@@ -30,6 +30,11 @@ export const shifts = pgTable('shifts', {
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
   hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
+  // Cancellation logic (hospitality)
+  cancellationWindowHours: integer('cancellation_window_hours').notNull().default(24),
+  killFeeAmount: decimal('kill_fee_amount', { precision: 10, scale: 2 }),
+  staffCancellationReason: text('staff_cancellation_reason'),
+  isEmergencyFill: boolean('is_emergency_fill').notNull().default(false),
   uniformRequirements: text('uniform_requirements'),
   rsaRequired: boolean('rsa_required').notNull().default(false),
   expectedPax: integer('expected_pax'),

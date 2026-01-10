@@ -81,19 +81,17 @@ export async function setup() {
     // Apply any repo-local SQL migrations that are not part of drizzle-kit push
     // (kept small and idempotent for test determinism).
     try {
-      const hospoShiftMigrationPath = path.join(
-        apiRoot,
-        '_src',
-        'db',
-        'migrations',
-        '0015_add_shift_hospitality_fields.sql'
-      );
+      const optionalMigrationPaths = [
+        path.join(apiRoot, '_src', 'db', 'migrations', '0015_add_shift_hospitality_fields.sql'),
+        path.join(apiRoot, '_src', 'db', 'migrations', '0016_add_shift_cancellation_fields.sql'),
+        path.join(apiRoot, '_src', 'db', 'migrations', '0017_add_profiles_reliability_strikes.sql'),
+      ];
 
-      if (fs.existsSync(hospoShiftMigrationPath)) {
-        const sqlText = fs.readFileSync(hospoShiftMigrationPath, 'utf8');
-        if (sqlText.trim().length > 0) {
-          await pool.query(sqlText);
-        }
+      for (const migrationPath of optionalMigrationPaths) {
+        if (!fs.existsSync(migrationPath)) continue;
+        const sqlText = fs.readFileSync(migrationPath, 'utf8');
+        if (sqlText.trim().length === 0) continue;
+        await pool.query(sqlText);
       }
     } catch (error) {
       console.warn('🟠 [GLOBAL SETUP] Optional SQL migrations failed to apply:', error);

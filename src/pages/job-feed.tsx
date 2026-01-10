@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchShifts } from '@/lib/api';
@@ -16,6 +16,7 @@ import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation, SlidersHo
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import { calculateDistance, reverseGeocodeToCity } from '@/lib/google-maps';
+import { useIsStaffCompliant } from '@/hooks/useCompliance';
 
 type SortOption = 'highest-rate' | 'closest' | 'soonest';
 type ViewMode = 'list' | 'map';
@@ -23,6 +24,7 @@ type ViewMode = 'list' | 'map';
 export default function JobFeedPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isStaffCompliant = useIsStaffCompliant();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedJob, setSelectedJob] = useState<JobCardData | null>(null);
@@ -360,8 +362,9 @@ export default function JobFeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-background relative">
+      <div className={!isStaffCompliant ? 'pointer-events-none select-none blur-sm' : ''}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -545,7 +548,26 @@ export default function JobFeedPage() {
             </div>
           </div>
         </div>
+        </div>
       </div>
+
+      {!isStaffCompliant ? (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-6">
+          <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg text-center">
+            <h2 className="text-xl font-bold text-foreground">
+              RSA Verification Required to View Shifts
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Upload your RSA certificate and ensure it’s verified and not expired before browsing shifts.
+            </p>
+            <div className="mt-5 flex items-center justify-center gap-3">
+              <Button onClick={() => navigate('/settings?category=verification')}>
+                Go to Verification
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

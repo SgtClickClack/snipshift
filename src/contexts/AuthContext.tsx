@@ -37,8 +37,10 @@ export interface User {
   experience?: string;
   isRoamingNomad?: boolean;
   // HospoGo compliance + preferences
+  rsaVerified?: boolean | null;
   rsaNumber?: string | null;
   rsaExpiry?: string | null;
+  rsaStateOfIssue?: string | null;
   rsaCertificateUrl?: string | null;
   hospitalityRole?: 'Bartender' | 'Waitstaff' | 'Barista' | 'Kitchen Hand' | 'Manager' | null;
   hourlyRatePreference?: number | null;

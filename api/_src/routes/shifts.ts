@@ -840,6 +840,7 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
         uniformRequirements: (shift as any).uniformRequirements ?? null,
         rsaRequired: (shift as any).rsaRequired ?? false,
         expectedPax: (shift as any).expectedPax ?? null,
+        isEmergencyFill: (shift as any).isEmergencyFill ?? false,
         // Add type indicator for debugging (optional)
         _type: 'shift'
       };
@@ -2673,6 +2674,10 @@ router.get('/:id', asyncHandler(async (req, res) => {
     location: shift.location,
     lat,
     lng,
+    cancellationWindowHours: (shift as any).cancellationWindowHours ?? 24,
+    killFeeAmount: (shift as any).killFeeAmount ?? null,
+    staffCancellationReason: (shift as any).staffCancellationReason ?? null,
+    isEmergencyFill: (shift as any).isEmergencyFill ?? false,
     uniformRequirements: (shift as any).uniformRequirements ?? null,
     rsaRequired: (shift as any).rsaRequired ?? false,
     expectedPax: (shift as any).expectedPax ?? null,

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,15 +23,17 @@ import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
 import { apiRequest } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSearchParams } from 'react-router-dom';
+import { RSALocker } from '@/components/profile/RSALocker';
 
 type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business';
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>('account');
   const [isSaving, setIsSaving] = useState(false);
-  const rsaFileInputRef = useRef<HTMLInputElement>(null);
 
   // Account form state
   const [accountData, setAccountData] = useState({
@@ -57,15 +59,15 @@ export default function SettingsPage() {
     marketingUpdatesEmail: false,
   });
 
-  const todayStart = new Date().setHours(0, 0, 0, 0);
-  const rsaExpiryDate = user?.rsaExpiry ? new Date(user.rsaExpiry) : null;
-  const rsaExpiryValid = rsaExpiryDate ? !isNaN(rsaExpiryDate.getTime()) : true;
-  const rsaExpired = rsaExpiryDate && rsaExpiryValid ? rsaExpiryDate.getTime() < todayStart : false;
-  const rsaUploaded = !!user?.rsaCertificateUrl;
+  useEffect(() => {
+    const category = searchParams.get('category');
+    const valid: SettingsCategory[] = ['account', 'security', 'notifications', 'verification', 'business'];
+    if (category && valid.includes(category as SettingsCategory)) {
+      setActiveCategory(category as SettingsCategory);
+    }
+  }, [searchParams]);
 
   const [complianceData, setComplianceData] = useState({
-    rsaNumber: user?.rsaNumber || '',
-    rsaExpiry: user?.rsaExpiry || '',
     hospitalityRole: (user?.hospitalityRole || '') as
       | ''
       | 'Bartender'
@@ -79,45 +81,16 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setComplianceData({
-      rsaNumber: user?.rsaNumber || '',
-      rsaExpiry: user?.rsaExpiry || '',
       hospitalityRole: (user?.hospitalityRole || '') as any,
       hourlyRatePreference:
         user?.hourlyRatePreference != null ? String(user.hourlyRatePreference) : '',
     });
-  }, [user?.rsaNumber, user?.rsaExpiry, user?.hospitalityRole, user?.hourlyRatePreference]);
-
-  const handleRsaUpload = async (file: File) => {
-    setIsSaving(true);
-    try {
-      const form = new FormData();
-      form.append('rsaCertificate', file);
-
-      await apiRequest('PUT', '/api/me', form);
-      await refreshUser();
-
-      toast({
-        title: 'RSA certificate uploaded',
-        description: 'Your RSA certificate has been uploaded successfully.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Upload failed',
-        description: error?.message || 'Failed to upload RSA certificate. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-      if (rsaFileInputRef.current) rsaFileInputRef.current.value = '';
-    }
-  };
+  }, [user?.hospitalityRole, user?.hourlyRatePreference]);
 
   const handleComplianceSave = async () => {
     setIsSaving(true);
     try {
       await apiRequest('PUT', '/api/me', {
-        rsaNumber: complianceData.rsaNumber || undefined,
-        rsaExpiry: complianceData.rsaExpiry || undefined,
         hospitalityRole: complianceData.hospitalityRole || undefined,
         hourlyRatePreference: complianceData.hourlyRatePreference || undefined,
       });
@@ -584,15 +557,15 @@ export default function SettingsPage() {
 
             {/* Verification Section */}
             {activeCategory === 'verification' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Verification & Compliance</CardTitle>
-                  <CardDescription>
-                    Upload your RSA certificate and keep compliance details up to date
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Verification</CardTitle>
+                    <CardDescription>
+                      Upload your RSA certificate and keep your compliance details up to date.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     {/* ID Verification */}
                     <div className="rounded-lg border p-4">
                       <div className="flex items-start justify-between">
@@ -611,152 +584,76 @@ export default function SettingsPage() {
                             <p className="text-sm text-muted-foreground mb-3">
                               ID verification storage is not yet wired to the backend in this build.
                             </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled
-                            >
+                            <Button variant="outline" size="sm" disabled>
                               Upload ID
                             </Button>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
 
-                    {/* RSA Certificate */}
-                    <div className="rounded-lg border p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className="rounded-full bg-muted p-2">
-                            <Shield className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold">RSA Certificate</h3>
-                              {rsaUploaded ? (
-                                rsaExpired ? (
-                                  <div className="flex items-center gap-1 text-destructive">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <span className="text-sm">Expired</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1 text-green-600">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    <span className="text-sm">Uploaded</span>
-                                  </div>
-                                )
-                              ) : (
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <XCircle className="h-4 w-4" />
-                                  <span className="text-sm">Not Uploaded</span>
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {rsaUploaded
-                                ? rsaExpired
-                                  ? 'Your RSA certificate appears expired. Upload a current certificate to apply for shifts.'
-                                  : 'Your RSA certificate is on file.'
-                                : 'Upload your RSA certificate to apply for shifts.'}
-                            </p>
-                            <Button
-                              variant={rsaExpired ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => rsaFileInputRef.current?.click()}
-                              disabled={isSaving}
-                            >
-                              {rsaUploaded && !rsaExpired ? 'Re-upload RSA' : 'Upload RSA'}
-                            </Button>
-                            <input
-                              ref={rsaFileInputRef}
-                              type="file"
-                              accept="application/pdf,image/jpeg,image/jpg,image/png,image/webp"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                handleRsaUpload(file);
-                              }}
-                            />
+                <RSALocker />
 
-                            <Separator className="my-6" />
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="rsaNumber">RSA Number</Label>
-                                <Input
-                                  id="rsaNumber"
-                                  value={complianceData.rsaNumber}
-                                  onChange={(e) =>
-                                    setComplianceData({ ...complianceData, rsaNumber: e.target.value })
-                                  }
-                                  placeholder="Enter your RSA number"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="rsaExpiry">RSA Expiry</Label>
-                                <Input
-                                  id="rsaExpiry"
-                                  type="date"
-                                  value={complianceData.rsaExpiry}
-                                  onChange={(e) =>
-                                    setComplianceData({ ...complianceData, rsaExpiry: e.target.value })
-                                  }
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Hospitality Role</Label>
-                                <Select
-                                  value={complianceData.hospitalityRole}
-                                  onValueChange={(value) =>
-                                    setComplianceData({
-                                      ...complianceData,
-                                      hospitalityRole: value as any,
-                                    })
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select role" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Bartender">Bartender</SelectItem>
-                                    <SelectItem value="Waitstaff">Waitstaff</SelectItem>
-                                    <SelectItem value="Barista">Barista</SelectItem>
-                                    <SelectItem value="Kitchen Hand">Kitchen Hand</SelectItem>
-                                    <SelectItem value="Manager">Manager</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="hourlyRatePreference">Hourly Rate Preference</Label>
-                                <Input
-                                  id="hourlyRatePreference"
-                                  type="number"
-                                  step="0.01"
-                                  value={complianceData.hourlyRatePreference}
-                                  onChange={(e) =>
-                                    setComplianceData({
-                                      ...complianceData,
-                                      hourlyRatePreference: e.target.value,
-                                    })
-                                  }
-                                  placeholder="e.g. 45.00"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex justify-end pt-4">
-                              <Button onClick={handleComplianceSave} disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save Compliance Details'}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Hospitality Preferences</CardTitle>
+                    <CardDescription>
+                      Optional details that help match you with suitable shifts.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Hospitality Role</Label>
+                        <Select
+                          value={complianceData.hospitalityRole}
+                          onValueChange={(value) =>
+                            setComplianceData({
+                              ...complianceData,
+                              hospitalityRole: value as any,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Bartender">Bartender</SelectItem>
+                            <SelectItem value="Waitstaff">Waitstaff</SelectItem>
+                            <SelectItem value="Barista">Barista</SelectItem>
+                            <SelectItem value="Kitchen Hand">Kitchen Hand</SelectItem>
+                            <SelectItem value="Manager">Manager</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="hourlyRatePreference">Hourly Rate Preference</Label>
+                        <Input
+                          id="hourlyRatePreference"
+                          type="number"
+                          step="0.01"
+                          value={complianceData.hourlyRatePreference}
+                          onChange={(e) =>
+                            setComplianceData({
+                              ...complianceData,
+                              hourlyRatePreference: e.target.value,
+                            })
+                          }
+                          placeholder="e.g. 45.00"
+                        />
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+                    <div className="flex justify-end">
+                      <Button onClick={handleComplianceSave} disabled={isSaving}>
+                        {isSaving ? 'Saving...' : 'Save Preferences'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
         </div>

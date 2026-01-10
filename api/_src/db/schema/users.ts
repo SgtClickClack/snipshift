@@ -34,8 +34,13 @@ export const users = pgTable('users', {
   avatarUrl: text('avatar_url'),
   bannerUrl: text('banner_url'),
   // HospoGo compliance + preferences
+  rsaVerified: boolean('rsa_verified').notNull().default(false),
   rsaNumber: varchar('rsa_number', { length: 100 }),
   rsaExpiry: date('rsa_expiry'),
+  rsaStateOfIssue: varchar('rsa_state_of_issue', { length: 10 }),
+  // New canonical column (added 2026-01-10)
+  rsaCertUrl: text('rsa_cert_url'),
+  // Legacy column kept for backwards compatibility in existing DBs
   rsaCertificateUrl: text('rsa_certificate_url'),
   hospitalityRole: hospitalityRoleEnum('hospitality_role'),
   hourlyRatePreference: decimal('hourly_rate_preference', { precision: 10, scale: 2 }),

@@ -60,7 +60,17 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h3 className="font-bold text-neutral-900 text-lg">{shopName}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-neutral-900 text-lg">{shopName}</h3>
+                {shift.isEmergencyFill ? (
+                  <span
+                    className="inline-flex items-center rounded-full bg-lime-400 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-black shadow-[0_0_12px_rgba(163,230,53,0.6)] ring-1 ring-lime-300 animate-pulse"
+                    aria-label="Emergency fill shift"
+                  >
+                    Emergency
+                  </span>
+                ) : null}
+              </div>
               <h4 className="font-semibold text-neutral-700 text-base">{shift.title}</h4>
             </div>
           </div>

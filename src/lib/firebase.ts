@@ -14,7 +14,6 @@ import {
 } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
-import { fallbackConfig } from "./firebase-fallback";
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
 const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string): string => {
@@ -36,16 +35,17 @@ const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string
   return sanitized;
 };
 
-// Load Firebase configuration from environment variables with fallback support
-// Falls back to fallbackConfig when env vars are missing (useful for development)
+// Load Firebase configuration from environment variables.
+// We intentionally fail fast if required env vars are missing to avoid silently
+// initializing against the wrong Firebase project in production.
 const firebaseConfig = {
-  apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY', fallbackConfig.apiKey),
-  authDomain: sanitizeEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, 'VITE_FIREBASE_AUTH_DOMAIN', fallbackConfig.authDomain),
-  projectId: sanitizeEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'VITE_FIREBASE_PROJECT_ID', fallbackConfig.projectId),
-  storageBucket: sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'VITE_FIREBASE_STORAGE_BUCKET', fallbackConfig.storageBucket),
-  messagingSenderId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, 'VITE_FIREBASE_MESSAGING_SENDER_ID', fallbackConfig.messagingSenderId),
-  appId: sanitizeEnv(import.meta.env.VITE_FIREBASE_APP_ID, 'VITE_FIREBASE_APP_ID', fallbackConfig.appId),
-  measurementId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'VITE_FIREBASE_MEASUREMENT_ID', fallbackConfig.measurementId),
+  apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY'),
+  authDomain: sanitizeEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, 'VITE_FIREBASE_AUTH_DOMAIN'),
+  projectId: sanitizeEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'VITE_FIREBASE_PROJECT_ID'),
+  storageBucket: sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'VITE_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, 'VITE_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: sanitizeEnv(import.meta.env.VITE_FIREBASE_APP_ID, 'VITE_FIREBASE_APP_ID'),
+  measurementId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'VITE_FIREBASE_MEASUREMENT_ID'),
 };
 
 // Initialize Firebase

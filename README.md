@@ -1,4 +1,4 @@
-﻿# HospoGo
+# HospoGo
 
 > The Gig Economy Platform for Barbers, Stylists, and Industry Professionals
 
@@ -285,7 +285,7 @@ This is a private project. For questions or support, please contact the developm
 
 ## 📞 Support
 
-- **Email:** support@snipshift.com
+- **Email:** support@hospogo.com
 - **Documentation:** See `/docs` directory (if available)
 - **Issues:** Contact the development team
 

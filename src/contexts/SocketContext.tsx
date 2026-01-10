@@ -53,8 +53,14 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Get API URL from environment or use default
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // Get API URL from environment or use a safe default.
+    // - In production on hospogo.com (single origin), default to the current origin.
+    // - In local dev (Vite on localhost), default to the API dev server on :5000.
+    const defaultApiUrl =
+      typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? window.location.origin
+        : 'http://localhost:5000';
+    const apiUrl = import.meta.env.VITE_API_URL || defaultApiUrl;
     
     // Initialize socket connection
     const newSocket = io(apiUrl, {

@@ -17,7 +17,8 @@ export default function TermsPage() {
           <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
             <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
             <AlertDescription className="text-amber-800 dark:text-amber-200">
-              <strong>Legal Disclaimer:</strong> This is a template. Please consult a legal professional before live operation.
+              <strong>Important:</strong> These Terms are provided for informational purposes only and may not be suitable for
+              your business or jurisdiction. Please consult a qualified legal professional before relying on them.
             </AlertDescription>
           </Alert>
 
@@ -36,11 +37,32 @@ export default function TermsPage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold text-steel-900 mb-4">2. Marketplace Model</h2>
                 <p className="text-steel-700 mb-4">
-                  HospoGo operates as a marketplace platform that connects barbers, stylists, beauticians, and other professionals with flexible work opportunities. The Platform facilitates connections between professionals seeking work and businesses offering shifts, gigs, or employment opportunities.
+                  HospoGo operates as a marketplace platform that connects hospitality venues with staff for flexible shift work.
+                  The Platform helps venues post shifts and enables staff to discover, accept, and complete shifts.
                 </p>
                 <p className="text-steel-700 mb-4">
                   <strong>Important:</strong> HospoGo acts solely as an intermediary and technology platform. We are not an employer, employment agency, or staffing company. We do not employ professionals, set their work schedules, or control their work performance. The relationship between professionals and businesses is that of independent contractors or direct employment, as determined by the parties involved.
                 </p>
+                <p className="text-steel-700 mb-4">
+                  For clarity in these Terms:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li>
+                    <strong>Venue</strong> means a business account that posts shifts (e.g., restaurant, bar, pub, cafe, hotel, event venue)
+                    and may include authorized representatives managing the venue’s postings.
+                  </li>
+                  <li>
+                    <strong>Staff</strong> means an individual account that applies for, accepts, or works shifts posted on the Platform.
+                  </li>
+                  <li>
+                    <strong>Shift</strong> means a scheduled work opportunity posted by a Venue that may include role requirements
+                    (e.g., uniform, expected pax, RSA/RCG where applicable), pay rate, start/end time, and cancellation terms.
+                  </li>
+                  <li>
+                    <strong>Emergency Fill</strong> means a Shift republished with urgency (e.g., after a late cancellation) to help Venues
+                    fill staffing gaps quickly.
+                  </li>
+                </ul>
                 <p className="text-steel-700 mb-4">
                   HospoGo is not responsible for:
                 </p>
@@ -122,11 +144,37 @@ export default function TermsPage() {
 
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold text-steel-900 mb-4">6. Cancellations and No-Shows</h2>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.1 Cancellation Policy</h3>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.1 Cancellation Window (Default 24 Hours)</h3>
                 <p className="text-steel-700 mb-4">
-                  Cancellation policies are set by individual businesses and may vary. Professionals and businesses are expected to honor their commitments. Cancellation terms should be clearly communicated and agreed upon before work begins.
+                  Unless otherwise shown on a Shift, HospoGo uses a <strong>24-hour cancellation window</strong>. This means a cancellation
+                  is considered “late” if it occurs within 24 hours of the Shift’s start time. Some Shifts may specify a different cancellation
+                  window, which will be displayed with the Shift details.
                 </p>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.2 No-Shows</h3>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.2 Staff Late Cancellation (Reliability Strikes)</h3>
+                <p className="text-steel-700 mb-4">
+                  If Staff cancels a Shift within the applicable cancellation window, HospoGo may treat it as a late cancellation. Late
+                  cancellations may trigger:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li><strong>Reliability Strike:</strong> a platform penalty recorded against the Staff account</li>
+                  <li><strong>Emergency Fill:</strong> the Shift may be republished as an Emergency Fill to help the Venue replace the Staff member</li>
+                  <li><strong>Account enforcement:</strong> repeated late cancellations may result in restrictions, suspension, or termination</li>
+                </ul>
+                <p className="text-steel-700 mb-4">
+                  Reliability Strikes are intended to protect Venue operations and marketplace trust. HospoGo may automatically suspend
+                  accounts that accumulate multiple strikes (for example, at <strong>three (3) strikes</strong>).
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.3 Venue Late Cancellation (Kill Fee)</h3>
+                <p className="text-steel-700 mb-4">
+                  Venues are expected to honor accepted Shifts. If a Venue cancels within the applicable cancellation window, HospoGo may
+                  require the Venue to pay a <strong>Kill Fee</strong> to compensate Staff for the late cancellation.
+                </p>
+                <p className="text-steel-700 mb-4">
+                  Where applicable, the Kill Fee amount (if any) will be shown on the Shift. HospoGo may collect the Kill Fee via the payment
+                  method on file and remit it to Staff (less any applicable fees) or otherwise administer the payment as permitted by law and
+                  platform policy. Not all Shifts may have a Kill Fee.
+                </p>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.4 No-Shows</h3>
                 <p className="text-steel-700 mb-4">
                   No-shows (failure to appear for a scheduled shift without proper cancellation) are a serious violation of these Terms. Consequences for no-shows may include:
                 </p>
@@ -139,7 +187,7 @@ export default function TermsPage() {
                 <p className="text-steel-700 mb-4">
                   Businesses that repeatedly cancel shifts at the last minute or fail to honor commitments may also face account suspension or termination.
                 </p>
-                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.3 Emergency Cancellations</h3>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">6.5 Emergency Cancellations</h3>
                 <p className="text-steel-700 mb-4">
                   We understand that emergencies occur. If you need to cancel due to a genuine emergency, please contact the other party and HospoGo support as soon as possible. Emergency cancellations will be reviewed on a case-by-case basis and may not result in penalties if properly documented and communicated.
                 </p>
@@ -197,6 +245,9 @@ export default function TermsPage() {
                 </p>
                 <p className="text-steel-700">
                   <strong>Email:</strong> legal@hospogo.com<br />
+                  <strong>Business Name:</strong> HospoGo<br />
+                  <strong>ABN:</strong> [INSERT_ABN]<br />
+                  <strong>Registered Address:</strong> [INSERT_REGISTERED_ADDRESS]<br />
                   <strong>Address:</strong> HospoGo Legal Department
                 </p>
               </section>

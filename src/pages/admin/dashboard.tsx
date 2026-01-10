@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Shield, Users, Briefcase, DollarSign, AlertTriangle, Trash2, CheckCircle2, XCircle, Ban, UserCheck, TrendingUp, Activity } from 'lucide-react';
+import { Shield, Users, Briefcase, DollarSign, AlertTriangle, Trash2, CheckCircle2, XCircle, Ban, UserCheck, TrendingUp, Activity, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 
 interface AdminStats {
@@ -93,6 +93,16 @@ interface Report {
   updatedAt: string;
 }
 
+interface PendingRsaVerification {
+  userId: string;
+  email: string;
+  name: string;
+  rsaExpiry: string | null;
+  rsaStateOfIssue: string | null;
+  rsaCertUrl: string | null;
+  updatedAt: string | null;
+}
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('stats');
@@ -161,6 +171,45 @@ export default function AdminDashboard() {
     },
     enabled: activeTab === 'disputes',
   });
+
+  const {
+    data: rsaData,
+    isLoading: rsaLoading,
+    refetch: refetchRsa,
+  } = useQuery<{
+    data: PendingRsaVerification[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>({
+    queryKey: ['admin', 'rsa', 'pending'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/admin/rsa/pending?limit=100');
+      return response.json();
+    },
+    enabled: activeTab === 'rsa',
+  });
+
+  const handleVerifyRsa = async (userId: string, verified: boolean) => {
+    try {
+      await apiRequest('PATCH', `/api/admin/rsa/${userId}/verify`, { verified });
+
+      toast({
+        title: verified ? 'RSA verified' : 'RSA unverified',
+        description: verified
+          ? 'Staff can now browse shifts.'
+          : 'Staff will be locked from browsing shifts.',
+      });
+
+      refetchRsa();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to update RSA verification.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleUpdateReportStatus = async (reportId: string, status: 'resolved' | 'dismissed') => {
     try {
@@ -350,6 +399,14 @@ export default function AdminDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="stats">Stats</TabsTrigger>
+            <TabsTrigger value="rsa">
+              RSA Review
+              {rsaData?.total ? (
+                <Badge variant="secondary" className="ml-2">
+                  {rsaData.total}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="jobs">Jobs</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
@@ -457,6 +514,103 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rsa" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>RSA Verification Queue</CardTitle>
+                <CardDescription>
+                  Review uploaded RSA certificates and approve staff to browse shifts.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {rsaLoading ? (
+                  <div className="text-center py-8">Loading RSA submissions...</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Name</th>
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Email</th>
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Expiry</th>
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">State</th>
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Certificate</th>
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Submitted</th>
+                          <th className="text-right p-3 text-sm font-medium text-muted-foreground">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(rsaData?.data || []).map((item) => (
+                          <tr key={item.userId} className="border-b border-border hover:bg-muted/50">
+                            <td className="p-3">{item.name}</td>
+                            <td className="p-3 text-muted-foreground">{item.email}</td>
+                            <td className="p-3 text-muted-foreground">{item.rsaExpiry || '—'}</td>
+                            <td className="p-3 text-muted-foreground">{item.rsaStateOfIssue || '—'}</td>
+                            <td className="p-3">
+                              {item.rsaCertUrl ? (
+                                <a
+                                  href={item.rsaCertUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                                >
+                                  View <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-muted-foreground text-sm">
+                              {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : '—'}
+                            </td>
+                            <td className="p-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-green-600 border-green-600 hover:bg-green-50"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Approve RSA Verification</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will mark RSA as verified for this staff member and unlock shift browsing.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleVerifyRsa(item.userId, true)}
+                                        className="bg-green-600 hover:bg-green-700"
+                                      >
+                                        Approve
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {rsaData && rsaData.data.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No pending RSA submissions.
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

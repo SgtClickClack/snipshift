@@ -10,6 +10,7 @@ import { relations } from 'drizzle-orm';
 import { users, userRoleEnum, hospitalityRoleEnum } from './schema/users.js';
 import { notifications, notificationTypeEnum } from './schema/notifications.js';
 import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations } from './schema/shifts.js';
+import { profiles } from './schema/profiles.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
 import { comments } from './schema/comments.js';
@@ -22,6 +23,7 @@ export const paymentStatusEnum = pgEnum('payment_status', ['UNPAID', 'AUTHORIZED
 
 export { 
   users, userRoleEnum, hospitalityRoleEnum,
+  profiles,
   notifications, notificationTypeEnum, 
   shifts, shiftStatusEnum,
   shiftOffers, shiftOfferStatusEnum,

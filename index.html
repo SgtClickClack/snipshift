@@ -211,7 +211,7 @@
       (function () {
         try {
           // Bump the key if we need to re-run recovery
-          var KEY = 'snipshift_sw_recovery_v3';
+          var KEY = 'hospogo_sw_recovery_v1';
           if (localStorage.getItem(KEY) === '1') return;
           if (!('serviceWorker' in navigator) || !('caches' in window)) return;
 
@@ -225,7 +225,7 @@
             var relevantKeys = keys.filter(function (k) {
               return (
                 k.indexOf('workbox-') === 0 ||
-                k.indexOf('snipshift') !== -1 ||
+                k.indexOf('hospogo') !== -1 ||
                 k === 'api-cache' ||
                 k === 'google-fonts-cache' ||
                 k === 'google-fonts-static-cache'

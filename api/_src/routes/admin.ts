@@ -2,11 +2,13 @@ import express from 'express';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { authenticateUser, AuthenticatedRequest, requireAdmin } from '../middleware/auth.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import * as profilesRepo from '../repositories/profiles.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as paymentsRepo from '../repositories/payments.repository.js';
 import * as reportsRepo from '../repositories/reports.repository.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as emailService from '../services/email.service.js';
+import { z } from 'zod';
 
 const router = express.Router();
 
@@ -19,6 +21,53 @@ const router = express.Router();
 
 router.use(authenticateUser);
 router.use(requireAdmin);
+
+// RSA review queue (admin-only)
+router.get('/rsa/pending', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const limitRaw = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 100;
+  const offsetRaw = typeof req.query.offset === 'string' ? parseInt(req.query.offset, 10) : 0;
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 100;
+  const offset = Number.isFinite(offsetRaw) ? Math.max(offsetRaw, 0) : 0;
+
+  const result = await profilesRepo.listPendingRsaVerifications(limit, offset);
+  res.status(200).json(result);
+}));
+
+const UpdateRsaVerificationSchema = z.object({
+  verified: z.boolean(),
+});
+
+router.patch('/rsa/:userId/verify', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.params.userId;
+
+  const validation = UpdateRsaVerificationSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  const { verified } = validation.data;
+
+  const ok = await profilesRepo.setRsaVerified(userId, verified);
+  if (!ok) {
+    res.status(500).json({ message: 'Failed to update RSA verification status' });
+    return;
+  }
+
+  // Keep legacy/user table flag in sync so older clients still work.
+  const updatedUser = await usersRepo.updateUser(userId, { rsaVerified: verified } as any);
+  if (!updatedUser) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  res.status(200).json({
+    userId,
+    rsaVerified: verified,
+  });
+}));
 
 // Handler for admin stats (legacy - kept for backward compatibility)
 router.get('/stats', asyncHandler(async (req: AuthenticatedRequest, res) => {

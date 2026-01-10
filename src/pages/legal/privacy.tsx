@@ -17,7 +17,8 @@ export default function PrivacyPage() {
           <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
             <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
             <AlertDescription className="text-amber-800 dark:text-amber-200">
-              <strong>Legal Disclaimer:</strong> This is a template. Please consult a legal professional before live operation.
+              <strong>Important:</strong> This Privacy Policy is provided for informational purposes only and may not be suitable for your
+              business or jurisdiction. Please consult a qualified legal professional before relying on it.
             </AlertDescription>
           </Alert>
 
@@ -70,6 +71,15 @@ export default function PrivacyPage() {
                   <li><strong>Location Data:</strong> General location information based on IP address or GPS (with your permission)</li>
                   <li><strong>Cookies and Tracking Technologies:</strong> See Section 6 for details</li>
                 </ul>
+                <h3 className="text-xl font-semibold text-steel-800 mb-3">2.4 Compliance and Identity Documents (RSA/ID)</h3>
+                <p className="text-steel-700 mb-4">
+                  If you choose to upload compliance or identity documents (such as RSA certificates and/or identification documents) for
+                  verification and regulatory compliance purposes, we collect and store:
+                </p>
+                <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
+                  <li><strong>Document images/files:</strong> the files you upload</li>
+                  <li><strong>Verification metadata:</strong> document number (where applicable), expiry date, and state of issue</li>
+                </ul>
               </section>
 
               <section className="mb-8">
@@ -117,6 +127,8 @@ export default function PrivacyPage() {
                   <li><strong>Google Analytics:</strong> We use Google Analytics to understand how users interact with the Platform. Google Analytics collects usage data, device information, and IP addresses. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">Google Privacy Policy</a></li>
                   <li><strong>Google Maps:</strong> We use Google Maps API to provide location services, address autocomplete, and mapping features. When you use location-based features, your location data may be shared with Google. For more information, visit: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-accent hover:underline">Google Privacy Policy</a></li>
                   <li><strong>Google OAuth:</strong> If you choose to sign in with Google, Google authenticates your identity and shares your basic profile information (name, email) with us.</li>
+                  <li><strong>Firebase Authentication:</strong> We use Firebase Authentication to authenticate users and manage login sessions.</li>
+                  <li><strong>Firebase Storage:</strong> We may use Firebase Storage to store user-uploaded files (including RSA/ID documents) securely.</li>
                 </ul>
                 <h3 className="text-xl font-semibold text-steel-800 mb-3">4.3 Other Service Providers</h3>
                 <p className="text-steel-700 mb-4">
@@ -182,6 +194,11 @@ export default function PrivacyPage() {
                 </p>
                 <p className="text-steel-700 mb-4">
                   Security measures include encryption in transit (SSL/TLS), secure password storage, regular security audits, and access controls.
+                </p>
+                <p className="text-steel-700 mb-4">
+                  <strong>RSA/ID document security:</strong> RSA certificates and identification documents you upload are stored securely and
+                  access is restricted to you and authorized HospoGo personnel involved in compliance review. These documents are not part of
+                  your public profile and are used only for verification and compliance purposes.
                 </p>
               </section>
 
@@ -259,6 +276,9 @@ export default function PrivacyPage() {
                 </p>
                 <p className="text-steel-700">
                   <strong>Email:</strong> privacy@hospogo.com<br />
+                  <strong>Business Name:</strong> HospoGo<br />
+                  <strong>ABN:</strong> [INSERT_ABN]<br />
+                  <strong>Registered Address:</strong> [INSERT_REGISTERED_ADDRESS]<br />
                   <strong>Address:</strong> HospoGo Privacy Department
                 </p>
               </section>

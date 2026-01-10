@@ -1,4 +1,4 @@
-﻿# 🎯 HospoGo - Project Handover Document
+# 🎯 HospoGo - Project Handover Document
 
 **Version:** 1.1.1  
 **Date:** December 16, 2025  
@@ -225,7 +225,7 @@ npm run migrate         # Run migrations
 ## 📞 Support Contacts
 
 - **Repository:** https://github.com/SgtClickClack/snipshift
-- **Email:** support@snipshift.com
+- **Email:** support@hospogo.com
 
 ---
 

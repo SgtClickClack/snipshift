@@ -6,7 +6,7 @@ export interface Shift {
   startTime: string;
   endTime: string;
   hourlyRate: string;
-  status: 'open' | 'filled' | 'completed' | 'draft' | 'invited' | 'confirmed';
+  status: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
   location?: string;
   autoAccept?: boolean;
   createdAt: string;
@@ -29,6 +29,12 @@ export interface Shift {
   // Location coordinates for distance filtering
   lat?: string | number | null; // Latitude
   lng?: string | number | null; // Longitude
+
+  // Hospitality cancellation logic
+  cancellationWindowHours?: number; // Default: 24
+  killFeeAmount?: string | null; // numeric(10,2) as string in most API payloads
+  staffCancellationReason?: string | null;
+  isEmergencyFill?: boolean;
 }
 
 export interface Post {

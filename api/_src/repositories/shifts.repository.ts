@@ -25,7 +25,11 @@ function shouldFallbackToLegacyShiftSchema(err: any): boolean {
     isMissingColumnError(err, 'role') ||
     isMissingColumnError(err, 'uniform_requirements') ||
     isMissingColumnError(err, 'rsa_required') ||
-    isMissingColumnError(err, 'expected_pax')
+    isMissingColumnError(err, 'expected_pax') ||
+    isMissingColumnError(err, 'cancellation_window_hours') ||
+    isMissingColumnError(err, 'kill_fee_amount') ||
+    isMissingColumnError(err, 'staff_cancellation_reason') ||
+    isMissingColumnError(err, 'is_emergency_fill')
   );
 }
 
@@ -48,6 +52,10 @@ function hydrateLegacyShiftRow(row: any): typeof shifts.$inferSelect {
     uniformRequirements: row?.uniformRequirements ?? null,
     rsaRequired: row?.rsaRequired ?? false,
     expectedPax: row?.expectedPax ?? null,
+    cancellationWindowHours: row?.cancellationWindowHours ?? 24,
+    killFeeAmount: row?.killFeeAmount ?? null,
+    staffCancellationReason: row?.staffCancellationReason ?? null,
+    isEmergencyFill: row?.isEmergencyFill ?? false,
   } as any;
 }
 
@@ -132,6 +140,10 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
         startTime: shifts.startTime,
         endTime: shifts.endTime,
         hourlyRate: shifts.hourlyRate,
+        cancellationWindowHours: shifts.cancellationWindowHours,
+        killFeeAmount: shifts.killFeeAmount,
+        staffCancellationReason: shifts.staffCancellationReason,
+        isEmergencyFill: shifts.isEmergencyFill,
         uniformRequirements: shifts.uniformRequirements,
         rsaRequired: shifts.rsaRequired,
         expectedPax: shifts.expectedPax,
@@ -216,6 +228,10 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       startTime: shifts.startTime,
       endTime: shifts.endTime,
       hourlyRate: shifts.hourlyRate,
+      cancellationWindowHours: shifts.cancellationWindowHours,
+      killFeeAmount: shifts.killFeeAmount,
+      staffCancellationReason: shifts.staffCancellationReason,
+      isEmergencyFill: shifts.isEmergencyFill,
       uniformRequirements: shifts.uniformRequirements,
       rsaRequired: shifts.rsaRequired,
       expectedPax: shifts.expectedPax,
@@ -873,6 +889,10 @@ export async function updateShift(
     location?: string;
     isRecurring?: boolean;
     parentShiftId?: string;
+    cancellationWindowHours?: number;
+    killFeeAmount?: string | null;
+    staffCancellationReason?: string | null;
+    isEmergencyFill?: boolean;
   }
 ): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();

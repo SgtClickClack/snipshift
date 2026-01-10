@@ -30,8 +30,10 @@ function initializeFirebase(): admin.auth.Auth | null {
     const firebaseAdmin = (admin as any).default || admin;
     
     // Use a named app instance to avoid stale default app issues in Vercel warm containers
-    const appName = 'snipshift-worker-v2';
-    const targetProjectId = 'snipshift-75b04';
+    const appName = process.env.FIREBASE_ADMIN_APP_NAME || 'hospogo-worker-v2';
+    // IMPORTANT: Do not hardcode a Firebase project id. Use env/service account so
+    // the app can be cleanly separated from any legacy projects (e.g. Snipshift).
+    let targetProjectId = process.env.FIREBASE_PROJECT_ID?.trim() || undefined;
     let app: admin.app.App | undefined;
 
     try {
@@ -56,17 +58,26 @@ function initializeFirebase(): admin.auth.Auth | null {
           console.log('--- DEBUG FIREBASE INIT ---');
           console.log('Env Var Project ID:', process.env.FIREBASE_PROJECT_ID);
           console.log('Service Account Project ID:', serviceAccount?.project_id);
-          console.log('Target Project ID:', targetProjectId);
+          console.log('Target Project ID:', targetProjectId || '(derived from service account)');
           console.log('---------------------------');
 
-          // FORCE OVERRIDE: Hardcode project ID to bypass any env var issues
-          console.log(`[FIREBASE] Forcing project ID to: ${targetProjectId}`);
-          serviceAccount.project_id = targetProjectId;
+          if (!targetProjectId && serviceAccount?.project_id) {
+            targetProjectId = String(serviceAccount.project_id);
+          }
+
+          // If FIREBASE_PROJECT_ID is explicitly set, ensure it wins.
+          if (targetProjectId && serviceAccount?.project_id && serviceAccount.project_id !== targetProjectId) {
+            console.log(`[FIREBASE] Overriding service account project_id to match FIREBASE_PROJECT_ID: ${targetProjectId}`);
+            serviceAccount.project_id = targetProjectId;
+          }
           
-          app = firebaseAdmin.initializeApp({
-            credential: firebaseAdmin.credential.cert(serviceAccount),
-            projectId: targetProjectId,
-          }, appName);
+          app = firebaseAdmin.initializeApp(
+            {
+              credential: firebaseAdmin.credential.cert(serviceAccount),
+              ...(targetProjectId ? { projectId: targetProjectId } : {}),
+            },
+            appName
+          );
           console.log('[FIREBASE] Admin initialized successfully via FIREBASE_SERVICE_ACCOUNT');
         } catch (e: any) {
           console.error('[FIREBASE] Init Failed (FIREBASE_SERVICE_ACCOUNT):', e?.message || e);
@@ -79,7 +90,7 @@ function initializeFirebase(): admin.auth.Auth | null {
           try {
               app = firebaseAdmin.initializeApp({
               credential: firebaseAdmin.credential.applicationDefault(),
-              projectId: targetProjectId,
+              ...(targetProjectId ? { projectId: targetProjectId } : {}),
               }, appName);
               console.log('[FIREBASE] Admin initialized successfully (fallback)');
               initError = null;
@@ -95,11 +106,11 @@ function initializeFirebase(): admin.auth.Auth | null {
         try {
           app = firebaseAdmin.initializeApp({
               credential: firebaseAdmin.credential.cert({
-              projectId: targetProjectId,
+              projectId: process.env.FIREBASE_PROJECT_ID,
               clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
               privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
               }),
-              projectId: targetProjectId,
+              projectId: process.env.FIREBASE_PROJECT_ID,
           }, appName);
           console.log('[FIREBASE] Admin initialized successfully via individual env vars');
         } catch (e: any) {
@@ -116,10 +127,13 @@ function initializeFirebase(): admin.auth.Auth | null {
           console.error('[FIREBASE] - FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
         }
         try {
-          app = firebaseAdmin.initializeApp({
-            credential: firebaseAdmin.credential.applicationDefault(),
-            projectId: targetProjectId,
-          }, appName);
+          app = firebaseAdmin.initializeApp(
+            {
+              credential: firebaseAdmin.credential.applicationDefault(),
+              ...(targetProjectId ? { projectId: targetProjectId } : {}),
+            },
+            appName
+          );
           console.log('[FIREBASE] Admin initialized successfully (application default)');
         } catch (e: any) {
           console.error('[FIREBASE] Init Failed (application default):', e?.message || e);

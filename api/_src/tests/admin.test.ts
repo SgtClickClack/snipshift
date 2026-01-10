@@ -50,6 +50,7 @@ vi.mock('../repositories/users.repository.js', () => ({
   getAllUsers: vi.fn(),
   deleteUser: vi.fn(),
   getUserById: vi.fn(),
+  updateUser: vi.fn(),
 }));
 
 vi.mock('../repositories/jobs.repository.js', () => ({
@@ -75,6 +76,11 @@ vi.mock('../services/email.service.js', () => ({
   sendApplicationStatusEmail: vi.fn().mockResolvedValue(true),
   sendNewMessageEmail: vi.fn().mockResolvedValue(true),
   sendJobAlertEmail: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock('../repositories/profiles.repository.js', () => ({
+  listPendingRsaVerifications: vi.fn(),
+  setRsaVerified: vi.fn(),
 }));
 
 // Mock DB Connection
@@ -155,6 +161,21 @@ describe('Admin Routes', () => {
       const response = await supertest(app)
         .post('/api/admin/test-email')
         .send({ type: 'welcome', email: 'test@test.com' })
+        .set('x-role', 'professional');
+      expect(response.status).toBe(403);
+    });
+
+    it('should return 403 for non-admin accessing RSA queue', async () => {
+      const response = await supertest(app)
+        .get('/api/admin/rsa/pending')
+        .set('x-role', 'professional');
+      expect(response.status).toBe(403);
+    });
+
+    it('should return 403 for non-admin verifying RSA', async () => {
+      const response = await supertest(app)
+        .patch('/api/admin/rsa/u1/verify')
+        .send({ verified: true })
         .set('x-role', 'professional');
       expect(response.status).toBe(403);
     });
@@ -374,6 +395,52 @@ describe('Admin Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Status must be one of');
+    });
+
+    it('should list pending RSA verifications for admin', async () => {
+      const profilesRepo = await import('../repositories/profiles.repository.js');
+      vi.mocked(profilesRepo.listPendingRsaVerifications).mockResolvedValue({
+        data: [
+          {
+            userId: 'u1',
+            email: 'u1@test.com',
+            name: 'User 1',
+            rsaExpiry: '2030-01-01',
+            rsaStateOfIssue: 'NSW',
+            rsaCertUrl: 'https://example.com/rsa.pdf',
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      } as any);
+
+      const response = await supertest(app)
+        .get('/api/admin/rsa/pending')
+        .set('x-role', 'admin');
+
+      expect(response.status).toBe(200);
+      expect(response.body.total).toBe(1);
+      expect(response.body.data[0].userId).toBe('u1');
+    });
+
+    it('should verify RSA for a user (admin)', async () => {
+      const profilesRepo = await import('../repositories/profiles.repository.js');
+      const usersRepo = await import('../repositories/users.repository.js');
+
+      vi.mocked(profilesRepo.setRsaVerified).mockResolvedValue(true as any);
+      vi.mocked(usersRepo.updateUser).mockResolvedValue({ id: 'u1' } as any);
+
+      const response = await supertest(app)
+        .patch('/api/admin/rsa/u1/verify')
+        .send({ verified: true })
+        .set('x-role', 'admin');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ userId: 'u1', rsaVerified: true });
+      expect(profilesRepo.setRsaVerified).toHaveBeenCalledWith('u1', true);
+      expect(usersRepo.updateUser).toHaveBeenCalledWith('u1', { rsaVerified: true });
     });
   });
 });

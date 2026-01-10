@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import * as profilesRepo from '../repositories/profiles.repository.js';
 import * as emailService from '../services/email.service.js';
 import { auth } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
@@ -22,6 +23,7 @@ const UpdateProfileSchema = z.object({
   // HospoGo compliance + preferences
   rsaNumber: z.string().max(100).optional(),
   rsaExpiry: z.string().optional(), // expected YYYY-MM-DD (stored as date)
+  rsaStateOfIssue: z.string().max(10).optional(),
   rsaCertificateUrl: z.string().url().optional(),
   hospitalityRole: z.enum(['Bartender', 'Waitstaff', 'Barista', 'Kitchen Hand', 'Manager']).optional(),
   hourlyRatePreference: z.union([
@@ -211,6 +213,8 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
        return;
     }
 
+    const profileCompliance = await profilesRepo.getProfileCompliance(req.user.id);
+
     // Map DB user to frontend User shape
     res.status(200).json({
       id: user.id,
@@ -222,9 +226,12 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       location: user.location,
       avatarUrl: user.avatarUrl || null,
       bannerUrl: user.bannerUrl || null,
+      rsaVerified: (user as any).rsaVerified ?? false,
       rsaNumber: (user as any).rsaNumber ?? null,
       rsaExpiry: (user as any).rsaExpiry ?? null,
-      rsaCertificateUrl: (user as any).rsaCertificateUrl ?? null,
+      rsaStateOfIssue: (user as any).rsaStateOfIssue ?? null,
+      rsaCertificateUrl: (user as any).rsaCertUrl ?? (user as any).rsaCertificateUrl ?? null,
+      profile: profileCompliance,
       hospitalityRole: (user as any).hospitalityRole ?? null,
       hourlyRatePreference: (user as any).hourlyRatePreference
         ? parseFloat((user as any).hourlyRatePreference)
@@ -436,6 +443,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     bannerUrl,
     rsaNumber,
     rsaExpiry,
+    rsaStateOfIssue,
     rsaCertificateUrl,
     hospitalityRole,
     hourlyRatePreference,
@@ -450,6 +458,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   if (location !== undefined) updates.location = location;
   if (rsaNumber !== undefined) updates.rsaNumber = rsaNumber;
   if (rsaExpiry !== undefined) updates.rsaExpiry = rsaExpiry;
+  if (rsaStateOfIssue !== undefined) updates.rsaStateOfIssue = rsaStateOfIssue;
   if (hospitalityRole !== undefined) updates.hospitalityRole = hospitalityRole;
   if (hourlyRatePreference !== undefined) updates.hourlyRatePreference = String(hourlyRatePreference);
   if (businessSettings !== undefined) {
@@ -493,9 +502,11 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   }
 
   if (processedRsaCertificateUrl !== undefined && isValidUrl(processedRsaCertificateUrl)) {
+    updates.rsaCertUrl = processedRsaCertificateUrl;
     updates.rsaCertificateUrl = processedRsaCertificateUrl;
     console.log('[PUT /api/me] Updating rsaCertificateUrl from uploaded file:', processedRsaCertificateUrl.substring(0, 50) + '...');
   } else if (rsaCertificateUrl !== undefined && isValidUrl(rsaCertificateUrl)) {
+    updates.rsaCertUrl = rsaCertificateUrl;
     updates.rsaCertificateUrl = rsaCertificateUrl;
     console.log('[PUT /api/me] Updating rsaCertificateUrl from body:', rsaCertificateUrl.substring(0, 50) + '...');
   } else if (rsaCertificateUrl !== undefined) {
@@ -510,6 +521,31 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     res.status(404).json({ message: 'User not found' });
     return;
   }
+
+  // Also upsert RSA compliance fields into the profiles table (canonical compliance store).
+  // Note: rsa_verified is intentionally NOT writable by the user.
+  try {
+    const profileUpdates: {
+      rsa_verified?: boolean;
+      rsa_expiry?: string;
+      rsa_state_of_issue?: string;
+      rsa_cert_url?: string;
+    } = {};
+    if (rsaExpiry !== undefined) profileUpdates.rsa_expiry = rsaExpiry;
+    if (rsaStateOfIssue !== undefined) profileUpdates.rsa_state_of_issue = rsaStateOfIssue;
+    if (processedRsaCertificateUrl !== undefined && isValidUrl(processedRsaCertificateUrl)) {
+      profileUpdates.rsa_cert_url = processedRsaCertificateUrl;
+    } else if (rsaCertificateUrl !== undefined && isValidUrl(rsaCertificateUrl)) {
+      profileUpdates.rsa_cert_url = rsaCertificateUrl;
+    }
+    if (Object.keys(profileUpdates).length > 0) {
+      await profilesRepo.upsertProfileCompliance(req.user.id, profileUpdates);
+    }
+  } catch (error) {
+    console.warn('[PUT /api/me] Failed to upsert profile compliance fields:', error);
+  }
+
+  const profileCompliance = await profilesRepo.getProfileCompliance(req.user.id);
 
   console.log('[PUT /api/me] Update successful:', {
     userId: updatedUser.id,
@@ -540,9 +576,12 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     location: updatedUser.location,
     avatarUrl: updatedUser.avatarUrl || null,
     bannerUrl: updatedUser.bannerUrl || null,
+    rsaVerified: (updatedUser as any).rsaVerified ?? false,
     rsaNumber: (updatedUser as any).rsaNumber ?? null,
     rsaExpiry: (updatedUser as any).rsaExpiry ?? null,
-    rsaCertificateUrl: (updatedUser as any).rsaCertificateUrl ?? null,
+    rsaStateOfIssue: (updatedUser as any).rsaStateOfIssue ?? null,
+    rsaCertificateUrl: (updatedUser as any).rsaCertUrl ?? (updatedUser as any).rsaCertificateUrl ?? null,
+    profile: profileCompliance,
     hospitalityRole: (updatedUser as any).hospitalityRole ?? null,
     hourlyRatePreference: (updatedUser as any).hourlyRatePreference
       ? parseFloat((updatedUser as any).hourlyRatePreference)
