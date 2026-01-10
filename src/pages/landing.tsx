@@ -76,7 +76,7 @@ export default function LandingPage() {
 
         {/* No overlays: keep hero image colors fully intact */}
         
-        <div className="relative z-elevated w-full pt-40 md:pt-52 pb-12 md:pb-16 flex items-end justify-center text-center px-4">
+        <div className="relative z-elevated w-full pt-24 md:pt-32 pb-4 md:pb-8 flex items-end justify-center text-center px-4">
           <div className="max-w-5xl mx-auto flex flex-col items-center gap-6 md:gap-7">
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
               The Roster That Never Quits.

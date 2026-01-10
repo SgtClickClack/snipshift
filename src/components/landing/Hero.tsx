@@ -36,7 +36,7 @@ export default function Hero() {
       {/* No overlays: keep hero image colors fully intact */}
 
       {/* Content Wrapper */}
-      <div className="relative z-elevated w-full pt-40 md:pt-52 pb-12 md:pb-16 flex items-end justify-center text-center px-4">
+      <div className="relative z-elevated w-full pt-24 md:pt-32 pb-4 md:pb-8 flex items-end justify-center text-center px-4">
         {/* Text and buttons */}
         <div className="max-w-5xl mx-auto flex flex-col items-center gap-6 md:gap-7">
           <p className="text-lg md:text-2xl text-white/85 drop-shadow-[0_6px_18px_rgba(0,0,0,0.85)] font-medium max-w-3xl">
