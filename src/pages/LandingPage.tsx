@@ -82,9 +82,9 @@ export default function LandingPage() {
             />
           </picture>
 
-          {/* Keep hero colors vivid: no full-image darkening scrim; only a light left-side readability gradient */}
+          {/* Dark overlay to make neon CTAs pop */}
           <div
-            className="absolute inset-0 z-base pointer-events-none bg-gradient-to-r from-black/35 via-black/10 to-transparent"
+            className="absolute inset-0 z-base pointer-events-none bg-black/40"
             aria-hidden="true"
           />
 
@@ -103,8 +103,7 @@ export default function LandingPage() {
                   <div className="mt-6 flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                     <Link to="/signup?role=hub">
                       <Button
-                        size="lg"
-                        className="bg-brand-neon text-brand-dark shadow-[0_0_15px_rgba(186,255,57,0.5)] hover:scale-105 transition-all font-semibold text-base md:text-lg px-8 py-4 h-auto"
+                        className="btn-neon-primary"
                         data-testid="button-find-staff"
                       >
                         Find Staff
@@ -113,9 +112,8 @@ export default function LandingPage() {
 
                     <Link to="/signup?role=professional">
                       <Button
-                        size="lg"
                         variant="outline"
-                        className="bg-transparent border-2 border-brand-neon text-brand-neon hover:bg-brand-neon hover:text-brand-dark text-base md:text-lg px-8 py-4 h-auto font-semibold transition-all"
+                        className="btn-neon-outline"
                         data-testid="button-find-shifts"
                       >
                         Find Shifts
@@ -128,7 +126,7 @@ export default function LandingPage() {
                   <Link to={getDashboardRoute(user.currentRole)}>
                     <Button
                       size="lg"
-                      className="mt-6 bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-base md:text-lg px-10 py-4 shadow-xl h-auto"
+                      className="mt-6 h-auto px-10 py-4 text-base md:text-lg shadow-[0_0_12px_rgba(186,255,57,0.35)] hover:shadow-[0_0_18px_rgba(186,255,57,0.45)]"
                       data-testid="button-go-to-dashboard"
                     >
                       Go to Dashboard
@@ -278,7 +276,7 @@ export default function LandingPage() {
                   </ul>
                   {!isAuthenticated && (
                     <Link to="/signup?role=hub">
-                      <Button className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white">
+                      <Button variant="accent" className="w-full">
                         Get Started as Shop Owner
                       </Button>
                     </Link>
@@ -314,7 +312,7 @@ export default function LandingPage() {
                   </ul>
                   {!isAuthenticated && (
                     <Link to="/signup?role=professional">
-                      <Button className="w-full bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white">
+                      <Button variant="accent" className="w-full">
                         Get Started as Staff
                       </Button>
                     </Link>
@@ -357,7 +355,7 @@ export default function LandingPage() {
                 <Link to="/signup?role=hub">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-8 py-6 shadow-xl"
+                    className="h-auto px-8 py-6 text-lg shadow-[0_0_12px_rgba(186,255,57,0.35)] hover:shadow-[0_0_18px_rgba(186,255,57,0.45)]"
                     data-testid="button-join-venue"
                   >
                     Venue Sign Up

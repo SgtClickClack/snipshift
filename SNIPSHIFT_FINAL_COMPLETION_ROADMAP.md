@@ -22,6 +22,33 @@
 
 ---
 
+### Update: 2026-01-10 - Neon Glow & Pulse Styling (Hero CTA Buttons)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added Tailwind keyframes/animations for `neon-pulse` (glow spread pulse) and `neon-flicker` (tube-like opacity variance).
+- Added reusable global CTA button classes: `.btn-neon-primary` and `.btn-neon-outline`.
+- Updated the Landing hero to use the new neon CTA classes and added a consistent dark overlay to increase contrast.
+
+**Impact:**
+- Creates a reusable “neon CTA” system and improves hero readability/contrast so the neon buttons visually pop.
+
+---
+
+### Update: 2026-01-10 - Refine Neon Glow to Realistic Hum (Primary CTA)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a realistic multi-layer glow shadow (`shadow-neon-realistic`) to Tailwind for consistent neon depth.
+- Replaced the hero primary CTA glow “pulse” with a subtle “hum” (brightness dip) while keeping a stable, layered neon halo and a slightly brighter hover state.
+
+**Impact:**
+- More realistic neon: a steady tube-like glow with a gentle electrical hum, instead of a noticeable size pulse.
+
+---
+
 ### Update: 2026-01-10 - Manual Payout Tracking (Payout Status Enum)
 
 **Status:** ✅ **IMPLEMENTED**

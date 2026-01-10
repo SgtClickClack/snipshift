@@ -1,3 +1,65 @@
+#### 2026-01-10: Apply Neon Glow & Pulse Styling (CTA Button System)
+
+**Core Components**
+- Tailwind animation config (`tailwind.config.js`)
+- Global neon button classes (`src/index.css`)
+- Landing hero CTA wiring (`src/pages/LandingPage.tsx`)
+
+**Key Features**
+- Added `neon-pulse` and `neon-flicker` keyframes + animations in Tailwind for reusable neon motion styling.
+- Introduced reusable CTA button classes:
+  - `.btn-neon-primary`: filled electric-lime with pulsing neon glow
+  - `.btn-neon-outline`: outlined electric-lime with hover fill
+- Updated Landing hero:
+  - Added a consistent dark overlay (`bg-black/40`) to boost neon contrast
+  - Swapped “Find Staff” / “Find Shifts” to the new `.btn-neon-*` classes
+
+**Integration Points**
+- Tailwind: `keyframes.neon-pulse`, `keyframes.neon-flicker`, `animation.neon-pulse`, `animation.neon-flicker`
+- Build verification: `npm run build`
+
+**File Paths**
+- `tailwind.config.js`
+- `src/index.css`
+- `src/pages/LandingPage.tsx`
+
+**Next Priority Task**
+- Apply the new `.btn-neon-*` classes to the remaining landing CTAs (e.g. the final CTA section) for full CTA consistency.
+
+**Code Organization & Quality**
+- Centralized CTA styling into global component-layer utilities to avoid repeated inline Tailwind class strings.
+
+---
+
+#### 2026-01-10: Refine Neon Glow to Realistic Hum (Primary CTA)
+
+**Core Components**
+- Tailwind shadow utilities (`tailwind.config.js`)
+- Global neon CTA styling (`src/index.css`)
+
+**Key Features**
+- Added a realistic multi-layer glow shadow utility: `shadow-neon-realistic`.
+- Replaced the primary CTA “pulse” with a subtle neon “hum”:
+  - Stable layered glow for a tube-like core + halo
+  - Minimal brightness dip animation (`neon-hum`) instead of expanding shadow radius
+  - Slightly hotter glow on hover to reinforce interactivity
+
+**Integration Points**
+- Tailwind utility: `shadow-neon-realistic`
+- CSS keyframes: `@keyframes neon-hum`
+
+**File Paths**
+- `tailwind.config.js`
+- `src/index.css`
+
+**Next Priority Task**
+- Apply `shadow-neon-realistic` to other neon-highlight surfaces (badges/labels) where appropriate for visual consistency.
+
+**Code Organization & Quality**
+- Kept glow styling centralized in the global component layer to avoid ad-hoc inline shadows.
+
+---
+
 #### 2026-01-10: Refine Global Color Palette (Brand Tokens + Landing CTA Buttons)
 
 **Core Components**

@@ -16,9 +16,9 @@
     --navbar-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
-    /* Primary: Electric Lime (#32CD32) */
-    --primary: 120 61% 50%;
-    --primary-foreground: 0 0% 10%;
+    /* Primary: Brand Neon (#BAFF39) */
+    --primary: 81 100% 61%;
+    --primary-foreground: 210 21% 5%;
     /* Secondary: Deep Charcoal surfaces */
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
@@ -31,7 +31,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 120 61% 50%;
+    --ring: 81 100% 61%;
     --radius: 0.5rem;
     --error: 0 75% 45%;
     --error-foreground: 0 0% 100%;
@@ -56,9 +56,9 @@
     --navbar-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
-    /* Primary: Electric Lime (#32CD32) */
-    --primary: 120 61% 50%;
-    --primary-foreground: 0 0% 10%;
+    /* Primary: Brand Neon (#BAFF39) */
+    --primary: 81 100% 61%;
+    --primary-foreground: 210 21% 5%;
     /* Secondary: Deep Charcoal surfaces */
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
@@ -70,7 +70,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 120 61% 50%;
+    --ring: 81 100% 61%;
     --error: 0 75% 50%;
     --error-foreground: 0 0% 100%;
     --success: 120 61% 50%;
@@ -141,6 +141,37 @@
   img, video, iframe, svg {
     max-width: 100%;
     height: auto;
+  }
+}
+
+@layer components {
+  .btn-neon-primary {
+    @apply bg-[#BAFF39] text-[#0B0E11] font-bold py-3 px-8 rounded-full transition-all duration-300;
+    /* Apply the multi-layered shadow */
+    box-shadow: 0 0 5px rgba(186, 255, 57, 0.9), 0 0 15px rgba(186, 255, 57, 0.5),
+      0 0 30px rgba(186, 255, 57, 0.2);
+    /* A very subtle brightness flicker instead of a size pulse */
+    animation: neon-hum 3s infinite linear;
+  }
+
+  .btn-neon-primary:hover {
+    /* Slightly brighter on hover to show interaction */
+    box-shadow: 0 0 5px rgba(186, 255, 57, 1), 0 0 20px rgba(186, 255, 57, 0.7),
+      0 0 40px rgba(186, 255, 57, 0.4);
+  }
+
+  .btn-neon-outline {
+    @apply border-2 border-[#BAFF39] text-[#BAFF39] font-bold py-3 px-8 rounded-full hover:bg-[#BAFF39] hover:text-[#0B0E11] transition-all;
+  }
+}
+
+@keyframes neon-hum {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(0.95);
   }
 }
 

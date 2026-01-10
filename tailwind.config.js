@@ -133,6 +133,10 @@ export default {
         100: "100",
         999: "999",
       },
+      boxShadow: {
+        "neon-realistic":
+          "0 0 5px rgba(186, 255, 57, 0.9), 0 0 15px rgba(186, 255, 57, 0.5), 0 0 30px rgba(186, 255, 57, 0.2)",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -142,10 +146,39 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "neon-pulse": {
+          "0%, 100%": {
+            "box-shadow":
+              "0 0 12px 5px #BAFF39, 0 0 26px 10px rgba(186,255,57,0.25)",
+          },
+          "50%": {
+            "box-shadow":
+              "0 0 22px 20px #BAFF39, 0 0 46px 24px rgba(186,255,57,0.6)",
+          },
+        },
+        "neon-flicker": {
+          "0%, 100%": { opacity: "1" },
+          "4%": { opacity: "0.96" },
+          "8%": { opacity: "1" },
+          "12%": { opacity: "0.9" },
+          "16%": { opacity: "1" },
+          "22%": { opacity: "0.95" },
+          "28%": { opacity: "1" },
+          "34%": { opacity: "0.92" },
+          "40%": { opacity: "1" },
+          "55%": { opacity: "0.97" },
+          "62%": { opacity: "1" },
+          "70%": { opacity: "0.93" },
+          "78%": { opacity: "1" },
+          "86%": { opacity: "0.98" },
+          "92%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "neon-pulse": "neon-pulse 2s infinite ease-in-out",
+        "neon-flicker": "neon-flicker 3.25s infinite ease-in-out",
       },
     },
   },
