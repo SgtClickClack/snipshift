@@ -7,7 +7,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2 } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { ReportButton } from '@/components/report/report-button';
@@ -109,23 +109,27 @@ export default function ShiftDetailsPage() {
       return;
     }
 
-    const hasRsaCertificate = !!user.rsaCertificateUrl;
-    const rsaExpiryDate = user.rsaExpiry ? new Date(user.rsaExpiry) : null;
-    const isRsaExpiryValid = rsaExpiryDate ? !isNaN(rsaExpiryDate.getTime()) : true;
-    const isRsaExpired = rsaExpiryDate && isRsaExpiryValid
-      ? rsaExpiryDate.getTime() < new Date().setHours(0, 0, 0, 0)
-      : false;
+    // Only enforce RSA if the shift explicitly requires it.
+    if (shift?.rsaRequired) {
+      const hasRsaCertificate = !!user.rsaCertificateUrl;
+      const rsaExpiryDate = user.rsaExpiry ? new Date(user.rsaExpiry) : null;
+      const isRsaExpiryValid = rsaExpiryDate ? !isNaN(rsaExpiryDate.getTime()) : true;
+      const isRsaExpired =
+        rsaExpiryDate && isRsaExpiryValid
+          ? rsaExpiryDate.getTime() < new Date().setHours(0, 0, 0, 0)
+          : false;
 
-    if (!hasRsaCertificate || isRsaExpired) {
-      toast({
-        title: 'RSA certificate required',
-        description: isRsaExpired
-          ? 'Your RSA certificate appears to be expired. Please upload a current RSA certificate to apply for shifts.'
-          : 'Upload your RSA certificate to apply for shifts.',
-        variant: 'destructive',
-      });
-      navigate('/settings');
-      return;
+      if (!hasRsaCertificate || isRsaExpired) {
+        toast({
+          title: 'RSA certificate required',
+          description: isRsaExpired
+            ? 'Your RSA certificate appears to be expired. Please upload a current RSA certificate to apply for this shift.'
+            : 'Upload your RSA certificate to apply for this shift.',
+          variant: 'destructive',
+        });
+        navigate('/settings');
+        return;
+      }
     }
 
     if (!id) {
@@ -154,7 +158,7 @@ export default function ShiftDetailsPage() {
     
     const applicationData = {
       shiftId: id,
-      coverLetter: `I am interested in applying for the ${shift?.title} shift at ${shift?.shopName || 'this location'}.`,
+      coverLetter: `I am interested in applying for the ${shift?.title} shift at ${shift?.shopName || 'this venue'}.`,
     };
 
     applyMutation.mutate(applicationData);
@@ -318,6 +322,22 @@ export default function ShiftDetailsPage() {
 
   const requirements = Array.isArray(shift.requirements) ? shift.requirements : (shift.description ? [shift.description] : []);
   const hasLocation = typeof shift.lat === 'number' && typeof shift.lng === 'number';
+  const hourlyRateNumber = (() => {
+    const n = Number.parseFloat(String(shift.hourlyRate ?? shift.rate ?? ''));
+    return Number.isFinite(n) ? n : null;
+  })();
+  const durationHours = (() => {
+    if (typeof shift.shiftLengthHours === 'number' && Number.isFinite(shift.shiftLengthHours)) {
+      return shift.shiftLengthHours;
+    }
+    if (!shift.startTime || !shift.endTime) return null;
+    const start = new Date(shift.startTime);
+    const end = new Date(shift.endTime);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    return hours > 0 ? Math.round(hours * 100) / 100 : null;
+  })();
+  const estimatedTotal = hourlyRateNumber != null && durationHours != null ? hourlyRateNumber * durationHours : null;
 
   // Format date and time for display
   const formatDateTime = (dateTimeStr: string) => {
@@ -350,7 +370,7 @@ export default function ShiftDetailsPage() {
         </Helmet>
       )}
       <div className="min-h-screen bg-background overflow-x-hidden" data-testid="shift-details-page">
-        <div className="max-w-4xl mx-auto px-4 py-6 w-full max-w-full">
+        <div className="max-w-4xl mx-auto px-4 py-6 w-full">
           {/* Back Button */}
           <Button
             variant="ghost"
@@ -404,6 +424,14 @@ export default function ShiftDetailsPage() {
 
               {/* Key Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+                {shift?.role && (
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0">
+                    <Users className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <span className="break-words overflow-hidden">
+                      Role: <span className="text-foreground font-medium">{shift.role}</span>
+                    </span>
+                  </div>
+                )}
                 {shift?.location && (
                   <div className="flex items-start gap-2 text-muted-foreground min-w-0">
                     <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -423,6 +451,47 @@ export default function ShiftDetailsPage() {
                     </div>
                   </div>
                 )}
+                {durationHours != null && (
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0">
+                    <Clock className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <span className="break-words overflow-hidden">
+                      Duration: <span className="text-foreground font-medium">{durationHours}</span> hours
+                    </span>
+                  </div>
+                )}
+                {estimatedTotal != null && (
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0">
+                    <DollarSign className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <span className="break-words overflow-hidden">
+                      Estimated total: <span className="text-foreground font-medium">${estimatedTotal.toFixed(2)}</span>
+                      <span className="text-xs text-muted-foreground ml-1">(Hourly Rate × Duration)</span>
+                    </span>
+                  </div>
+                )}
+                {shift?.rsaRequired ? (
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0">
+                    <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-success" />
+                    <span className="break-words overflow-hidden">
+                      RSA required
+                    </span>
+                  </div>
+                ) : null}
+                {shift?.expectedPax != null ? (
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0">
+                    <Users className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <span className="break-words overflow-hidden">
+                      Expected pax: <span className="text-foreground font-medium">{shift.expectedPax}</span>
+                    </span>
+                  </div>
+                ) : null}
+                {shift?.uniformRequirements ? (
+                  <div className="flex items-start gap-2 text-muted-foreground min-w-0 md:col-span-2">
+                    <FileText className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <span className="break-words overflow-hidden">
+                      Uniform: <span className="text-foreground font-medium">{shift.uniformRequirements}</span>
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>
@@ -451,7 +520,7 @@ export default function ShiftDetailsPage() {
             </Card>
           )}
 
-          {/* Shop Bio Section */}
+          {/* Venue Section */}
           {shift?.shopName && (
             <Card className="bg-card rounded-lg border border-border shadow-sm mb-6">
               <CardContent className="p-6">
@@ -468,7 +537,7 @@ export default function ShiftDetailsPage() {
                   </div>
                 )}
                 <p className="text-muted-foreground">
-                  Connect with {shift.shopName} to learn more about their business and work environment.
+                  Connect with {shift.shopName} to learn more about the venue and the shift environment.
                 </p>
               </CardContent>
             </Card>

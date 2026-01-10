@@ -1,5 +1,5 @@
 /**
- * Notification Service for Booking Workflow
+ * Notification Service for Shift Workflow
  * 
  * Handles in-app notifications and email notifications for shift-related events
  */
@@ -221,7 +221,7 @@ Old time:
 New time:
 - ${nextStart.toLocaleString('en-US')} → ${nextEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
 
-Reason provided by the shop:
+Reason provided by the venue:
 ${payload.reason}
 
 Please log in to review the updated shift details.
@@ -415,7 +415,7 @@ Shift ID: #${shiftId.substring(0, 8)}
 Shift Title: ${shiftTitle}
 Payment Intent: ${paymentIntentId}
 
-The barber has accepted this shift, but we were unable to authorize payment. Please:
+A staff member has accepted this shift, but we were unable to authorize payment. Please:
 
 1. Update your payment method in your billing settings
 2. Contact support if you believe this is an error

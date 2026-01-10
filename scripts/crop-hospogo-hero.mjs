@@ -152,14 +152,22 @@ async function main() {
   const inputPath = await resolveInput();
   const meta = await sharp(inputPath).metadata();
 
-  const { cropTopPx, debug } = await detectCropTopPx(inputPath, meta);
   if (!meta.width || !meta.height) {
     throw new Error('Unable to read image dimensions for hero source');
   }
 
-  // Add a small buffer to ensure we fully clear embedded navbar shadows/edges.
-  const extraCropPx = clampInt(Math.round(meta.height * 0.05), 40, 120);
-  const finalCropTopPx = clampInt(cropTopPx + extraCropPx, 0, meta.height - 1);
+  // We only want to remove the *baked-in* navbar strip at the top of the provided hero image.
+  // Default to ~12% of image height, which matches the current hospogohero.png layout.
+  // Override if needed:
+  //   - PowerShell: $env:HOSPOGO_HERO_CROP_TOP_PX=160; node scripts/crop-hospogo-hero.mjs
+  //   - Bash: HOSPOGO_HERO_CROP_TOP_PX=160 node scripts/crop-hospogo-hero.mjs
+  const envCropTop = Number.parseInt(process.env.HOSPOGO_HERO_CROP_TOP_PX ?? '', 10);
+  const defaultCropTopPx = clampInt(Math.round(meta.height * 0.12), 80, 240);
+  const finalCropTopPx = clampInt(
+    Number.isFinite(envCropTop) ? envCropTop : defaultCropTopPx,
+    0,
+    meta.height - 1
+  );
 
   const cropHeight = meta.height - finalCropTopPx;
   if (cropHeight < 50) {
@@ -192,14 +200,13 @@ async function main() {
       {
         input: path.relative(process.cwd(), inputPath),
         inputSize: { width: meta.width, height: meta.height },
-        detectedCropTopPx: cropTopPx,
-        extraCropPx,
         cropTopPx: finalCropTopPx,
+        defaultCropTopPx,
+        envCropTopPx: Number.isFinite(envCropTop) ? envCropTop : null,
         output: {
           webp: path.relative(process.cwd(), OUT_WEBP),
           jpg: path.relative(process.cwd(), OUT_JPG),
         },
-        debug,
       },
       null,
       2

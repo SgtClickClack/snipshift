@@ -38,6 +38,66 @@
 
 ---
 
+#### 2026-01-10: Landing Hero Image Swap (HospoGo Hero + Navbar Crop)
+
+**Core Components**
+- Landing hero section (`src/pages/landing.tsx`)
+- Shared hero component (`src/components/landing/Hero.tsx`)
+- Hero crop pipeline (`scripts/crop-hospogo-hero.mjs`)
+- Public hero assets (`public/hospogohero.webp`, `public/hospogohero.jpg`)
+- Source hero image (`hospogohero.png`)
+
+**Key Features**
+- **Hero image replaced**: Swapped the previous landing hero background (`/herobarber (2).*`) to the new HospoGo hero asset (`/hospogohero.*`).
+- **Navbar removed from source**: Cropped only the embedded navbar strip off the top of the provided hero image (keeps the hero’s HospoGo wordmark visible) and generated optimized **WebP + JPG** outputs for fast loading. Crop amount is **overrideable via env** (`HOSPOGO_HERO_CROP_TOP_PX`) if the source image changes.
+- **Consistent delivery**: Kept assets served from `public/` and retained `<picture>` WebP-first + JPG fallback behavior.
+
+**Integration Points**
+- Vite static assets served from `public/` at `/hospogohero.webp` and `/hospogohero.jpg`
+- Asset generation: `node scripts/crop-hospogo-hero.mjs`
+
+**File Paths**
+- `hospogohero.png`
+- `public/hospogohero.webp`
+- `public/hospogohero.jpg`
+- `scripts/crop-hospogo-hero.mjs`
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+
+**Next Priority Task**
+- Run a quick visual regression sweep (desktop + mobile) to confirm the new hero crop/composition looks correct across breakpoints.
+
+**Code Organization & Quality**
+- Reused the existing approach from `scripts/crop-hospogo-logo.mjs` (Sharp-based asset pipeline) to keep branding workflows consistent and repeatable.
+
+---
+
+#### 2026-01-10: Landing Hero Layout Polish (Reduce Clutter / Improve Readability)
+
+**Core Components**
+- Landing hero section (`src/pages/landing.tsx`)
+- Shared hero component (`src/components/landing/Hero.tsx`)
+
+**Key Features**
+- **Reduced clutter**: Repositioned hero content lower in the hero so it doesn’t fight with the baked-in HospoGo wordmark, while keeping the original “text over image” style (no panel overlay).
+- **Improved legibility**: Strengthened bottom gradient + tuned overlay opacity for a cleaner read over photography.
+- **Responsive sizing**: Reduced headline/body/button sizing and spacing for better balance on both desktop and mobile.
+
+**Integration Points**
+- Vite HMR updates to landing page layout
+
+**File Paths**
+- `src/pages/landing.tsx`
+- `src/components/landing/Hero.tsx`
+
+**Next Priority Task**
+- Run a quick content sweep to align remaining barber/shop copy on the landing page with venue/staff terminology.
+
+**Code Organization & Quality**
+- Kept changes scoped to layout/styling only; no routing/auth logic touched.
+
+---
+
 #### 2026-01-10: Hospitality Shift Details (Roles + Uniform/RSA/Pax + Hourly Pricing)
 
 **Core Components**
@@ -89,6 +149,40 @@
 
 ---
 
+#### 2026-01-10: Hospitality Terminology Pass + Shift Details Display (Venue/Staff)
+
+**Core Components**
+- Shift details page (`src/pages/shift-details.tsx`)
+- Staff assignment modal (`src/components/calendar/assign-staff-modal.tsx`)
+- Shift review surfaces (`src/components/shifts/shift-review-modal.tsx`, `src/components/shifts/pending-review-notification.tsx`, `src/components/shifts/ShiftCard.tsx`)
+- Backend notification copy (`api/_src/lib/notifications-service.ts`)
+
+**Key Features**
+- **Shift Details now shows hospitality fields**: role, duration (hours), estimated total (Hourly Rate × Duration), RSA requirement, expected pax, and uniform requirements.
+- **RSA gating fixed**: RSA certificate enforcement now triggers **only when the shift is marked `rsaRequired`** (instead of blocking all applications).
+- **Terminology cleanup**: Replaced “barber/shop” strings in shift-related UI and notification copy with hospitality-first wording (“staff member/professional/venue”).
+
+**Integration Points**
+- UI route: `/shifts/:id` (Shift Details)
+- API: `GET /api/shifts/:id` provides `role`, `rsaRequired`, `expectedPax`, `uniformRequirements`, `shiftLengthHours`
+- Notifications: copy updated in `notifyProfessionalOfShiftChange` + `notifyShopOfPaymentFailure`
+
+**File Paths**
+- `src/pages/shift-details.tsx`
+- `src/components/calendar/assign-staff-modal.tsx`
+- `src/components/shifts/shift-review-modal.tsx`
+- `src/components/shifts/pending-review-notification.tsx`
+- `src/components/shifts/ShiftCard.tsx`
+- `api/_src/lib/notifications-service.ts`
+
+**Next Priority Task**
+- Replace remaining barber/salon strings in legacy “job” posting modals and onboarding copy (where still visible), keeping behavior unchanged.
+
+**Code Organization & Quality**
+- Kept changes scoped to user-facing copy + Shift Details display; no behavioral changes beyond correcting RSA gating to match the shift flag.
+
+---
+
 #### 2026-01-10: SEO & Metadata Finalization (HospoGo Home)
 
 **Core Components**
@@ -120,6 +214,30 @@
 
 **Code Organization & Quality**
 - Kept changes scoped to metadata + SEO defaults; avoided touching unrelated UI/business logic.
+
+---
+
+#### 2026-01-10: Landing CTA Copy Fix (Hospitality Pivot - “Find Staff”)
+
+**Core Components**
+- Landing page hero CTA (`src/pages/landing.tsx`)
+
+**Key Features**
+- Updated the primary landing CTA from “Find a Barber” to **“Find Staff”** to match HospoGo’s hospitality staffing positioning.
+- Updated the test id from `button-find-barber` → `button-find-staff` (no E2E references found in repo).
+
+**Integration Points**
+- Route: `/` (Landing)
+- Signup entry: `/signup?role=hub` (business/venue onboarding)
+
+**File Paths**
+- `src/pages/landing.tsx`
+
+**Next Priority Task**
+- Sweep remaining barber/salon strings in landing/supporting marketing copy (e.g. hero subheading) to hospitality language.
+
+**Code Organization & Quality**
+- Single-string UI change; no behavioral impact.
 
 ---
 

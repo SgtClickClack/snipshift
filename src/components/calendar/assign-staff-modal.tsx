@@ -46,7 +46,7 @@ interface AssignStaffModalProps {
  * - Search bar to find professionals by name or skill
  * - Recent Hires section
  * - Single invite button OR Multi-select with checkboxes
- * - "Invite X Barbers" button when multiple are selected
+ * - "Invite X Professionals" button when multiple are selected
  */
 export function AssignStaffModal({
   isOpen,
@@ -272,7 +272,7 @@ export function AssignStaffModal({
             )}
             {enableMultiSelect && (
               <span className="block mt-2 text-sm text-muted-foreground">
-                Select one or more barbers to invite. First one to accept gets the shift!
+                Select one or more professionals to invite. First one to accept gets the shift!
               </span>
             )}
           </DialogDescription>
@@ -375,10 +375,10 @@ export function AssignStaffModal({
             >
               <UserPlus className="h-4 w-4 mr-2" />
               {selectedIds.size === 0 
-                ? 'Select Barbers' 
+                ? 'Select Professionals' 
                 : selectedIds.size === 1 
-                  ? 'Invite 1 Barber' 
-                  : `Invite ${selectedIds.size} Barbers`}
+                  ? 'Invite 1 Professional' 
+                  : `Invite ${selectedIds.size} Professionals`}
             </Button>
           </DialogFooter>
         )}

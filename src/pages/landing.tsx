@@ -67,7 +67,7 @@ export default function LandingPage() {
           <img
             src={encodeURI("/hospogohero.jpg")}
             alt=""
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-[center_35%]"
             loading="eager"
             fetchPriority="high"
             decoding="async"
@@ -75,30 +75,30 @@ export default function LandingPage() {
         </picture>
 
         {/* Dark Overlay for text readability - reduced opacity to show image */}
-        <div className="absolute inset-0 bg-black/30 dark:bg-black/40 z-base" />
+        <div className="absolute inset-0 bg-black/20 dark:bg-black/30 z-base" />
         
         {/* Bottom Gradient Overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent z-elevated" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent z-elevated" />
         
-        <div className="relative z-elevated w-full py-12 md:py-20 flex flex-col items-center justify-center text-center px-4">
-          <div className="max-w-5xl mx-auto flex flex-col items-center gap-8 md:gap-10">
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground max-w-4xl mx-auto leading-tight drop-shadow-lg">
+        <div className="relative z-elevated w-full pt-40 md:pt-52 pb-12 md:pb-16 flex items-end justify-center text-center px-4">
+          <div className="max-w-5xl mx-auto flex flex-col items-center gap-6 md:gap-7">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
               The Roster That Never Quits.
             </h2>
             
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto drop-shadow-md font-medium">
-              Instant coverage for shops. Instant work for barbers. The marketplace that keeps your business moving.
+            <p className="text-lg md:text-2xl text-white/80 drop-shadow-[0_6px_18px_rgba(0,0,0,0.85)] font-medium max-w-3xl">
+              Instant coverage for venues. Instant work for staff. The marketplace that keeps your business moving.
             </p>
             
             {!isAuthenticated && (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-2">
                 <Link to="/signup?role=hub">
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-8 py-6 shadow-xl h-auto" 
-                    data-testid="button-find-barber"
+                    className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-10 py-5 shadow-xl h-auto" 
+                    data-testid="button-find-staff"
                   >
-                    Find a Barber
+                    Find Staff
                   </Button>
                 </Link>
                 
@@ -106,7 +106,7 @@ export default function LandingPage() {
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="bg-background/80 dark:bg-white/10 border-2 border-border dark:border-white/30 text-foreground dark:text-white hover:bg-muted dark:hover:bg-white/20 text-lg px-8 py-6 h-auto font-semibold" 
+                    className="bg-white/10 border-2 border-white/25 text-white hover:bg-white/20 text-lg px-10 py-5 h-auto font-semibold" 
                     data-testid="button-find-shifts"
                   >
                     Find Shifts
@@ -119,7 +119,7 @@ export default function LandingPage() {
               <Link to={getDashboardRoute(user.currentRole)}>
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-6 shadow-xl h-auto" 
+                  className="bg-gradient-to-r from-red-accent to-red-accent-dark hover:from-red-accent-light hover:to-red-accent text-white font-semibold text-lg px-12 py-5 shadow-xl h-auto" 
                   data-testid="button-go-to-dashboard"
                 >
                   Go to Dashboard

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -137,8 +137,8 @@ export default function ShiftReviewModal({
   };
 
   const reviewTypeLabel = reviewType === 'SHOP_REVIEWING_BARBER' 
-    ? 'Rate the Barber' 
-    : 'Rate the Shop';
+    ? 'Rate the Staff Member' 
+    : 'Rate the Venue';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -189,7 +189,7 @@ export default function ShiftReviewModal({
                   Mark as No-Show
                 </Label>
                 <p className="text-sm text-steel-600 mt-1">
-                  Check this if the barber did not show up for the shift
+                  Check this if the staff member did not show up for the shift
                 </p>
               </div>
               <Switch

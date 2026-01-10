@@ -32,7 +32,7 @@ export default function PendingReviewNotification() {
 
   const handleReviewClick = (shift: typeof pendingShifts[0]) => {
     const isShop = shift.employerId === user?.id;
-    const reviewerName = isShop ? shift.assigneeName || 'Barber' : shift.employerName || 'Shop';
+    const reviewerName = isShop ? shift.assigneeName || 'Staff Member' : shift.employerName || 'Venue';
     const reviewType = isShop ? 'SHOP_REVIEWING_BARBER' : 'BARBER_REVIEWING_SHOP';
 
     setSelectedShift({
@@ -59,7 +59,7 @@ export default function PendingReviewNotification() {
           <div className="space-y-3">
             {pendingShifts.slice(0, 3).map((shift) => {
               const isShop = shift.employerId === user?.id;
-              const reviewerName = isShop ? shift.assigneeName || 'Barber' : shift.employerName || 'Shop';
+              const reviewerName = isShop ? shift.assigneeName || 'Staff Member' : shift.employerName || 'Venue';
               const timeAgo = formatDistanceToNow(new Date(shift.endTime), { addSuffix: true });
 
               return (

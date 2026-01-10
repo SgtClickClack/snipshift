@@ -35,8 +35,8 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
     businessId: shift.employerId, // Map employer to business
   };
 
-  // Get shop name and avatar, with fallbacks
-  const shopName = shift.shopName || 'Shop';
+  // Get venue name and avatar, with fallbacks
+  const shopName = shift.shopName || 'Venue';
   const shopAvatarUrl = shift.shopAvatarUrl;
   const shopInitials = shopName
     .split(' ')

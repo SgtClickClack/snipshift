@@ -22,6 +22,32 @@
 
 ---
 
+### Update: 2026-01-10 - Landing Hero Image Updated (HospoGo Hero)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Replaced the old landing hero background image with the new HospoGo hero asset (`/hospogohero.webp` with JPG fallback).
+- Cropped the embedded navbar off the top of the source hero image and generated optimized outputs in `public/`.
+
+**Impact:**
+- **Cleaner landing visuals**: the hero background no longer includes a visible navbar baked into the image.
+
+---
+
+### Update: 2026-01-10 - Landing Hero Layout Polish (Reduce Clutter)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Repositioned the landing hero copy/CTAs lower while keeping the original “text over image” style (no opaque panel), so it doesn’t compete with the hero’s baked-in HospoGo wordmark.
+- Tuned overlay/gradient strength and responsive sizing to improve legibility across desktop and mobile.
+
+**Impact:**
+- **Cleaner conversion surface**: hero content is easier to read and no longer visually clashes with the background branding.
+
+---
+
 ### Update: 2026-01-10 - Final Visual Branding Sweep (HospoGo)
 
 **Status:** ✅ **COMPLETE**
@@ -48,6 +74,33 @@
 **Impact:**
 - **Clearer hospitality-first posting flow**: venues can post shifts with the details staff actually need.
 - **Consistent pricing UX**: duration is shown in hours and total cost is transparent at creation time.
+
+---
+
+### Update: 2026-01-10 - Hospitality Terminology Pass + Shift Details Display (Venue/Staff)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Updated Shift Details to display hospitality fields (role, uniform requirements, expected pax, duration + estimated total).
+- Fixed RSA enforcement to only apply when the shift is flagged `rsaRequired`.
+- Replaced barber/shop terminology in shift-related UI and notification copy with venue/staff language.
+
+**Impact:**
+- **Less user confusion**: terminology now matches the hospitality staffing model.
+- **Correct compliance behavior**: RSA is required only when the shift requires it.
+
+---
+
+### Update: 2026-01-10 - Landing CTA Copy (Find Staff)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated the main landing hero CTA from “Find a Barber” to **“Find Staff”** to match the HospoGo hospitality pivot.
+
+**Impact:**
+- **Immediate brand alignment** on the highest-traffic conversion surface (landing hero).
 
 ---
 
