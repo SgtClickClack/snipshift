@@ -294,6 +294,28 @@
 - `public/hospogoappicon.png`
 - `src/components/layout/Navbar.tsx`
 
+---
+
+#### 2026-01-10: Navbar Logo Crop + Blend (hospogoappicon → navbar asset)
+
+**Core Components**
+- Brand asset pipeline (auto-trim + background keying) (`scripts/crop-hospogo-logo.mjs`)
+- Public navbar logo asset (`public/hospogoappicon-navbar.png`)
+- Navbar branding (`src/components/layout/Navbar.tsx`)
+
+**Key Features**
+- Cropped and enlarged the provided icon into a navbar-optimized asset (tight trim, transparent background) so it blends cleanly into the charcoal navbar.
+- Increased navbar logo height for better fill while keeping the image crisp on high-DPI screens.
+
+**Integration Points**
+- Asset generation: `node scripts/crop-hospogo-logo.mjs`
+- Frontend build: `npm run build`
+
+**File Paths**
+- `scripts/crop-hospogo-logo.mjs`
+- `public/hospogoappicon-navbar.png`
+- `src/components/layout/Navbar.tsx`
+
 #### 2026-01-10: Refund & Dispute Policy Page (Refunds + Kill Fee)
 
 **Core Components**

@@ -21,6 +21,16 @@ import sharp from 'sharp';
 
 const INPUT = path.resolve('hospogologo.png');
 const OUT_DIR = path.resolve('public');
+const APP_ICON_INPUT = path.resolve('hospogoappicon.png');
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function clampCrop({ left, top, width, height }, meta) {
   const l = Math.max(0, Math.min(left, meta.width - 1));
@@ -78,6 +88,15 @@ async function makeBackgroundTransparent(pngBuffer, bgRgb, options = {}) {
   }
 
   return sharp(out, { raw: { width, height, channels: 4 } }).png().toBuffer();
+}
+
+async function sampleTopLeftRgb(pngBuffer) {
+  const { data, info } = await sharp(pngBuffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (info.channels < 3) throw new Error('Expected at least RGB channels');
+  return [data[0], data[1], data[2]];
 }
 
 async function main() {
@@ -190,6 +209,30 @@ async function main() {
     .composite([{ input: wordmarkForOg, gravity: 'center' }])
     .jpeg({ quality: 90 })
     .toFile(path.join(OUT_DIR, 'og-image.jpg'));
+
+  // Navbar logo from app icon (crop + background-key to transparent + upscale for crisp rendering)
+  // This keeps the navbar logo bright/clean and ensures it blends into the charcoal navbar.
+  if (await fileExists(APP_ICON_INPUT)) {
+    const appIconTrimmed = await sharp(APP_ICON_INPUT)
+      .trim({ threshold: 10 })
+      .png()
+      .toBuffer();
+
+    const bgRgb = await sampleTopLeftRgb(appIconTrimmed);
+    const appIconTransparent = await makeBackgroundTransparent(appIconTrimmed, bgRgb, {
+      near: 22,
+      far: 80,
+    });
+
+    const appIconNavbar = await sharp(appIconTransparent)
+      .trim({ threshold: 10 })
+      // Export at ~2x the rendered size for crispness on high-DPI screens
+      .resize({ height: 128, fit: 'inside', withoutEnlargement: false })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+
+    await sharp(appIconNavbar).toFile(path.join(OUT_DIR, 'hospogoappicon-navbar.png'));
+  }
 }
 
 main().catch((err) => {
