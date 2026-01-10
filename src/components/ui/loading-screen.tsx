@@ -1,4 +1,4 @@
-const logoUrl = '/brand-wordmark-transparent.png';
+const logoUrl = '/hospogoneonlogo.png';
 
 export function LoadingScreen() {
   return (

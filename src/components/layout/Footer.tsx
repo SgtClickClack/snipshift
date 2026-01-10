@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-const logoUrl = '/brand-wordmark-transparent.png';
+const logoUrl = '/hospogoneonlogo.png';
 
 export function Footer() {
   return (

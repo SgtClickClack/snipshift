@@ -251,6 +251,30 @@
 **Next Priority Task**
 - Add a quick visual regression check for hero color vibrancy across breakpoints (desktop + mobile).
 
+---
+
+#### 2026-01-10: Navbar Neon Logo Restored (Correct Asset + Better Sizing)
+
+**Core Components**
+- Brand asset pipeline (neon logo alias) (`scripts/crop-hospogo-logo.mjs`)
+- Public neon logo asset (`public/hospogoneonlogo.png`)
+- Navigation + shell logo usage (`src/components/layout/Navbar.tsx`, `src/components/layout/Footer.tsx`, `src/components/ui/loading-screen.tsx`)
+
+**Key Features**
+- Restored the navbar logo to the **HospoGo neon** wordmark asset (`/hospogoneonlogo.png`).
+- Increased logo sizing to better fill the navbar height and added a subtle neon drop-shadow for brightness without blurring.
+
+**Integration Points**
+- Asset generation: `node scripts/crop-hospogo-logo.mjs`
+- Frontend build: `npm run build`
+
+**File Paths**
+- `scripts/crop-hospogo-logo.mjs`
+- `public/hospogoneonlogo.png`
+- `src/components/layout/Navbar.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/ui/loading-screen.tsx`
+
 #### 2026-01-10: Refund & Dispute Policy Page (Refunds + Kill Fee)
 
 **Core Components**

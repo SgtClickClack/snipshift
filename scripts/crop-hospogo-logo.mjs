@@ -132,6 +132,8 @@ async function main() {
     far: 60,
   });
   await sharp(wordmarkTransparent).toFile(path.join(OUT_DIR, 'brand-wordmark-transparent.png'));
+  // Alias: canonical neon logo filename for navbar usage
+  await sharp(wordmarkTransparent).toFile(path.join(OUT_DIR, 'hospogoneonlogo.png'));
 
   // Icon (middle mark) -> trimmed and padded to square for consistent app icons
   const iconBuffer = await sharp(INPUT)
