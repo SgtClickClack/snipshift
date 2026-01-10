@@ -8,7 +8,7 @@ import {
   Calendar,
   Award,
   Star,
-  Scissors,
+  FastForward,
   FileText,
   MessageSquare,
   Handshake
@@ -40,8 +40,8 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
           {
             title: 'Active Shifts',
             value: stats.openJobs || 0,
-            icon: Scissors,
-            description: 'Active job postings',
+            icon: FastForward,
+            description: 'Active shift postings',
             variant: 'accent',
             action: 'jobs'
           },
@@ -82,10 +82,10 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
             action: 'applications'
           },
           {
-            title: 'Bookings',
+            title: 'Upcoming Shifts',
             value: stats.upcomingBookings || 0,
             icon: Calendar,
-            description: 'Upcoming confirmed jobs',
+            description: 'Upcoming confirmed shifts',
             variant: 'steel',
             action: 'bookings'
           },

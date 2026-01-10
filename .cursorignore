@@ -17,6 +17,19 @@ assets/
 *.svg
 *.ico
 
+# Allow-list specific brand assets we need to inspect/crop
+!hospogologo.png
+!public/brand-logo.png
+!public/brand-logo-192.png
+!public/brand-logo-512.png
+!public/logo.png
+!public/logo-white.png
+!public/brand-icon.png
+!public/brand-wordmark.png
+!public/og-image.jpg
+!public/og-image-hospogo.png
+!public/favicon.ico
+
 # Lock files (Huge and useless for logic checks)
 package-lock.json
 yarn.lock
@@ -25,6 +38,9 @@ pnpm-lock.yaml
 # Logs and local config
 *.log
 .env
+.env.*
+!.env
+!.env.example
 .DS_Store
 
 # Test artifacts and screenshots

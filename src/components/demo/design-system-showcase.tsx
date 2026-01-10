@@ -13,7 +13,7 @@ export const DesignSystemShowcase = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="heading-chrome text-4xl md:text-6xl">
-            Snipshift Design System
+            HospoGo Design System
           </h1>
           <p className="text-accent-gradient text-xl">
             Black & Chrome Design Language

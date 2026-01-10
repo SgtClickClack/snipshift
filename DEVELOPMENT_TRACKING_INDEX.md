@@ -1,6 +1,6 @@
-# Development Tracking Index
+﻿# Development Tracking Index
 
-This index tracks all development tracking files used to document progress on the Snipshift project.
+This index tracks all development tracking files used to document progress on the HospoGo project.
 
 ## Tracking Files
 

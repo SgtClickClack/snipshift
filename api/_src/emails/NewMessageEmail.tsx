@@ -32,10 +32,10 @@ export const NewMessageEmail = ({
         <Container style={container}>
           <Section style={header}>
             <Img
-              src="https://snipshift.com.au/brand-logo.png"
+              src="https://hospogo.com/brand-logo.png"
               width="120"
               height="40"
-              alt="Snipshift"
+              alt="HospoGo"
               style={logo}
             />
           </Section>
@@ -56,7 +56,7 @@ export const NewMessageEmail = ({
             </Section>
             
             <Section style={buttonContainer}>
-              <Link href={`https://snipshift.com.au/messages?conversation=${conversationId}`} style={button}>
+              <Link href={`https://hospogo.com/messages?conversation=${conversationId}`} style={button}>
                 View Message
               </Link>
             </Section>
@@ -69,7 +69,7 @@ export const NewMessageEmail = ({
             
             <Text style={footer}>
               Best regards,<br />
-              The Snipshift Team
+              The HospoGo Team
             </Text>
           </Section>
         </Container>

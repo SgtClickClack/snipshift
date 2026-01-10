@@ -25,24 +25,24 @@ export const WelcomeEmail = ({ userName, userEmail }: WelcomeEmailProps) => {
         <Container style={container}>
           <Section style={header}>
             <Img
-              src="https://snipshift.com.au/brand-logo.png"
+              src="https://hospogo.com/brand-logo.png"
               width="120"
               height="40"
-              alt="Snipshift"
+              alt="HospoGo"
               style={logo}
             />
           </Section>
           
           <Section style={content}>
-            <Heading style={h1}>Welcome to Snipshift!</Heading>
+            <Heading style={h1}>Welcome to HospoGo!</Heading>
             
             <Text style={text}>
               Hi {userName || 'there'},
             </Text>
             
             <Text style={text}>
-              We're thrilled to have you join the Snipshift community! You're now part of a platform
-              that connects barbers, stylists, and beauticians with flexible work opportunities.
+              We're thrilled to have you join the HospoGo community! You're now part of a platform
+              that connects hospitality staff with venues for flexible work opportunities.
             </Text>
             
             <Text style={text}>
@@ -57,7 +57,7 @@ export const WelcomeEmail = ({ userName, userEmail }: WelcomeEmailProps) => {
             </Section>
             
             <Section style={buttonContainer}>
-              <Link href="https://snipshift.com.au/jobs" style={button}>
+              <Link href="https://hospogo.com/jobs" style={button}>
                 Browse Shifts
               </Link>
             </Section>
@@ -70,7 +70,7 @@ export const WelcomeEmail = ({ userName, userEmail }: WelcomeEmailProps) => {
             
             <Text style={footer}>
               Happy shifting!<br />
-              The Snipshift Team
+              The HospoGo Team
             </Text>
           </Section>
         </Container>

@@ -1,4 +1,4 @@
-# QA Audit Report - Snipshift
+﻿# QA Audit Report - HospoGo
 
 ## 🚨 Critical Issues (Feature Broken)
 

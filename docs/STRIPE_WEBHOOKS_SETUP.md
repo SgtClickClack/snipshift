@@ -1,6 +1,6 @@
 # Stripe Webhooks Setup Guide
 
-This guide explains how to set up and test Stripe webhooks for payment reliability in the Snipshift application.
+This guide explains how to set up and test Stripe webhooks for payment reliability in the HospoGo application.
 
 ## Overview
 

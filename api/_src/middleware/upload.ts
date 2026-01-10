@@ -4,14 +4,28 @@ import { Request } from 'express';
 // Configure multer for memory storage (files will be in req.files as buffers)
 const storage = multer.memoryStorage();
 
-// File filter to only accept images
+// File filter:
+// - Profile images: images only
+// - RSA certificate uploads: image or PDF
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Accept images only
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed'));
+  const isImage = file.mimetype.startsWith('image/');
+  const isPdf = file.mimetype === 'application/pdf';
+
+  if (file.fieldname === 'rsaCertificate') {
+    if (isImage || isPdf) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('RSA certificate must be an image or PDF'));
+    return;
   }
+
+  if (isImage) {
+    cb(null, true);
+    return;
+  }
+
+  cb(new Error('Only image files are allowed'));
 };
 
 // Configure multer
@@ -28,6 +42,7 @@ export const uploadProfileImages = upload.fields([
   { name: 'logo', maxCount: 1 },
   { name: 'banner', maxCount: 1 },
   { name: 'avatar', maxCount: 1 }, // Also support 'avatar' for compatibility
+  { name: 'rsaCertificate', maxCount: 1 },
 ]);
 
 // Middleware for single file upload (for backward compatibility)

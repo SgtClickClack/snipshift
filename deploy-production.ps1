@@ -1,30 +1,30 @@
-# Production Deployment Script for Snipshift (PowerShell)
+﻿# Production Deployment Script for HospoGo (PowerShell)
 # This script automates the production deployment process
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "🚀 Snipshift Production Deployment Script" -ForegroundColor Cyan
+Write-Host "ðŸš€ HospoGo Production Deployment Script" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if .env.production exists
 if (-not (Test-Path ".env.production")) {
-    Write-Host "❌ Error: .env.production file not found!" -ForegroundColor Red
+    Write-Host "âŒ Error: .env.production file not found!" -ForegroundColor Red
     Write-Host ""
     Write-Host "Please create .env.production file with your production configuration." -ForegroundColor Yellow
     Write-Host "You can use PRODUCTION_DEPLOYMENT.md as a reference." -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "✅ Found .env.production file" -ForegroundColor Green
+Write-Host "âœ… Found .env.production file" -ForegroundColor Green
 Write-Host ""
 
 # Check if Docker is running
 try {
     docker info | Out-Null
-    Write-Host "✅ Docker is running" -ForegroundColor Green
+    Write-Host "âœ… Docker is running" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Error: Docker is not running!" -ForegroundColor Red
+    Write-Host "âŒ Error: Docker is not running!" -ForegroundColor Red
     Write-Host "Please start Docker and try again." -ForegroundColor Yellow
     exit 1
 }
@@ -32,34 +32,34 @@ try {
 Write-Host ""
 
 # Step 1: Build production images
-Write-Host "📦 Step 1: Building production images..." -ForegroundColor Cyan
+Write-Host "ðŸ“¦ Step 1: Building production images..." -ForegroundColor Cyan
 Write-Host "This may take several minutes..." -ForegroundColor Yellow
 docker-compose -f docker-compose.prod.yml build --no-cache
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Build completed successfully" -ForegroundColor Green
+    Write-Host "âœ… Build completed successfully" -ForegroundColor Green
 } else {
-    Write-Host "❌ Build failed!" -ForegroundColor Red
+    Write-Host "âŒ Build failed!" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
 
 # Step 2: Start services
-Write-Host "🚀 Step 2: Starting services..." -ForegroundColor Cyan
+Write-Host "ðŸš€ Step 2: Starting services..." -ForegroundColor Cyan
 docker-compose -f docker-compose.prod.yml up -d
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Services started" -ForegroundColor Green
+    Write-Host "âœ… Services started" -ForegroundColor Green
 } else {
-    Write-Host "❌ Failed to start services!" -ForegroundColor Red
+    Write-Host "âŒ Failed to start services!" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
 
 # Step 3: Wait for services to be healthy
-Write-Host "⏳ Step 3: Waiting for services to be healthy..." -ForegroundColor Cyan
+Write-Host "â³ Step 3: Waiting for services to be healthy..." -ForegroundColor Cyan
 Start-Sleep -Seconds 10
 
 # Check API health
@@ -69,13 +69,13 @@ for ($i = 1; $i -le 30; $i++) {
     try {
         $response = Invoke-WebRequest -Uri "http://localhost:5000/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction SilentlyContinue
         if ($response.StatusCode -eq 200) {
-            Write-Host "✅ API is healthy" -ForegroundColor Green
+            Write-Host "âœ… API is healthy" -ForegroundColor Green
             $apiHealthy = $true
             break
         }
     } catch {
         if ($i -eq 30) {
-            Write-Host "⚠️  API health check timeout. Check logs with: docker-compose -f docker-compose.prod.yml logs -f api" -ForegroundColor Yellow
+            Write-Host "âš ï¸  API health check timeout. Check logs with: docker-compose -f docker-compose.prod.yml logs -f api" -ForegroundColor Yellow
         } else {
             Write-Host "   Waiting for API... ($i/30)" -ForegroundColor Gray
             Start-Sleep -Seconds 2
@@ -86,11 +86,11 @@ for ($i = 1; $i -le 30; $i++) {
 Write-Host ""
 
 # Step 4: Show status
-Write-Host "📊 Step 4: Service Status" -ForegroundColor Cyan
+Write-Host "ðŸ“Š Step 4: Service Status" -ForegroundColor Cyan
 docker-compose -f docker-compose.prod.yml ps
 
 Write-Host ""
-Write-Host "✨ Deployment complete!" -ForegroundColor Green
+Write-Host "âœ¨ Deployment complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "1. Promote your user to admin:"

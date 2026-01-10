@@ -1,4 +1,4 @@
-﻿import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
@@ -35,7 +35,7 @@ export function InstallButton({
         isInstalled 
           ? 'App already installed' 
           : canInstall 
-            ? 'Install Snipshift app' 
+            ? 'Install HospoGo app' 
             : 'Install prompt will appear soon'
       }
     >

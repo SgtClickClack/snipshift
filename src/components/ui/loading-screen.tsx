@@ -1,13 +1,13 @@
 import React from 'react';
-import logoProcessed from "@/assets/logo-processed.png";
+const logoUrl = '/brand-logo.png';
 
 export function LoadingScreen() {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background dark:bg-steel-900 transition-opacity duration-300" data-testid="loading-screen">
       <div className="flex items-center justify-center mb-6 min-h-36">
         <img 
-          src={logoProcessed} 
-          alt="Snipshift" 
+          src={logoUrl} 
+          alt="HospoGo" 
           className="w-64 h-auto object-contain animate-pulse logo-sharp"
           style={{
             imageRendering: 'auto',

@@ -24,7 +24,19 @@ export const JobSchema = z.object({
   date: z.string().min(1, 'Date is required'),
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().min(1, 'End time is required'),
-  role: z.enum(['barber', 'hairdresser', 'stylist', 'other']).optional(),
+  // Backwards compatible: allow legacy barber roles + HospoGo hospitality roles
+  role: z.enum([
+    'barber',
+    'hairdresser',
+    'stylist',
+    'other',
+    'Bartender',
+    'Waitstaff',
+    'Barista',
+    'Barback',
+    'Kitchen Hand',
+    'Duty Manager',
+  ]).optional(),
   location: z.string().optional(),
   shopName: z.string().optional(),
   address: z.string().optional(),
@@ -117,6 +129,7 @@ export const ShiftReviewSchema = z.object({
  * Supports both single date (for frontend compatibility) and separate start/end times
  */
 export const ShiftSchema = z.object({
+  role: z.string().min(1, 'Role is required').optional(),
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required').optional(),
   requirements: z.string().optional(), // Alias for description for frontend compatibility
@@ -130,6 +143,9 @@ export const ShiftSchema = z.object({
       return !isNaN(num) && num >= 0;
     }, 'Hourly rate must be a non-negative number'),
   ]).optional(),
+  uniformRequirements: z.string().optional(),
+  rsaRequired: z.boolean().optional(),
+  expectedPax: z.union([z.number().int().nonnegative(), z.string()]).optional(),
   pay: z.union([ // Alias for hourlyRate for frontend compatibility
     z.number().positive('Pay rate must be a positive number'),
     z.string().refine((val) => {

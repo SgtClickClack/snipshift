@@ -1,8 +1,8 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, UserCheck, Award, GraduationCap, Scissors } from "lucide-react";
+import { Store, UserCheck, Award, GraduationCap, FastForward } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
@@ -117,9 +117,9 @@ export default function RoleSelectionPage() {
       <div className="w-full max-w-3xl">
         <div className="text-center mb-12">
           <div className="mx-auto w-20 h-20 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full flex items-center justify-center mb-6 shadow-lg border-2 border-steel-700">
-            <Scissors className="text-white text-3xl w-10 h-10" />
+            <FastForward className="text-white text-3xl w-10 h-10" />
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight">Welcome to Snipshift!</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight">Welcome to HospoGo!</h1>
           <p className="text-steel-300 text-lg max-w-md mx-auto leading-relaxed">
             Select one or more roles to personalize your experience.
           </p>

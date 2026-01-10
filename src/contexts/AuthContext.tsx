@@ -36,6 +36,12 @@ export interface User {
   skills?: string[];
   experience?: string;
   isRoamingNomad?: boolean;
+  // HospoGo compliance + preferences
+  rsaNumber?: string | null;
+  rsaExpiry?: string | null;
+  rsaCertificateUrl?: string | null;
+  hospitalityRole?: 'Bartender' | 'Waitstaff' | 'Barista' | 'Kitchen Hand' | 'Manager' | null;
+  hourlyRatePreference?: number | null;
   businessSettings?: {
     openingHours: Record<string, { open: string; close: string; enabled: boolean }>;
     shiftSplitType: 'halves' | 'thirds' | 'custom' | 'full-day';
@@ -81,10 +87,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     hasInitialized.current = true;
 
     // E2E mode: bypass Firebase dependency and hydrate user from sessionStorage.
-    // Playwright sets VITE_E2E=1 and provides `snipshift_test_user` session storage.
+    // Playwright sets VITE_E2E=1 and provides `hospogo_test_user` session storage.
     if (import.meta.env.VITE_E2E === '1' && typeof window !== 'undefined') {
       try {
-        const raw = window.sessionStorage.getItem('snipshift_test_user');
+        const raw = window.sessionStorage.getItem('hospogo_test_user');
         if (raw) {
           const parsed = JSON.parse(raw) as Partial<User>;
           const roles = Array.isArray(parsed.roles) ? parsed.roles : (parsed.currentRole ? [parsed.currentRole] : []);

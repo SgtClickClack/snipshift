@@ -80,7 +80,7 @@ After deployment completes:
 
 1. **Test the debug endpoint:**
    ```bash
-   curl https://snipshift.com.au/api/debug
+   curl https://hospogo.com/api/debug
    ```
    Or if using Vercel preview URL:
    ```bash

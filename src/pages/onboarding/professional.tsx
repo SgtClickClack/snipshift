@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
@@ -101,7 +101,7 @@ export default function ProfessionalOnboardingPage() {
     <>
       <SEO
         title="Create Professional Profile"
-        description="Setup your professional profile on SnipShift."
+        description="Setup your professional profile on HospoGo."
         url="/onboarding/professional"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">

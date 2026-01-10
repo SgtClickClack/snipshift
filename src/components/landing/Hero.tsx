@@ -5,8 +5,8 @@ import { getDashboardRoute } from "@/lib/roles";
 
 export default function Hero() {
   const { user, isAuthenticated } = useAuth();
-  const heroJpgUrl = encodeURI("/herobarber (2).jpg");
-  const heroWebpUrl = encodeURI("/herobarber (2).webp");
+  const heroJpgUrl = encodeURI("/hospogohero.jpg");
+  const heroWebpUrl = encodeURI("/hospogohero.webp");
   
   // Determine dashboard route based on user role
   const getDashboardLink = () => {
@@ -44,7 +44,7 @@ export default function Hero() {
         {/* Text and buttons */}
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-6 md:gap-8">
           <p className="text-xl md:text-2xl text-foreground dark:text-steel-100 max-w-3xl mx-auto drop-shadow-md font-medium">
-            Connect verified barbers with top shops for seamless workforce flexibility
+            Connect verified hospitality staff with venues for fast, flexible shift work
           </p>
           
           {isAuthenticated && user ? (
@@ -77,7 +77,7 @@ export default function Hero() {
             </div>
           )}
           
-          <p className="text-sm text-muted-foreground opacity-75">Join thousands of professionals already on Snipshift</p>
+          <p className="text-sm text-muted-foreground opacity-75">Join thousands of professionals already on HospoGo</p>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 /**
  * Subscription Plans Seeding Script
  * 
- * Populates the subscription_plans table with standard Snipshift tiers.
+ * Populates the subscription_plans table with standard HospoGo tiers.
  * 
  * Usage:
  *   1. Replace placeholder Stripe Price IDs in this file with your real Price IDs from Stripe Dashboard

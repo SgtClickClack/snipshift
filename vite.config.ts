@@ -12,11 +12,11 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand-logo.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg', 'herobarber (2).webp', 'herobarber (2).jpg'],
+      includeAssets: ['brand-logo.png', 'brand-wordmark.png', 'brand-icon.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg', 'herobarber (2).webp', 'herobarber (2).jpg'],
       manifest: {
-        name: 'Snipshift',
-        short_name: 'Snipshift',
-        description: 'Connect barbers, stylists, and beauticians with flexible work opportunities',
+        name: 'HospoGo',
+        short_name: 'HospoGo',
+        description: 'HospoGo connects hospitality staff with venues for flexible shift work. Find shifts or fill rosters fast.',
         theme_color: '#0f172a',
         background_color: '#ffffff',
         display: 'standalone',

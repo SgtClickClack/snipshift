@@ -1,4 +1,4 @@
-
+﻿
 #### 2025-12-14: Fix 500 Error on Calendar Load (Missing Status Enums)
 
 **Core Components**
@@ -1088,7 +1088,7 @@
 - **Backend Logic:**
   - Created Stripe Connect service for Express account onboarding and management
   - Implemented PaymentIntent creation with manual capture on shift confirmation
-  - Payment capture and transfer to barber on shift completion (with Snipshift commission)
+  - Payment capture and transfer to barber on shift completion (with HospoGo commission)
   - Security checks: verify `charges_enabled` before allowing barbers to accept shifts
   - Webhook handlers for Connect account updates and payment events
 - **API Endpoints:**

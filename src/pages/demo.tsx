@@ -179,7 +179,7 @@ export default function DemoPage() {
           <div className="text-center">
             <Scissors className="text-6xl mx-auto mb-6 opacity-90" />
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Snipshift Platform Demo
+              HospoGo Platform Demo
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
               Comprehensive B2B2C marketplace for the barbering and beauty industries

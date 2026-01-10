@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
  * Payment UI Test (Mocked Stripe)
@@ -160,7 +160,7 @@ test.describe('Payment UI: Stripe Payment Method Setup', () => {
 
     // Set sessionStorage
     await page.evaluate((user) => {
-      sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+      sessionStorage.setItem('hospogo_test_user', JSON.stringify({
         ...user,
         roles: ['business'],
         isOnboarded: true,

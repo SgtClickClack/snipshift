@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +28,6 @@ import {
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
-import PortfolioLightbox from './portfolio-lightbox';
 import { apiRequest } from '@/lib/queryClient';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth } from '@/lib/firebase';
@@ -115,7 +114,6 @@ export default function ProfessionalDigitalResume({
   const { isCompressing: isCompressingAvatar, handleImageSelect: handleAvatarImageSelect } = useImageUpload();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [newSkill, setNewSkill] = useState('');
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -192,7 +190,7 @@ export default function ProfessionalDigitalResume({
   // Calculate profile completeness
   const profileCompleteness = useMemo(() => {
     let completed = 0;
-    const total = 10;
+    const total = 9;
 
     if (profile.displayName) completed++;
     if (profile.professionalTitle) completed++;
@@ -200,13 +198,29 @@ export default function ProfessionalDigitalResume({
     if (profile.avatarUrl) completed++;
     if (profile.skills.length > 0) completed++;
     if (profile.certifications.length > 0) completed++;
-    if (profile.portfolio.length > 0) completed++;
     if (profile.workHistory.length > 0) completed++;
     if (profile.hourlyRateMin && profile.hourlyRateMax) completed++;
     if (profile.isIdVerified || profile.isLicenseVerified) completed++;
 
     return Math.round((completed / total) * 100);
   }, [profile]);
+
+  const complianceBadges = useMemo(() => {
+    const skills = new Set((profile.skills || []).map((s) => s.toLowerCase().trim()));
+    const certs = new Set((profile.certifications || []).map((c) => (c.type || '').toLowerCase().trim()));
+
+    const hasRSA = Array.from(certs).some((c) => c.includes('rsa'));
+    const hasRCG = Array.from(certs).some((c) => c.includes('rcg'));
+    const hasCovid = skills.has('covid safety') || Array.from(certs).some((c) => c.includes('covid'));
+    const hasManual = skills.has('manual handling') || Array.from(certs).some((c) => c.includes('manual'));
+
+    return [
+      hasRSA ? 'RSA Verified' : null,
+      hasRCG ? 'RCG Verified' : null,
+      hasCovid ? 'Covid Safety' : null,
+      hasManual ? 'Manual Handling' : null,
+    ].filter((b): b is string => Boolean(b));
+  }, [profile.skills, profile.certifications]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -558,27 +572,6 @@ export default function ProfessionalDigitalResume({
     }
   };
 
-  const handleAddPortfolioImage = (url: string) => {
-    setProfile(prev => ({
-      ...prev,
-      portfolio: [
-        ...prev.portfolio,
-        {
-          id: `portfolio-${Date.now()}`,
-          imageURL: url,
-          caption: '',
-        },
-      ],
-    }));
-  };
-
-  const handleRemovePortfolioImage = (id: string) => {
-    setProfile(prev => ({
-      ...prev,
-      portfolio: prev.portfolio.filter(item => item.id !== id),
-    }));
-  };
-
   const getAvailabilitySummary = () => {
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const availableDays = days.filter(day => profile.availability?.[day as keyof typeof profile.availability]);
@@ -605,7 +598,7 @@ export default function ProfessionalDigitalResume({
                 </div>
                 <Progress value={profileCompleteness} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  Complete your profile to increase your visibility to salons
+                  Complete your profile to increase your visibility to venues
                 </p>
               </div>
             </CardContent>
@@ -654,6 +647,8 @@ export default function ProfessionalDigitalResume({
                   onChange={handleBannerFileSelect}
                   className="hidden"
                   disabled={isUploadingBanner || isCompressingBanner}
+                  aria-label="Upload banner image"
+                  title="Upload banner image"
                 />
                 {bannerImageSrc && (
                   <ImageCropper
@@ -699,6 +694,8 @@ export default function ProfessionalDigitalResume({
                       onChange={handleAvatarUpload}
                       className="hidden"
                       disabled={isUploadingAvatar || isCompressingAvatar}
+                      aria-label="Upload profile picture"
+                      title="Upload profile picture"
                     />
                   </>
                 )}
@@ -726,7 +723,7 @@ export default function ProfessionalDigitalResume({
                       <Input
                         value={profile.professionalTitle || ''}
                         onChange={(e) => setProfile(prev => ({ ...prev, professionalTitle: e.target.value }))}
-                        placeholder="Professional Title (e.g., Senior Barber)"
+                        placeholder="Professional Title (e.g., Senior Bartender)"
                         className="max-w-md"
                       />
                     ) : (
@@ -749,6 +746,15 @@ export default function ProfessionalDigitalResume({
                           License Verified
                         </Badge>
                       )}
+                      {complianceBadges.map((label) => (
+                        <Badge
+                          key={label}
+                          variant="outline"
+                          className="bg-primary/10 text-primary border-primary/30"
+                        >
+                          {label}
+                        </Badge>
+                      ))}
                       {isEditing && (
                         <div className="flex gap-2">
                           <Button
@@ -765,6 +771,8 @@ export default function ProfessionalDigitalResume({
                           accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                           className="hidden"
                           onChange={handleIdentityUpload}
+                          aria-label="Upload identity document"
+                          title="Upload identity document"
                         />
                           <Button
                             variant={profile.isLicenseVerified ? "default" : "outline"}
@@ -780,6 +788,8 @@ export default function ProfessionalDigitalResume({
                           accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                           className="hidden"
                           onChange={handleLicenseUpload}
+                          aria-label="Upload license document"
+                          title="Upload license document"
                         />
                         </div>
                       )}
@@ -869,7 +879,7 @@ export default function ProfessionalDigitalResume({
                   <Textarea
                     value={profile.bio || ''}
                     onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-                    placeholder="Tell salons about yourself, your experience, and what makes you unique..."
+                    placeholder="Tell venues about yourself, your experience, and what makes you unique..."
                     rows={6}
                     className="resize-none"
                   />
@@ -877,75 +887,6 @@ export default function ProfessionalDigitalResume({
                   <p className="text-muted-foreground whitespace-pre-wrap">
                     {profile.bio || 'No bio added yet. Click "Edit Profile" to add one.'}
                   </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Portfolio Grid */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Portfolio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {profile.portfolio.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {profile.portfolio.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="group relative aspect-square cursor-pointer rounded-lg overflow-hidden bg-muted"
-                        onClick={() => setSelectedImageIndex(index)}
-                      >
-                        <OptimizedImage
-                          src={item.imageURL}
-                          alt={item.caption || 'Portfolio image'}
-                          fallbackType="image"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                        {isEditing && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="absolute top-2 right-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemovePortfolioImage(item.id);
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {item.caption && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 text-xs">
-                            {item.caption}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 md:py-12 text-muted-foreground">
-                    <ImageIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No portfolio images yet</p>
-                    {isEditing && (
-                      <Button variant="outline" className="mt-4" onClick={() => {
-                        // In a real app, this would open a file picker
-                        const url = prompt('Enter image URL:');
-                        if (url) handleAddPortfolioImage(url);
-                      }}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Image
-                      </Button>
-                    )}
-                  </div>
-                )}
-                {isEditing && profile.portfolio.length > 0 && (
-                  <Button variant="outline" className="mt-4 w-full" onClick={() => {
-                    const url = prompt('Enter image URL:');
-                    if (url) handleAddPortfolioImage(url);
-                  }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Image
-                  </Button>
                 )}
               </CardContent>
             </Card>
@@ -1084,8 +1025,11 @@ export default function ProfessionalDigitalResume({
                       {skill}
                       {isEditing && (
                         <button
+                          type="button"
                           onClick={() => handleRemoveSkill(skill)}
                           className="ml-2 hover:text-destructive"
+                          aria-label={`Remove skill: ${skill}`}
+                          title={`Remove skill: ${skill}`}
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -1107,7 +1051,7 @@ export default function ProfessionalDigitalResume({
                       placeholder="Add skill"
                       className="flex-1"
                     />
-                    <Button onClick={handleAddSkill} size="sm">
+                    <Button onClick={handleAddSkill} size="sm" aria-label="Add skill" title="Add skill">
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1203,8 +1147,11 @@ export default function ProfessionalDigitalResume({
                   <div className="space-y-2">
                     {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
                       <div key={day} className="flex items-center justify-between">
-                        <Label className="capitalize">{day}</Label>
+                        <Label htmlFor={`availability-${day}`} className="capitalize">
+                          {day}
+                        </Label>
                         <input
+                          id={`availability-${day}`}
                           type="checkbox"
                           checked={profile.availability?.[day as keyof typeof profile.availability] || false}
                           onChange={(e) => setProfile(prev => ({
@@ -1215,6 +1162,8 @@ export default function ProfessionalDigitalResume({
                             },
                           }))}
                           className="rounded"
+                          aria-label={`${day} availability`}
+                          title={`${day} availability`}
                         />
                       </div>
                     ))}
@@ -1275,14 +1224,6 @@ export default function ProfessionalDigitalResume({
         </div>
       </div>
 
-      {/* Portfolio Lightbox */}
-      {selectedImageIndex !== null && (
-        <PortfolioLightbox
-          images={profile.portfolio}
-          initialIndex={selectedImageIndex}
-          onClose={() => setSelectedImageIndex(null)}
-        />
-      )}
     </div>
   );
 }

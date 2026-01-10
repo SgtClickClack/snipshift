@@ -1,5 +1,5 @@
-# Render Blueprint for Snipshift Production Deployment
-# This file defines the infrastructure for deploying Snipshift on Render.com
+﻿# Render Blueprint for HospoGo Production Deployment
+# This file defines the infrastructure for deploying HospoGo on Render.com
 # 
 # Usage: 
 #   1. Connect your Git repository to Render

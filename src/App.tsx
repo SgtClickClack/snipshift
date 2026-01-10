@@ -495,7 +495,7 @@ function App() {
       <HelmetProvider>
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="dark" storageKey="snipshift-ui-theme">
+          <ThemeProvider defaultTheme="dark" storageKey="hospogo-ui-theme">
           <TooltipProvider>
             <Router>
               <AuthProvider>

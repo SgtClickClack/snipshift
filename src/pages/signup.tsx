@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { Scissors, Eye, EyeOff } from "lucide-react";
+import { FastForward, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -63,7 +63,7 @@ export default function SignupPage() {
         // Create mock Google user with client role (universal signup)
         const mockUser = {
           id: `google_${Date.now()}`,
-          email: 'demo@snipshift.com.au',
+          email: 'demo@hospogo.com',
           password: '',
           roles: ['client' as const],
           currentRole: 'client' as const,
@@ -85,7 +85,7 @@ export default function SignupPage() {
         // Navigate to home (role selection)
         navigate('/home');
       } catch (error) {
-        console.error('âŒ OAuth callback error:', error);
+        console.error('❌ OAuth callback error:', error);
         toast({
           title: "Authentication Error",
           description: "There was an issue processing your Google authentication.",
@@ -162,7 +162,7 @@ export default function SignupPage() {
       
       toast({
         title: "Account created successfully",
-        description: "Welcome to Snipshift! Let's set up your profile.",
+        description: "Welcome to HospoGo! Let's set up your profile.",
       });
 
       // Get role preference from sessionStorage if available
@@ -228,10 +228,10 @@ export default function SignupPage() {
           <CardHeader className="text-center bg-gradient-to-b from-muted/50 to-card rounded-t-lg border-b border-border/50">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full shadow-lg">
-                <Scissors className="h-8 w-8 text-white" />
+                <FastForward className="h-8 w-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-card-foreground" data-testid="heading-signup">Join Snipshift</CardTitle>
+            <CardTitle className="text-2xl font-bold text-card-foreground" data-testid="heading-signup">Join HospoGo</CardTitle>
             <p className="text-muted-foreground font-medium">Connect with the industry network</p>
           </CardHeader>
           <CardContent>

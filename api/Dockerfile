@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Snipshift API (Express + TypeScript)
+# Multi-stage Dockerfile for HospoGo API (Express + TypeScript)
 # Stage 1: Dependencies
 FROM node:22-alpine AS deps
 WORKDIR /app

@@ -1,6 +1,6 @@
-# 🚀 Production Deployment Guide
+﻿# 🚀 Production Deployment Guide
 
-This guide walks you through the complete production deployment process for Snipshift.
+This guide walks you through the complete production deployment process for HospoGo.
 
 ## Prerequisites
 
@@ -358,4 +358,4 @@ If you encounter issues:
 
 ---
 
-**🎉 Congratulations! Your Snipshift application is now live in production!**
+**🎉 Congratulations! Your HospoGo application is now live in production!**

@@ -5,36 +5,36 @@
 @layer base {
   :root {
     /* color-scheme will be set dynamically by theme provider */
-    /* Soft, desaturated off-white background for visual hierarchy */
-    --background: 0 0% 97%;
-    /* High-contrast dark foreground for maximum readability */
-    --foreground: 0 0% 9%;
-    /* Pure white card surfaces to pop off the background */
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    /* Dark navbar for strong visual presence */
-    --navbar: 0 0% 15%;
-    --navbar-foreground: 0 0% 98%;
+    /* HospoGo surface: Deep Charcoal (#1A1A1A) */
+    --background: 0 0% 10%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
+    /* HospoGo brand */
+    --navbar: 0 0% 10%; /* #1A1A1A */
+    --navbar-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    /* Secondary and muted colors with good contrast against new background */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
+    /* Primary: Electric Lime (#32CD32) */
+    --primary: 120 61% 50%;
+    --primary-foreground: 0 0% 10%;
+    /* Secondary: Deep Charcoal surfaces */
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    /* Accent: White (#FFFFFF) */
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    --ring: 120 61% 50%;
     --radius: 0.5rem;
     --error: 0 75% 45%;
     --error-foreground: 0 0% 100%;
-    --success: 120 100% 25%;
+    --success: 120 61% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 45 100% 50%;
     --warning-foreground: 0 0% 100%;
@@ -44,18 +44,21 @@
 
   .dark {
     color-scheme: dark;
-    --background: 240 10% 3.9%;
+    /* Keep dark mode aligned to the HospoGo surface */
+    --background: 0 0% 10%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 0 0% 12%;
     --card-foreground: 0 0% 98%;
-    /* Dark navbar for dark mode - slightly lighter than background for distinction */
-    --navbar: 240 10% 8%;
-    --navbar-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    /* HospoGo brand in dark mode */
+    --navbar: 0 0% 10%; /* #1A1A1A */
+    --navbar-foreground: 0 0% 100%; /* #FFFFFF */
+    --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
+    /* Primary: Electric Lime (#32CD32) */
+    --primary: 120 61% 50%;
+    --primary-foreground: 0 0% 10%;
+    /* Secondary: Deep Charcoal surfaces */
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
@@ -65,10 +68,10 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --ring: 120 61% 50%;
     --error: 0 75% 50%;
     --error-foreground: 0 0% 100%;
-    --success: 120 100% 40%;
+    --success: 120 61% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 45 100% 60%;
     --warning-foreground: 0 0% 100%;

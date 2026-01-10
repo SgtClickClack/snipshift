@@ -1,11 +1,11 @@
-#!/bin/sh
+﻿#!/bin/sh
 set -e
 
-echo "🚀 Starting Snipshift API entrypoint..."
+echo "ðŸš€ Starting HospoGo API entrypoint..."
 
 # Wait for database to be ready (optional but recommended)
 if [ -n "$DATABASE_URL" ] || [ -n "$POSTGRES_URL" ]; then
-  echo "⏳ Waiting for database to be ready..."
+  echo "â³ Waiting for database to be ready..."
   
   # Extract connection details from DATABASE_URL
   # Format: postgresql://user:password@host:port/database
@@ -22,7 +22,7 @@ if [ -n "$DATABASE_URL" ] || [ -n "$POSTGRES_URL" ]; then
   counter=0
   while ! nc -z "${DB_HOST:-localhost}" "${DB_PORT:-5432}" 2>/dev/null; do
     if [ $counter -ge $timeout ]; then
-      echo "❌ Database connection timeout after ${timeout} seconds"
+      echo "âŒ Database connection timeout after ${timeout} seconds"
       exit 1
     fi
     echo "   Waiting for database... (${counter}/${timeout}s)"
@@ -30,11 +30,11 @@ if [ -n "$DATABASE_URL" ] || [ -n "$POSTGRES_URL" ]; then
     counter=$((counter + 1))
   done
   
-  echo "✅ Database is ready"
+  echo "âœ… Database is ready"
 fi
 
 # Run database migrations
-echo "📦 Running database migrations..."
+echo "ðŸ“¦ Running database migrations..."
 if [ -d "drizzle" ] && [ -n "$(ls -A drizzle/*.sql 2>/dev/null)" ]; then
   echo "   Found migration files in drizzle directory"
   # Apply all migrations in order (sorted by filename)
@@ -47,26 +47,26 @@ if [ -d "drizzle" ] && [ -n "$(ls -A drizzle/*.sql 2>/dev/null)" ]; then
       # Use the existing apply-migration script
       if [ -f "_src/scripts/apply-migration.ts" ]; then
         npx tsx _src/scripts/apply-migration.ts "$migration_name" || {
-          echo "⚠️  Migration $migration_name failed or already applied"
+          echo "âš ï¸  Migration $migration_name failed or already applied"
           # Continue with other migrations even if one fails (might be already applied)
         }
         migration_count=$((migration_count + 1))
       else
-        echo "⚠️  Migration script not found at _src/scripts/apply-migration.ts"
+        echo "âš ï¸  Migration script not found at _src/scripts/apply-migration.ts"
         break
       fi
     fi
   done
   if [ $migration_count -gt 0 ]; then
-    echo "✅ Processed $migration_count migration(s)"
+    echo "âœ… Processed $migration_count migration(s)"
   else
-    echo "ℹ️  No new migrations to apply"
+    echo "â„¹ï¸  No new migrations to apply"
   fi
 else
-  echo "⚠️  No migration files found in drizzle directory"
+  echo "âš ï¸  No migration files found in drizzle directory"
   echo "   Make sure migrations are applied manually or via CI/CD"
 fi
 
 # Start the application
-echo "🎯 Starting API server..."
+echo "ðŸŽ¯ Starting API server..."
 exec "$@"

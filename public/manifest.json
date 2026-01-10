@@ -1,13 +1,13 @@
 {
-  "name": "Snipshift",
-  "short_name": "Snipshift",
-  "description": "Snipshift connects barbershops with verified professionals for seamless workforce flexibility. Find shifts or fill chairs today.",
+  "name": "HospoGo Staffing",
+  "short_name": "HospoGo",
+  "description": "HospoGo connects hospitality staff with venues for flexible shift work. Find shifts or fill rosters fast.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "scope": "/",
-  "background_color": "#ffffff",
-  "theme_color": "#0f172a",
+  "background_color": "#1A1A1A",
+  "theme_color": "#1A1A1A",
   "icons": [
     {
       "src": "/brand-logo-192.png",

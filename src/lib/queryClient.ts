@@ -59,7 +59,7 @@ export async function apiRequest(
   const headers: Record<string, string> = {
     // Only set Content-Type for non-FormData. FormData sets its own boundary.
     ...(data && !isFormData ? { "Content-Type": "application/json" } : {}),
-    ...(isSafe ? {} : { 'X-Snipshift-CSRF': '1' }),
+    ...(isSafe ? {} : { 'X-HospoGo-CSRF': '1' }),
   };
 
   if (auth.currentUser) {

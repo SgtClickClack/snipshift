@@ -109,6 +109,25 @@ export default function ShiftDetailsPage() {
       return;
     }
 
+    const hasRsaCertificate = !!user.rsaCertificateUrl;
+    const rsaExpiryDate = user.rsaExpiry ? new Date(user.rsaExpiry) : null;
+    const isRsaExpiryValid = rsaExpiryDate ? !isNaN(rsaExpiryDate.getTime()) : true;
+    const isRsaExpired = rsaExpiryDate && isRsaExpiryValid
+      ? rsaExpiryDate.getTime() < new Date().setHours(0, 0, 0, 0)
+      : false;
+
+    if (!hasRsaCertificate || isRsaExpired) {
+      toast({
+        title: 'RSA certificate required',
+        description: isRsaExpired
+          ? 'Your RSA certificate appears to be expired. Please upload a current RSA certificate to apply for shifts.'
+          : 'Upload your RSA certificate to apply for shifts.',
+        variant: 'destructive',
+      });
+      navigate('/settings');
+      return;
+    }
+
     if (!id) {
       toast({
         title: 'Error',
@@ -236,7 +255,7 @@ export default function ShiftDetailsPage() {
       employmentType: 'CONTRACTOR',
       hiringOrganization: {
         '@type': 'Organization',
-        name: shift.shopName || 'SnipShift',
+        name: shift.shopName || 'HospoGo',
       },
     };
 
@@ -268,7 +287,7 @@ export default function ShiftDetailsPage() {
     if (shift.id) {
       schema.identifier = {
         '@type': 'PropertyValue',
-        name: 'SnipShift',
+        name: 'HospoGo',
         value: shift.id,
       };
     }

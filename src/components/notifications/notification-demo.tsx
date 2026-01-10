@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,7 @@ export default function NotificationDemo() {
           Notification System Demo
         </h1>
         <p className="text-steel-600 max-w-2xl mx-auto">
-          Experience Snipshift's real-time notification system that keeps users connected to important 
+          Experience HospoGo's real-time notification system that keeps users connected to important 
           platform activities including job applications, messages, and social interactions.
         </p>
       </div>
@@ -285,23 +285,23 @@ export default function NotificationDemo() {
             <div>
               <h4 className="font-semibold text-steel-900 mb-3">Core Features</h4>
               <ul className="space-y-2 text-sm text-steel-600">
-                <li>âœ“ Real-time notification badge with unread count</li>
-                <li>âœ“ Interactive dropdown with notification list</li>
-                <li>âœ“ Mark individual or all notifications as read</li>
-                <li>âœ“ Visual indicators for read/unread status</li>
-                <li>âœ“ Auto-simulation for demo purposes</li>
-                <li>âœ“ Responsive design for all devices</li>
+                <li>✓ Real-time notification badge with unread count</li>
+                <li>✓ Interactive dropdown with notification list</li>
+                <li>✓ Mark individual or all notifications as read</li>
+                <li>✓ Visual indicators for read/unread status</li>
+                <li>✓ Auto-simulation for demo purposes</li>
+                <li>✓ Responsive design for all devices</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-steel-900 mb-3">Notification Triggers</h4>
               <ul className="space-y-2 text-sm text-steel-600">
-                <li>â†’ New job applications received</li>
-                <li>â†’ Incoming direct messages</li>
-                <li>â†’ Social post likes and comments</li>
-                <li>â†’ New job postings in your area</li>
-                <li>â†’ Profile views and interactions</li>
-                <li>â†’ System announcements and updates</li>
+                <li>→ New job applications received</li>
+                <li>→ Incoming direct messages</li>
+                <li>→ Social post likes and comments</li>
+                <li>→ New job postings in your area</li>
+                <li>→ Profile views and interactions</li>
+                <li>→ System announcements and updates</li>
               </ul>
             </div>
           </div>

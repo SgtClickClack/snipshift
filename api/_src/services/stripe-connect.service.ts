@@ -134,7 +134,7 @@ export async function createPaymentIntent(
   amount: number, // in cents
   currency: string,
   customerId: string,
-  applicationFeeAmount: number, // Snipshift commission in cents
+  applicationFeeAmount: number, // HospoGo commission in cents
   transferData: {
     destination: string; // Barber's Stripe account ID
   },
@@ -298,7 +298,7 @@ export async function createAndConfirmPaymentIntent(
   currency: string,
   customerId: string,
   paymentMethodId: string,
-  applicationFeeAmount: number, // Snipshift commission in cents
+  applicationFeeAmount: number, // HospoGo commission in cents
   transferData: {
     destination: string; // Barber's Stripe account ID
   },

@@ -22,6 +22,22 @@ import { toISOStringSafe } from '../lib/date.js';
 
 const router = Router();
 
+function computeShiftLengthHours(startTime: unknown, endTime: unknown): number | null {
+  const start = startTime ? new Date(startTime as any) : null;
+  const end = endTime ? new Date(endTime as any) : null;
+  if (!start || !end) return null;
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  return hours > 0 ? Math.round(hours * 100) / 100 : null;
+}
+
+function parseExpectedPax(value: unknown): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return Math.floor(n);
+}
+
 const authenticateIfEmployerQuery = (req: Request, res: Response, next: NextFunction) => {
   if (!req.query?.employer_id) {
     next();
@@ -88,6 +104,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   try {
     const isRecurring = shiftData.isRecurring || false;
     const recurringShifts = shiftData.recurringShifts || [];
+    const expectedPax = parseExpectedPax((shiftData as any).expectedPax);
 
     // If recurring and we have recurring shifts data, create multiple shifts in a transaction
     if (isRecurring && recurringShifts.length > 0) {
@@ -97,11 +114,15 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       
       const parentShiftData = {
         employerId: userId,
+        role: (shiftData as any).role,
         title: shiftData.title,
         description: shiftData.description || shiftData.requirements || '',
         startTime,
         endTime,
         hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
+        uniformRequirements: (shiftData as any).uniformRequirements,
+        rsaRequired: !!(shiftData as any).rsaRequired,
+        expectedPax,
         status: shiftData.status || 'draft',
         location: shiftData.location,
         lat: lat !== undefined ? (typeof lat === 'string' ? parseFloat(lat) : lat) : undefined,
@@ -137,11 +158,15 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
     
     const shiftPayload = {
       employerId: userId,
+      role: (shiftData as any).role,
       title: shiftData.title,
       description: shiftData.description || shiftData.requirements || '',
       startTime,
       endTime,
       hourlyRate: (shiftData.hourlyRate || shiftData.pay || '0').toString(),
+      uniformRequirements: (shiftData as any).uniformRequirements,
+      rsaRequired: !!(shiftData as any).rsaRequired,
+      expectedPax,
       // If a staff member is selected, create an invited shift
       status: assignedStaffId ? 'invited' : (shiftData.status || 'draft'),
       location: shiftData.location,
@@ -282,6 +307,7 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
       date: (shift as any).startTime ? toISOStringSafe((shift as any).startTime) : undefined,
       pay: shift.hourlyRate ? String(shift.hourlyRate) : undefined,
       requirements: shift.description,
+      shiftLengthHours: computeShiftLengthHours((shift as any).startTime, (shift as any).endTime),
     }));
 
     res.status(200).json(transformed);
@@ -316,6 +342,7 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
     date: (shift as any).startTime ? toISOStringSafe((shift as any).startTime) : undefined,
     pay: shift.hourlyRate ? String(shift.hourlyRate) : undefined,
     requirements: shift.description, // Alias for description
+    shiftLengthHours: computeShiftLengthHours((shift as any).startTime, (shift as any).endTime),
   }));
 
   res.status(200).json(transformedData);
@@ -798,16 +825,21 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
 
       return {
         id: shift.id,
+        role: (shift as any).role ?? null,
         title: shift.title,
         payRate: shift.hourlyRate,
         date: dateStr,
         startTime: startTimeISO,
         endTime: endTimeISO,
+        shiftLengthHours: computeShiftLengthHours(shift.startTime, shift.endTime),
         status: shift.status,
         location,
         applicationCount,
         createdAt: createdAtISO,
         employerId: shift.employerId,
+        uniformRequirements: (shift as any).uniformRequirements ?? null,
+        rsaRequired: (shift as any).rsaRequired ?? false,
+        expectedPax: (shift as any).expectedPax ?? null,
         // Add type indicator for debugging (optional)
         _type: 'shift'
       };
@@ -2631,14 +2663,19 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
   res.status(200).json({
     id: shift.id,
+    role: (shift as any).role ?? null,
     title: shift.title,
     description: shift.description,
     startTime: toISOStringSafe((shift as any).startTime),
     endTime: toISOStringSafe((shift as any).endTime),
+    shiftLengthHours: computeShiftLengthHours((shift as any).startTime, (shift as any).endTime),
     hourlyRate: shift.hourlyRate,
     location: shift.location,
     lat,
     lng,
+    uniformRequirements: (shift as any).uniformRequirements ?? null,
+    rsaRequired: (shift as any).rsaRequired ?? false,
+    expectedPax: (shift as any).expectedPax ?? null,
     status: shift.status,
     employerId: shift.employerId,
     assigneeId: shift.assigneeId ?? null,

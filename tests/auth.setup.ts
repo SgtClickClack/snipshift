@@ -1,4 +1,4 @@
-import { chromium, FullConfig } from '@playwright/test';
+﻿import { chromium, FullConfig } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -11,17 +11,17 @@ const __dirname = path.dirname(__filename);
  *
  * We intentionally avoid brittle UI-driven Firebase auth in automation.
  * During Playwright runs we set `VITE_E2E=1` (see `playwright.config.ts`),
- * and the app hydrates auth state from `sessionStorage['snipshift_test_user']`.
+ * and the app hydrates auth state from `sessionStorage['hospogo_test_user']`.
  */
 async function globalSetup(config: FullConfig) {
-  console.log('🔐 Global Setup: Preparing E2E authenticated state...');
+  console.log('ðŸ” Global Setup: Preparing E2E authenticated state...');
 
   const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
   const testEmail = process.env.TEST_EMAIL || 'test@snipshift.com';
 
   // Wait for frontend to be ready before starting
   // Note: Tests use mocked API routes via Playwright's page.route(), so we only need the frontend
-  console.log('⏳ Waiting for frontend to be ready...');
+  console.log('â³ Waiting for frontend to be ready...');
   const maxWaitTime = 120000; // 2 minutes
   const startTime = Date.now();
   let frontendReady = false;
@@ -34,15 +34,15 @@ async function globalSetup(config: FullConfig) {
       }).catch(() => null);
 
       if (frontendResponse?.ok) {
-        console.log('✅ Frontend is ready!');
+        console.log('âœ… Frontend is ready!');
         frontendReady = true;
         break;
       }
 
-      console.log('⏳ Waiting for frontend...');
+      console.log('â³ Waiting for frontend...');
       await new Promise((resolve) => setTimeout(resolve, 2000));
     } catch {
-      console.log('⏳ Frontend not ready, retrying...');
+      console.log('â³ Frontend not ready, retrying...');
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
@@ -67,7 +67,7 @@ async function globalSetup(config: FullConfig) {
       }
 
       sessionStorage.setItem(
-        'snipshift_test_user',
+        'hospogo_test_user',
         JSON.stringify({
           id: 'e2e-user-0001',
           email,
@@ -112,12 +112,12 @@ async function globalSetup(config: FullConfig) {
     };
 
     fs.writeFileSync(storageStatePath, JSON.stringify(enhancedStorageState, null, 2));
-    console.log(`💾 Session state saved to: ${storageStatePath}`);
-    console.log(`📋 SessionStorage items saved: ${sessionStorageItems.length}`);
+    console.log(`ðŸ’¾ Session state saved to: ${storageStatePath}`);
+    console.log(`ðŸ“‹ SessionStorage items saved: ${sessionStorageItems.length}`);
 
     await browser.close();
   } catch (error) {
-    console.error('❌ Authentication setup failed:', error);
+    console.error('âŒ Authentication setup failed:', error);
     await page.screenshot({ path: path.join(__dirname, 'auth-setup-failure.png'), fullPage: true });
     await browser.close();
     throw error;

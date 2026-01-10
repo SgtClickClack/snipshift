@@ -8,7 +8,7 @@ export default function PrivacyPage() {
     <>
       <SEO
         title="Privacy Policy"
-        description="SnipShift Privacy Policy - Learn how we collect, use, and protect your personal information."
+        description="HospoGo Privacy Policy - Learn how we collect, use, and protect your personal information."
         url="/privacy"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 py-12 px-4">
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold text-steel-900 mb-4">1. Introduction</h2>
                 <p className="text-steel-700 mb-4">
-                  SnipShift ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our marketplace platform ("the Platform"). Please read this Privacy Policy carefully.
+                  HospoGo ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our marketplace platform ("the Platform"). Please read this Privacy Policy carefully.
                 </p>
                 <p className="text-steel-700 mb-4">
                   By using the Platform, you consent to the data practices described in this policy. If you do not agree with the data practices described in this policy, you should not use the Platform.
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
                   <li><strong>Tax Information:</strong> Tax identification numbers or other tax-related information as required by law</li>
                 </ul>
                 <p className="text-steel-700 mb-4">
-                  <strong>Important:</strong> SnipShift does not store your full credit card numbers or sensitive payment details on our servers. All payment information is securely processed and stored by Stripe in accordance with PCI DSS compliance standards.
+                  <strong>Important:</strong> HospoGo does not store your full credit card numbers or sensitive payment details on our servers. All payment information is securely processed and stored by Stripe in accordance with PCI DSS compliance standards.
                 </p>
                 <h3 className="text-xl font-semibold text-steel-800 mb-3">2.3 Automatically Collected Information</h3>
                 <p className="text-steel-700 mb-4">When you use the Platform, we automatically collect certain information, including:</p>
@@ -137,14 +137,14 @@ export default function PrivacyPage() {
                 </p>
                 <h3 className="text-xl font-semibold text-steel-800 mb-3">4.6 Business Transfers</h3>
                 <p className="text-steel-700 mb-4">
-                  If SnipShift is involved in a merger, acquisition, or asset sale, your information may be transferred as part of that transaction.
+                  If HospoGo is involved in a merger, acquisition, or asset sale, your information may be transferred as part of that transaction.
                 </p>
               </section>
 
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold text-steel-900 mb-4">5. Payment Processing and Stripe</h2>
                 <p className="text-steel-700 mb-4">
-                  SnipShift uses Stripe Connect to process all payments on the Platform. When you make or receive a payment:
+                  HospoGo uses Stripe Connect to process all payments on the Platform. When you make or receive a payment:
                 </p>
                 <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2">
                   <li>Your payment information is securely transmitted directly to Stripe</li>
@@ -258,8 +258,8 @@ export default function PrivacyPage() {
                   If you have any questions about this Privacy Policy or our data practices, please contact us at:
                 </p>
                 <p className="text-steel-700">
-                  <strong>Email:</strong> privacy@snipshift.com<br />
-                  <strong>Address:</strong> SnipShift Privacy Department
+                  <strong>Email:</strong> privacy@hospogo.com<br />
+                  <strong>Address:</strong> HospoGo Privacy Department
                 </p>
               </section>
             </CardContent>

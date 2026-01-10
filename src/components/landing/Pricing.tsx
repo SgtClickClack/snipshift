@@ -17,7 +17,7 @@ export default function Pricing() {
   const tiers = [
     {
       name: "Professional",
-      description: "For barbers & stylists seeking freedom.",
+      description: "For hospitality staff seeking flexibility.",
       price: "Free",
       duration: "Forever",
       subPrice: null,
@@ -51,7 +51,7 @@ export default function Pricing() {
     },
     {
       name: "Salon Unlimited",
-      description: "For shops that need regular reliable cover.",
+      description: "For venues that need regular reliable cover.",
       price: "$49",
       duration: "month",
       subPrice: "$0 Booking Fees",

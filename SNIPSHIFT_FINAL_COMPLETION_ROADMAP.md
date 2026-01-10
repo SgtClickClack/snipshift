@@ -1,10 +1,80 @@
-# SnipShift v1.0 - Final Completion Roadmap
+# HospoGo - Brand Pivot Roadmap
 
 ## 🎉 v1.0 Launch Status
 
 **Launch Date:** December 2024  
 **Status:** ✅ **PRODUCTION READY**  
-**Production URL:** https://snipshift.com (or your Vercel deployment URL)
+**Production URL:** https://hospogo.com
+
+---
+
+### Update: 2026-01-10 - SEO & Metadata Brand Transformation (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated the app shell title/description to match the HospoGo positioning (“On-Demand Hospitality Staff” + RSA-verified messaging).
+- Updated OpenGraph/Twitter metadata to use canonical `https://hospogo.com/` + the new share image path `/hospogo-og.png` (1200x630).
+- Updated PWA manifest branding (app name + dark theme/background) and added a dedicated `public/favicon.ico`.
+
+**Impact:**
+- **Cleaner brand consistency** in browser tabs, installs, and social shares.
+
+---
+
+### Update: 2026-01-10 - Final Visual Branding Sweep (HospoGo)
+
+**Status:** ✅ **COMPLETE**
+
+**Action Taken:**
+- Completed a final pass to remove remaining “Snipshift” user-facing branding across legal pages, docs/scripts, and API email signatures.
+- Aligned E2E/session hydration naming to `hospogo_test_user` for HospoGo-branded test fixtures.
+
+**Impact:**
+- **Consistent HospoGo branding** across UI, docs, and transactional messaging surfaces.
+
+---
+
+### Update: 2026-01-10 - Hospitality Shift Model & UI (Roles + Uniform/RSA/Pax + Hourly Pricing)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added hospitality shift fields end-to-end (`role`, `uniformRequirements`, `rsaRequired`, `expectedPax`) and computed `shiftLengthHours` for pricing display.
+- Updated shift creation/posting UI to use “Select Shift Role” and show **Hourly Rate × Duration** estimated totals.
+- Removed the profile portfolio gallery in favor of Work History/Certifications focus and surfaced compliance badges (RSA/RCG/Covid Safety/Manual Handling).
+- Updated theme tokens + primary action button styling to match Electric Lime + Deep Charcoal direction.
+
+**Impact:**
+- **Clearer hospitality-first posting flow**: venues can post shifts with the details staff actually need.
+- **Consistent pricing UX**: duration is shown in hours and total cost is transparent at creation time.
+
+---
+
+### Update: 2025-12-25 - Google Auth Resilience When DB Is Paused/Over-Quota
+
+**Status:** ✅ **HARDENED**
+
+**Action Taken:**
+- Normalized hosted Postgres “compute time quota exceeded” failures into a clear **503 Service Unavailable** response with a stable `DB_QUOTA_EXCEEDED` code.
+- Updated auth middleware to avoid misreporting DB outages as “invalid token” / 401.
+- Improved Google sign-in UX to surface a specific error message when Firebase auth succeeds but DB user creation cannot complete.
+
+**Impact:**
+- **Less confusion:** Users get a clear “database temporarily unavailable” message instead of a misleading auth failure.
+- **Faster diagnosis:** The error code makes it obvious when the fix is external (restore DB compute/quota).
+
+---
+
+### Update: 2025-12-25 - Local Dev DB Bootstrap (Docker Postgres)
+
+**Status:** ✅ **UNBLOCKED (LOCAL DEV)**
+
+**Action Taken:**
+- Added a local Postgres dev container + init SQL (pgcrypto) and a one-command PowerShell bootstrap to run the app against `postgres://dev:dev@localhost:5434/snipshift_dev`.
+
+**Impact:**
+- **Local development unblocked** even when the hosted DB is paused/over-quota (Google auth can create/read users again locally).
 
 ---
 
@@ -779,7 +849,7 @@ Enabled click interactions for Business Dashboard statistics cards.
 
 ## 🚀 v1.0 Release Summary
 
-SnipShift v1.0 is a fully-featured marketplace platform connecting barbers, stylists, and industry professionals with flexible work opportunities. The platform includes:
+HospoGo v1.0 is a fully-featured marketplace platform connecting barbers, stylists, and industry professionals with flexible work opportunities. The platform includes:
 
 - **Complete User Journey:** Signup → Onboarding → Dashboard → Job Discovery → Application → Communication → Payment
 - **Multi-Role Support:** Professionals, Business Owners, Hubs, Brands, and Trainers

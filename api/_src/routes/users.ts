@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as emailService from '../services/email.service.js';
 import { auth } from '../config/firebase.js';
+import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 import { z } from 'zod';
 import { uploadProfileImages } from '../middleware/upload.js';
 import admin from 'firebase-admin';
@@ -18,6 +19,18 @@ const UpdateProfileSchema = z.object({
   location: z.string().max(255).optional(),
   avatarUrl: z.string().url().optional(),
   bannerUrl: z.string().url().optional(),
+  // HospoGo compliance + preferences
+  rsaNumber: z.string().max(100).optional(),
+  rsaExpiry: z.string().optional(), // expected YYYY-MM-DD (stored as date)
+  rsaCertificateUrl: z.string().url().optional(),
+  hospitalityRole: z.enum(['Bartender', 'Waitstaff', 'Barista', 'Kitchen Hand', 'Manager']).optional(),
+  hourlyRatePreference: z.union([
+    z.number().nonnegative(),
+    z.string().refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'hourlyRatePreference must be a non-negative number'),
+  ]).optional(),
   businessSettings: z.object({
     openingHours: z.record(z.string(), z.object({
       open: z.string(),
@@ -133,6 +146,13 @@ router.post('/register', asyncHandler(async (req, res) => {
         role: dbRole as 'professional' | 'business' | 'admin' | 'trainer' | 'hub',
       });
     } catch (dbError: any) {
+      if (isDatabaseComputeQuotaExceededError(dbError)) {
+        res.status(503).json({
+          message: 'Service temporarily unavailable: database compute quota exceeded. Please try again later.',
+          code: 'DB_QUOTA_EXCEEDED',
+        });
+        return;
+      }
       console.error('[REGISTER ERROR] Database error creating user:', dbError);
       console.error('[REGISTER ERROR] Database error stack:', dbError?.stack);
       res.status(500).json({ 
@@ -202,6 +222,13 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       location: user.location,
       avatarUrl: user.avatarUrl || null,
       bannerUrl: user.bannerUrl || null,
+      rsaNumber: (user as any).rsaNumber ?? null,
+      rsaExpiry: (user as any).rsaExpiry ?? null,
+      rsaCertificateUrl: (user as any).rsaCertificateUrl ?? null,
+      hospitalityRole: (user as any).hospitalityRole ?? null,
+      hourlyRatePreference: (user as any).hourlyRatePreference
+        ? parseFloat((user as any).hourlyRatePreference)
+        : null,
       roles: user.roles || [user.role], // Use roles from DB
       currentRole: user.role,
       uid: req.user.uid, // Keep the firebase UID from the token/request
@@ -274,12 +301,14 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   // Process uploaded files (FormData) - upload to Firebase Storage if present
   let processedAvatarUrl: string | undefined = undefined;
   let processedBannerUrl: string | undefined = undefined;
+  let processedRsaCertificateUrl: string | undefined = undefined;
 
   if (files) {
     console.log('[PUT /api/me] Files received:', {
       logo: files.logo ? files.logo[0]?.originalname : undefined,
       banner: files.banner ? files.banner[0]?.originalname : undefined,
       avatar: files.avatar ? files.avatar[0]?.originalname : undefined,
+      rsaCertificate: files.rsaCertificate ? files.rsaCertificate[0]?.originalname : undefined,
     });
 
     try {
@@ -337,6 +366,28 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
         processedBannerUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
         console.log('[PUT /api/me] Uploaded banner to Firebase Storage:', processedBannerUrl.substring(0, 50) + '...');
       }
+
+      // Process RSA certificate file (PDF or image)
+      const rsaFile = files.rsaCertificate?.[0];
+      if (rsaFile) {
+        const isPdf = rsaFile.mimetype === 'application/pdf';
+        const fileExtension = isPdf
+          ? 'pdf'
+          : (rsaFile.originalname.split('.').pop() || 'jpg');
+        const fileName = `users/${req.user.uid}/rsa-certificate.${fileExtension}`;
+        const file = bucket.file(fileName);
+
+        await file.save(rsaFile.buffer, {
+          metadata: {
+            contentType: rsaFile.mimetype,
+          },
+        });
+
+        await file.makePublic();
+
+        processedRsaCertificateUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        console.log('[PUT /api/me] Uploaded RSA certificate to Firebase Storage:', processedRsaCertificateUrl.substring(0, 50) + '...');
+      }
     } catch (error: any) {
       console.error('[PUT /api/me] Error uploading files to Firebase Storage:', error);
       res.status(500).json({ 
@@ -376,7 +427,20 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     return;
   }
 
-  const { displayName, bio, phone, location, avatarUrl, bannerUrl, businessSettings } = validationResult.data;
+  const {
+    displayName,
+    bio,
+    phone,
+    location,
+    avatarUrl,
+    bannerUrl,
+    rsaNumber,
+    rsaExpiry,
+    rsaCertificateUrl,
+    hospitalityRole,
+    hourlyRatePreference,
+    businessSettings,
+  } = validationResult.data;
 
   // Prepare update object
   const updates: any = {};
@@ -384,6 +448,10 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   if (bio !== undefined) updates.bio = bio;
   if (phone !== undefined) updates.phone = phone;
   if (location !== undefined) updates.location = location;
+  if (rsaNumber !== undefined) updates.rsaNumber = rsaNumber;
+  if (rsaExpiry !== undefined) updates.rsaExpiry = rsaExpiry;
+  if (hospitalityRole !== undefined) updates.hospitalityRole = hospitalityRole;
+  if (hourlyRatePreference !== undefined) updates.hourlyRatePreference = String(hourlyRatePreference);
   if (businessSettings !== undefined) {
     // Store businessSettings as JSON in the database
     // Note: This assumes the database column exists or can be added
@@ -424,6 +492,16 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     console.log('[PUT /api/me] Skipping bannerUrl update - received invalid/empty value:', bannerUrl);
   }
 
+  if (processedRsaCertificateUrl !== undefined && isValidUrl(processedRsaCertificateUrl)) {
+    updates.rsaCertificateUrl = processedRsaCertificateUrl;
+    console.log('[PUT /api/me] Updating rsaCertificateUrl from uploaded file:', processedRsaCertificateUrl.substring(0, 50) + '...');
+  } else if (rsaCertificateUrl !== undefined && isValidUrl(rsaCertificateUrl)) {
+    updates.rsaCertificateUrl = rsaCertificateUrl;
+    console.log('[PUT /api/me] Updating rsaCertificateUrl from body:', rsaCertificateUrl.substring(0, 50) + '...');
+  } else if (rsaCertificateUrl !== undefined) {
+    console.log('[PUT /api/me] Skipping rsaCertificateUrl update - received invalid/empty value:', rsaCertificateUrl);
+  }
+
   // Update user in database
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
 
@@ -462,6 +540,13 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     location: updatedUser.location,
     avatarUrl: updatedUser.avatarUrl || null,
     bannerUrl: updatedUser.bannerUrl || null,
+    rsaNumber: (updatedUser as any).rsaNumber ?? null,
+    rsaExpiry: (updatedUser as any).rsaExpiry ?? null,
+    rsaCertificateUrl: (updatedUser as any).rsaCertificateUrl ?? null,
+    hospitalityRole: (updatedUser as any).hospitalityRole ?? null,
+    hourlyRatePreference: (updatedUser as any).hourlyRatePreference
+      ? parseFloat((updatedUser as any).hourlyRatePreference)
+      : null,
     roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
     currentRole: updatedUser.role,
     uid: req.user.uid,

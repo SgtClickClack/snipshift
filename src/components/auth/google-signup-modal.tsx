@@ -85,7 +85,7 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
             Welcome, {userData.name}!
           </DialogTitle>
           <DialogDescription>
-            To complete your sign-up with Google, please select your account type. This helps us personalize your Snipshift experience.
+            To complete your sign-up with Google, please select your account type. This helps us personalize your HospoGo experience.
           </DialogDescription>
         </DialogHeader>
 
@@ -142,7 +142,7 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
               disabled={!selectedRole}
               data-testid="button-continue"
             >
-              Continue to Snipshift
+              Continue to HospoGo
             </Button>
           </div>
         </div>

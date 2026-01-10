@@ -1,11 +1,11 @@
-# SnipShift
+﻿# HospoGo
 
 > The Gig Economy Platform for Barbers, Stylists, and Industry Professionals
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/SgtClickClack/snipshift)
 [![License](https://img.shields.io/badge/license-Private-red.svg)](LICENSE)
 
-SnipShift is an "Uber for Barbers" marketplace platform that connects barbershops, salons, and workspaces with talented professionals seeking flexible work opportunities. Built for the gig economy, SnipShift empowers professionals to work on their own terms while helping businesses find qualified talent quickly and efficiently.
+HospoGo is an "Uber for Barbers" marketplace platform that connects barbershops, salons, and workspaces with talented professionals seeking flexible work opportunities. Built for the gig economy, HospoGo empowers professionals to work on their own terms while helping businesses find qualified talent quickly and efficiently.
 
 ## ✨ Features
 
@@ -295,5 +295,5 @@ Built with modern web technologies and best practices. Special thanks to the ope
 
 ---
 
-**SnipShift v1.0.0** - Ready for production 🚀
+**HospoGo v1.0.0** - Ready for production 🚀
 

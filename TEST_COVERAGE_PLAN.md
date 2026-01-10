@@ -1,9 +1,9 @@
-# Test Coverage & Audit Plan
+﻿# Test Coverage & Audit Plan
 
 ## Status Overview
 
 **Date:** November 25, 2025
-**Project:** Snipshift API
+**Project:** HospoGo API
 **Test Runner:** Vitest (configured with `@vitest/coverage-v8`)
 **Current Health:** ⚠️ **Attention Needed**. Core critical paths passed in previous runs, but v1.3.0 updates introduced regression in test stability (mocking issues).
 **Overall Coverage:** **Unknown** (Last valid run: 36.91%). Current runs failing due to ESM mocking constraints.

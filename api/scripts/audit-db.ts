@@ -5,7 +5,7 @@
  * This helps identify schema drift between the codebase and the live database.
  * 
  * Usage:
- *   docker exec -it snipshift-api npx tsx scripts/audit-db.ts
+ *   docker exec -it hospogo-api npx tsx scripts/audit-db.ts
  * 
  * Or locally:
  *   cd api
@@ -147,7 +147,7 @@ async function audit() {
     { name: 'attendance_status', description: 'Attendance status (pending/completed/no_show)' },
     { name: 'payment_intent_id', description: 'Stripe payment intent ID' },
     { name: 'stripe_charge_id', description: 'Stripe charge ID' },
-    { name: 'application_fee_amount', description: 'Snipshift commission in cents' },
+    { name: 'application_fee_amount', description: 'HospoGo commission in cents' },
     { name: 'transfer_amount', description: 'Amount sent to barber in cents' },
     { name: 'auto_accept', description: 'Auto-accept applications' },
     { name: 'assignee_id', description: 'Assigned professional ID' },
@@ -226,8 +226,8 @@ async function audit() {
     console.log(`❌ Found ${totalIssues} issue(s) that need to be fixed.`);
     console.log('');
     console.log('🔧 TO FIX:');
-    console.log('   1. Run: docker exec -it snipshift-api npm run db:migrate');
-    console.log('   2. Or: docker exec -it snipshift-api npx drizzle-kit push');
+    console.log('   1. Run: docker exec -it hospogo-api npm run db:migrate');
+    console.log('   2. Or: docker exec -it hospogo-api npx drizzle-kit push');
     console.log('   3. Then run this audit again to verify');
   }
   console.log('');

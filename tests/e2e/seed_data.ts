@@ -1,4 +1,4 @@
-import { Page, BrowserContext } from '@playwright/test';
+﻿import { Page, BrowserContext } from '@playwright/test';
 
 /**
  * Seed Data Helper for Calendar Lifecycle E2E Tests
@@ -149,7 +149,7 @@ export async function setupUserContext(
 ): Promise<void> {
   await context.addInitScript((userData) => {
     sessionStorage.setItem(
-      'snipshift_test_user',
+      'hospogo_test_user',
       JSON.stringify(userData)
     );
     localStorage.setItem('E2E_MODE', 'true');

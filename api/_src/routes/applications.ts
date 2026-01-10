@@ -78,18 +78,40 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   // Get user details if authenticated
   let userEmail = validationResult.data.email;
   let userName = validationResult.data.name;
+  let applicantHasRsaCertificate = false;
+  let applicantRsaExpiry: string | null = null;
   
   if (finalUserId) {
     const user = await usersRepo.getUserById(finalUserId);
     if (user) {
       userEmail = user.email;
       userName = user.name;
+      applicantHasRsaCertificate = !!(user as any).rsaCertificateUrl;
+      applicantRsaExpiry = (user as any).rsaExpiry ?? null;
     }
   }
 
   if (!userEmail || !userName) {
     res.status(400).json({ message: 'Name and email are required' });
     return;
+  }
+
+  // HospoGo compliance gate: cannot apply without an uploaded RSA certificate.
+  // Enforced server-side to prevent bypassing UI checks.
+  if (finalUserId) {
+    const expiryDate = applicantRsaExpiry ? new Date(applicantRsaExpiry) : null;
+    const isExpiryValid = expiryDate ? !isNaN(expiryDate.getTime()) : true;
+    const isExpired = expiryDate && isExpiryValid
+      ? expiryDate.getTime() < new Date().setHours(0, 0, 0, 0)
+      : false;
+
+    if (!applicantHasRsaCertificate || isExpired) {
+      res.status(403).json({
+        message: 'RSA certificate required to apply for shifts.',
+        code: 'RSA_REQUIRED',
+      });
+      return;
+    }
   }
 
   // Verify existence of target (Shift or Job)
@@ -153,7 +175,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
     // Send email notification to job owner
     const owner = await usersRepo.getUserById(ownerId);
     if (owner && owner.email) {
-      const applicationLink = `https://snipshift.com.au/manage-jobs?jobId=${targetId}`;
+      const applicationLink = `https://hospogo.com/manage-jobs?jobId=${targetId}`;
       await emailService.notifyApplicationReceived(
         owner.email,
         userName,

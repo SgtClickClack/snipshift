@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -214,13 +214,13 @@ export default function EditProfilePage() {
                   const confirmed = window.confirm(
                     'Are you sure you want to delete your account?\n\n' +
                     'To proceed with account deletion, please contact our support team at:\n\n' +
-                    'support@snipshift.com.au\n\n' +
+                    'support@hospogo.com\n\n' +
                     'Our team will verify your identity and process your request within 48 hours.'
                   );
                   if (confirmed) {
                     toast({
                       title: "Deletion Request",
-                      description: "Please email support@snipshift.com.au to complete your account deletion request.",
+                      description: "Please email support@hospogo.com to complete your account deletion request.",
                       variant: "default",
                     });
                   }

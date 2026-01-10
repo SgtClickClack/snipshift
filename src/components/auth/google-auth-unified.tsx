@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +24,7 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
       // In production, this would integrate with actual Google OAuth
       const mockGoogleUser = {
         id: `google_${Date.now()}`,
-        email: "demo@snipshift.com.au",
+        email: "demo@hospogo.com",
         password: "",
         role: "professional" as const,
         createdAt: new Date(),
@@ -38,7 +38,7 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
       if (mode === "signup") {
         const response = await fetch("/api/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json", 'X-Snipshift-CSRF': '1' },
+          headers: { "Content-Type": "application/json", 'X-HospoGo-CSRF': '1' },
           body: JSON.stringify(mockGoogleUser),
         });
 
@@ -47,7 +47,7 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
           login(user);
           toast({
             title: "Account created successfully!",
-            description: "Welcome to Snipshift",
+            description: "Welcome to HospoGo",
           });
           navigate('/role-selection');
         } else {
@@ -57,7 +57,7 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
         // Login mode
         const response = await fetch("/api/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json", 'X-Snipshift-CSRF': '1' },
+          headers: { "Content-Type": "application/json", 'X-HospoGo-CSRF': '1' },
           body: JSON.stringify({
             email: mockGoogleUser.email,
             provider: "google"

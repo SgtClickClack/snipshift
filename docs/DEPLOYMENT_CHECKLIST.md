@@ -1,6 +1,6 @@
 # Production Deployment Checklist
 
-Use this checklist to ensure your SnipShift deployment is production-ready.
+Use this checklist to ensure your HospoGo deployment is production-ready.
 
 ## ✅ Pre-Deployment
 

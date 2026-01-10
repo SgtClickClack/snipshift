@@ -7,7 +7,7 @@ export default function AboutPage() {
     <>
       <SEO
         title="About Us"
-        description="Learn about SnipShift's mission to connect barbers, stylists, and professionals with flexible work opportunities."
+        description="Learn about HospoGo's mission to connect barbers, stylists, and professionals with flexible work opportunities."
         url="/about"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 py-12 px-4">
@@ -15,7 +15,7 @@ export default function AboutPage() {
           {/* Hero Section */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-steel-900 mb-4">
-              About SnipShift
+              About HospoGo
             </h1>
             <p className="text-xl text-steel-600 max-w-2xl mx-auto">
               Connecting barbers, stylists, and professionals with flexible work opportunities
@@ -32,7 +32,7 @@ export default function AboutPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-steel-900 mb-3">Our Mission</h2>
                   <p className="text-steel-700 text-lg leading-relaxed">
-                    SnipShift bridges the gap between barbershops and salons that need flexible staffing, 
+                    HospoGo bridges the gap between barbershops and salons that need flexible staffing, 
                     and talented professionals seeking work opportunities. We believe in empowering the gig economy within 
                     the barbering and beauty industry, making it easier for businesses to find qualified talent and for professionals 
                     to build their careers on their own terms.
@@ -53,14 +53,14 @@ export default function AboutPage() {
                   Yet, finding these connections has been fragmented and inefficient.
                 </p>
                 <p>
-                  SnipShift was born from the recognition that the traditional job board model doesn't work for the 
+                  HospoGo was born from the recognition that the traditional job board model doesn't work for the 
                   industry. We're not just matching resumes to job descriptions—we're building a community where professionals 
                   can showcase their skills, businesses can find trusted talent, and everyone benefits from the flexibility 
                   that makes the industry thrive.
                 </p>
                 <p>
                   Whether you're a barber looking for weekend shifts, a salon owner needing coverage during peak seasons, 
-                  or a brand looking to connect with professionals, SnipShift provides the tools and platform to 
+                  or a brand looking to connect with professionals, HospoGo provides the tools and platform to 
                   make those connections seamless.
                 </p>
               </div>
@@ -112,7 +112,7 @@ export default function AboutPage() {
               <h2 className="text-2xl font-bold text-steel-900 mb-4">Join the Movement</h2>
               <p className="text-steel-700 mb-6 max-w-2xl mx-auto">
                 Whether you're a professional looking for opportunities or a business seeking talent, 
-                SnipShift is here to help you succeed in the industry.
+                HospoGo is here to help you succeed in the industry.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a

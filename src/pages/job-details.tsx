@@ -292,7 +292,7 @@ export default function JobDetailsPage() {
       employmentType: 'CONTRACTOR',
       hiringOrganization: {
         '@type': 'Organization',
-        name: job.shopName || 'SnipShift',
+        name: job.shopName || 'HospoGo',
       },
     };
 
@@ -324,7 +324,7 @@ export default function JobDetailsPage() {
     if (job.id) {
       schema.identifier = {
         '@type': 'PropertyValue',
-        name: 'SnipShift',
+        name: 'HospoGo',
         value: job.id,
       };
     }

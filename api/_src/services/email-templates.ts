@@ -1,8 +1,8 @@
 /**
  * Email Templates
  * 
- * Basic HTML email templates for Snipshift
- * Uses Snipshift brand colors (#0f172a)
+ * Basic HTML email templates for HospoGo
+ * Uses HospoGo brand colors (#0f172a)
  */
 
 /**
@@ -15,7 +15,7 @@ export function getWelcomeEmail(name: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Snipshift</title>
+  <title>Welcome to HospoGo</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif; background-color: #f6f9fc;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f6f9fc; padding: 40px 0;">
@@ -25,22 +25,22 @@ export function getWelcomeEmail(name: string): string {
           <!-- Header -->
           <tr>
             <td style="background-color: #0f172a; padding: 32px 24px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">Snipshift</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">HospoGo</h1>
             </td>
           </tr>
           
           <!-- Content -->
           <tr>
             <td style="padding: 48px;">
-              <h2 style="color: #0f172a; font-size: 24px; font-weight: bold; margin: 0 0 20px 0;">Welcome to Snipshift!</h2>
+              <h2 style="color: #0f172a; font-size: 24px; font-weight: bold; margin: 0 0 20px 0;">Welcome to HospoGo!</h2>
               
               <p style="color: #334155; font-size: 16px; line-height: 26px; margin: 16px 0;">
                 Hi ${name || 'there'},
               </p>
               
               <p style="color: #334155; font-size: 16px; line-height: 26px; margin: 16px 0;">
-                We're thrilled to have you join the Snipshift community! You're now part of a platform
-                that connects barbers, stylists, and beauticians with flexible work opportunities.
+                We're thrilled to have you join the HospoGo community! You're now part of a platform
+                that connects hospitality staff with venues for flexible work opportunities.
               </p>
               
               <p style="color: #334155; font-size: 16px; line-height: 26px; margin: 16px 0;">
@@ -55,7 +55,7 @@ export function getWelcomeEmail(name: string): string {
               </ul>
               
               <div style="text-align: center; margin: 32px 0;">
-                <a href="https://snipshift.com.au/jobs" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Browse Shifts</a>
+                <a href="https://hospogo.com/jobs" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Browse Shifts</a>
               </div>
               
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
@@ -66,7 +66,7 @@ export function getWelcomeEmail(name: string): string {
               
               <p style="color: #64748b; font-size: 14px; line-height: 24px; margin: 16px 0;">
                 Happy shifting!<br>
-                The Snipshift Team
+                The HospoGo Team
               </p>
             </td>
           </tr>
@@ -87,7 +87,7 @@ export function getApplicationEmail(
   jobTitle: string,
   link?: string
 ): string {
-  const applicationLink = link || 'https://snipshift.com.au/manage-jobs';
+  const applicationLink = link || 'https://hospogo.com/manage-jobs';
   
   return `
 <!DOCTYPE html>
@@ -105,7 +105,7 @@ export function getApplicationEmail(
           <!-- Header -->
           <tr>
             <td style="background-color: #0f172a; padding: 32px 24px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">Snipshift</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">HospoGo</h1>
             </td>
           </tr>
           
@@ -137,7 +137,7 @@ export function getApplicationEmail(
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
               
               <p style="color: #64748b; font-size: 14px; line-height: 24px; margin: 16px 0;">
-                This is an automated notification from Snipshift.
+                This is an automated notification from HospoGo.
               </p>
             </td>
           </tr>

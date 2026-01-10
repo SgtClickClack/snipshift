@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
                   <p className="text-xs text-muted-foreground">
                     <strong>Didn't receive the email?</strong>
                     <br />
-                    • Check your <strong>spam/junk folder</strong> — the email comes from noreply@snipshift-75b04.firebaseapp.com
+                    • Check your <strong>spam/junk folder</strong> — password reset emails are sometimes filtered by email providers
                     <br />
                     • If you signed up with Google, use "Sign in with Google" instead
                     <br />

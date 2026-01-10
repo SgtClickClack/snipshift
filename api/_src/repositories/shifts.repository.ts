@@ -19,13 +19,21 @@ function isMissingColumnError(err: any, column: string): boolean {
 function shouldFallbackToLegacyShiftSchema(err: any): boolean {
   // We’ve observed production DBs that are missing the newer `lat`/`lng` columns on `shifts`.
   // Drizzle inserts/selects reference all schema columns and will 500 on these environments.
-  return isMissingColumnError(err, 'lat') || isMissingColumnError(err, 'lng');
+  return (
+    isMissingColumnError(err, 'lat') ||
+    isMissingColumnError(err, 'lng') ||
+    isMissingColumnError(err, 'role') ||
+    isMissingColumnError(err, 'uniform_requirements') ||
+    isMissingColumnError(err, 'rsa_required') ||
+    isMissingColumnError(err, 'expected_pax')
+  );
 }
 
 function hydrateLegacyShiftRow(row: any): typeof shifts.$inferSelect {
   return {
     ...row,
     assigneeId: row?.assigneeId ?? null,
+    role: row?.role ?? null,
     attendanceStatus: 'pending',
     paymentStatus: 'UNPAID',
     paymentIntentId: null,
@@ -37,6 +45,9 @@ function hydrateLegacyShiftRow(row: any): typeof shifts.$inferSelect {
     isRecurring: false,
     autoAccept: false,
     parentShiftId: null,
+    uniformRequirements: row?.uniformRequirements ?? null,
+    rsaRequired: row?.rsaRequired ?? false,
+    expectedPax: row?.expectedPax ?? null,
   } as any;
 }
 
@@ -115,11 +126,15 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
         id: shifts.id,
         employerId: shifts.employerId,
         assigneeId: shifts.assigneeId,
+        role: shifts.role,
         title: shifts.title,
         description: shifts.description,
         startTime: shifts.startTime,
         endTime: shifts.endTime,
         hourlyRate: shifts.hourlyRate,
+        uniformRequirements: shifts.uniformRequirements,
+        rsaRequired: shifts.rsaRequired,
+        expectedPax: shifts.expectedPax,
         status: shifts.status,
         attendanceStatus: shifts.attendanceStatus,
         paymentStatus: shifts.paymentStatus,
@@ -195,11 +210,15 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       id: shifts.id,
       employerId: shifts.employerId,
       assigneeId: shifts.assigneeId,
+      role: shifts.role,
       title: shifts.title,
       description: shifts.description,
       startTime: shifts.startTime,
       endTime: shifts.endTime,
       hourlyRate: shifts.hourlyRate,
+      uniformRequirements: shifts.uniformRequirements,
+      rsaRequired: shifts.rsaRequired,
+      expectedPax: shifts.expectedPax,
       status: shifts.status,
       attendanceStatus: shifts.attendanceStatus,
       paymentStatus: shifts.paymentStatus,
@@ -232,11 +251,15 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
  */
 export async function createShift(shiftData: {
   employerId: string;
+  role?: string;
   title: string;
   description: string;
   startTime: Date | string;
   endTime: Date | string;
   hourlyRate: string;
+  uniformRequirements?: string;
+  rsaRequired?: boolean;
+  expectedPax?: number;
   status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
   assigneeId?: string;
   location?: string;
@@ -256,11 +279,15 @@ export async function createShift(shiftData: {
       .insert(shifts)
       .values({
         employerId: shiftData.employerId,
+        role: shiftData.role || null,
         title: shiftData.title,
         description: shiftData.description,
         startTime: typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime,
         endTime: typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime,
         hourlyRate: shiftData.hourlyRate,
+        uniformRequirements: shiftData.uniformRequirements || null,
+        rsaRequired: shiftData.rsaRequired ?? false,
+        expectedPax: shiftData.expectedPax ?? null,
         status: shiftData.status || 'draft',
         assigneeId: shiftData.assigneeId || null,
         location: shiftData.location || null,
@@ -282,49 +309,68 @@ export async function createShift(shiftData: {
       const start = typeof shiftData.startTime === 'string' ? new Date(shiftData.startTime) : shiftData.startTime;
       const end = typeof shiftData.endTime === 'string' ? new Date(shiftData.endTime) : shiftData.endTime;
 
-      const insertWithoutAssignee = async () => {
-        return await (db as any).execute(sql`
-          INSERT INTO shifts (
-            employer_id,
-            title,
-            description,
-            start_time,
-            end_time,
-            hourly_rate,
-            status,
-            location
-          ) VALUES (
-            ${shiftData.employerId},
-            ${shiftData.title},
-            ${shiftData.description},
-            ${start},
-            ${end},
-            ${shiftData.hourlyRate},
-            ${shiftData.status || 'draft'},
-            ${shiftData.location || null}
-          )
-          RETURNING
-            id,
-            employer_id AS "employerId",
-            title,
-            description,
-            start_time AS "startTime",
-            end_time AS "endTime",
-            hourly_rate AS "hourlyRate",
-            status,
-            location,
-            created_at AS "createdAt",
-            updated_at AS "updatedAt"
-        `);
-      };
+      const insertLegacyBestEffort = async (withAssigneeId: boolean) => {
+        const role = shiftData.role || null;
+        const uniformRequirements = shiftData.uniformRequirements || null;
+        const rsaRequired = shiftData.rsaRequired ?? false;
+        const expectedPax = shiftData.expectedPax ?? null;
 
-      let raw: any;
-      if (shiftData.assigneeId) {
-        try {
-          raw = await (db as any).execute(sql`
+        const tryWithHospoFields = async () => {
+          return await (db as any).execute(sql`
             INSERT INTO shifts (
               employer_id,
-              assignee_id,
+              ${withAssigneeId ? sql`assignee_id,` : sql``}
+              role,
+              title,
+              description,
+              start_time,
+              end_time,
+              hourly_rate,
+              uniform_requirements,
+              rsa_required,
+              expected_pax,
+              status,
+              location
+            ) VALUES (
+              ${shiftData.employerId},
+              ${withAssigneeId ? sql`${shiftData.assigneeId},` : sql``}
+              ${role},
+              ${shiftData.title},
+              ${shiftData.description},
+              ${start},
+              ${end},
+              ${shiftData.hourlyRate},
+              ${uniformRequirements},
+              ${rsaRequired},
+              ${expectedPax},
+              ${shiftData.status || 'draft'},
+              ${shiftData.location || null}
+            )
+            RETURNING
+              id,
+              employer_id AS "employerId",
+              ${withAssigneeId ? sql`assignee_id AS "assigneeId",` : sql``}
+              role,
+              title,
+              description,
+              start_time AS "startTime",
+              end_time AS "endTime",
+              hourly_rate AS "hourlyRate",
+              uniform_requirements AS "uniformRequirements",
+              rsa_required AS "rsaRequired",
+              expected_pax AS "expectedPax",
+              status,
+              location,
+              created_at AS "createdAt",
+              updated_at AS "updatedAt"
+          `);
+        };
+
+        const tryMinimal = async () => {
+          return await (db as any).execute(sql`
+            INSERT INTO shifts (
+              employer_id,
+              ${withAssigneeId ? sql`assignee_id,` : sql``}
               title,
               description,
               start_time,
@@ -334,7 +380,7 @@ export async function createShift(shiftData: {
               location
             ) VALUES (
               ${shiftData.employerId},
-              ${shiftData.assigneeId},
+              ${withAssigneeId ? sql`${shiftData.assigneeId},` : sql``}
               ${shiftData.title},
               ${shiftData.description},
               ${start},
@@ -346,7 +392,7 @@ export async function createShift(shiftData: {
             RETURNING
               id,
               employer_id AS "employerId",
-              assignee_id AS "assigneeId",
+              ${withAssigneeId ? sql`assignee_id AS "assigneeId",` : sql``}
               title,
               description,
               start_time AS "startTime",
@@ -357,16 +403,38 @@ export async function createShift(shiftData: {
               created_at AS "createdAt",
               updated_at AS "updatedAt"
           `);
+        };
+
+        try {
+          return await tryWithHospoFields();
+        } catch (e: any) {
+          // If any of the Hospo fields don't exist yet, retry with minimal columns.
+          if (
+            isMissingColumnError(e, 'role') ||
+            isMissingColumnError(e, 'uniform_requirements') ||
+            isMissingColumnError(e, 'rsa_required') ||
+            isMissingColumnError(e, 'expected_pax')
+          ) {
+            return await tryMinimal();
+          }
+          throw e;
+        }
+      };
+
+      let raw: any;
+      if (shiftData.assigneeId) {
+        try {
+          raw = await insertLegacyBestEffort(true);
         } catch (e: any) {
           // If the environment is missing assignee_id too, retry without it.
           if (isMissingColumnError(e, 'assignee_id')) {
-            raw = await insertWithoutAssignee();
+            raw = await insertLegacyBestEffort(false);
           } else {
             throw e;
           }
         }
       } else {
-        raw = await insertWithoutAssignee();
+        raw = await insertLegacyBestEffort(false);
       }
 
       const rows = (raw as any)?.rows ?? raw;

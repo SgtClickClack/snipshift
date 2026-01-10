@@ -1,4 +1,4 @@
-# 🎯 SnipShift - Project Handover Document
+﻿# 🎯 HospoGo - Project Handover Document
 
 **Version:** 1.1.1  
 **Date:** December 16, 2025  
@@ -8,7 +8,7 @@
 
 ## 📊 Executive Summary
 
-SnipShift is a gig economy platform ("Uber for Barbers") connecting barbershops/salons with freelance professionals. The codebase has been fully audited and stabilized:
+HospoGo is a gig economy platform ("Uber for Barbers") connecting barbershops/salons with freelance professionals. The codebase has been fully audited and stabilized:
 
 | Metric | Status |
 |--------|--------|

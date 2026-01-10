@@ -1,6 +1,6 @@
-﻿import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Store, UserCheck, Award, GraduationCap, Scissors } from "lucide-react";
+import { Store, UserCheck, Award, GraduationCap, FastForward } from "lucide-react";
 import { authService } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/useToast";
@@ -72,12 +72,12 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex justify-center mb-8">
             <div className="p-4 bg-gradient-to-br from-red-accent to-red-accent-dark rounded-full shadow-xl">
-              <Scissors className="h-12 w-12 text-white" />
+              <FastForward className="h-12 w-12 text-white" />
             </div>
           </div>
           
           <h1 className="text-4xl md:text-5xl font-bold text-steel-900 mb-6">
-            Welcome to Snipshift!
+            Welcome to HospoGo!
           </h1>
           <p className="text-xl text-steel-600 mb-8 max-w-2xl mx-auto">
             Choose a role to access that dashboard. You can have multiple roles on your account.

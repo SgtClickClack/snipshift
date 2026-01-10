@@ -1,6 +1,6 @@
-# FINAL POLISH AUDIT
+﻿# FINAL POLISH AUDIT
 
-**Project:** Snipshift
+**Project:** HospoGo
 **Date:** December 3, 2025
 **Severity:** Low (Polish)
 

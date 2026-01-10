@@ -1,6 +1,6 @@
-# Static Analysis: Crash Risk & Broken Flows Report
+﻿# Static Analysis: Crash Risk & Broken Flows Report
 
-**Project:** Snipshift
+**Project:** HospoGo
 **Date:** December 3, 2025
 **Severity:** Critical (Proactive QA)
 

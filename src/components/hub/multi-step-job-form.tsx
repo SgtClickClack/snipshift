@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Save, Send, Calendar, DollarSign, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import { HOSPITALITY_COMMON_SKILLS, HOSPITALITY_ROLES } from "@/utils/hospitality";
 
 interface JobFormData {
   title: string;
@@ -36,11 +37,7 @@ const AUSTRALIAN_STATES = [
   "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"
 ];
 
-const COMMON_SKILLS = [
-  "Hair Cutting", "Beard Trimming", "Hair Styling", "Hair Color", 
-  "Highlights", "Perms", "Shampoo & Conditioning", "Blow Dry",
-  "Razor Work", "Fade Cuts", "Scissor Work", "Customer Service"
-];
+const COMMON_SKILLS = [...HOSPITALITY_COMMON_SKILLS];
 
 export default function MultiStepJobForm({
   formData,
@@ -120,7 +117,7 @@ export default function MultiStepJobForm({
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>{editingJob ? 'Edit Job Posting' : 'Create New Job Posting'}</span>
+          <span>{editingJob ? 'Edit Shift Posting' : 'Create New Shift Posting'}</span>
           <Button variant="ghost" onClick={onCancel} data-testid="button-cancel-job-form">
             ✕
           </Button>
@@ -149,8 +146,8 @@ export default function MultiStepJobForm({
         </div>
         
         <div className="text-sm text-muted-foreground mt-2">
-          {currentStep === 1 && "Step 1: Job Details"}
-          {currentStep === 2 && "Step 2: Compensation & Location"}
+          {currentStep === 1 && "Step 1: Shift Role & Details"}
+          {currentStep === 2 && "Step 2: Shift Date & Time"}
           {currentStep === 3 && "Step 3: Review & Publish"}
         </div>
       </CardHeader>
@@ -160,24 +157,24 @@ export default function MultiStepJobForm({
         {currentStep === 1 && (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="title">Job Title *</Label>
+              <Label htmlFor="title">Shift Role *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => updateFormData({ title: e.target.value })}
-                placeholder="e.g., Weekend Barber Needed"
+                placeholder={`e.g., ${HOSPITALITY_ROLES[0]} Needed`}
                 data-testid="input-job-title"
               />
             </div>
             
             <div>
-              <Label htmlFor="description">Job Description *</Label>
+              <Label htmlFor="description">Shift Notes *</Label>
               <Textarea
                 id="description"
                 rows={4}
                 value={formData.description}
                 onChange={(e) => updateFormData({ description: e.target.value })}
-                placeholder="Describe the role, responsibilities, and what you're looking for in a professional..."
+                placeholder="Describe duties, venue type, and any key notes for the shift..."
                 data-testid="input-job-description"
               />
             </div>
@@ -270,7 +267,7 @@ export default function MultiStepJobForm({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="payRate">Pay Rate *</Label>
+              <Label htmlFor="payRate">Hourly Rate *</Label>
                 <Input
                   id="payRate"
                   type="number"
@@ -283,7 +280,7 @@ export default function MultiStepJobForm({
                 />
               </div>
               <div>
-                <Label htmlFor="payType">Pay Type *</Label>
+                <Label htmlFor="payType">Rate Type *</Label>
                 <Select value={formData.payType} onValueChange={(value: any) => updateFormData({ payType: value })}>
                   <SelectTrigger data-testid="select-pay-type">
                     <SelectValue placeholder="Select pay type" />
@@ -291,7 +288,6 @@ export default function MultiStepJobForm({
                   <SelectContent>
                     <SelectItem value="hourly">Per Hour</SelectItem>
                     <SelectItem value="daily">Per Day</SelectItem>
-                    <SelectItem value="commission">Commission</SelectItem>
                     <SelectItem value="fixed">Fixed Rate</SelectItem>
                   </SelectContent>
                 </Select>
@@ -374,7 +370,7 @@ export default function MultiStepJobForm({
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-blue-800 mb-2">Ready to publish?</h4>
               <p className="text-sm text-blue-600">
-                Once published, your job will be visible to all professionals on Snipshift. 
+                Once published, your shift will be visible to all professionals on HospoGo. 
                 You can edit or remove it at any time from your dashboard.
               </p>
             </div>

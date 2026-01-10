@@ -36,10 +36,10 @@ export const ApplicationStatusEmail = ({
         <Container style={container}>
           <Section style={header}>
             <Img
-              src="https://snipshift.com.au/brand-logo.png"
+              src="https://hospogo.com/brand-logo.png"
               width="120"
               height="40"
-              alt="Snipshift"
+              alt="HospoGo"
               style={logo}
             />
           </Section>
@@ -74,7 +74,7 @@ export const ApplicationStatusEmail = ({
                 </Text>
                 
                 <Section style={buttonContainer}>
-                  <Link href="https://snipshift.com.au/my-applications" style={button}>
+                  <Link href="https://hospogo.com/my-applications" style={button}>
                     View Application
                   </Link>
                 </Section>
@@ -92,19 +92,19 @@ export const ApplicationStatusEmail = ({
             {!isAccepted && (
               <Text style={text}>
                 Don't be discouraged! Keep applying to other opportunities that match your skills.
-                There are many shifts available on Snipshift.
+                There are many shifts available on HospoGo.
               </Text>
             )}
             
             <Hr style={hr} />
             
             <Text style={footer}>
-              Keep checking Snipshift for new opportunities!
+              Keep checking HospoGo for new opportunities!
             </Text>
             
             <Text style={footer}>
               Best regards,<br />
-              The Snipshift Team
+              The HospoGo Team
             </Text>
           </Section>
         </Container>

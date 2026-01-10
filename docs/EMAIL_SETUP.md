@@ -1,6 +1,6 @@
 # Email Service Setup Guide
 
-SnipShift uses [Resend](https://resend.com) for transactional emails. The system is designed to work gracefully with or without an API key (mocks emails in development).
+HospoGo uses [Resend](https://resend.com) for transactional emails. The system is designed to work gracefully with or without an API key (mocks emails in development).
 
 ## Quick Setup
 
@@ -18,17 +18,17 @@ Add the following to your `.env` file (or environment variables in production):
 ```bash
 # Resend Email Service
 RESEND_API_KEY=re_your_api_key_here
-RESEND_FROM_EMAIL=Snipshift <noreply@snipshift.com.au>
+RESEND_FROM_EMAIL=HospoGo <noreply@hospogo.com>
 ```
 
-**Note:** Replace `noreply@snipshift.com.au` with your verified domain email address in Resend.
+**Note:** Replace `noreply@hospogo.com` with your verified domain email address in Resend.
 
 ### 3. Verify Your Domain (Production)
 
 For production, you need to verify your sending domain:
 
 1. Go to **Domains** in Resend dashboard
-2. Add your domain (e.g., `snipshift.com.au`)
+2. Add your domain (e.g., `hospogo.com`)
 3. Add the DNS records provided by Resend
 4. Wait for verification (usually a few minutes)
 5. Update `RESEND_FROM_EMAIL` to use your verified domain

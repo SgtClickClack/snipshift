@@ -1,6 +1,6 @@
-# E2E Testing with Playwright
+﻿# E2E Testing with Playwright
 
-This directory contains End-to-End (E2E) tests for SnipShift using Playwright.
+This directory contains End-to-End (E2E) tests for HospoGo using Playwright.
 
 ## Setup
 

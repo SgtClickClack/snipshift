@@ -1,11 +1,11 @@
-@echo off
-echo Starting Snipshift Development Servers...
+﻿@echo off
+echo Starting HospoGo Development Servers...
 echo.
 
-start "Snipshift API Server" cmd /k "cd api && npm start"
+start "HospoGo API Server" cmd /k "cd api && npm start"
 timeout /t 2 /nobreak >nul
 
-start "Snipshift Frontend" cmd /k "npm run dev"
+start "HospoGo Frontend" cmd /k "npm run dev"
 
 echo.
 echo Servers are starting in separate windows.

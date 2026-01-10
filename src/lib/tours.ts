@@ -23,7 +23,7 @@ export function startBusinessTour() {
       {
         element: "body",
         popover: {
-          title: "Welcome to SnipShift",
+          title: "Welcome to HospoGo",
           description: "Let's show you around your new command center.",
           side: "bottom",
           align: "center",

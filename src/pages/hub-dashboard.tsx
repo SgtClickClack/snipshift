@@ -354,12 +354,16 @@ export default function HubDashboard() {
         // Create all recurring shifts
         const promises = (recurringShifts || []).map((shift) => {
           const payload: any = {
+            role: shift.role,
             title: shift.title,
             description: shift.description || shift.requirements || '',
             hourlyRate: shift.hourlyRate,
             startTime: shift.startTime.toISOString(),
             endTime: shift.endTime.toISOString(),
             location: shift.location || '',
+            uniformRequirements: shift.uniformRequirements,
+            rsaRequired: !!shift.rsaRequired,
+            expectedPax: shift.expectedPax,
             status: shift.status || 'open',
           };
           // Add recurring metadata if present
@@ -378,12 +382,16 @@ export default function HubDashboard() {
       } else {
         // Single shift
         const payload = {
+          role: shiftData.role,
           title: shiftData.title,
           description: shiftData.description || shiftData.requirements || '',
           hourlyRate: shiftData.hourlyRate,
           startTime: shiftData.startTime.toISOString(),
           endTime: shiftData.endTime.toISOString(),
           location: shiftData.location || '',
+          uniformRequirements: shiftData.uniformRequirements,
+          rsaRequired: !!shiftData.rsaRequired,
+          expectedPax: shiftData.expectedPax,
           status: shiftData.status || 'open',
         };
         return [await createShift(payload)];
@@ -1119,7 +1127,7 @@ export default function HubDashboard() {
                                     Applying for: <span className="font-medium text-foreground break-words">{app.job?.title || app.shift?.title || 'Unknown Position'}</span>
                                  </div>
                                  {(!app.job && !app.shift) && (
-                                   <p className="text-xs text-amber-600 mt-1">âš ï¸ Original job/shift may have been deleted</p>
+                                   <p className="text-xs text-amber-600 mt-1">Warning: Original job/shift may have been deleted</p>
                                  )}
                               </div>
                               <div className="flex items-center gap-2">

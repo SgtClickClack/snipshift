@@ -1,6 +1,6 @@
 # Go-Live Checklist
 
-This checklist ensures a smooth transition from "Test Mode" to "Production" for SnipShift. Complete all items before launching to production.
+This checklist ensures a smooth transition from "Test Mode" to "Production" for HospoGo. Complete all items before launching to production.
 
 ## 🔒 Security
 

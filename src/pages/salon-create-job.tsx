@@ -33,13 +33,14 @@ import { CalendarIcon, X } from 'lucide-react';
 import { format, differenceInHours, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { SEO } from '@/components/seo/SEO';
+import { HOSPITALITY_ROLES } from '@/utils/hospitality';
 
-type JobTitle = 'Barber' | 'Senior Stylist' | 'Colorist' | 'Apprentice';
+type JobTitle = (typeof HOSPITALITY_ROLES)[number];
 type JobType = 'Coverage' | 'Busy' | 'Sick';
 
 // Zod validation schema
 const jobPostSchema = z.object({
-  jobTitle: z.enum(['Barber', 'Senior Stylist', 'Colorist', 'Apprentice'], {
+  jobTitle: z.enum(['Bartender', 'Waitstaff', 'Barista', 'Barback', 'Kitchen Hand', 'Duty Manager'], {
     required_error: 'Job title is required',
   }),
   jobTypes: z.array(z.enum(['Coverage', 'Busy', 'Sick'])).default([]),
@@ -70,15 +71,15 @@ const jobPostSchema = z.object({
 
 type FormData = z.infer<typeof jobPostSchema>;
 
-const JOB_TITLES: JobTitle[] = ['Barber', 'Senior Stylist', 'Colorist', 'Apprentice'];
+const JOB_TITLES: JobTitle[] = [...HOSPITALITY_ROLES];
 const JOB_TYPES: JobType[] = ['Coverage', 'Busy', 'Sick'];
 const REQUIREMENTS_OPTIONS = [
-  'Must be proficient in fading',
-  'Bring own scissors',
-  'Experience with color work',
-  'Customer service skills',
-  'Licensed professional',
-  'Weekend availability',
+  'RSA required (if serving alcohol)',
+  'RCG required (if gaming venue)',
+  'Black uniform (shirt + enclosed shoes)',
+  'Coffee experience',
+  'Cocktail experience',
+  'Manual handling',
 ];
 
 export default function SalonCreateJobPage() {
@@ -188,8 +189,8 @@ export default function SalonCreateJobPage() {
       location: user?.location || 'Location',
       locationCity: user?.location?.split(',')[0] || undefined,
       status: 'open' as const,
-      salonName: user?.displayName || user?.name || 'Your Salon',
-      shopName: user?.displayName || user?.name || 'Your Salon',
+      salonName: user?.displayName || user?.name || 'Your Venue',
+      shopName: user?.displayName || user?.name || 'Your Venue',
     };
   }, [watchedValues, totalHours, estimatedTotalPay, user]);
 
@@ -200,6 +201,7 @@ export default function SalonCreateJobPage() {
     const endTimeStr = `${dateStr}T${data.endTime}:00`;
 
     const payload = {
+      role: data.jobTitle,
       title: data.jobTitle,
       description:
         data.notes?.trim() || (data.requirements || []).join('\n') || 'Shift details',
@@ -208,6 +210,8 @@ export default function SalonCreateJobPage() {
       startTime: startTimeStr,
       endTime: endTimeStr,
       hourlyRate: parseFloat(data.hourlyRate),
+      // Convenience mapping: if the poster selected an RSA requirement, persist it explicitly.
+      rsaRequired: (data.requirements || []).some((r) => r.toLowerCase().includes('rsa required')),
       requirements: data.requirements,
       notes: data.notes || '',
       totalHours: totalHours,

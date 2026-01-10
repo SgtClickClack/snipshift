@@ -3,7 +3,7 @@
 ## Issue
 Profile picture uploads are failing with CORS errors:
 ```
-Access to XMLHttpRequest at 'https://firebasestorage.googleapis.com/...' from origin 'https://snipshift.com.au' has been blocked by CORS policy
+Access to XMLHttpRequest at 'https://firebasestorage.googleapis.com/...' from origin 'https://hospogo.com' has been blocked by CORS policy
 ```
 
 ## Root Cause
@@ -22,7 +22,7 @@ Firebase Storage requires CORS to be explicitly configured for your domain. The 
 ```json
 [
   {
-    "origin": ["https://snipshift.com.au", "https://www.snipshift.com.au"],
+    "origin": ["https://hospogo.com", "https://www.hospogo.com"],
     "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
     "maxAgeSeconds": 3600,
     "responseHeader": ["Content-Type", "Authorization", "Content-Length", "X-Requested-With"]
@@ -39,7 +39,7 @@ If you have `gsutil` installed and configured:
 cat > cors.json << EOF
 [
   {
-    "origin": ["https://snipshift.com.au", "https://www.snipshift.com.au"],
+    "origin": ["https://hospogo.com", "https://www.hospogo.com"],
     "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
     "maxAgeSeconds": 3600,
     "responseHeader": ["Content-Type", "Authorization", "Content-Length", "X-Requested-With"]
@@ -59,8 +59,8 @@ If you also need to test locally, add localhost origins:
 [
   {
     "origin": [
-      "https://snipshift.com.au",
-      "https://www.snipshift.com.au",
+      "https://hospogo.com",
+      "https://www.hospogo.com",
       "http://localhost:5173",
       "http://localhost:3000",
       "http://127.0.0.1:5173",

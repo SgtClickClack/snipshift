@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { getDashboardRoute, mapRoleToApiRole, AppRole } from "@/lib/roles";
 import { InstallButton } from "@/components/pwa/install-button";
-import logo from "@/assets/logo-processed.png";
+const logoUrl = "/brand-wordmark.png";
 
 async function fetchUnreadCount(): Promise<{ unreadCount: number }> {
   const res = await apiRequest('GET', '/api/conversations/unread-count');
@@ -119,8 +119,8 @@ export default function Navbar() {
           >
             <div className="bg-transparent">
               <img 
-                src={logo} 
-                alt="Snipshift Logo" 
+                src={logoUrl} 
+                alt="HospoGo Logo" 
                 className="h-10 w-auto object-contain max-w-32 sm:max-w-none logo-sharp invert contrast-[1.3] brightness-[1.08] saturate-[1.15] dark:invert-0" 
                 loading="eager"
                 width={120}

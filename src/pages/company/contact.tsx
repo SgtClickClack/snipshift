@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { SEO } from '@/components/seo/SEO';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ export default function ContactPage() {
     requestAnimationFrame(() => {
       toast({
         title: 'Message sent',
-        description: "Thanks! We've received your message and will reply within 24–48 hours.",
+        description: "Thanks! We've received your message and will reply within 24�48 hours.",
       });
       setIsSubmitting(false);
       setFormData({ email: '', subject: '', message: '' });
@@ -41,7 +41,7 @@ export default function ContactPage() {
     <>
       <SEO
         title="Contact Us"
-        description="Get in touch with SnipShift. We're here to help with questions, support, or feedback."
+        description="Get in touch with HospoGo. We're here to help with questions, support, or feedback."
         url="/contact"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 py-12 px-4">
@@ -70,10 +70,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-steel-900 mb-1">Email</h3>
                     <a 
-                      href="mailto:support@snipshift.com.au" 
+                      href="mailto:support@hospogo.com" 
                       className="text-steel-600 hover:text-red-accent transition-colors"
                     >
-                      support@snipshift.com.au
+                      support@hospogo.com
                     </a>
                   </div>
                 </div>
@@ -171,7 +171,7 @@ export default function ContactPage() {
                   </Button>
 
                   <p className="text-xs text-steel-500 text-center">
-                    Prefer email? Reach us at <span className="font-medium">support@snipshift.com.au</span>.
+                    Prefer email? Reach us at <span className="font-medium">support@hospogo.com</span>.
                   </p>
                 </form>
               </CardContent>

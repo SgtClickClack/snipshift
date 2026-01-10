@@ -1,10 +1,21 @@
-import { pgTable, uuid, varchar, text, decimal, boolean, timestamp, pgEnum, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, decimal, boolean, timestamp, pgEnum, index, date } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 /**
  * User roles enum
  */
 export const userRoleEnum = pgEnum('user_role', ['professional', 'business', 'admin', 'trainer', 'hub']);
+
+/**
+ * Hospitality role enum (HospoGo pivot)
+ */
+export const hospitalityRoleEnum = pgEnum('hospitality_role', [
+  'Bartender',
+  'Waitstaff',
+  'Barista',
+  'Kitchen Hand',
+  'Manager',
+]);
 
 /**
  * Users table
@@ -22,6 +33,12 @@ export const users = pgTable('users', {
   location: varchar('location', { length: 255 }),
   avatarUrl: text('avatar_url'),
   bannerUrl: text('banner_url'),
+  // HospoGo compliance + preferences
+  rsaNumber: varchar('rsa_number', { length: 100 }),
+  rsaExpiry: date('rsa_expiry'),
+  rsaCertificateUrl: text('rsa_certificate_url'),
+  hospitalityRole: hospitalityRoleEnum('hospitality_role'),
+  hourlyRatePreference: decimal('hourly_rate_preference', { precision: 10, scale: 2 }),
   averageRating: decimal('average_rating', { precision: 3, scale: 2 }),
   reviewCount: decimal('review_count', { precision: 10, scale: 0 }).default('0'),
   isOnboarded: boolean('is_onboarded').notNull().default(false),

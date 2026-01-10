@@ -24,17 +24,21 @@ export const shifts = pgTable('shifts', {
   id: uuid('id').defaultRandom().primaryKey(),
   employerId: uuid('employer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   assigneeId: uuid('assignee_id').references(() => users.id, { onDelete: 'set null' }),
+  role: varchar('role', { length: 64 }),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
   hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
+  uniformRequirements: text('uniform_requirements'),
+  rsaRequired: boolean('rsa_required').notNull().default(false),
+  expectedPax: integer('expected_pax'),
   status: shiftStatusEnum('status').notNull().default('draft'),
   attendanceStatus: attendanceStatusEnum('attendance_status').default('pending'),
   paymentStatus: paymentStatusEnum('payment_status').default('UNPAID'),
   paymentIntentId: varchar('payment_intent_id', { length: 255 }),
   stripeChargeId: varchar('stripe_charge_id', { length: 255 }),
-  applicationFeeAmount: integer('application_fee_amount'), // Snipshift commission in cents
+  applicationFeeAmount: integer('application_fee_amount'), // HospoGo commission in cents
   transferAmount: integer('transfer_amount'), // Amount sent to barber in cents
   location: varchar('location', { length: 512 }),
   lat: decimal('lat', { precision: 10, scale: 7 }), // Latitude for distance filtering

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -400,7 +400,7 @@ export default function OnboardingPage() {
     <>
       <SEO
         title="Complete Your Profile"
-        description="Finish setting up your SnipShift profile to start finding work opportunities or hiring talent."
+        description="Finish setting up your HospoGo profile to start finding work opportunities or hiring talent."
         url="/onboarding"
       />
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 pb-24 md:pb-4">
@@ -427,7 +427,7 @@ export default function OnboardingPage() {
         <Card className="card-chrome bg-zinc-900 border border-zinc-800">
           <CardHeader>
             <CardTitle className="text-center text-white">
-              Welcome to SnipShift
+              Welcome to HospoGo
             </CardTitle>
           </CardHeader>
           <CardContent>

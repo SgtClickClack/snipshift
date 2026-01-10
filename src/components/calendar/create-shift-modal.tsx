@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import { CalendarIcon, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateRecurringShifts, RecurringShiftConfig } from "@/utils/recurring-shifts";
 import { useToast } from "@/hooks/useToast";
+import { HOSPITALITY_ROLES } from "@/utils/hospitality";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CreateShiftModalProps {
   isOpen: boolean;
@@ -38,6 +40,7 @@ export default function CreateShiftModal({
 }: CreateShiftModalProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
+    role: "" as string,
     title: "",
     description: "",
     date: initialDate ? format(initialDate, "yyyy-MM-dd") : "",
@@ -45,6 +48,9 @@ export default function CreateShiftModal({
     endTime: initialEndTime || "17:00",
     hourlyRate: "45", // Default $45/hr
     location: "",
+    uniformRequirements: "",
+    rsaRequired: false,
+    expectedPax: "",
   });
 
   const [repeatWeekly, setRepeatWeekly] = useState(false);
@@ -75,6 +81,7 @@ export default function CreateShiftModal({
     } else {
       // Reset form when closing
       setFormData({
+        role: "",
         title: "",
         description: "",
         date: "",
@@ -82,6 +89,9 @@ export default function CreateShiftModal({
         endTime: "17:00",
         hourlyRate: "45", // Default $45/hr
         location: "",
+        uniformRequirements: "",
+        rsaRequired: false,
+        expectedPax: "",
       });
       setRepeatWeekly(false);
       const date = new Date();
@@ -92,6 +102,24 @@ export default function CreateShiftModal({
       setAssigneeOption('keep');
     }
   }, [isOpen, initialDate, initialStartTime, initialEndTime]);
+
+  const durationHours = useMemo(() => {
+    if (!formData.date || !formData.startTime || !formData.endTime) return null;
+    const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
+    const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+    if (Number.isNaN(startDateTime.getTime()) || Number.isNaN(endDateTime.getTime())) return null;
+    const ms = endDateTime.getTime() - startDateTime.getTime();
+    if (ms <= 0) return null;
+    return ms / (1000 * 60 * 60);
+  }, [formData.date, formData.startTime, formData.endTime]);
+
+  const estimatedTotal = useMemo(() => {
+    const hours = durationHours;
+    if (!hours) return null;
+    const rate = Number.parseFloat(String(formData.hourlyRate ?? ''));
+    if (!Number.isFinite(rate) || rate < 0) return null;
+    return rate * hours;
+  }, [durationHours, formData.hourlyRate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,14 +182,30 @@ export default function CreateShiftModal({
       }
     }
 
+    if (!formData.role || formData.role.trim().length === 0) {
+      toast({
+        title: "Select a role",
+        description: "Please choose a shift role (e.g. Bartender).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const baseShiftData = {
-      title: formData.title,
+      role: formData.role,
+      title: formData.title?.trim() ? formData.title : `${formData.role} Shift`,
       description: formData.description,
       requirements: formData.description,
       startTime: startDateTime,
       endTime: endDateTime,
       hourlyRate: formData.hourlyRate || "45",
       location: formData.location,
+      uniformRequirements: formData.uniformRequirements,
+      rsaRequired: !!formData.rsaRequired,
+      expectedPax:
+        formData.expectedPax === "" || formData.expectedPax === null
+          ? undefined
+          : Number.parseInt(String(formData.expectedPax), 10),
       status: 'open' as const,
     };
 
@@ -194,31 +238,49 @@ export default function CreateShiftModal({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <Label htmlFor="title">Shift Title *</Label>
+            <Label htmlFor="role">Shift Role *</Label>
+            <Select
+              value={formData.role}
+              onValueChange={(value) => setFormData({ ...formData, role: value })}
+            >
+              <SelectTrigger className="bg-zinc-900 border-zinc-700" data-testid="select-shift-role">
+                <SelectValue placeholder="Select Shift Role (e.g. Bartender)" />
+              </SelectTrigger>
+              <SelectContent>
+                {HOSPITALITY_ROLES.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {role}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="title">Shift Title (optional)</Label>
             <Input
               id="title"
-              required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., Weekend Barber Needed"
+              placeholder={formData.role ? `e.g., ${formData.role} Needed` : "e.g., Bartender Needed"}
               className="bg-zinc-900 border-zinc-700"
             />
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Shift Notes</Label>
             <Textarea
               id="description"
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the shift requirements... (e.g., Barber needed for busy Saturday)"
+              placeholder="Anything the staff member should know (e.g., busy service, split shift, bar close)."
               className="bg-zinc-900 border-zinc-700"
             />
           </div>
 
           <div>
-            <Label htmlFor="date">Date *</Label>
+            <Label htmlFor="date">Shift Date *</Label>
             <Input
               id="date"
               type="date"
@@ -257,7 +319,7 @@ export default function CreateShiftModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="hourlyRate">Hourly Rate ($) *</Label>
+              <Label htmlFor="hourlyRate">Hourly Rate ($/hr) *</Label>
               <Input
                 id="hourlyRate"
                 type="number"
@@ -268,6 +330,14 @@ export default function CreateShiftModal({
                 placeholder="45.00"
                 className="bg-zinc-900 border-zinc-700"
               />
+              <div className="mt-2 text-xs text-muted-foreground">
+                <div>Duration (Hours): {durationHours ? durationHours.toFixed(2) : "—"}</div>
+                <div>
+                  Estimated Total:{" "}
+                  {estimatedTotal != null ? `$${estimatedTotal.toFixed(2)}` : "—"}{" "}
+                  <span className="opacity-80">(Hourly Rate × Duration)</span>
+                </div>
+              </div>
             </div>
             <div>
               <Label htmlFor="location">Location</Label>
@@ -276,6 +346,43 @@ export default function CreateShiftModal({
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="e.g., 123 Main St, City, State"
+                className="bg-zinc-900 border-zinc-700"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="uniformRequirements">Uniform Requirements</Label>
+            <Input
+              id="uniformRequirements"
+              value={formData.uniformRequirements}
+              onChange={(e) => setFormData({ ...formData, uniformRequirements: e.target.value })}
+              placeholder="e.g., Black shirt, enclosed shoes"
+              className="bg-zinc-900 border-zinc-700"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox
+                id="rsaRequired"
+                checked={!!formData.rsaRequired}
+                onCheckedChange={(checked) => setFormData({ ...formData, rsaRequired: checked === true })}
+              />
+              <Label htmlFor="rsaRequired" className="cursor-pointer">
+                RSA Required
+              </Label>
+            </div>
+
+            <div>
+              <Label htmlFor="expectedPax">Expected Pax (optional)</Label>
+              <Input
+                id="expectedPax"
+                type="number"
+                min="0"
+                value={formData.expectedPax}
+                onChange={(e) => setFormData({ ...formData, expectedPax: e.target.value })}
+                placeholder="e.g., 120"
                 className="bg-zinc-900 border-zinc-700"
               />
             </div>

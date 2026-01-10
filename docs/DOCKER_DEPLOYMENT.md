@@ -1,10 +1,10 @@
 # Docker Production Deployment Guide
 
-This guide explains how to deploy Snipshift using Docker for production environments.
+This guide explains how to deploy HospoGo using Docker for production environments.
 
 ## Architecture
 
-Snipshift consists of two main services:
+HospoGo consists of two main services:
 - **Frontend (web)**: Vite + React application served as static files
 - **Backend (api)**: Express + TypeScript API server with PostgreSQL database
 

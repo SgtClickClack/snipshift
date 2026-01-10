@@ -7,7 +7,7 @@
 
 import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, index, unique } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { users, userRoleEnum } from './schema/users.js';
+import { users, userRoleEnum, hospitalityRoleEnum } from './schema/users.js';
 import { notifications, notificationTypeEnum } from './schema/notifications.js';
 import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations } from './schema/shifts.js';
 import { posts, postTypeEnum } from './schema/posts.js';
@@ -21,7 +21,7 @@ import { trainingPurchases } from './schema/training-purchases.js';
 export const paymentStatusEnum = pgEnum('payment_status', ['UNPAID', 'AUTHORIZED', 'PAID', 'REFUNDED', 'PAYMENT_FAILED']);
 
 export { 
-  users, userRoleEnum, 
+  users, userRoleEnum, hospitalityRoleEnum,
   notifications, notificationTypeEnum, 
   shifts, shiftStatusEnum,
   shiftOffers, shiftOfferStatusEnum,

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
  * E2E Coverage: Shop Scheduling Command Center (/shop/schedule)
@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test';
  *
  * Notes:
  * - Uses Playwright route mocks for /api/shifts schedule endpoints to keep the test deterministic.
- * - Auth is provided via `sessionStorage['snipshift_test_user']` when `VITE_E2E=1` (see `tests/auth.setup.ts`).
+ * - Auth is provided via `sessionStorage['hospogo_test_user']` when `VITE_E2E=1` (see `tests/auth.setup.ts`).
  */
 
 type ShiftStatus = 'draft' | 'open' | 'confirmed' | 'pending' | 'invited' | 'filled' | 'completed' | 'cancelled';
@@ -59,7 +59,7 @@ test.describe('Shop Schedule E2E Tests', () => {
     // Ensure we're in a shop role for this test
     await page.addInitScript(() => {
       sessionStorage.setItem(
-        'snipshift_test_user',
+        'hospogo_test_user',
         JSON.stringify({
           id: 'e2e-shop-0001',
           email: 'shop-e2e@snipshift.com',
@@ -142,7 +142,7 @@ test.describe('Shop Schedule E2E Tests', () => {
     // ------------------------------
     await page.addInitScript(() => {
       sessionStorage.setItem(
-        'snipshift_test_user',
+        'hospogo_test_user',
         JSON.stringify({
           id: 'e2e-shop-0001',
           email: 'shop-e2e@snipshift.com',

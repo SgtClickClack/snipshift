@@ -95,6 +95,32 @@ describe('Auth Flow & Critical Paths', () => {
       }
     });
 
+    it('should return 503 with a stable code when DB compute quota is exceeded', async () => {
+      const randomEmail = `test-${Date.now()}@example.com`;
+      const quotaError = new Error(
+        'Your account or project has exceeded the compute time quota. Upgrade your plan to increase limits.'
+      );
+
+      const usersRepo = await import('../repositories/users.repository.js');
+      vi.mocked(usersRepo.getUserByEmail).mockResolvedValue(null);
+      vi.mocked(usersRepo.createUser).mockRejectedValue(quotaError);
+
+      // Sanity check: ensure our matcher recognizes the quota error in this test runtime.
+      const dbErrors = await import('../utils/dbErrors.js');
+      expect(dbErrors.isDatabaseComputeQuotaExceededError(quotaError)).toBe(true);
+
+      const response = await supertest(app)
+        .post('/api/register')
+        .send({
+          email: randomEmail,
+          name: 'Test User',
+          password: 'password123',
+        });
+
+      expect(response.status).toBe(503);
+      expect(response.body.code).toBe('DB_QUOTA_EXCEEDED');
+    });
+
     it('should return 409 if user already exists', async () => {
       const existingUser = {
         id: 'user-123',

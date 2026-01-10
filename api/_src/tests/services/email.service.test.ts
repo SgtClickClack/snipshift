@@ -33,9 +33,9 @@ describe('Email Service', () => {
 
       expect(result).toBe(true);
       expect(resendLib.resend!.emails.send).toHaveBeenCalledWith({
-        from: expect.stringContaining('Snipshift'),
+        from: expect.stringContaining('HospoGo'),
         to: 'test@example.com',
-        subject: 'Welcome to Snipshift!',
+        subject: 'Welcome to HospoGo!',
         html: expect.stringContaining('Mock Rendered HTML'),
       });
     });

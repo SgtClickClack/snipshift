@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logo from '@/assets/logo-processed.png';
+const logoUrl = '/brand-wordmark.png';
 
 export function Footer() {
   return (
@@ -10,8 +10,8 @@ export function Footer() {
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center mb-4">
               <img 
-                src={logo} 
-                alt="SnipShift Logo" 
+                src={logoUrl} 
+                alt="HospoGo Logo" 
                 className="h-8 w-auto logo-sharp invert dark:invert-0 dark:contrast-[1.3] dark:brightness-[1.08] dark:saturate-[1.15]"
                 loading="eager"
                 width={96}
@@ -23,7 +23,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-muted-foreground dark:text-steel-400 mb-4">
-              Connect barbers, stylists, and professionals with flexible work opportunities.
+              Connect hospitality staff with venues for flexible shift work.
             </p>
           </div>
 
@@ -93,11 +93,11 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-border dark:border-steel-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground dark:text-steel-400">
-              © {new Date().getFullYear()} SnipShift. All rights reserved.
+              © {new Date().getFullYear()} HospoGo. All rights reserved.
             </p>
             <div className="mt-4 md:mt-0 flex space-x-6">
               <a 
-                href="https://twitter.com/snipshift" 
+                href="https://twitter.com/hospogo" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-steel-400 hover:text-white transition-colors text-sm"
@@ -105,7 +105,7 @@ export function Footer() {
                 Twitter
               </a>
               <a 
-                href="https://www.linkedin.com/company/snipshift/" 
+                href="https://www.linkedin.com/company/hospogo/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-steel-400 hover:text-white transition-colors text-sm"

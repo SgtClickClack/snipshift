@@ -1,4 +1,264 @@
 
+#### 2026-01-10: Final Visual Branding Sweep (HospoGo)
+
+**Core Components**
+- App shell theme persistence (`src/App.tsx`)
+- Auth E2E hydration key (`src/contexts/AuthContext.tsx`)
+- Password reset UX copy (`src/pages/forgot-password.tsx`)
+- Legal pages (Terms + Sitemap) (`src/pages/legal/terms.tsx`, `src/pages/legal/sitemap.tsx`)
+- API email/signature branding + dev/ops labeling (`api/_src/lib/notifications-service.ts`, `api/_src/services/stripe-connect.service.ts`, `api/_src/db/schema/shifts.ts`, `api/_src/scripts/seed-plans.ts`, `api/scripts/audit-db.ts`, `api/Dockerfile`, `api/package.json`)
+- Test fixtures/docs references (`tests/*`, `e2e/*`, tracking/docs markdown)
+
+**Key Features**
+- **HospoGo branding consistency**: Removed remaining user-facing “Snipshift” strings (legal copy, sitemap social links, email signatures, docs/scripts).
+- **Auth/test alignment**: Standardized Playwright/session hydration key to `hospogo_test_user` and updated fixtures/docs accordingly.
+- **Password reset copy**: Removed the hard-coded Firebase sender domain from the “check your email” guidance to avoid brand mismatch/confusion.
+
+**Integration Points**
+- Playwright E2E: session hydration via `sessionStorage['hospogo_test_user']` (when `VITE_E2E=1`)
+- Dev UX: Vite HMR refreshed branding changes without a full rebuild
+
+**File Paths**
+- `src/App.tsx`
+- `src/contexts/AuthContext.tsx`
+- `src/pages/forgot-password.tsx`
+- `src/pages/legal/terms.tsx`
+- `src/pages/legal/sitemap.tsx`
+- `api/_src/lib/notifications-service.ts`
+- `api/_src/services/stripe-connect.service.ts`
+- `api/_src/db/schema/shifts.ts`
+- `api/_src/scripts/seed-plans.ts`
+- `api/scripts/audit-db.ts`
+- `api/Dockerfile`
+- `api/package.json`
+- `tests/**`
+
+**Next Priority Task**
+- Verify the deployed UI on `hospogo.com` has no remaining “Snipshift” user-facing branding (including transactional emails + legal pages).
+
+---
+
+#### 2026-01-10: Hospitality Shift Details (Roles + Uniform/RSA/Pax + Hourly Pricing)
+
+**Core Components**
+- Shift creation modal (`src/components/calendar/create-shift-modal.tsx`)
+- Shift posting pages (`src/pages/post-job.tsx`, `src/pages/salon-create-job.tsx`)
+- Shop schedule quick-create (`src/pages/shop/schedule.tsx`)
+- Professional profile resume (`src/components/profile/professional-digital-resume.tsx`)
+- Shared hospitality constants (`src/utils/hospitality.ts`)
+- Shifts API + schema (`api/_src/routes/shifts.ts`, `api/_src/repositories/shifts.repository.ts`, `api/_src/db/schema/shifts.ts`, `api/_src/validation/schemas.ts`)
+- Test DB setup (idempotent SQL add-on) (`api/_src/tests/globalSetup.ts`, `api/_src/db/migrations/0015_add_shift_hospitality_fields.sql`)
+- Theme + action button styling (`src/index.css`, `src/components/ui/button.tsx`)
+
+**Key Features**
+- **Role selector**: Shift creation now starts with “Select Shift Role” with hospitality roles (Bartender, Waitstaff, Barista, Barback, Kitchen Hand, Duty Manager).
+- **Shift-specific fields**: Added `uniformRequirements`, `rsaRequired`, and `expectedPax` to shift create/post flows and persisted them on the backend.
+- **Pricing logic**: UI now shows duration in **hours** plus an **estimated total** using \(Hourly Rate × Duration\).
+- **Profile pivot**: Removed the portfolio gallery and surfaced hospitality compliance badges (RSA/RCG/Covid Safety/Manual Handling) alongside existing verification badges.
+- **API compatibility**: Added `shiftLengthHours` in shift responses, and maintained compatibility aliases (`pay`, `requirements`, `date`) for older clients.
+
+**Integration Points**
+- API endpoint: `POST /api/shifts` (accepts hospitality fields)
+- API endpoints: `GET /api/shifts`, `GET /api/shifts?employer_id=me`, `GET /api/shifts/:id` (returns `shiftLengthHours` + hospitality fields)
+- DB schema: `shifts.role`, `shifts.uniform_requirements`, `shifts.rsa_required`, `shifts.expected_pax`
+- Dev server: Vite HMR (theme + component changes)
+
+**File Paths**
+- `src/utils/hospitality.ts`
+- `src/components/calendar/create-shift-modal.tsx`
+- `src/pages/shop/schedule.tsx`
+- `src/pages/hub-dashboard.tsx`
+- `src/pages/post-job.tsx`
+- `src/pages/salon-create-job.tsx`
+- `src/components/profile/professional-digital-resume.tsx`
+- `src/components/ui/button.tsx`
+- `src/index.css`
+- `api/_src/db/schema/shifts.ts`
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/routes/shifts.ts`
+- `api/_src/validation/schemas.ts`
+- `api/_src/tests/globalSetup.ts`
+- `api/_src/db/migrations/0015_add_shift_hospitality_fields.sql`
+
+**Next Priority Task**
+- Update remaining barber/salon terminology in shift/job flows (notifications + labels) to hospitality-first wording, and verify new hospitality fields display in Shift Details.
+
+**Code Organization & Quality**
+- Reused existing shift posting and scheduling surfaces; added a small shared constants module to avoid duplication.
+- Backend changes are additive (new optional columns + compatibility transforms), minimizing risk to existing environments.
+
+---
+
+#### 2026-01-10: SEO & Metadata Finalization (HospoGo Home)
+
+**Core Components**
+- App shell metadata (`index.html`)
+- React Helmet defaults (`src/components/seo/SEO.tsx`)
+- Landing page SEO overrides (`src/pages/landing.tsx`)
+- Social preview image asset (`public/hospogo-og.png`)
+
+**Key Features**
+- Updated homepage `<title>` and description to match the Brisbane/RSA positioning.
+- Aligned OpenGraph + Twitter card tags to the requested copy and canonical URL (`https://hospogo.com/`).
+- Standardized OG/Twitter image URL to `https://hospogo.com/hospogo-og.png` and added a real `public/hospogo-og.png` asset.
+- Removed the “double HospoGo” title issue on the landing page by using shared defaults and only overriding the social share title.
+
+**Integration Points**
+- Browser metadata + social previews: `<meta property="og:*">`, `twitter:*` tags in `index.html`
+- React Helmet: `SEO` component defaults/overrides
+- Static asset served from `/hospogo-og.png`
+
+**File Paths**
+- `index.html`
+- `src/components/seo/SEO.tsx`
+- `src/pages/landing.tsx`
+- `public/hospogo-og.png`
+- `vercel.json`
+
+**Next Priority Task**
+- Verify social previews render correctly on `hospogo.com` (Facebook/Twitter/X/LinkedIn caches) using the new `https://hospogo.com/hospogo-og.png`.
+
+**Code Organization & Quality**
+- Kept changes scoped to metadata + SEO defaults; avoided touching unrelated UI/business logic.
+
+---
+
+#### 2026-01-09: HospoGo Pivot (Brand, RSA Compliance Gate, User Schema Extensions)
+
+**Core Components**
+- API user schema (`api/_src/db/schema/users.ts`)
+- Profile upload middleware (`api/_src/middleware/upload.ts`)
+- User profile routes (`api/_src/routes/users.ts`)
+- Applications route enforcement (`api/_src/routes/applications.ts`)
+- Settings compliance UI (`src/pages/settings.tsx`)
+- Shift apply UI guard (`src/pages/shift-details.tsx`)
+- Brand/SEO/PWA metadata (`src/components/seo/SEO.tsx`, `index.html`, `public/manifest.json`, `public/robots.txt`, `public/sitemap.xml`)
+- Icon placeholder swap (`src/components/dashboard/dashboard-stats.tsx`, auth/role pages)
+- API test DB setup (`api/_src/tests/globalSetup.ts`)
+
+**Key Features**
+- **HospoGo branding foundation**: Updated core SEO defaults, site metadata, and PWA manifest/robots/sitemap to the new brand and domain (`hospogo.com`).
+- **Logo/icon placeholder updates**: Replaced scissors-style branding icons with `FastForward` to match the “Go” brand direction.
+- **Color system update**: Updated base theme tokens to align with Deep Charcoal + Lime Green + White (primary/secondary/accent).
+- **Compliance Check (RSA)**:
+  - Added DB fields for RSA metadata + certificate URL and hospitality role/rate preferences.
+  - Added backend enforcement: users cannot apply without an uploaded RSA certificate (`code: RSA_REQUIRED`).
+  - Added frontend guardrail: Shift Details blocks apply and routes users to Settings when RSA is missing/expired.
+  - Added Settings UX for uploading RSA certificate (PDF/image) via `PUT /api/me` multipart upload and saving compliance details.
+- **Testing infra hardening**: Updated API test global setup to use `drizzle-kit push --force` for schema sync (SQL migrations are not committed in this repo). Note: API tests still require a reachable test Postgres.
+
+**Integration Points**
+- API endpoints:
+  - `GET /api/me` (returns RSA/compliance fields)
+  - `PUT /api/me` (accepts RSA fields; accepts `rsaCertificate` file upload)
+  - `POST /api/applications` (now blocks without RSA certificate)
+- Storage: Firebase Admin Storage upload in `/api/me` for `rsaCertificate`
+
+**File Paths**
+- `api/_src/db/schema/users.ts`
+- `api/_src/middleware/upload.ts`
+- `api/_src/routes/users.ts`
+- `api/_src/routes/applications.ts`
+- `api/_src/tests/globalSetup.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/pages/settings.tsx`
+- `src/pages/shift-details.tsx`
+- `src/components/seo/SEO.tsx`
+- `src/components/layout/Navbar.tsx`
+- `src/components/dashboard/dashboard-stats.tsx`
+- `src/pages/login.tsx`
+- `src/pages/signup.tsx`
+- `src/pages/home.tsx`
+- `src/pages/role-selection.tsx`
+- `src/components/landing/Hero.tsx`
+- `src/components/landing/Pricing.tsx`
+- `src/index.css`
+- `src/lib/queryClient.ts`
+- `index.html`
+- `public/manifest.json`
+- `public/robots.txt`
+- `public/sitemap.xml`
+
+**Next Priority Task**
+- Finish the HospoGo terminology sweep (barber→staff, shop→venue, haircut→service, chair→shift) in **user-facing copy only**, then update remaining SEO/docs references and remove remaining scissors/comb iconography.
+
+**Code Organization & Quality**
+- Reused existing upload patterns (`PUT /api/me`) for compliance documents instead of introducing a separate upload service.
+- Enforced RSA compliance server-side to prevent UI bypass.
+
+---
+
+#### 2025-12-25: Harden Google Auth When Database Is Unavailable (DB Quota Exceeded → 503)
+
+**Core Components**
+- API registration route (`/api/register`) and user lookup path (`/api/me` via auth middleware)
+- DB outage/quota detection utility
+- Google auth UI error surfacing (toast messaging)
+- Auth flow tests
+
+**Key Features**
+- **Correct status code**: Database “compute quota exceeded” failures now return **503 Service Unavailable** (instead of generic 500/401).
+- **Stable error code**: Added a consistent API error code `DB_QUOTA_EXCEEDED` for the frontend to key off.
+- **No more misleading auth failures**: Prevents the auth middleware from misclassifying DB outages as “invalid token”.
+- **Clearer UX**: Google sign-in now shows a specific toast when Firebase auth succeeds but DB user creation fails due to DB unavailability.
+
+**Integration Points**
+- API endpoints:
+  - `POST /api/register`
+  - `GET /api/me` (via `authenticateUser`)
+- Frontend: Google sign-in flow (`GoogleAuthButton` → `/api/register`)
+- Tests: `cd api && npm test`
+
+**File Paths**
+- `api/_src/utils/dbErrors.ts`
+- `api/_src/utils/dbErrors.js`
+- `api/_src/routes/users.ts`
+- `api/_src/routes/users.js`
+- `api/_src/middleware/auth.ts`
+- `api/_src/middleware/auth.js`
+- `src/components/auth/google-auth-button.tsx`
+- `api/_src/tests/auth-flow.test.ts`
+
+**Next Priority Task**
+- Restore/upgrade the Postgres provider compute quota so `/api/register` can create users again (this will fully unblock Google auth end-to-end).
+
+**Code Organization & Quality**
+- Centralized DB outage detection behind a small utility and reused it across both the registration route and auth middleware to keep behavior consistent.
+
+---
+
+#### 2025-12-25: Local Dev Database Bootstrap (Docker Postgres + Non-Interactive Schema Push)
+
+**Core Components**
+- Local dev database container definition (Docker Compose)
+- Local dev DB initialization (pgcrypto extension for UUIDs)
+- One-command local dev bootstrap for Windows (PowerShell)
+
+**Key Features**
+- **Local Postgres for dev**: Added a `postgres-dev` container on port `5434` (`snipshift_dev`) for local development.
+- **UUID support**: Ensures `pgcrypto` is enabled so UUID defaults (`gen_random_uuid()`) work.
+- **Non-interactive schema sync**: Uses `drizzle-kit push --force` to avoid prompts during automated setup.
+- **Clean restart**: Bootstrap script stops dev servers on ports `3000` and `5000`, then restarts them against the local DB.
+
+**Integration Points**
+- Docker: `cd api && npm run dev:db:up`
+- DB schema sync: `cd api && npm run db:push:force`
+- Dev bootstrap: `powershell -ExecutionPolicy Bypass -File scripts/start-dev-localdb.ps1`
+
+**File Paths**
+- `api/docker-compose.dev.yml`
+- `api/docker/dev-init.sql`
+- `api/package.json`
+- `scripts/start-dev-localdb.ps1`
+
+**Next Priority Task**
+- If production is still impacted, restore/upgrade the hosted Postgres provider compute quota so deployed Google auth can create/read users.
+
+**Code Organization & Quality**
+- Reused existing Docker usage patterns already present for test DB; kept changes additive and dev-scoped (no `.env` overwrites).
+
+---
+
 #### 2025-12-16: Final UX and SEO Cleanup (Date Guards, Footer Links, Contact Form, Verification UX, Landing H1)
 
 **Core Components**
@@ -399,3 +659,115 @@
 
 **Code Organization & Quality**
 - Kept the fix localized to layout/overflow behavior without introducing new patterns or touching business logic.
+
+---
+
+#### 2026-01-09: Apply New HospoGo Logo Across App Shell (Navbar/Footer/Loading + PWA Icons)
+
+**Core Components**
+- App shell branding (favicon + splash screen in `index.html`)
+- Global UI branding (Navbar, Footer, Loading screen)
+- SEO defaults (OpenGraph/Twitter fallback image)
+- PWA manifest branding (VitePWA manifest config)
+
+**Key Features**
+- **New logo used across UI**: Updated the primary brand logo usage in Navbar/Footer/Loading states to reference the new public logo asset.
+- **Splash screen updated**: Swapped the pre-hydration splash logo to use the new brand logo and corrected the fallback label to “HospoGo”.
+- **Cropped composite into real assets**: Added a small crop pipeline to split `hospogologo.png` (which contains full logo + icon + wordmark) into separate files in `public/`.
+- **SEO/OG aligned to banner**: Set the default SEO image and HTML OG/Twitter image to `public/og-image.jpg` (1200x630) instead of using the full logo.
+- **PWA icons use icon crop**: Generated square icon assets (including 192x192 and 512x512) from the cropped icon so installs/home-screen icons render correctly.
+
+**Integration Points**
+- Frontend build: `npm run build` (verifies Vite + VitePWA generation succeeds with the updated branding assets)
+- Public assets consumed by:
+  - Favicon: `index.html` (`/brand-icon.png`)
+  - PWA: `public/manifest.json` and VitePWA manifest (`/brand-logo-192.png`, `/brand-logo-512.png`)
+  - Social previews: `public/og-image.jpg`
+
+**File Paths**
+- `hospogologo.png` (source logo added to repo root)
+- `scripts/crop-hospogo-logo.mjs` (cropping + export pipeline)
+- `public/brand-logo.png` (cropped full logo)
+- `public/brand-wordmark.png` (cropped wordmark)
+- `public/brand-icon.png` (cropped icon)
+- `public/brand-logo-192.png` (icon 192x192)
+- `public/brand-logo-512.png` (icon 512x512)
+- `public/og-image.jpg` (OG banner 1200x630)
+- `public/logo.png` (kept in sync for legacy references)
+- `public/logo-white.png` (kept in sync for legacy references)
+- `index.html`
+- `src/components/layout/Navbar.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/ui/loading-screen.tsx`
+- `src/components/seo/SEO.tsx`
+- `vite.config.ts`
+
+**Next Priority Task**
+- Replace `public/logo-white.png` with a true white-on-transparent variant (current pipeline exports the icon/logo against a dark background).
+
+**Code Organization & Quality**
+- Standardized brand logo usage to a single public path (`/brand-logo.png`) to avoid duplicating imported image modules across components.
+
+---
+
+#### 2026-01-09: Use HospoGo Wordmark in Navbar/Footer
+
+**Core Components**
+- Global navigation branding (`Navbar`, `Footer`)
+
+**Key Features**
+- **Wordmark in primary UI**: Switched the header/footer brand mark to the cropped wordmark (`/brand-wordmark.png`) for a cleaner, more compact nav presentation.
+
+**Integration Points**
+- Frontend build: `npm run build`
+
+**File Paths**
+- `src/components/layout/Navbar.tsx`
+- `src/components/layout/Footer.tsx`
+
+**Next Priority Task**
+- If you want the splash/loading visuals to match the wordmark too, swap the splash + loading screen to `/brand-wordmark.png` (currently they use the full logo).
+
+---
+
+#### 2026-01-10: Finalize HospoGo Domain Pivot (Vite + Vercel)
+
+**Core Components**
+- Environment config (`.env`, `.cursorignore`)
+- Vercel SPA routing config (`vercel.json`)
+- Transactional email templates + sender defaults (`api/_src/services/email.service.ts`, `api/_src/services/email-templates.ts`, `api/_src/emails/*`)
+- Ops/docs references updated to the new canonical domain
+
+**Key Features**
+- **Domain pivot finalized**: Standardized the canonical public URLs to `https://hospogo.com` and `https://hospogo.com/api` for Vite runtime config.
+- **New root env added (non-secret)**: Added `VITE_APP_URL`, `VITE_API_URL`, and `VITE_APP_NAME` for local/dev parity with Vercel env configuration.
+- **Email links/logo updated**: Updated transactional emails to use `https://hospogo.com` for logo assets and deep-links.
+- **Legacy domain cleanup**: Removed remaining `snipshift.com.au` hardcodes across backend scripts and operational docs.
+- **Project close-out note**: This marks the formal end of the HospoGo collaboration and transition under the acquired `hospogo.com` domain.
+
+**Integration Points**
+- Vite env: `import.meta.env.VITE_*`
+- Vercel: SPA rewrites already handle client-side routing (`/(.*)` → `/index.html`) and API routing (`/api/(.*)` → `/api`)
+- Resend: `RESEND_FROM_EMAIL` (fallback sender updated for HospoGo)
+
+**File Paths**
+- `.cursorignore`
+- `.env`
+- `vercel.json`
+- `api/_src/services/email.service.ts`
+- `api/_src/services/email-templates.ts`
+- `api/_src/emails/WelcomeEmail.tsx`
+- `api/_src/emails/NewMessageEmail.tsx`
+- `api/_src/emails/JobAlertEmail.tsx`
+- `api/_src/emails/ApplicationStatusEmail.tsx`
+- `api/scripts/sync-production-db.ts`
+- `api/scripts/migrate-production.ts`
+- `VERCEL_DEPLOYMENT_REMINDER.md`
+- `FIX_PRODUCTION_DB.md`
+- `FIREBASE_STORAGE_CORS_FIX.md`
+
+**Next Priority Task**
+- Update OAuth provider redirect URIs (Google/Facebook/Apple) to `https://hospogo.com/api/auth/callback`.
+
+**Code Organization & Quality**
+- Kept changes scoped to configuration + domain references (no new patterns introduced).

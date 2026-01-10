@@ -50,11 +50,12 @@ export default function LandingPage() {
   return (
     <>
       <SEO
-        title="Snipshift | On-Demand Barber Staffing Australia"
-        description="Connect with top-rated barbers for temporary shifts. Reliable, vetted, and paid securely."
+        // Use the shared SEO defaults for title/description and only override social title.
+        socialTitle="HospoGo | On-Demand Hospitality Staff"
+        ogDescription="Brisbane's fastest way to find qualified hospitality professionals."
         url="/"
       />
-      <h1 className="sr-only">SnipShift: The On-Demand Barber Marketplace</h1>
+      <h1 className="sr-only">HospoGo: Hospitality Shifts for Staff and Venues</h1>
       <div className="min-h-screen">
       {/* Hero Section */}
       <section 
@@ -62,9 +63,9 @@ export default function LandingPage() {
       >
         {/* Hero image (replaces CSS background for better loading priority) */}
         <picture className="absolute inset-0 z-base" aria-hidden="true">
-          <source type="image/webp" srcSet={encodeURI("/herobarber (2).webp")} />
+          <source type="image/webp" srcSet={encodeURI("/hospogohero.webp")} />
           <img
-            src={encodeURI("/herobarber (2).jpg")}
+            src={encodeURI("/hospogohero.jpg")}
             alt=""
             className="h-full w-full object-cover"
             loading="eager"
@@ -133,8 +134,8 @@ export default function LandingPage() {
       <div className="py-8 md:py-20 bg-background border-t border-border overflow-x-hidden">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">How Snipshift Works</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Simple, efficient, and designed for the barbering and beauty industry</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">How HospoGo Works</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Simple, fast, and built for hospitality</p>
           </div>
           
           {/* Add top padding to accommodate badges that extend above cards, especially on mobile */}

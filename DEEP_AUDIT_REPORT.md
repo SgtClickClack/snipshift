@@ -1,6 +1,6 @@
-# DEEP AUDIT REPORT
+﻿# DEEP AUDIT REPORT
 
-This report details the findings from a Deep Logic & Quality Assurance Audit of the Snipshift codebase.
+This report details the findings from a Deep Logic & Quality Assurance Audit of the HospoGo codebase.
 
 ## Summary
 - **Critical Risks Identified:** 3 categories (List Stability, Silent Failures, Hardcoded Backend Config).

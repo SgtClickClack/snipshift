@@ -55,6 +55,28 @@ import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
 import type Stripe from 'stripe';
 
+type LegacyJobRole = 'barber' | 'hairdresser' | 'stylist' | 'other';
+
+/**
+ * Normalize HospoGo-era role values into the legacy job role enum stored in the `jobs` table.
+ *
+ * The DB `job_role` enum (and repository types) are currently legacy-only. We keep the API
+ * validation backwards-compatible but coerce hospitality roles to `other` for storage.
+ */
+function toLegacyJobRole(role: unknown): LegacyJobRole {
+  if (!role) return 'barber';
+
+  switch (role) {
+    case 'barber':
+    case 'hairdresser':
+    case 'stylist':
+    case 'other':
+      return role as LegacyJobRole;
+    default:
+      return 'other';
+  }
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -420,7 +442,7 @@ app.post('/api/jobs', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     date: jobData.date!,
     startTime: jobData.startTime!,
     endTime: jobData.endTime!,
-    role: jobData.role || 'barber',
+    role: toLegacyJobRole(jobData.role),
     shopName: jobData.shopName,
     address,
     city,
@@ -699,7 +721,7 @@ app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authenticate
     date: jobData.date!,
     startTime: jobData.startTime!,
     endTime: jobData.endTime!,
-    role: jobData.role,
+    role: toLegacyJobRole(jobData.role),
   });
 
   if (updatedJob) {

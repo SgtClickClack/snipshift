@@ -7,6 +7,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as usersRepo from '../repositories/users.repository.js';
 import { auth } from '../config/firebase.js';
+import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 
 /**
  * Express request with user property
@@ -260,7 +261,19 @@ export function authenticateUser(
         }
 
         // Find user in our DB to get role
-        const user = await usersRepo.getUserByEmail(email);
+        let user;
+        try {
+          user = await usersRepo.getUserByEmail(email);
+        } catch (dbError: any) {
+          if (isDatabaseComputeQuotaExceededError(dbError)) {
+            res.status(503).json({
+              message: 'Service temporarily unavailable: database compute quota exceeded. Please try again later.',
+              code: 'DB_QUOTA_EXCEEDED',
+            });
+            return;
+          }
+          throw dbError;
+        }
 
         if (!user) {
           // For now, we'll fail if they aren't in our DB, to enforce proper signup flow

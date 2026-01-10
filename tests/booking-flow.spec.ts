@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+﻿import { test, expect, Page } from '@playwright/test';
 
 /**
  * Full Roster Lifecycle: Business Invite to Professional Accept
@@ -212,7 +212,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
     
     // Set sessionStorage to match business user
     await page.evaluate((user) => {
-      sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+      sessionStorage.setItem('hospogo_test_user', JSON.stringify({
         ...user,
         currentRole: 'business',
         roles: ['business'],
@@ -450,7 +450,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
           response.request().method() === 'GET',
         { timeout: 5000 }
       );
-      console.log('✅ Calendar refetched shifts after invite');
+      console.log('âœ… Calendar refetched shifts after invite');
     } catch (error) {
       // If no automatic refetch, manually trigger by clicking the calendar tab again
       console.log('No automatic refetch detected, triggering manual refetch...');
@@ -474,7 +474,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
     // The shift status should now be 'invited' which shows as pending (amber/orange)
     // Wait for network to be idle to ensure all API calls are complete
     await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
-      console.log('⚠️ Network idle timeout, continuing anyway');
+      console.log('âš ï¸ Network idle timeout, continuing anyway');
     });
     
     // Wait a bit more for React to re-render with the updated data
@@ -491,12 +491,12 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
     // Give it more time since the refetch might take a moment
     const ghostVisible = await ghostSlot.isVisible({ timeout: 5000 }).catch(() => false);
     if (!ghostVisible) {
-      console.log('✅ Ghost slot disappeared, status updated to invited');
+      console.log('âœ… Ghost slot disappeared, status updated to invited');
       // Status was updated, now wait for pending slot to appear
       // The calendar should have refetched and re-rendered with the new status
       try {
         await expect(pendingSlot).toBeVisible({ timeout: 20000 });
-        console.log('✅ Pending slot appeared after invite');
+        console.log('âœ… Pending slot appeared after invite');
       } catch (error) {
         // If pending slot still not visible, check what shift blocks exist
         const allShiftBlocks = await page.locator('[data-testid^="shift-block-"]').all();
@@ -505,7 +505,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
         // Check for any shift block with assigned staff (might be rendering differently)
         const anyShiftWithStaff = await page.locator('.rbc-event').first().isVisible({ timeout: 2000 }).catch(() => false);
         if (anyShiftWithStaff) {
-          console.log('✅ Shift event exists on calendar (may be rendering as pending)');
+          console.log('âœ… Shift event exists on calendar (may be rendering as pending)');
           // The shift might be there but not with the exact testid - continue
         } else {
           throw error;
@@ -513,7 +513,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
       }
     } else {
       // Ghost slot still visible - check if PUT request was actually made
-      console.log('⚠️ Ghost slot still visible - forcing page reload to trigger refetch...');
+      console.log('âš ï¸ Ghost slot still visible - forcing page reload to trigger refetch...');
       // Force a page reload to ensure the calendar refetches with the updated status
       await page.reload({ waitUntil: 'networkidle' });
       await page.waitForTimeout(2000);
@@ -524,13 +524,13 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
       // Check again for ghost slot
       const ghostAfterReload = await ghostSlot.isVisible({ timeout: 3000 }).catch(() => false);
       if (!ghostAfterReload) {
-        console.log('✅ Ghost slot disappeared after page reload');
+        console.log('âœ… Ghost slot disappeared after page reload');
         // Now check for pending slot
         await expect(pendingSlot).toBeVisible({ timeout: 20000 });
-        console.log('✅ Pending slot appeared after page reload');
+        console.log('âœ… Pending slot appeared after page reload');
       } else {
         // Still showing ghost slot - the GET request might not be returning updated status
-        console.log('⚠️ Ghost slot still visible after reload - checking mock response...');
+        console.log('âš ï¸ Ghost slot still visible after reload - checking mock response...');
         // Check what status the mock is returning
         console.log(`[TEST] Mock should return status: ${shiftStatus}, assignedStaff: ${assignedStaff ? 'yes' : 'no'}`);
         throw new Error('Ghost slot still visible after page reload - mock GET response may not be returning updated status');
@@ -615,7 +615,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
     
     // Set sessionStorage to match professional user (similar to Phase 1)
     await page.evaluate((user) => {
-      sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+      sessionStorage.setItem('hospogo_test_user', JSON.stringify({
         ...user,
         currentRole: 'professional',
         roles: ['professional'],
@@ -633,7 +633,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
     // Wait for user context to be ready (OfferInbox requires user?.id)
     // The sessionStorage should already be set, but wait to ensure it's available
     await page.waitForFunction(() => {
-      const userData = sessionStorage.getItem('snipshift_test_user');
+      const userData = sessionStorage.getItem('hospogo_test_user');
       return userData && JSON.parse(userData).id;
     }, { timeout: 10000 });
 
@@ -652,10 +652,10 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
     const offerTitle = page.getByText('Weekend Barber Needed');
     try {
       await expect(offerTitle).toBeVisible({ timeout: 15000 });
-      console.log('✅ Offer "Weekend Barber Needed" is visible - OfferInbox has loaded');
+      console.log('âœ… Offer "Weekend Barber Needed" is visible - OfferInbox has loaded');
     } catch (error) {
       // If offer title not found, check what's actually on the page
-      console.log('⚠️ Offer title not found, checking page content...');
+      console.log('âš ï¸ Offer title not found, checking page content...');
       const bodyText = await page.locator('body').textContent();
       console.log(`[DEBUG] Page body text (first 500 chars): ${bodyText?.substring(0, 500)}`);
       
@@ -663,7 +663,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
       const loadingState = page.getByText('Loading offers...');
       const isLoading = await loadingState.isVisible({ timeout: 2000 }).catch(() => false);
       if (isLoading) {
-        console.log('⚠️ OfferInbox is still loading, waiting more...');
+        console.log('âš ï¸ OfferInbox is still loading, waiting more...');
         await page.waitForTimeout(3000);
         await expect(offerTitle).toBeVisible({ timeout: 10000 });
       } else {
@@ -809,7 +809,7 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
     await page.waitForLoadState('domcontentloaded');
     
     await page.evaluate((user) => {
-      sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+      sessionStorage.setItem('hospogo_test_user', JSON.stringify({
         ...user,
         currentRole: 'business',
         roles: ['business'],
@@ -840,9 +840,9 @@ test.describe('Full Roster Lifecycle: Business Invite to Professional Accept', (
           response.request().method() === 'GET',
         { timeout: 10000 }
       );
-      console.log('✅ Calendar refetched shifts with confirmed status');
+      console.log('âœ… Calendar refetched shifts with confirmed status');
     } catch (error) {
-      console.log('⚠️ No automatic refetch detected, navigating to trigger refetch...');
+      console.log('âš ï¸ No automatic refetch detected, navigating to trigger refetch...');
       // Use goto instead of reload - more robust and handles navigation issues better
       // If page is closed, this will throw a clear error
       const currentUrl = page.url();

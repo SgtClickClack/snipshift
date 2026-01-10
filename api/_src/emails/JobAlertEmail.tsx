@@ -38,10 +38,10 @@ export const JobAlertEmail = ({
         <Container style={container}>
           <Section style={header}>
             <Img
-              src="https://snipshift.com.au/brand-logo.png"
+              src="https://hospogo.com/brand-logo.png"
               width="120"
               height="40"
-              alt="Snipshift"
+              alt="HospoGo"
               style={logo}
             />
           </Section>
@@ -71,7 +71,7 @@ export const JobAlertEmail = ({
             </Section>
             
             <Section style={buttonContainer}>
-              <Link href={`https://snipshift.com.au/jobs/${jobId}`} style={button}>
+              <Link href={`https://hospogo.com/jobs/${jobId}`} style={button}>
                 View Shift Details
               </Link>
             </Section>
@@ -88,7 +88,7 @@ export const JobAlertEmail = ({
             
             <Text style={footer}>
               Happy shifting!<br />
-              The Snipshift Team
+              The HospoGo Team
             </Text>
           </Section>
         </Container>

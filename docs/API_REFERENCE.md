@@ -1,6 +1,6 @@
 # API Reference
 
-This document provides an overview of the SnipShift API endpoints, authentication requirements, and request/response formats.
+This document provides an overview of the HospoGo API endpoints, authentication requirements, and request/response formats.
 
 ## Base URL
 

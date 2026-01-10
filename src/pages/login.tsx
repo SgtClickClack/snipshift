@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/useToast";
-import { Scissors, Eye, EyeOff } from "lucide-react";
+import { FastForward, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -156,7 +156,7 @@ export default function LoginPage() {
       <div className="max-w-md mx-auto px-4">
         <Card className="shadow-sm">
           <CardHeader className="text-center">
-            <Scissors className="text-primary text-3xl mx-auto mb-4" />
+            <FastForward className="text-primary text-3xl mx-auto mb-4" />
             <CardTitle className="text-2xl font-bold text-card-foreground">Welcome Back</CardTitle>
             <p className="text-muted-foreground">Sign in to your account</p>
           </CardHeader>

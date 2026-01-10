@@ -7,7 +7,7 @@ export default function SitemapPage() {
     <>
       <SEO
         title="Sitemap"
-        description="SnipShift Sitemap - Find all pages and sections of our platform."
+        description="HospoGo Sitemap - Find all pages and sections of our platform."
         url="/sitemap"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 dark:from-steel-900 dark:to-steel-800 py-12 px-4">
@@ -60,7 +60,7 @@ export default function SitemapPage() {
                     </li>
                     <li>
                       <a 
-                        href="mailto:support@snipshift.com.au" 
+                        href="mailto:support@hospogo.com" 
                         className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors"
                       >
                         Contact
@@ -107,7 +107,7 @@ export default function SitemapPage() {
                     </li>
                     <li>
                       <a 
-                        href="https://twitter.com/snipshift" 
+                        href="https://twitter.com/hospogo" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors"
@@ -117,7 +117,7 @@ export default function SitemapPage() {
                     </li>
                     <li>
                       <a 
-                        href="https://linkedin.com/company/snipshift" 
+                        href="https://linkedin.com/company/hospogo" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-steel-600 dark:text-steel-300 hover:text-red-accent dark:hover:text-red-accent-light transition-colors"

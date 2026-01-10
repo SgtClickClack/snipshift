@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { HOSPITALITY_ROLES } from '@/utils/hospitality';
 
 import { copyPreviousWeekShifts, createShift, fetchEmployerShifts, fetchProfessionals, publishAllDraftShifts, updateShiftTimes } from '@/lib/api';
 import { apiRequest } from '@/lib/queryClient';
@@ -143,7 +144,7 @@ export default function ShopSchedulePage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [draftForm, setDraftForm] = useState({
-    role: 'barber',
+    role: 'Bartender',
     title: '',
     hourlyRate: '45',
     description: '',
@@ -274,6 +275,7 @@ export default function ShopSchedulePage() {
         throw new Error('Hourly rate must be a valid number');
       }
       return await createShift({
+        role: draftForm.role,
         title,
         description: (draftForm.description || 'Draft shift').trim(),
         startTime: selectedSlot.start.toISOString(),
@@ -285,7 +287,7 @@ export default function ShopSchedulePage() {
     onSuccess: () => {
       setCreateOpen(false);
       setSelectedSlot(null);
-      setDraftForm({ role: 'barber', title: '', hourlyRate: '45', description: '' });
+      setDraftForm({ role: 'Bartender', title: '', hourlyRate: '45', description: '' });
       queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
       queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
@@ -702,16 +704,17 @@ export default function ShopSchedulePage() {
 
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Role</Label>
+              <Label>Shift Role</Label>
               <Select value={draftForm.role} onValueChange={(role) => setDraftForm((p) => ({ ...p, role }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder="Select shift role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="barber">Barber</SelectItem>
-                  <SelectItem value="hairdresser">Hairdresser</SelectItem>
-                  <SelectItem value="stylist">Stylist</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {HOSPITALITY_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -722,7 +725,7 @@ export default function ShopSchedulePage() {
                 id="title"
                 value={draftForm.title}
                 onChange={(e) => setDraftForm((p) => ({ ...p, title: e.target.value }))}
-                placeholder="e.g. Weekend Barber"
+                placeholder={draftForm.role ? `e.g. Weekend ${draftForm.role}` : 'e.g. Weekend Bartender'}
               />
             </div>
 

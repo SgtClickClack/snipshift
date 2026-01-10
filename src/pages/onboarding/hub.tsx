@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
@@ -100,7 +100,7 @@ export default function HubOnboardingPage() {
     <>
       <SEO
         title="Create Shop Profile"
-        description="Register your shop on SnipShift."
+        description="Register your shop on HospoGo."
         url="/onboarding/hub"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">

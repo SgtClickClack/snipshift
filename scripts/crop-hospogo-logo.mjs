@@ -1,0 +1,137 @@
+/**
+ * Crop `hospogologo.png` (a composite containing multiple marks) into separate assets.
+ *
+ * Output (written to `public/`):
+ * - brand-logo.png        (full logo, left mark)
+ * - brand-wordmark.png    (wordmark, right mark)
+ * - brand-icon.png        (icon, middle mark, square)
+ * - brand-logo-192.png    (icon resized to 192x192)
+ * - brand-logo-512.png    (icon resized to 512x512)
+ * - og-image.jpg          (banner-style OG image, 1200x630)
+ *
+ * NOTE: Crops are based on the current layout of hospogologo.png (2816x1536).
+ * If the source image changes, update the crop boxes below.
+ */
+
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import sharp from 'sharp';
+
+const INPUT = path.resolve('hospogologo.png');
+const OUT_DIR = path.resolve('public');
+
+function clampCrop({ left, top, width, height }, meta) {
+  const l = Math.max(0, Math.min(left, meta.width - 1));
+  const t = Math.max(0, Math.min(top, meta.height - 1));
+  const w = Math.max(1, Math.min(width, meta.width - l));
+  const h = Math.max(1, Math.min(height, meta.height - t));
+  return { left: l, top: t, width: w, height: h };
+}
+
+async function main() {
+  const meta = await sharp(INPUT).metadata();
+  if (!meta.width || !meta.height) {
+    throw new Error('Unable to read image dimensions for hospogologo.png');
+  }
+
+  // Source image: 2816x1536.
+  // Visual layout:
+  // - Left: full logo ("HospoGo" + cloche) around x~0..~1050, y~450..~1050
+  // - Middle: icon around x~1150..~1750, y~410..~980
+  // - Right: wordmark around x~1800..end, y~520..~900
+  //
+  // We keep some padding and then trim by background color to tighten.
+  const fullLogoCrop = clampCrop(
+    { left: 0, top: 380, width: 1180, height: 820 },
+    meta
+  );
+  // The icon sits slightly left of center; keep this crop tight so we don't catch the wordmark.
+  const iconCrop = clampCrop(
+    { left: 980, top: 320, width: 760, height: 760 },
+    meta
+  );
+  const wordmarkCrop = clampCrop(
+    { left: 1700, top: 420, width: 1116, height: 640 },
+    meta
+  );
+
+  await fs.mkdir(OUT_DIR, { recursive: true });
+
+  // Full logo (left mark)
+  await sharp(INPUT)
+    .extract(fullLogoCrop)
+    .trim({ threshold: 10 })
+    .png()
+    .toFile(path.join(OUT_DIR, 'brand-logo.png'));
+
+  // Wordmark (right mark)
+  await sharp(INPUT)
+    .extract(wordmarkCrop)
+    .trim({ threshold: 10 })
+    .png()
+    .toFile(path.join(OUT_DIR, 'brand-wordmark.png'));
+
+  // Icon (middle mark) -> trimmed and padded to square for consistent app icons
+  const iconBuffer = await sharp(INPUT)
+    .extract(iconCrop)
+    .trim({ threshold: 10 })
+    .png()
+    .toBuffer();
+
+  const iconMeta = await sharp(iconBuffer).metadata();
+  if (!iconMeta.width || !iconMeta.height) {
+    throw new Error('Unable to read cropped icon dimensions');
+  }
+
+  // Ensure square by adding background padding using the source background color (dark slate).
+  const iconSize = Math.max(iconMeta.width, iconMeta.height);
+  const iconSquare = await sharp(iconBuffer)
+    .extend({
+      top: Math.floor((iconSize - iconMeta.height) / 2),
+      bottom: Math.ceil((iconSize - iconMeta.height) / 2),
+      left: Math.floor((iconSize - iconMeta.width) / 2),
+      right: Math.ceil((iconSize - iconMeta.width) / 2),
+      background: { r: 20, g: 26, b: 32, alpha: 1 },
+    })
+    .png()
+    .toBuffer();
+
+  await sharp(iconSquare).png().toFile(path.join(OUT_DIR, 'brand-icon.png'));
+  await sharp(iconSquare)
+    .resize(192, 192, { fit: 'cover' })
+    .png()
+    .toFile(path.join(OUT_DIR, 'brand-logo-192.png'));
+  await sharp(iconSquare)
+    .resize(512, 512, { fit: 'cover' })
+    .png()
+    .toFile(path.join(OUT_DIR, 'brand-logo-512.png'));
+
+  // OG image: 1200x630 using the wordmark centered with padding.
+  // We create a solid dark background and composite the wordmark onto it.
+  const ogBase = sharp({
+    create: {
+      width: 1200,
+      height: 630,
+      channels: 4,
+      background: { r: 20, g: 26, b: 32, alpha: 1 },
+    },
+  });
+
+  const wordmarkForOg = await sharp(path.join(OUT_DIR, 'brand-wordmark.png'))
+    .resize(1000, 400, { fit: 'inside' })
+    .png()
+    .toBuffer();
+
+  await ogBase
+    .composite([{ input: wordmarkForOg, gravity: 'center' }])
+    .jpeg({ quality: 90 })
+    .toFile(path.join(OUT_DIR, 'og-image.jpg'));
+}
+
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error(err);
+  process.exit(1);
+});
+
+

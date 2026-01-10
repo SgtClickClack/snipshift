@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
  * End-to-End Booking Flow Test
@@ -58,7 +58,7 @@ test.describe('Booking Flow: Shop to Barber Application to Approval', () => {
 
     // Set sessionStorage for Alice
     await page.evaluate((user) => {
-      sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+      sessionStorage.setItem('hospogo_test_user', JSON.stringify({
         ...user,
         roles: ['business'],
         isOnboarded: true,
@@ -192,7 +192,7 @@ test.describe('Booking Flow: Shop to Barber Application to Approval', () => {
 
     // Set sessionStorage for Bob
     await page.evaluate((user) => {
-      sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+      sessionStorage.setItem('hospogo_test_user', JSON.stringify({
         ...user,
         roles: ['professional'],
         isOnboarded: true,
@@ -304,7 +304,7 @@ test.describe('Booking Flow: Shop to Barber Application to Approval', () => {
 
     // Set sessionStorage for Alice again
     await page.evaluate((user) => {
-      sessionStorage.setItem('snipshift_test_user', JSON.stringify({
+      sessionStorage.setItem('hospogo_test_user', JSON.stringify({
         ...user,
         roles: ['business'],
         isOnboarded: true,

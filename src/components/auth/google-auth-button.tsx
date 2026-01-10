@@ -44,8 +44,17 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
 
     // 201 = created, 409 = already exists - both are fine
     if (!registerRes.ok && registerRes.status !== 409) {
-      const errorData = await registerRes.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to create user account");
+      const errorData = await registerRes.json().catch(() => ({} as any));
+
+      // If the database is temporarily unavailable (e.g. provider compute quota exceeded),
+      // show a clear, actionable message instead of a generic "internal server error".
+      if (registerRes.status === 503 && errorData?.code === "DB_QUOTA_EXCEEDED") {
+        throw new Error(
+          "Google sign-in succeeded, but the database is temporarily unavailable. Please try again in a few minutes."
+        );
+      }
+
+      throw new Error(errorData?.message || "Failed to create user account");
     }
     
     logger.debug("GoogleAuthButton", "User ensured in database", { email });

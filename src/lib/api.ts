@@ -421,11 +421,15 @@ export async function updateJobStatus(
 }
 
 export async function createShift(shiftData: {
+  role?: string;
   title: string;
   description: string;
   startTime: string;
   endTime: string;
   hourlyRate: string | number;
+  uniformRequirements?: string;
+  rsaRequired?: boolean;
+  expectedPax?: number;
   status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed';
   location?: string;
   lat?: number;
@@ -806,14 +810,19 @@ export const applyToJob = async (
 // Shift Details
 export interface ShiftDetails {
   id: string;
+  role?: string | null;
   title: string;
   description: string;
   hourlyRate: string;
   startTime: string;
   endTime: string;
+  shiftLengthHours?: number | null;
   location?: string | null;
   lat?: string | number | null;
   lng?: string | number | null;
+  uniformRequirements?: string | null;
+  rsaRequired?: boolean;
+  expectedPax?: number | null;
   status:
     | 'draft'
     | 'pending'

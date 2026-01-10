@@ -106,7 +106,7 @@ try {
   console.log('✅ Schema sync completed successfully!');
   console.log('');
   console.log('Next steps:');
-  console.log('  1. Refresh your dashboard at snipshift.com.au');
+  console.log('  1. Refresh your dashboard at hospogo.com');
   console.log('  2. The red error messages should be gone');
   console.log('  3. Run the audit script to verify: npx tsx scripts/audit-db.ts');
   console.log('');

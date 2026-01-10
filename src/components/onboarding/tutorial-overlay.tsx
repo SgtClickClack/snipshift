@@ -17,7 +17,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
   hub: [
     {
       id: "welcome",
-      title: "Welcome to Snipshift!",
+      title: "Welcome to HospoGo!",
       content: "Let's take a quick tour of your Business dashboard and key features.",
       position: "center"
     },

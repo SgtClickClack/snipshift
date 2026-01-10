@@ -12,8 +12,8 @@ import NewMessageEmail from '../emails/NewMessageEmail.js';
 import JobAlertEmail from '../emails/JobAlertEmail.js';
 import * as emailTemplates from './email-templates.js';
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Snipshift <noreply@snipshift.com.au>';
-const FROM_NAME = 'Snipshift';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'HospoGo <noreply@hospogo.com>';
+const FROM_NAME = 'HospoGo';
 
 /**
  * Generic email sending function
@@ -70,7 +70,7 @@ export async function sendWelcomeEmail(
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: userEmail,
-      subject: 'Welcome to Snipshift!',
+      subject: `Welcome to ${FROM_NAME}!`,
       html: emailHtml,
     });
 

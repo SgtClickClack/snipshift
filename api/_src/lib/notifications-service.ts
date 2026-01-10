@@ -141,7 +141,7 @@ ${shift.hourlyRate ? `- Rate: $${shift.hourlyRate}/hour` : ''}
 Please log in to view and respond to this offer.
 
 Best regards,
-Snipshift Team
+HospoGo Team
       `.trim();
 
       await sendEmailMock(
@@ -227,7 +227,7 @@ ${payload.reason}
 Please log in to review the updated shift details.
 
 Best regards,
-Snipshift Team
+HospoGo Team
       `.trim();
 
       await sendEmailMock(professional.email, title, emailBody);
@@ -293,7 +293,7 @@ ${shiftDetails.hourlyRate ? `- Rate: $${shiftDetails.hourlyRate}/hour` : ''}
 The shift has been confirmed and added to your calendar.
 
 Best regards,
-Snipshift Team
+HospoGo Team
       `.trim();
 
       await sendEmailMock(
@@ -356,7 +356,7 @@ Applicant: ${applicationDetails.professionalName}
 Please log in to review and respond to this application.
 
 Best regards,
-Snipshift Team
+HospoGo Team
       `.trim();
 
       await sendEmailMock(
@@ -423,7 +423,7 @@ The barber has accepted this shift, but we were unable to authorize payment. Ple
 The shift will remain in "Payment Failed" status until the issue is resolved.
 
 Best regards,
-Snipshift Team
+HospoGo Team
       `.trim();
 
       await sendEmailMock(
