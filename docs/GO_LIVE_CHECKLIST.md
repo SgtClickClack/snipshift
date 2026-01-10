@@ -33,7 +33,7 @@ This checklist ensures a smooth transition from "Test Mode" to "Production" for 
 
 ### API Keys
 - [ ] Swap `STRIPE_SECRET_KEY` from `sk_test_...` to `sk_live_...`
-- [ ] Swap `STRIPE_PUBLISHABLE_KEY` from `pk_test_...` to `pk_live_...`
+- [ ] Swap `VITE_STRIPE_PUBLISHABLE_KEY` from `pk_test_...` to `pk_live_...`
 - [ ] Update `VITE_STRIPE_PUBLISHABLE_KEY` in frontend environment variables
 - [ ] Verify Stripe keys are for the correct account
 

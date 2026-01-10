@@ -1,4 +1,4 @@
-﻿# 🚀 Production Deployment Guide
+# 🚀 Production Deployment Guide
 
 This guide walks you through the complete production deployment process for HospoGo.
 
@@ -32,15 +32,15 @@ DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 POSTGRES_URL=postgresql://user:password@host:port/database?sslmode=require
 
 # If using containerized database (optional)
-POSTGRES_USER=snipshift
+POSTGRES_USER=hospogo
 POSTGRES_PASSWORD=your_secure_password_here
-POSTGRES_DB=snipshift
+POSTGRES_DB=hospogo
 
 # ============================================
 # FRONTEND BUILD VARIABLES
 # ============================================
-# Your public API URL (e.g., https://api.snipshift.com or load balancer IP)
-VITE_API_URL=https://api.snipshift.com
+# Your public API URL (e.g., https://hospogo.com/api)
+VITE_API_URL=https://hospogo.com/api
 
 # Firebase Configuration (Frontend)
 VITE_FIREBASE_API_KEY=your_firebase_api_key
@@ -75,13 +75,13 @@ RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # Server Configuration
 PORT=5000
-FRONTEND_URL=https://snipshift.com
+FRONTEND_URL=https://hospogo.com
 
 # ============================================
 # OPTIONAL CONFIGURATION
 # ============================================
 # Admin emails (comma-separated)
-ADMIN_EMAILS=admin@snipshift.com
+ADMIN_EMAILS=admin@hospogo.com
 
 # Logging
 LOG_LEVEL=info
@@ -92,8 +92,8 @@ LOG_LEVEL=info
 1. **`NODE_ENV=production`** - Must be set to `production`
 2. **`DATABASE_URL`** - Your live PostgreSQL connection string
 3. **`STRIPE_SECRET_KEY`** - Use `sk_live_...` (NOT `sk_test_...`)
-4. **`STRIPE_PUBLISHABLE_KEY`** - Use `pk_live_...` (NOT `pk_test_...`)
-5. **`VITE_API_URL`** - Your public API domain (e.g., `https://api.snipshift.com`)
+4. **`VITE_STRIPE_PUBLISHABLE_KEY`** - Use `pk_live_...` (NOT `pk_test_...`)
+5. **`VITE_API_URL`** - Your public API domain (e.g., `https://hospogo.com/api`)
 
 ## Step 2: Database Migration
 

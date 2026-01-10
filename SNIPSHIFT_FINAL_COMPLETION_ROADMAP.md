@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-10 - RSA Compliance Browse Lock (Verification Gate)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added an RSA compliance gate to shift browsing so staff cannot view the shift feed until RSA is **verified** and **not expired**.
+- Added a dedicated RSA Locker UI for uploading the certificate (PDF/image) plus capturing RSA number, expiry date, and state of issue.
+- Synced canonical RSA fields into the `profiles` table (`rsa_verified`, `rsa_expiry`, `rsa_cert_url`) and returned them in `GET /api/me` as `profile`.
+- Added an admin review workflow (Admin Dashboard RSA Review tab) to approve RSA submissions and set `rsa_verified=true`.
+
+**Impact:**
+- **Clear compliance enforcement** at the marketplace entry point: staff must verify RSA before browsing shifts.
+
+---
+
 ### Update: 2026-01-10 - SEO & Metadata Brand Transformation (HospoGo)
 
 **Status:** ✅ **UPDATED**
@@ -62,6 +77,39 @@
 
 ---
 
+### Update: 2026-01-10 - Hospo-Specific Legal Content (Terms + Privacy)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated Terms of Service to define **Venue** vs **Staff** roles and reflect hospitality shift terminology.
+- Documented the default **24-hour cancellation window** behavior and the **Emergency Fill** concept.
+- Added detailed penalty definitions:
+  - **Kill Fee** (Venue-side penalty for late cancellation when applicable)
+  - **Reliability Strike** (Staff-side penalty for late cancellation, with potential suspension on repeated strikes)
+- Updated Privacy Policy disclosures to explicitly mention:
+  - **Stripe** for payment processing
+  - **Firebase** for authentication
+  - Secure storage of **RSA/ID documents** for compliance and verification workflows
+
+**Impact:**
+- Legal pages now match the hospitality marketplace model and the platform’s implemented cancellation/penalty concepts.
+
+---
+
+### Update: 2026-01-10 - Native Package Identifier Audit (Android/Capacitor)
+
+**Status:** ✅ **VERIFIED (THIS REPO)**
+
+**Action Taken:**
+- Searched for Capacitor config files (`capacitor.config.*`) and native Android project folders (`android/`) in this repository.
+- Confirmed `com.snipshift.app` is not present here.
+
+**Impact:**
+- The Android package id change (`com.snipshift.app` → `com.hospogo.app`) must be applied in the **native wrapper project** used to build your APK/AAB (Android Studio / Capacitor project), not in this web repo.
+
+---
+
 ### Update: 2026-01-10 - Neon Logo Applied (Navbar + Splash/Loading)
 
 **Status:** ✅ **UPDATED**
@@ -104,6 +152,43 @@
 **Impact:**
 - **Less user confusion**: terminology now matches the hospitality staffing model.
 - **Correct compliance behavior**: RSA is required only when the shift requires it.
+
+---
+
+### Update: 2026-01-10 - Hospitality Cancellation Logic (Emergency Fill + Late Cancellation Penalties)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Extended the `shifts` model with cancellation-window + emergency-fill fields:
+  - `cancellation_window_hours` (default 24)
+  - `kill_fee_amount`
+  - `staff_cancellation_reason`
+  - `is_emergency_fill`
+- Implemented `handleStaffCancellation` to compare time-to-start vs cancellation window:
+  - Late cancellation → notify venue with **CRITICAL** message, trigger penalty, republish as **Emergency Fill**
+  - Early cancellation → republish normally
+- Added a pulsing Electric Lime **Emergency** badge on shift cards when `is_emergency_fill` is true.
+
+**Impact:**
+- Venues can immediately identify last-minute gaps and prioritize fill workflows.
+- The platform now has a single, reusable cancellation decision function for consistent behavior.
+
+---
+
+### Update: 2026-01-10 - Staff Penalty Persistence (Reliability Strikes + Auto Suspension)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added `profiles.reliability_strikes` to persist reliability penalties per staff member (default 0).
+- Implemented an atomic increment (UPSERT) when a penalty is triggered.
+- Added enforcement: at **3 strikes**, the staff account is **suspended** (implemented as `users.is_active = false`).
+- Notified the staff member in-app with a clear explanation of the strike/suspension.
+- Added a `ReliabilityBadge` UI component (green/yellow/red) for profile surfaces.
+
+**Impact:**
+- Penalties are now persistent and enforceable, enabling consistent reliability controls across shifts.
 
 ---
 
@@ -971,3 +1056,17 @@ HospoGo v1.0 is a fully-featured marketplace platform connecting barbers, stylis
 This roadmap documents the journey from initial development through v1.0 launch. All features have been implemented, tested, and deployed to production.
 
 For ongoing development and feature requests, please refer to the project's issue tracker or contact the development team.
+
+---
+
+### Update: 2026-01-10 - Stripe Key Rotation Support (Docs + Local CLI)
+
+**Status:** ✅ **READY**
+
+**Action Taken:**
+- Standardized documentation to use `VITE_STRIPE_PUBLISHABLE_KEY` (frontend) and `STRIPE_SECRET_KEY` (backend).
+- Added a safe local PowerShell helper to update `.env` + `api/.env` without printing secrets.
+- Added `docs/env.vercel.example` as a non-secret template for deployment environments.
+
+**Impact:**
+- **Safer key rotation + fewer deployment foot-guns:** Clear variable naming, safe local setup, and a single place to copy env keys for hosting providers.

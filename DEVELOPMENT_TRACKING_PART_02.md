@@ -1,4 +1,229 @@
 
+#### 2026-01-10: Staff Penalty Persistence (Reliability Strikes + Auto Suspension)
+
+**Core Components**
+- Profiles schema + strikes storage (`api/_src/db/schema/profiles.ts`, `api/_src/db/schema/profiles.js`, `api/_src/db/schema.ts`)
+- Profiles repository (atomic strike increment) (`api/_src/repositories/profiles.repository.ts`)
+- Cancellation penalty implementation (`api/_src/services/cancellationService.ts`)
+- Test DB optional migration wiring (`api/_src/tests/globalSetup.ts`, `api/_src/db/migrations/0017_add_profiles_reliability_strikes.sql`)
+- Cancellation service tests (`api/_src/tests/services/cancellationService.test.ts`)
+- Reliability UI component (`src/components/profile/ReliabilityBadge.tsx`)
+
+**Key Features**
+- **Reliability strikes persisted**: Added `profiles.reliability_strikes` (default 0) and an atomic UPSERT increment in `profiles.repository`.
+- **Penalty enforcement**: `triggerPenalty(...)` now:
+  - Increments `reliability_strikes`
+  - If strikes ≥ 3, **suspends** the account by setting `users.isActive = false` (maps to `account_status = SUSPENDED`)
+  - Sends an in-app notification to the staff member explaining the strike/suspension
+- **UI badge**: Added `ReliabilityBadge` component with green (0), yellow (1), red warning (≥2) states.
+
+**Integration Points**
+- Service: `api/_src/services/cancellationService.ts` → `triggerPenalty(staffId, { shiftId, timeUntilShiftHours })`
+- Repo: `api/_src/repositories/profiles.repository.ts` → `incrementReliabilityStrikes(userId)`
+- Tests: `cd api && npm run test:db:up && npm test -- cancellationService && npm run test:db:down`
+
+**File Paths**
+- `api/_src/db/schema/profiles.ts`
+- `api/_src/db/schema/profiles.js`
+- `api/_src/db/schema.ts`
+- `api/_src/db/migrations/0017_add_profiles_reliability_strikes.sql`
+- `api/_src/tests/globalSetup.ts`
+- `api/_src/repositories/profiles.repository.ts`
+- `api/_src/services/cancellationService.ts`
+- `api/_src/tests/services/cancellationService.test.ts`
+- `src/components/profile/ReliabilityBadge.tsx`
+
+**Next Priority Task**
+- Expose `reliability_strikes` on `GET /api/me` (and/or staff profile endpoints) so the badge can be displayed in Settings/Profile without additional client-side calls.
+
+**Code Organization & Quality**
+- Kept persistence in a repository and business rules in `cancellationService` (clear separation of concerns).
+- Implemented the strike increment with a single-statement UPSERT for race safety.
+
+---
+
+#### 2026-01-10: RSA Compliance Gate (Browse Shifts Lock + RSA Locker UI)
+
+**Core Components**
+- RSA compliance hook (`src/hooks/useCompliance.ts`)
+- RSA locker UI component (`src/components/profile/RSALocker.tsx`)
+- Shift browsing feed overlay gate (`src/pages/job-feed.tsx`, `src/pages/BrowseShifts.tsx`)
+- Settings deep-link + verification section composition (`src/pages/settings.tsx`)
+- User/profile compliance API response + profile upsert (`api/_src/routes/users.ts`, `api/_src/routes/users.js`, `api/_src/repositories/profiles.repository.ts`, `api/_src/repositories/profiles.repository.js`)
+- Profiles DB schema (RSA fields) (`api/_src/db/schema/profiles.ts`, `api/_src/db/schema/profiles.js`)
+- Users DB schema (RSA fields + backwards-compatible cert URL columns) (`api/_src/db/schema/users.ts`, `api/_src/db/schema/users.js`)
+- Admin RSA review endpoints + UI (`api/_src/routes/admin.ts`, `api/_src/routes/admin.js`, `src/pages/admin/dashboard.tsx`)
+- Admin route tests (RSA) (`api/_src/tests/admin.test.ts`)
+
+**Key Features**
+- **Hard gate on shift browsing**: `/jobs` is now blurred/locked when staff are not compliant, showing an overlay: “RSA Verification Required to View Shifts”.
+- **Compliance logic encapsulated**: `useIsStaffCompliant()` returns a boolean based on:
+  - `rsa_verified === true`
+  - current date is **before** `rsa_expiry`
+  - safe parsing for `YYYY-MM-DD` to avoid timezone drift.
+- **RSA Locker UI**: Added a dedicated RSA capture component:
+  - Upload RSA certificate (PDF/image)
+  - RSA certificate number
+  - Expiry date picker
+  - State of issue (AU states dropdown)
+- **Backend profile sync**: `/api/me` now includes a `profile` object containing the canonical RSA fields (`rsa_verified`, `rsa_expiry`, `rsa_cert_url`, `rsa_state_of_issue`) and upserts those fields when users update RSA details/upload their certificate.
+- **Admin review workflow**: Admins can review pending RSA submissions and approve them (sets `profiles.rsa_verified=true` and keeps `users.rsa_verified` in sync) from the Admin Dashboard.
+- **DB sync**: Added RSA fields to the `profiles` table and ensured `users` retains backwards compatibility for existing RSA certificate URL storage.
+
+**Integration Points**
+- UI:
+  - `/jobs` (shift feed) uses `useIsStaffCompliant()` to lock/unlock browsing
+  - `/settings?category=verification` deep-links to the RSA verification section
+  - `/admin/dashboard` → RSA Review tab shows pending RSA submissions and approve actions
+- API:
+  - `GET /api/me` now returns `profile` compliance fields
+  - `PUT /api/me` uploads `rsaCertificate` and upserts profile RSA fields (verification remains server-controlled)
+  - `GET /api/admin/rsa/pending` lists pending RSA submissions
+  - `PATCH /api/admin/rsa/:userId/verify` sets `rsa_verified` for the user (admin-only)
+- DB:
+  - `profiles.rsa_verified` (bool)
+  - `profiles.rsa_expiry` (date)
+  - `profiles.rsa_cert_url` (text)
+  - `profiles.rsa_state_of_issue` (varchar)
+
+**File Paths**
+- `src/hooks/useCompliance.ts`
+- `src/components/profile/RSALocker.tsx`
+- `src/pages/job-feed.tsx`
+- `src/pages/BrowseShifts.tsx`
+- `src/pages/settings.tsx`
+- `src/pages/admin/dashboard.tsx`
+- `api/_src/routes/users.ts`
+- `api/_src/routes/users.js`
+- `api/_src/routes/admin.ts`
+- `api/_src/routes/admin.js`
+- `api/_src/repositories/profiles.repository.ts`
+- `api/_src/repositories/profiles.repository.js`
+- `api/_src/db/schema/profiles.ts`
+- `api/_src/db/schema/profiles.js`
+- `api/_src/db/schema/users.ts`
+- `api/_src/db/schema/users.js`
+- `api/_src/tests/admin.test.ts`
+
+**Next Priority Task**
+- Add “Reject RSA” and “Request re-upload” actions (with optional reason) and surface review status messaging/ETA in `RSALocker`.
+
+**Code Organization & Quality**
+- Kept compliance logic isolated in a hook and returned a simple boolean gate for reuse across pages.
+- Preserved legacy compatibility while introducing `profiles` as the canonical compliance store.
+
+---
+
+#### 2026-01-10: Hospitality Cancellation Logic (Emergency Fill + Windowed Penalties)
+
+**Core Components**
+- Shifts DB schema (cancellation + emergency fill fields) (`api/_src/db/schema/shifts.ts`)
+- Test DB optional migration wiring (`api/_src/tests/globalSetup.ts`, `api/_src/db/migrations/0016_add_shift_cancellation_fields.sql`)
+- Cancellation service (staff cancellation decisioning) (`api/_src/services/cancellationService.ts`)
+- Shift repository projections (field plumbing to API responses) (`api/_src/repositories/shifts.repository.ts`)
+- Shift details/listings payload shaping (expose emergency flag) (`api/_src/routes/shifts.ts`)
+- Shift card UI (Emergency badge) (`src/components/shifts/ShiftCard.tsx`)
+- Shared shift types (include new fields) (`src/shared/types.ts`)
+
+**Key Features**
+- **Shift cancellation window support**: Added `cancellationWindowHours` (default **24**) as a per-shift setting to drive “late cancellation” behavior.
+- **Emergency fill flag**: Added `isEmergencyFill` and ensured it flows through repository selects and API payload shaping so the frontend can render it reliably.
+- **Staff cancellation handler**: Implemented `handleStaffCancellation` to compare \(now → shift start\) against the window:
+  - Within the window: triggers `triggerPenalty(...)`, notifies the venue with a **CRITICAL** message, and republishes the shift as **Emergency Fill**.
+  - Outside the window: republishes the shift normally.
+- **Cancellation reason capture**: Supports persisting `staffCancellationReason` when a staff member cancels.
+
+**Integration Points**
+- `api/_src/services/cancellationService.ts`: `handleStaffCancellation({ shiftId, staffId, reason })`
+- Notifications: uses `createInAppNotification(...)` for venue alerting (default behavior)
+- Tests: `cd api && npm run test:db:up && npm test -- cancellationService && npm run test:db:down`
+
+**File Paths**
+- `api/_src/db/schema/shifts.ts`
+- `api/_src/db/schema/shifts.js`
+- `api/_src/db/migrations/0016_add_shift_cancellation_fields.sql`
+- `api/_src/tests/globalSetup.ts`
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/repositories/shifts.repository.js`
+- `api/_src/routes/shifts.ts`
+- `api/_src/routes/shifts.js`
+- `api/_src/services/cancellationService.ts`
+- `api/_src/tests/services/cancellationService.test.ts`
+- `src/shared/types.ts`
+- `src/components/shifts/ShiftCard.tsx`
+
+**Next Priority Task**
+- Add an authenticated API endpoint for staff to cancel a confirmed shift that calls `handleStaffCancellation` (and define the penalty mechanism persistence strategy).
+
+**Code Organization & Quality**
+- Kept the cancellation decision logic isolated in a single service (testable via dependency injection and module mocks).
+- Maintained legacy-schema resilience patterns by extending fallback guards in `shifts.repository`.
+
+---
+
+#### 2026-01-10: Pivot Audit Complete (Brand + Vercel Env)
+
+**Core Components**
+- Vercel project linkage + production env audit (`.vercel/*`, `.env.production`)
+- Firebase client initialization (`src/lib/firebase.ts`)
+- Service worker recovery key branding (`index.html`)
+- Socket base URL fallback (avoid localhost in prod) (`src/contexts/SocketContext.tsx`)
+- Support contact docs (`README.md`, `HANDOVER.md`)
+- Production deployment guide examples (`PRODUCTION_DEPLOYMENT.md`)
+
+**Key Features**
+- **Vercel env audit complete**: Linked the repo to `dojo-pool-team/hospogo-web`, pulled Production env vars for review, and inspected the latest Production deployment aliases (`hospogo.com`, `www.hospogo.com`).
+- **No legacy app URL vars found**: Confirmed Production env does **not** include `VITE_APP_URL` or `NEXT_PUBLIC_APP_URL` (so they cannot be pointing at a Snipshift domain in Vercel).
+- **Brand string sweep (targeted)**: Removed remaining `Snipshift/snipshift/SNIPSHIFT` occurrences from `src/` and `index.html`.
+- **Firebase config hardening**: Removed the committed Firebase fallback config and now fail-fast if required `VITE_FIREBASE_*` env vars are missing (prevents accidental initialization against the wrong project).
+- **Docs compliance**: Updated support email references to `support@hospogo.com` and refreshed production env examples to use `hospogo.com`/`hospogo.com/api`.
+
+**Integration Points**
+- Vercel CLI:
+  - `vercel link --project hospogo-web --yes`
+  - `vercel env pull .env.production --environment production --yes`
+  - `vercel list hospogo-web --environment production`
+  - `vercel inspect <latest-production-deployment-url>`
+
+**File Paths**
+- `.env.production` (pulled for audit; do not commit)
+- `.vercel/*` (project link metadata)
+- `src/lib/firebase.ts`
+- `src/contexts/SocketContext.tsx`
+- `index.html`
+- `README.md`
+- `HANDOVER.md`
+- `PRODUCTION_DEPLOYMENT.md`
+
+**Next Priority Task**
+- Add/verify a single canonical public URL env var in Vercel (e.g. `VITE_APP_URL=https://hospogo.com`) if you want runtime-configurable canonical links (otherwise continue using hard-coded `https://hospogo.com/` in SEO).
+
+**Code Organization & Quality**
+- Removed a risky fallback path (harder-to-debug) in favor of explicit env requirements.
+- Kept changes scoped to branding/environment surfaces; no feature behavior refactors.
+
+---
+
+#### 2026-01-10: Native Package Id Check (Capacitor/Android)
+
+**Core Components**
+- Repo structure audit (Capacitor config + native Android project folders)
+
+**Key Features**
+- Verified this repository does **not** contain `capacitor.config.json` (or any `capacitor.config.*`) and does **not** include a native `android/` folder.
+- Confirmed `com.snipshift.app` is **not present** in this repo, so the package id update to `com.hospogo.app` must be performed in the **native wrapper repository/project** used to build your APK/AAB (Capacitor/Android Studio project).
+
+**Integration Points**
+- Android build tooling (external): `android/app/build.gradle(.kts)` `applicationId`, and/or `capacitor.config.*` `appId`
+
+**File Paths**
+- N/A (no native wrapper files found in this repo)
+
+**Next Priority Task**
+- In your native wrapper project, update `applicationId/appId` from `com.snipshift.app` → `com.hospogo.app` before generating the next APK/AAB.
+
+---
+
 #### 2026-01-10: Final Visual Branding Sweep (HospoGo)
 
 **Core Components**
@@ -1044,3 +1269,72 @@
 
 **Code Organization & Quality**
 - Kept changes localized to asset + direct consumers; no new components or patterns introduced.
+
+---
+
+#### 2026-01-10: Stripe Keys Rotation Support (Env Wiring + Local CLI + Docs Consistency)
+
+**Core Components**
+- Backend Stripe initialization (`api/_src/lib/stripe.ts`)
+- Deployment documentation (env var naming consistency)
+- Local dev tooling (secure key input + `.env` updates)
+- Vercel env template (safe placeholders)
+
+**Key Features**
+- **Hardened backend env loading for Stripe**: Stripe SDK now attempts `api/.env` first and cleanly falls back to root `.env` when needed (matches the API entrypoint behavior).
+- **Docs corrected to the real frontend env var**: Removed lingering references to `STRIPE_PUBLISHABLE_KEY` and standardized on `VITE_STRIPE_PUBLISHABLE_KEY`.
+- **Safe local keys updater**: Added a PowerShell CLI that prompts for Stripe keys (secret key as `SecureString`) and updates `.env` + `api/.env` without printing secrets.
+- **Vercel env example added**: Introduced `docs/env.vercel.example` with placeholders for all required vars (including Stripe).
+
+**Integration Points**
+- Env vars:
+  - Frontend: `VITE_STRIPE_PUBLISHABLE_KEY`
+  - Backend: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- Preflight: `npm run preflight:local`
+- Backend tests: `cd api && npm run test:integration`
+
+**File Paths**
+- `api/_src/lib/stripe.ts`
+- `PRODUCTION_DEPLOYMENT.md`
+- `docs/GO_LIVE_CHECKLIST.md`
+- `docs/env.vercel.example`
+- `scripts/set-stripe-keys.ps1`
+
+**Next Priority Task**
+- Rotate/update Stripe keys in hosting providers (Vercel/Render/etc.) and ensure webhook signing secret is also updated where applicable.
+
+**Code Organization & Quality**
+- No secrets committed; tooling avoids echoing secret values and keeps changes localized to Stripe/env docs + helper script.
+
+---
+
+#### 2026-01-10: Hospo-Specific Legal Content (Terms + Privacy Updates)
+
+**Core Components**
+- Terms of Service content updates (roles + cancellation/penalties) (`src/pages/legal/terms.tsx`)
+- Privacy Policy updates (Stripe + Firebase + RSA/ID docs security) (`src/pages/legal/privacy.tsx`)
+- Compatibility wrapper pages for requested file paths (`src/pages/TermsOfService.tsx`, `src/pages/PrivacyPolicy.tsx`)
+
+**Key Features**
+- **Venue vs Staff roles clarified**: Added explicit definitions for “Venue”, “Staff”, “Shift”, and “Emergency Fill”.
+- **24-hour cancellation window described**: Documented the default 24h cancellation window (and that a Shift may override the window when shown in Shift details).
+- **Kill Fee defined (Venue-side penalty)**: Documented a Venue late-cancellation Kill Fee that may apply when displayed on a Shift.
+- **Reliability Strike defined (Staff-side penalty)**: Documented reliability strikes for staff late cancellation and noted potential suspension at 3 strikes.
+- **Privacy disclosures updated**: Added explicit mention of Firebase Authentication (login/session) and secure storage of RSA/ID documents for compliance, alongside existing Stripe disclosures.
+
+**Integration Points**
+- Routes: `/terms` and `/privacy` are registered in `src/App.tsx` and served by the legal pages under `src/pages/legal/`.
+- Payments: Stripe Connect is referenced as the payment processor in both Terms and Privacy.
+- Auth/Docs: Firebase Authentication + Firebase Storage are referenced for authentication and secure document uploads.
+
+**File Paths**
+- `src/pages/legal/terms.tsx`
+- `src/pages/legal/privacy.tsx`
+- `src/pages/TermsOfService.tsx`
+- `src/pages/PrivacyPolicy.tsx`
+
+**Next Priority Task**
+- Have counsel review and finalize Terms/Privacy for the target jurisdictions (including kill-fee enforceability and retention obligations).
+
+**Code Organization & Quality**
+- Kept routing stable by updating the existing `src/pages/legal/*` route targets and adding lightweight wrapper exports to satisfy alternate file path expectations.
