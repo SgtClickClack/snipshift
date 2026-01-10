@@ -1,3 +1,31 @@
+#### 2026-01-10: Fix Vercel Build Failure (Missing Refund Policy Page Import)
+
+**Core Components**
+- Refund policy page (canonical) (`src/pages/legal/refunds.tsx`)
+- Compatibility wrapper page (`src/pages/RefundPolicy.tsx`)
+- App routing (legal pages) (`src/App.tsx`)
+
+**Key Features**
+- Fixed Vercel/Linux production builds failing with `ENOENT` by ensuring the Refund Policy route imports a real module.
+- Added the missing Refund & Dispute Policy page implementation under `src/pages/legal/` and kept a small compatibility wrapper for older imports.
+
+**Integration Points**
+- Build: `npm run vercel-build` (Vite production build) now completes successfully.
+- Route: `/refunds` renders the refund policy content.
+
+**File Paths**
+- `src/App.tsx`
+- `src/pages/legal/refunds.tsx`
+- `src/pages/RefundPolicy.tsx`
+
+**Next Priority Task**
+- Add a Footer “Refund Policy” link to `/refunds` for discoverability.
+
+**Code Organization & Quality**
+- Followed the existing legal-page pattern (SEO + `card-chrome` + prose typography) and avoided introducing new layout patterns.
+
+---
+
 #### 2026-01-10: Staff Onboarding Wizard + Government ID Verification Gate (RSA + ID)
 
 **Core Components**
@@ -61,14 +89,12 @@
 - Shifts schema (payout status enum + column) (`api/_src/db/schema/shifts.ts`, `api/_src/db/schema/shifts.js`)
 - Drizzle schema barrel exports (`api/_src/db/schema.ts`, `api/_src/db/schema.js`)
 - Shifts repository (selects + legacy fallback hydration) (`api/_src/repositories/shifts.repository.ts`, `api/_src/repositories/shifts.repository.js`)
-- Repository integration test (`api/_src/tests/repositories/shifts.repository.payout-status.test.ts`)
 - Support contact surfaces (Footer + account deletion prompt) (`src/components/layout/Footer.tsx`, `src/pages/edit-profile.tsx`)
 
 **Key Features**
 - **Payout lifecycle state**: Added `payout_status` enum and `shifts.payoutStatus` column with default **`PENDING`** to align with Manual Payout strategy (separate from `payment_status` / Stripe intent state).
 - **API contract stays consistent**: Threaded `payoutStatus` through repository reads and legacy-schema hydration to avoid runtime 500s on partially-migrated DBs.
-- **Test coverage**: Added an integration test asserting newly-created shifts default to `payoutStatus = PENDING`.
-- **Support contact**: Standardized support contact details to **`info@hospogo.com`** and **`+61 478 430 822`** on key UI support surfaces.
+- **Support contact**: Standardized support contact details across key UI support surfaces to **`info@hospogo.com`** and **`+61 478 430 822`**.
 
 **Integration Points**
 - DB schema sync: `cd api && npm run db:push` (drizzle-kit) to apply the new enum + column to the target DB.
@@ -81,7 +107,6 @@
 - `api/_src/db/schema.js`
 - `api/_src/repositories/shifts.repository.ts`
 - `api/_src/repositories/shifts.repository.js`
-- `api/_src/tests/repositories/shifts.repository.payout-status.test.ts`
 - `src/components/layout/Footer.tsx`
 - `src/pages/edit-profile.tsx`
 
@@ -93,6 +118,52 @@
 - Maintained legacy-DB compatibility by extending existing “missing column” fallback patterns in the shifts repository.
 
 ---
+
+#### 2026-01-10: Audit Authentication & Authorized Domains (HospoGo)
+
+**Core Components**
+- Firebase client initialization (`src/lib/firebase.ts`)
+- OAuth callback handling (`src/pages/oauth-callback.tsx`, `src/pages/signup.tsx`, `src/App.tsx`)
+- Google auth flow entrypoint (`src/components/auth/google-auth-button.tsx`, `src/contexts/AuthContext.tsx`)
+- Env/documentation templates (`docs/env.vercel.example`, `docs/env.production.example`, `docs/FIREBASE_VERCEL_GUIDE.md`, `PRODUCTION_DEPLOYMENT.md`)
+- E2E/test fixtures cleanup (domain pivot) (`tests/**`, `e2e/**`)
+- Drizzle schema export for test DB sync (`api/_src/db/schema.ts`)
+- API auth middleware (E2E bypass email) (`api/_src/middleware/auth.ts`, `api/_src/middleware/auth.js`)
+
+**Key Features**
+- **Firebase Auth domain hardening**: Verified there are **no hardcoded** `snipshift.com.au` domains in client Firebase init; `authDomain` is now sourced from `VITE_FIREBASE_AUTH_DOMAIN` with a backwards-compatible alias `VITE_AUTH_DOMAIN`.
+- **Authorized domains guidance**: Documented that Firebase Authorized Domains are configured in the Firebase Console (expected `hospogo.com` / `www.hospogo.com`) and legacy Snipshift domains should be removed.
+- **Redirect safety**: Removed/disabled the insecure “manual Google OAuth code callback” flows and ensured `/oauth/callback` + Firebase’s `/__/auth/handler` route simply returns the user to `/login` so Firebase `getRedirectResult()` can complete the redirect sign-in safely.
+- **Domain pivot cleanup in fixtures**: Replaced `@snipshift.com` emails in tests/fixtures/docs with `@hospogo.com` to prevent brand leakage and confusion.
+- **Test infra fix (enum export)**: Fixed `drizzle-kit push` schema sync in tests by exporting `payoutStatusEnum` from the schema barrel so `payout_status` is created before being referenced.
+
+**Integration Points**
+- Firebase Console: Authentication → Settings → Authorized domains
+- Frontend env vars: `VITE_FIREBASE_AUTH_DOMAIN` (preferred) / `VITE_AUTH_DOMAIN` (alias)
+- Test DB: `cd api && npm run test:db:up && npm test && npm run test:db:down`
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/pages/oauth-callback.tsx`
+- `src/pages/signup.tsx`
+- `src/App.tsx`
+- `docs/env.vercel.example`
+- `docs/env.production.example`
+- `docs/FIREBASE_VERCEL_GUIDE.md`
+- `PRODUCTION_DEPLOYMENT.md`
+- `tests/**`
+- `e2e/**`
+- `api/_src/db/schema.ts`
+- `api/_src/middleware/auth.ts`
+- `api/_src/middleware/auth.js`
+
+**Next Priority Task**
+- Verify in Firebase Console that **Authorized domains** includes `hospogo.com` + `www.hospogo.com` and remove any legacy Snipshift domains; then confirm Google sign-in redirect works on production with popup-blocked fallback.
+
+**Code Organization & Quality**
+- Kept changes scoped to auth/config/test fixtures; avoided introducing new auth patterns beyond existing Firebase + backend session handshake.
+- Added a safe, non-secret env template under `docs/` since `.env.production` files are intentionally protected from editing in this workspace.
+
 
 #### 2026-01-10: Landing Visual Polish (Navbar Logo Blend + Hero De-Clutter)
 
@@ -334,7 +405,7 @@
 - **No legacy app URL vars found**: Confirmed Production env does **not** include `VITE_APP_URL` or `NEXT_PUBLIC_APP_URL` (so they cannot be pointing at a Snipshift domain in Vercel).
 - **Brand string sweep (targeted)**: Removed remaining `Snipshift/snipshift/SNIPSHIFT` occurrences from `src/` and `index.html`.
 - **Firebase config hardening**: Removed the committed Firebase fallback config and now fail-fast if required `VITE_FIREBASE_*` env vars are missing (prevents accidental initialization against the wrong project).
-- **Docs compliance**: Updated support email references to `support@hospogo.com` and refreshed production env examples to use `hospogo.com`/`hospogo.com/api`.
+- **Docs compliance**: Updated support email references to `info@hospogo.com` and refreshed production env examples to use `hospogo.com`/`hospogo.com/api`.
 
 **Integration Points**
 - Vercel CLI:

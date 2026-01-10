@@ -15,7 +15,6 @@
 **Action Taken:**
 - Added a dedicated `payout_status` enum with states **PENDING / RELEASED / DISPUTED** and wired it into the `shifts` model as `payoutStatus` (default **PENDING**).
 - Updated the shifts repository to return `payoutStatus` and to safely fall back on legacy DBs missing the new column.
-- Added an integration test to lock the default payout status behavior.
 
 **Impact:**
 - Enables a **Manual Payout strategy** by tracking payout lifecycle separately from `payment_status` / Stripe intent state, with safe behavior across partially-migrated environments.
@@ -146,6 +145,19 @@
 
 **Impact:**
 - Clear, centralized policy reference for venues and staff, improving dispute handling expectations and reducing support ambiguity.
+
+---
+
+### Update: 2026-01-10 - Fix Vercel Build Failure (Missing Refund Policy Page Module)
+
+**Status:** ✅ **FIXED**
+
+**Action Taken:**
+- Fixed a production build failure caused by a missing `RefundPolicy` page import.
+- Implemented the canonical Refund & Dispute Policy page at `src/pages/legal/refunds.tsx` and added a compatibility wrapper at `src/pages/RefundPolicy.tsx`.
+
+**Impact:**
+- Vercel/Linux builds no longer fail with `ENOENT` for the Refund Policy route.
 
 ---
 
@@ -1122,3 +1134,17 @@ For ongoing development and feature requests, please refer to the project's issu
 
 **Impact:**
 - **Safer key rotation + fewer deployment foot-guns:** Clear variable naming, safe local setup, and a single place to copy env keys for hosting providers.
+
+---
+
+### Update: 2026-01-10 - Authentication & Authorized Domains Audit (HospoGo)
+
+**Status:** ✅ **VERIFIED + HARDENED**
+
+**Action Taken:**
+- Verified Firebase client initialization does **not** hardcode legacy Snipshift domains and now supports `VITE_AUTH_DOMAIN` as a backwards-compatible alias for `VITE_FIREBASE_AUTH_DOMAIN`.
+- Removed insecure “manual Google OAuth code callback” behavior and routed `/oauth/callback` and Firebase’s `/__/auth/handler` to safely complete sign-in via the standard Firebase redirect result flow.
+- Added clear documentation on Firebase Console **Authorized domains** (ensure `hospogo.com` + `www.hospogo.com`, remove any Snipshift domains).
+
+**Impact:**
+- Reduces risk of `auth/unauthorized-domain` errors and prevents accidental auth flows pointing at legacy domains or unsafe callback handlers.
