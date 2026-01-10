@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { getDashboardRoute, mapRoleToApiRole, AppRole } from "@/lib/roles";
 import { InstallButton } from "@/components/pwa/install-button";
-const logoUrl = '/hospogoneonlogo.png';
+const logoUrl = '/hospogoappicon.png';
 
 async function fetchUnreadCount(): Promise<{ unreadCount: number }> {
   const res = await apiRequest('GET', '/api/conversations/unread-count');
@@ -123,17 +123,17 @@ export default function Navbar() {
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-11 sm:h-12 w-auto object-contain"
+                className="h-12 w-12 sm:h-[52px] sm:w-[52px] object-contain"
                 loading="eager"
-                width={180}
-                height={48}
+                width={52}
+                height={52}
                 style={{
                   imageRendering: 'auto',
                   WebkitFontSmoothing: 'antialiased',
                   backgroundColor: 'transparent',
                   display: 'block',
-                  // Slight glow to keep the neon feeling without blurring the logo itself
-                  filter: 'drop-shadow(0 0 10px rgba(50,205,50,0.35))',
+                  // Keep it bright and "neon" without blurring the icon itself
+                  filter: 'drop-shadow(0 0 14px rgba(50,205,50,0.45))',
                 }}
               />
             </div>

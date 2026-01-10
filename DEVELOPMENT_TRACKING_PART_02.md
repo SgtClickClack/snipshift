@@ -275,6 +275,25 @@
 - `src/components/layout/Footer.tsx`
 - `src/components/ui/loading-screen.tsx`
 
+---
+
+#### 2026-01-10: Navbar Logo Updated to App Icon (hospogoappicon.png)
+
+**Core Components**
+- Public app icon asset (`public/hospogoappicon.png`)
+- Navbar branding (`src/components/layout/Navbar.tsx`)
+
+**Key Features**
+- Updated the navbar logo to use the provided root asset `hospogoappicon.png` (served from `public/`).
+- Increased navbar logo sizing to better fill the header space and added a subtle neon glow.
+
+**Integration Points**
+- Frontend build: `npm run build`
+
+**File Paths**
+- `public/hospogoappicon.png`
+- `src/components/layout/Navbar.tsx`
+
 #### 2026-01-10: Refund & Dispute Policy Page (Refunds + Kill Fee)
 
 **Core Components**
