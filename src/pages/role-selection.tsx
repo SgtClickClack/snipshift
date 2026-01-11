@@ -84,15 +84,15 @@ export default function RoleSelectionPage() {
   const roles = [
     {
       id: "professional" as const,
-      title: "Professional",
-      description: "Barber, stylist, or beauty professional",
+      title: "Pro",
+      description: "Staff, stylist, or hospitality pro",
       icon: UserCheck,
       color: "border-steel-700 bg-steel-800/80 hover:bg-brand-neon/10 hover:border-brand-neon/60 hover:shadow-lg"
     },
     {
       id: "hub" as const,
-      title: "Shop Owner",
-      description: "Own a barbershop or salon",
+      title: "Venue",
+      description: "Own a venue or restaurant",
       icon: Store,
       color: "border-steel-700 bg-steel-800/60 hover:bg-brand-neon/10 hover:border-brand-neon/60 hover:shadow-lg"
     },

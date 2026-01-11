@@ -47,7 +47,7 @@ export default function ReviewPage() {
       // User is the professional - review the employer
       if (job.businessId) {
         setRevieweeId(job.businessId);
-        setRevieweeName(job.businessName || job.shopName || 'Unknown Shop');
+        setRevieweeName(job.businessName || job.shopName || 'Unknown Venue');
       }
     }
   }, [job, user, jobId, applications]);

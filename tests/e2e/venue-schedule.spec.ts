@@ -1,7 +1,7 @@
 ﻿import { test, expect } from '@playwright/test';
 
 /**
- * E2E Coverage: Shop Scheduling Command Center (/shop/schedule)
+ * E2E Coverage: Venue Scheduling Command Center (/venue/schedule)
  *
  * Focuses on the key UX wiring:
  * - Load schedule page (shop role)
@@ -50,7 +50,7 @@ function addDays(date: Date, days: number): Date {
   return d;
 }
 
-test.describe('Shop Schedule E2E Tests', () => {
+test.describe('Venue Schedule E2E Tests', () => {
   test('mobile: does not cause horizontal page overflow', async ({ page }) => {
     test.setTimeout(60000);
 
@@ -84,10 +84,10 @@ test.describe('Shop Schedule E2E Tests', () => {
       });
     });
 
-    await page.goto('/shop/schedule', { waitUntil: 'domcontentloaded' });
+    await page.goto('/venue/schedule', { waitUntil: 'domcontentloaded' });
 
     // Wait for the schedule page + calendar to render
-    await expect(page.getByText('Shop Schedule', { exact: false })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Venue Schedule', { exact: false })).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
 
     // If something tries to "blow out" width on mobile, scrollWidth will exceed viewport width.
@@ -287,13 +287,13 @@ test.describe('Shop Schedule E2E Tests', () => {
     // ------------------------------
     // Go to schedule page
     // ------------------------------
-    await page.goto('/shop/schedule');
+    await page.goto('/venue/schedule');
     await page.waitForLoadState('domcontentloaded');
 
     // Assert we are not redirected to login
-    expect(page.url()).toContain('/shop/schedule');
+    expect(page.url()).toContain('/venue/schedule');
 
-    await expect(page.getByText('Shop Schedule', { exact: false })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Venue Schedule', { exact: false })).toBeVisible({ timeout: 15000 });
 
     // Ensure calendar rendered
     await expect(page.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
@@ -316,16 +316,10 @@ test.describe('Shop Schedule E2E Tests', () => {
     // ------------------------------
     // Quick Create (Draft) via slot selection
     // ------------------------------
-    // Drag-select on the calendar grid to trigger onSelectSlot.
-    const grid = page.locator('.rbc-time-content').first();
-    const box = await grid.boundingBox();
-    expect(box).toBeTruthy();
-    if (!box) return;
-
-    await page.mouse.move(box.x + 80, box.y + 80);
-    await page.mouse.down();
-    await page.mouse.move(box.x + 80, box.y + 140);
-    await page.mouse.up();
+    // Click a time slot to trigger onSelectSlot (more reliable on Mobile Safari than drag).
+    const slot = page.locator('.rbc-day-slot .rbc-time-slot').nth(10);
+    await expect(slot).toBeVisible({ timeout: 15000 });
+    await slot.click({ force: true });
 
     await expect(page.getByText('Quick Create (Draft)', { exact: true })).toBeVisible({ timeout: 15000 });
 

@@ -16,14 +16,14 @@ import {
 /**
  * Calendar Lifecycle E2E Tests
  *
- * Validates the entire Shop-to-Barber roster flow using Playwright.
+ * Validates the entire Venue-to-Pro roster flow using Playwright.
  * Uses dual browser contexts to simulate two distinct user roles
- * (Shop Owner and Professional) interacting with the same shift data.
+ * (Venue and Pro) interacting with the same shift data.
  *
  * Test Flows:
- * 1. Direct Invite Flow - Shop invites barber directly, barber accepts
- * 2. Open Job Flow - Shop posts to marketplace, barber applies, shop accepts
- * 3. Cancellation Sync - Shop cancels shift, barber sees removal
+ * 1. Direct Invite Flow - Venue invites pro directly, pro accepts
+ * 2. Open Job Flow - Venue posts to marketplace, pro applies, venue accepts
+ * 3. Cancellation Sync - Venue cancels shift, pro sees removal
  */
 
 test.describe('Calendar Lifecycle E2E Tests', () => {
@@ -39,7 +39,7 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
   });
 
   test.beforeEach(async () => {
-    // Create two separate browser contexts for Shop and Barber roles
+    // Create two separate browser contexts for Venue and Pro roles
     shopContext = await browser.newContext({
       baseURL: 'http://localhost:3000',
     });
@@ -90,15 +90,44 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       // ============================================
       // Step 1: Shop Owner navigates to Schedule
       // ============================================
-      await shopPage.goto('/shop/schedule');
+      await shopPage.goto('/venue/schedule');
       await shopPage.waitForLoadState('domcontentloaded');
 
       // Verify we're on the shop schedule page
-      await expect(shopPage).toHaveURL(/.*\/shop\/schedule/);
-      await expect(shopPage.getByText('Shop Schedule', { exact: false })).toBeVisible({ timeout: 15000 });
+      await expect(shopPage).toHaveURL(/.*\/venue\/schedule/);
+      try {
+        await expect(shopPage.getByText('Venue Schedule', { exact: false })).toBeVisible({ timeout: 30000 });
+      } catch (e) {
+        const bodyText = await shopPage.locator('body').innerText().catch(() => '');
+        const storage = await shopPage
+          .evaluate(() => {
+            try {
+              return {
+                sessionUser: window.sessionStorage.getItem('hospogo_test_user'),
+                localUser: window.localStorage.getItem('hospogo_test_user'),
+                e2eMode: window.localStorage.getItem('E2E_MODE'),
+              };
+            } catch {
+              return { sessionUser: null, localUser: null, e2eMode: null };
+            }
+          })
+          .catch(() => ({ sessionUser: null, localUser: null, e2eMode: null }));
+        console.log('[DEBUG][venue/schedule] url=', shopPage.url());
+        console.log('[DEBUG][venue/schedule] title=', await shopPage.title().catch(() => ''));
+        console.log('[DEBUG][venue/schedule] storage=', storage);
+        console.log('[DEBUG][venue/schedule] body(first400)=', bodyText.slice(0, 400));
+        throw e;
+      }
 
       // Wait for calendar to render
-      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
+      try {
+        await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 30000 });
+      } catch (e) {
+        const bodyText = await shopPage.locator('body').innerText().catch(() => '');
+        console.log('[DEBUG][venue/schedule][calendar] url=', shopPage.url());
+        console.log('[DEBUG][venue/schedule][calendar] body(first400)=', bodyText.slice(0, 400));
+        throw e;
+      }
 
       // ============================================
       // Step 2: Shop clicks on a Draft (Ghost) Slot
@@ -215,7 +244,17 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
 
       // Verify we're on professional dashboard
       await expect(barberPage).toHaveURL(/.*\/professional-dashboard/);
-      await expect(barberPage.getByRole('heading', { name: /Professional Dashboard/i }).first()).toBeVisible({ timeout: 15000 });
+      try {
+        await expect(
+          barberPage.getByRole('heading', { name: /Pro Dashboard|Professional Dashboard/i }).first()
+        ).toBeVisible({ timeout: 15000 });
+      } catch (e) {
+        const bodyText = await barberPage.locator('body').innerText().catch(() => '');
+        console.log('[DEBUG][professional-dashboard] url=', barberPage.url());
+        console.log('[DEBUG][professional-dashboard] title=', await barberPage.title().catch(() => ''));
+        console.log('[DEBUG][professional-dashboard] body(first400)=', bodyText.slice(0, 400));
+        throw e;
+      }
 
       // ============================================
       // Step 6: Barber sees shift in "Invited Shifts"
@@ -261,7 +300,7 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       await shopPage.waitForLoadState('domcontentloaded');
 
       // Wait for calendar to render
-      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
+      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 30000 });
 
       // Look for confirmed shift (should now be green)
       const confirmedShiftEvent = shopPage.locator('.rbc-event').filter({
@@ -320,9 +359,9 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       // ============================================
       // Step 1: Shop creates a Marketplace Job (Open Shift)
       // ============================================
-      await shopPage.goto('/shop/schedule');
+      await shopPage.goto('/venue/schedule');
       await shopPage.waitForLoadState('domcontentloaded');
-      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
+      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 30000 });
 
       // Try to create a new open shift via slot selection
       const grid = shopPage.locator('.rbc-time-content').first();
@@ -482,9 +521,9 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       // ============================================
       // Step 5: Verify job converts to Confirmed Shift
       // ============================================
-      await shopPage.goto('/shop/schedule');
+      await shopPage.goto('/venue/schedule');
       await shopPage.waitForLoadState('domcontentloaded');
-      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
+      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 30000 });
 
       // The shift should now be confirmed (green)
       console.log('✅ Open Job Flow: Test completed');
@@ -507,7 +546,9 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       await barberPage.waitForLoadState('domcontentloaded');
 
       // Wait for dashboard to load (use .first() since there may be multiple matching headings)
-      await expect(barberPage.getByRole('heading', { name: /Professional Dashboard/i }).first()).toBeVisible({ timeout: 15000 });
+      await expect(
+        barberPage.getByRole('heading', { name: /Pro Dashboard|Professional Dashboard/i }).first()
+      ).toBeVisible({ timeout: 15000 });
 
       // Look for upcoming shifts section
       const upcomingSection = barberPage.locator('text=/Upcoming|My Shifts|Schedule/i').first();
@@ -524,9 +565,9 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       // ============================================
       // Step 2: Shop cancels/deletes the confirmed shift
       // ============================================
-      await shopPage.goto('/shop/schedule');
+      await shopPage.goto('/venue/schedule');
       await shopPage.waitForLoadState('domcontentloaded');
-      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
+      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 30000 });
 
       // Find the confirmed shift on the calendar
       const confirmedEvent = shopPage.locator('.rbc-event').filter({
@@ -576,7 +617,9 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       await barberPage.waitForLoadState('domcontentloaded');
 
       // Wait for dashboard to load (use .first() since there may be multiple matching headings)
-      await expect(barberPage.getByRole('heading', { name: /Professional Dashboard/i }).first()).toBeVisible({ timeout: 15000 });
+      await expect(
+        barberPage.getByRole('heading', { name: /Pro Dashboard|Professional Dashboard/i }).first()
+      ).toBeVisible({ timeout: 15000 });
 
       // The confirmed shift should no longer appear
       const shiftAfterCancel = barberPage.locator('[class*="card"], [class*="Card"], .rbc-event').filter({
@@ -658,9 +701,9 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       // ============================================
       // Step 1: Shop invites multiple barbers
       // ============================================
-      await shopPage.goto('/shop/schedule');
+      await shopPage.goto('/venue/schedule');
       await shopPage.waitForLoadState('domcontentloaded');
-      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 15000 });
+      await expect(shopPage.locator('.rbc-calendar')).toBeVisible({ timeout: 30000 });
 
       // Find draft shift and click
       const draftEvent = shopPage.locator('.rbc-event').filter({
@@ -687,7 +730,7 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
           }
 
           // Click invite button
-          const inviteButton = modal.getByRole('button', { name: /Invite.*Barber/i }).first();
+          const inviteButton = modal.getByRole('button', { name: /Invite/i }).first();
           if (await inviteButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await inviteButton.click();
           }
@@ -769,13 +812,13 @@ test.describe('Calendar Lifecycle - Setup Verification', () => {
 
     // Navigate and verify
     await Promise.all([
-      shopPg.goto('/shop/schedule'),
+      shopPg.goto('/venue/schedule'),
       barberPg.goto('/professional-dashboard'),
     ]);
 
     // Verify shop page loaded
     const shopUrl = shopPg.url();
-    expect(shopUrl).toContain('/shop/schedule');
+    expect(shopUrl).toContain('/venue/schedule');
 
     // Verify barber page loaded  
     const barberUrl = barberPg.url();

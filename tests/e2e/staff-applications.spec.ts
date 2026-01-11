@@ -1,7 +1,7 @@
 import { test, expect } from '../sessionStorage.setup';
 
 /**
- * E2E Tests for Professional Applications View
+ * E2E Tests for Staff Applications View
  * 
  * Tests the Applications View after full API integration:
  * - Status tabs visibility (Pending, Confirmed, Rejected)
@@ -11,7 +11,7 @@ import { test, expect } from '../sessionStorage.setup';
  * Note: Authentication is handled by global setup (auth.setup.ts)
  */
 
-test.describe('Professional Applications E2E Tests', () => {
+test.describe('Staff Applications E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Capture fatal JavaScript errors that prevent React from mounting
     page.on('pageerror', (exception) => {
@@ -185,9 +185,8 @@ test.describe('Professional Applications E2E Tests', () => {
       await expect(confirmedTab).toBeVisible();
       
       // Find the Rejected/Archived tab
-      const rejectedTab = page.getByRole('tab', { name: /rejected|archived/i }).or(
-        page.getByText(/Rejected|Archived/i).first()
-      );
+      // Prefer stable test id to avoid strict-mode ambiguity (nested span can also match text).
+      const rejectedTab = page.getByTestId('tab-rejected');
       await expect(rejectedTab).toBeVisible();
       
       // Verify all three tabs are in the same tab list

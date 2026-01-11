@@ -15,16 +15,16 @@ export default function DemoPage() {
     const demoUsers = {
       hub: {
         id: "demo_hub_1",
-        email: "demo@barbershop.com",
+        email: "demo@venue.com",
         password: null,
-        displayName: "Downtown Barbershop",
+        displayName: "Downtown Venue",
         role: "hub" as const,
         provider: "email" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
         profileComplete: true,
         hubProfile: {
-          businessName: "Downtown Barbershop",
+          businessName: "Downtown Venue",
           location: {
             address: "123 Main St",
             city: "New York",
@@ -37,7 +37,7 @@ export default function DemoPage() {
       },
       professional: {
         id: "demo_pro_1",
-        email: "demo@barber.com",
+        email: "demo@staff.com",
         password: null,
         displayName: "John Smith",
         role: "professional" as const,
@@ -57,14 +57,14 @@ export default function DemoPage() {
         id: "demo_trainer_1",
         email: "demo@trainer.com",
         password: null,
-        displayName: "Master Barber Mike",
+        displayName: "Master Staff Mike",
         role: "trainer" as const,
         provider: "email" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
         profileComplete: true,
         trainerProfile: {
-          qualifications: ["Master Barber License", "10+ years experience"],
+          qualifications: ["Master Staff License", "10+ years experience"],
           specializations: ["Advanced Fades", "Beard Care", "Business Training"],
           yearsExperience: 12,
           trainingLocation: "Downtown Training Center"
@@ -220,8 +220,8 @@ export default function DemoPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-16">
           {[
-            { role: "hub", label: "Shop Owner", icon: Store, description: "Manage barbershop operations" },
-            { role: "professional", label: "Professional", icon: UserCheck, description: "Find jobs and gigs" },
+            { role: "hub", label: "Venue", icon: Store, description: "Manage venue operations" },
+            { role: "professional", label: "Pro", icon: UserCheck, description: "Find jobs and gigs" },
             { role: "trainer", label: "Trainer", icon: Award, description: "Monetize your expertise" },
             { role: "brand", label: "Brand", icon: Globe, description: "Promote your products" }
           ].map((item) => (

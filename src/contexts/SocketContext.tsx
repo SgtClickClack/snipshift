@@ -54,6 +54,25 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // E2E testing only: disable real-time socket connections to avoid noisy auth failures
+    // and "networkidle" hangs in automated tests.
+    //
+    // IMPORTANT: Keep Socket.io ENABLED for production so real-time updates work for live users.
+    const isE2E =
+      import.meta.env.VITE_E2E === '1' ||
+      (typeof window !== 'undefined' &&
+        window.location.hostname === 'localhost' &&
+        window.localStorage.getItem('E2E_MODE') === 'true');
+
+    if (isE2E) {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+      setIsConnected(false);
+      return;
+    }
+
     // Get API URL from environment or use a safe default.
     // - In production on hospogo.com (single origin), default to the current origin.
     // - In local dev (Vite frontend on :3000), Socket.io connects directly to API backend on :5000

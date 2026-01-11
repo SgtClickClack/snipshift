@@ -148,10 +148,12 @@ export async function setupUserContext(
   user: TestUser
 ): Promise<void> {
   await context.addInitScript((userData) => {
-    sessionStorage.setItem(
-      'hospogo_test_user',
-      JSON.stringify(userData)
-    );
+    // Playwright restores `localStorage` reliably via storageState; `sessionStorage` can be flaky
+    // across browsers (especially Mobile Safari). Write to both so AuthContext E2E hydration
+    // consistently finds the session user.
+    const raw = JSON.stringify(userData);
+    sessionStorage.setItem('hospogo_test_user', raw);
+    localStorage.setItem('hospogo_test_user', raw);
     localStorage.setItem('E2E_MODE', 'true');
   }, user);
 }

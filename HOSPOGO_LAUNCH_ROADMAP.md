@@ -52,6 +52,22 @@
 **Impact:**
 - Prevents role confusion (e.g., workers landing on venue dashboards) and eliminates “stuck after Google sign-in” redirect edge cases.
 
+---
+
+### Update: 2026-01-11 - Final Branding & Path Refactor (Venue Schedule + E2E Spec Renames)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added branded schedule route **`/venue/schedule`** (legacy `/shop/schedule` remains as a compatibility alias).
+- Renamed legacy Playwright specs to match new HospoGo terminology:
+  - `shop-schedule.spec.ts` → `venue-schedule.spec.ts`
+  - `professional-applications.spec.ts` → `staff-applications.spec.ts`
+- Updated E2E guards so Mobile Safari reliably hydrates test auth state and avoids websocket noise during automation.
+
+**Impact:**
+- Keeps branding consistent in URLs and test suites while maintaining backwards-compatible routing for older links/bookmarks.
+
 ### Update: 2026-01-10 - Branded Venue Welcome Email (Stripe Connect Completion Trigger)
 
 **Status:** ✅ **IMPLEMENTED**

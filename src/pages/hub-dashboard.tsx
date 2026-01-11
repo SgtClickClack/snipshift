@@ -815,7 +815,7 @@ export default function HubDashboard() {
                             required
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            placeholder="e.g., Weekend Barber Needed"
+                            placeholder="e.g., Weekend Staff Needed"
                             data-testid="input-job-title"
                           />
                         </div>

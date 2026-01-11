@@ -172,7 +172,7 @@ export default function ShopDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-neutral-900">Shop Dashboard</h1>
+              <h1 className="text-2xl font-bold text-neutral-900">Venue Dashboard</h1>
               <p className="text-neutral-600">{user.email}</p>
             </div>
             <Button 
@@ -266,7 +266,7 @@ export default function ShopDashboard() {
                         required
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="e.g., Weekend Barber Needed"
+                        placeholder="e.g., Weekend Staff Needed"
                       />
                     </div>
                     

@@ -3,8 +3,13 @@ import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   root: '.',
+  // Make NODE_ENV available in the client bundle for test-only guards (e.g. Socket.io disabling in E2E).
+  // In Playwright E2E runs we explicitly set NODE_ENV=test in `playwright.config.ts`.
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? mode),
+  },
   plugins: [
     react({
       // Ensure React is properly transformed and available
@@ -181,5 +186,5 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
   },
-});
+}));
 

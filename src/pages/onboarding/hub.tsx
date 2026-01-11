@@ -46,18 +46,18 @@ export default function HubOnboardingPage() {
          // Try to parse error
          try {
              const error = await response.json();
-             throw new Error(error.message || 'Failed to create shop profile');
+             throw new Error(error.message || 'Failed to create venue profile');
          } catch (e) {
              if (e instanceof Error) {
                throw e;
              }
-             throw new Error('Failed to create shop profile');
+             throw new Error('Failed to create venue profile');
          }
       }
 
       toast({
-        title: "Shop Profile Created",
-        description: "Your shop has been successfully registered.",
+        title: "Venue Profile Created",
+        description: "Your venue has been successfully registered.",
         variant: "default",
       });
 
@@ -99,8 +99,8 @@ export default function HubOnboardingPage() {
   return (
     <>
       <SEO
-        title="Create Shop Profile"
-        description="Register your shop on HospoGo."
+        title="Create Venue Profile"
+        description="Register your venue on HospoGo."
         url="/onboarding/hub"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
@@ -110,15 +110,15 @@ export default function HubOnboardingPage() {
                <div className="mx-auto w-12 h-12 bg-brand-neon rounded-full flex items-center justify-center mb-4 shadow-neon-realistic">
                   <Building2 className="h-6 w-6 text-brand-dark" />
                </div>
-              <CardTitle className="text-2xl text-steel-900">Create Shop Profile</CardTitle>
+              <CardTitle className="text-2xl text-steel-900">Create Venue Profile</CardTitle>
               <CardDescription>
-                Tell us about your business to start hiring professionals
+                Tell us about your business to start hiring pros
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="shopName" className="text-steel-700">Shop Name *</Label>
+                  <Label htmlFor="shopName" className="text-steel-700">Venue Name *</Label>
                   <Input
                     id="shopName"
                     name="shopName"
@@ -162,7 +162,7 @@ export default function HubOnboardingPage() {
                   className="w-full"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Creating Profile...' : 'Create Shop Profile'}
+                  {isSubmitting ? 'Creating Profile...' : 'Create Venue Profile'}
                 </Button>
               </form>
             </CardContent>

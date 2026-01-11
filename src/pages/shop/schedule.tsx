@@ -231,7 +231,7 @@ export default function ShopSchedulePage() {
       const data = await fetchProfessionals();
       return data.map((p: any) => ({
         id: p.id,
-        name: p.name || p.displayName || 'Professional',
+        name: p.name || p.displayName || 'Pro',
         displayName: p.displayName,
         email: p.email,
         photoURL: p.avatarUrl || p.photoURL,
@@ -578,7 +578,7 @@ export default function ShopSchedulePage() {
             {/* Top row: Title + Controls */}
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <CardTitle>Shop Schedule</CardTitle>
+                <CardTitle>Venue Schedule</CardTitle>
                 <div className="text-sm text-muted-foreground">
                   Week of {format(weekStart, 'MMM d')} – {format(weekEnd, 'MMM d')}
                 </div>
@@ -819,7 +819,7 @@ export default function ShopSchedulePage() {
           <DialogHeader>
             <DialogTitle>Warning: Changing a confirmed shift</DialogTitle>
             <DialogDescription>
-              This shift is assigned to a Professional. Provide a reason to proceed (they will be notified).
+              This shift is assigned to a Pro. Provide a reason to proceed (they will be notified).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
@@ -828,7 +828,7 @@ export default function ShopSchedulePage() {
               id="reason"
               value={moveReason}
               onChange={(e) => setMoveReason(e.target.value)}
-              placeholder="e.g. Shop closed early due to plumbing issue…"
+              placeholder="e.g. Venue closed early due to plumbing issue…"
             />
           </div>
           <DialogFooter>
@@ -912,7 +912,7 @@ export default function ShopSchedulePage() {
 
               {selectedConfirmedShift.assigneeId && (
                 <div>
-                  <Label className="text-muted-foreground text-sm">Assigned Professional</Label>
+                  <Label className="text-muted-foreground text-sm">Assigned Pro</Label>
                   <div className="font-medium">Staff member confirmed</div>
                 </div>
               )}
@@ -956,7 +956,7 @@ export default function ShopSchedulePage() {
                 id="edit-title"
                 value={editForm.title}
                 onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                placeholder="e.g. Weekend Barber"
+                placeholder="e.g. Weekend Staff"
               />
             </div>
 

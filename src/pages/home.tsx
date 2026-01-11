@@ -116,8 +116,8 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <Store className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Shop Owner</h3>
-                <p className="text-steel-600">Own a barbershop or salon? Post shifts and find professionals.</p>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Venue</h3>
+                <p className="text-steel-600">Own a venue? Post shifts and find pros.</p>
               </CardContent>
             </Card>
 
@@ -129,8 +129,8 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <UserCheck className="text-white h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-steel-900">Professional</h3>
-                <p className="text-steel-600">Barber, stylist, or beauty professional? Find flexible work opportunities.</p>
+                <h3 className="text-xl font-semibold mb-3 text-steel-900">Pro</h3>
+                <p className="text-steel-600">Staff, stylist, or hospitality pro? Find flexible work opportunities.</p>
               </CardContent>
             </Card>
 

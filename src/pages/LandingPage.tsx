@@ -180,8 +180,8 @@ export default function LandingPage() {
                     Post or Browse Opportunities
                   </h3>
                   <p className="text-muted-foreground text-sm">
-                    Shop owners post shifts with clear rates and requirements. Brands share launches.
-                    Professionals browse the feed to find work that fits their schedule.
+                    Venue owners post shifts with clear rates and requirements. Brands share launches.
+                    Pros browse the feed to find work that fits their schedule.
                   </p>
                 </CardContent>
               </Card>
@@ -200,7 +200,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-xl font-semibold mb-3 text-card-foreground">Connect & Apply</h3>
                   <p className="text-muted-foreground text-sm">
-                    Apply to shifts in one click. Shop owners review profiles and ratings, then book the best
+                    Apply to shifts in one click. Venue owners review profiles and ratings, then book the best
                     talent instantly.
                   </p>
                 </CardContent>
@@ -271,7 +271,7 @@ export default function LandingPage() {
                   {!isAuthenticated && (
                     <Link to="/signup?role=hub">
                       <Button variant="accent" className="w-full">
-                        Get Started as Shop Owner
+                        Get Started as Venue
                       </Button>
                     </Link>
                   )}
@@ -323,7 +323,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
               <div className="flex items-center gap-3">
                 <Shield className="h-6 w-6 text-brand-neon" />
-                <span className="text-lg font-semibold text-foreground">Verified Professionals</span>
+                <span className="text-lg font-semibold text-foreground">Verified Pros</span>
               </div>
               <div className="flex items-center gap-3">
                 <CreditCard className="h-6 w-6 text-brand-neon" />

@@ -263,7 +263,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // E2E mode: bypass Firebase dependency and hydrate user from storage.
     // Note: Playwright restores `localStorage` from `storageState`, but not `sessionStorage`.
     // We support both so tests can use either strategy.
-    if (import.meta.env.VITE_E2E === '1' && typeof window !== 'undefined') {
+    const isE2E =
+      import.meta.env.VITE_E2E === '1' ||
+      (typeof window !== 'undefined' &&
+        window.location.hostname === 'localhost' &&
+        window.localStorage.getItem('E2E_MODE') === 'true');
+
+    if (isE2E && typeof window !== 'undefined') {
       try {
         const raw =
           window.sessionStorage.getItem('hospogo_test_user') ??
@@ -556,7 +562,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // E2E mode: use API middleware bypass token.
-    if (import.meta.env.VITE_E2E === '1') {
+    if (
+      import.meta.env.VITE_E2E === '1' ||
+      (typeof window !== 'undefined' &&
+        window.location.hostname === 'localhost' &&
+        window.localStorage.getItem('E2E_MODE') === 'true')
+    ) {
       setToken('mock-test-token');
       return 'mock-test-token';
     }

@@ -28,6 +28,49 @@
 
 ---
 
+#### 2026-01-11: Final Branding & Path Refactor (Venue/Staff + E2E Guardrails)
+
+**Core Components**
+- Branded schedule + dashboard routing (`src/App.tsx`)
+- E2E auth/socket reliability (`src/contexts/AuthContext.tsx`, `src/contexts/SocketContext.tsx`)
+- Venue schedule UI copy (`src/pages/shop/schedule.tsx`)
+- Playwright E2E specs (`tests/e2e/*.spec.ts`)
+- Vite client env wiring (`vite.config.ts`)
+
+**Key Features**
+- Added branded route alias **`/venue/schedule`** (keeps legacy `/shop/schedule` working).
+- Added branded dashboard routes **`/venue/dashboard`** and **`/worker/dashboard`** without introducing new dashboard page trees.
+- Ensured Socket.io is disabled during automated E2E runs (prevents noisy websocket/auth failures) while staying enabled for production usage.
+- Hardened E2E auth hydration so Mobile Safari consistently uses the injected `hospogo_test_user` state.
+- Renamed legacy E2E specs:
+  - `tests/e2e/shop-schedule.spec.ts` → `tests/e2e/venue-schedule.spec.ts`
+  - `tests/e2e/professional-applications.spec.ts` → `tests/e2e/staff-applications.spec.ts`
+
+**Integration Points**
+- E2E: `npm run test:e2e -- tests/e2e/{calendar-lifecycle,venue-schedule,staff-applications}.spec.ts`
+- Client env exposure: `vite define` for `process.env.NODE_ENV`
+
+**File Paths**
+- `src/App.tsx`
+- `src/contexts/AuthContext.tsx`
+- `src/contexts/SocketContext.tsx`
+- `src/pages/shop/schedule.tsx`
+- `tests/e2e/calendar-lifecycle.spec.ts`
+- `tests/e2e/seed_data.ts`
+- `tests/e2e/staff-applications.spec.ts`
+- `tests/e2e/venue-schedule.spec.ts`
+- `tests/e2e/shop-schedule.spec.ts` (deleted)
+- `tests/e2e/professional-applications.spec.ts` (deleted)
+- `vite.config.ts`
+
+**Next Priority Task**
+- Re-run and triage the full Playwright suite to decide which failing specs are release-gating vs flaky/non-blocking.
+
+**Code Organization & Quality**
+- Kept branding changes constrained to UI-facing strings and routing; avoided introducing new dashboard page trees/patterns.
+
+---
+
 #### 2026-01-10: Branded Venue Welcome Email (Stripe Connect Onboarding Completion Trigger)
 
 **Core Components**

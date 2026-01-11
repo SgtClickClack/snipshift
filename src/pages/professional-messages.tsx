@@ -149,7 +149,7 @@ export default function ProfessionalMessagesPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">This page is only available for professionals.</p>
+          <p className="text-muted-foreground">This page is only available for pros.</p>
         </div>
       </div>
     );
@@ -157,7 +157,7 @@ export default function ProfessionalMessagesPage() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <SEO title="Messages - Professional Dashboard" />
+      <SEO title="Messages - Pro Dashboard" />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Conversation List */}
         <div

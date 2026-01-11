@@ -14,8 +14,6 @@ import { SocketProvider } from '@/contexts/SocketContext';
 import { NotificationToast } from '@/components/notifications/notification-toast';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { VenueRoute } from '@/components/auth/venue-route';
-import { WorkerRoute } from '@/components/auth/worker-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
@@ -72,8 +70,6 @@ const ShopSchedulePage = lazy(() => import('@/pages/shop/schedule'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
 const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
 const TrainerDashboard = lazy(() => import('@/pages/trainer-dashboard'));
-const VenueDashboard = lazy(() => import('@/pages/venue/Dashboard'));
-
 // Feature pages - lazy load for better performance
 const ProfilePage = lazy(() => import('@/pages/profile'));
 const WalletPage = lazy(() => import('@/pages/wallet'));
@@ -83,14 +79,10 @@ const ProfessionalMessagesPage = lazy(() => import('@/pages/professional-message
 const SalonCreateJobPage = lazy(() => import('@/pages/salon-create-job'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
-const AdminOverview = lazy(() => import('@/pages/admin/Overview'));
 
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
 const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
-
-// Worker Dashboard
-const WorkerDashboard = lazy(() => import('@/pages/worker/Dashboard'));
 
 function AppRoutes() {
   const location = useLocation();
@@ -363,6 +355,15 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
+        {/* Branded alias for schedule (preferred) */}
+        <Route path="/venue/schedule" element={
+          <ProtectedRoute allowedRoles={['hub', 'business']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ShopSchedulePage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
         <Route path="/salon/create-job" element={
           <ProtectedRoute allowedRoles={['hub', 'business']}>
             <Suspense fallback={<PageLoadingFallback />}>
@@ -407,30 +408,22 @@ function AppRoutes() {
           <Navigate to="/venue/dashboard" replace />
         } />
 
-        {/* Clean-break role trees */}
-        <Route path="/venue/*" element={<VenueRoute />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route
-            path="dashboard"
-            element={
-              <Suspense fallback={<PageLoadingFallback />}>
-                <VenueDashboard />
-              </Suspense>
-            }
-          />
-        </Route>
+        {/* Branded dashboard paths (keep underlying pages stable) */}
+        <Route path="/venue/dashboard" element={
+          <ProtectedRoute allowedRoles={['hub', 'business']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ShopDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
 
-        <Route path="/worker/*" element={<WorkerRoute />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route
-            path="dashboard"
-            element={
-              <Suspense fallback={<PageLoadingFallback />}>
-                <WorkerDashboard />
-              </Suspense>
-            }
-          />
-        </Route>
+        <Route path="/worker/dashboard" element={
+          <ProtectedRoute requiredRole="professional">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <ProfessionalDashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
 
         {/* Protected feature routes - Disabled for stability */}
         <Route path="/community" element={
@@ -465,13 +458,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="/admin/overview" element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <AdminOverview />
-            </Suspense>
-          </ProtectedRoute>
-        } />
+        <Route path="/admin/overview" element={<Navigate to="/admin/dashboard" replace />} />
 
         <Route path="/profile" element={
           <ProtectedRoute>

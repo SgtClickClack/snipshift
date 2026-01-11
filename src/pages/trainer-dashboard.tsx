@@ -419,7 +419,7 @@ export default function TrainerDashboard() {
                   <Label htmlFor="credentials">Credentials</Label>
                   <Input
                     id="credentials"
-                    placeholder="e.g., Master Barber License, 10+ years experience"
+                    placeholder="e.g., Master Staff License, 10+ years experience"
                     data-testid="input-credentials"
                   />
                 </div>

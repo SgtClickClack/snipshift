@@ -416,14 +416,14 @@ export default function ProfessionalDashboard() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <SEO title="Professional Dashboard" />
+      <SEO title="Pro Dashboard" />
       
       {/* Banner/Profile Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <DashboardHeader
           bannerImage={user?.bannerUrl || user?.bannerImage}
           profileImage={user?.avatarUrl || user?.photoURL}
-          title={user?.displayName || "Professional Dashboard"}
+          title={user?.displayName || "Pro Dashboard"}
           subtitle={user?.email}
         />
       </div>
@@ -433,7 +433,7 @@ export default function ProfessionalDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-0">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Professional Dashboard</h1>
+              <h1 className="text-2xl font-bold text-foreground">Pro Dashboard</h1>
               <p className="text-muted-foreground">{user?.displayName || user?.email}</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -854,7 +854,7 @@ export default function ProfessionalDashboard() {
                             {job.hubId && (
                               <StartChatButton
                                 otherUserId={job.hubId}
-                                otherUserName="Shop Owner"
+                                otherUserName="Venue"
                                 otherUserRole="hub"
                                 variant="outline"
                                 size="sm"

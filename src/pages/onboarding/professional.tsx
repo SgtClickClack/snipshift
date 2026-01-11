@@ -21,7 +21,7 @@ export default function ProfessionalOnboardingPage() {
   const [formData, setFormData] = useState({
     displayName: user?.displayName || '',
     location: user?.location || '',
-    profession: 'Barber', // Default profession
+    profession: 'Staff', // Default profession
     bio: user?.bio || '',
   });
 
@@ -57,7 +57,7 @@ export default function ProfessionalOnboardingPage() {
       }
 
       toast({
-        title: "Professional Profile Created",
+        title: "Pro Profile Created",
         description: "Your profile has been successfully updated.",
         variant: "default",
       });
@@ -100,8 +100,8 @@ export default function ProfessionalOnboardingPage() {
   return (
     <>
       <SEO
-        title="Create Professional Profile"
-        description="Setup your professional profile on HospoGo."
+        title="Create Pro Profile"
+        description="Setup your pro profile on HospoGo."
         url="/onboarding/professional"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
@@ -111,7 +111,7 @@ export default function ProfessionalOnboardingPage() {
                <div className="mx-auto w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
                   <User className="h-6 w-6 text-white" />
                </div>
-              <CardTitle className="text-2xl text-steel-900">Create Professional Profile</CardTitle>
+              <CardTitle className="text-2xl text-steel-900">Create Pro Profile</CardTitle>
               <CardDescription>
                 Tell us about yourself to start finding work
               </CardDescription>
@@ -138,7 +138,7 @@ export default function ProfessionalOnboardingPage() {
                     name="profession"
                     value={formData.profession}
                     onChange={handleChange}
-                    placeholder="e.g. Barber, Stylist, etc."
+                    placeholder="e.g. Staff, Bartender, etc."
                     required
                     className="bg-card"
                   />
@@ -175,7 +175,7 @@ export default function ProfessionalOnboardingPage() {
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Creating Profile...' : 'Create Professional Profile'}
+                  {isSubmitting ? 'Creating Profile...' : 'Create Pro Profile'}
                 </Button>
               </form>
             </CardContent>
