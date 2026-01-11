@@ -9,6 +9,7 @@
 - Kept the navbar logo exactly as-is (banner logo).
 - Updated the loading splash to use the **same banner asset** (`/hospogo-navbar-banner.png`) so the first paint matches the navbar.
 - Removed splash-only logo filters that were changing the mark’s appearance across themes.
+- Bumped the one-time service-worker recovery key to force stale clients to refresh cached HTML/assets.
 
 **Integration Points**
 - Dev verification: `npm run dev`

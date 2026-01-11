@@ -15,6 +15,7 @@
 **Action Taken:**
 - Standardized the loading splash to use the exact same navbar banner logo (`/hospogo-navbar-banner.png`) so the first paint matches the header.
 - Removed splash-only CSS filters that were altering the logo’s appearance across dark/light modes.
+- Bumped the one-time service worker recovery key to flush stale cached clients.
 
 **Impact:**
 - Users see a consistent HospoGo brand mark from first paint (splash) through the app shell (navbar).

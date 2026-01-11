@@ -205,7 +205,7 @@
       (function () {
         try {
           // Bump the key if we need to re-run recovery
-          var KEY = 'hospogo_sw_recovery_v1';
+          var KEY = 'hospogo_sw_recovery_v2';
           if (localStorage.getItem(KEY) === '1') return;
           if (!('serviceWorker' in navigator) || !('caches' in window)) return;
 
