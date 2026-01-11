@@ -8,12 +8,13 @@
 
 ---
 
-### Update: 2026-01-11 - Splash Screen Branding Consistency (Match Navbar Wordmark)
+### Update: 2026-01-11 - Splash Screen Branding Consistency (Match Navbar Banner Logo)
 
 **Status:** ✅ **UPDATED**
 
 **Action Taken:**
-- Standardized the splash/loading surfaces to use the same HospoGo wordmark as the navbar (asset + glow), eliminating mismatched logo variants.
+- Standardized the loading splash to use the exact same navbar banner logo (`/hospogo-navbar-banner.png`) so the first paint matches the header.
+- Removed splash-only CSS filters that were altering the logo’s appearance across dark/light modes.
 
 **Impact:**
 - Users see a consistent HospoGo brand mark from first paint (splash) through the app shell (navbar).

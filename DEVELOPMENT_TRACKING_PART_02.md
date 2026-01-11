@@ -1,3 +1,32 @@
+#### 2026-01-11: Loading Splash Logo Matches Navbar Banner (No Style Regression)
+
+**Core Components**
+- App shell splash screen (`index.html`)
+- Global navigation branding (`src/components/layout/Navbar.tsx`)
+- In-app loading overlay (`src/components/ui/loading-screen.tsx`)
+
+**Key Features**
+- Kept the navbar logo exactly as-is (banner logo).
+- Updated the loading splash to use the **same banner asset** (`/hospogo-navbar-banner.png`) so the first paint matches the navbar.
+- Removed splash-only logo filters that were changing the mark’s appearance across themes.
+
+**Integration Points**
+- Dev verification: `npm run dev`
+- Build verification: `npm run build`
+
+**File Paths**
+- `index.html`
+- `src/components/layout/Navbar.tsx`
+- `src/components/ui/loading-screen.tsx`
+
+**Next Priority Task**
+- Confirm whether any OS-level PWA install splash surfaces should mirror the banner logo or remain the square app icon.
+
+**Code Organization & Quality**
+- Changes are isolated to branding surfaces (no new patterns; reused existing assets/scripts).
+
+---
+
 #### 2026-01-10: Branded Venue Welcome Email (Stripe Connect Onboarding Completion Trigger)
 
 **Core Components**

@@ -1,4 +1,4 @@
-const logoUrl = '/hospogoneonlogo.png';
+const logoUrl = '/hospogo-navbar-banner.png';
 
 export function LoadingScreen() {
   return (
@@ -10,7 +10,7 @@ export function LoadingScreen() {
           className="w-72 max-w-[85vw] h-auto object-contain animate-pulse"
           style={{
             imageRendering: 'auto',
-            filter: 'drop-shadow(0 0 18px rgba(255,255,255,0.25))',
+            filter: 'drop-shadow(0 0 14px rgba(50,205,50,0.45))',
             WebkitFontSmoothing: 'antialiased',
           }}
           loading="eager"
