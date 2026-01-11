@@ -4,6 +4,7 @@
  * Manages Socket.io connection and provides real-time messaging functionality
  */
 
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
@@ -55,7 +56,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     // Get API URL from environment or use a safe default.
     // - In production on hospogo.com (single origin), default to the current origin.
-    // - In local dev (Vite on localhost), default to the API dev server on :5000.
+    // - In local dev (Vite frontend on :3000), Socket.io connects directly to API backend on :5000
+    //   because Vite's proxy only handles /api and /graphql paths, not WebSocket connections.
     const defaultApiUrl =
       typeof window !== 'undefined' && window.location.hostname !== 'localhost'
         ? window.location.origin
@@ -123,6 +125,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       setSocket(null);
       setIsConnected(false);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token]);
 
   const joinConversation = useCallback((conversationId: string) => {

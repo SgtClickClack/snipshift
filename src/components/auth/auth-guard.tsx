@@ -22,6 +22,7 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const { user, isLoading, isAuthenticated, isAuthReady } = useAuth();
   const location = useLocation();
+  const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
   // Show loading spinner while checking authentication or waiting for auth to be ready
   if (isLoading || !isAuthReady) {
@@ -83,7 +84,7 @@ export function AuthGuard({
   // If specific role is required but user's currentRole doesn't match
   if (requiredRole && user && user.currentRole !== requiredRole) {
     // Debug logging for E2E tests
-    if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
+    if (shouldDebug) {
       logger.debug('AuthGuard', 'Role mismatch - redirecting to unauthorized:', {
         requiredRole,
         userCurrentRole: user.currentRole,
@@ -97,7 +98,7 @@ export function AuthGuard({
   }
   
   // Debug: Log successful role check
-  if (requiredRole && (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1')) {
+  if (requiredRole && shouldDebug) {
     logger.debug('AuthGuard', 'Role check passed:', {
       requiredRole,
       userCurrentRole: user?.currentRole,
@@ -108,7 +109,7 @@ export function AuthGuard({
   // If multiple roles are allowed, check if user's role is in the allowed list
   if (allowedRoles && user && user.currentRole && !allowedRoles.includes(user.currentRole as typeof allowedRoles[number])) {
     // Debug logging
-    if (process.env.NODE_ENV === 'development' || process.env.VITE_E2E === '1') {
+    if (shouldDebug) {
       logger.debug('AuthGuard', 'Role not in allowed list - redirecting to unauthorized:', {
         allowedRoles,
         userCurrentRole: user.currentRole,

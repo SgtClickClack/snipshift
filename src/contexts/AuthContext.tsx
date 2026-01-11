@@ -1,7 +1,10 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
+import { getDashboardRoute } from '@/lib/roles';
 
 export interface User {
   id: string;
@@ -62,9 +65,11 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAuthReady: boolean;
+  isRedirecting: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
   setCurrentRole: (role: NonNullable<User['currentRole']>) => void;
@@ -72,6 +77,7 @@ interface AuthContextType {
   updateRoles: (roles: User['roles']) => void;
   getToken: () => Promise<string | null>;
   refreshUser: () => Promise<void>;
+  triggerPostAuthRedirect: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -82,13 +88,82 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Keep the latest router helpers without re-subscribing auth listeners.
+  const navigateRef = useRef(navigate);
+  const locationRef = useRef(location);
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
   
   // Refs to prevent Strict Mode double-firing and race conditions
   const isProcessingAuth = useRef(false);
   const currentAuthUid = useRef<string | null>(null);
   const hasInitialized = useRef(false);
+  const pendingRedirect = useRef(false);
+
+  const deriveRoleHome = (u: User | null): string => {
+    if (!u) return '/onboarding';
+    if (u.isOnboarded === false) return '/onboarding';
+
+    // "Clean break" role homes
+    if (u.currentRole === 'professional') return '/worker/dashboard';
+    if (u.currentRole === 'business' || u.currentRole === 'hub') return '/venue/dashboard';
+
+    // Fallback to existing dashboard routing for other roles / legacy surfaces.
+    if (!u.currentRole || u.currentRole === 'client') return '/role-selection';
+    return getDashboardRoute(u.currentRole);
+  };
+
+  const shouldAutoRedirectFromPath = (pathname: string): boolean => {
+    // Only auto-redirect from auth/callback/redirect pages to avoid disrupting normal browsing.
+    return (
+      pathname === '/login' ||
+      pathname === '/signup' ||
+      pathname === '/dashboard' ||
+      pathname === '/oauth/callback' ||
+      pathname === '/__/auth/handler'
+    );
+  };
+
+  const handleRedirect = (u: User | null, opts?: { force?: boolean }) => {
+    const pathname = locationRef.current.pathname;
+    const force = opts?.force === true;
+
+    if (!force && !pendingRedirect.current && !shouldAutoRedirectFromPath(pathname)) {
+      return;
+    }
+
+    const target = deriveRoleHome(u);
+
+    // Avoid redirect loops / churn.
+    if (pathname === target) {
+      pendingRedirect.current = false;
+      setIsRedirecting(false);
+      return;
+    }
+
+    // If we're already on the onboarding flow, don't bounce repeatedly.
+    if (target.startsWith('/onboarding') && pathname.startsWith('/onboarding')) {
+      pendingRedirect.current = false;
+      setIsRedirecting(false);
+      return;
+    }
+
+    pendingRedirect.current = false;
+    navigateRef.current(target, { replace: true });
+    setIsRedirecting(false);
+  };
 
   useEffect(() => {
     // Prevent double initialization in Strict Mode
@@ -97,11 +172,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     hasInitialized.current = true;
 
-    // E2E mode: bypass Firebase dependency and hydrate user from sessionStorage.
-    // Playwright sets VITE_E2E=1 and provides `hospogo_test_user` session storage.
+    // E2E mode: bypass Firebase dependency and hydrate user from storage.
+    // Note: Playwright restores `localStorage` from `storageState`, but not `sessionStorage`.
+    // We support both so tests can use either strategy.
     if (import.meta.env.VITE_E2E === '1' && typeof window !== 'undefined') {
       try {
-        const raw = window.sessionStorage.getItem('hospogo_test_user');
+        const raw =
+          window.sessionStorage.getItem('hospogo_test_user') ??
+          window.localStorage.getItem('hospogo_test_user');
         if (raw) {
           const parsed = JSON.parse(raw) as Partial<User>;
           const roles = Array.isArray(parsed.roles) ? parsed.roles : (parsed.currentRole ? [parsed.currentRole] : []);
@@ -115,12 +193,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             createdAt: parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
             updatedAt: parsed.updatedAt ? new Date(parsed.updatedAt) : new Date(),
           });
+          setToken('mock-test-token');
         } else {
           setUser(null);
+          setToken(null);
         }
       } catch (error) {
         console.error('[AuthContext] Failed to parse E2E session user:', error);
         setUser(null);
+        setToken(null);
       } finally {
         setIsLoading(false);
         setIsAuthReady(true);
@@ -199,6 +280,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (isNewSignIn) {
           logger.debug('AuthContext', 'New sign-in detected, showing loading screen');
           setIsLoading(true);
+          // When a user signs in, we want the app-level role redirect to run.
+          pendingRedirect.current = true;
+          setIsRedirecting(true);
         }
         
         // Mark as processing and track current user
@@ -209,6 +293,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (firebaseUser) {
             try {
               const token = await firebaseUser.getIdToken();
+              setToken(token);
               const res = await fetch('/api/me', {
                 headers: {
                   'Authorization': `Bearer ${token}`
@@ -217,7 +302,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               
               if (res.ok) {
                 const profile = await res.json();
-                setUser({ 
+                const nextUser: User = { 
                   ...profile, 
                   uid: firebaseUser.uid,
                   // Ensure roles is array
@@ -227,11 +312,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
                   // Ensure isOnboarded is boolean
                   isOnboarded: profile.isOnboarded ?? false
-                });
+                };
+                setUser(nextUser);
+                handleRedirect(nextUser);
               } else if (res.status === 401) {
                 // 401 means token is invalid or expired - try to refresh token once
                 try {
                   const refreshedToken = await firebaseUser.getIdToken(true);
+                  setToken(refreshedToken);
                   const retryRes = await fetch('/api/me', {
                     headers: {
                       'Authorization': `Bearer ${refreshedToken}`
@@ -240,40 +328,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   
                   if (retryRes.ok) {
                     const profile = await retryRes.json();
-                    setUser({ 
+                    const nextUser: User = { 
                       ...profile, 
                       uid: firebaseUser.uid,
                       roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
                       createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
                       updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
                       isOnboarded: profile.isOnboarded ?? false
-                    });
+                    };
+                    setUser(nextUser);
+                    handleRedirect(nextUser);
                   } else {
                     // Token refresh didn't help - user doesn't exist in DB or token is still invalid
                     // Silently set user to null - don't log warning as this is expected for logged-out users
                     setUser(null);
+                    handleRedirect(null);
                   }
-                } catch (refreshError) {
+                } catch {
                   // Token refresh failed - user is logged out
                   setUser(null);
+                  setToken(null);
+                  handleRedirect(null);
                 }
               } else {
                 logger.error('AuthContext', 'User authenticated in Firebase but profile fetch failed', res.status);
                 // Optional: Set a minimal user or redirect to signup completion?
                 // For now, we logout if we can't identify the user in our system
                 setUser(null);
+                setToken(null);
+                handleRedirect(null);
               }
             } catch (error) {
               console.error('Error fetching user profile:', error);
               setUser(null);
+              setToken(null);
+              handleRedirect(null);
             }
           } else {
             setUser(null);
+            setToken(null);
+            // If we've explicitly triggered a redirect but auth resolves to null user, send to onboarding.
+            handleRedirect(null);
           }
         } catch (error) {
           // Catch any unexpected errors in the callback itself
           console.error('Unexpected error in auth state change callback:', error);
           setUser(null);
+          setToken(null);
+          handleRedirect(null);
         } finally {
           // CRITICAL: Always set loading states, even if there's an error
           // This prevents the "Flash of Doom" where the app renders before auth check completes
@@ -298,7 +400,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       hasInitialized.current = false;
       isProcessingAuth.current = false;
       currentAuthUid.current = null;
+      pendingRedirect.current = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // No dependencies - listener should only be set up once
 
   const login = (userData: User) => {
@@ -331,6 +435,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Clear user state immediately
       setUser(null);
+      setToken(null);
       
       // Navigate to login page
       if (typeof window !== 'undefined') {
@@ -341,6 +446,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Even if there's an error, clear state and navigate
       currentAuthUid.current = null;
       setUser(null);
+      setToken(null);
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }
@@ -373,14 +479,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const getToken = async () => {
     if (auth.currentUser) {
-      return auth.currentUser.getIdToken();
+      const nextToken = await auth.currentUser.getIdToken();
+      setToken(nextToken);
+      return nextToken;
     }
 
     // E2E mode: use API middleware bypass token.
     if (import.meta.env.VITE_E2E === '1') {
+      setToken('mock-test-token');
       return 'mock-test-token';
     }
 
+    setToken(null);
     return null;
   };
 
@@ -388,12 +498,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) {
       setUser(null);
+      setToken(null);
       return;
     }
 
     try {
       // Force refresh token to ensure we have latest claims/session
       const token = await firebaseUser.getIdToken(true);
+      setToken(token);
       const res = await fetch('/api/me', {
         cache: 'no-store',
         headers: {
@@ -405,18 +517,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (res.ok) {
         const profile = await res.json();
-        setUser({ 
+        const nextUser: User = { 
           ...profile, 
           uid: firebaseUser.uid,
           roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
           createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
           updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
           isOnboarded: profile.isOnboarded ?? false
-        });
+        };
+        setUser(nextUser);
+        handleRedirect(nextUser, { force: true });
       } else if (res.status === 401) {
         // 401 means token is invalid or expired - try to refresh token once
         try {
           const refreshedToken = await firebaseUser.getIdToken(true);
+          setToken(refreshedToken);
           const retryRes = await fetch('/api/me', {
             cache: 'no-store',
             headers: {
@@ -428,21 +543,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           if (retryRes.ok) {
             const profile = await retryRes.json();
-            setUser({ 
+            const nextUser: User = { 
               ...profile, 
               uid: firebaseUser.uid,
               roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
               createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
               updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
               isOnboarded: profile.isOnboarded ?? false
-            });
+            };
+            setUser(nextUser);
+            handleRedirect(nextUser, { force: true });
           } else {
             // Token refresh didn't help - silently set user to null
             setUser(null);
+            handleRedirect(null, { force: true });
           }
-        } catch (refreshError) {
+        } catch {
           // Token refresh failed - user is logged out
           setUser(null);
+          setToken(null);
+          handleRedirect(null, { force: true });
         }
       } else {
         logger.error('AuthContext', 'Failed to refresh user profile', res.status);
@@ -452,11 +572,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const triggerPostAuthRedirect = () => {
+    pendingRedirect.current = true;
+    setIsRedirecting(true);
+
+    // If we already have a user, execute immediately.
+    if (user) {
+      handleRedirect(user, { force: true });
+    }
+  };
+
   const value = {
     user,
+    token,
     isLoading,
     isAuthenticated: !!user,
     isAuthReady,
+    isRedirecting,
     login,
     logout,
     setCurrentRole,
@@ -464,6 +596,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateRoles,
     getToken,
     refreshUser,
+    triggerPostAuthRedirect,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
