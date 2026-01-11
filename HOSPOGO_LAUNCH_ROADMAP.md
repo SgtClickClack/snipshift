@@ -22,6 +22,20 @@
 
 ---
 
+### Update: 2026-01-11 - Fix Landing Page Skip & Auth Handshake (Public Root + Google Account Picker)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Ensured the root path `/` is not wrapped in any auth/protected route wrapper so the Landing Page is always reachable.
+- Hardened Google sign-in by forcing the account picker (`prompt: select_account`) to avoid silent reuse of stale/broken legacy sessions.
+- Added a temporary “clean break” that clears `localStorage` when legacy `snipshift` keys are detected.
+
+**Impact:**
+- Reduces “instant redirect / stuck auth” edge cases when old Snipshift client state is present and makes Google sign-in more deterministic for users with multiple accounts.
+
+---
+
 ### Update: 2026-01-11 - Final Project Hard-Lock & Separation Audit (HospoGo)
 
 **Status:** ✅ **COMPLETED**

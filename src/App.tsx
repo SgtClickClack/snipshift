@@ -101,11 +101,8 @@ function AppRoutes() {
       <div className="flex-grow w-full max-w-full overflow-x-hidden">
         <Routes>
         {/* Public routes */}
-        <Route path="/" element={
-          <AuthGuard>
-            <LandingPage />
-          </AuthGuard>
-        } />
+        {/* IMPORTANT: Landing must remain fully public (no auth guard / no protected route wrapper). */}
+        <Route path="/" element={<LandingPage />} />
         
         <Route path="/home" element={
           <AuthGuard>

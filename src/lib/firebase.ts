@@ -58,6 +58,8 @@ export const storage = getStorage(app);
 // Configure Google provider
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
+// Force Google to show the account picker (helps bypass stale/broken sessions from legacy domains).
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 // Google sign-in methods
 export const signInWithGoogle = async () => {

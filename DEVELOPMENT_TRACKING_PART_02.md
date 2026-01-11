@@ -1,3 +1,38 @@
+#### 2026-01-11: Fix Landing Page Skip & Auth Handshake (Public Root + Google Prompt + Legacy Storage Reset)
+
+**Core Components**
+- Routing (public root route) (`src/App.tsx`)
+- Firebase Google provider configuration (`src/lib/firebase.ts`)
+- Auth compatibility shim (provider hardening helper) (`src/lib/auth.ts`)
+- App shell pre-hydration cleanup (`index.html`)
+- Landing E2E regression suite (`tests/e2e/landing-layout.spec.ts`)
+
+**Key Features**
+- Ensured the landing route `/` is truly public by removing the auth guard wrapper in the route tree.
+- Hardened Google auth handshake by forcing the account picker via `prompt: 'select_account'` on the Google provider.
+- Added a temporary “clean break” that wipes `localStorage` if any legacy `snipshift` keys are detected (prevents stale redirect/auth artifacts from influencing HospoGo).
+- Updated landing E2E coverage to align with current HospoGo copy and the app’s enforced dark-mode behavior.
+
+**Integration Points**
+- Firebase Auth: `GoogleAuthProvider.setCustomParameters({ prompt: 'select_account' })`
+- E2E: `npm run test:e2e -- tests/e2e/landing-layout.spec.ts`
+- Dev: `npm run dev:all` (Vite + API) after clearing `node_modules/.vite`
+
+**File Paths**
+- `src/App.tsx`
+- `src/lib/firebase.ts`
+- `src/lib/auth.ts`
+- `index.html`
+- `tests/e2e/landing-layout.spec.ts`
+
+**Next Priority Task**
+- Confirm end-to-end Google sign-in (popup + redirect fallback) from `/` in Mobile Safari with a previously “stuck” browser profile.
+
+**Code Organization & Quality**
+- Kept changes tightly scoped to routing/auth bootstrap and avoided introducing new auth patterns; reused existing `AuthGuard`/`ProtectedRoute` structure.
+
+---
+
 #### 2026-01-11: Loading Splash Logo Matches Navbar Banner (No Style Regression)
 
 **Core Components**

@@ -200,6 +200,25 @@
     </div>
     <div id="root"></div>
     <script>
+      // TEMP (HospoGo Clean-Break): if any legacy "snipshift" keys exist, wipe localStorage to
+      // avoid stale/broken auth/session state causing redirects or Google auth handshake issues.
+      (function () {
+        try {
+          var matched = [];
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k && k.toLowerCase().indexOf('snipshift') !== -1) matched.push(k);
+          }
+          if (matched.length > 0) {
+            // eslint-disable-next-line no-console
+            console.warn('[HospoGo] Clearing localStorage due to legacy snipshift keys:', matched);
+            localStorage.clear();
+          }
+        } catch (e) {
+          // Never block startup if storage access fails.
+        }
+      })();
+
       // Recovery: If a stale PWA/service worker cache is serving broken chunks (black screen),
       // do a ONE-TIME unregister + cache cleanup before loading the app bundle.
       (function () {
