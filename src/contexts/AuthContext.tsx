@@ -96,6 +96,89 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  /**
+   * Normalize backend role values (including older/alternate labels) into the app's canonical roles.
+   *
+   * Notes:
+   * - "Clean break" dashboards are exposed at `/venue/*` and `/worker/*`,
+   *   but the canonical roles used throughout the app remain:
+   *   - venue-side: `business` | `hub`
+   *   - worker-side: `professional`
+   * - Some backend responses (or legacy docs) may refer to these as `venue` / `worker`.
+   */
+  const normalizeRoleValue = (raw: unknown): User['currentRole'] | null => {
+    if (typeof raw !== 'string') return null;
+    const r = raw.toLowerCase();
+
+    // Clean-break aliases
+    if (r === 'worker') return 'professional';
+    if (r === 'venue') return 'business';
+
+    // Legacy aliases / common variants
+    if (r === 'pro') return 'professional';
+    if (r === 'shop') return 'business';
+    if (r === 'employer') return 'business';
+
+    // Canonical roles
+    if (
+      r === 'client' ||
+      r === 'hub' ||
+      r === 'business' ||
+      r === 'professional' ||
+      r === 'brand' ||
+      r === 'trainer' ||
+      r === 'admin'
+    ) {
+      return r as User['currentRole'];
+    }
+
+    return null;
+  };
+
+  const normalizeRolesArray = (input: unknown): User['roles'] => {
+    if (!Array.isArray(input)) return [];
+    const out: Array<User['roles'][number]> = [];
+    for (const v of input) {
+      const role = normalizeRoleValue(v);
+      if (role && role !== 'client' && role !== null) {
+        out.push(role as User['roles'][number]);
+      } else if (role === 'client') {
+        out.push('client');
+      }
+    }
+    return Array.from(new Set(out));
+  };
+
+  const normalizeUserFromApi = (apiUser: any, firebaseUid: string): User => {
+    const rolesFromApi = normalizeRolesArray(apiUser?.roles);
+    const roleFromApi = normalizeRoleValue(apiUser?.role);
+    const currentRoleFromApi = normalizeRoleValue(apiUser?.currentRole);
+
+    const roles: User['roles'] =
+      rolesFromApi.length > 0
+        ? rolesFromApi
+        : roleFromApi
+          ? [roleFromApi as User['roles'][number]]
+          : currentRoleFromApi
+            ? [currentRoleFromApi as User['roles'][number]]
+            : ['professional'];
+
+    const currentRole: User['currentRole'] =
+      currentRoleFromApi ?? (roles[0] ?? null);
+
+    return {
+      ...(apiUser as User),
+      uid: firebaseUid,
+      roles,
+      currentRole,
+      // Ensure date strings are Dates
+      createdAt: apiUser?.createdAt ? new Date(apiUser.createdAt) : new Date(),
+      updatedAt: apiUser?.updatedAt ? new Date(apiUser.updatedAt) : new Date(),
+      // Ensure isOnboarded is boolean (do NOT confuse this with compliance profile presence)
+      isOnboarded: apiUser?.isOnboarded ?? false,
+    };
+  };
+
   // Keep the latest router helpers without re-subscribing auth listeners.
   const navigateRef = useRef(navigate);
   const locationRef = useRef(location);
@@ -115,6 +198,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const deriveRoleHome = (u: User | null): string => {
     if (!u) return '/onboarding';
     if (u.isOnboarded === false) return '/onboarding';
+
+    // If the backend ever sends clean-break role labels, honor them explicitly.
+    const apiRole = normalizeRoleValue((u as any)?.role);
+    if (apiRole === 'business' || apiRole === 'hub') return '/venue/dashboard';
+    if (apiRole === 'professional') return '/worker/dashboard';
 
     // "Clean break" role homes
     if (u.currentRole === 'professional') return '/worker/dashboard';
@@ -301,18 +389,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               });
               
               if (res.ok) {
-                const profile = await res.json();
-                const nextUser: User = { 
-                  ...profile, 
-                  uid: firebaseUser.uid,
-                  // Ensure roles is array
-                  roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
-                  // Ensure date strings are Dates
-                  createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
-                  updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
-                  // Ensure isOnboarded is boolean
-                  isOnboarded: profile.isOnboarded ?? false
-                };
+                const apiUser = await res.json();
+                const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                 setUser(nextUser);
                 handleRedirect(nextUser);
               } else if (res.status === 401) {
@@ -327,15 +405,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   });
                   
                   if (retryRes.ok) {
-                    const profile = await retryRes.json();
-                    const nextUser: User = { 
-                      ...profile, 
-                      uid: firebaseUser.uid,
-                      roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
-                      createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
-                      updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
-                      isOnboarded: profile.isOnboarded ?? false
-                    };
+                    const apiUser = await retryRes.json();
+                    const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                     setUser(nextUser);
                     handleRedirect(nextUser);
                   } else {
@@ -516,15 +587,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       
       if (res.ok) {
-        const profile = await res.json();
-        const nextUser: User = { 
-          ...profile, 
-          uid: firebaseUser.uid,
-          roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
-          createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
-          updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
-          isOnboarded: profile.isOnboarded ?? false
-        };
+        const apiUser = await res.json();
+        const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
         setUser(nextUser);
         handleRedirect(nextUser, { force: true });
       } else if (res.status === 401) {
@@ -542,15 +606,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
           
           if (retryRes.ok) {
-            const profile = await retryRes.json();
-            const nextUser: User = { 
-              ...profile, 
-              uid: firebaseUser.uid,
-              roles: Array.isArray(profile.roles) ? profile.roles : [profile.role || 'professional'],
-              createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
-              updatedAt: profile.updatedAt ? new Date(profile.updatedAt) : new Date(),
-              isOnboarded: profile.isOnboarded ?? false
-            };
+            const apiUser = await retryRes.json();
+            const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
             setUser(nextUser);
             handleRedirect(nextUser, { force: true });
           } else {

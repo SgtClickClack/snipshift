@@ -1,4 +1,106 @@
 ﻿
+#### 2026-01-11: Fix Landing Page Mobile Horizontal Overflow (Blowout)
+
+**Core Components**
+- Landing page (`src/pages/LandingPage.tsx`)
+- Landing layout regression tests (`tests/e2e/landing-layout.spec.ts`)
+
+**Key Features**
+- Prevented mobile horizontal overflow caused by transform scaling:
+  - Disabled hero image scale on small screens (kept on `md+` only)
+  - Disabled card hover scale on mobile (kept on `md+` only) to avoid “sticky hover” widening on touch devices
+- Strengthened the landing mobile overflow Playwright checks by simulating mobile taps before asserting no horizontal scroll.
+
+**Integration Points**
+- E2E: `npm run test:e2e` (Playwright) → `tests/e2e/landing-layout.spec.ts`
+
+**File Paths**
+- `src/pages/LandingPage.tsx`
+- `tests/e2e/landing-layout.spec.ts`
+
+**Next Priority Task**
+- Verify the landing page on a real iOS Safari device to confirm horizontal scrolling is gone.
+
+**Code Organization & Quality**
+- Kept changes localized to landing UI behaviors (no global overflow hacks) and added interaction-aware regression coverage.
+
+---
+
+#### 2026-01-11: Implement Role-Based Redirects (Venue/Worker Clean-Break)
+
+**Core Components**
+- Auth context provider (`src/contexts/AuthContext.tsx`)
+- Google auth entrypoint (`src/components/auth/google-auth-button.tsx`)
+- Clean-break route protectors (`src/components/auth/venue-route.tsx`, `src/components/auth/worker-route.tsx`)
+- App route tree (`src/App.tsx`)
+
+**Key Features**
+- Normalized backend role values (including `venue`/`worker`) into the app’s canonical role model to prevent redirect/guard mismatches.
+- Centralized post-auth redirect resolution to the clean-break homes:
+  - Venue-side → `/venue/dashboard`
+  - Worker-side → `/worker/dashboard`
+  - Not onboarded / missing app user → `/onboarding`
+- Ensured Google sign-in reliably kicks off the centralized redirect logic and displays a neon-green spinner while redirect resolution is in progress.
+- Verified `/venue/*` and `/worker/*` route trees remain strictly protected by `VenueRoute` / `WorkerRoute`.
+
+**Integration Points**
+- Firebase auth listener: `onAuthStateChange`
+- API: `GET /api/me`
+- Routing: `useNavigate` / `Navigate` (React Router)
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+
+**Next Priority Task**
+- Add a small unit test suite around role normalization + redirect target selection to prevent regressions across role label changes.
+
+**Code Organization & Quality**
+- Kept role normalization and redirect selection local to AuthContext (no new global patterns) and avoided coupling onboarding gates to compliance profile presence.
+
+---
+
+#### 2026-01-11: Branded Worker Dashboard & Compliance Hub
+
+**Core Components**
+- Worker Dashboard page (`src/pages/worker/Dashboard.tsx`)
+- ShiftFeed component (`src/components/worker/ShiftFeed.tsx`)
+- RSAManager component (`src/components/worker/RSAManager.tsx`)
+- Updated Footer with support contact info
+- Language polish across codebase
+
+**Key Features**
+- **Mobile-First Worker Dashboard**: Deep Obsidian (#0B0E11) background with animated 'Steady Hum' HospoGo logo using neon-flicker animation and drop shadow effects.
+- **Earnings Section**: Simple cards showing Total Paid and Pending Payouts using existing payment balance API.
+- **Compliance Section**: Neon Green badge if RSA verified, Electric Purple alert if RSA is missing or expired. Direct navigation to RSA manager.
+- **ShiftFeed Component**: Fetches and displays shifts where status === 'OPEN'. Shows 'Verified Only' badge on premium shifts. Direct navigation to shift details to apply.
+- **RSAManager Component**: Drag-and-drop upload zone for QLD RSA PDF/Image. POST to `/api/me` with `rsaCertificate`. Shows 'Under Review' status immediately after upload.
+- **Clean Break Language Polish**: Replaced all user-facing references to 'Barber', 'Shop', 'Chair' with 'Pro', 'Venue', 'Shift' across landing pages, onboarding, and profile components.
+- **Support Footer**: Updated to info@hospogo.com and +61 478 430 822.
+
+**Integration Points**
+- API endpoint: `GET /api/payments/balance/:userId` (earnings data)
+- API endpoint: `PUT /api/me` (RSA certificate upload via FormData)
+- API endpoint: `GET /api/shifts?status=open` (open shifts feed)
+- Route: `/worker` (protected, requires professional role)
+- Auth context: Uses `user.rsaCertificateUrl`, `user.rsaVerified`, `user.rsaExpiry` for compliance status
+
+**File Paths**
+- `src/pages/worker/Dashboard.tsx` - Main worker dashboard page
+- `src/components/worker/ShiftFeed.tsx` - Open shifts feed component
+- `src/components/worker/RSAManager.tsx` - RSA upload and management component
+- `src/components/layout/Footer.tsx` - Added support contact section
+- `src/App.tsx` - Added /worker route
+- `src/pages/role-selection.tsx` - "Venue Manager" terminology
+- `src/pages/LandingPage.tsx` - Hospitality language polish
+- `src/pages/company/about.tsx` - Updated hospitality context
+- `src/components/onboarding/RoleSelection.tsx` - "Venue" terminology
+- `src/components/profile/public-profile.tsx` - "Hospitality Venue" label
+
+**Next Priority Task**
+- Test the Worker Dashboard on mobile devices and verify RSA upload workflow.
+
+---
+
 #### 2025-12-14: Fix 500 Error on Calendar Load (Missing Status Enums)
 
 **Core Components**
@@ -357,7 +459,7 @@
 - Shop schedule E2E coverage (`/shop/schedule`)
 
 **Key Features**
-- Stabilized E2E auth by hydrating the user from `sessionStorage['snipshift_test_user']` when `VITE_E2E=1` (no brittle Firebase UI login in automation).
+- Stabilized E2E auth by hydrating the user from `sessionStorage['hospogo_test_user']` when `VITE_E2E=1` (no brittle Firebase UI login in automation).
 - Added E2E API auth fallback token (`Bearer mock-test-token`) so API routes work in Playwright runs.
 - Added a Playwright spec that covers `/shop/schedule` core workflows: **Copy Previous Week**, **Publish All**, and **Quick Create (Draft)**.
 
@@ -1107,7 +1209,7 @@
   - Escrow model: PaymentIntent created on shift confirmation (manual capture)
   - Funds held until shift completion
   - Automatic capture and transfer on shift completion (barber receives payment minus commission)
-  - Commission rate configurable via `SNIPSHIFT_COMMISSION_RATE` env var (default 10%)
+  - Commission rate configurable via `HOSPOGO_COMMISSION_RATE` env var (default 10%)
 
 **Integration Points**
 - API endpoints: `/api/stripe-connect/*`
