@@ -14,7 +14,7 @@ interface GoogleAuthButtonProps {
 export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { triggerPostAuthRedirect, refreshUser } = useAuth();
+  const { triggerPostAuthRedirect } = useAuth();
   // Prevent double-click/double-fire in Strict Mode
   const isAuthInProgress = useRef(false);
 
@@ -97,18 +97,16 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       // This prevents race conditions where /api/me fails because user doesn't exist yet
       await ensureUserInDatabase(firebaseUser);
       
-      // Step 3: Refresh user profile to get latest data from backend
-      await refreshUser();
-      
-      // Step 4: Show success toast with HospoGo brand neon green styling
+      // Step 3: Show success toast with HospoGo brand neon green styling
       toast({
         title: "Welcome!",
         description: "Successfully signed in with Google!",
         variant: "success",
       });
       
-      // Step 5: Explicitly trigger redirect to dashboard
-      // This ensures users are sent to /venue/dashboard or /worker/dashboard based on their role
+      // Step 4: Explicitly trigger redirect to dashboard
+      // AuthContext's onAuthStateChanged will handle fetching the user profile
+      // and triggerPostAuthRedirect ensures redirect to /venue/dashboard or /worker/dashboard
       triggerPostAuthRedirect();
       
       // Call onSuccess if provided (for custom handling)
