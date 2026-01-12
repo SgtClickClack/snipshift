@@ -73,6 +73,20 @@ export default function LandingPage() {
             />
           </picture>
 
+          {/* Logo overlay - positions the clean navbar logo on top of the baked-in hero logo */}
+          <div 
+            className="absolute left-1/2 -translate-x-1/2 z-[1] pointer-events-none"
+            style={{ top: '10%' }}
+            aria-hidden="true"
+          >
+            <img
+              src="/hero-logo-overlay.png"
+              alt=""
+              className="w-[min(50vw,460px)] h-auto drop-shadow-[0_0_24px_rgba(186,255,57,0.4)]"
+              loading="eager"
+            />
+          </div>
+
           <div className="relative z-elevated w-full pb-10 md:pb-16 pt-24 md:pt-28">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="max-w-2xl text-left">

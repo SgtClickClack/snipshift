@@ -228,9 +228,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Paths that should NEVER be auto-redirected away from (even for auth failures)
+  // These are public pages that users should always be able to view
   const isProtectedPublicPath = (pathname: string): boolean => {
-    return pathname === '/' || pathname === '/terms' || pathname === '/privacy' || 
-           pathname === '/about' || pathname === '/contact' || pathname === '/refunds';
+    const publicPaths = [
+      '/',           // Landing page
+      '/login',      // Login page
+      '/signup',     // Signup page  
+      '/terms',      // Legal pages
+      '/privacy',
+      '/about',
+      '/contact',
+      '/refunds',
+      '/forgot-password',
+    ];
+    return publicPaths.includes(pathname);
   };
 
   const handleRedirect = (u: User | null, opts?: { force?: boolean }) => {
