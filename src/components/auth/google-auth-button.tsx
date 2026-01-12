@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/useToast";
 import { signInWithGoogleDevAware } from "@/lib/auth";
 import { Chrome } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -13,6 +14,7 @@ interface GoogleAuthButtonProps {
 export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { triggerPostAuthRedirect, refreshUser } = useAuth();
   // Prevent double-click/double-fire in Strict Mode
   const isAuthInProgress = useRef(false);
 
@@ -95,25 +97,24 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       // This prevents race conditions where /api/me fails because user doesn't exist yet
       await ensureUserInDatabase(firebaseUser);
       
-      // Step 3: Show success toast - AuthContext will handle profile fetching
-      // and LoginPage/AuthGuard will handle navigation
+      // Step 3: Refresh user profile to get latest data from backend
+      await refreshUser();
+      
+      // Step 4: Show success toast with HospoGo brand neon green styling
       toast({
         title: "Welcome!",
         description: "Successfully signed in with Google!",
+        variant: "success",
       });
+      
+      // Step 5: Explicitly trigger redirect to dashboard
+      // This ensures users are sent to /venue/dashboard or /worker/dashboard based on their role
+      triggerPostAuthRedirect();
       
       // Call onSuccess if provided (for custom handling)
       if (onSuccess) {
         onSuccess();
       }
-      
-      // NOTE: We intentionally do NOT navigate here.
-      // AuthContext's onAuthStateChange will:
-      // 1. Detect the new sign-in and set isLoading=true (shows loading screen)
-      // 2. Fetch user profile from /api/me
-      // 3. Set isLoading=false, update user state
-      // Then LoginPage's useEffect will redirect to the appropriate dashboard.
-      // This single flow is faster and less janky than having multiple components race to navigate.
       
     } catch (error: any) {
       const errorCode = error?.code ? String(error.code) : 'unknown';
