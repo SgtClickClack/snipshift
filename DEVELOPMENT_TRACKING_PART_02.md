@@ -2089,3 +2089,43 @@
 
 **Code Organization & Quality**
 - Reused the existing logo crop script (no new tooling/patterns introduced); kept changes localized to branding assets + navbar.
+
+---
+
+#### 2026-01-12: Auth Redirect Hardening (Keep `/` Public on Refresh) + Remove Legacy OAuth Code-Flow
+
+**Core Components**
+- Auth redirect state machine (`src/contexts/AuthContext.tsx`)
+- Firebase client configuration (`src/lib/firebase.ts`)
+- OAuth redirect landing route (`src/pages/oauth-callback.tsx`, `src/App.tsx`)
+- API profile upload Firebase app selection (`api/_src/routes/users.ts`)
+- Legacy auth surfaces removal (unused) (`src/lib/google-oauth-direct.ts`, `src/components/auth/google-oauth-fallback.tsx`, `src/components/auth/simple-google-auth.tsx`, `src/components/auth/google-demo.tsx`)
+
+**Key Features**
+- **Landing refresh stability**: Prevented hard-refreshing `/` from being redirected to `/login` when a Firebase session exists but the backend profile handshake (`/api/me`) fails (e.g. API down / DB paused).
+- **Redirect scope tightening**: Limited app-level auto-redirect behavior to auth/callback pages only (login/signup/dashboard/oauth handler), avoiding disruptive redirects during normal browsing.
+- **Safer unauth target**: Updated null-user redirect target to `/login` (instead of `/onboarding`, which is auth-protected and can cause confusing bounce loops).
+- **Env alias support**: Added the documented `VITE_AUTH_DOMAIN` alias for Firebase `authDomain` (fallback when `VITE_FIREBASE_AUTH_DOMAIN` is not set).
+- **Legacy OAuth removal**: Removed unused, insecure/manual Google OAuth “code flow” helpers and demo components to eliminate configuration confusion and ensure the Firebase redirect result flow remains canonical.
+- **Brand-safe Firebase Admin appName**: Removed a hardcoded legacy Firebase Admin app name (`snipshift-worker-v2`) used for Storage access and aligned it with `FIREBASE_ADMIN_APP_NAME` / `hospogo-worker-v2` to prevent “Firebase app not initialized” errors during profile uploads.
+
+**Integration Points**
+- Frontend: Firebase Auth (popup/redirect) + backend handshake (`POST /api/register`, `GET /api/me`)
+- Routes: `/oauth/callback`, `/__/auth/handler`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/lib/firebase.ts`
+- `src/pages/oauth-callback.tsx`
+- `src/App.tsx`
+- `api/_src/routes/users.ts`
+- `src/lib/google-oauth-direct.ts` (deleted)
+- `src/components/auth/google-oauth-fallback.tsx` (deleted)
+- `src/components/auth/simple-google-auth.tsx` (deleted)
+- `src/components/auth/google-demo.tsx` (deleted)
+
+**Next Priority Task**
+- Verify local Google sign-in end-to-end with the API running: confirm `/api/register` (idempotent) and `/api/me` succeed and that role-based redirects land on `/venue/dashboard` or `/worker/dashboard` without intermediate `/login` bounces.
+
+**Code Organization & Quality**
+- Kept changes scoped to auth routing/handshake logic; removed unused legacy OAuth surfaces rather than introducing new patterns.

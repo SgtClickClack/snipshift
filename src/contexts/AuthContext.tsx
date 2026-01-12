@@ -196,7 +196,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pendingRedirect = useRef(false);
 
   const deriveRoleHome = (u: User | null): string => {
-    if (!u) return '/onboarding';
+    // No app user => send to login (onboarding is auth-protected, so redirecting there can cause
+    // confusing bounces like "/" -> "/onboarding" -> "/login" on hard refresh when /api/me fails).
+    if (!u) return '/login';
     if (u.isOnboarded === false) return '/onboarding';
 
     // If the backend ever sends clean-break role labels, honor them explicitly.
@@ -374,9 +376,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (isNewSignIn) {
           logger.debug('AuthContext', 'New sign-in detected, showing loading screen');
           setIsLoading(true);
-          // When a user signs in, we want the app-level role redirect to run.
+        // Only auto-redirect from auth/callback pages (NOT from normal browsing pages like "/").
+        // This prevents hard-refreshing public pages from being yanked to /login when the API/profile
+        // handshake is temporarily unavailable.
+        if (shouldAutoRedirectFromPath(locationRef.current.pathname)) {
           pendingRedirect.current = true;
           setIsRedirecting(true);
+        }
         }
         
         // Mark as processing and track current user

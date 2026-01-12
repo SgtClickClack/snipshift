@@ -8,6 +8,19 @@
 
 ---
 
+### Update: 2026-01-12 - Auth Redirect Hardening (Keep `/` Public) + Remove Legacy OAuth Code-Flow
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Hardened auth redirect behavior so hard-refreshing the public Landing page (`/`) does **not** bounce to `/login` if the backend profile handshake is temporarily unavailable.
+- Tightened app-level auto-redirects to only run from auth/callback pages (login/signup/dashboard/oauth handler), avoiding disruptive redirects during normal browsing.
+- Added the documented Firebase env alias: `VITE_AUTH_DOMAIN` now works as a fallback for `VITE_FIREBASE_AUTH_DOMAIN`.
+- Removed unused/insecure legacy manual Google OAuth “code flow” helpers and demo components so Firebase `getRedirectResult()` remains the canonical redirect-completion path.
+
+**Impact:**
+- Users can always access the Landing page directly, and Google auth redirect handling is simpler/safer with less configuration drift.
+
 ### Update: 2026-01-11 - Splash Screen Branding Consistency (Match Navbar Banner Logo)
 
 **Status:** ✅ **UPDATED**

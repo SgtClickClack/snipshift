@@ -2,99 +2,68 @@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiRequest } from '@/lib/queryClient';
 
+/**
+ * Safe landing page for Google auth redirects.
+ *
+ * Important:
+ * - We do NOT implement a manual Google OAuth code exchange here.
+ * - Firebase redirect completion is handled centrally in `AuthProvider` via `getRedirectResult()`.
+ * - This route exists only to give the browser a stable place to land while that happens, then
+ *   forward the user into the normal app redirect flow.
+ */
 export function OAuthCallback() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { isAuthReady, isAuthenticated, user, triggerPostAuthRedirect } = useAuth();
+
   // Prevent double execution in React Strict Mode
-  const hasProcessedCallback = useRef(false);
+  const hasProcessed = useRef(false);
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Check if we already processed this callback
-    if (hasProcessedCallback.current) return;
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
 
-    const handleOAuthCallback = async () => {
-      // Mark as processed immediately to prevent double execution
-      hasProcessedCallback.current = true;
+    // Give Firebase redirect processing + profile handshake a moment to complete.
+    timeoutRef.current = window.setTimeout(() => {
+      // If we still aren't authenticated after the grace period, send to login.
+      // (This is also the desired behavior if a user hits this route directly.)
+      toast({
+        title: 'Authentication pending',
+        description: 'Please sign in again to continue.',
+        variant: 'destructive',
+      });
+      navigate('/login', { replace: true });
+    }, 6000);
 
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        const error = urlParams.get('error');
-
-        if (error) {
-          throw new Error(`OAuth error: ${error}`);
-        }
-
-        if (!code) {
-          throw new Error('No authorization code received');
-        }
-        
-        // MVP: register (idempotent) and then login to establish a server session
-        const googleId = `google_${Date.now()}`;
-        const email = 'user@gmail.com'; // In production, exchange the code for user info
-        try {
-          await apiRequest('POST', '/api/register', {
-            email,
-            password: '',
-            provider: 'google',
-            googleId,
-          });
-        } catch (e: any) {
-          // Ignore 400 (already exists)
-          const isExistingUserError = e instanceof Error && e.message.includes('400');
-          if (!isExistingUserError) {
-            throw e;
-          }
-        }
-
-        // Login to create session cookie
-        const res = await apiRequest('POST', '/api/login', { email, googleId });
-        const userData = await res.json();
-        login({
-          id: userData.id,
-          email: userData.email,
-          password: '',
-          roles: userData.roles || [],
-          currentRole: userData.currentRole || null,
-          provider: 'google',
-          googleId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          displayName: userData.displayName || 'Google User',
-          profileImage: userData.profileImage || '',
-        });
-        
-        toast({
-          title: "Welcome!",
-          description: "Successfully signed in with Google! Choose your role to continue.",
-        });
-
-        navigate('/role-selection');
-        
-      } catch (error) {
-        console.error('âŒ OAuth callback error:', error);
-        toast({
-          title: "Authentication failed",
-          description: "There was an error processing your Google authentication. Please try again.",
-          variant: "destructive",
-        });
-        navigate('/login');
+    return () => {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    handleOAuthCallback();
-  }, [navigate, toast]);
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    if (isAuthenticated && user) {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      // Centralize post-auth routing in AuthContext (role-based clean-break redirects, etc.).
+      triggerPostAuthRedirect();
+      return;
+    }
+  }, [isAuthReady, isAuthenticated, user, triggerPostAuthRedirect]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <h2 className="text-lg font-medium text-neutral-900">Processing your authentication...</h2>
-        <p className="text-neutral-600 mt-2">Please wait while we complete your sign-in.</p>
+        <h2 className="text-lg font-medium text-foreground">Completing sign-in…</h2>
+        <p className="text-muted-foreground mt-2">Please wait while we finish your authentication.</p>
       </div>
     </div>
   );

@@ -325,7 +325,9 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     try {
       // Get Firebase Storage bucket
       const firebaseAdmin = (admin as any).default || admin;
-      const appName = 'snipshift-worker-v2';
+      // Keep Firebase Admin app naming consistent with lazy init in `api/_src/config/firebase.ts`
+      // to avoid "Firebase app not initialized" errors when accessing Storage.
+      const appName = process.env.FIREBASE_ADMIN_APP_NAME || 'hospogo-worker-v2';
       let app: admin.app.App;
       try {
         app = firebaseAdmin.app(appName);
