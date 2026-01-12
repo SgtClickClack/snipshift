@@ -113,6 +113,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
     strictPort: true,
+    // NOTE: Vite does not support `server: { force: true }`.
+    // To reduce “stale env / stale bundle” confusion during local debugging, we instead:
+    // - keep `optimizeDeps.force = true` (forces re-optimization)
+    // - disable browser caching for dev responses
+    headers: {
+      'Cache-Control': 'no-store',
+    },
     proxy: {
       // Forward REST API requests
       '/api': {

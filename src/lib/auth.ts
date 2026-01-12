@@ -15,6 +15,45 @@ export async function getGoogleProvider() {
   return googleProvider;
 }
 
+/**
+ * Local-dev focused Google sign-in:
+ * - Uses popup only (avoids redirect_uri_mismatch headaches on localhost)
+ * - Logs the exact error object for debugging
+ */
+export async function signInWithGoogleLocalDevPopup() {
+  const { auth } = await import('./firebase');
+  const googleProvider = await getGoogleProvider();
+  const { signInWithPopup, setPersistence, browserLocalPersistence } = await import('firebase/auth');
+
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error) {
+    // Log the exact error object (requested)
+    console.error('[Auth] Google popup sign-in error (exact object):', error);
+    throw error;
+  }
+}
+
+/**
+ * Environment-aware Google sign-in:
+ * - localhost => popup-only
+ * - everything else => use the existing implementation (popup with redirect fallback)
+ */
+export async function signInWithGoogleDevAware() {
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  if (isLocalhost) {
+    return await signInWithGoogleLocalDevPopup();
+  }
+
+  const { signInWithGoogle } = await import('./firebase');
+  return await signInWithGoogle();
+}
+
 export const authService = {
   async initialize() {},
   login(user: User) {

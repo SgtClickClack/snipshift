@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
-import { signInWithGoogle } from "@/lib/firebase";
+import { signInWithGoogleDevAware } from "@/lib/auth";
 import { Chrome } from "lucide-react";
 import { logger } from "@/lib/logger";
 
@@ -82,7 +82,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     
     try {
       // Step 1: Firebase authentication (opens popup)
-      const firebaseUser = await signInWithGoogle();
+      const firebaseUser = await signInWithGoogleDevAware();
       
       if (!firebaseUser) {
         // Popup closed or redirect happened

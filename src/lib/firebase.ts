@@ -71,12 +71,22 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: unknown) {
+    // Log the exact error object for debugging (requested)
+    console.error('[Firebase] Google sign-in error (exact object):', error);
+
     const code =
       typeof error === 'object' && error && 'code' in error
         ? String((error as { code: unknown }).code)
         : '';
     // If popup is blocked, fallback to redirect
     if (code === 'auth/popup-blocked') {
+      // Local dev: do NOT fallback to redirect; popup-only avoids redirect_uri mismatches on localhost.
+      if (
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ) {
+        throw error;
+      }
       // Persistence is already set above, so redirect will also persist
       await signInWithRedirect(auth, googleProvider);
       return null; // Will be handled by redirect result

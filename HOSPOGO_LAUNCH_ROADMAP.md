@@ -36,6 +36,21 @@
 
 ---
 
+### Update: 2026-01-11 - Local Dev Auth Handshake Debugging (Popup-Only + No-Store Dev Headers)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Confirmed the Landing Page route (`/`) remains first in the route list and is not protected.
+- Implemented a localhost-only Google auth path that uses **popup-only** (no redirect fallback) and logs the **exact error object** to the console.
+- Added dev server `Cache-Control: no-store` response headers as a safe cache-busting alternative (Vite does not support `server.force`).
+- Added a localhost-only removal of `firebase:previous_external_idp_params` from localStorage to clear “session ghosts”.
+
+**Impact:**
+- Makes local Google sign-in debugging more deterministic and surfaces the real failure cause (rather than silently redirecting), while reducing confusion from cached dev assets.
+
+---
+
 ### Update: 2026-01-11 - Final Project Hard-Lock & Separation Audit (HospoGo)
 
 **Status:** ✅ **COMPLETED**

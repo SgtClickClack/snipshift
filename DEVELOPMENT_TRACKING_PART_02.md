@@ -33,6 +33,45 @@
 
 ---
 
+#### 2026-01-11: Local Dev Auth Debugging + Env Cache Bust (Popup-Only + No-Store Headers)
+
+**Core Components**
+- Landing routing verification (`src/App.tsx`)
+- Local-dev Google auth wrapper + error logging (`src/lib/auth.ts`)
+- Firebase sign-in fallback behavior (`src/lib/firebase.ts`)
+- Google auth button wiring (`src/components/auth/google-auth-button.tsx`)
+- Vite dev server caching headers (`vite.config.ts`)
+- Localhost session ghost purge (`src/main.tsx`)
+
+**Key Features**
+- Confirmed `/` (Landing Page) is the first route and remains unwrapped by any `ProtectedRoute`/auth wall.
+- Implemented a localhost-only **popup-only** Google sign-in path to avoid redirect-based issues on `localhost:3000`, and added logging of the **exact** error object for debugging.
+- Prevented redirect fallback from being triggered on localhost when a popup is blocked (surfaced as an error instead).
+- Added dev server `Cache-Control: no-store` headers (safe alternative to the non-existent `server.force` setting) to reduce “stale bundle/env” confusion during local debugging.
+- Added a localhost-only localStorage cleanup for `firebase:previous_external_idp_params`.
+
+**Integration Points**
+- Auth UI: `GoogleAuthButton` uses `signInWithGoogleDevAware()` (popup-only on localhost).
+- Vite dev: `server.headers['Cache-Control']='no-store'`
+- Build verification: `npm run build`
+- E2E verification: `npm run test:e2e -- tests/e2e/landing-layout.spec.ts`
+
+**File Paths**
+- `src/App.tsx`
+- `src/lib/auth.ts`
+- `src/lib/firebase.ts`
+- `src/components/auth/google-auth-button.tsx`
+- `vite.config.ts`
+- `src/main.tsx`
+
+**Next Priority Task**
+- Re-test Google sign-in on localhost with popups blocked/unblocked to confirm the new error logging surfaces the real root cause (and doesn’t silently redirect).
+
+**Code Organization & Quality**
+- Kept localhost-specific behavior behind runtime hostname checks; production behavior remains unchanged.
+
+---
+
 #### 2026-01-11: Loading Splash Logo Matches Navbar Banner (No Style Regression)
 
 **Core Components**

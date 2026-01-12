@@ -6,6 +6,17 @@ import "./index.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { StartupErrorBoundary } from "@/components/error/StartupErrorBoundary";
 
+// TEMP (Local Dev): Clear legacy session ghosts on localhost.
+// Note: We can't place this *before* imports in an ES module; this is the earliest safe spot.
+try {
+  if (window.location.hostname === "localhost") {
+    console.log("Clearing legacy session ghosts...");
+    localStorage.removeItem("firebase:previous_external_idp_params");
+  }
+} catch {
+  // ignore storage access issues
+}
+
 // Version indicator removed for production
 
 // Global error handler for chunk loading failures (common in SPAs after deployment)
