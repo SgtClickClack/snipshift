@@ -38,7 +38,7 @@ export default function ProfessionalOnboardingPage() {
     try {
       const response = await apiRequest('POST', '/api/users/role', {
         role: 'professional',
-        shopName: formData.displayName, // Reusing shopName field to pass display name update
+        shopName: formData.displayName, // API expects shopName for backward compatibility (used for display name)
         location: formData.location,
         description: `${formData.profession}\n\n${formData.bio}`, // Combine profession and bio
       });

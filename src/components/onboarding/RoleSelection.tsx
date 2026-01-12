@@ -1,29 +1,29 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { User, Store } from 'lucide-react';
+import { User, Building2 } from 'lucide-react';
 
 interface RoleSelectionProps {
-  selectedRole: 'professional' | 'shop' | null;
-  onSelect: (role: 'professional' | 'shop') => void;
+  selectedRole: 'professional' | 'venue' | null;
+  onSelect: (role: 'professional' | 'venue') => void;
 }
 
 /**
- * STRICT MODE: Only two roles allowed - Professional and Shop
- * This is hardcoded to prevent regression to 4-role selection.
+ * STRICT MODE: Only two roles allowed - Staff/Pro and Venue
+ * This is hardcoded to prevent regression to multi-role selection.
  * DO NOT add Client, Admin, or any other roles here.
  */
 const ROLES = [
   {
     id: 'professional',
-    label: 'Professional Barber',
+    label: 'Staff / Pro',
     description: 'I want to pick up shifts and get paid.',
     icon: User,
   },
   {
-    id: 'shop',
-    label: 'Barbershop',
-    description: 'I need to fill empty chairs with talent.',
-    icon: Store,
+    id: 'venue',
+    label: 'Venue',
+    description: 'I need to fill shifts with talented staff.',
+    icon: Building2,
   },
 ] as const;
 
@@ -39,20 +39,25 @@ export function RoleSelection({ selectedRole, onSelect }: RoleSelectionProps) {
             key={role.id}
             onClick={() => onSelect(role.id)}
             className={cn(
-              "flex flex-col items-start p-6 space-y-4 border-2 rounded-xl transition-all hover:border-primary/50",
+              "flex flex-col items-start p-6 space-y-4 border-2 rounded-xl transition-all",
               isSelected 
-                ? "border-primary bg-primary/5 ring-2 ring-primary/20" 
-                : "border-muted bg-card hover:bg-accent/5"
+                ? "border-brand-neon bg-brand-neon/10 ring-2 ring-brand-neon/30 shadow-neon-realistic" 
+                : "border-muted bg-card hover:border-brand-neon/50 hover:bg-brand-neon/5"
             )}
           >
             <div className={cn(
-              "p-3 rounded-full",
-              isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              "p-3 rounded-full transition-all",
+              isSelected 
+                ? "bg-brand-neon text-brand-dark shadow-neon-realistic" 
+                : "bg-muted text-muted-foreground"
             )}>
               <Icon className="w-6 h-6" />
             </div>
             <div className="text-left space-y-1">
-              <h3 className="font-semibold tracking-tight text-lg">{role.label}</h3>
+              <h3 className={cn(
+                "font-semibold tracking-tight text-lg",
+                isSelected && "text-brand-neon"
+              )}>{role.label}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {role.description}
               </p>

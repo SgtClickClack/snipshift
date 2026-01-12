@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,7 +20,6 @@ import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
   const { user, isAuthenticated, isAuthReady } = useAuth();
-  const navigate = useNavigate();
   const hasCleanedUp = useRef(false);
 
   // Clear stale auth-related localStorage/sessionStorage data on landing page load
@@ -45,17 +44,9 @@ export default function LandingPage() {
     }
   }, [isAuthenticated, isAuthReady]);
 
-  // If authenticated, redirect to dashboard
-  useEffect(() => {
-    if (isAuthenticated && user?.currentRole) {
-      navigate(getDashboardRoute(user.currentRole), { replace: true });
-    }
-  }, [isAuthenticated, user, navigate]);
-
-  // Show loading or nothing while redirecting
-  if (isAuthenticated && user?.currentRole) {
-    return null;
-  }
+  // NOTE: Removed auto-redirect for authenticated users.
+  // The landing page should always be viewable - authenticated users see
+  // "Go to Dashboard" button instead of being forcibly redirected.
 
   return (
     <>

@@ -19,7 +19,7 @@ export default function HubOnboardingPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    shopName: '',
+    venueName: '',
     location: '',
     description: '',
   });
@@ -37,7 +37,7 @@ export default function HubOnboardingPage() {
     try {
       const response = await apiRequest('POST', '/api/users/role', {
         role: 'hub',
-        shopName: formData.shopName,
+        shopName: formData.venueName, // API expects shopName for backward compatibility
         location: formData.location,
         description: formData.description,
       });
@@ -118,13 +118,13 @@ export default function HubOnboardingPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="shopName" className="text-steel-700">Venue Name *</Label>
+                  <Label htmlFor="venueName" className="text-steel-700">Venue Name *</Label>
                   <Input
-                    id="shopName"
-                    name="shopName"
-                    value={formData.shopName}
+                    id="venueName"
+                    name="venueName"
+                    value={formData.venueName}
                     onChange={handleChange}
-                    placeholder="e.g. Elite Cuts"
+                    placeholder="e.g. The Grand Hotel"
                     required
                     className="bg-card"
                   />
@@ -150,7 +150,7 @@ export default function HubOnboardingPage() {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    placeholder="Briefly describe your shop..."
+                    placeholder="Briefly describe your venue..."
                     rows={4}
                     className="bg-card"
                   />

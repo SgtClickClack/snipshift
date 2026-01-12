@@ -13,7 +13,7 @@ try {
     console.log("Clearing legacy session ghosts...");
     localStorage.removeItem("firebase:previous_external_idp_params");
     
-    // Hard-reset legacy Snipshift session data causing 401s
+    // Hard-reset legacy session data that may cause 401s
     const lastClear = localStorage.getItem("hospogo_auth_reset");
     if (!lastClear) {
       localStorage.clear();
