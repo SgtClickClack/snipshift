@@ -66,6 +66,7 @@ export async function createUser(
       avatarUrl: null,
       bannerUrl: null,
       rsaVerified: false,
+      rsaNotRequired: false,
       rsaNumber: null,
       rsaExpiry: null,
       rsaStateOfIssue: null,

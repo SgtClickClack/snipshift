@@ -35,6 +35,7 @@ export const users = pgTable('users', {
   bannerUrl: text('banner_url'),
   // HospoGo compliance + preferences
   rsaVerified: boolean('rsa_verified').notNull().default(false),
+  rsaNotRequired: boolean('rsa_not_required').notNull().default(false), // User indicated they don't need RSA (e.g., kitchen staff, non-alcohol venues)
   rsaNumber: varchar('rsa_number', { length: 100 }),
   rsaExpiry: date('rsa_expiry'),
   rsaStateOfIssue: varchar('rsa_state_of_issue', { length: 10 }),

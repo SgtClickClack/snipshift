@@ -41,6 +41,7 @@ export interface User {
   isRoamingNomad?: boolean;
   // HospoGo compliance + preferences
   rsaVerified?: boolean | null;
+  rsaNotRequired?: boolean | null; // User indicated they don't need RSA (e.g., kitchen staff, non-alcohol venues)
   rsaNumber?: string | null;
   rsaExpiry?: string | null;
   rsaStateOfIssue?: string | null;

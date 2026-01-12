@@ -62,9 +62,9 @@ export default function LandingPage() {
         <section className="relative isolate w-full min-h-[85vh] max-h-[90vh] text-foreground overflow-hidden bg-background dark:bg-steel-900 border-b border-border flex items-end">
           {/* Hero image (replaces CSS background for better loading priority) */}
           <picture className="absolute inset-0 z-base" aria-hidden="true">
-            <source type="image/webp" srcSet={encodeURI("/hospogohero-updated.webp")} />
+            <source type="image/webp" srcSet={encodeURI("/hospogohero.webp")} />
             <img
-              src={encodeURI("/hospogohero-updated.jpg")}
+              src={encodeURI("/hospogohero.jpg")}
               alt=""
               className="h-full w-full object-cover object-[center_35%] -translate-y-[3px] scale-[1.01]"
               loading="eager"

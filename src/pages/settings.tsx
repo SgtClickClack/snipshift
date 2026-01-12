@@ -25,6 +25,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams } from 'react-router-dom';
 import { RSALocker } from '@/components/profile/RSALocker';
+import { GovernmentIDLocker } from '@/components/profile/GovernmentIDLocker';
 
 type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business';
 
@@ -560,40 +561,15 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Verification</CardTitle>
+                    <CardTitle>Document Verification</CardTitle>
                     <CardDescription>
-                      Upload your RSA certificate and keep your compliance details up to date.
+                      Upload your documents for verification. These are required to accept shifts.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* ID Verification */}
-                    <div className="rounded-lg border p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className="rounded-full bg-muted p-2">
-                            <Shield className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold">Government ID</h3>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <AlertCircle className="h-4 w-4" />
-                                <span className="text-sm">Coming soon</span>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              ID verification storage is not yet wired to the backend in this build.
-                            </p>
-                            <Button variant="outline" size="sm" disabled>
-                              Upload ID
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
                 </Card>
 
+                <GovernmentIDLocker />
+                
                 <RSALocker />
 
                 <Card>

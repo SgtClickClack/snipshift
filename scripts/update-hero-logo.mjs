@@ -1,8 +1,7 @@
 /**
- * Update the hero image by compositing the clean navbar banner logo
- * on top of the baked-in logo in the hero image.
- * 
- * This creates a new hero image with the improved logo baked in.
+ * Update the hero image by:
+ * 1. Creating a full-width dark strip at the top that fades to transparent
+ * 2. Compositing the clean navbar banner logo on top
  */
 
 import fs from 'node:fs/promises';
@@ -29,25 +28,74 @@ async function main() {
   const heroMeta = await sharp(HERO_INPUT).metadata();
   console.log(`Hero dimensions: ${heroMeta.width}x${heroMeta.height}`);
 
-  // Calculate positioning for the logo overlay
-  // The baked-in logo is centered horizontally and very near the top
-  // Make the new logo slightly larger to fully cover the old one's glow
-  const logoWidth = Math.round(heroMeta.width * 0.42); // ~42% of hero width (slightly larger than original)
-  const logoTop = Math.round(heroMeta.height * 0.01);  // ~1% from top (positioned to cover old logo)
+  // Step 1: Create a centered dark area that fades on all edges
+  // Wide enough to cover the original logo but with soft edges on sides
+  const coverWidth = Math.round(heroMeta.width * 0.70); // 70% of width - wider to cover original
+  const coverHeight = Math.round(heroMeta.height * 0.42);
+  const coverLeft = Math.round((heroMeta.width - coverWidth) / 2);
   
-  console.log('Resizing navbar banner to match...');
+  console.log(`Creating centered dark area: ${coverWidth}x${coverHeight} at x=${coverLeft}`);
+  
+  // Create an SVG with gradients that fade on all edges (vignette style)
+  // Wider center solid area, but soft fades on sides to preserve the people
+  const svg = `
+    <svg width="${coverWidth}" height="${coverHeight}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="fadeBottom" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:rgb(12,15,18);stop-opacity:1" />
+          <stop offset="55%" style="stop-color:rgb(12,15,18);stop-opacity:0.85" />
+          <stop offset="75%" style="stop-color:rgb(12,15,18);stop-opacity:0.3" />
+          <stop offset="100%" style="stop-color:rgb(12,15,18);stop-opacity:0" />
+        </linearGradient>
+        <linearGradient id="fadeSides" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:white;stop-opacity:0" />
+          <stop offset="8%" style="stop-color:white;stop-opacity:0.7" />
+          <stop offset="20%" style="stop-color:white;stop-opacity:1" />
+          <stop offset="80%" style="stop-color:white;stop-opacity:1" />
+          <stop offset="92%" style="stop-color:white;stop-opacity:0.7" />
+          <stop offset="100%" style="stop-color:white;stop-opacity:0" />
+        </linearGradient>
+        <mask id="sideMask">
+          <rect width="100%" height="100%" fill="url(#fadeSides)" />
+        </mask>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#fadeBottom)" mask="url(#sideMask)" />
+    </svg>
+  `;
+  
+  const darkCover = await sharp(Buffer.from(svg)).png().toBuffer();
+
+  // Step 2: Composite the dark cover onto the hero image (centered)
+  console.log('Covering original logo area...');
+  const coveredHero = await sharp(HERO_INPUT)
+    .composite([
+      {
+        input: darkCover,
+        left: coverLeft,
+        top: 0,
+      }
+    ])
+    .toBuffer();
+
+  // Step 3: Resize the navbar banner to a nice size
+  const logoWidth = Math.round(heroMeta.width * 0.38);
+  
+  console.log('Resizing navbar banner...');
   const resizedLogo = await sharp(NAVBAR_BANNER)
     .resize(logoWidth, null, { fit: 'inside' })
     .png()
     .toBuffer();
   
   const logoMeta = await sharp(resizedLogo).metadata();
-  const logoLeft = Math.round((heroMeta.width - logoMeta.width) / 2); // Center horizontally
+  
+  // Center horizontally and position near top
+  const logoLeft = Math.round((heroMeta.width - logoMeta.width) / 2);
+  const logoTop = Math.round(heroMeta.height * 0.03); // Higher up to cover original
 
   console.log(`Compositing logo at (${logoLeft}, ${logoTop}) size ${logoMeta.width}x${logoMeta.height}...`);
 
-  // Composite the logo onto the hero
-  const compositedHero = await sharp(HERO_INPUT)
+  // Step 4: Composite the navbar logo onto the covered hero
+  const finalHero = await sharp(coveredHero)
     .composite([
       {
         input: resizedLogo,
@@ -59,13 +107,13 @@ async function main() {
 
   // Save as WebP
   console.log('Saving updated hero as WebP...');
-  await sharp(compositedHero)
+  await sharp(finalHero)
     .webp({ quality: 90 })
     .toFile(HERO_OUTPUT_WEBP);
 
   // Save as JPG fallback
   console.log('Saving updated hero as JPG...');
-  await sharp(compositedHero)
+  await sharp(finalHero)
     .jpeg({ quality: 90 })
     .toFile(HERO_OUTPUT_JPG);
 
