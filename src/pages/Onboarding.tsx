@@ -152,3 +152,103 @@ export default function Onboarding() {
       setIsSubmitting(false);
     }
   };
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-white mb-2">What brings you to HospoGo?</h2>
+              <p className="text-gray-300">Select your role to get started</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button type="button" onClick={() => setSelectedRole('professional')} className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}>
+                <div className={`p-4 rounded-full mb-4 ${selectedRole === 'professional' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><User className="h-8 w-8" /></div>
+                <h3 className={`text-lg font-semibold mb-2 ${selectedRole === 'professional' ? 'text-brand-neon' : 'text-white'}`}>I'm looking for shifts</h3>
+                <p className="text-sm text-gray-400 text-center">Pick up hospitality shifts and get paid</p>
+              </button>
+              <button type="button" onClick={() => setSelectedRole('venue')} className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}>
+                <div className={`p-4 rounded-full mb-4 ${selectedRole === 'venue' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><Building2 className="h-8 w-8" /></div>
+                <h3 className={`text-lg font-semibold mb-2 ${selectedRole === 'venue' ? 'text-brand-neon' : 'text-white'}`}>I need to fill shifts</h3>
+                <p className="text-sm text-gray-400 text-center">Post shifts and find reliable staff</p>
+              </button>
+            </div>
+          </div>
+        );
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-white mb-2">Personal Details</h2>
+              <p className="text-gray-300">Add your details and a professional profile photo.</p>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2"><Label htmlFor="displayName" className="text-gray-300">Full Name *</Label><Input id="displayName" value={formData.displayName} onChange={(e) => updateFormData({ displayName: e.target.value })} placeholder="Enter your full name" data-testid="onboarding-display-name" /></div>
+              <div className="space-y-2"><Label htmlFor="phone" className="text-gray-300">Phone Number *</Label><Input id="phone" type="tel" value={formData.phone} onChange={(e) => updateFormData({ phone: e.target.value })} placeholder="Enter your phone number" data-testid="onboarding-phone" /></div>
+              <div className="space-y-2"><Label htmlFor="location" className="text-gray-300">Location *</Label><Input id="location" value={formData.location} onChange={(e) => updateFormData({ location: e.target.value })} placeholder="City/Suburb" data-testid="onboarding-location" /></div>
+              {user && (<div className="space-y-2"><Label className="text-gray-300">Profile Photo</Label><ImageUpload currentImageUrl={formData.avatarUrl} onUploadComplete={(url) => updateFormData({ avatarUrl: url })} onUploadError={(error) => toast({ title: 'Upload failed', description: error.message || 'Failed to upload image.', variant: 'destructive' })} pathPrefix="users" entityId={user.id} fileName="avatar" shape="circle" maxSize={5 * 1024 * 1024} /></div>)}
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Document Verification</h2><p className="text-gray-300">To accept shifts, you'll need to verify your identity and credentials.</p></div>
+            {!documentsSkipped && (<div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"><div className="flex items-start gap-3"><div className="rounded-full bg-brand-neon/20 p-2 mt-0.5"><SkipForward className="h-4 w-4 text-brand-neon" /></div><div className="flex-1"><h3 className="font-medium text-white mb-1">Want to explore first?</h3><p className="text-sm text-gray-400 mb-3">Skip this step and upload your documents later from your profile settings.</p><Button type="button" variant="outline" onClick={() => setDocumentsSkipped(true)} className="border-zinc-600 hover:bg-zinc-700"><SkipForward className="h-4 w-4 mr-2" />Skip for now</Button></div></div></div>)}
+            {documentsSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can upload your documents anytime from <span className="font-semibold">Settings - Verification</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => setDocumentsSkipped(false)} className="w-full text-gray-400 hover:text-white">Changed your mind? Upload documents now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">- or upload now -</p></div><RSALocker /><GovernmentIDLocker /></div>)}
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-6 pb-12 md:pb-0">
+            <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Role & Experience</h2><p className="text-gray-300">Tell venues what kind of shifts you're looking for.</p></div>
+            <div className="space-y-4">
+              <div className="space-y-2"><Label className="text-gray-300">Primary Role *</Label><Select value={formData.hospitalityRole} onValueChange={(value) => updateFormData({ hospitalityRole: value as any })}><SelectTrigger aria-label="Primary Role" data-testid="onboarding-role"><SelectValue placeholder="Select a role" /></SelectTrigger><SelectContent>{HOSPITALITY_ROLES.map((role) => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select></div>
+              <div className="space-y-2"><Label htmlFor="hourlyRatePreference" className="text-gray-300">Hourly Rate Preference (optional)</Label><Input id="hourlyRatePreference" inputMode="decimal" value={formData.hourlyRatePreference} onChange={(e) => updateFormData({ hourlyRatePreference: e.target.value })} placeholder="e.g. 38" data-testid="onboarding-rate" /></div>
+              <div className="space-y-2"><Label htmlFor="bio" className="text-gray-300">Experience Summary *</Label><Textarea id="bio" value={formData.bio} onChange={(e) => updateFormData({ bio: e.target.value })} placeholder="Tell us about your hospitality experience (roles, venues, strengths)..." rows={5} data-testid="onboarding-bio" /></div>
+            </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Stripe Payout Setup</h2><p className="text-gray-300">Set up your payout account so you can get paid automatically.</p></div>
+            {!payoutSkipped && (<div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"><div className="flex items-start gap-3"><div className="rounded-full bg-brand-neon/20 p-2 mt-0.5"><SkipForward className="h-4 w-4 text-brand-neon" /></div><div className="flex-1"><h3 className="font-medium text-white mb-1">Set up payouts later?</h3><p className="text-sm text-gray-400 mb-3">Skip this step and set up your bank account later from your profile settings.</p><Button type="button" variant="outline" onClick={() => setPayoutSkipped(true)} className="border-zinc-600 hover:bg-zinc-700"><SkipForward className="h-4 w-4 mr-2" />Skip for now</Button></div></div></div>)}
+            {payoutSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can set up your payout account anytime from <span className="font-semibold">Settings - Payments</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => setPayoutSkipped(false)} className="w-full text-gray-400 hover:text-white">Changed your mind? Set up payouts now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">- or set up now -</p></div><div className="bg-white rounded-lg p-4"><PayoutSettings /></div></div>)}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+  return (
+    <>
+      <SEO title="Staff Onboarding" description="Complete your staff profile to start browsing shifts." url="/onboarding" />
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 pb-24 md:pb-4">
+        <div className="w-full max-w-2xl">
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-300">{currentStep === 0 ? 'Getting Started' : `Step ${currentStep} of ${TOTAL_STEPS - 1}`}</span>
+              <span className="text-sm text-gray-400">{progressPct}% Complete</span>
+            </div>
+            <div className="w-full bg-zinc-800 rounded-full h-2"><div className="bg-brand-neon h-2 rounded-full transition-all duration-300" style={{ width: `${progressPct}%` }} /></div>
+          </div>
+          <Card className="card-chrome bg-zinc-900 border border-zinc-800">
+            <CardHeader><CardTitle className="text-center text-brand-neon animate-steady-hum">Welcome to HospoGo</CardTitle></CardHeader>
+            <CardContent>
+              {renderStep()}
+              <div className="flex justify-between mt-8 pt-6 border-t border-zinc-800">
+                <Button type="button" variant="outline" onClick={handleBack} disabled={currentStep === 0 || isSavingStep || isSubmitting} className="steel" data-testid="onboarding-back"><ChevronLeft className="h-4 w-4 mr-2" />Back</Button>
+                {currentStep < TOTAL_STEPS - 1 ? (
+                  <Button type="button" onClick={handleNext} disabled={!canProceed || isSavingStep} variant="accent" className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" data-testid="onboarding-next">{isSavingStep ? 'Saving...' : 'Next'}<ChevronRight className="h-4 w-4 ml-2" /></Button>
+                ) : (
+                  <Button type="button" onClick={handleComplete} disabled={!canProceed || isSubmitting} variant="accent" className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" data-testid="onboarding-complete">{isSubmitting ? 'Completing...' : 'Complete Onboarding'}</Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
