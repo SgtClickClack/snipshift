@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-const logoUrl = '/hospogoneonlogo.png';
+const logoUrl = '/hospogo-navbar-banner.png';
 
 export function Footer() {
   return (
@@ -8,14 +8,14 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-1">
-            <Link to="/" className="flex items-center mb-4">
+            <Link to="/" className="flex items-center mb-4 bg-transparent">
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-8 w-auto object-contain"
+                className="h-12 w-auto object-contain block antialiased drop-shadow-[0_0_10px_rgba(50,205,50,0.35)]"
                 loading="eager"
-                width={96}
-                height={32}
+                width={180}
+                height={48}
                 style={{
                   imageRendering: 'auto',
                   WebkitFontSmoothing: 'antialiased',
