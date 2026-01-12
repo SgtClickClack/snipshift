@@ -61,8 +61,9 @@ export async function getGoogleProvider() {
 
 /**
  * Local-dev focused Google sign-in:
- * - Uses popup only (avoids redirect_uri_mismatch headaches on localhost)
- * - Logs the exact error object for debugging
+ * - Uses popup with resilient handling for COOP (Cross-Origin-Opener-Policy) issues
+ * - COOP only affects window.closed detection, not the actual auth result
+ * - Auth completes via postMessage/iframe even with COOP blocking
  */
 export async function signInWithGoogleLocalDevPopup() {
   await maybeResetFirebaseSession();
@@ -72,6 +73,7 @@ export async function signInWithGoogleLocalDevPopup() {
 
   try {
     await setPersistence(auth, browserLocalPersistence);
+    // Popup flow - COOP warning is expected but auth still works via postMessage
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
@@ -79,7 +81,7 @@ export async function signInWithGoogleLocalDevPopup() {
     
     // Don't log user-cancelled popups - this is expected behavior
     if (code !== 'auth/popup-closed-by-user') {
-      console.error('[Auth] Google popup sign-in error (exact object):', error);
+      console.error('[Auth] Google popup sign-in error:', error);
     }
 
     if (isHttp400StyleAuthFailure(error)) {
@@ -92,7 +94,7 @@ export async function signInWithGoogleLocalDevPopup() {
 
 /**
  * Environment-aware Google sign-in:
- * - localhost => popup-only
+ * - localhost => popup flow (COOP warnings are expected but auth still works)
  * - everything else => use the existing implementation (popup with redirect fallback)
  */
 export async function signInWithGoogleDevAware() {
@@ -102,6 +104,7 @@ export async function signInWithGoogleDevAware() {
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   if (isLocalhost) {
+    // Use popup flow - COOP warning is expected but auth completes via postMessage
     return await signInWithGoogleLocalDevPopup();
   }
 

@@ -83,13 +83,12 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     }
     
     try {
-      // Step 1: Firebase authentication (opens popup)
+      // Step 1: Firebase authentication (popup flow - COOP warning is expected but auth works)
       const firebaseUser = await signInWithGoogleDevAware();
       
       if (!firebaseUser) {
-        // Popup closed or redirect happened
-        isAuthInProgress.current = false;
-        setIsLoading(false);
+        // Popup was closed without completing auth
+        logger.debug('GoogleAuthButton', 'No user returned from Google auth');
         return;
       }
       
@@ -148,6 +147,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         });
       }
     } finally {
+      // Always reset state
       isAuthInProgress.current = false;
       setIsLoading(false);
     }

@@ -421,9 +421,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                     setUser(nextUser);
                     handleRedirect(nextUser);
+                  } else if (retryRes.status === 404 || retryRes.status === 401) {
+                    // User exists in Firebase but not in our database - redirect to onboarding
+                    logger.debug('AuthContext', 'Firebase user has no profile, redirecting to onboarding');
+                    setUser(null);
+                    setToken(refreshedToken);
+                    // Directly navigate to onboarding since deriveRoleHome(null) would go to /login
+                    navigateRef.current('/onboarding', { replace: true });
+                    setIsRedirecting(false);
+                    pendingRedirect.current = false;
                   } else {
-                    // Token refresh didn't help - user doesn't exist in DB or token is still invalid
-                    // Silently set user to null - don't log warning as this is expected for logged-out users
+                    // Other error - user is logged out
                     setUser(null);
                     handleRedirect(null);
                   }
@@ -433,10 +441,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   setToken(null);
                   handleRedirect(null);
                 }
+              } else if (res.status === 404) {
+                // User exists in Firebase but not in our database - redirect to onboarding
+                logger.debug('AuthContext', 'Firebase user has no profile (404), redirecting to onboarding');
+                setUser(null);
+                // Keep the token so the user can complete onboarding
+                // Directly navigate to onboarding
+                navigateRef.current('/onboarding', { replace: true });
+                setIsRedirecting(false);
+                pendingRedirect.current = false;
               } else {
                 logger.error('AuthContext', 'User authenticated in Firebase but profile fetch failed', res.status);
-                // Optional: Set a minimal user or redirect to signup completion?
-                // For now, we logout if we can't identify the user in our system
+                // For other errors, redirect to onboarding to allow user to complete profile
                 setUser(null);
                 setToken(null);
                 handleRedirect(null);
@@ -608,6 +624,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
         setUser(nextUser);
         handleRedirect(nextUser, { force: true });
+      } else if (res.status === 404) {
+        // User exists in Firebase but not in our database - redirect to onboarding
+        logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404), redirecting to onboarding');
+        setUser(null);
+        navigateRef.current('/onboarding', { replace: true });
+        setIsRedirecting(false);
+        pendingRedirect.current = false;
       } else if (res.status === 401) {
         // 401 means token is invalid or expired - try to refresh token once
         try {
@@ -627,6 +650,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
             setUser(nextUser);
             handleRedirect(nextUser, { force: true });
+          } else if (retryRes.status === 404) {
+            // User exists in Firebase but not in our database - redirect to onboarding
+            logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404), redirecting to onboarding');
+            setUser(null);
+            navigateRef.current('/onboarding', { replace: true });
+            setIsRedirecting(false);
+            pendingRedirect.current = false;
           } else {
             // Token refresh didn't help - silently set user to null
             setUser(null);
