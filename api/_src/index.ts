@@ -230,7 +230,7 @@ app.post('/api/purchase-content', authenticateUser, (req, res, next) => {
 });
 
 
-// Health check endpoint
+// Health check endpoint (legacy)
 app.get('/health', asyncHandler(async (req, res) => {
   const db = getDatabase();
   const dbStatus = db ? 'connected' : 'not configured';
@@ -239,6 +239,20 @@ app.get('/health', asyncHandler(async (req, res) => {
     status: 'ok', 
     message: 'Server is running',
     database: dbStatus,
+  });
+}));
+
+// API Health check endpoint (accessible via /api/health)
+app.get('/api/health', asyncHandler(async (req, res) => {
+  const db = getDatabase();
+  const dbStatus = db ? 'connected' : 'not configured';
+  
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'HospoGo API is running',
+    database: dbStatus,
+    version: '2024-01-12-auto-create-users', // Deployment marker
+    timestamp: new Date().toISOString(),
   });
 }));
 
