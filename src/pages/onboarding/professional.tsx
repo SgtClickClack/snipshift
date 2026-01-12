@@ -36,6 +36,11 @@ export default function ProfessionalOnboardingPage() {
 
     setIsSubmitting(true);
     try {
+      // Force refresh the Firebase ID token BEFORE the API call to avoid 401 errors.
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+      }
+
       const response = await apiRequest('POST', '/api/users/role', {
         role: 'professional',
         shopName: formData.displayName, // API expects shopName for backward compatibility (used for display name)
@@ -108,8 +113,8 @@ export default function ProfessionalOnboardingPage() {
         <div className="w-full max-w-xl">
           <Card className="card-chrome">
             <CardHeader className="text-center">
-               <div className="mx-auto w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
-                  <User className="h-6 w-6 text-white" />
+               <div className="mx-auto w-12 h-12 bg-brand-neon rounded-full flex items-center justify-center mb-4 shadow-neon-realistic">
+                  <User className="h-6 w-6 text-brand-dark" />
                </div>
               <CardTitle className="text-2xl text-steel-900">Create Pro Profile</CardTitle>
               <CardDescription>
@@ -172,7 +177,8 @@ export default function ProfessionalOnboardingPage() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  variant="accent"
+                  className="w-full shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Creating Profile...' : 'Create Pro Profile'}

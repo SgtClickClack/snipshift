@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/seo/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -10,13 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SkipForward, AlertCircle, Building2, User } from 'lucide-react';
 import { RSALocker } from '@/components/profile/RSALocker';
 import { GovernmentIDLocker } from '@/components/profile/GovernmentIDLocker';
 import PayoutSettings from '@/components/payments/payout-settings';
 import { HOSPITALITY_ROLES } from '@/utils/hospitality';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 type StaffOnboardingData = {
   displayName: string;
@@ -32,9 +34,27 @@ export default function Onboarding() {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingStep, setIsSavingStep] = useState(false);
+  const [documentsSkipped, setDocumentsSkipped] = useState(false);
+  const [payoutSkipped, setPayoutSkipped] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'professional' | 'venue' | null>(null);
+  const navigate = useNavigate();
+
+  // Check for role preference from signup flow
+  useEffect(() => {
+    const rolePreference = sessionStorage.getItem('signupRolePreference');
+    if (rolePreference === 'hub') {
+      // User selected venue during signup - redirect to venue onboarding
+      sessionStorage.removeItem('signupRolePreference');
+      navigate('/onboarding/hub', { replace: true });
+    } else if (rolePreference === 'professional') {
+      // User selected staff during signup - continue with this flow
+      sessionStorage.removeItem('signupRolePreference');
+      setSelectedRole('professional');
+    }
+  }, [navigate]);
 
   const [formData, setFormData] = useState<StaffOnboardingData>(() => ({
     displayName: user?.displayName || user?.name || '',
@@ -82,7 +102,8 @@ export default function Onboarding() {
           formData.location.trim().length > 0
         );
       case 2:
-        return rsaUploaded && idUploaded;
+        // Step 2 can proceed if user skipped docs OR both are uploaded
+        return documentsSkipped || (rsaUploaded && idUploaded);
       case 3:
         return formData.hospitalityRole !== '' && formData.bio.trim().length > 0;
       case 4:
@@ -90,7 +111,7 @@ export default function Onboarding() {
       default:
         return false;
     }
-  }, [currentStep, formData.bio, formData.displayName, formData.hospitalityRole, formData.location, formData.phone, idUploaded, rsaUploaded]);
+  }, [currentStep, formData.bio, formData.displayName, formData.hospitalityRole, formData.location, formData.phone, idUploaded, rsaUploaded, documentsSkipped]);
 
   const updateFormData = (updates: Partial<StaffOnboardingData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -260,14 +281,66 @@ export default function Onboarding() {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-2">Upload Documents</h2>
-              <p className="text-gray-300">Upload your RSA certificate and government ID for verification.</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Document Verification</h2>
+              <p className="text-gray-300">
+                To accept shifts, you'll need to verify your identity and credentials.
+              </p>
             </div>
 
-            <div className="space-y-6">
-              <RSALocker />
-              <GovernmentIDLocker />
-            </div>
+            {/* Skip option - prominent at the top */}
+            {!documentsSkipped && (
+              <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-brand-neon/20 p-2 mt-0.5">
+                    <SkipForward className="h-4 w-4 text-brand-neon" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-white mb-1">Want to explore first?</h3>
+                    <p className="text-sm text-gray-400 mb-3">
+                      Skip this step and upload your documents later from your profile settings. 
+                      You'll need them before accepting your first shift.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setDocumentsSkipped(true)}
+                      className="border-zinc-600 hover:bg-zinc-700"
+                    >
+                      <SkipForward className="h-4 w-4 mr-2" />
+                      Skip for now
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {documentsSkipped ? (
+              <div className="space-y-4">
+                <Alert className="bg-green-900/30 border-green-500/50">
+                  <AlertCircle className="h-4 w-4 text-green-500" />
+                  <AlertDescription className="text-green-200">
+                    No problem! You can upload your documents anytime from{' '}
+                    <span className="font-semibold">Settings → Verification</span>.
+                  </AlertDescription>
+                </Alert>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setDocumentsSkipped(false)}
+                  className="w-full text-gray-400 hover:text-white"
+                >
+                  Changed your mind? Upload documents now
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-center py-2">
+                  <p className="text-sm text-gray-500">— or upload now —</p>
+                </div>
+                <RSALocker />
+                <GovernmentIDLocker />
+              </div>
+            )}
           </div>
         );
 
@@ -335,11 +408,66 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-white mb-2">Stripe Payout Setup</h2>
-              <p className="text-gray-300">Set up your payout account so you can get paid automatically.</p>
+              <p className="text-gray-300">
+                Set up your payout account so you can get paid automatically.
+              </p>
             </div>
-            <div className="bg-white rounded-lg p-4">
-              <PayoutSettings />
-            </div>
+
+            {/* Skip option - prominent at the top */}
+            {!payoutSkipped && (
+              <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-brand-neon/20 p-2 mt-0.5">
+                    <SkipForward className="h-4 w-4 text-brand-neon" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-white mb-1">Set up payouts later?</h3>
+                    <p className="text-sm text-gray-400 mb-3">
+                      Skip this step and set up your bank account later from your profile settings. 
+                      You'll need this before you can receive payments for completed shifts.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPayoutSkipped(true)}
+                      className="border-zinc-600 hover:bg-zinc-700"
+                    >
+                      <SkipForward className="h-4 w-4 mr-2" />
+                      Skip for now
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {payoutSkipped ? (
+              <div className="space-y-4">
+                <Alert className="bg-green-900/30 border-green-500/50">
+                  <AlertCircle className="h-4 w-4 text-green-500" />
+                  <AlertDescription className="text-green-200">
+                    No problem! You can set up your payout account anytime from{' '}
+                    <span className="font-semibold">Settings → Payments</span>.
+                  </AlertDescription>
+                </Alert>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setPayoutSkipped(false)}
+                  className="w-full text-gray-400 hover:text-white"
+                >
+                  Changed your mind? Set up payouts now
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-center py-2">
+                  <p className="text-sm text-gray-500">— or set up now —</p>
+                </div>
+                <div className="bg-white rounded-lg p-4">
+                  <PayoutSettings />
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -380,7 +508,7 @@ export default function Onboarding() {
                   type="button"
                   variant="outline"
                   onClick={handleBack}
-                  disabled={currentStep === 1 || isSavingStep || isSubmitting}
+                  disabled={currentStep === 0 || isSavingStep || isSubmitting}
                   className="steel"
                   data-testid="onboarding-back"
                 >
@@ -388,7 +516,7 @@ export default function Onboarding() {
                   Back
                 </Button>
 
-                {currentStep < TOTAL_STEPS ? (
+                {currentStep < TOTAL_STEPS - 1 ? (
                   <Button
                     type="button"
                     onClick={handleNext}

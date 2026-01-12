@@ -35,6 +35,11 @@ export default function HubOnboardingPage() {
 
     setIsSubmitting(true);
     try {
+      // Force refresh the Firebase ID token BEFORE the API call to avoid 401 errors.
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+      }
+
       const response = await apiRequest('POST', '/api/users/role', {
         role: 'hub',
         shopName: formData.venueName, // API expects shopName for backward compatibility
@@ -159,7 +164,7 @@ export default function HubOnboardingPage() {
                 <Button 
                   type="submit" 
                   variant="accent"
-                  className="w-full"
+                  className="w-full shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Creating Profile...' : 'Create Venue Profile'}

@@ -25,6 +25,7 @@ const UpdateProfileSchema = z.object({
   rsaExpiry: z.string().optional(), // expected YYYY-MM-DD (stored as date)
   rsaStateOfIssue: z.string().max(10).optional(),
   rsaCertificateUrl: z.string().url().optional(),
+  rsaNotRequired: z.boolean().optional(), // User doesn't need RSA (e.g., kitchen staff, non-alcohol venues)
   hospitalityRole: z.enum(['Bartender', 'Waitstaff', 'Barista', 'Kitchen Hand', 'Manager']).optional(),
   hourlyRatePreference: z.union([
     z.number().nonnegative(),
@@ -45,8 +46,11 @@ const UpdateProfileSchema = z.object({
 });
 
 // Validation schema for onboarding completion
+// Accepts both canonical roles and clean-break aliases:
+// - 'staff' / 'worker' → maps to 'professional'
+// - 'venue' / 'hub' → maps to 'business' (hub is stored as-is in roles array)
 const OnboardingCompleteSchema = z.object({
-  role: z.enum(['professional', 'business', 'trainer', 'brand']),
+  role: z.enum(['professional', 'business', 'trainer', 'brand', 'hub', 'staff', 'worker', 'venue']),
   displayName: z.string().min(1).max(255),
   phone: z.string().max(50),
   bio: z.string().max(1000).optional(),
@@ -236,6 +240,7 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       avatarUrl: user.avatarUrl || null,
       bannerUrl: user.bannerUrl || null,
       rsaVerified: (user as any).rsaVerified ?? false,
+      rsaNotRequired: (user as any).rsaNotRequired ?? false,
       rsaNumber: (user as any).rsaNumber ?? null,
       rsaExpiry: (user as any).rsaExpiry ?? null,
       rsaStateOfIssue: (user as any).rsaStateOfIssue ?? null,
@@ -481,6 +486,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     rsaExpiry,
     rsaStateOfIssue,
     rsaCertificateUrl,
+    rsaNotRequired,
     hospitalityRole,
     hourlyRatePreference,
     businessSettings,
@@ -495,6 +501,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   if (rsaNumber !== undefined) updates.rsaNumber = rsaNumber;
   if (rsaExpiry !== undefined) updates.rsaExpiry = rsaExpiry;
   if (rsaStateOfIssue !== undefined) updates.rsaStateOfIssue = rsaStateOfIssue;
+  if (rsaNotRequired !== undefined) updates.rsaNotRequired = rsaNotRequired;
   if (hospitalityRole !== undefined) updates.hospitalityRole = hospitalityRole;
   if (hourlyRatePreference !== undefined) updates.hourlyRatePreference = String(hourlyRatePreference);
   if (businessSettings !== undefined) {
@@ -617,6 +624,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     avatarUrl: updatedUser.avatarUrl || null,
     bannerUrl: updatedUser.bannerUrl || null,
     rsaVerified: (updatedUser as any).rsaVerified ?? false,
+    rsaNotRequired: (updatedUser as any).rsaNotRequired ?? false,
     rsaNumber: (updatedUser as any).rsaNumber ?? null,
     rsaExpiry: (updatedUser as any).rsaExpiry ?? null,
     rsaStateOfIssue: (updatedUser as any).rsaStateOfIssue ?? null,
@@ -652,9 +660,33 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
 
   const { role, displayName, bio, phone, location, avatarUrl } = validationResult.data;
 
-  // Map frontend roles to backend database roles
-  // 'brand' maps to 'business' in the database, 'trainer' stays as 'trainer'
-  const dbRole = role === 'brand' ? 'business' : role === 'trainer' ? 'trainer' : role;
+  // Map frontend roles to backend database roles (clean break migration)
+  // Clean-break aliases:
+  // - 'staff' / 'worker' → 'professional' in DB
+  // - 'venue' → 'business' in DB  
+  // - 'hub' stays as 'hub' in DB
+  // Legacy aliases:
+  // - 'brand' → 'business' in DB
+  // - 'trainer' stays as 'trainer'
+  let dbRole: string;
+  switch (role) {
+    case 'staff':
+    case 'worker':
+      dbRole = 'professional';
+      break;
+    case 'venue':
+      dbRole = 'business';
+      break;
+    case 'brand':
+      dbRole = 'business';
+      break;
+    case 'hub':
+    case 'trainer':
+    case 'professional':
+    case 'business':
+    default:
+      dbRole = role;
+  }
 
   // Fetch current user to get existing roles
   const currentUser = await usersRepo.getUserById(req.user.id);

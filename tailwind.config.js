@@ -173,12 +173,23 @@ export default {
           "86%": { opacity: "0.98" },
           "92%": { opacity: "1" },
         },
+        "steady-hum": {
+          "0%, 100%": {
+            "text-shadow": "0 0 4px rgba(186,255,57,0.6), 0 0 8px rgba(186,255,57,0.4), 0 0 12px rgba(186,255,57,0.2)",
+            opacity: "1",
+          },
+          "50%": {
+            "text-shadow": "0 0 6px rgba(186,255,57,0.8), 0 0 12px rgba(186,255,57,0.5), 0 0 18px rgba(186,255,57,0.3)",
+            opacity: "0.98",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "neon-pulse": "neon-pulse 2s infinite ease-in-out",
         "neon-flicker": "neon-flicker 3.25s infinite ease-in-out",
+        "steady-hum": "steady-hum 2.5s infinite ease-in-out",
       },
     },
   },
