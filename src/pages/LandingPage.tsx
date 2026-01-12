@@ -64,7 +64,7 @@ export default function LandingPage() {
           <img
             src={encodeURI("/hospogonewhero.png")}
             alt=""
-            className="absolute inset-0 z-0 h-full w-full object-cover object-[center_35%]"
+            className="absolute inset-0 z-0 h-full w-full object-cover object-[center_55%]"
             loading="eager"
             fetchPriority="high"
             decoding="async"
