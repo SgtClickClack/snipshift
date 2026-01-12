@@ -118,12 +118,6 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     } catch (error: any) {
       const errorCode = error?.code ? String(error.code) : 'unknown';
       const errorMessage = error?.message ? String(error.message) : 'Unknown error';
-
-      // Required debug logging (stuck popup diagnosis)
-      console.error('[GoogleAuthButton] Google sign-in failed:', {
-        code: errorCode,
-        message: errorMessage,
-      });
       
       // Check for specific error codes
       if (errorCode === 'auth/popup-blocked') {
@@ -143,6 +137,11 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         });
         console.error("Instruction for User: Please add this domain to Google Cloud Console > APIs & Services > Credentials > Authorized Javascript Origins");
       } else {
+        // Log actual authentication errors (not user-cancelled)
+        console.error('[GoogleAuthButton] Google sign-in failed:', {
+          code: errorCode,
+          message: errorMessage,
+        });
         toast({
           title: "Authentication failed",
           description: errorMessage || "There was an error signing in with Google.",

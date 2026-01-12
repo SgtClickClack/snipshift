@@ -75,8 +75,12 @@ export async function signInWithGoogleLocalDevPopup() {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
-    // Log the exact error object (requested)
-    console.error('[Auth] Google popup sign-in error (exact object):', error);
+    const code = (error as any)?.code;
+    
+    // Don't log user-cancelled popups - this is expected behavior
+    if (code !== 'auth/popup-closed-by-user') {
+      console.error('[Auth] Google popup sign-in error (exact object):', error);
+    }
 
     if (isHttp400StyleAuthFailure(error)) {
       shouldResetFirebaseSessionBeforeNextAttempt = true;

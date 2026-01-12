@@ -76,13 +76,16 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: unknown) {
-    // Log the exact error object for debugging (requested)
-    console.error('[Firebase] Google sign-in error (exact object):', error);
-
     const code =
       typeof error === 'object' && error && 'code' in error
         ? String((error as { code: unknown }).code)
         : '';
+    
+    // Don't log user-cancelled popups - this is expected behavior
+    if (code !== 'auth/popup-closed-by-user') {
+      console.error('[Firebase] Google sign-in error (exact object):', error);
+    }
+    
     // If popup is blocked, fallback to redirect
     if (code === 'auth/popup-blocked') {
       // Local dev: do NOT fallback to redirect; popup-only avoids redirect_uri mismatches on localhost.
