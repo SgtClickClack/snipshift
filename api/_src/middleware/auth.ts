@@ -276,9 +276,34 @@ export function authenticateUser(
         }
 
         if (!user) {
-          // For now, we'll fail if they aren't in our DB, to enforce proper signup flow
-          res.status(401).json({ message: 'Unauthorized: User not found in database' });
-          return;
+          // Auto-create user if they have valid Firebase token but don't exist in DB
+          // This handles race conditions during OAuth sign-up flow where /api/me is called
+          // before /api/register completes
+          console.log('[AUTH] User not found, auto-creating from Firebase token:', email);
+          const displayName = decodedToken.name || decodedToken.display_name || email.split('@')[0];
+          try {
+            user = await usersRepo.createUser({
+              email,
+              name: displayName,
+              role: 'professional', // Default role for new OAuth users
+            });
+            console.log('[AUTH] Auto-created user:', user?.id);
+          } catch (createError: any) {
+            // If creation fails due to race condition (user was just created), try to fetch again
+            if (createError?.code === '23505') { // Postgres unique violation
+              console.log('[AUTH] Race condition detected, fetching user again');
+              user = await usersRepo.getUserByEmail(email);
+            } else {
+              console.error('[AUTH] Failed to auto-create user:', createError);
+              res.status(500).json({ message: 'Failed to create user account' });
+              return;
+            }
+          }
+          
+          if (!user) {
+            res.status(401).json({ message: 'Unauthorized: User not found in database' });
+            return;
+          }
         }
 
         // Attach user to request object
