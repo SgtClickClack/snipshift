@@ -680,23 +680,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
             setUser(nextUser);
             handleRedirect(nextUser, { force: true });
-          } else if (retryRes.status === 404) {
+          } else if (retryRes.status === 404 || retryRes.status === 401) {
             // User exists in Firebase but not in our database - redirect to onboarding
-            logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404), redirecting to onboarding');
+            // Also handle 401 as "no profile" since user just signed in with Firebase
+            logger.debug('AuthContext', 'refreshUser: Firebase user has no profile, redirecting to onboarding');
             setUser(null);
             navigateRef.current('/onboarding', { replace: true });
             setIsRedirecting(false);
             pendingRedirect.current = false;
           } else {
-            // Token refresh didn't help - silently set user to null
+            // Other error - still redirect to onboarding since user has valid Firebase session
+            logger.debug('AuthContext', 'refreshUser: API error but Firebase user exists, redirecting to onboarding');
             setUser(null);
-            handleRedirect(null, { force: true });
+            navigateRef.current('/onboarding', { replace: true });
+            setIsRedirecting(false);
+            pendingRedirect.current = false;
           }
         } catch {
-          // Token refresh failed - user is logged out
+          // Token refresh failed but Firebase user exists - redirect to onboarding
+          logger.debug('AuthContext', 'refreshUser: Token refresh failed, redirecting to onboarding');
           setUser(null);
           setToken(null);
-          handleRedirect(null, { force: true });
+          navigateRef.current('/onboarding', { replace: true });
+          setIsRedirecting(false);
+          pendingRedirect.current = false;
         }
       } else {
         logger.error('AuthContext', 'Failed to refresh user profile', res.status);

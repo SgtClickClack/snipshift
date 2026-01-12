@@ -76,11 +76,11 @@ async function main() {
   const inputBuffer = await fs.readFile(INPUT);
 
   // The brand-wordmark has a dark slate background around RGB(20, 26, 32)
-  // We'll key this out to make it transparent
+  // We'll key this out aggressively to fully remove the background and glow shadows
   console.log('Keying out dark background...');
   const transparentBuffer = await makeBackgroundTransparent(inputBuffer, [20, 26, 32], {
-    near: 30,
-    far: 80,
+    near: 45,   // More aggressive - remove more of the dark glow
+    far: 100,   // Wider range to preserve the bright neon text
   });
 
   console.log(`Writing ${OUTPUT}...`);
