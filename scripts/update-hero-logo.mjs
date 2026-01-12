@@ -28,31 +28,38 @@ async function main() {
   const heroMeta = await sharp(HERO_INPUT).metadata();
   console.log(`Hero dimensions: ${heroMeta.width}x${heroMeta.height}`);
 
-  // Step 1: Create a centered dark area that fades on all edges
-  // Wide enough to cover the original logo but with soft edges on sides
-  const coverWidth = Math.round(heroMeta.width * 0.70); // 70% of width - wider to cover original
-  const coverHeight = Math.round(heroMeta.height * 0.42);
+  // Step 1: First resize the logo to know its exact dimensions
+  const logoWidth = Math.round(heroMeta.width * 0.38);
+  const resizedLogoForSize = await sharp(NAVBAR_BANNER)
+    .resize(logoWidth, null, { fit: 'inside' })
+    .png()
+    .toBuffer();
+  const logoMeta = await sharp(resizedLogoForSize).metadata();
+  
+  // Step 2: Create a dark cover that's slightly larger than the logo
+  // Add margins on sides (15% of logo width on each side) to cover original logo glow
+  const margin = Math.round(logoMeta.width * 0.15);
+  const coverWidth = logoMeta.width + (margin * 2);
+  const coverHeight = logoMeta.height + Math.round(heroMeta.height * 0.10); // Extra height for glow
   const coverLeft = Math.round((heroMeta.width - coverWidth) / 2);
+  const coverTop = 0;
   
-  console.log(`Creating centered dark area: ${coverWidth}x${coverHeight} at x=${coverLeft}`);
+  console.log(`Creating tight dark cover: ${coverWidth}x${coverHeight} at (${coverLeft}, ${coverTop})`);
   
-  // Create an SVG with gradients that fade on all edges (vignette style)
-  // Wider center solid area, but soft fades on sides to preserve the people
+  // Create an SVG with soft edges - tight to the logo
   const svg = `
     <svg width="${coverWidth}" height="${coverHeight}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="fadeBottom" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:rgb(12,15,18);stop-opacity:1" />
-          <stop offset="55%" style="stop-color:rgb(12,15,18);stop-opacity:0.85" />
-          <stop offset="75%" style="stop-color:rgb(12,15,18);stop-opacity:0.3" />
-          <stop offset="100%" style="stop-color:rgb(12,15,18);stop-opacity:0" />
+          <stop offset="0%" style="stop-color:rgb(10,12,15);stop-opacity:1" />
+          <stop offset="70%" style="stop-color:rgb(10,12,15);stop-opacity:1" />
+          <stop offset="90%" style="stop-color:rgb(10,12,15);stop-opacity:0.5" />
+          <stop offset="100%" style="stop-color:rgb(10,12,15);stop-opacity:0" />
         </linearGradient>
         <linearGradient id="fadeSides" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" style="stop-color:white;stop-opacity:0" />
-          <stop offset="8%" style="stop-color:white;stop-opacity:0.7" />
-          <stop offset="20%" style="stop-color:white;stop-opacity:1" />
-          <stop offset="80%" style="stop-color:white;stop-opacity:1" />
-          <stop offset="92%" style="stop-color:white;stop-opacity:0.7" />
+          <stop offset="10%" style="stop-color:white;stop-opacity:1" />
+          <stop offset="90%" style="stop-color:white;stop-opacity:1" />
           <stop offset="100%" style="stop-color:white;stop-opacity:0" />
         </linearGradient>
         <mask id="sideMask">
@@ -77,20 +84,12 @@ async function main() {
     ])
     .toBuffer();
 
-  // Step 3: Resize the navbar banner to a nice size
-  const logoWidth = Math.round(heroMeta.width * 0.38);
-  
-  console.log('Resizing navbar banner...');
-  const resizedLogo = await sharp(NAVBAR_BANNER)
-    .resize(logoWidth, null, { fit: 'inside' })
-    .png()
-    .toBuffer();
-  
-  const logoMeta = await sharp(resizedLogo).metadata();
+  // Step 3: Use the already-resized logo from step 1
+  const resizedLogo = resizedLogoForSize;
   
   // Center horizontally and position near top
   const logoLeft = Math.round((heroMeta.width - logoMeta.width) / 2);
-  const logoTop = Math.round(heroMeta.height * 0.03); // Higher up to cover original
+  const logoTop = Math.round(heroMeta.height * 0.02); // Near top to cover original
 
   console.log(`Compositing logo at (${logoLeft}, ${logoTop}) size ${logoMeta.width}x${logoMeta.height}...`);
 

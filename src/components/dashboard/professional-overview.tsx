@@ -238,6 +238,22 @@ export default function ProfessionalOverview({
       });
     }
 
+    // Check for RSA verification
+    if (!userProfile?.rsaVerified && !userProfile?.rsaNotRequired && !userProfile?.rsaCertificateUrl) {
+      items.push({
+        id: 'upload-rsa',
+        title: 'Upload RSA Certificate',
+        description: 'Required for bar work and alcohol service roles',
+        icon: Upload,
+        action: () => {
+          if (onViewChange) {
+            onViewChange('profile');
+          }
+        },
+        priority: 'high',
+      });
+    }
+
     // Check for ID verification
     if (!userProfile?.isIdVerified && !userProfile?.isLicenseVerified) {
       items.push({
