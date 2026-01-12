@@ -36,11 +36,10 @@ async function main() {
     .toBuffer();
   const logoMeta = await sharp(resizedLogoForSize).metadata();
   
-  // Step 2: Create a dark cover that's slightly larger than the logo
-  // Add margins on sides (15% of logo width on each side) to cover original logo glow
-  const margin = Math.round(logoMeta.width * 0.15);
-  const coverWidth = logoMeta.width + (margin * 2);
-  const coverHeight = logoMeta.height + Math.round(heroMeta.height * 0.10); // Extra height for glow
+  // Step 2: Create a dark cover that's exactly the size of the logo
+  // No extra margin - just cover what's behind the logo
+  const coverWidth = logoMeta.width;
+  const coverHeight = logoMeta.height + Math.round(heroMeta.height * 0.02); // Minimal extra height
   const coverLeft = Math.round((heroMeta.width - coverWidth) / 2);
   const coverTop = 0;
   
