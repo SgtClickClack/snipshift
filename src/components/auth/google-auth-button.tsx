@@ -5,6 +5,7 @@ import { signInWithGoogleDevAware } from "@/lib/auth";
 import { Chrome } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -14,7 +15,8 @@ interface GoogleAuthButtonProps {
 export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { triggerPostAuthRedirect } = useAuth();
+  const { refreshUser } = useAuth();
+  const navigate = useNavigate();
   // Prevent double-click/double-fire in Strict Mode
   const isAuthInProgress = useRef(false);
 
@@ -103,10 +105,24 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         variant: "success",
       });
       
-      // Step 4: Explicitly trigger redirect to dashboard
-      // AuthContext's onAuthStateChanged will handle fetching the user profile
-      // and triggerPostAuthRedirect ensures redirect to /venue/dashboard or /worker/dashboard
-      triggerPostAuthRedirect();
+      // Step 4: Refresh user profile and redirect
+      // This triggers AuthContext to fetch the profile and determine the correct redirect
+      try {
+        await refreshUser();
+      } catch (refreshError) {
+        logger.debug('GoogleAuthButton', 'refreshUser failed, navigating to onboarding', refreshError);
+      }
+      
+      // Step 5: Force redirect to onboarding as fallback (AuthContext should handle this, 
+      // but we add a fallback to ensure navigation happens)
+      // Give AuthContext a moment to process, then navigate if still on auth pages
+      setTimeout(() => {
+        const currentPath = window.location.pathname;
+        if (currentPath === '/login' || currentPath === '/signup') {
+          logger.debug('GoogleAuthButton', 'Fallback redirect to onboarding');
+          navigate('/onboarding', { replace: true });
+        }
+      }, 500);
       
       // Call onSuccess if provided (for custom handling)
       if (onSuccess) {
