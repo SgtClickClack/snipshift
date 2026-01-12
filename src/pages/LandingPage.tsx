@@ -149,7 +149,7 @@ export default function LandingPage() {
                   <div className="flex gap-4 items-center">
                     <Link to="/signup?role=hub">
                       <Button
-                        className="h-12 flex items-center justify-center px-8 rounded-full font-bold transition-all bg-[#BFFF00] text-black hover:brightness-110"
+                        className="bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all"
                         data-testid="button-find-staff"
                       >
                         FIND STAFF
@@ -159,7 +159,7 @@ export default function LandingPage() {
                     <Link to="/signup?role=professional">
                       <Button
                         variant="ghost"
-                        className="h-12 flex items-center justify-center px-8 rounded-full font-bold transition-all border-2 border-white text-white hover:bg-white/10"
+                        className="border-2 border-white text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-all"
                         data-testid="button-find-shifts"
                       >
                         Find Shifts
@@ -171,7 +171,7 @@ export default function LandingPage() {
                 {isAuthenticated && user && (
                   <Link to={getDashboardRoute(user.currentRole)}>
                     <Button
-                      className="h-12 flex items-center justify-center px-8 rounded-full font-bold transition-all bg-[#BFFF00] text-black hover:brightness-110"
+                      className="bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all"
                       data-testid="button-go-to-dashboard"
                     >
                       Go to Dashboard
@@ -196,84 +196,59 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Add top padding to accommodate badges that extend above cards, especially on mobile */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8 md:pt-6">
-              {/* Keep overflow-visible to prevent badge clipping */}
-              <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
-                <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
-                  data-testid="step-badge-1"
-                >
-                  1
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="bg-[#121212] border border-zinc-800 p-8 rounded-2xl hover:border-lime-500/50 transition-colors group">
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
-                    <UserPlus className="text-brand-dark h-8 w-8" />
+                  <span className="text-zinc-500 font-mono text-sm mb-2 block" data-testid="step-badge-1">01</span>
+                  <div className="w-12 h-12 rounded-lg bg-lime-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <UserPlus className="h-6 w-6" style={{ color: '#BFFF00' }} />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-card-foreground">Create Your Profile</h3>
-                  <p className="text-muted-foreground text-sm">
+                  <h3 className="text-xl font-bold text-white mb-3">Create Your Profile</h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">
                     Sign up and build your professional profile. Choose your role: shop owner, professional,
                     brand, or trainer.
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Keep overflow-visible to prevent badge clipping */}
-              <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
-                <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
-                  data-testid="step-badge-2"
-                >
-                  2
-                </div>
+              <Card className="bg-[#121212] border border-zinc-800 p-8 rounded-2xl hover:border-lime-500/50 transition-colors group">
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
-                    <FileText className="text-brand-dark h-8 w-8" />
+                  <span className="text-zinc-500 font-mono text-sm mb-2 block" data-testid="step-badge-2">02</span>
+                  <div className="w-12 h-12 rounded-lg bg-lime-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <FileText className="h-6 w-6" style={{ color: '#BFFF00' }} />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-card-foreground">
+                  <h3 className="text-xl font-bold text-white mb-3">
                     Post or Browse Opportunities
                   </h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-zinc-400 text-sm leading-relaxed">
                     Venue owners post shifts with clear rates and requirements. Brands share launches.
                     Pros browse the feed to find work that fits their schedule.
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Keep overflow-visible to prevent badge clipping */}
-              <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
-                <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
-                  data-testid="step-badge-3"
-                >
-                  3
-                </div>
+              <Card className="bg-[#121212] border border-zinc-800 p-8 rounded-2xl hover:border-lime-500/50 transition-colors group">
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
-                    <Handshake className="text-brand-dark h-8 w-8" />
+                  <span className="text-zinc-500 font-mono text-sm mb-2 block" data-testid="step-badge-3">03</span>
+                  <div className="w-12 h-12 rounded-lg bg-lime-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <Handshake className="h-6 w-6" style={{ color: '#BFFF00' }} />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-card-foreground">Connect & Apply</h3>
-                  <p className="text-muted-foreground text-sm">
+                  <h3 className="text-xl font-bold text-white mb-3">Connect & Apply</h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">
                     Apply to shifts in one click. Venue owners review profiles and ratings, then book the best
                     talent instantly.
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Keep overflow-visible to prevent badge clipping */}
-              <Card className="text-center p-8 bg-card border border-border rounded-xl hover:shadow-xl hover:border-border/80 transition-all duration-300 relative overflow-visible hover:scale-105">
-                <div
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-brand-neon text-brand-dark rounded-full flex items-center justify-center font-bold text-sm shadow-neon-realistic z-badge"
-                  data-testid="step-badge-4"
-                >
-                  4
-                </div>
+              <Card className="bg-[#121212] border border-zinc-800 p-8 rounded-2xl hover:border-lime-500/50 transition-colors group">
                 <CardContent className="pt-0">
-                  <div className="w-16 h-16 bg-brand-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-realistic">
-                    <CheckCircle className="text-brand-dark h-8 w-8" />
+                  <span className="text-zinc-500 font-mono text-sm mb-2 block" data-testid="step-badge-4">04</span>
+                  <div className="w-12 h-12 rounded-lg bg-lime-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <CheckCircle className="h-6 w-6" style={{ color: '#BFFF00' }} />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-card-foreground">Work Together</h3>
-                  <p className="text-muted-foreground text-sm">
+                  <h3 className="text-xl font-bold text-white mb-3">Work Together</h3>
+                  <p className="text-zinc-400 text-sm leading-relaxed">
                     Complete the opportunity, build your network, and grow your reputation within the
                     industry community.
                   </p>

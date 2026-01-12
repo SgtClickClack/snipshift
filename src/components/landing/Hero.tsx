@@ -106,7 +106,7 @@ export default function Hero() {
               <div className="flex gap-4 items-center">
                 <Link to="/signup?role=hub">
                   <Button
-                    className="h-12 flex items-center justify-center px-8 rounded-full font-bold transition-all bg-[#BFFF00] text-black hover:brightness-110"
+                    className="bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all"
                     data-testid="button-find-staff"
                   >
                     FIND STAFF
@@ -116,7 +116,7 @@ export default function Hero() {
                 <Link to="/signup?role=professional">
                   <Button
                     variant="ghost"
-                    className="h-12 flex items-center justify-center px-8 rounded-full font-bold transition-all border-2 border-white text-white hover:bg-white/10"
+                    className="border-2 border-white text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-all"
                     data-testid="button-find-shifts"
                   >
                     Find Shifts
@@ -126,7 +126,7 @@ export default function Hero() {
             ) : (
               <Link to={getDashboardLink()}>
                 <Button
-                  className="h-12 flex items-center justify-center px-8 rounded-full font-bold transition-all bg-[#BFFF00] text-black hover:brightness-110"
+                  className="bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all"
                   data-testid="button-go-to-dashboard"
                 >
                   Go to Dashboard
