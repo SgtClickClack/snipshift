@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,62 +9,61 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useToast } from "@/hooks/useToast";
+
+// Helper to render feature text with **bold** markdown support
+function renderFeature(feature: string) {
+  const parts = feature.split(/\*\*(.*?)\*\*/g);
+  if (parts.length === 1) return feature;
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i} className="text-white font-semibold">{part}</strong> : part
+  );
+}
 
 export default function Pricing() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const tiers = [
+  const plans = [
     {
-      name: "Professional",
-      description: "For hospitality staff seeking flexibility.",
-      price: "Free",
-      duration: "Forever",
-      subPrice: null,
-      features: [
-        "Keep 100% of your hourly rate",
-        "Instant payouts available",
-        "Build your digital reputation",
-        "First access to high-paying shifts",
-      ],
-      cta: "Join as Pro",
-      buttonVariant: "secondary" as const,
-      highlighted: false,
-      badge: null,
-    },
-    {
-      name: "Venue Starter",
-      description: "Perfect for emergency cover.",
+      name: "Starter",
       price: "$0",
       duration: "month",
-      subPrice: "+ $20 Booking Fee per shift",
+      description: "Perfect for occasional emergency cover.",
       features: [
-        "No monthly subscription",
-        "Pay only when you book",
+        "$20 Booking Fee per shift",
         "Access to all vetted staff",
         "Standard Support",
       ],
       cta: "Post a Job",
-      buttonVariant: "outline" as const,
       highlighted: false,
       badge: null,
     },
     {
-      name: "Venue Unlimited",
-      description: "For venues that need regular reliable cover.",
-      price: "$49",
+      name: "Business",
+      price: "$149",
       duration: "month",
-      subPrice: "$0 Booking Fees",
+      description: "For venues needing a reliable, constant roster.",
       features: [
-        "Unlimited Booking Fees waived",
+        "**Unlimited Booking Fees waived**",
         "Smart-Fill Roster Technology",
+        "Priority Support",
         "Dedicated Account Manager",
-        "Save ~30% after 3 shifts",
       ],
-      cta: "Start Free Trial",
-      buttonVariant: "accent" as const,
+      cta: "Start 14-Day Free Trial",
       highlighted: true,
       badge: "Most Popular",
+    },
+    {
+      name: "Enterprise",
+      price: "Custom",
+      duration: null,
+      description: "Centralized staffing for hospitality groups.",
+      features: [
+        "Multi-location dashboard",
+        "Volume-based staff discounts",
+        "Custom contract management",
+        "24/7 Premium Support",
+      ],
+      cta: "Contact Sales",
+      highlighted: false,
+      badge: null,
     },
   ];
 
@@ -83,89 +82,84 @@ export default function Pricing() {
 
         {/* Add top padding to accommodate badges that extend above cards, especially on mobile */}
         <div className="grid md:grid-cols-3 gap-6 pt-6 md:pt-4 items-start">
-          {tiers.map((tier) => (
-              /* Keep overflow-visible to prevent badge clipping */
-              <Card
-                key={tier.name}
-                className={`relative flex flex-col overflow-visible rounded-3xl p-10 transition-all duration-300 ${
-                tier.highlighted
-                  ? "border-2 border-[#BFFF00] scale-105 z-10 bg-[#161616] shadow-[0_0_40px_rgba(191,255,0,0.15)]"
+          {plans.map((plan) => (
+            <Card
+              key={plan.name}
+              className={`relative flex flex-col overflow-visible rounded-3xl p-10 transition-all duration-300 ${
+                plan.highlighted
+                  ? "border-2 border-[#BFFF00] scale-105 z-10 bg-zinc-900 shadow-2xl"
                   : "border border-zinc-800 bg-[#161616] hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl"
               }`}
             >
-              {tier.badge && (
+              {plan.badge && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20" data-testid="pricing-badge">
-                  <span className="bg-[#BFFF00] text-black text-xs font-black px-3 py-1 rounded-full">
-                    {tier.badge}
+                  <span className="bg-[#BFFF00] text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                    {plan.badge}
                   </span>
                 </div>
               )}
               <CardHeader className="p-0 pb-4">
                 <CardTitle className="text-2xl font-bold text-white">
-                  {tier.name}
+                  {plan.name}
                 </CardTitle>
                 <CardDescription className="text-zinc-400">
-                  {tier.description}
+                  {plan.description}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow p-0">
                 <div className="mb-6">
                   <div className="flex items-baseline">
                     <span className="text-4xl font-black text-white">
-                      {tier.price}
+                      {plan.price}
                     </span>
-                    {tier.duration && (
+                    {plan.duration && (
                       <span className="text-zinc-500 ml-2 text-lg">
-                        / {tier.duration}
+                        / {plan.duration}
                       </span>
                     )}
                   </div>
-                  {tier.subPrice && (
+                  {plan.price === "$0" && (
                     <div className="mt-2">
                       <span className="text-sm text-zinc-400 font-medium">
-                        {tier.subPrice}
+                        Pay per booking
                       </span>
                     </div>
                   )}
                 </div>
                 <ul className="space-y-3">
-                  {tier.features.map((feature) => (
+                  {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start">
                       <Check className="h-5 w-5 text-[#BFFF00] mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-zinc-300 text-sm">{feature}</span>
+                      <span className="text-zinc-300 text-sm">{renderFeature(feature)}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
               <CardFooter className="p-0 pt-8">
-                {tier.cta === "Join as Pro" ? (
-                  <Link to="/signup" className="w-full">
+                {plan.cta === "Post a Job" ? (
+                  <Link to="/signup?plan=starter" className="w-full">
                     <Button
-                      className="w-full font-bold py-4 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white transition-all duration-300"
+                      className="w-full font-bold py-4 rounded-full border-2 border-zinc-600 text-white bg-transparent hover:bg-white/5 hover:border-[#BFFF00]/50 transition-all duration-300"
                     >
-                      {tier.cta}
+                      {plan.cta}
                     </Button>
                   </Link>
-                ) : tier.cta === "Post a Job" ? (
-                  <Link to="/post-job" className="w-full">
+                ) : plan.cta === "Start 14-Day Free Trial" ? (
+                  <Link to="/signup?plan=business&trial=true" className="w-full">
                     <Button
-                      className="w-full font-bold py-4 rounded-full border-2 border-white text-white bg-transparent hover:bg-white/5 transition-all duration-300"
+                      className="w-full font-black py-4 rounded-full bg-[#BFFF00] text-black hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300"
                     >
-                      {tier.cta}
+                      {plan.cta}
                     </Button>
                   </Link>
                 ) : (
-                  <Button
-                    className="w-full font-black py-4 rounded-full bg-[#BFFF00] text-black hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300"
-                    onClick={() => {
-                      toast({
-                        title: "Coming soon!",
-                        description: "Free trial signup will be available soon.",
-                      });
-                    }}
-                  >
-                    {tier.cta}
-                  </Button>
+                  <Link to="/contact?inquiry=enterprise" className="w-full">
+                    <Button
+                      className="w-full font-bold py-4 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white transition-all duration-300"
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Link>
                 )}
               </CardFooter>
             </Card>
