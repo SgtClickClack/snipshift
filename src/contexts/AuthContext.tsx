@@ -217,6 +217,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const shouldAutoRedirectFromPath = (pathname: string): boolean => {
     // Only auto-redirect from auth/callback/redirect pages to avoid disrupting normal browsing.
+    // NEVER redirect from the landing page (/) - users should see it regardless of auth state
     return (
       pathname === '/login' ||
       pathname === '/signup' ||
@@ -226,9 +227,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
   };
 
+  // Paths that should NEVER be auto-redirected away from (even for auth failures)
+  const isProtectedPublicPath = (pathname: string): boolean => {
+    return pathname === '/' || pathname === '/terms' || pathname === '/privacy' || 
+           pathname === '/about' || pathname === '/contact' || pathname === '/refunds';
+  };
+
   const handleRedirect = (u: User | null, opts?: { force?: boolean }) => {
     const pathname = locationRef.current.pathname;
     const force = opts?.force === true;
+
+    // NEVER redirect away from protected public paths (landing, legal pages, etc.)
+    // unless user explicitly triggered it (force=true from triggerPostAuthRedirect)
+    if (!force && isProtectedPublicPath(pathname)) {
+      return;
+    }
 
     if (!force && !pendingRedirect.current && !shouldAutoRedirectFromPath(pathname)) {
       return;
