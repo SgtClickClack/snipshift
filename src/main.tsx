@@ -12,6 +12,15 @@ try {
   if (window.location.hostname === "localhost") {
     console.log("Clearing legacy session ghosts...");
     localStorage.removeItem("firebase:previous_external_idp_params");
+    
+    // Hard-reset legacy Snipshift session data causing 401s
+    const lastClear = localStorage.getItem("hospogo_auth_reset");
+    if (!lastClear) {
+      localStorage.clear();
+      sessionStorage.clear();
+      localStorage.setItem("hospogo_auth_reset", Date.now().toString());
+      console.log("Local storage purged to resolve auth conflicts.");
+    }
   }
 } catch {
   // ignore storage access issues

@@ -114,11 +114,13 @@ export default defineConfig(({ mode }) => ({
     port: 3000,
     strictPort: true,
     // NOTE: Vite does not support `server: { force: true }`.
-    // To reduce “stale env / stale bundle” confusion during local debugging, we instead:
+    // To reduce "stale env / stale bundle" confusion during local debugging, we instead:
     // - keep `optimizeDeps.force = true` (forces re-optimization)
     // - disable browser caching for dev responses
+    // - set COOP to allow Google Auth popup to communicate with main window
     headers: {
       'Cache-Control': 'no-store',
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     },
     proxy: {
       // Forward REST API requests

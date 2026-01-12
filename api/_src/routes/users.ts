@@ -130,10 +130,18 @@ router.post('/register', asyncHandler(async (req, res) => {
     // Ensure name is always a string (fallback to email prefix if somehow still undefined)
     const finalName = name || email.split('@')[0];
 
-    // Check if user already exists
+    // Check if user already exists - if so, treat as login and return existing profile
+    // This prevents 409 Conflict errors from breaking frontend redirect flow (OAuth flows)
     const existingUser = await usersRepo.getUserByEmail(email);
     if (existingUser) {
-      res.status(409).json({ message: 'User with this email already exists' });
+      console.log('[REGISTER] User already exists, returning existing profile for:', email);
+      res.status(200).json({
+        id: existingUser.id,
+        email: existingUser.email,
+        name: existingUser.name,
+        role: existingUser.role,
+        isOnboarded: existingUser.isOnboarded ?? false,
+      });
       return;
     }
 
