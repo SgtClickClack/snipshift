@@ -435,12 +435,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     setUser(nextUser);
                     handleRedirect(nextUser);
                   } else if (retryRes.status === 404 || retryRes.status === 401) {
-                    // User exists in Firebase but not in our database - redirect to onboarding
-                    logger.debug('AuthContext', 'Firebase user has no profile, redirecting to onboarding');
+                    // User exists in Firebase but not in our database
+                    logger.debug('AuthContext', 'Firebase user has no profile after retry');
                     setUser(null);
                     setToken(refreshedToken);
-                    // Directly navigate to onboarding since deriveRoleHome(null) would go to /login
-                    navigateRef.current('/onboarding', { replace: true });
+                    // ONLY redirect to onboarding if NOT on a protected public path
+                    // The landing page should always be viewable
+                    if (!isProtectedPublicPath(locationRef.current.pathname)) {
+                      navigateRef.current('/onboarding', { replace: true });
+                    }
                     setIsRedirecting(false);
                     pendingRedirect.current = false;
                   } else {
@@ -455,12 +458,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   handleRedirect(null);
                 }
               } else if (res.status === 404) {
-                // User exists in Firebase but not in our database - redirect to onboarding
-                logger.debug('AuthContext', 'Firebase user has no profile (404), redirecting to onboarding');
+                // User exists in Firebase but not in our database
+                logger.debug('AuthContext', 'Firebase user has no profile (404)');
                 setUser(null);
                 // Keep the token so the user can complete onboarding
-                // Directly navigate to onboarding
-                navigateRef.current('/onboarding', { replace: true });
+                // ONLY redirect to onboarding if NOT on a protected public path
+                // The landing page should always be viewable
+                if (!isProtectedPublicPath(locationRef.current.pathname)) {
+                  navigateRef.current('/onboarding', { replace: true });
+                }
                 setIsRedirecting(false);
                 pendingRedirect.current = false;
               } else {
