@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardRoute } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { logger } from '@/lib/logger';
+import { auth } from '@/lib/firebase';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ export function AuthGuard({
   allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
-  const { user, isLoading, isAuthenticated, isAuthReady } = useAuth();
+  const { user, isLoading, isAuthenticated, isAuthReady, token } = useAuth();
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
@@ -29,9 +30,17 @@ export function AuthGuard({
     return <LoadingScreen />;
   }
 
+  // Check if there's a Firebase session (user might have signed in but profile not yet created)
+  const hasFirebaseSession = !!auth.currentUser || !!token;
 
   // If authentication is required but user is not authenticated
+  // EXCEPTION: Allow /onboarding if there's a Firebase session (user just signed in but no profile yet)
   if (requireAuth && !isAuthenticated) {
+    // Allow onboarding page if there's a Firebase session - user needs to complete profile
+    if (location.pathname === '/onboarding' && hasFirebaseSession) {
+      logger.debug('AuthGuard', 'Allowing onboarding access with Firebase session but no profile');
+      return <>{children}</>;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

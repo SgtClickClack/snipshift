@@ -30,10 +30,10 @@ async function main() {
   console.log(`Hero dimensions: ${heroMeta.width}x${heroMeta.height}`);
 
   // Calculate positioning for the logo overlay
-  // The baked-in logo is centered horizontally and very near the top (~2-5% from top)
-  // We need to match its position and size exactly
-  const logoWidth = Math.round(heroMeta.width * 0.36); // ~36% of hero width to match original
-  const logoTop = Math.round(heroMeta.height * 0.02);  // ~2% from top (matches original position)
+  // The baked-in logo is centered horizontally and very near the top
+  // Make the new logo slightly larger to fully cover the old one's glow
+  const logoWidth = Math.round(heroMeta.width * 0.42); // ~42% of hero width (slightly larger than original)
+  const logoTop = Math.round(heroMeta.height * 0.01);  // ~1% from top (positioned to cover old logo)
   
   console.log('Resizing navbar banner to match...');
   const resizedLogo = await sharp(NAVBAR_BANNER)
