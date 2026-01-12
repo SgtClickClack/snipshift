@@ -2129,3 +2129,33 @@
 
 **Code Organization & Quality**
 - Kept changes scoped to auth routing/handshake logic; removed unused legacy OAuth surfaces rather than introducing new patterns.
+
+---
+
+#### 2026-01-12: Debug Stuck Auth Popup (Error Logging + Clean-Break Reset Guard)
+
+**Core Components**
+- Google sign-in UI error handling (`src/components/auth/google-auth-button.tsx`)
+- Local-dev auth wrapper + clean-break reset (`src/lib/auth.ts`)
+- Local env audit (`.env`) (no changes applied)
+
+**Key Features**
+- **Auth error catcher**: Added explicit console logging of `error.code` and `error.message` from Google popup sign-in failures to speed up diagnosis of “stuck popup” reports.
+- **Targeted popup failures**: Explicitly handles `auth/popup-blocked` and `auth/unauthorized-domain` (with clear user messaging and actionable console guidance).
+- **Clean-break session guard**: If a prior auth attempt fails with a “400-style” error, the next attempt forces a Firebase sign-out and clears known redirect artifacts (`firebase:previous_external_idp_params`) before retrying.
+- **Env verification**: Confirmed `VITE_REDIRECT_URI` format is correct for local dev (no trailing slash) without modifying `.env`.
+
+**Integration Points**
+- Firebase Auth: `signInWithPopup`, `signOut`
+- Backend handshake: `POST /api/register` (idempotent)
+
+**File Paths**
+- `src/components/auth/google-auth-button.tsx`
+- `src/lib/auth.ts`
+- `.env` (audited only)
+
+**Next Priority Task**
+- Reproduce the “stuck popup” on localhost and capture the logged `{ code, message }` pair; then validate Firebase Console Authorized Domains includes `localhost` and that the Google OAuth client’s JS origins match the running origin.
+
+**Code Organization & Quality**
+- Kept logic isolated to existing auth UI + auth utility wrapper; reset behavior is best-effort and does not block sign-in attempts if cleanup fails.

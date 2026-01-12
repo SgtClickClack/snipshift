@@ -21,6 +21,20 @@
 **Impact:**
 - Users can always access the Landing page directly, and Google auth redirect handling is simpler/safer with less configuration drift.
 
+---
+
+### Update: 2026-01-12 - Debug “Stuck Google Auth Popup” (Error Catcher + Clean-Break Reset)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added explicit Google sign-in popup error logging (`error.code` + `error.message`) to speed up localhost debugging.
+- Added a clean-break guard: after a “400-style” auth failure, the next sign-in attempt forces a Firebase sign-out and clears known stale redirect artifacts before retrying.
+- Verified local redirect URI formatting in `.env` (no changes applied).
+
+**Impact:**
+- Faster diagnosis of popup issues (blocked popups / unauthorized domain) and fewer “stuck session” retries during local dev.
+
 ### Update: 2026-01-11 - Splash Screen Branding Consistency (Match Navbar Banner Logo)
 
 **Status:** ✅ **UPDATED**

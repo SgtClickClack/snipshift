@@ -116,19 +116,26 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       // This single flow is faster and less janky than having multiple components race to navigate.
       
     } catch (error: any) {
-      console.error("Google auth error:", error);
+      const errorCode = error?.code ? String(error.code) : 'unknown';
+      const errorMessage = error?.message ? String(error.message) : 'Unknown error';
+
+      // Required debug logging (stuck popup diagnosis)
+      console.error('[GoogleAuthButton] Google sign-in failed:', {
+        code: errorCode,
+        message: errorMessage,
+      });
       
       // Check for specific error codes
-      if (error.code === 'auth/popup-blocked') {
+      if (errorCode === 'auth/popup-blocked') {
         toast({
           title: "Popup Blocked",
           description: "Please allow popups for this site to sign in with Google.",
           variant: "destructive",
         });
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      } else if (errorCode === 'auth/popup-closed-by-user') {
         // User closed popup - silently ignore, no toast needed
         logger.debug('GoogleAuthButton', 'User closed Google auth popup');
-      } else if (error.code === 'auth/unauthorized-domain') {
+      } else if (errorCode === 'auth/unauthorized-domain') {
         toast({
           title: "Configuration Error",
           description: "This domain is not authorized for Google Auth. Please contact support.",
@@ -138,7 +145,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       } else {
         toast({
           title: "Authentication failed",
-          description: error.message || "There was an error signing in with Google.",
+          description: errorMessage || "There was an error signing in with Google.",
           variant: "destructive",
         });
       }
