@@ -8,6 +8,7 @@ import { auth } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LocationInput } from '@/components/ui/location-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
@@ -142,14 +143,14 @@ export default function Onboarding() {
     try {
       await saveStepData();
       if (auth.currentUser) await auth.currentUser.getIdToken(true);
-      const res = await apiRequest('POST', '/api/onboarding/complete', { role: 'professional', displayName: formData.displayName, phone: formData.phone, bio: formData.bio || undefined, location: formData.location, avatarUrl: formData.avatarUrl || undefined });
-      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.message || 'Failed to complete onboarding'); }
+      await apiRequest('POST', '/api/onboarding/complete', { role: 'professional', displayName: formData.displayName, phone: formData.phone, bio: formData.bio || undefined, location: formData.location, avatarUrl: formData.avatarUrl || undefined });
+      // Force refresh token to get updated claims
       if (auth.currentUser) await auth.currentUser.getIdToken(true);
-      window.location.href = '/dashboard';
+      await refreshUser();
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       toast({ title: 'Setup Failed', description: error?.message || 'Failed to complete onboarding. Please try again.', variant: 'destructive' });
-    } finally {
-      setIsSubmitting(false);
+    setIsSubmitting(false);
     }
   };
   const renderStep = () => {
@@ -185,7 +186,7 @@ export default function Onboarding() {
             <div className="space-y-4">
               <div className="space-y-2"><Label htmlFor="displayName" className="text-gray-300">Full Name *</Label><Input id="displayName" value={formData.displayName} onChange={(e) => updateFormData({ displayName: e.target.value })} placeholder="Enter your full name" data-testid="onboarding-display-name" /></div>
               <div className="space-y-2"><Label htmlFor="phone" className="text-gray-300">Phone Number *</Label><Input id="phone" type="tel" value={formData.phone} onChange={(e) => updateFormData({ phone: e.target.value })} placeholder="Enter your phone number" data-testid="onboarding-phone" /></div>
-              <div className="space-y-2"><Label htmlFor="location" className="text-gray-300">Location *</Label><Input id="location" value={formData.location} onChange={(e) => updateFormData({ location: e.target.value })} placeholder="City/Suburb" data-testid="onboarding-location" /></div>
+              <div className="space-y-2"><Label htmlFor="location" className="text-gray-300">Location *</Label><LocationInput value={formData.location} onChange={(val) => updateFormData({ location: val })} placeholder="City/Suburb" data-testid="onboarding-location" /></div>
               {user && (<div className="space-y-2"><Label className="text-gray-300">Profile Photo</Label><ImageUpload currentImageUrl={formData.avatarUrl} onUploadComplete={(url) => updateFormData({ avatarUrl: url })} onUploadError={(error) => toast({ title: 'Upload failed', description: error.message || 'Failed to upload image.', variant: 'destructive' })} pathPrefix="users" entityId={user.id} fileName="avatar" shape="circle" maxSize={5 * 1024 * 1024} /></div>)}
             </div>
           </div>
