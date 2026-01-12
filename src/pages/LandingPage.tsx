@@ -71,11 +71,6 @@ export default function LandingPage() {
             aria-hidden="true"
           />
 
-          {/* Subtle gradient overlay - left edge only for text readability */}
-          <div
-            className="absolute inset-0 z-[1] pointer-events-none bg-gradient-to-r from-[#0A0A0A]/80 via-[#0A0A0A]/40 to-transparent"
-            aria-hidden="true"
-          />
 
           {/* Landing Header - Absolute positioned over hero */}
           <header className="absolute top-0 w-full z-50 py-8 px-6 md:px-12">
@@ -369,7 +364,7 @@ export default function LandingPage() {
 
         {/* Final CTA Section */}
         {!isAuthenticated && (
-          <section className="py-16 md:py-24 bg-[#1a2a10]">
+          <section className="py-16 md:py-24 bg-[#1f1f1f]">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <h2 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">Ready to Get Started?</h2>
               <p className="text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
