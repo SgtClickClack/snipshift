@@ -63,12 +63,13 @@ export default function LandingPage() {
           {/* Hero image (replaces CSS background for better loading priority) */}
           <picture className="absolute inset-0 z-base" aria-hidden="true">
             <source type="image/webp" srcSet={encodeURI("/hospogohero.webp")} />
+            {/* eslint-disable-next-line react/no-unknown-property */}
             <img
               src={encodeURI("/hospogohero.jpg")}
               alt=""
               className="h-full w-full object-cover object-[center_35%] -translate-y-[3px] scale-[1.01]"
               loading="eager"
-              fetchPriority="high"
+              fetchpriority="high"
               decoding="async"
             />
           </picture>

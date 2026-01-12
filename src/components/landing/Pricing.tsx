@@ -84,8 +84,7 @@ export default function Pricing() {
         {/* Add top padding to accommodate badges that extend above cards, especially on mobile */}
         <div className="grid md:grid-cols-3 gap-8 pt-6 md:pt-4">
           {tiers.map((tier) => (
-            <>
-              {/* Keep overflow-visible to prevent badge clipping */}
+              /* Keep overflow-visible to prevent badge clipping */
               <Card
                 key={tier.name}
                 className={`relative flex flex-col overflow-visible ${
@@ -171,7 +170,6 @@ export default function Pricing() {
                 )}
               </CardFooter>
             </Card>
-            </>
           ))}
         </div>
       </div>

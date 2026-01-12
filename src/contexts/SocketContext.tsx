@@ -73,15 +73,15 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Get API URL from environment or use a safe default.
-    // - In production on hospogo.com (single origin), default to the current origin.
+    // Get API URL for socket connection.
     // - In local dev (Vite frontend on :3000), Socket.io connects directly to API backend on :5000
     //   because Vite's proxy only handles /api and /graphql paths, not WebSocket connections.
-    const defaultApiUrl =
-      typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-        ? window.location.origin
-        : 'http://localhost:5000';
-    const apiUrl = import.meta.env.VITE_API_URL || defaultApiUrl;
+    // - In production on hospogo.com (single origin), use the current origin or VITE_API_URL.
+    // NOTE: We intentionally ignore VITE_API_URL in local dev to prevent connecting to production.
+    const isLocalDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    const apiUrl = isLocalDev
+      ? 'http://localhost:5000'
+      : (import.meta.env.VITE_API_URL || window.location.origin);
     
     // Initialize socket connection
     const newSocket = io(apiUrl, {

@@ -24,6 +24,7 @@
     "db:reset": "tsx scripts/reset-db.ts",
     "db:clean": "ts-node _src/scripts/seed-clean.ts",
     "db:wipe-mock-shifts": "ts-node _src/scripts/wipe-mock-shifts.ts",
+    "db:clear-all-shifts": "npx tsx _src/scripts/clear-all-shifts.ts",
     "db:apply-migration": "ts-node _src/scripts/apply-migration.ts",
     "db:apply-shifts": "ts-node _src/scripts/apply-migration.ts 0003_add_shifts_final.sql",
     "test": "vitest run",

@@ -570,7 +570,7 @@ function App() {
           <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="dark" storageKey="hospogo-ui-theme">
           <TooltipProvider>
-            <Router>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <AuthProvider>
                 <SocketProvider>
                   <NotificationProvider>
