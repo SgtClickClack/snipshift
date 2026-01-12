@@ -17,7 +17,7 @@ export interface EnhancedJobFiltersState {
   minRate: number;
   maxRate: number;
   dateRange: { from?: Date; to?: Date };
-  jobType: string; // 'all' | 'barber' | 'hairdresser' | 'colorist' | 'stylist'
+  jobType: string; // 'all' | 'bartender' | 'waiter' | 'chef' | 'barista'
 }
 
 interface EnhancedJobFiltersProps {
@@ -225,9 +225,10 @@ export function EnhancedJobFilters({ className, onFiltersChange }: EnhancedJobFi
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="barber">Barber</SelectItem>
-              <SelectItem value="hairdresser">Hairdresser</SelectItem>
-              <SelectItem value="colorist">Colorist</SelectItem>
+              <SelectItem value="bartender">Bartender</SelectItem>
+              <SelectItem value="waiter">Waiter/Waitress</SelectItem>
+              <SelectItem value="chef">Chef/Cook</SelectItem>
+              <SelectItem value="barista">Barista</SelectItem>
               <SelectItem value="stylist">Stylist</SelectItem>
             </SelectContent>
           </Select>

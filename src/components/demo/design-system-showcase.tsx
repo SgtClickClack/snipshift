@@ -59,7 +59,7 @@ export const DesignSystemShowcase = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-steel-600 mb-4">
-                  Professional barbershop services with authentic chrome styling.
+                  Professional hospitality services with authentic chrome styling.
                 </p>
                 <div className="flex gap-2">
                   <Badge className="badge-steel">Professional</Badge>
@@ -124,7 +124,7 @@ export const DesignSystemShowcase = () => {
               />
               <textarea 
                 className="input-chrome min-h-24 resize-none"
-                placeholder="Tell us about your barbershop needs..."
+                placeholder="Tell us about your hospitality needs..."
               />
               <div className="flex gap-3">
                 <Button variant="accent" className="flex-1">
@@ -169,7 +169,7 @@ export const DesignSystemShowcase = () => {
                 <div>
                   <h4 className="heading-chrome text-sm">New Job Available</h4>
                   <p className="text-steel-600 text-sm">
-                    Premium barbershop position in CBD area - $35/hour
+                    Premium hospitality position in CBD area - $35/hour
                   </p>
                 </div>
               </div>

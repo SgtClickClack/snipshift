@@ -41,7 +41,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       postcode: '',
       country: 'United States'
     },
-    businessType: 'barbershop' as 'barbershop' | 'salon' | 'spa' | 'other',
+    businessType: 'restaurant' as 'restaurant' | 'bar' | 'cafe' | 'hotel' | 'other',
     operatingHours: {
       monday: { open: '09:00', close: '18:00' },
       tuesday: { open: '09:00', close: '18:00' },
@@ -326,9 +326,10 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
               <SelectValue placeholder="Select business type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="barbershop">Barbershop</SelectItem>
-              <SelectItem value="salon">Hair Salon</SelectItem>
-              <SelectItem value="spa">Spa</SelectItem>
+              <SelectItem value="restaurant">Restaurant</SelectItem>
+              <SelectItem value="bar">Bar</SelectItem>
+              <SelectItem value="cafe">Cafe</SelectItem>
+              <SelectItem value="hotel">Hotel</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>

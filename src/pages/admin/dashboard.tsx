@@ -35,7 +35,7 @@ interface AdminMetrics {
   users: {
     total: number;
     shops: number;
-    barbers: number;
+    professionals: number;
   };
   shifts: {
     completed: number;
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
                 {metricsLoading ? '...' : metrics?.users.total.toLocaleString() || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {metricsLoading ? '' : `${metrics?.users.shops || 0} shops, ${metrics?.users.barbers || 0} barbers`}
+                {metricsLoading ? '' : `${metrics?.users.shops || 0} venues, ${metrics?.users.professionals || 0} staff`}
               </p>
             </CardContent>
           </Card>
@@ -494,7 +494,7 @@ export default function AdminDashboard() {
                     <p className="text-sm text-muted-foreground">Total Users</p>
                     <p className="text-2xl font-bold">{metrics?.users.total.toLocaleString() || 0}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {metrics?.users.shops || 0} shops, {metrics?.users.barbers || 0} barbers
+                      {metrics?.users.shops || 0} venues, {metrics?.users.professionals || 0} staff
                     </p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">

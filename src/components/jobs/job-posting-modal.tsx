@@ -196,7 +196,7 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g., Senior Barber - Weekend Shift"
+                    placeholder="e.g., Senior Bartender - Weekend Shift"
                     required
                     data-testid="input-job-title"
                   />

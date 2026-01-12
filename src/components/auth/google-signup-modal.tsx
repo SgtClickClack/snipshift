@@ -38,14 +38,14 @@ export function GoogleSignupModal({ isOpen, onClose, onRoleSelected, userData }:
     {
       value: 'professional',
       title: 'Professional',
-      description: 'Barber, Hairdresser, or Stylist looking for opportunities',
+      description: 'Hospitality professional looking for opportunities',
       icon: Users,
       color: 'border-blue-200 bg-blue-50/50 hover:bg-blue-50',
     },
     {
       value: 'hub',
       title: 'Business',
-      description: 'Barbershop, Salon, or Business posting jobs',
+      description: 'Restaurant, Bar, Cafe, or Venue posting jobs',
       icon: Building,
       color: 'border-purple-200 bg-purple-50/50 hover:bg-purple-50',
     },

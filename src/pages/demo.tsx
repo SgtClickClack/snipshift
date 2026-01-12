@@ -32,7 +32,7 @@ export default function DemoPage() {
             postcode: "10001",
             country: "USA"
           },
-          businessType: "barbershop" as const
+          businessType: "venue" as const
         }
       },
       professional: {
@@ -182,7 +182,7 @@ export default function DemoPage() {
               HospoGo Platform Demo
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Comprehensive B2B2C marketplace for the barbering and beauty industries
+              Comprehensive B2B2C marketplace for the hospitality industry
             </p>
             <div className="flex justify-center gap-4 mb-8">
               <Button 

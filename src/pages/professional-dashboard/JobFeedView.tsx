@@ -37,8 +37,8 @@ export default function JobFeedView() {
     }
 
     const jobType = searchParams.get('jobType');
-    if (jobType && ['barber', 'hairdresser', 'stylist', 'other'].includes(jobType)) {
-      filterObj.jobType = jobType as 'barber' | 'hairdresser' | 'stylist' | 'other';
+    if (jobType && ['bartender', 'waiter', 'chef', 'barista', 'other'].includes(jobType)) {
+      filterObj.jobType = jobType as 'bartender' | 'waiter' | 'chef' | 'barista' | 'other';
     }
 
     return filterObj;

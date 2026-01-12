@@ -15,7 +15,7 @@ export interface JobFeedFilters {
   maxPayRate?: number;
   startDate?: string;
   endDate?: string;
-  jobType?: 'barber' | 'hairdresser' | 'stylist' | 'other';
+  jobType?: 'bartender' | 'waiter' | 'chef' | 'barista' | 'other';
   limit?: number;
   offset?: number;
 }

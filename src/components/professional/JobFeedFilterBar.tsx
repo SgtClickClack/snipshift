@@ -20,7 +20,7 @@ export interface JobFeedFilterBarFilters {
   location?: string;
   minPayRate?: number;
   maxPayRate?: number;
-  jobType?: 'barber' | 'hairdresser' | 'stylist' | 'other';
+  jobType?: 'bartender' | 'waiter' | 'chef' | 'barista' | 'other';
 }
 
 interface JobFeedFilterBarProps {
@@ -49,9 +49,9 @@ export function JobFeedFilterBar({ onFiltersChange, className }: JobFeedFilterBa
     return max ? parseFloat(max) : DEFAULT_MAX_RATE;
   });
 
-  const [jobType, setJobType] = useState<'barber' | 'hairdresser' | 'stylist' | 'other' | 'all'>(() => {
+  const [jobType, setJobType] = useState<'bartender' | 'waiter' | 'chef' | 'barista' | 'other' | 'all'>(() => {
     const type = searchParams.get('jobType');
-    return (type as 'barber' | 'hairdresser' | 'stylist' | 'other') || 'all';
+    return (type as 'bartender' | 'waiter' | 'chef' | 'barista' | 'other') || 'all';
   });
 
   // Update URL params when filters change
@@ -182,9 +182,10 @@ export function JobFeedFilterBar({ onFiltersChange, className }: JobFeedFilterBa
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="barber">Barber</SelectItem>
-                <SelectItem value="hairdresser">Hairdresser</SelectItem>
-                <SelectItem value="stylist">Stylist</SelectItem>
+                <SelectItem value="bartender">Bartender</SelectItem>
+                <SelectItem value="waiter">Waiter/Waitress</SelectItem>
+                <SelectItem value="chef">Chef/Cook</SelectItem>
+                <SelectItem value="barista">Barista</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>

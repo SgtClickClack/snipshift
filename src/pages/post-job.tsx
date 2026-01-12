@@ -453,7 +453,7 @@ export default function PostJobPage() {
                     Site Photo (Optional)
                   </Label>
                   <p className="text-xs text-steel-500 mb-2">
-                    Upload a photo of your salon, barbershop, or workspace
+                    Upload a photo of your venue or workspace
                   </p>
                   <ImageUpload
                     currentImageUrl={formData.sitePhotoUrl}

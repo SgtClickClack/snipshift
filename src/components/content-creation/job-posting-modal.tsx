@@ -179,7 +179,7 @@ export default function JobPostingModal({ isOpen, onClose }: JobPostingModalProp
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g., Full-time Barber, Chair Rental"
+                placeholder="e.g., Full-time Bartender, Weekend Shift"
                 data-testid="input-job-title"
                 className={errors.title ? "border-red-500" : ""}
               />

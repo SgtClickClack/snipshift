@@ -24,7 +24,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "post-job",
       title: "Post Your First Job",
-      content: "Tap the + button to post a shift and attract talented professionals to your barbershop.",
+      content: "Tap the + button to post a shift and attract talented professionals to your venue.",
       target: "[data-testid='button-post-job']",
       position: "bottom"
     },
@@ -69,7 +69,7 @@ const tutorialSteps: Record<string, TutorialStep[]> = {
     {
       id: "welcome",
       title: "Welcome Brand Partner!",
-      content: "Reach the barbering community with your products and promotions.",
+      content: "Reach the hospitality community with your products and promotions.",
       position: "center"
     },
     {

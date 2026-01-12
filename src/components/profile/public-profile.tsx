@@ -63,7 +63,7 @@ export default function PublicProfile({ profile, isOwnProfile = false, onEditPro
       case "professional":
         return "Professional";
       case "hub":
-        return "Barbershop/Salon";
+        return "Venue";
       case "brand":
         return "Brand";
       case "trainer":

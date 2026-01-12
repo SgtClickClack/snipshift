@@ -1112,7 +1112,7 @@ export default function ProfessionalDigitalResume({
                 )}
                 {isEditing && (
                   <Button variant="outline" className="mt-4 w-full" onClick={() => {
-                    const type = prompt('Certification Type (e.g., QLD Barber License):');
+                    const type = prompt('Certification Type (e.g., RSA Certificate):');
                     const issuer = prompt('Issuer:');
                     if (type && issuer) {
                       setProfile(prev => ({

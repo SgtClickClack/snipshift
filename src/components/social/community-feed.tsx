@@ -179,7 +179,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
               Community Feed
             </h1>
             <p className="text-muted-foreground">
-              Discover trends, connect with professionals, and stay updated with the latest in barbering
+              Discover trends, connect with professionals, and stay updated with the latest in hospitality
             </p>
           </div>
           <Button

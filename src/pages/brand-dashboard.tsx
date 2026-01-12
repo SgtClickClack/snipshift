@@ -688,7 +688,7 @@ export default function BrandDashboard() {
                       id="discountCode"
                       value={formData.discountCode}
                       onChange={(e) => setFormData(prev => ({ ...prev, discountCode: e.target.value }))}
-                      placeholder="e.g., BARBER20"
+                      placeholder="e.g., HOSPO20"
                       data-testid="input-discount-code"
                     />
                   </div>

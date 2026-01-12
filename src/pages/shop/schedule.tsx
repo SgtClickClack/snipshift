@@ -440,7 +440,7 @@ export default function ShopSchedulePage() {
       queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
       const count = variables.professionalIds.length;
       toast({
-        title: `${count} barber${count > 1 ? 's' : ''} invited!`,
+        title: `${count} professional${count > 1 ? 's' : ''} invited!`,
         description: 'First one to accept gets the shift.',
       });
     },
@@ -457,7 +457,7 @@ export default function ShopSchedulePage() {
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
     const shift = event.resource;
     
-    // DRAFT: Open the AssignStaffModal to invite a barber
+    // DRAFT: Open the AssignStaffModal to invite a professional
     if (shift.status === 'draft') {
       setSelectedDraftShift(shift);
       setAssignModalOpen(true);

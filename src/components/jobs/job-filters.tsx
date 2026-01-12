@@ -31,8 +31,8 @@ export function JobFilters({ className }: JobFiltersProps) {
   
   // Filter state from URL params
   const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [role, setRole] = useState<'barber' | 'hairdresser' | 'stylist' | 'other' | ''>(
-    (searchParams.get('role') as 'barber' | 'hairdresser' | 'stylist' | 'other') || ''
+  const [role, setRole] = useState<'bartender' | 'waiter' | 'chef' | 'barista' | 'other' | ''>(
+    (searchParams.get('role') as 'bartender' | 'waiter' | 'chef' | 'barista' | 'other') || ''
   );
   const [minRate, setMinRate] = useState<number>(
     searchParams.get('minRate') ? parseFloat(searchParams.get('minRate')!) : 0
@@ -156,13 +156,14 @@ export function JobFilters({ className }: JobFiltersProps) {
         <select
           id="role"
           value={role}
-          onChange={(e) => setRole(e.target.value as 'barber' | 'hairdresser' | 'stylist' | 'other' | '')}
+          onChange={(e) => setRole(e.target.value as 'bartender' | 'waiter' | 'chef' | 'barista' | 'other' | '')}
           className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
           <option value="">All Roles</option>
-          <option value="barber">Barber</option>
-          <option value="hairdresser">Hairdresser</option>
-          <option value="stylist">Stylist</option>
+          <option value="bartender">Bartender</option>
+          <option value="waiter">Waiter/Waitress</option>
+          <option value="chef">Chef/Cook</option>
+          <option value="barista">Barista</option>
           <option value="other">Other</option>
         </select>
       </div>

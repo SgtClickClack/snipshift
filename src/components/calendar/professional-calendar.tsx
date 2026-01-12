@@ -1621,7 +1621,7 @@ export default function ProfessionalCalendar({
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
       const count = variables.professionals.length;
       toast({
-        title: `${count} barber${count > 1 ? 's' : ''} invited`,
+        title: `${count} professional${count > 1 ? 's' : ''} invited`,
         description: `Invitations sent! First one to accept gets the shift.`,
       });
       setShowAssignStaffModal(false);
@@ -2746,7 +2746,7 @@ export default function ProfessionalCalendar({
                   <Input
                     id="event-title"
                     required
-                    placeholder="e.g., Weekend Barber Needed"
+                    placeholder="e.g., Weekend Staff Needed"
                     value={shiftFormData.title || newEventTitle}
                     onChange={(e) => {
                       setShiftFormData({ ...shiftFormData, title: e.target.value });
@@ -2764,7 +2764,7 @@ export default function ProfessionalCalendar({
                     rows={3}
                     value={shiftFormData.description}
                     onChange={(e) => setShiftFormData({ ...shiftFormData, description: e.target.value })}
-                    placeholder="Describe the shift requirements... (e.g., Barber needed for busy Saturday)"
+                    placeholder="Describe the shift requirements... (e.g., Staff needed for busy Saturday)"
                     className="bg-zinc-900 border-zinc-700"
                   />
                 </div>

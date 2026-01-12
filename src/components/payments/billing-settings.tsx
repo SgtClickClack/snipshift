@@ -257,7 +257,7 @@ export default function BillingSettings() {
             <div className="space-y-4">
               <div className="p-4 border border-steel-200 rounded-lg bg-steel-50">
                 <p className="text-sm text-steel-700 mb-4">
-                  Add a payment method to automatically pay for shifts when barbers accept them.
+                  Add a payment method to automatically pay for shifts when staff accept them.
                 </p>
                 <Button
                   onClick={() => setShowAddForm(true)}
@@ -279,11 +279,11 @@ export default function BillingSettings() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-steel-400">2.</span>
-                <span>When a barber accepts your shift, payment is authorized (funds are held)</span>
+                <span>When a professional accepts your shift, payment is authorized (funds are held)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-steel-400">3.</span>
-                <span>After the shift is completed and reviewed, payment is automatically captured and transferred to the barber</span>
+                <span>After the shift is completed and reviewed, payment is automatically captured and transferred to the professional</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-steel-400">4.</span>

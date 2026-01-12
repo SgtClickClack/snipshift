@@ -58,7 +58,7 @@ export interface JobFilterParams {
   limit?: number;
   offset?: number;
   search?: string;
-  role?: 'barber' | 'hairdresser' | 'stylist' | 'other';
+  role?: 'bartender' | 'waiter' | 'chef' | 'barista' | 'other';
   minRate?: number;
   maxRate?: number;
   startDate?: string;

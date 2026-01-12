@@ -137,7 +137,7 @@ export default function ShiftReviewModal({
   };
 
   const reviewTypeLabel = reviewType === 'SHOP_REVIEWING_BARBER' 
-    ? 'Rate the Staff Member' 
+    ? 'Rate the Professional' 
     : 'Rate the Venue';
 
   return (

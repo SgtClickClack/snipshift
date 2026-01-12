@@ -7,7 +7,7 @@ export default function AboutPage() {
     <>
       <SEO
         title="About Us"
-        description="Learn about HospoGo's mission to connect barbers, stylists, and professionals with flexible work opportunities."
+        description="Learn about HospoGo's mission to connect hospitality professionals with flexible work opportunities."
         url="/about"
       />
       <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 py-12 px-4">
@@ -18,7 +18,7 @@ export default function AboutPage() {
               About HospoGo
             </h1>
             <p className="text-xl text-steel-600 max-w-2xl mx-auto">
-              Connecting barbers, stylists, and professionals with flexible work opportunities
+              Connecting hospitality professionals with flexible work opportunities
             </p>
           </div>
 
@@ -32,9 +32,9 @@ export default function AboutPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-steel-900 mb-3">Our Mission</h2>
                   <p className="text-steel-700 text-lg leading-relaxed">
-                    HospoGo bridges the gap between barbershops and salons that need flexible staffing, 
+                    HospoGo bridges the gap between hospitality venues that need flexible staffing, 
                     and talented professionals seeking work opportunities. We believe in empowering the gig economy within 
-                    the barbering and beauty industry, making it easier for businesses to find qualified talent and for professionals 
+                    the hospitality industry, making it easier for businesses to find qualified talent and for professionals 
                     to build their careers on their own terms.
                   </p>
                 </div>
@@ -48,8 +48,8 @@ export default function AboutPage() {
               <h2 className="text-2xl font-bold text-steel-900 mb-4">Our Story</h2>
               <div className="prose prose-slate max-w-none text-steel-700 space-y-4">
                 <p>
-                  The industry has always been built on flexibility and talent. Barbershops need coverage for busy 
-                  weekends. Salons need specialists for special events. Professionals want to work when and where they choose. 
+                  The hospitality industry has always been built on flexibility and talent. Venues need coverage for busy 
+                  weekends. Restaurants need specialists for special events. Professionals want to work when and where they choose. 
                   Yet, finding these connections has been fragmented and inefficient.
                 </p>
                 <p>
@@ -59,7 +59,7 @@ export default function AboutPage() {
                   that makes the industry thrive.
                 </p>
                 <p>
-                  Whether you're a barber looking for weekend shifts, a salon owner needing coverage during peak seasons, 
+                  Whether you're a hospitality professional looking for weekend shifts, a venue owner needing coverage during peak seasons, 
                   or a brand looking to connect with professionals, HospoGo provides the tools and platform to 
                   make those connections seamless.
                 </p>

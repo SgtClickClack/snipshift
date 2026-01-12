@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
@@ -84,15 +84,22 @@ const NotificationDemo = lazy(() => import('@/components/notifications/notificat
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
 const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 
-function AppRoutes() {
+function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const location = useLocation();
   const { isLoading } = useAuth();
   const hideNavbar = location.pathname === '/onboarding';
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/forgot-password'].includes(location.pathname);
   
   // Show loading screen while auth is initializing to prevent errors
-  if (isLoading) {
+  // BUT only after HTML splash has been removed to avoid duplicate loading screens
+  if (isLoading && splashHandled) {
     return <LoadingScreen />;
+  }
+  
+  // If still loading but HTML splash hasn't been removed yet, render nothing
+  // The HTML splash in index.html will handle displaying the loading state
+  if (isLoading && !splashHandled) {
+    return null;
   }
   
   return (
@@ -533,17 +540,27 @@ function AppRoutes() {
 
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
-function App() {
-  // Remove splash screen after React successfully mounts
-  useEffect(() => {
-    // Call removeSplash after a brief delay to ensure React has fully rendered
-    const timer = setTimeout(() => {
-      if (typeof window !== 'undefined' && window.removeSplash) {
-        window.removeSplash();
-      }
-    }, 100);
+// Track if HTML splash has been removed (shared between App and AppRoutes)
+let htmlSplashRemoved = false;
 
-    return () => clearTimeout(timer);
+function App() {
+  const [splashHandled, setSplashHandled] = useState(htmlSplashRemoved);
+
+  // Remove HTML splash screen when React mounts
+  // Track this so AppRoutes doesn't show duplicate LoadingScreen during overlap
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.removeSplash) {
+      window.removeSplash();
+      // Mark splash as removed after the fade transition (300ms)
+      setTimeout(() => {
+        htmlSplashRemoved = true;
+        setSplashHandled(true);
+      }, 300);
+    } else {
+      // No splash to remove, mark as handled immediately
+      htmlSplashRemoved = true;
+      setSplashHandled(true);
+    }
   }, []);
 
   return (
@@ -560,7 +577,7 @@ function App() {
                     <RouteProgressBar />
                     <Toaster />
                     <NotificationToast />
-                    <AppRoutes />
+                    <AppRoutes splashHandled={splashHandled} />
                     <TutorialOverlay />
                     <FeedbackWidget />
                     <InstallPrompt />
