@@ -369,10 +369,10 @@ export default function LandingPage() {
 
         {/* Final CTA Section */}
         {!isAuthenticated && (
-          <section className="py-16 md:py-24 bg-[#BFFF00]">
+          <section className="py-16 md:py-24 bg-[#1a2a10]">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2 className="text-3xl md:text-5xl font-black text-black mb-6 tracking-tight">Ready to Get Started?</h2>
-              <p className="text-xl text-black/70 mb-10 max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">Ready to Get Started?</h2>
+              <p className="text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
                 Join the marketplace that's reshaping how venues and staff connect
               </p>
 
@@ -380,7 +380,7 @@ export default function LandingPage() {
                 <Link to="/signup?role=hub">
                   <Button
                     size="lg"
-                    className="h-auto bg-black text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-black/90 transition-all duration-300"
+                    className="h-auto bg-[#BFFF00] text-black px-10 py-4 rounded-full font-black text-lg hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300"
                     data-testid="button-join-venue"
                   >
                     Venue Sign Up
@@ -390,7 +390,7 @@ export default function LandingPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="h-auto bg-transparent border-2 border-black text-black px-10 py-4 rounded-full font-bold text-lg hover:bg-black/10 transition-all duration-300"
+                    className="h-auto bg-transparent border-2 border-white text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white/5 transition-all duration-300"
                     data-testid="button-join-staff"
                   >
                     Staff Sign Up
