@@ -417,11 +417,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           if (firebaseUser) {
             try {
-              const token = await firebaseUser.getIdToken();
+              // Always get a fresh token to ensure validity
+              const token = await firebaseUser.getIdToken(/* forceRefresh */ false);
               setToken(token);
+              logger.debug('AuthContext', 'Fetching user profile from /api/me');
               const res = await fetch('/api/me', {
                 headers: {
-                  'Authorization': `Bearer ${token}`
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
               });
               
@@ -431,13 +434,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setUser(nextUser);
                 handleRedirect(nextUser);
               } else if (res.status === 401) {
-                // 401 means token is invalid or expired - try to refresh token once
+                // 401 means token is invalid or expired - force refresh token and retry once
+                logger.debug('AuthContext', 'Received 401 from /api/me, refreshing token...');
                 try {
-                  const refreshedToken = await firebaseUser.getIdToken(true);
+                  const refreshedToken = await firebaseUser.getIdToken(/* forceRefresh */ true);
                   setToken(refreshedToken);
+                  logger.debug('AuthContext', 'Token refreshed, retrying /api/me...');
                   const retryRes = await fetch('/api/me', {
                     headers: {
-                      'Authorization': `Bearer ${refreshedToken}`
+                      'Authorization': `Bearer ${refreshedToken}`,
+                      'Content-Type': 'application/json'
                     }
                   });
                   

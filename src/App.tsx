@@ -87,7 +87,7 @@ const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const location = useLocation();
   const { isLoading } = useAuth();
-  const hideNavbar = location.pathname === '/onboarding';
+  const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/';
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/forgot-password'].includes(location.pathname);
   
   // Show loading screen while auth is initializing to prevent errors
