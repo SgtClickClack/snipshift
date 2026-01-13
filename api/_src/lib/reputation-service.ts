@@ -644,6 +644,7 @@ export async function getUserReputationStats(userId: string): Promise<{
   isSuspended: boolean;
   completedShiftCount: number;
   noShowCount: number;
+  lastNoShowShiftId: string | null;
 } | null> {
   const user = await usersRepo.getUserById(userId);
   if (!user) return null;
@@ -654,6 +655,34 @@ export async function getUserReputationStats(userId: string): Promise<{
   const shiftsSinceLastStrike = user.shiftsSinceLastStrike ?? 0;
   const recoveryProgress = user.recoveryProgress ?? 0;
   const reliabilityScore = getReliabilityScore(strikes, suspendedUntil);
+
+  // Get last no-show shift ID for medical certificate appeals
+  let lastNoShowShiftId: string | null = null;
+  if (isSuspended && user.lastNoShowAt) {
+    try {
+      // Find the most recent shift with no-show status for this user
+      const db = getDb();
+      if (db) {
+        const result = await db
+          .select({ id: shifts.id })
+          .from(shifts)
+          .where(
+            and(
+              eq(shifts.assigneeId, userId),
+              eq(shifts.attendanceStatus, 'no_show')
+            )
+          )
+          .orderBy(sql`${shifts.updatedAt} DESC`)
+          .limit(1);
+        
+        if (result.length > 0) {
+          lastNoShowShiftId = result[0].id;
+        }
+      }
+    } catch (error) {
+      console.error('[REPUTATION] Error fetching last no-show shift:', error);
+    }
+  }
 
   return {
     strikes,
@@ -666,6 +695,207 @@ export async function getUserReputationStats(userId: string): Promise<{
     isSuspended,
     completedShiftCount: user.completedShiftCount ?? 0,
     noShowCount: user.noShowCount ?? 0,
+    lastNoShowShiftId,
+  };
+}
+
+/**
+ * Medical Override Result Interface
+ */
+export interface MedicalOverrideResult {
+  success: boolean;
+  message: string;
+  strikeCount: number;
+  previousStrikeCount: number;
+  suspensionLifted: boolean;
+  flaggedForReview: boolean;
+}
+
+/**
+ * Medical Certificate Data Interface
+ */
+export interface MedicalCertificateData {
+  date: string;          // Date on the certificate (ISO format or parseable date string)
+  proName: string;       // Name on the certificate
+  doctorName?: string;   // Doctor/practitioner name (optional)
+  valid: boolean;        // Whether OCR extraction was successful
+  rawText?: string;      // Raw OCR text for audit
+  imageUrl?: string;     // URL of uploaded certificate image
+}
+
+/**
+ * Apply medical override to lift suspension and reduce strikes
+ * 
+ * Rules:
+ * - Certificate date must match the shift date (within 1 day tolerance)
+ * - Certificate name must match user's name (fuzzy match)
+ * - Decrements strikes by 2
+ * - Lifts suspension immediately
+ * - Logs the override event for audit
+ * 
+ * @param userId - The professional's user ID
+ * @param shiftId - The shift ID that caused the suspension
+ * @param certificateData - Extracted data from the medical certificate
+ */
+export async function applyMedicalOverride(
+  userId: string,
+  shiftId: string,
+  certificateData: MedicalCertificateData
+): Promise<MedicalOverrideResult> {
+  const db = getDb();
+  if (!db) {
+    return {
+      success: false,
+      message: 'Database not available',
+      strikeCount: 0,
+      previousStrikeCount: 0,
+      suspensionLifted: false,
+      flaggedForReview: false,
+    };
+  }
+
+  // Get user details
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    return {
+      success: false,
+      message: 'User not found',
+      strikeCount: 0,
+      previousStrikeCount: 0,
+      suspensionLifted: false,
+      flaggedForReview: false,
+    };
+  }
+
+  // Get shift details
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    return {
+      success: false,
+      message: 'Shift not found',
+      strikeCount: user.strikes ?? 0,
+      previousStrikeCount: user.strikes ?? 0,
+      suspensionLifted: false,
+      flaggedForReview: false,
+    };
+  }
+
+  // Verify certificate validity
+  if (!certificateData.valid) {
+    console.log(`[REPUTATION] Medical certificate invalid or unreadable for user ${userId}, flagging for admin review`);
+    return {
+      success: false,
+      message: 'Certificate could not be verified. Flagged for admin review.',
+      strikeCount: user.strikes ?? 0,
+      previousStrikeCount: user.strikes ?? 0,
+      suspensionLifted: false,
+      flaggedForReview: true,
+    };
+  }
+
+  // Verify certificate date matches shift date (within 1 day tolerance)
+  const certDate = new Date(certificateData.date);
+  const shiftDate = new Date(shift.startTime);
+  const daysDiff = Math.abs(certDate.getTime() - shiftDate.getTime()) / (1000 * 60 * 60 * 24);
+  
+  if (daysDiff > 1) {
+    console.log(`[REPUTATION] Medical certificate date mismatch for user ${userId}: cert=${certificateData.date}, shift=${shift.startTime}`);
+    return {
+      success: false,
+      message: 'Certificate date does not match the shift date. Flagged for admin review.',
+      strikeCount: user.strikes ?? 0,
+      previousStrikeCount: user.strikes ?? 0,
+      suspensionLifted: false,
+      flaggedForReview: true,
+    };
+  }
+
+  // Verify name matches (fuzzy match - case insensitive, allows partial match)
+  const userName = (user.name || '').toLowerCase().trim();
+  const certName = (certificateData.proName || '').toLowerCase().trim();
+  
+  const nameMatches = userName === certName || 
+    userName.includes(certName) || 
+    certName.includes(userName) ||
+    (userName.split(' ').some(part => certName.includes(part)) && certName.split(' ').some(part => userName.includes(part)));
+
+  if (!nameMatches) {
+    console.log(`[REPUTATION] Medical certificate name mismatch for user ${userId}: cert="${certificateData.proName}", user="${user.name}"`);
+    return {
+      success: false,
+      message: 'Name on certificate does not match your account. Flagged for admin review.',
+      strikeCount: user.strikes ?? 0,
+      previousStrikeCount: user.strikes ?? 0,
+      suspensionLifted: false,
+      flaggedForReview: true,
+    };
+  }
+
+  // All validations passed - apply the medical override
+  const previousStrikeCount = user.strikes ?? 0;
+  const newStrikeCount = Math.max(0, previousStrikeCount - 2);
+  const now = new Date();
+
+  // Update user: reduce strikes by 2, lift suspension, and ensure account is active
+  await db
+    .update(users)
+    .set({
+      strikes: newStrikeCount,
+      suspendedUntil: null, // Lift suspension
+      isActive: true, // Ensure account is active
+      updatedAt: now,
+    })
+    .where(eq(users.id, userId));
+
+  // Send notification to the professional
+  try {
+    await notificationsService.createNotification(userId, {
+      type: 'strike_removed',
+      title: 'Medical Override Applied',
+      message: `Your medical certificate has been verified. ${previousStrikeCount - newStrikeCount} strike(s) removed and your suspension has been lifted.`,
+      data: {
+        shiftId,
+        strikesRemoved: previousStrikeCount - newStrikeCount,
+        totalStrikes: newStrikeCount,
+        reason: 'medical_override',
+        certificateDate: certificateData.date,
+      },
+    });
+  } catch (error) {
+    console.error('[REPUTATION] Failed to send medical override notification:', error);
+  }
+
+  // Send confirmation email
+  try {
+    await emailService.sendAccountRestoredEmail(
+      user.email,
+      user.name || user.email.split('@')[0],
+      newStrikeCount,
+      newStrikeCount > 0 ? 5 : 0
+    );
+  } catch (error) {
+    console.error('[REPUTATION] Failed to send account restored email:', error);
+  }
+
+  // Log the override event for audit purposes
+  console.log(`[REPUTATION] Medical override applied for user ${userId}: -${previousStrikeCount - newStrikeCount} strikes (now ${newStrikeCount}), suspension lifted`, {
+    userId,
+    shiftId,
+    previousStrikeCount,
+    newStrikeCount,
+    certificateDate: certificateData.date,
+    certificateName: certificateData.proName,
+    certificateUrl: certificateData.imageUrl,
+    timestamp: now.toISOString(),
+  });
+
+  return {
+    success: true,
+    message: 'Medical certificate verified. Strikes reduced and suspension lifted.',
+    strikeCount: newStrikeCount,
+    previousStrikeCount,
+    suspensionLifted: true,
+    flaggedForReview: false,
   };
 }
 
