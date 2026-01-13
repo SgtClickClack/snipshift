@@ -1773,12 +1773,13 @@ app.post('/api/subscriptions/create-with-trial', authenticateUser, asyncHandler(
       },
     });
 
-    // Calculate period dates
-    const currentPeriodStart = stripeSubscription.current_period_start 
-      ? new Date(stripeSubscription.current_period_start * 1000) 
+    // Get period dates from the first subscription item (Stripe SDK v20+ moved these to SubscriptionItem)
+    const firstItem = stripeSubscription.items.data[0];
+    const currentPeriodStart = firstItem?.current_period_start 
+      ? new Date(firstItem.current_period_start * 1000) 
       : new Date();
-    const currentPeriodEnd = stripeSubscription.current_period_end 
-      ? new Date(stripeSubscription.current_period_end * 1000) 
+    const currentPeriodEnd = firstItem?.current_period_end 
+      ? new Date(firstItem.current_period_end * 1000) 
       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     // Create subscription record in database
@@ -1791,6 +1792,11 @@ app.post('/api/subscriptions/create-with-trial', authenticateUser, asyncHandler(
       currentPeriodStart,
       currentPeriodEnd,
     });
+
+    if (!subscription) {
+      res.status(500).json({ message: 'Failed to create subscription record in database' });
+      return;
+    }
 
     res.status(201).json({
       message: 'Subscription created successfully',

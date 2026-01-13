@@ -79,7 +79,7 @@ router.post('/enterprise', asyncHandler(async (req, res) => {
     let emailServiceAvailable = isEmailServiceAvailable() && resend;
 
     // 2. Send internal notification email to admin
-    if (emailServiceAvailable) {
+    if (emailServiceAvailable && resend) {
       try {
         const adminEmailHtml = await render(
           EnterpriseLeadNotification({
@@ -173,6 +173,7 @@ router.post('/general', asyncHandler(async (req, res) => {
   try {
     // Store the lead in database
     const lead = await leadsRepo.createLead({
+      companyName: '', // General contacts don't have a company name
       contactName: name,
       email,
       message,
@@ -193,7 +194,7 @@ router.post('/general', asyncHandler(async (req, res) => {
     let emailServiceAvailable = isEmailServiceAvailable() && resend;
 
     // Send notification email to admin
-    if (emailServiceAvailable) {
+    if (emailServiceAvailable && resend) {
       try {
         await resend.emails.send({
           from: FROM_EMAIL,
