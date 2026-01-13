@@ -1,3 +1,41 @@
+#### 2026-01-13: Enterprise Lead API Implementation
+
+**Core Components**
+- Leads Repository (`api/_src/repositories/leads.repository.ts`)
+- Enterprise Lead Validation Schema (`api/_src/validation/schemas.ts`)
+- Enterprise Lead Email Templates (`api/_src/emails/EnterpriseLeadEmail.tsx`)
+- Leads Route Handler (`api/_src/routes/leads.ts`)
+- Database Migration (`api/_src/db/migrations/0019_add_enterprise_leads.sql`)
+
+**Key Features**
+- POST `/api/leads/enterprise` endpoint for receiving enterprise lead submissions
+- Stores leads in PostgreSQL database via Drizzle ORM
+- Sends internal notification email to admin when new lead is received
+- Sends automated "Thank You" email to the lead
+- Supports flexible field naming (frontend-style and API-style field names)
+- Includes lead status management (new, contacted, qualified, proposal_sent, closed_won, closed_lost)
+- React Email templates for professional email formatting
+
+**Integration Points**
+- Frontend: `ContactSalesForm.tsx` component on landing page
+- Email: Resend service (`api/_src/lib/resend.ts`)
+- Database: PostgreSQL via Drizzle ORM
+- Environment Variables: `ADMIN_EMAIL`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
+
+**File Paths**
+- `api/_src/routes/leads.ts`
+- `api/_src/repositories/leads.repository.ts`
+- `api/_src/validation/schemas.ts`
+- `api/_src/emails/EnterpriseLeadEmail.tsx`
+- `api/_src/db/schema/leads.ts` (existing schema)
+- `api/_src/db/migrations/0019_add_enterprise_leads.sql`
+- `api/_src/index.ts` (route registration)
+
+**Next Priority Task**
+- Add admin dashboard UI to view and manage enterprise leads
+
+---
+
 #### 2026-01-11: Fix Landing Page Skip & Auth Handshake (Public Root + Google Prompt + Legacy Storage Reset)
 
 **Core Components**

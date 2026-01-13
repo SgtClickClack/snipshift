@@ -922,3 +922,34 @@ export const cancelSubscription = async (): Promise<boolean> => {
     throw toApiError(error, 'cancelSubscription');
   }
 };
+
+// Enterprise Leads
+export interface EnterpriseLeadData {
+  companyName: string;
+  contactName?: string;
+  email: string;
+  phone?: string;
+  numberOfLocations?: number;
+  inquiryType?: 'enterprise_plan' | 'custom_solution' | 'partnership' | 'general';
+  message?: string;
+}
+
+export interface EnterpriseLeadResponse {
+  success: boolean;
+  message: string;
+  leadId: string;
+}
+
+/**
+ * Submit an enterprise lead from the ContactSalesForm
+ * @param data - Lead form data
+ * @returns Promise resolving to the submission response
+ */
+export async function submitEnterpriseLead(data: EnterpriseLeadData): Promise<EnterpriseLeadResponse> {
+  try {
+    const res = await apiRequest('POST', '/api/leads/enterprise', data);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'submitEnterpriseLead');
+  }
+}

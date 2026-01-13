@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SEO } from '@/components/seo/SEO';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,8 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Mail, MessageSquare, Send } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
+import ContactSalesForm from '@/components/landing/ContactSalesForm';
+import EnterpriseBenefits from '@/components/landing/EnterpriseBenefits';
 
 export default function ContactPage() {
+  const [searchParams] = useSearchParams();
+  const isEnterpriseInquiry = searchParams.get('inquiry') === 'enterprise';
+
   const [formData, setFormData] = useState({
     email: '',
     subject: '',
@@ -30,13 +36,53 @@ export default function ContactPage() {
     requestAnimationFrame(() => {
       toast({
         title: 'Message sent',
-        description: "Thanks! We've received your message and will reply within 24�48 hours.",
+        description: "Thanks! We've received your message and will reply within 24–48 hours.",
       });
       setIsSubmitting(false);
       setFormData({ email: '', subject: '', message: '' });
     });
   };
 
+  // Enterprise inquiry view
+  if (isEnterpriseInquiry) {
+    return (
+      <>
+        <SEO
+          title="Enterprise Solutions | Contact Sales"
+          description="Scale your hospitality staffing across multiple locations with HospoGo Enterprise. Talk to our partnerships team today."
+          url="/contact?inquiry=enterprise"
+        />
+        <div className="min-h-screen bg-[#0A0A0A] py-12 md:py-20 px-4">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
+                Enterprise Solutions
+              </h1>
+              <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+                Centralized staffing for hospitality groups with 5+ locations.
+              </p>
+            </div>
+
+            {/* Two-column layout: Benefits + Form */}
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+              {/* Benefits sidebar */}
+              <div className="order-2 lg:order-1">
+                <EnterpriseBenefits />
+              </div>
+              
+              {/* Contact form */}
+              <div className="order-1 lg:order-2">
+                <ContactSalesForm />
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Default general contact view
   return (
     <>
       <SEO
@@ -182,4 +228,3 @@ export default function ContactPage() {
     </>
   );
 }
-

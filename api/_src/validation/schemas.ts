@@ -301,3 +301,44 @@ export type ShiftInput = z.infer<typeof ShiftSchema>;
 export type GenerateRosterInput = z.infer<typeof GenerateRosterSchema>;
 export type PostInput = z.infer<typeof PostSchema>;
 export type TrainingModuleInput = z.infer<typeof TrainingModuleSchema>;
+
+/**
+ * Schema for enterprise lead submission
+ * Supports both frontend field names and API-style names for flexibility
+ */
+export const EnterpriseLeadSchema = z.object({
+  // Company name (required) - supports both 'companyName' and 'company'
+  companyName: z.string().min(1, 'Company name is required').max(255).optional(),
+  company: z.string().min(1, 'Company name is required').max(255).optional(),
+  // Contact name - supports both 'contactName' and 'name'
+  contactName: z.string().max(255).optional(),
+  name: z.string().max(255).optional(),
+  // Email (required)
+  email: z.string().email('Valid email is required').max(255),
+  // Phone (optional)
+  phone: z.string().max(50).optional(),
+  // Number of locations - supports both 'numberOfLocations' and 'locations'
+  numberOfLocations: z.union([
+    z.number().int().positive(),
+    z.string().refine((val) => {
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num > 0;
+    }, 'Must be a positive integer'),
+  ]).optional(),
+  locations: z.union([
+    z.number().int().positive(),
+    z.string().refine((val) => {
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num > 0;
+    }, 'Must be a positive integer'),
+  ]).optional(),
+  // Message (optional)
+  message: z.string().max(5000, 'Message must be less than 5000 characters').optional(),
+  // Inquiry type
+  inquiryType: z.enum(['enterprise_plan', 'custom_solution', 'partnership', 'general']).optional(),
+}).refine(
+  (data) => data.companyName || data.company,
+  { message: 'Company name is required', path: ['companyName'] }
+);
+
+export type EnterpriseLeadInput = z.infer<typeof EnterpriseLeadSchema>;

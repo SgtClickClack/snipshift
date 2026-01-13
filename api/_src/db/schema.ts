@@ -16,6 +16,7 @@ import { postLikes } from './schema/post-likes.js';
 import { comments } from './schema/comments.js';
 import { trainingModules, trainingLevelEnum } from './schema/training-modules.js';
 import { trainingPurchases } from './schema/training-purchases.js';
+import { leads, leadInquiryTypeEnum, leadStatusEnum } from './schema/leads.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -34,7 +35,8 @@ export {
   postLikes,
   comments,
   trainingModules, trainingLevelEnum,
-  trainingPurchases
+  trainingPurchases,
+  leads, leadInquiryTypeEnum, leadStatusEnum
 };
 
 /**
