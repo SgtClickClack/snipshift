@@ -205,8 +205,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">Create Your Profile</h3>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Sign up and build your professional profile. Choose your role: shop owner, professional,
-                    brand, or trainer.
+                    Sign up and build your profile. Whether you're a venue looking for staff or a professional looking for shifts.
                   </p>
                 </CardContent>
               </Card>
@@ -221,7 +220,7 @@ export default function LandingPage() {
                     Post or Browse Opportunities
                   </h3>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Venue owners post shifts with clear rates and requirements. Brands share launches.
+                    Venue owners post shifts with clear rates and requirements.
                     Pros browse the feed to find work that fits their schedule.
                   </p>
                 </CardContent>

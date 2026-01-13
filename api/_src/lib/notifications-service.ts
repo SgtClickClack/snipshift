@@ -376,6 +376,74 @@ HospoGo Team
 }
 
 /**
+ * Notify venue owner when their subscription is downgraded due to payment failure
+ * This is called after 3 failed payment attempts to inform them they've lost Business perks
+ */
+export async function notifyVenueOfDowngrade(
+  venueOwnerId: string,
+  reason: string
+): Promise<void> {
+  try {
+    const title = 'Subscription Downgraded';
+    const message = 'Your Business subscription has been canceled due to payment failure.';
+
+    // Create in-app notification
+    await createInAppNotification(
+      venueOwnerId,
+      'SYSTEM',
+      title,
+      message,
+      {
+        type: 'subscription_downgraded',
+        reason,
+        link: '/wallet',
+      }
+    );
+
+    // Get venue owner's email
+    const venueOwner = await usersRepo.getUserById(venueOwnerId);
+    if (venueOwner?.email) {
+      const emailBody = `
+IMPORTANT: Subscription Downgraded
+
+Hello ${venueOwner.name || 'Venue Owner'},
+
+Your Business subscription has been canceled due to repeated payment failures.
+
+What this means:
+- A $20 booking fee will now apply to each shift booking
+- You no longer have access to Business tier features
+
+Reason: ${reason}
+
+To restore your Business subscription and remove booking fees:
+1. Log in to your HospoGo account
+2. Go to Wallet settings
+3. Update your payment method
+4. Resubscribe to the Business plan
+
+If you believe this is an error or need assistance, please contact our support team.
+
+Best regards,
+HospoGo Team
+      `.trim();
+
+      await sendEmailMock(
+        venueOwner.email,
+        'IMPORTANT: Your HospoGo Business Subscription Has Been Downgraded',
+        emailBody
+      );
+    }
+  } catch (error: any) {
+    console.error('[notifyVenueOfDowngrade] Error:', {
+      message: error?.message,
+      venueOwnerId,
+    });
+    // Don't throw - notification failures shouldn't break the workflow
+  }
+}
+
+/**
  * Notify shop owner when payment fails for a shift
  */
 export async function notifyShopOfPaymentFailure(

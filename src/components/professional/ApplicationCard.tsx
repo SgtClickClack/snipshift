@@ -238,7 +238,7 @@ export function ApplicationCard({
                     <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
                     <AlertDialogDescription>
                       Are you sure you want to withdraw your application for "{application.jobTitle}"? 
-                      This action cannot be undone and the shop owner will be notified.
+                      This action cannot be undone and the venue owner will be notified.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

@@ -50,7 +50,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
     onSuccess: () => {
       toast({
         title: "Application Sent!",
-        description: "The shop owner has been notified of your interest.",
+        description: "The venue owner has been notified of your interest.",
         variant: "default",
       });
       // Invalidate job/shift lists
@@ -276,7 +276,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
                   Application Already Submitted
                 </h3>
                 <p className="text-green-600">
-                  You have already applied for this position. The shop owner will review your application and contact you if you're selected.
+                  You have already applied for this position. The venue owner will review your application and contact you if you're selected.
                 </p>
               </div>
             </div>
@@ -291,7 +291,7 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
                   id="coverLetter"
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
-                  placeholder="Tell the shop owner why you're interested in this position and what makes you a good fit. Include your experience, skills, and availability..."
+                  placeholder="Tell the venue owner why you're interested in this position and what makes you a good fit. Include your experience, skills, and availability..."
                   rows={6}
                   data-testid="textarea-cover-letter"
                   className={errors.coverLetter ? "border-red-500" : ""}

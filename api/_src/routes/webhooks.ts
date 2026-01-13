@@ -180,12 +180,38 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           break;
         }
 
-        // Update subscription status to past_due
-        await subscriptionsRepo.updateSubscription(subscription.id, {
-          status: 'past_due',
-        });
+        // Track payment attempt count - Stripe sends this in the invoice
+        const attemptCount = invoice.attempt_count || 1;
 
-        console.warn(`⚠️  Payment failed for subscription ${subscription.id}`);
+        // After 3 failed attempts, downgrade to Starter tier (cancel subscription)
+        // This ensures venues don't retain Business perks (booking fee waiver) indefinitely
+        if (attemptCount >= 3) {
+          await subscriptionsRepo.updateSubscription(subscription.id, {
+            status: 'canceled',
+            canceledAt: new Date(),
+          });
+
+          // Notify venue owner of downgrade
+          try {
+            await notificationsService.notifyVenueOfDowngrade(
+              subscription.userId,
+              'Your Business subscription has been canceled due to payment failure. ' +
+              'A $20 booking fee will now apply to each shift booking. ' +
+              'Please update your payment method in Wallet settings to resubscribe.'
+            );
+          } catch (notifyError) {
+            console.error('[WEBHOOK] Failed to notify venue of downgrade:', notifyError);
+          }
+
+          console.warn(`⚠️  Subscription ${subscription.id} DOWNGRADED to Starter after ${attemptCount} failed payment attempts`);
+        } else {
+          // First or second failure - just mark as past_due
+          await subscriptionsRepo.updateSubscription(subscription.id, {
+            status: 'past_due',
+          });
+
+          console.warn(`⚠️  Payment failed for subscription ${subscription.id} (attempt ${attemptCount}/3)`);
+        }
         break;
       }
 

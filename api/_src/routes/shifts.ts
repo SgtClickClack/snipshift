@@ -53,6 +53,30 @@ function isValidUUID(id: string): boolean {
   return uuidRegex.test(id);
 }
 
+/**
+ * Mask email address to prevent platform leakage before hire
+ * Example: "john.doe@gmail.com" -> "j***@g***.com"
+ */
+function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return '***@***.***';
+  const [local, domain] = email.split('@');
+  const domainParts = domain.split('.');
+  const maskedLocal = local.charAt(0) + '***';
+  const maskedDomain = domainParts[0].charAt(0) + '***.' + domainParts.slice(1).join('.');
+  return `${maskedLocal}@${maskedDomain}`;
+}
+
+/**
+ * Mask phone number to prevent platform leakage before hire
+ * Example: "+61412345678" -> "+61***678"
+ */
+function maskPhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const cleaned = phone.replace(/\s/g, '');
+  if (cleaned.length < 6) return '***';
+  return cleaned.slice(0, 3) + '***' + cleaned.slice(-3);
+}
+
 // Create a shift (authenticated, employer only)
 router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
@@ -477,22 +501,32 @@ router.get('/:id/applications', authenticateUser, asyncHandler(async (req: Authe
   }
 
   // Transform to include applicant profile information
+  // PLATFORM LEAKAGE PROTECTION: Mask contact details until applicant is hired
   const transformed = applications.map((app) => {
     const user = app.user;
+    // Only reveal full contact info if this applicant has been hired (assigneeId matches)
+    const isHired = shift.assigneeId === app.userId;
+    
     return {
       id: app.id,
       name: app.name,
-      email: app.email,
+      // Mask email until hired to prevent off-platform deals
+      email: isHired ? app.email : maskEmail(app.email),
       coverLetter: app.coverLetter,
       status: app.status,
       appliedAt: app.appliedAt.toISOString(),
       respondedAt: app.respondedAt ? app.respondedAt.toISOString() : null,
       userId: app.userId || undefined,
+      // Flag to indicate if contact details are revealed
+      contactRevealed: isHired,
       // User profile data
       applicant: user ? {
         id: user.id,
         name: user.name,
-        email: user.email,
+        // Mask email until hired
+        email: isHired ? user.email : maskEmail(user.email),
+        // Mask phone until hired (if available)
+        phone: isHired ? (user as any).phone || null : maskPhone((user as any).phone),
         avatarUrl: user.avatarUrl,
         displayName: user.name, // Use name as displayName
         // Rating can be calculated from reviews if needed
@@ -2547,6 +2581,16 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
   const shift = await shiftsRepo.getShiftById(shiftId);
   if (!shift) {
     res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // REVIEW BOMBING PROTECTION: Only allow reviews for completed shifts
+  // This prevents reviews on cancelled, draft, or in-progress shifts
+  if (shift.status !== 'completed' && shift.status !== 'pending_completion') {
+    res.status(400).json({ 
+      message: 'Can only review completed shifts',
+      currentStatus: shift.status 
+    });
     return;
   }
 

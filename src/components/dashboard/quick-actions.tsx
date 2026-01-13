@@ -93,7 +93,7 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
           },
           {
             title: 'Messages',
-            description: 'Chat with shop owners',
+            description: 'Chat with venue owners',
             icon: MessageCircle,
             action: 'open-messages',
             variant: 'outline' as const

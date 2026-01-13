@@ -1,3 +1,37 @@
+#### 2026-01-13: Deep Architecture Audit Phase 2 Fixes
+
+**Core Components**
+- Subscription Downgrade Logic (`api/_src/routes/webhooks.ts`)
+- Venue Downgrade Notification (`api/_src/lib/notifications-service.ts`)
+- Contact Masking Helpers (`api/_src/routes/shifts.ts`)
+- Review Status Validation (`api/_src/routes/shifts.ts`)
+- Complete Setup Banner (`src/components/onboarding/CompleteSetupBanner.tsx`)
+- Hub Dashboard Integration (`src/pages/hub-dashboard.tsx`)
+
+**Key Features**
+- **Subscription Downgrade**: Auto-downgrades Business users to Starter tier after 3 failed payment attempts, re-enabling $20 booking fees
+- **Contact Masking**: Masks applicant email/phone until they are hired (prevents off-platform deals)
+- **Review Validation**: Prevents reviews on cancelled/draft shifts (only completed/pending_completion allowed)
+- **Onboarding Banner**: Dismissible banner prompts hub users without subscription to complete setup
+
+**Integration Points**
+- Stripe Webhooks: `invoice.payment_failed` handler enhanced with attempt tracking
+- Shifts API: `GET /:id/applications` now masks contact details
+- Shifts API: `POST /:id/review` validates shift status before allowing reviews
+- Hub Dashboard: Displays setup banner when subscription is missing
+
+**File Paths**
+- `api/_src/routes/webhooks.ts` (lines 169-210)
+- `api/_src/lib/notifications-service.ts` (new `notifyVenueOfDowngrade` function)
+- `api/_src/routes/shifts.ts` (lines 50-75, 480-510, 2547-2560)
+- `src/components/onboarding/CompleteSetupBanner.tsx` (new file)
+- `src/pages/hub-dashboard.tsx` (banner integration)
+
+**Next Priority Task**
+- Add in-platform messaging system to further reduce platform leakage
+
+---
+
 #### 2026-01-13: Enterprise Lead API Implementation
 
 **Core Components**

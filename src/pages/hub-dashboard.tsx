@@ -13,6 +13,7 @@ import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
+import { CompleteSetupBanner } from "@/components/onboarding/CompleteSetupBanner";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
@@ -699,6 +700,9 @@ export default function HubDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Onboarding Incomplete Banner - Shows when hub user has no active subscription */}
+        <CompleteSetupBanner />
+
         {/* Overview Tab */}
         {activeView === 'overview' && (
           <div className="space-y-6">
