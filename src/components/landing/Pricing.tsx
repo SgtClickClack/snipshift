@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,8 +75,14 @@ export default function Pricing() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-            Choose the plan that fits your needs. No hidden fees, just verified
+            Choose the plan that fits your venue. No hidden fees, just verified
             professionals and seamless connections.
+          </p>
+          <p className="text-sm text-zinc-500 mt-2">
+            Pricing below is for venues. Looking for work?{" "}
+            <Link to="/signup?role=professional" className="text-[#BFFF00] hover:underline font-medium">
+              Join as a Professional — it's free
+            </Link>
           </p>
         </div>
 
@@ -164,6 +170,29 @@ export default function Pricing() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+
+        {/* Staff CTA Section */}
+        <div className="mt-16 text-center">
+          <Card className="max-w-2xl mx-auto bg-gradient-to-r from-zinc-900 to-zinc-800 border border-zinc-700 rounded-2xl p-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="p-3 bg-[#BFFF00]/10 rounded-full">
+                <Users className="h-8 w-8 text-[#BFFF00]" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Looking for Hospitality Work?
+            </h3>
+            <p className="text-zinc-400 mb-6">
+              Join HospoGo as a professional — it's <span className="text-[#BFFF00] font-semibold">100% free</span>.
+              Get access to shifts from top venues, keep all your earnings, and build your reputation.
+            </p>
+            <Link to="/signup?role=professional">
+              <Button className="font-bold py-3 px-8 rounded-full border-2 border-[#BFFF00] text-[#BFFF00] bg-transparent hover:bg-[#BFFF00] hover:text-black transition-all duration-300">
+                Join as a Professional
+              </Button>
+            </Link>
+          </Card>
         </div>
       </div>
     </section>

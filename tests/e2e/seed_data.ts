@@ -19,7 +19,7 @@ export interface TestUser {
 
 export const TEST_SHOP_OWNER: TestUser = {
   id: 'e2e-shop-owner-001',
-  email: 'shop-owner-e2e@snipshift.com',
+  email: 'shop-owner-e2e@hospogo.com',
   name: 'E2E Shop Owner',
   roles: ['business'],
   currentRole: 'business',
@@ -28,7 +28,7 @@ export const TEST_SHOP_OWNER: TestUser = {
 
 export const TEST_PROFESSIONAL: TestUser = {
   id: 'e2e-professional-001',
-  email: 'professional-e2e@snipshift.com',
+  email: 'professional-e2e@hospogo.com',
   name: 'E2E Test Barber',
   roles: ['professional'],
   currentRole: 'professional',
@@ -37,7 +37,7 @@ export const TEST_PROFESSIONAL: TestUser = {
 
 export const TEST_MULTI_ROLE_USER: TestUser = {
   id: 'e2e-multi-role-001',
-  email: 'multi-role-e2e@snipshift.com',
+  email: 'multi-role-e2e@hospogo.com',
   name: 'E2E Multi-Role User',
   roles: ['professional', 'business'],
   currentRole: 'professional',

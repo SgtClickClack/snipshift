@@ -50,7 +50,7 @@ export async function createLead(input: CreateLeadInput): Promise<Lead | null> {
         email: input.email,
         phone: input.phone || null,
         numberOfLocations: input.numberOfLocations || null,
-        inquiryType: input.inquiryType || 'enterprise_plan',
+        inquiryType: input.inquiryType || 'general',
         message: input.message || null,
         source: input.source || 'contact_form',
       })

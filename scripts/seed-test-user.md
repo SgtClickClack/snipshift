@@ -7,7 +7,7 @@ To ensure E2E tests can run, create a test user in Firebase:
 1. **Go to Firebase Console**: https://console.firebase.google.com
 2. **Navigate to**: Authentication > Users
 3. **Add User**:
-   - Email: `test@snipshift.com`
+   - Email: `test@hospogo.com`
    - Password: `password123`
    - Email verification: Not required for testing
 
@@ -21,7 +21,7 @@ node scripts/create-test-user.js
 
 ## Test Credentials
 
-- **Email**: `test@snipshift.com`
+- **Email**: `test@hospogo.com`
 - **Password**: `password123`
 
 These credentials are used by the E2E tests in `tests/core-flow.spec.ts`.
@@ -31,7 +31,7 @@ These credentials are used by the E2E tests in `tests/core-flow.spec.ts`.
 Set these in your `.env` file or CI/CD secrets:
 
 ```env
-TEST_EMAIL=test@snipshift.com
+TEST_EMAIL=test@hospogo.com
 TEST_PASSWORD=password123
 ```
 

@@ -8,13 +8,13 @@ services:
     environment:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: dev
-      POSTGRES_DB: snipshift_dev
+      POSTGRES_DB: hospogo_dev
     volumes:
-      - snipshift_dev_db:/var/lib/postgresql/data
+      - hospogo_dev_db:/var/lib/postgresql/data
       - ./docker/dev-init.sql:/docker-entrypoint-initdb.d/dev-init.sql:ro
     restart: unless-stopped
 
 volumes:
-  snipshift_dev_db:
+  hospogo_dev_db:
 
 

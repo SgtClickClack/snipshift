@@ -116,12 +116,17 @@ export const ReviewSchema = z.object({
 
 /**
  * Schema for shift review creation
+ * Note: Review types use legacy naming (SHOP_REVIEWING_BARBER, BARBER_REVIEWING_SHOP) for backward compatibility
+ * These map to VENUE_REVIEWING_STAFF and STAFF_REVIEWING_VENUE conceptually
  */
 export const ShiftReviewSchema = z.object({
   rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
   comment: z.string().max(1000, 'Comment must be less than 1000 characters').optional(),
+  // Legacy naming maintained for backward compatibility with existing data
+  // SHOP_REVIEWING_BARBER = Venue reviewing staff
+  // BARBER_REVIEWING_SHOP = Staff reviewing venue
   type: z.enum(['SHOP_REVIEWING_BARBER', 'BARBER_REVIEWING_SHOP']),
-  markAsNoShow: z.boolean().optional(), // Shop side only - mark barber as no-show
+  markAsNoShow: z.boolean().optional(), // Venue side only - mark staff as no-show
 });
 
 /**
@@ -342,3 +347,15 @@ export const EnterpriseLeadSchema = z.object({
 );
 
 export type EnterpriseLeadInput = z.infer<typeof EnterpriseLeadSchema>;
+
+/**
+ * Schema for general contact form submission
+ */
+export const GeneralContactSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(255),
+  email: z.string().email('Valid email is required').max(255),
+  message: z.string().min(1, 'Message is required').max(5000, 'Message must be less than 5000 characters'),
+  subject: z.string().max(255).optional(),
+});
+
+export type GeneralContactInput = z.infer<typeof GeneralContactSchema>;

@@ -1,5 +1,5 @@
 /**
- * SnipShift API Server Entry Point
+ * HospoGo API Server Entry Point
  * 
  * RESTful API server with PostgreSQL database integration via Drizzle ORM
  */
@@ -523,7 +523,7 @@ async function geocodeCity(cityName: string): Promise<{ lat: number; lng: number
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'SnipShift/1.0' // Required by Nominatim
+        'User-Agent': 'HospoGo/1.0' // Required by Nominatim
       }
     });
     
@@ -1689,6 +1689,129 @@ app.post('/api/subscriptions/checkout', authenticateUser, asyncHandler(async (re
   }
 }));
 
+// Handler for creating subscription with trial (for onboarding flow)
+// This is used when payment method has already been collected via SetupIntent
+app.post('/api/subscriptions/create-with-trial', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (!stripe) {
+    res.status(500).json({ message: 'Stripe is not configured' });
+    return;
+  }
+
+  const { planId, trialDays = 14 } = req.body;
+
+  if (!planId) {
+    res.status(400).json({ message: 'planId is required' });
+    return;
+  }
+
+  // Get the plan from database
+  const plan = await subscriptionsRepo.getSubscriptionPlanById(planId);
+  if (!plan) {
+    res.status(404).json({ message: 'Subscription plan not found' });
+    return;
+  }
+
+  // Check if user already has an active subscription
+  const existingSubscription = await subscriptionsRepo.getCurrentSubscription(userId);
+  if (existingSubscription) {
+    res.status(400).json({ message: 'You already have an active subscription' });
+    return;
+  }
+
+  // Get user details
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Get or create Stripe customer
+  let customerId = user.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      metadata: { userId },
+    });
+    customerId = customer.id;
+    // Update user with Stripe customer ID
+    await usersRepo.updateUser(userId, { stripeCustomerId: customerId });
+  }
+
+  // Get the customer's default payment method
+  const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+  const defaultPaymentMethod = customer.invoice_settings?.default_payment_method as string | null;
+
+  if (!defaultPaymentMethod) {
+    res.status(400).json({ message: 'No payment method found. Please add a payment method first.' });
+    return;
+  }
+
+  // Get Stripe Price ID from plan
+  const stripePriceId = plan.stripePriceId;
+  if (!stripePriceId || stripePriceId.startsWith('price_HOLDER_')) {
+    res.status(400).json({ message: 'Subscription plan is not properly configured with Stripe' });
+    return;
+  }
+
+  try {
+    // Create Stripe subscription with trial
+    const stripeSubscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: stripePriceId }],
+      default_payment_method: defaultPaymentMethod,
+      trial_period_days: trialDays,
+      metadata: {
+        userId,
+        planId,
+      },
+    });
+
+    // Calculate period dates
+    const currentPeriodStart = stripeSubscription.current_period_start 
+      ? new Date(stripeSubscription.current_period_start * 1000) 
+      : new Date();
+    const currentPeriodEnd = stripeSubscription.current_period_end 
+      ? new Date(stripeSubscription.current_period_end * 1000) 
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    // Create subscription record in database
+    const subscription = await subscriptionsRepo.createSubscription({
+      userId,
+      planId,
+      status: stripeSubscription.status === 'trialing' ? 'trialing' : 'active',
+      stripeSubscriptionId: stripeSubscription.id,
+      stripeCustomerId: customerId,
+      currentPeriodStart,
+      currentPeriodEnd,
+    });
+
+    res.status(201).json({
+      message: 'Subscription created successfully',
+      subscription: {
+        id: subscription.id,
+        status: subscription.status,
+        trialEnd: stripeSubscription.trial_end 
+          ? new Date(stripeSubscription.trial_end * 1000).toISOString() 
+          : null,
+        currentPeriodEnd: currentPeriodEnd.toISOString(),
+      },
+    });
+  } catch (error: any) {
+    console.error('Stripe subscription error:', error);
+    res.status(500).json({ 
+      message: 'Failed to create subscription',
+      error: error.message 
+    });
+  }
+}));
+
 // Handler for canceling subscription
 app.post('/api/subscriptions/cancel', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
@@ -2129,7 +2252,7 @@ app.post('/api/reports', authenticateUser, asyncHandler(async (req: Authenticate
 // Root endpoint
 app.get('/', (req, res) => {
   res.status(200).json({
-    message: 'SnipShift API is running',
+    message: 'HospoGo API is running',
     version: '1.0.0',
     documentation: '/api/docs' // Placeholder
   });

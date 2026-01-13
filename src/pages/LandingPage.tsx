@@ -38,6 +38,8 @@ export default function LandingPage() {
         localStorage.removeItem("redirect_url");
         localStorage.removeItem("pending_redirect");
         sessionStorage.removeItem("signupRolePreference");
+        sessionStorage.removeItem("signupPlanPreference");
+        sessionStorage.removeItem("signupTrialMode");
         sessionStorage.removeItem("oauth_state");
       } catch {
         // Ignore storage errors (e.g., private browsing mode)

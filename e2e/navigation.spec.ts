@@ -26,7 +26,7 @@ test.describe('Navigation Test', () => {
     await page.goto('/login');
     
     // Fill in credentials
-    await page.getByLabel('Email Address').fill('test@snipshift.com');
+    await page.getByLabel('Email Address').fill('test@hospogo.com');
     await page.getByLabel('Password').fill('password123');
     
     // Click Sign In

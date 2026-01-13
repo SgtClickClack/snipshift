@@ -8,6 +8,6 @@ services:
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
-      POSTGRES_DB: snipshift_test
+      POSTGRES_DB: hospogo_test
     restart: always
 

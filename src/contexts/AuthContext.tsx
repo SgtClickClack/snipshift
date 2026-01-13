@@ -561,6 +561,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.removeItem('onboarding_step');
         localStorage.removeItem('redirect_url');
         sessionStorage.removeItem('signupRolePreference');
+        sessionStorage.removeItem('signupPlanPreference');
+        sessionStorage.removeItem('signupTrialMode');
       }
       
       // Reset tracking refs before sign out

@@ -5,7 +5,7 @@ test.describe('Smoke Test', () => {
     await page.goto('/');
 
     // Verify title
-    await expect(page).toHaveTitle(/Snipshift/i);
+    await expect(page).toHaveTitle(/HospoGo/i);
 
     // Verify "Login" and "Sign Up" buttons are visible
     // Note: Based on navbar.tsx, the text is "Login" and "Sign Up"
@@ -14,7 +14,7 @@ test.describe('Smoke Test', () => {
     await expect(page.getByRole('link', { name: 'Sign Up' })).toBeVisible();
     
     // Verify Logo is present (use .first() as there might be multiple logos on the page)
-    const logo = page.getByAltText('Snipshift Logo').first();
+    const logo = page.getByAltText('HospoGo Logo').first();
     await expect(logo).toBeVisible();
   });
 

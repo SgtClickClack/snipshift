@@ -1,11 +1,11 @@
 # HospoGo
 
-> The Gig Economy Platform for Barbers, Stylists, and Industry Professionals
+> The Gig Economy Platform for Hospitality Professionals
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/SgtClickClack/snipshift)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/hospogo/hospogo)
 [![License](https://img.shields.io/badge/license-Private-red.svg)](LICENSE)
 
-HospoGo is an "Uber for Barbers" marketplace platform that connects barbershops, salons, and workspaces with talented professionals seeking flexible work opportunities. Built for the gig economy, HospoGo empowers professionals to work on their own terms while helping businesses find qualified talent quickly and efficiently.
+HospoGo is a marketplace platform that connects hospitality venues with talented professionals seeking flexible work opportunities. Built for the gig economy, HospoGo empowers bartenders, waitstaff, baristas, and other hospitality professionals to work on their own terms while helping venues find qualified talent quickly and efficiently.
 
 ## ✨ Features
 
@@ -108,8 +108,8 @@ HospoGo is an "Uber for Barbers" marketplace platform that connects barbershops,
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/SgtClickClack/snipshift.git
-   cd snipshift
+   git clone https://github.com/hospogo/hospogo.git
+   cd hospogo
    ```
 
 2. **Install dependencies**
@@ -122,7 +122,7 @@ HospoGo is an "Uber for Barbers" marketplace platform that connects barbershops,
    Create a `.env` file in the root directory:
    ```env
    # Database
-   DATABASE_URL=postgresql://user:password@localhost:5432/snipshift
+   DATABASE_URL=postgresql://user:password@localhost:5432/hospogo
 
    # Firebase
    VITE_FIREBASE_API_KEY=your_api_key
@@ -203,9 +203,9 @@ HospoGo is an "Uber for Barbers" marketplace platform that connects barbershops,
 ## 📁 Project Structure
 
 ```
-snipshift/
+hospogo/
 ├── api/                    # Backend API server
-│   ├── src/
+│   ├── _src/
 │   │   ├── db/            # Database schema and migrations
 │   │   ├── routes/        # API routes
 │   │   ├── repositories/  # Data access layer
@@ -224,6 +224,7 @@ snipshift/
 │   ├── lib/              # Utilities and helpers
 │   └── App.tsx           # Main app component
 ├── tests/                 # E2E tests
+├── e2e/                   # Additional E2E tests
 ├── package.json
 └── README.md
 ```

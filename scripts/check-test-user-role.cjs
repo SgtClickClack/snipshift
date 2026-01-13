@@ -26,7 +26,7 @@ if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
     }
 }
 
-const TEST_EMAIL = process.env.TEST_EMAIL || 'test@snipshift.com';
+const TEST_EMAIL = process.env.TEST_EMAIL || 'test@hospogo.com';
 
 async function checkUserRole() {
   const client = new Client({

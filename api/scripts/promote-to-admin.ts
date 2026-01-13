@@ -7,7 +7,7 @@
  *   npx tsx api/scripts/promote-to-admin.ts <email>
  * 
  * Example:
- *   npx tsx api/scripts/promote-to-admin.ts admin@snipshift.com
+ *   npx tsx api/scripts/promote-to-admin.ts admin@hospogo.com
  */
 
 import * as dotenv from 'dotenv';
@@ -71,7 +71,7 @@ if (!email) {
   console.log('\nUsage:');
   console.log('  npx tsx api/scripts/promote-to-admin.ts <email>');
   console.log('\nExample:');
-  console.log('  npx tsx api/scripts/promote-to-admin.ts admin@snipshift.com');
+  console.log('  npx tsx api/scripts/promote-to-admin.ts admin@hospogo.com');
   process.exit(1);
 }
 

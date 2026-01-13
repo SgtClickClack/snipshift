@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand-logo.png', 'brand-wordmark.png', 'brand-icon.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg', 'herobarber (2).webp', 'herobarber (2).jpg'],
+      includeAssets: ['brand-logo.png', 'brand-wordmark.png', 'brand-icon.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg'],
       manifest: {
         name: 'HospoGo',
         short_name: 'HospoGo',
@@ -45,8 +45,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,webp}'],
-        globIgnores: ['**/herobarber (2).png'], // Exclude remaining legacy large PNG from precaching
-        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MB limit (to accommodate herobarber images)
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,

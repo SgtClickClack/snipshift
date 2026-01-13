@@ -1,5 +1,5 @@
 /**
- * Snipshift Pre-Flight Checks
+ * HospoGo Pre-Flight Checks
  *
  * Usage:
  *   npm run preflight
@@ -211,7 +211,7 @@ function main() {
   const allScannedFiles = [...srcFiles, ...apiFiles];
   const refs = extractEnvRefs(allScannedFiles);
 
-  // Snipshift-specific required keys for a real production deploy.
+  // HospoGo-specific required keys for a real production deploy.
   // In --local mode, we still report these, but we don't fail the run on missing values.
   const prodRequiredEnv = [
     // Frontend Firebase (Vite)
@@ -378,7 +378,7 @@ function main() {
     process.stdout.write(JSON.stringify(report, null, 2));
     process.stdout.write('\n');
   } else {
-    console.log('Snipshift Pre-Flight');
+    console.log('HospoGo Pre-Flight');
     console.log(`Mode: ${report.mode}`);
     if (loadedEnvFiles.length) {
       console.log(`Loaded env files: ${loadedEnvFiles.join(', ')}`);

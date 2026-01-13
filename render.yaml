@@ -9,13 +9,13 @@
 services:
   # Frontend Web Service
   - type: web
-    name: snipshift-web
+    name: hospogo-web
     env: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: starter # or standard/pro for production
     region: oregon # or your preferred region
-    buildCommand: docker build -t snipshift-web .
+    buildCommand: docker build -t hospogo-web .
     startCommand: serve -s dist -l 3000
     envVars:
       - key: NODE_ENV
@@ -35,13 +35,13 @@ services:
 
   # Backend API Service
   - type: web
-    name: snipshift-api
+    name: hospogo-api
     env: docker
     dockerfilePath: ./api/Dockerfile
     dockerContext: ./api
     plan: starter # or standard/pro for production
     region: oregon # or your preferred region
-    buildCommand: docker build -t snipshift-api .
+    buildCommand: docker build -t hospogo-api .
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -50,11 +50,11 @@ services:
         value: 5000
       - key: DATABASE_URL
         fromDatabase:
-          name: snipshift-db
+          name: hospogo-db
           property: connectionString
       - key: POSTGRES_URL
         fromDatabase:
-          name: snipshift-db
+          name: hospogo-db
           property: connectionString
       - key: FIREBASE_PROJECT_ID
         sync: false
@@ -73,10 +73,10 @@ services:
 
   # PostgreSQL Database
   - type: pspg
-    name: snipshift-db
+    name: hospogo-db
     plan: starter # or standard/pro for production
     region: oregon # or your preferred region
-    databaseName: snipshift
-    databaseUser: snipshift
+    databaseName: hospogo
+    databaseUser: hospogo
     # Note: Render will automatically set DATABASE_URL and POSTGRES_URL
     # for services that reference this database

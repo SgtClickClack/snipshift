@@ -62,7 +62,7 @@ test.describe('Venue Schedule E2E Tests', () => {
         'hospogo_test_user',
         JSON.stringify({
           id: 'e2e-shop-0001',
-          email: 'shop-e2e@snipshift.com',
+          email: 'shop-e2e@hospogo.com',
           name: 'E2E Shop User',
           roles: ['business'],
           currentRole: 'business',
@@ -145,7 +145,7 @@ test.describe('Venue Schedule E2E Tests', () => {
         'hospogo_test_user',
         JSON.stringify({
           id: 'e2e-shop-0001',
-          email: 'shop-e2e@snipshift.com',
+          email: 'shop-e2e@hospogo.com',
           name: 'E2E Shop User',
           roles: ['business'],
           currentRole: 'business',

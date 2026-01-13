@@ -49,7 +49,7 @@ if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
     dotenv.config({ path: cwdEnvPath });
 }
 
-const TEST_EMAIL = process.env.TEST_EMAIL || 'test@snipshift.com';
+const TEST_EMAIL = process.env.TEST_EMAIL || 'test@hospogo.com';
 const TARGET_ROLE = 'professional';
 
 async function updateTestUserRole() {

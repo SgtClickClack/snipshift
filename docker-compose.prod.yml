@@ -12,7 +12,7 @@ services:
         - VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN}
         - VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID}
         - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
-    container_name: snipshift-web
+    container_name: hospogo-web
     ports:
       - "3000:3000"
     environment:
@@ -21,7 +21,7 @@ services:
     depends_on:
       - api
     networks:
-      - snipshift-network
+      - hospogo-network
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -34,7 +34,7 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: snipshift-api
+    container_name: hospogo-api
     ports:
       - "5000:5000"
     environment:
@@ -54,7 +54,7 @@ services:
     depends_on:
       - db
     networks:
-      - snipshift-network
+      - hospogo-network
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -65,26 +65,26 @@ services:
   # PostgreSQL Database (Optional - if not using external database)
   db:
     image: postgres:16-alpine
-    container_name: snipshift-db
+    container_name: hospogo-db
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-snipshift}
+      - POSTGRES_USER=${POSTGRES_USER:-hospogo}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB:-snipshift}
+      - POSTGRES_DB=${POSTGRES_DB:-hospogo}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: always
     networks:
-      - snipshift-network
+      - hospogo-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-snipshift}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hospogo}"]
       interval: 10s
       timeout: 3s
       retries: 5
 
 networks:
-  snipshift-network:
+  hospogo-network:
     driver: bridge
 
 volumes:

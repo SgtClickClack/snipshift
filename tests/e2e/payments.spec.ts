@@ -12,7 +12,7 @@
 
 // Test user credentials
 const SHOP_USER = {
-  email: 'alice@snipshift.com',
+  email: 'alice@hospogo.com',
   password: 'password123',
   id: 'shop-user-id',
   name: 'Alice Shop Owner',

@@ -1,13 +1,13 @@
 /**
- * Enterprise Leads API Routes
+ * Leads API Routes
  * 
- * Handles enterprise lead submissions from the ContactSalesForm
+ * Handles lead submissions from contact forms (enterprise and general)
  */
 
 import { Router } from 'express';
 import { render } from '@react-email/render';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { EnterpriseLeadSchema } from '../validation/schemas.js';
+import { EnterpriseLeadSchema, GeneralContactSchema } from '../validation/schemas.js';
 import * as leadsRepo from '../repositories/leads.repository.js';
 import { resend, isEmailServiceAvailable } from '../lib/resend.js';
 import { EnterpriseLeadNotification, EnterpriseLeadThankYou } from '../emails/EnterpriseLeadEmail.js';
@@ -74,8 +74,12 @@ router.post('/enterprise', asyncHandler(async (req, res) => {
 
     console.log(`[LEADS] New enterprise lead created: ${lead.id} - ${companyName}`);
 
+    // Track email delivery status for user feedback
+    let confirmationEmailSent = false;
+    let emailServiceAvailable = isEmailServiceAvailable() && resend;
+
     // 2. Send internal notification email to admin
-    if (isEmailServiceAvailable() && resend) {
+    if (emailServiceAvailable) {
       try {
         const adminEmailHtml = await render(
           EnterpriseLeadNotification({
@@ -118,6 +122,7 @@ router.post('/enterprise', asyncHandler(async (req, res) => {
         });
 
         console.log(`[LEADS] Thank you email sent to: ${email}`);
+        confirmationEmailSent = true;
       } catch (emailError) {
         // Log error but don't fail the request
         console.error('[LEADS] Failed to send thank you email:', emailError);
@@ -126,14 +131,132 @@ router.post('/enterprise', asyncHandler(async (req, res) => {
       console.log('[LEADS] Email service not available, skipping email notifications');
     }
 
-    // Return success response
+    // Return success response with email status for fail-soft UX
+    const responseMessage = confirmationEmailSent
+      ? 'Thank you for your inquiry. A confirmation has been sent to your email. Our team will be in touch shortly.'
+      : 'Thank you for your inquiry. Our team will be in touch shortly. (Note: Confirmation email may be delayed)';
+
     res.status(200).json({ 
       success: true, 
       id: lead.id,
-      message: 'Thank you for your inquiry. Our team will be in touch shortly.',
+      message: responseMessage,
+      emailSent: confirmationEmailSent,
     });
   } catch (error) {
     console.error('[LEADS] Lead submission error:', error);
+    res.status(500).json({ error: 'Failed to process inquiry. Please try again later.' });
+  }
+}));
+
+/**
+ * POST /api/leads/general
+ * 
+ * Submit a general contact inquiry
+ * Public endpoint - no authentication required
+ */
+router.post('/general', asyncHandler(async (req, res) => {
+  // Validate request body
+  const validationResult = GeneralContactSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      error: 'Validation error',
+      details: validationResult.error.errors.map(e => ({
+        field: e.path.join('.'),
+        message: e.message,
+      })),
+    });
+    return;
+  }
+
+  const { name, email, message, subject } = validationResult.data;
+
+  try {
+    // Store the lead in database
+    const lead = await leadsRepo.createLead({
+      contactName: name,
+      email,
+      message,
+      inquiryType: 'general',
+      source: 'general_contact_form',
+    });
+
+    if (!lead) {
+      console.error('[LEADS] Failed to create general contact lead in database');
+      res.status(500).json({ error: 'Failed to process inquiry. Please try again later.' });
+      return;
+    }
+
+    console.log(`[LEADS] New general contact lead created: ${lead.id} - ${name}`);
+
+    // Track email delivery status for user feedback
+    let confirmationEmailSent = false;
+    let emailServiceAvailable = isEmailServiceAvailable() && resend;
+
+    // Send notification email to admin
+    if (emailServiceAvailable) {
+      try {
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: ADMIN_EMAIL,
+          subject: `📬 New Contact Form: ${subject || 'General Inquiry'}`,
+          html: `
+            <h2>New Contact Form Submission</h2>
+            <p><strong>From:</strong> ${name} (${email})</p>
+            ${subject ? `<p><strong>Subject:</strong> ${subject}</p>` : ''}
+            <p><strong>Message:</strong></p>
+            <blockquote style="border-left: 3px solid #ccc; padding-left: 12px; margin: 12px 0;">
+              ${message.replace(/\n/g, '<br>')}
+            </blockquote>
+            <hr>
+            <p style="color: #666; font-size: 12px;">Lead ID: ${lead.id}</p>
+          `,
+        });
+
+        console.log(`[LEADS] Admin notification sent for general contact: ${lead.id}`);
+      } catch (emailError) {
+        console.error('[LEADS] Failed to send admin notification email:', emailError);
+      }
+
+      // Send confirmation email to the user
+      try {
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: email,
+          subject: 'Thanks for contacting HospoGo',
+          html: `
+            <h2>Thanks for reaching out, ${name}!</h2>
+            <p>We've received your message and will get back to you within 24-48 hours.</p>
+            <p>In the meantime, feel free to explore our platform:</p>
+            <ul>
+              <li><a href="https://hospogo.com/pricing">View our pricing plans</a></li>
+              <li><a href="https://hospogo.com/about">Learn more about HospoGo</a></li>
+            </ul>
+            <p>Best regards,<br>The HospoGo Team</p>
+          `,
+        });
+
+        console.log(`[LEADS] Confirmation email sent to: ${email}`);
+        confirmationEmailSent = true;
+      } catch (emailError) {
+        console.error('[LEADS] Failed to send confirmation email:', emailError);
+      }
+    } else {
+      console.log('[LEADS] Email service not available, skipping email notifications');
+    }
+
+    // Return success response
+    const responseMessage = confirmationEmailSent
+      ? "Thanks! We've received your message and will reply within 24–48 hours."
+      : "Thanks! We've received your message and will reply within 24–48 hours. (Note: Confirmation email may be delayed)";
+
+    res.status(200).json({ 
+      success: true, 
+      id: lead.id,
+      message: responseMessage,
+      emailSent: confirmationEmailSent,
+    });
+  } catch (error) {
+    console.error('[LEADS] General contact submission error:', error);
     res.status(500).json({ error: 'Failed to process inquiry. Please try again later.' });
   }
 }));

@@ -45,7 +45,11 @@ export {
 export const jobStatusEnum = pgEnum('job_status', ['open', 'filled', 'closed', 'completed']);
 
 /**
- * Job role enum
+ * Job role enum (LEGACY)
+ * 
+ * This enum is maintained for backward compatibility with the legacy `jobs` table.
+ * New shift-based functionality uses `hospitalityRoleEnum` from schema/users.ts
+ * which includes: Bartender, Waitstaff, Barista, Barback, Kitchen Hand, Duty Manager
  */
 export const jobRoleEnum = pgEnum('job_role', ['barber', 'hairdresser', 'stylist', 'other']);
 
@@ -64,6 +68,12 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'trialing',
   'incomplete',
 ]);
+
+/**
+ * Subscription plan tier enum
+ * Used for robust fee waiver logic instead of name matching
+ */
+export const planTierEnum = pgEnum('plan_tier', ['starter', 'business', 'enterprise']);
 
 
 /**
@@ -239,13 +249,16 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   description: text('description'),
   price: decimal('price', { precision: 10, scale: 2 }).notNull(),
   interval: varchar('interval', { length: 50 }).notNull(), // 'month', 'year'
+  tier: planTierEnum('tier').notNull().default('starter'), // For robust fee waiver logic
   stripePriceId: varchar('stripe_price_id', { length: 255 }),
   features: text('features'), // JSON string of features array
+  bookingFeeWaived: timestamp('booking_fee_waived'), // NULL means booking fees apply, timestamp means waived
   isActive: timestamp('is_active'), // NULL means inactive, timestamp means active
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   stripePriceIdIdx: index('subscription_plans_stripe_price_id_idx').on(table.stripePriceId),
+  tierIdx: index('subscription_plans_tier_idx').on(table.tier),
 }));
 
 /**

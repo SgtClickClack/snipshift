@@ -16,7 +16,7 @@
 
 // Test user credentials
 const ALICE = {
-  email: 'alice@snipshift.com',
+  email: 'alice@hospogo.com',
   password: 'password123',
   id: 'alice-user-id',
   name: 'Alice Shop Owner',
@@ -25,7 +25,7 @@ const ALICE = {
 };
 
 const BOB = {
-  email: 'bob@snipshift.com',
+  email: 'bob@hospogo.com',
   password: 'password123',
   id: 'bob-user-id',
   name: 'Bob Barber',

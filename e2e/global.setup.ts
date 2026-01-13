@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 async function globalSetup(config: FullConfig) {
   console.log('Global Setup: Initializing Test Environment...');
 
-  const dbUrl = 'postgresql://test:test@localhost:5433/snipshift_test';
+  const dbUrl = 'postgresql://test:test@localhost:5433/hospogo_test';
   process.env.DATABASE_URL = dbUrl;
 
   // 1. Wait for DB to be ready
@@ -61,7 +61,7 @@ async function globalSetup(config: FullConfig) {
 
     // 3. Seed Test User
     console.log('Seeding Test User...');
-    const TEST_EMAIL = 'test@snipshift.com';
+    const TEST_EMAIL = 'test@hospogo.com';
     const TEST_ID = '00000000-0000-0000-0000-000000000001'; // Fixed ID for E2E tests
 
     // Check if user exists

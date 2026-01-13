@@ -57,7 +57,7 @@ function Upsert-EnvVar([string]$FilePath, [string]$Key, [string]$Value) {
 }
 
 Write-Host ""
-Write-Host "Snipshift - Set Stripe Keys (local)" -ForegroundColor Cyan
+Write-Host "HospoGo - Set Stripe Keys (local)" -ForegroundColor Cyan
 Write-Host "This will update .env and api/.env (both are gitignored)." -ForegroundColor DarkGray
 Write-Host ""
 

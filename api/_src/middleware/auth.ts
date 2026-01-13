@@ -114,7 +114,7 @@ export function authenticateUser(
     // This prevents production exploitation while maintaining E2E test reliability
     if (token === 'mock-test-token' && process.env.NODE_ENV === 'test') {
       const mockUserId = '00000000-0000-0000-0000-000000000001';
-      const mockEmail = 'test@snipshift.com';
+      const mockEmail = 'test@hospogo.com';
       
       // Ensure the user exists in the database with the specific ID
       Promise.resolve().then(async () => {

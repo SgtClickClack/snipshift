@@ -14,6 +14,7 @@ import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
 import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
 import * as stripeConnectService from '../services/stripe-connect.service.js';
+import * as subscriptionsRepo from '../repositories/subscriptions.repository.js';
 import { SmartFillSchema, GenerateRosterSchema } from '../validation/schemas.js';
 import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
 import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange, deleteAllShiftsForEmployer } from '../repositories/shifts.repository.js';
@@ -1353,7 +1354,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   const endTime = new Date(shift.endTime);
   const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
   const shiftAmount = Math.round(hourlyRate * hours * 100); // Convert to cents
-  const commissionRate = parseFloat(process.env.SNIPSHIFT_COMMISSION_RATE || '0.10'); // 10% default
+  const commissionRate = parseFloat(process.env.HOSPOGO_COMMISSION_RATE || '0.10'); // 10% default
   const commissionAmount = Math.round(shiftAmount * commissionRate);
   const barberAmount = shiftAmount - commissionAmount;
 
@@ -1637,8 +1638,38 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
       const endTime = new Date(shift.endTime);
       const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
       const shiftAmount = Math.round(hourlyRate * hours * 100);
-      const commissionRate = parseFloat(process.env.SNIPSHIFT_COMMISSION_RATE || '0.10');
-      const commissionAmount = Math.round(shiftAmount * commissionRate);
+      
+      // Check if employer has an active Business subscription (booking fee waiver)
+      const employerSubscription = await subscriptionsRepo.getCurrentSubscription(shift.employerId);
+      let commissionAmount = 0;
+      
+      if (employerSubscription) {
+        // Get the plan details to check if it's Business/Enterprise tier
+        const plan = await subscriptionsRepo.getSubscriptionPlanById(employerSubscription.planId);
+        
+        // Use tier field for robust fee waiver logic (fallback to name matching for legacy data)
+        const isBusinessTier = plan?.tier === 'business' || 
+                               plan?.tier === 'enterprise' ||
+                               plan?.name?.toLowerCase().includes('business') || 
+                               plan?.name?.toLowerCase().includes('enterprise');
+        
+        if (isBusinessTier) {
+          // Business/Enterprise tier: booking fee waived
+          commissionAmount = 0;
+          console.log(`[SHIFTS] Booking fee waived for employer ${shift.employerId} (${plan?.name} tier: ${plan?.tier})`);
+        } else {
+          // Other subscription (shouldn't happen with current plans): apply standard commission
+          const commissionRate = parseFloat(process.env.HOSPOGO_COMMISSION_RATE || process.env.SNIPSHIFT_COMMISSION_RATE || '0.10');
+          commissionAmount = Math.round(shiftAmount * commissionRate);
+        }
+      } else {
+        // No subscription (Starter/free tier): apply $20 booking fee per shift
+        // Using $20 flat fee (2000 cents) as documented in pricing
+        const BOOKING_FEE_CENTS = 2000;
+        commissionAmount = BOOKING_FEE_CENTS;
+        console.log(`[SHIFTS] Applying $20 booking fee for employer ${shift.employerId} (no subscription)`);
+      }
+      
       const barberAmount = shiftAmount - commissionAmount;
 
       // Create payment intent

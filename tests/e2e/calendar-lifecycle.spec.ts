@@ -651,7 +651,7 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
       
       const SECOND_BARBER = {
         id: 'e2e-professional-002',
-        email: 'barber2-e2e@snipshift.com',
+        email: 'barber2-e2e@hospogo.com',
         name: 'E2E Second Barber',
         roles: ['professional'],
         currentRole: 'professional',

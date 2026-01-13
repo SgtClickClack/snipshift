@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test';
 
 // Test credentials - these should be set via environment variables in CI/CD
 // For local testing, you may need to create test users
-const TEST_EMAIL = process.env.TEST_EMAIL || 'test@snipshift.com';
+const TEST_EMAIL = process.env.TEST_EMAIL || 'test@hospogo.com';
 const TEST_PASSWORD = process.env.TEST_PASSWORD || 'password123';
 
 test.describe('Critical Path Tests', () => {
@@ -72,7 +72,7 @@ test.describe('Critical Path Tests', () => {
       const hasErrorFeedback = await page.locator('text=/invalid|failed|error|incorrect/i').first().isVisible().catch(() => false);
       
       // Test passes if form is functional (error feedback is optional but good)
-      // Note: To fully test login, create test user: test@snipshift.com / password123
+      // Note: To fully test login, create test user: test@hospogo.com / password123
       console.log('ℹ️  Login form is functional. For full login test, ensure test user exists.');
     }
   });

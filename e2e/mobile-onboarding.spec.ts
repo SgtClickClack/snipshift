@@ -18,7 +18,7 @@ test.describe('Mobile Onboarding', () => {
       await route.fulfill({ 
           json: {
             id: 'test-user-id',
-            email: 'test@snipshift.com',
+            email: 'test@hospogo.com',
             name: 'Test User',
             roles: ['professional'],
             currentRole: 'professional',

@@ -17,7 +17,7 @@ async function globalSetup(config: FullConfig) {
   console.log('ðŸ” Global Setup: Preparing E2E authenticated state...');
 
   const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
-  const testEmail = process.env.TEST_EMAIL || 'test@snipshift.com';
+  const testEmail = process.env.TEST_EMAIL || 'test@hospogo.com';
 
   // Wait for frontend to be ready before starting
   // Note: Tests use mocked API routes via Playwright's page.route(), so we only need the frontend

@@ -28,7 +28,7 @@ test('Crawl critical paths (Authenticated)', async ({ page }) => {
       console.log('Mocking /api/me response');
       const json = {
           id: 'test-user-id',
-          email: 'test@snipshift.com',
+          email: 'test@hospogo.com',
           name: 'Test User',
           roles: ['professional'],
           currentRole: 'professional',

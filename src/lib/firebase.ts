@@ -41,7 +41,6 @@ const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string
 const firebaseConfig = {
   apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY'),
   // Use the branded HospoGo Firebase domain for auth popups.
-  // This hides the 'snipshift' name from the Google sign-in popup window.
   // Can be overridden via VITE_FIREBASE_AUTH_DOMAIN if needed.
   authDomain: sanitizeEnv(
     import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,

@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Snipshift Frontend (Vite + React)
+# Multi-stage Dockerfile for HospoGo Frontend (Vite + React)
 # Stage 1: Dependencies
 FROM node:22-alpine AS deps
 WORKDIR /app

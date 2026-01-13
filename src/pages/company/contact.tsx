@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Mail, MessageSquare, Send } from 'lucide-react';
+import { Mail, MessageSquare, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
+import { apiRequest } from '@/lib/queryClient';
 import ContactSalesForm from '@/components/landing/ContactSalesForm';
 import EnterpriseBenefits from '@/components/landing/EnterpriseBenefits';
 
@@ -16,6 +17,7 @@ export default function ContactPage() {
   const isEnterpriseInquiry = searchParams.get('inquiry') === 'enterprise';
 
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     subject: '',
     message: '',
@@ -28,19 +30,40 @@ export default function ContactPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Lightweight client-side submission for now (keeps UI responsive without forcing mailto)
-    requestAnimationFrame(() => {
+    try {
+      const response = await apiRequest('POST', '/api/leads/general', {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send message');
+      }
+
+      const data = await response.json();
+      
       toast({
         title: 'Message sent',
-        description: "Thanks! We've received your message and will reply within 24–48 hours.",
+        description: data.message || "Thanks! We've received your message and will reply within 24–48 hours.",
       });
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error: any) {
+      console.error('Contact form error:', error);
+      toast({
+        title: 'Failed to send message',
+        description: error.message || 'Please try again or email us directly at support@hospogo.com',
+        variant: 'destructive',
+      });
+    } finally {
       setIsSubmitting(false);
-      setFormData({ email: '', subject: '', message: '' });
-    });
+    }
   };
 
   // Enterprise inquiry view
@@ -153,6 +176,22 @@ export default function ContactPage() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
+                    <Label htmlFor="name" className="text-steel-700">
+                      Your Name *
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="John Doe"
+                      required
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="email" className="text-steel-700">
                       Your Email *
                     </Label>
@@ -207,7 +246,10 @@ export default function ContactPage() {
                     className="w-full"
                   >
                     {isSubmitting ? (
-                      'Sending...'
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />

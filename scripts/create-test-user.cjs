@@ -78,7 +78,7 @@ if (!admin.apps.length) {
   }
 }
 
-const TEST_EMAIL = 'test@snipshift.com';
+const TEST_EMAIL = 'test@hospogo.com';
 const TEST_PASSWORD = 'password123';
 
 async function createTestUser() {

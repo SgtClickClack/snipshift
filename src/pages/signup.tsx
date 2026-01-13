@@ -30,11 +30,13 @@ export default function SignupPage() {
   // Prevent double execution in React Strict Mode
   const hasProcessedOAuthCallback = useRef(false);
 
-  // Check for email and role in query params (e.g. redirect from login or landing page)
+  // Check for email, role, and plan in query params (e.g. redirect from login, landing page, or pricing)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const emailParam = urlParams.get('email');
     const roleParam = urlParams.get('role');
+    const planParam = urlParams.get('plan');
+    const trialParam = urlParams.get('trial');
     
     if (emailParam) {
       setFormData(prev => ({ ...prev, email: emailParam }));
@@ -43,6 +45,20 @@ export default function SignupPage() {
     // Store role preference in sessionStorage to pass to onboarding
     if (roleParam && (roleParam === 'hub' || roleParam === 'professional')) {
       sessionStorage.setItem('signupRolePreference', roleParam);
+    }
+    
+    // Handle plan selection from pricing page (Starter, Business, Enterprise)
+    // Plan selection implies venue/hub role since pricing is for businesses
+    if (planParam) {
+      sessionStorage.setItem('signupPlanPreference', planParam);
+      // If coming from pricing, default to hub role (business owner)
+      if (!roleParam) {
+        sessionStorage.setItem('signupRolePreference', 'hub');
+      }
+      // Store trial flag if present
+      if (trialParam === 'true') {
+        sessionStorage.setItem('signupTrialMode', 'true');
+      }
     }
   }, []);
 

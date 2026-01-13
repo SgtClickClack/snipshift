@@ -3,7 +3,7 @@ import fs from 'fs';
 import { Pool } from 'pg';
 import { spawnSync } from 'child_process';
 
-const TEST_DB_URL = 'postgres://test:test@localhost:5433/snipshift_test';
+const TEST_DB_URL = 'postgres://test:test@localhost:5433/hospogo_test';
 
 async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));

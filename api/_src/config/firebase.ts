@@ -32,7 +32,7 @@ function initializeFirebase(): admin.auth.Auth | null {
     // Use a named app instance to avoid stale default app issues in Vercel warm containers
     const appName = process.env.FIREBASE_ADMIN_APP_NAME || 'hospogo-worker-v2';
     // IMPORTANT: Do not hardcode a Firebase project id. Use env/service account so
-    // the app can be cleanly separated from any legacy projects (e.g. Snipshift).
+    // the app can be cleanly separated from any legacy projects.
     let targetProjectId = process.env.FIREBASE_PROJECT_ID?.trim() || undefined;
     let app: admin.app.App | undefined;
 

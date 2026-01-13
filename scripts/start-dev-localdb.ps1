@@ -2,7 +2,7 @@
 
 Write-Host "Starting HospoGo local dev database + servers..." -ForegroundColor Cyan
 
-$dbUrl = "postgres://dev:dev@localhost:5434/snipshift_dev"
+$dbUrl = "postgres://dev:dev@localhost:5434/hospogo_dev"
 
 function Wait-Port {
   param(

@@ -20,7 +20,7 @@ test('Shop Owner can post a shift and see it in the feed', async ({ page }) => {
 
   // 2. Fill in Signup Form
   const randomId = Date.now();
-  const email = `e2e_test_${randomId}@snipshift.com`;
+  const email = `e2e_test_${randomId}@hospogo.com`;
   const password = 'password123';
 
   await page.fill('[data-testid="input-email"]', email);
@@ -147,7 +147,7 @@ test('Shop Owner can post a shift and see it in the feed', async ({ page }) => {
   // 18. Create a NEW user (Pro)
   await page.goto('/signup');
   
-  const proEmail = `e2e_test_pro_${randomId}@snipshift.com`;
+  const proEmail = `e2e_test_pro_${randomId}@hospogo.com`;
   await page.fill('[data-testid="input-email"]', proEmail);
   await page.fill('[data-testid="input-password"]', password);
   await page.fill('[data-testid="input-confirm-password"]', password);
