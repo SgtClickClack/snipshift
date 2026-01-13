@@ -13,6 +13,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Pricing from "@/components/landing/Pricing";
+import FAQSection from "@/components/landing/FAQSection";
 import { SEO } from "@/components/seo/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
@@ -361,6 +362,9 @@ export default function LandingPage() {
 
         {/* Pricing Section */}
         <Pricing />
+
+        {/* FAQ Section */}
+        <FAQSection />
 
         {/* Final CTA Section */}
         {!isAuthenticated && (
