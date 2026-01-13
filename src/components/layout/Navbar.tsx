@@ -123,10 +123,10 @@ export default function Navbar() {
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-16 sm:h-[70px] w-auto object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)]"
+                className="h-12 md:h-14 w-auto object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)]"
                 loading="eager"
                 width={360}
-                height={70}
+                height={56}
               />
             </div>
           </Link>
