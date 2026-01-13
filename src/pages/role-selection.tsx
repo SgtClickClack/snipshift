@@ -2,25 +2,44 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, UserCheck, Award, GraduationCap, FastForward } from "lucide-react";
+import { Store, UserCheck, Award, GraduationCap, FastForward, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserSync } from "@/hooks/useUserSync";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute, mapRoleToApiRole } from "@/lib/roles";
+import { auth } from "@/lib/firebase";
 
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand" | "trainer">>([]);
   const { toast } = useToast();
-  const { user, setCurrentRole, updateRoles } = useAuth();
+  const { user, setCurrentRole, updateRoles, token, isAuthReady } = useAuth();
+  const { isSynced, isPolling } = useUserSync({ enabled: true });
+  
+  // Check if there's a Firebase session (user might have signed in but profile not yet created)
+  const hasFirebaseSession = !!auth.currentUser || !!token;
+  
+  // Show loader until user profile is synced
+  const shouldShowLoader = !isAuthReady || !hasFirebaseSession || !isSynced || !user?.id || isPolling;
   
   const toggleRole = (role: "hub" | "professional" | "brand" | "trainer") => {
     setSelectedRoles((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
   };
 
   const handleContinue = async () => {
-    if (!user || selectedRoles.length === 0) return;
+    // Hydration guard: prevent crash if user is not yet loaded
+    if (!user || !user.id || selectedRoles.length === 0) {
+      if (!user || !user.id) {
+        toast({
+          title: 'Please wait',
+          description: 'Your profile is still loading. Please try again in a moment.',
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -111,6 +130,18 @@ export default function RoleSelectionPage() {
       color: "border-steel-700 bg-steel-800/60 hover:bg-brand-neon/10 hover:border-brand-neon/60 hover:shadow-lg"
     }
   ];
+
+  if (shouldShowLoader) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-steel-900 via-steel-800 to-steel-950 flex items-center justify-center p-6">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-brand-neon mx-auto" />
+          <h2 className="text-xl font-semibold text-white">Preparing your HospoGo Workspace...</h2>
+          <p className="text-gray-400">Setting up your account, just a moment</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-steel-900 via-steel-800 to-steel-950 flex items-center justify-center p-6">

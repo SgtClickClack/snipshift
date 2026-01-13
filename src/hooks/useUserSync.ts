@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger } from '@/lib/logger';
+import { auth } from '@/lib/firebase';
 
 interface UseUserSyncOptions {
   /**
@@ -129,14 +130,17 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     }
 
     // If we already have a user with an ID, we're synced
-    if (user?.id && isAuthenticated) {
+    if (user?.id) {
       setIsSynced(true);
       setIsPolling(false);
       return;
     }
 
-    // If not authenticated, don't poll
-    if (!isAuthenticated || !token) {
+    // Check if there's a Firebase session (user might have signed in but profile not yet created)
+    const hasFirebaseSession = !!auth.currentUser || !!token;
+    
+    // If no Firebase session, don't poll
+    if (!hasFirebaseSession) {
       setIsSynced(false);
       setIsPolling(false);
       return;
@@ -195,8 +199,11 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return;
     }
 
+    // Check if there's a Firebase session (user might have signed in but profile not yet created)
+    const hasFirebaseSession = !!auth.currentUser || !!token;
+
     // Reset state when auth state changes
-    if (!isAuthReady || !isAuthenticated || !token) {
+    if (!isAuthReady || !hasFirebaseSession) {
       setIsSynced(false);
       setIsPolling(false);
       return;
@@ -209,7 +216,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return;
     }
 
-    // Start polling if we're authenticated but don't have user data yet
+    // Start polling if we have a Firebase session but don't have user profile data yet
     startPolling();
 
     return () => {
@@ -218,7 +225,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthReady, isAuthenticated, token, user?.id, enabled]);
+  }, [isAuthReady, token, user?.id, enabled]);
 
   return {
     isSynced,
