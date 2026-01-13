@@ -3,7 +3,7 @@
 /**
  * Seed Data Helper for Calendar Lifecycle E2E Tests
  *
- * Creates fresh test users and shop data to ensure deterministic test execution.
+ * Creates fresh test users and venue data to ensure deterministic test execution.
  * This avoids relying on production data which may be inconsistent or missing.
  */
 
@@ -17,19 +17,22 @@ export interface TestUser {
   isOnboarded: boolean;
 }
 
-export const TEST_SHOP_OWNER: TestUser = {
-  id: 'e2e-shop-owner-001',
-  email: 'shop-owner-e2e@hospogo.com',
-  name: 'E2E Shop Owner',
+export const TEST_VENUE_OWNER: TestUser = {
+  id: 'e2e-venue-owner-001',
+  email: 'venue-owner-e2e@hospogo.com',
+  name: 'E2E Venue Owner',
   roles: ['business'],
   currentRole: 'business',
   isOnboarded: true,
 };
 
+// Legacy alias for backward compatibility
+export const TEST_SHOP_OWNER = TEST_VENUE_OWNER;
+
 export const TEST_PROFESSIONAL: TestUser = {
   id: 'e2e-professional-001',
   email: 'professional-e2e@hospogo.com',
-  name: 'E2E Test Barber',
+  name: 'E2E Test Professional',
   roles: ['professional'],
   currentRole: 'professional',
   isOnboarded: true,

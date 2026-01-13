@@ -140,12 +140,23 @@ router.post('/register', asyncHandler(async (req, res) => {
     const existingUser = await usersRepo.getUserByEmail(email);
     if (existingUser) {
       console.log('[REGISTER] User already exists, returning existing profile for:', email);
+      // CRITICAL: Verify the database record exists before completing OAuth flow
+      // Re-fetch to ensure we have the latest data
+      const verifiedExistingUser = await usersRepo.getUserById(existingUser.id);
+      if (!verifiedExistingUser) {
+        console.error('[REGISTER ERROR] Existing user found but not verifiable in database');
+        res.status(500).json({ 
+          message: 'Failed to verify user account',
+          error: 'User record not found'
+        });
+        return;
+      }
       res.status(200).json({
-        id: existingUser.id,
-        email: existingUser.email,
-        name: existingUser.name,
-        role: existingUser.role,
-        isOnboarded: existingUser.isOnboarded ?? false,
+        id: verifiedExistingUser.id,
+        email: verifiedExistingUser.email,
+        name: verifiedExistingUser.name,
+        role: verifiedExistingUser.role,
+        isOnboarded: verifiedExistingUser.isOnboarded ?? false,
       });
       return;
     }
@@ -188,6 +199,18 @@ router.post('/register', asyncHandler(async (req, res) => {
       return;
     }
 
+    // CRITICAL: Verify the database record exists before completing OAuth flow
+    // This ensures the user record is available for subsequent /api/me calls
+    const verifiedUser = await usersRepo.getUserById(newUser.id);
+    if (!verifiedUser) {
+      console.error('[REGISTER ERROR] User created but not found in database after creation');
+      res.status(500).json({ 
+        message: 'Failed to verify user creation',
+        error: 'User record not found after creation'
+      });
+      return;
+    }
+
     // Send welcome email (non-blocking)
     emailService.sendWelcomeEmail(email, finalName).catch(error => {
       console.error('Failed to send welcome email:', error);
@@ -195,10 +218,11 @@ router.post('/register', asyncHandler(async (req, res) => {
     });
 
     res.status(201).json({
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      role: newUser.role,
+      id: verifiedUser.id,
+      email: verifiedUser.email,
+      name: verifiedUser.name,
+      role: verifiedUser.role,
+      isOnboarded: verifiedUser.isOnboarded ?? false,
     });
   } catch (error: any) {
     console.error('[REGISTER ERROR]', error);

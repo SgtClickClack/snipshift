@@ -64,9 +64,37 @@ export function AuthGuard({
     return <Navigate to={userDashboard} replace />;
   }
 
-  // If user is authenticated but not onboarded, redirect to onboarding
-  // Exception: Allow access to onboarding page itself, landing page, legal pages, and other public routes
+  // CRITICAL: If authenticated AND role is null AND not on /onboarding -> Redirect to /onboarding
+  // This ensures users without a role complete onboarding before accessing other pages
   const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
+  if (isAuthenticated && user) {
+    // Check if user has a role (currentRole is set and not null/undefined/client)
+    const hasRole = user.currentRole && user.currentRole !== 'client';
+    
+    // If user doesn't have a role and is not on onboarding, redirect to onboarding
+    if (!hasRole && location.pathname !== '/onboarding' && !publicRoutes.includes(location.pathname)) {
+      logger.debug('AuthGuard', 'User authenticated but no role set, redirecting to onboarding', {
+        currentRole: user.currentRole,
+        isOnboarded: user.isOnboarded,
+        pathname: location.pathname
+      });
+      return <Navigate to="/onboarding" replace />;
+    }
+    
+    // CRITICAL: If authenticated AND role is set AND on /onboarding -> Redirect to dashboard
+    // This prevents users with completed onboarding from accessing onboarding again
+    if (hasRole && location.pathname === '/onboarding') {
+      const userDashboard = getDashboardRoute(user.currentRole);
+      logger.debug('AuthGuard', 'User has role and on onboarding, redirecting to dashboard', {
+        currentRole: user.currentRole,
+        dashboard: userDashboard
+      });
+      return <Navigate to={userDashboard} replace />;
+    }
+  }
+
+  // Legacy: If user is authenticated but not onboarded, redirect to onboarding
+  // Exception: Allow access to onboarding page itself, landing page, legal pages, and other public routes
   if (isAuthenticated && user && user.isOnboarded === false) {
     // Avoid redirect loop when already on a public route
     if (!publicRoutes.includes(location.pathname)) {

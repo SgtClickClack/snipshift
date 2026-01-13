@@ -8,13 +8,13 @@ export default defineConfig({
   /* Global setup - authenticate once before all tests */
   globalSetup: './tests/auth.setup.ts',
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false, // Disabled to prevent Cursor/IDE disconnects during high-load browser runs
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Use single worker to prevent Cursor/IDE disconnects during high-load browser runs */
+  workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

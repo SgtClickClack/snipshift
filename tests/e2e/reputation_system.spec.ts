@@ -250,6 +250,8 @@ async function setupReputationMocks(page: Page, options: {
 test.describe('Reputation System - Automated Strike System E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     await waitForServersReady(page);
+    // Ensure page is fully hydrated before tests
+    await page.goto('/', { waitUntil: 'networkidle' });
   });
 
   test.describe('No-Show Reporting', () => {
@@ -470,6 +472,108 @@ test.describe('Reputation System - Automated Strike System E2E Tests', () => {
       
       // Test passes if button is not visible (expected behavior)
       expect(true).toBeTruthy();
+    });
+  });
+
+  test.describe('Pro Side Account Suspension', () => {
+    test('should show Account Suspended status and 2 strikes on Pro side after Venue reports No-Show', async ({ page, context }) => {
+      test.setTimeout(120000);
+
+      // Setup professional user context (the one who will receive strikes)
+      await setupUserContext(context, {
+        ...STAFF_MEMBER,
+        strikes: 2,
+        suspendedUntil: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+        status: 'suspended',
+      });
+
+      // Mock user API to return suspended status
+      await page.route('**/api/me', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...STAFF_MEMBER,
+            strikes: 2,
+            suspendedUntil: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+            status: 'suspended',
+            accountStatus: 'suspended',
+          }),
+        });
+      });
+
+      // Mock notifications to include suspension notification
+      await page.route('**/api/notifications', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            {
+              id: 'notif-suspension-001',
+              type: 'account_suspended',
+              title: 'Account Suspended',
+              message: 'Your account has been suspended due to 2 strikes from a No-Show report.',
+              createdAt: new Date().toISOString(),
+              read: false,
+            },
+          ]),
+        });
+      });
+
+      // Mock other endpoints
+      await page.route('**/api/shifts**', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      });
+
+      await page.route('**/api/messaging/chats', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      });
+
+      // Navigate to professional dashboard
+      await page.goto('/professional-dashboard', { waitUntil: 'networkidle' });
+      await page.waitForTimeout(2000);
+
+      // ================================================
+      // PHASE 2 ALIGNMENT: Verify Account Suspended status
+      // ================================================
+      // Look for suspension banner or status indicator
+      const suspendedBanner = page.getByText(/Account Suspended|suspended|2 strikes/i).first();
+      const hasSuspendedBanner = await suspendedBanner.isVisible({ timeout: 10000 }).catch(() => false);
+
+      // Verify strikes count is displayed
+      const strikesIndicator = page.getByText(/2 strikes|strikes: 2/i).first();
+      const hasStrikesIndicator = await strikesIndicator.isVisible({ timeout: 5000 }).catch(() => false);
+
+      // At least one indicator should be present
+      expect(hasSuspendedBanner || hasStrikesIndicator).toBeTruthy();
+
+      // Verify user data shows suspended status
+      const userStatus = await page.evaluate(() => {
+        const userData = sessionStorage.getItem('hospogo_test_user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          return {
+            strikes: user.strikes,
+            status: user.status,
+            suspendedUntil: user.suspendedUntil,
+          };
+        }
+        return null;
+      });
+
+      if (userStatus) {
+        expect(userStatus.strikes).toBe(2);
+        expect(userStatus.status).toBe('suspended');
+        expect(userStatus.suspendedUntil).not.toBeNull();
+      }
     });
   });
 

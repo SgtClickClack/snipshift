@@ -5,17 +5,17 @@
  * 
  * Tests the payment method setup flow:
  * - Intercepts Stripe API calls to avoid real charges
- * - Navigates to Billing Settings as Shop user
+ * - Navigates to Billing Settings as Venue user
  * - Fills Stripe Element with test card "4242"
  * - Asserts "Payment Method Saved" toast appears
  */
 
 // Test user credentials
-const SHOP_USER = {
+const VENUE_USER = {
   email: 'alice@hospogo.com',
   password: 'password123',
-  id: 'shop-user-id',
-  name: 'Alice Shop Owner',
+  id: 'venue-user-id',
+  name: 'Alice Venue Owner',
   role: 'business',
   currentRole: 'business',
 };
@@ -101,7 +101,7 @@ test.describe('Payment UI: Stripe Payment Method Setup', () => {
           contentType: 'application/json',
           body: JSON.stringify({
             id: 'cus_test_123',
-            email: SHOP_USER.email,
+            email: VENUE_USER.email,
           }),
         });
       }
@@ -144,14 +144,14 @@ test.describe('Payment UI: Stripe Payment Method Setup', () => {
     });
 
     // ============================================
-    // STEP 1: Login as Shop User
+    // STEP 1: Login as Venue User
     // ============================================
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
 
     // Fill login form
-    await page.fill('input[type="email"]', SHOP_USER.email);
-    await page.fill('input[type="password"]', SHOP_USER.password);
+    await page.fill('input[type="email"]', VENUE_USER.email);
+    await page.fill('input[type="password"]', VENUE_USER.password);
     await page.click('button[type="submit"]');
 
     // Wait for navigation to dashboard
@@ -165,14 +165,14 @@ test.describe('Payment UI: Stripe Payment Method Setup', () => {
         roles: ['business'],
         isOnboarded: true,
       }));
-    }, SHOP_USER);
+    }, VENUE_USER);
 
     // ============================================
     // STEP 2: Navigate to Billing Settings
     // ============================================
     // Navigate to settings page - adjust route based on your app structure
-    // Common routes: /settings, /shop-dashboard?tab=billing, /billing
-    await page.goto('/shop-dashboard?tab=billing');
+    // Common routes: /settings, /hub-dashboard?tab=billing, /billing
+    await page.goto('/hub-dashboard?tab=billing');
     
     // If that doesn't work, try navigating via UI
     // Look for Settings link or Billing link in navigation

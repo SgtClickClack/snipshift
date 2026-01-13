@@ -383,7 +383,7 @@ test.describe('Subscription & Stripe Flow', () => {
             body: JSON.stringify({
               ...NEW_SIGNUP_USER,
               isOnboarded: true,
-              shopName: 'Test Venue E2E',
+              venueName: 'Test Venue E2E',
             }),
           });
         } else {

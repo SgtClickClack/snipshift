@@ -79,6 +79,45 @@ async function globalSetup(config: FullConfig) {
       );
     }, testEmail);
 
+    // ================================================
+    // DEFENSIVE GLOBAL SETUP: Wait for backend handshake
+    // ================================================
+    // Wait for /api/me or /api/auth/session endpoint to ensure backend is ready
+    console.log('🔄 Waiting for backend handshake...');
+    try {
+      await page.waitForResponse(
+        (response) => {
+          const url = response.url();
+          return (
+            (url.includes('/api/me') || url.includes('/api/auth/session')) &&
+            response.status() === 200
+          );
+        },
+        { timeout: 30000 }
+      ).catch(() => {
+        // If the endpoint isn't called automatically, make a manual request
+        console.log('⚠️  Auto-handshake not detected, making manual request...');
+      });
+
+      // Verify database user record exists by making a direct API call
+      const apiBaseURL = baseURL.replace(':3000', ':5000'); // API runs on port 5000
+      const meResponse = await page.request.get(`${apiBaseURL}/api/me`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => null);
+
+      if (meResponse && meResponse.ok()) {
+        const userData = await meResponse.json();
+        console.log(`✅ Backend handshake complete. User record verified: ${userData.email || 'N/A'}`);
+      } else {
+        console.log('⚠️  Could not verify user record via API (this may be expected in E2E mode)');
+      }
+    } catch (error) {
+      console.log('⚠️  Backend handshake check failed (may be expected in E2E mode):', error);
+      // Don't fail the setup if this check fails - E2E mode may use mocked APIs
+    }
+
     // Save storage state to file
     const storageStatePath = path.join(__dirname, 'storageState.json');
     

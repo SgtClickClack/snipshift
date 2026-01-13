@@ -4,10 +4,10 @@
  * End-to-End Booking Flow Test
  * 
  * Tests the complete "Booking to Payment" flow:
- * 1. Alice (Shop User) logs in
+ * 1. Alice (Venue User) logs in
  * 2. Navigates to Calendar -> Clicks "Smart Fill" -> Confirms toast "Shifts Created"
  * 3. Logs out Alice
- * 4. Bob (Barber User) logs in
+ * 4. Bob (Professional User) logs in
  * 5. Navigates to "Job Board" -> Applies for Alice's shift -> Verifies "Applied" state
  * 6. Logs out Bob
  * 7. Alice logs in -> "Applications" -> Clicks "Approve" on Bob's card
@@ -19,7 +19,7 @@ const ALICE = {
   email: 'alice@hospogo.com',
   password: 'password123',
   id: 'alice-user-id',
-  name: 'Alice Shop Owner',
+  name: 'Alice Venue Owner',
   role: 'business',
   currentRole: 'business',
 };
@@ -28,7 +28,7 @@ const BOB = {
   email: 'bob@hospogo.com',
   password: 'password123',
   id: 'bob-user-id',
-  name: 'Bob Barber',
+  name: 'Bob Professional',
   role: 'professional',
   currentRole: 'professional',
 };
@@ -37,12 +37,12 @@ let createdShiftId: string | null = null;
 let applicationId: string | null = null;
 let shiftStatus = 'open';
 
-test.describe('Booking Flow: Shop to Barber Application to Approval', () => {
+test.describe('Booking Flow: Venue to Professional Application to Approval', () => {
   test('Complete booking workflow from Smart Fill to Application Approval', async ({ page }) => {
     test.setTimeout(180000); // 3 minutes for full flow
 
     // ============================================
-    // STEP 1: Login as Alice (Shop User)
+    // STEP 1: Login as Alice (Venue User)
     // ============================================
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');
@@ -110,7 +110,7 @@ test.describe('Booking Flow: Shop to Barber Application to Approval', () => {
     });
 
     // Mock shifts API to return the created shift
-    await page.route('**/api/shifts/shop/**', async (route) => {
+    await page.route('**/api/shifts/venue/**', async (route) => {
       if (route.request().method() === 'GET') {
         const shifts = createdShiftId ? [{
           id: createdShiftId,
@@ -176,7 +176,7 @@ test.describe('Booking Flow: Shop to Barber Application to Approval', () => {
     await page.context().clearCookies();
 
     // ============================================
-    // STEP 4: Login as Bob (Barber User)
+    // STEP 4: Login as Bob (Professional User)
     // ============================================
     await page.goto('/login');
     await page.waitForLoadState('domcontentloaded');

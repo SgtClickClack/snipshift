@@ -9,7 +9,7 @@ import { fetchUserReviews } from "@/lib/api";
 import { PageLoadingFallback } from "@/components/loading/loading-spinner";
 
 export default function UserDashboard() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading, isAuthReady } = useAuth();
 
   const { data: reviews, isLoading: isLoadingReviews } = useQuery({
     queryKey: ['user-reviews', user?.id],
@@ -19,6 +19,24 @@ export default function UserDashboard() {
 
   const averageRating = user?.averageRating;
   const reviewCount = user?.reviewCount;
+
+  // Show loading skeleton if session is still loading to prevent "ages to appear" lag perception
+  if (isAuthLoading || !isAuthReady) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header skeleton */}
+          <div className="h-12 bg-muted animate-pulse rounded-lg w-1/3" />
+          {/* Cards skeleton */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-8">
