@@ -355,9 +355,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
               }),
             });
             
-            // 201 = created, 409 = already exists - both are fine
-            if (!registerRes.ok && registerRes.status !== 409) {
-              logger.error('AuthContext', 'Failed to register redirect user in database');
+            // 201 = created, 200 = already exists (from register endpoint), 409 = conflict - all are fine
+            if (!registerRes.ok && registerRes.status !== 200 && registerRes.status !== 409) {
+              const errorText = await registerRes.text().catch(() => 'Unknown error');
+              logger.error('AuthContext', 'Failed to register redirect user in database', {
+                status: registerRes.status,
+                error: errorText
+              });
+            } else {
+              logger.debug('AuthContext', 'User registered/verified in database, status:', registerRes.status);
+              
+              // Add 500ms cooldown to allow DB replication if using a distributed database
+              // This ensures the user record is available when /api/me is called
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              logger.debug('AuthContext', 'Cooldown complete, user should be available in database');
             }
           } catch (registerError) {
             logger.error('AuthContext', 'Error registering redirect user:', registerError);
@@ -372,7 +384,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
     
-    // Process redirect result (non-blocking)
+    // Process redirect result (await to ensure DB write completes before auth state change)
     processRedirectResult();
 
     // Wrap listener setup in try-catch to ensure loading states are always set
