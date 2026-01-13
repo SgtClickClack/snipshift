@@ -45,7 +45,13 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,webp}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+        // Exclude large image files from precaching (they'll still be served, just not precached)
+        globIgnores: [
+          '**/hospogoappicon.png',      // 7.66 MB - too large for precache
+          '**/hospogonewhero.png',      // 1.74 MB - too large for precache
+          '**/hospogoneonlogo.png',     // Large logo variant
+        ],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB limit
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
