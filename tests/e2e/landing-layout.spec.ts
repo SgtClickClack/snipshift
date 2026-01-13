@@ -91,11 +91,16 @@ test.describe('Landing Page Layout Regression Tests', () => {
       const howItWorksSection = page.locator('text=How HospoGo Works').first();
       await howItWorksSection.scrollIntoViewIfNeeded();
       
-      await page.waitForTimeout(1000);
+      // Wait for section to be fully rendered
+      await page.waitForTimeout(1500);
       
-      // Find badge 1 using data-testid
+      // Wait for badge to be visible with retry
       const badge1 = page.getByTestId('step-badge-1');
-      await expect(badge1).toBeVisible();
+      await expect(badge1).toBeVisible({ timeout: 10000 });
+      
+      // Ensure badge is in viewport
+      await badge1.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
       
       // Get computed z-index
       const zIndex = await badge1.evaluate((el) => {

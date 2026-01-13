@@ -180,7 +180,12 @@ test.describe('Enterprise Page Tests', () => {
       await submitButton.click();
 
       // Should show error message
-      await expect(page.locator('text=Something went wrong').or(page.locator('text=Internal server error'))).toBeVisible({ timeout: 10000 });
+      // Check both locators separately to avoid strict mode violation
+      const errorMsg1 = page.locator('text=Something went wrong');
+      const errorMsg2 = page.locator('text=Internal server error');
+      const hasError = await errorMsg1.isVisible({ timeout: 5000 }).catch(() => false) ||
+                      await errorMsg2.isVisible({ timeout: 5000 }).catch(() => false);
+      expect(hasError).toBe(true);
     });
 
     test('should send correct payload to API', async ({ page }) => {

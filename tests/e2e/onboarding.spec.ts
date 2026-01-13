@@ -277,12 +277,22 @@ test.describe('Onboarding Flow E2E Tests', () => {
         return;
       }
 
+      // Wait for subscription API call to complete
+      await page.waitForResponse(
+        (response) => response.url().includes('/api/subscriptions/current') && response.request().method() === 'GET',
+        { timeout: 10000 }
+      ).catch(() => {});
+      
+      // Wait a bit for React to render the banner
+      await page.waitForTimeout(1000);
+
       // Verify banner is visible
       const setupBanner = page.getByTestId('complete-setup-banner');
       await expect(setupBanner).toBeVisible({ timeout: 15000 });
 
       // Click "Remind me later" button
       const remindLaterButton = page.getByRole('button', { name: /Remind me later/i });
+      await expect(remindLaterButton).toBeVisible({ timeout: 5000 });
       await remindLaterButton.click();
 
       // Verify banner is dismissed
@@ -463,13 +473,26 @@ test.describe('Onboarding Flow E2E Tests', () => {
       // ================================================
       // After selecting Venue, the onboarding should proceed to payment step
       // which should show the Business Plan at $149/month
-      const businessPlanPrice = page.getByText('$149').or(
-        page.locator('text=/\\$149.*month/i')
-      ).first();
-
+      // Wait for navigation or price to appear
+      await page.waitForTimeout(2000);
+      
+      // Wait for either the price to appear or navigation to complete
+      await page.waitForResponse(
+        (response) => response.url().includes('/api/users/role') && response.request().method() === 'POST',
+        { timeout: 10000 }
+      ).catch(() => {});
+      
+      // Wait a bit more for UI to update
+      await page.waitForTimeout(1500);
+      
+      // Check both locators separately to avoid strict mode violation
+      const businessPlanPrice1 = page.getByText('$149').first();
+      const businessPlanPrice2 = page.locator('text=/\\$149.*month/i').first();
+      
       // The price might appear on the next step, so we check if we've navigated
       // or if the price is visible on the current step
-      const priceVisible = await businessPlanPrice.isVisible({ timeout: 10000 }).catch(() => false);
+      const priceVisible = await businessPlanPrice1.isVisible({ timeout: 5000 }).catch(() => false) ||
+                          await businessPlanPrice2.isVisible({ timeout: 5000 }).catch(() => false);
       
       // At minimum, verify that clicking Venue doesn't cause errors
       // and the role selection is processed

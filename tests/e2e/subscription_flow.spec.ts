@@ -266,16 +266,22 @@ test.describe('Subscription & Stripe Flow', () => {
       await expect(businessPrice).toBeVisible({ timeout: 15000 });
 
       // Verify the price is displayed with "/month" suffix
+      // Check both separately to avoid strict mode violation
       const priceWithDuration = page.locator('text=/\\$149.*month/i').first();
-      await expect(priceWithDuration.or(businessPrice)).toBeVisible();
+      const hasPriceWithDuration = await priceWithDuration.isVisible().catch(() => false);
+      const hasBusinessPrice = await businessPrice.isVisible().catch(() => false);
+      expect(hasPriceWithDuration || hasBusinessPrice).toBe(true);
 
       // ===============================================
       // PHASE 2 ALIGNMENT: Verify "14-Day Free Trial" CTA Button
       // ===============================================
-      const trialButton = page.getByTestId('business-trial-button').or(
-        page.getByRole('link', { name: /Start 14-Day Free Trial/i }).first()
-      );
-      await expect(trialButton).toBeVisible({ timeout: 10000 });
+      // Check both locators separately to avoid strict mode violation
+      const trialButtonById = page.getByTestId('business-trial-button');
+      const trialButtonByRole = page.getByRole('link', { name: /Start 14-Day Free Trial/i }).first();
+      const hasTrialButton = await trialButtonById.isVisible({ timeout: 5000 }).catch(() => false) ||
+                            await trialButtonByRole.isVisible({ timeout: 5000 }).catch(() => false);
+      expect(hasTrialButton).toBe(true);
+      const trialButton = hasTrialButton ? (await trialButtonById.isVisible().catch(() => false) ? trialButtonById : trialButtonByRole) : trialButtonByRole;
 
       // Verify the button text contains "14-Day Free Trial"
       const buttonText = await trialButton.textContent();
@@ -284,10 +290,12 @@ test.describe('Subscription & Stripe Flow', () => {
       // ===============================================
       // PHASE 2 ALIGNMENT: Verify "Most Popular" Badge on Business Plan
       // ===============================================
-      const businessBadge = page.getByTestId('pricing-badge-business').or(
-        page.locator('[data-testid="pricing-badge"]').filter({ hasText: /Most Popular/i })
-      );
-      await expect(businessBadge).toBeVisible({ timeout: 10000 });
+      // Check both locators separately to avoid strict mode violation
+      const businessBadgeById = page.getByTestId('pricing-badge-business');
+      const businessBadgeByFilter = page.locator('[data-testid="pricing-badge"]').filter({ hasText: /Most Popular/i });
+      const hasBadge = await businessBadgeById.isVisible({ timeout: 5000 }).catch(() => false) ||
+                       await businessBadgeByFilter.isVisible({ timeout: 5000 }).catch(() => false);
+      expect(hasBadge).toBe(true);
     });
 
     test('should persist plan preference through signup flow', async ({ page }) => {
@@ -309,10 +317,13 @@ test.describe('Subscription & Stripe Flow', () => {
       await expect(businessPrice).toBeVisible({ timeout: 15000 });
 
       // Find and click "Start 14-Day Free Trial" button
-      const trialButton = page.getByTestId('business-trial-cta').or(
-        page.getByRole('link', { name: /Start 14-Day Free Trial/i }).first()
-      );
-      await expect(trialButton).toBeVisible({ timeout: 10000 });
+      // Check both locators separately to avoid strict mode violation
+      const trialButtonById = page.getByTestId('business-trial-cta');
+      const trialButtonByRole = page.getByRole('link', { name: /Start 14-Day Free Trial/i }).first();
+      const hasTrialButton = await trialButtonById.isVisible({ timeout: 5000 }).catch(() => false) ||
+                            await trialButtonByRole.isVisible({ timeout: 5000 }).catch(() => false);
+      expect(hasTrialButton).toBe(true);
+      const trialButton = hasTrialButton ? (await trialButtonById.isVisible().catch(() => false) ? trialButtonById : trialButtonByRole) : trialButtonByRole;
       
       // Verify the link has correct URL params
       const href = await trialButton.getAttribute('href');
