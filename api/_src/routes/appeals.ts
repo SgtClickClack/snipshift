@@ -302,7 +302,7 @@ async function flagForAdminReview(
     // Notify the user that their appeal is being reviewed
     try {
       // Import dynamically to avoid circular dependency
-      const notificationsServiceModule = await import('../services/notifications-service.js');
+      const notificationsServiceModule = await import('../lib/notifications-service.js');
       await notificationsServiceModule.createNotification(userId, {
         type: 'appeal_submitted',
         title: 'Medical Certificate Submitted',
