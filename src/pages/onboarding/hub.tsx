@@ -123,7 +123,7 @@ function PaymentForm({
 }
 
 export default function HubOnboardingPage() {
-  const { user, refreshUser, login } = useAuth();
+  const { user, refreshUser, login, isLoading: isAuthLoading, isAuthReady } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,14 +131,38 @@ export default function HubOnboardingPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanInfo | null>(null);
   const [isTrialMode, setIsTrialMode] = useState(false);
+  const [isVerifyingUser, setIsVerifyingUser] = useState(true);
   const [formData, setFormData] = useState({
     venueName: '',
     location: '',
     description: '',
   });
 
+  // Wait for auth to be ready and verify user exists before showing onboarding
+  useEffect(() => {
+    if (!isAuthReady) return;
+    
+    // If auth is ready but no user, redirect to login
+    if (!user && !isAuthLoading) {
+      // Give a small grace period for the user profile to load
+      const timeout = setTimeout(() => {
+        if (!user) {
+          navigate('/login', { replace: true });
+        }
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+    
+    // User is verified, allow onboarding to proceed
+    if (user) {
+      setIsVerifyingUser(false);
+    }
+  }, [isAuthReady, isAuthLoading, user, navigate]);
+
   // Read plan preference from sessionStorage on mount
   useEffect(() => {
+    if (isVerifyingUser) return; // Don't process until user is verified
+    
     const planPreference = sessionStorage.getItem('signupPlanPreference');
     const trialMode = sessionStorage.getItem('signupTrialMode') === 'true';
     
@@ -157,7 +181,7 @@ export default function HubOnboardingPage() {
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, []);
+  }, [isVerifyingUser]);
 
   const fetchPlanByName = async (planName: string) => {
     try {
@@ -191,7 +215,7 @@ export default function HubOnboardingPage() {
 
   const handleVenueDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user?.id) return; // Use optional chaining to prevent crash if user is null
 
     setIsSubmitting(true);
     try {
@@ -391,6 +415,46 @@ export default function HubOnboardingPage() {
       </div>
     );
   };
+
+  // Show loading state while verifying user
+  if (isVerifyingUser || isAuthLoading || !isAuthReady) {
+    return (
+      <>
+        <SEO
+          title="Create Venue Profile"
+          description="Register your venue on HospoGo."
+          url="/onboarding/hub"
+        />
+        <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
+          <div className="text-center space-y-6">
+            <div className="relative">
+              <Loader2 className="h-12 w-12 animate-spin text-brand-neon mx-auto" />
+              <div className="absolute inset-0 h-12 w-12 mx-auto rounded-full bg-brand-neon/20 animate-pulse" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold text-steel-900">Preparing your venue...</h2>
+              <p className="text-steel-500 text-sm max-w-xs mx-auto">
+                Just a moment while we set things up for you.
+              </p>
+            </div>
+            {/* Skeleton preview of the venue onboarding card */}
+            <div className="w-full max-w-md mx-auto mt-8">
+              <div className="bg-white border border-steel-200 rounded-xl p-6 space-y-4 animate-pulse shadow-lg">
+                <div className="w-12 h-12 bg-steel-200 rounded-full mx-auto" />
+                <div className="h-6 bg-steel-200 rounded w-3/4 mx-auto" />
+                <div className="h-4 bg-steel-200 rounded w-1/2 mx-auto" />
+                <div className="space-y-3 pt-4">
+                  <div className="h-10 bg-steel-100 rounded" />
+                  <div className="h-10 bg-steel-100 rounded" />
+                  <div className="h-20 bg-steel-100 rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

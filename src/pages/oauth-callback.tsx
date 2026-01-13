@@ -1,7 +1,8 @@
-﻿import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 /**
  * Safe landing page for Google auth redirects.
@@ -11,31 +12,40 @@ import { useAuth } from '@/contexts/AuthContext';
  * - Firebase redirect completion is handled centrally in `AuthProvider` via `getRedirectResult()`.
  * - This route exists only to give the browser a stable place to land while that happens, then
  *   forward the user into the normal app redirect flow.
+ * 
+ * Race Condition Fix:
+ * - We now wait for BOTH isAuthReady AND user profile verification before redirecting
+ * - This prevents the onboarding page from crashing due to missing user data
  */
 export function OAuthCallback() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthReady, isAuthenticated, user, triggerPostAuthRedirect } = useAuth();
+  const { isAuthReady, isAuthenticated, user, triggerPostAuthRedirect, isLoading } = useAuth();
+  const [statusMessage, setStatusMessage] = useState('Completing sign-in…');
 
   // Prevent double execution in React Strict Mode
   const hasProcessed = useRef(false);
   const timeoutRef = useRef<number | null>(null);
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
     if (hasProcessed.current) return;
     hasProcessed.current = true;
 
     // Give Firebase redirect processing + profile handshake a moment to complete.
+    // Extended timeout to account for database user record verification
     timeoutRef.current = window.setTimeout(() => {
       // If we still aren't authenticated after the grace period, send to login.
       // (This is also the desired behavior if a user hits this route directly.)
-      toast({
-        title: 'Authentication pending',
-        description: 'Please sign in again to continue.',
-        variant: 'destructive',
-      });
-      navigate('/login', { replace: true });
-    }, 6000);
+      if (!hasRedirected.current) {
+        toast({
+          title: 'Authentication pending',
+          description: 'Please sign in again to continue.',
+          variant: 'destructive',
+        });
+        navigate('/login', { replace: true });
+      }
+    }, 10000); // Extended from 6s to 10s to allow for database verification
 
     return () => {
       if (timeoutRef.current) {
@@ -45,10 +55,28 @@ export function OAuthCallback() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update status message based on auth state
+  useEffect(() => {
+    if (!isAuthReady) {
+      setStatusMessage('Completing sign-in…');
+    } else if (isAuthenticated && !user) {
+      setStatusMessage('Verifying your account…');
+    } else if (isAuthenticated && user && !user.isOnboarded) {
+      setStatusMessage('Preparing onboarding…');
+    } else if (isAuthenticated && user) {
+      setStatusMessage('Redirecting to your dashboard…');
+    }
+  }, [isAuthReady, isAuthenticated, user]);
+
   useEffect(() => {
     if (!isAuthReady) return;
+    if (isLoading) return; // Wait for loading to complete
+    if (hasRedirected.current) return;
 
     if (isAuthenticated && user) {
+      // User is authenticated AND we have their profile data
+      // Safe to redirect now
+      hasRedirected.current = true;
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
       }
@@ -56,14 +84,30 @@ export function OAuthCallback() {
       triggerPostAuthRedirect();
       return;
     }
-  }, [isAuthReady, isAuthenticated, user, triggerPostAuthRedirect]);
+    
+    // If auth is ready but no user after loading completes, 
+    // the user might need to complete onboarding
+    // AuthContext will handle the redirect to /onboarding if needed
+  }, [isAuthReady, isAuthenticated, user, triggerPostAuthRedirect, isLoading]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <h2 className="text-lg font-medium text-foreground">Completing sign-in…</h2>
-        <p className="text-muted-foreground mt-2">Please wait while we finish your authentication.</p>
+      <div className="text-center space-y-4">
+        <div className="relative">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-lg font-medium text-foreground">{statusMessage}</h2>
+          <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+            Please wait while we finish your authentication.
+          </p>
+        </div>
+        {/* Progress indicator */}
+        <div className="flex justify-center gap-1.5 pt-2">
+          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${isAuthReady ? 'bg-primary' : 'bg-muted'}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${isAuthenticated ? 'bg-primary' : 'bg-muted'}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${user ? 'bg-primary' : 'bg-muted'}`} />
+        </div>
       </div>
     </div>
   );

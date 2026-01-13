@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp, FileCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MedicalCertificateUpload } from '@/components/appeals/MedicalCertificateUpload';
 
 interface ReputationStats {
   strikes: number;
@@ -18,6 +20,7 @@ interface ReputationStats {
   isSuspended: boolean;
   completedShiftCount: number;
   noShowCount: number;
+  lastNoShowShiftId?: string;
 }
 
 // Strike state configuration
@@ -116,7 +119,34 @@ function SuspensionCountdown({ suspendedUntil }: { suspendedUntil: string }) {
 }
 
 // Full-screen suspension overlay
-function SuspensionOverlay({ suspendedUntil }: { suspendedUntil: string }) {
+function SuspensionOverlay({ suspendedUntil, lastShiftId }: { suspendedUntil: string; lastShiftId?: string }) {
+  const [showMedicalUpload, setShowMedicalUpload] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleUploadSuccess = () => {
+    // Refresh the page to update suspension status
+    queryClient.invalidateQueries({ queryKey: ['/api/me/reputation'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/me'] });
+    setShowMedicalUpload(false);
+    // Force a page refresh to update the UI state
+    window.location.reload();
+  };
+
+  // Show medical certificate upload form
+  if (showMedicalUpload && lastShiftId) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="max-w-lg w-full">
+          <MedicalCertificateUpload 
+            shiftId={lastShiftId}
+            onSuccess={handleUploadSuccess}
+            onClose={() => setShowMedicalUpload(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="max-w-lg w-full text-center space-y-8">
@@ -139,6 +169,31 @@ function SuspensionOverlay({ suspendedUntil }: { suspendedUntil: string }) {
             <SuspensionCountdown suspendedUntil={suspendedUntil} />
           </CardContent>
         </Card>
+
+        {/* Medical Certificate Appeal */}
+        {lastShiftId && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-2 text-primary">
+                  <FileCheck className="h-5 w-5" />
+                  <span className="font-medium">Have a medical certificate?</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  If you were unable to attend due to illness, submit a medical certificate to have your suspension reviewed and potentially lifted.
+                </p>
+                <Button 
+                  onClick={() => setShowMedicalUpload(true)}
+                  className="w-full"
+                  variant="default"
+                >
+                  <FileCheck className="mr-2 h-4 w-4" />
+                  Submit Medical Certificate
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Info */}
         <div className="text-sm text-muted-foreground space-y-2">
@@ -220,11 +275,12 @@ export function ProReliabilityTracker() {
     suspendedUntil,
     isSuspended,
     completedShiftCount,
+    lastNoShowShiftId,
   } = reputationStats;
 
   // Show suspension overlay if suspended
   if (isSuspended && suspendedUntil) {
-    return <SuspensionOverlay suspendedUntil={suspendedUntil} />;
+    return <SuspensionOverlay suspendedUntil={suspendedUntil} lastShiftId={lastNoShowShiftId} />;
   }
 
   // Get state configuration based on strikes (cap at 2 for styling purposes)
