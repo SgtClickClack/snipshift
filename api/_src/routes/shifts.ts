@@ -15,11 +15,13 @@ import * as notificationsService from '../lib/notifications-service.js';
 import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
 import * as stripeConnectService from '../services/stripe-connect.service.js';
 import * as subscriptionsRepo from '../repositories/subscriptions.repository.js';
+import * as proVerificationService from '../services/pro-verification.service.js';
 import { SmartFillSchema, GenerateRosterSchema } from '../validation/schemas.js';
 import { generateShiftSlotsForRange, filterOverlappingSlots } from '../utils/shift-slot-generator.js';
 import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange, deleteAllShiftsForEmployer } from '../repositories/shifts.repository.js';
 import { getDb } from '../db/index.js';
 import { toISOStringSafe } from '../lib/date.js';
+import * as reputationService from '../lib/reputation-service.js';
 
 const router = Router();
 
@@ -1353,6 +1355,29 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     return;
   }
 
+  // Check if user is suspended due to strikes
+  const isSuspended = await reputationService.isUserSuspended(userId);
+  if (isSuspended) {
+    const reputationStats = await reputationService.getUserReputationStats(userId);
+    const suspendedUntil = reputationStats?.suspendedUntil;
+    const suspendedUntilStr = suspendedUntil ? suspendedUntil.toLocaleString() : 'soon';
+    res.status(403).json({ 
+      message: `Your account is suspended until ${suspendedUntilStr} due to no-show violations.`,
+      suspendedUntil: suspendedUntil?.toISOString(),
+    });
+    return;
+  }
+
+  // Check if professional can work this shift (RSA requirements, verification status)
+  const eligibility = await proVerificationService.canProWorkShift(userId, id);
+  if (!eligibility.eligible) {
+    res.status(403).json({
+      message: eligibility.reasons.join('. '),
+      reasons: eligibility.reasons,
+    });
+    return;
+  }
+
   // Get shop (employer) information
   const shop = await usersRepo.getUserById(shift.employerId);
   if (!shop) {
@@ -1590,6 +1615,19 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
   const canAcceptShifts = await stripeConnectService.isAccountReady(barber.stripeAccountId);
   if (!canAcceptShifts) {
     res.status(400).json({ message: 'Your payout account is not fully set up. Please complete onboarding.' });
+    return;
+  }
+
+  // Check if user is suspended due to strikes
+  const isSuspended = await reputationService.isUserSuspended(userId);
+  if (isSuspended) {
+    const reputationStats = await reputationService.getUserReputationStats(userId);
+    const suspendedUntil = reputationStats?.suspendedUntil;
+    const suspendedUntilStr = suspendedUntil ? suspendedUntil.toLocaleString() : 'soon';
+    res.status(403).json({ 
+      message: `Your account is suspended until ${suspendedUntilStr} due to no-show violations.`,
+      suspendedUntil: suspendedUntil?.toISOString(),
+    });
     return;
   }
 
@@ -2313,6 +2351,16 @@ router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: Auth
     return;
   }
 
+  // Check if professional can work this shift (RSA requirements, verification status)
+  const eligibility = await proVerificationService.canProWorkShift(userId, offer.shiftId);
+  if (!eligibility.eligible) {
+    res.status(403).json({
+      message: eligibility.reasons.join('. '),
+      reasons: eligibility.reasons,
+    });
+    return;
+  }
+
   // Use transaction to:
   // 1. Update offer status to accepted
   // 2. Update shift assigneeId and status to confirmed
@@ -2638,6 +2686,15 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
       attendanceStatus: 'no_show',
       status: 'completed', // Mark shift as completed even if no-show
     });
+
+    // Apply strikes for no-show (2 strikes + 48h suspension)
+    if (shift.assigneeId) {
+      const noShowResult = await reputationService.handleNoShow(shift.assigneeId, shiftId);
+      console.log(`[SHIFT_REVIEW] No-show strike applied: ${noShowResult.message}`);
+      
+      // Update pro verification status for no-show
+      await proVerificationService.onNoShow(shift.assigneeId, shiftId);
+    }
   }
 
   // Create review
@@ -2691,10 +2748,43 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
         status: 'completed',
       });
     }
+
+    // Record successful shift completion (may remove a strike if 5th shift since last strike)
+    if (shift.assigneeId) {
+      const successResult = await reputationService.handleSuccessfulShift(shift.assigneeId, shiftId);
+      console.log(`[SHIFT_REVIEW] Successful shift recorded: ${successResult.message}`);
+    }
   }
 
   // Recalculate and update reviewee's rating
   await shiftReviewsRepo.updateUserRating(revieweeId);
+
+  // Update pro verification status based on review (Top Rated badge, rating warnings)
+  if (reviewData.type === 'SHOP_REVIEWING_BARBER' && shift.assigneeId) {
+    await proVerificationService.onReviewReceived(shift.assigneeId, reviewData.rating, shiftId);
+    
+    // If shift was completed (not no-show), update verification status
+    if (!reviewData.markAsNoShow) {
+      await proVerificationService.onShiftCompleted(shift.assigneeId, shiftId);
+      
+      // Process rating-based strike recovery
+      // - Rating >= 4.5: Increment recovery progress (toward strike removal)
+      // - Rating < 3.0: Reset recovery progress (poor performance resets redemption)
+      const recoveryResult = await reputationService.processShiftSuccess(
+        shift.assigneeId,
+        reviewData.rating,
+        shiftId
+      );
+      
+      if (recoveryResult.strikeRemoved) {
+        console.log(`[SHIFT_REVIEW] Strike removed via recovery: ${recoveryResult.message}`);
+      } else if (recoveryResult.progressReset) {
+        console.log(`[SHIFT_REVIEW] Recovery progress reset: ${recoveryResult.message}`);
+      } else if (recoveryResult.recoveryProgress > recoveryResult.previousRecoveryProgress) {
+        console.log(`[SHIFT_REVIEW] Recovery progress updated: ${recoveryResult.message}`);
+      }
+    }
+  }
 
   res.status(201).json({
     id: newReview.id,
@@ -2705,6 +2795,114 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
     rating: parseInt(newReview.rating),
     comment: newReview.comment,
     createdAt: newReview.createdAt.toISOString(),
+  });
+}));
+
+// Report No-Show - Venue action to report a staff member who didn't show up
+// POST /api/shifts/:id/no-show
+router.post('/:id/no-show', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.uid;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Get the shift
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Verify the user is the employer (venue owner) for this shift
+  if (shift.employerId !== userId) {
+    res.status(403).json({ message: 'Only the venue owner can report a no-show' });
+    return;
+  }
+
+  // Check if shift has an assigned staff member
+  if (!shift.assigneeId) {
+    res.status(400).json({ message: 'Cannot report no-show - no staff member assigned to this shift' });
+    return;
+  }
+
+  // Check if shift start time has passed
+  const shiftStartTime = new Date(shift.startTime);
+  const now = new Date();
+  if (now < shiftStartTime) {
+    res.status(400).json({ 
+      message: 'Cannot report no-show before shift start time',
+      shiftStartTime: shiftStartTime.toISOString()
+    });
+    return;
+  }
+
+  // Check if shift is in a valid state for no-show reporting
+  // Valid states: assigned (confirmed), filled, pending_completion
+  const validStatuses = ['assigned', 'confirmed', 'filled', 'pending_completion'];
+  if (!validStatuses.includes(shift.status)) {
+    res.status(400).json({ 
+      message: `Cannot report no-show for a shift with status: ${shift.status}`,
+      currentStatus: shift.status
+    });
+    return;
+  }
+
+  // Check if no-show was already reported
+  if (shift.attendanceStatus === 'no_show') {
+    res.status(400).json({ message: 'No-show has already been reported for this shift' });
+    return;
+  }
+
+  console.log(`[NO_SHOW] Venue ${userId} reporting no-show for shift ${shiftId}, staff ${shift.assigneeId}`);
+
+  // 1. Update shift status to no_show
+  await shiftsRepo.updateShift(shiftId, {
+    status: 'completed', // Mark shift as ended
+    attendanceStatus: 'no_show',
+  });
+
+  // 2. Trigger Reputation Service (2 strikes + 48h suspension)
+  const noShowResult = await reputationService.handleNoShow(shift.assigneeId, shiftId);
+  console.log(`[NO_SHOW] Strike result: ${noShowResult.message}`);
+
+  // 3. Update pro verification status for no-show
+  await proVerificationService.onNoShow(shift.assigneeId, shiftId);
+
+  // 4. Notify the staff member
+  await notificationsService.createNotification(shift.assigneeId, {
+    type: 'no_show_reported',
+    title: 'No-Show Reported',
+    message: `A venue has reported you as a no-show for a shift. You have received ${noShowResult.strikesAdded} strike(s). Current total: ${noShowResult.strikeCount} strikes.`,
+    data: {
+      shiftId,
+      strikesAdded: noShowResult.strikesAdded,
+      totalStrikes: noShowResult.strikeCount,
+      suspendedUntil: noShowResult.suspendedUntil,
+      reliabilityScore: noShowResult.reliabilityScore,
+    },
+  });
+
+  // 5. Get staff member details for response
+  const staffMember = await usersRepo.getUserById(shift.assigneeId);
+
+  res.status(200).json({
+    message: 'No-show reported successfully',
+    shiftId,
+    staffId: shift.assigneeId,
+    staffName: staffMember?.name || 'Unknown',
+    strikesAdded: noShowResult.strikesAdded,
+    totalStrikes: noShowResult.strikeCount,
+    suspendedUntil: noShowResult.suspendedUntil,
+    reliabilityScore: noShowResult.reliabilityScore,
   });
 }));
 

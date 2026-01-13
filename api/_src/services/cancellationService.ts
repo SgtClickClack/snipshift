@@ -13,6 +13,7 @@ import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as profilesRepo from '../repositories/profiles.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
+import * as reputationService from '../lib/reputation-service.js';
 
 export type HandleStaffCancellationResult =
   | { ok: true; branch: 'late'; updatedShiftId: string }
@@ -51,12 +52,28 @@ function hoursUntil(now: Date, startTime: Date): number {
 /**
  * Increment a staff member's reliability strikes and suspend if threshold reached.
  *
- * Suspension maps to `users.isActive = false` in this codebase.
+ * Uses the new reputation service for late cancellation handling.
+ * Only applies a strike if the cancellation is within 4 hours of shift start.
  */
 export async function triggerPenalty(
   staffId: string,
-  meta: { shiftId: string; timeUntilShiftHours: number }
+  meta: { shiftId: string; timeUntilShiftHours: number; shiftStartTime?: Date }
 ): Promise<{ strikes: number; suspended: boolean } | null> {
+  // Use reputation service for late cancellations (< 4h notice)
+  if (meta.shiftStartTime) {
+    const result = await reputationService.handleLateCancellation(
+      staffId,
+      meta.shiftId,
+      meta.shiftStartTime
+    );
+
+    return {
+      strikes: result.strikeCount,
+      suspended: result.reliabilityScore === 'suspended',
+    };
+  }
+
+  // Fallback: use legacy profiles repo logic if shiftStartTime not provided
   const strikes = await profilesRepo.incrementReliabilityStrikes(staffId);
   if (strikes === null) return null;
 
@@ -135,14 +152,14 @@ export async function handleStaffCancellation(
       );
     });
 
-  const triggerPenaltyImpl = deps.triggerPenalty ?? (async (staffId: string, meta: { shiftId: string; timeUntilShiftHours: number }) => {
+  const triggerPenaltyImpl = deps.triggerPenalty ?? (async (staffId: string, meta: { shiftId: string; timeUntilShiftHours: number; shiftStartTime?: Date }) => {
     await triggerPenalty(staffId, meta);
   });
 
   if (isLateCancellation) {
     // Late cancellation: mark as emergency-fill and alert the venue.
     await Promise.all([
-      triggerPenaltyImpl(params.staffId, { shiftId: params.shiftId, timeUntilShiftHours }),
+      triggerPenaltyImpl(params.staffId, { shiftId: params.shiftId, timeUntilShiftHours, shiftStartTime: startTime }),
       notifyVenue(shift.employerId, 'CRITICAL: Staff cancelled late.', {
         shiftId: params.shiftId,
         staffId: params.staffId,

@@ -1,3 +1,181 @@
+#### 2026-01-13: Automated Strike Recovery Service
+
+**Core Components**
+- Users Schema Update (`api/_src/db/schema/users.ts`)
+- Strike Recovery Migration (`api/_src/db/migrations/006_strike_recovery_progress.sql`)
+- Reputation Service (`api/_src/lib/reputation-service.ts`)
+- Shifts Route Integration (`api/_src/routes/shifts.ts`)
+- Users Route Integration (`api/_src/routes/users.ts`)
+- Users Repository (`api/_src/repositories/users.repository.ts`)
+- ProReliabilityTracker Update (`src/components/dashboard/ProReliabilityTracker.tsx`)
+
+**Key Features**
+- **New `recovery_progress` Field**: Tracks shifts with 4.5+ rating toward strike removal (0-5)
+
+- **`processShiftSuccess(userId, rating)` Function**:
+  - If `user.strikes > 0` AND `rating >= 4.5`: Increment `recovery_progress` by 1
+  - If `recovery_progress >= 5`: Decrement `strikes` by 1, reset `recovery_progress` to 0
+  - If `rating < 3.0`: Reset `recovery_progress` to 0 (poor performance resets redemption)
+
+- **Notifications**:
+  - Strike removed notification when recovery progress reaches 5
+  - Recovery progress reset notification when rating < 3.0
+
+- **Frontend Integration**:
+  - ProReliabilityTracker now uses `recoveryProgress` instead of `shiftsSinceLastStrike`
+  - Progress bar shows 0/5 progress toward strike removal
+
+**Integration Points**
+- Triggered during shift review finalization (`POST /api/shifts/:id/review`)
+- Only processes when shop reviews barber (SHOP_REVIEWING_BARBER) and not a no-show
+- API endpoint `/api/me/reputation` returns `recoveryProgress` field
+
+**File Paths**
+- `api/_src/db/schema/users.ts` (added `recoveryProgress` column)
+- `api/_src/db/migrations/006_strike_recovery_progress.sql` (new)
+- `api/_src/lib/reputation-service.ts` (added `processShiftSuccess` function)
+- `api/_src/routes/shifts.ts` (integrated recovery processing)
+- `api/_src/routes/users.ts` (returns `recoveryProgress` in reputation stats)
+- `api/_src/repositories/users.repository.ts` (mock user includes `recoveryProgress`)
+- `src/components/dashboard/ProReliabilityTracker.tsx` (uses `recoveryProgress`)
+
+**Next Priority Task**
+- Add admin dashboard view for monitoring strike recovery across all professionals
+
+---
+
+#### 2026-01-13: Pro Reliability Tracker Component
+
+**Core Components**
+- ProReliabilityTracker (`src/components/dashboard/ProReliabilityTracker.tsx`)
+- Professional Dashboard Integration (`src/pages/professional-dashboard.tsx`)
+
+**Key Features**
+- **State-Based UI Display**:
+  - 0 Strikes: "Elite Professional" (lime/neon green #BFFF00) - "You have a perfect reliability record!"
+  - 1 Strike: "Good Standing" (amber #FBBF24) - "1 Strike active. Reliability is key to high-paying shifts."
+  - 2+ Strikes: "At Risk" (red #EF4444) - "2 Strikes active. High risk of permanent deactivation."
+
+- **Strike Recovery Progress**:
+  - Progress bar showing 0/5 progress toward strike removal
+  - Text: "Complete X more shifts with 4.5+ stars to remove a strike."
+  - Only shown when strikes > 0
+
+- **Suspension Overlay**:
+  - Full-screen countdown timer when account is suspended
+  - Timer format: HH:MM:SS with real-time updates
+  - Shows restrictions during suspension
+  - Support contact link
+
+**Integration Points**
+- Uses existing `/api/me/reputation` endpoint
+- Lazy-loaded at top of Professional Dashboard overview
+- Auto-refreshes on window focus
+
+**File Paths**
+- `src/components/dashboard/ProReliabilityTracker.tsx` (new)
+- `src/pages/professional-dashboard.tsx` (integration)
+
+**Next Priority Task**
+- Add reliability badge to public professional profile views
+
+---
+
+#### 2026-01-13: Automated Strike Notifications
+
+**Core Components**
+- Suspension Alert Email Template (`api/_src/emails/SuspensionAlertEmail.tsx`)
+- Strike Warning Email Template (`api/_src/emails/StrikeWarningEmail.tsx`)
+- Account Restored Email Template (`api/_src/emails/AccountRestoredEmail.tsx`)
+- Email Service Extensions (`api/_src/services/email.service.ts`)
+- Reputation Service Updates (`api/_src/lib/reputation-service.ts`)
+- Shift Completion Cron Updates (`api/_src/services/shift-completion-cron.ts`)
+
+**Key Features**
+- **No-Show Email (suspension-alert)**:
+  - Template: `SuspensionAlertEmail.tsx` - red alert banner, strike stats, suspension end date
+  - Timing: Immediate - sent when strikes increment by 2 in a single event
+  - Logic: Triggered in `handleNoShow()` after 48h suspension is applied
+
+- **Late Cancellation Email (strike-warning)**:
+  - Template: `StrikeWarningEmail.tsx` - warning banner, status indicator, strike prevention tips
+  - Timing: Immediate - sent when strikes reach 1 or 2 via late cancellation
+  - Logic: Triggered in `handleLateCancellation()` when < 4h notice given
+
+- **Reactivation Email (account-restored)**:
+  - Template: `AccountRestoredEmail.tsx` - success banner, tips for staying in good standing
+  - Timing: After 48 hours - sent when suspension period expires
+  - Logic: Cron job checks for expired suspensions every 5 minutes
+
+**Integration Points**
+- Reputation Service: `handleNoShow()` and `handleLateCancellation()` now send emails
+- Cron Service: `checkSuspensionExpirations()` sends reactivation emails
+- Email Service: New functions `sendSuspensionAlertEmail()`, `sendStrikeWarningEmail()`, `sendAccountRestoredEmail()`
+
+**File Paths**
+- `api/_src/emails/SuspensionAlertEmail.tsx` (new)
+- `api/_src/emails/StrikeWarningEmail.tsx` (new)
+- `api/_src/emails/AccountRestoredEmail.tsx` (new)
+- `api/_src/services/email.service.ts` (3 new email functions added)
+- `api/_src/lib/reputation-service.ts` (email triggers + `checkAndSendReactivationEmails()`)
+- `api/_src/services/shift-completion-cron.ts` (calls `checkSuspensionExpirations()`)
+
+**Next Priority Task**
+- Add email preference settings to allow Pros to opt out of non-critical notifications
+
+---
+
+#### 2026-01-13: Automated Pro Verification Logic
+
+**Core Components**
+- Pro Verification Service (`api/_src/services/pro-verification.service.ts`)
+- Users Schema Update (`api/_src/db/schema/users.ts`)
+- Pro Verification Migration (`api/_src/db/migrations/005_pro_verification.sql`)
+- Verification Badge Components (`src/components/profile/VerificationBadge.tsx`, `VerificationStatusCard.tsx`)
+- Shift Completion Cron Updates (`api/_src/services/shift-completion-cron.ts`)
+- Shifts Route Integration (`api/_src/routes/shifts.ts`)
+- Users Route Integration (`api/_src/routes/users.ts`)
+
+**Key Features**
+- **Profile Requirements**:
+  - Pros must upload RSA certificate photo to unlock 'Alcohol Service' shifts (rsaRequired flag on shifts)
+  - New accounts marked as 'Pending Review' until first successful shift completion (verification_status field)
+
+- **Search Algorithm**:
+  - Prioritizes Pros with 4.8+ rating AND zero 'No-Shows' in the last 30 days
+  - 'Top Rated' badge automatically awarded to Pros with 5+ consecutive 5-star reviews
+  - New `/api/professionals?prioritized=true` endpoint for venues to find best staff
+
+- **Automated Notifications**:
+  - Warning sent to any Pro whose rating drops below 4.0 (verification_status changes to 'at_risk')
+  - Account verified notification on first completed shift
+  - No-show warning notification when incident is recorded
+  - Top Rated badge earned notification
+
+- **New User Fields**: verificationStatus, completedShiftCount, noShowCount, lastNoShowAt, consecutiveFiveStarCount, topRatedBadge, ratingWarningAt
+
+**Integration Points**
+- Shift acceptance: RSA verification check before accepting alcohol service shifts
+- Review submission: Updates verification status, Top Rated badge, and sends rating warnings
+- Shift completion: Upgrades verification status from 'pending_review' to 'verified'
+- Cron service: Hourly sync of Top Rated badges and rating-based status changes
+- New API endpoints: `GET /api/me/verification-status`, `GET /api/me/can-work-alcohol-shifts`
+
+**File Paths**
+- `api/_src/services/pro-verification.service.ts` (new)
+- `api/_src/db/schema/users.ts` (updated with new enum and columns)
+- `api/_src/db/migrations/005_pro_verification.sql` (new)
+- `api/_src/services/shift-completion-cron.ts` (integrated pro verification sync)
+- `api/_src/routes/shifts.ts` (added verification checks and status updates)
+- `api/_src/routes/users.ts` (added verification status endpoints)
+- `src/components/profile/VerificationBadge.tsx` (new)
+- `src/components/profile/VerificationStatusCard.tsx` (new)
+
+**Next Priority Task**
+- Add verification status display to Professional Dashboard and public profile views
+
+---
+
 #### 2026-01-13: Deep Architecture Audit Phase 2 Fixes
 
 **Core Components**

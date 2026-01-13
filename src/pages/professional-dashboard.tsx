@@ -37,6 +37,7 @@ const OfferInbox = lazy(() => import("@/components/shifts/offer-inbox").then(m =
 const PendingReviewNotification = lazy(() => import("@/components/shifts/pending-review-notification"));
 const GoogleMapView = lazy(() => import("@/components/job-feed/google-map-view"));
 const LocationSearch = lazy(() => import("@/components/job-feed/location-search"));
+const ProReliabilityTracker = lazy(() => import("@/components/dashboard/ProReliabilityTracker"));
 
 // Loading fallback component
 const ViewLoader = () => (
@@ -588,6 +589,15 @@ export default function ProfessionalDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Pro Reliability Tracker - Show at top of dashboard */}
+        {activeView === 'overview' && (
+          <div className="mb-6">
+            <Suspense fallback={null}>
+              <ProReliabilityTracker />
+            </Suspense>
+          </div>
+        )}
+
         {/* Job Requests - Only show on overview and invitations views */}
         {(activeView === 'overview' || activeView === 'invitations') && (
           <div className="mb-8">

@@ -21,6 +21,7 @@ import { copyPreviousWeekShifts, createShift, fetchEmployerShifts, fetchProfessi
 import { apiRequest } from '@/lib/queryClient';
 import type { ShiftDetails } from '@/lib/api';
 import { AssignStaffModal, Professional } from '@/components/calendar/assign-staff-modal';
+import { NoShowAction, canReportNoShow } from '@/components/shifts/no-show-action';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
@@ -921,6 +922,23 @@ export default function ShopSchedulePage() {
                 <div>
                   <Label className="text-muted-foreground text-sm">Notes</Label>
                   <div className="text-sm">{selectedConfirmedShift.description}</div>
+                </div>
+              )}
+
+              {/* No-Show Action - Only visible if shift start time has passed */}
+              {selectedConfirmedShift.assigneeId && canReportNoShow(selectedConfirmedShift.status, selectedConfirmedShift.startTime) && (
+                <div className="pt-4 border-t border-border">
+                  <Label className="text-muted-foreground text-sm mb-2 block">Attendance Issue?</Label>
+                  <NoShowAction
+                    shiftId={selectedConfirmedShift.id}
+                    shiftStatus={selectedConfirmedShift.status}
+                    shiftStartTime={selectedConfirmedShift.startTime}
+                    assigneeName={selectedConfirmedShift.assigneeName}
+                    onSuccess={() => {
+                      setDetailsModalOpen(false);
+                      setSelectedConfirmedShift(null);
+                    }}
+                  />
                 </div>
               )}
             </div>

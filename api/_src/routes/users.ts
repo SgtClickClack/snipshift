@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as profilesRepo from '../repositories/profiles.repository.js';
 import * as emailService from '../services/email.service.js';
+import * as proVerificationService from '../services/pro-verification.service.js';
 import { auth } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 import { z } from 'zod';
@@ -269,6 +270,44 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
 }));
 
 /**
+ * GET /api/me/verification-status
+ *
+ * Returns the current user's pro verification status
+ * Includes: verificationStatus, completedShiftCount, noShowCount, topRatedBadge, etc.
+ */
+router.get('/me/verification-status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const status = await proVerificationService.getProVerificationStatus(req.user.id);
+  
+  if (!status) {
+    res.status(404).json({ message: 'Verification status not found' });
+    return;
+  }
+
+  res.status(200).json(status);
+}));
+
+/**
+ * GET /api/me/can-work-alcohol-shifts
+ *
+ * Check if the current user can work alcohol service shifts
+ * Returns eligibility status and reasons
+ */
+router.get('/me/can-work-alcohol-shifts', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const result = await proVerificationService.canWorkAlcoholServiceShift(req.user.id);
+  res.status(200).json(result);
+}));
+
+/**
  * GET /api/professionals
  *
  * Returns a lightweight list of professionals for business scheduling/invites.
@@ -276,16 +315,34 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
  *
  * Query Parameters:
  * - search: optional free-text search (name/email)
+ * - rsaRequired: if true, only returns professionals with RSA certificates
+ * - prioritized: if true, sorts by rating and reliability (4.8+ rating, zero no-shows)
  * - limit: max results (default 100, max 200)
  * - offset: pagination offset (default 0)
  */
 router.get('/professionals', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+  const rsaRequired = req.query.rsaRequired === 'true';
+  const prioritized = req.query.prioritized === 'true';
   const limitRaw = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 100;
   const offsetRaw = typeof req.query.offset === 'string' ? parseInt(req.query.offset, 10) : 0;
   const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 100;
   const offset = Number.isFinite(offsetRaw) ? Math.max(offsetRaw, 0) : 0;
 
+  // Use prioritized search if requested (for venues looking to fill shifts)
+  if (prioritized) {
+    const result = await proVerificationService.searchProsWithPrioritization({
+      search: search.length > 0 ? search : undefined,
+      rsaRequired,
+      limit,
+      offset,
+    });
+
+    res.status(200).json(result);
+    return;
+  }
+
+  // Standard search (backwards compatible)
   const result = await usersRepo.listProfessionals({
     search: search.length > 0 ? search : undefined,
     limit,
@@ -974,6 +1031,39 @@ router.get('/users/:id', asyncHandler(async (req, res) => {
     reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
     joinedDate: user.createdAt.toISOString(),
     verified: user.isOnboarded,
+  });
+}));
+
+// Get current user's reputation stats (for professionals)
+router.get('/me/reputation', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const userId = req.user.id;
+  
+  // Import reputation service dynamically to avoid circular deps
+  const reputationService = await import('../lib/reputation-service.js');
+  
+  const stats = await reputationService.getUserReputationStats(userId);
+  
+  if (!stats) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  res.status(200).json({
+    strikes: stats.strikes,
+    reliabilityScore: stats.reliabilityScore,
+    reliabilityLabel: stats.reliabilityLabel,
+    shiftsSinceLastStrike: stats.shiftsSinceLastStrike,
+    shiftsUntilStrikeRemoval: stats.shiftsUntilStrikeRemoval,
+    recoveryProgress: stats.recoveryProgress,
+    suspendedUntil: stats.suspendedUntil?.toISOString() || null,
+    isSuspended: stats.isSuspended,
+    completedShiftCount: stats.completedShiftCount,
+    noShowCount: stats.noShowCount,
   });
 }));
 

@@ -10,6 +10,9 @@ import WelcomeEmail from '../emails/WelcomeEmail.js';
 import ApplicationStatusEmail from '../emails/ApplicationStatusEmail.js';
 import NewMessageEmail from '../emails/NewMessageEmail.js';
 import JobAlertEmail from '../emails/JobAlertEmail.js';
+import SuspensionAlertEmail from '../emails/SuspensionAlertEmail.js';
+import StrikeWarningEmail from '../emails/StrikeWarningEmail.js';
+import AccountRestoredEmail from '../emails/AccountRestoredEmail.js';
 import * as emailTemplates from './email-templates.js';
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'HospoGo <noreply@hospogo.com>';
@@ -250,3 +253,160 @@ export async function notifyApplicationReceived(
   return await sendEmail(ownerEmail, subject, html);
 }
 
+/**
+ * Send suspension alert email (no-show: +2 strikes)
+ * Sent immediately when strikes increment by 2 in a single event
+ */
+export async function sendSuspensionAlertEmail(
+  userEmail: string,
+  userName: string,
+  strikesAdded: number,
+  totalStrikes: number,
+  suspendedUntil: Date,
+  shiftTitle?: string,
+  shiftDate?: string
+): Promise<boolean> {
+  if (!isEmailServiceAvailable() || !resend) {
+    console.warn('[EMAIL] Email service not available, skipping suspension alert email');
+    return false;
+  }
+
+  try {
+    const emailHtml = await render(
+      SuspensionAlertEmail({
+        userName,
+        strikesAdded,
+        totalStrikes,
+        suspendedUntil: suspendedUntil.toLocaleString('en-AU', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZoneName: 'short',
+        }),
+        shiftTitle,
+        shiftDate,
+      })
+    );
+
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: userEmail,
+      subject: '⚠️ Account Suspended - No Show Violation',
+      html: emailHtml,
+    });
+
+    if (error) {
+      console.error('[EMAIL] Failed to send suspension alert email:', error);
+      return false;
+    }
+
+    console.log(`[EMAIL] Suspension alert sent to ${userEmail}`);
+    return true;
+  } catch (error) {
+    console.error('[EMAIL] Error sending suspension alert email:', error);
+    return false;
+  }
+}
+
+/**
+ * Send strike warning email (late cancellation: +1 strike)
+ * Sent immediately when strikes reach 1 or 2 via cancellation
+ */
+export async function sendStrikeWarningEmail(
+  userEmail: string,
+  userName: string,
+  strikesAdded: number,
+  totalStrikes: number,
+  reason: 'late_cancellation' | 'no_show' | 'other',
+  hoursNotice?: number,
+  shiftTitle?: string,
+  shiftDate?: string
+): Promise<boolean> {
+  if (!isEmailServiceAvailable() || !resend) {
+    console.warn('[EMAIL] Email service not available, skipping strike warning email');
+    return false;
+  }
+
+  try {
+    const emailHtml = await render(
+      StrikeWarningEmail({
+        userName,
+        strikesAdded,
+        totalStrikes,
+        reason,
+        hoursNotice,
+        shiftTitle,
+        shiftDate,
+      })
+    );
+
+    const subject = totalStrikes >= 2
+      ? '⚡ Strike Warning - Account At Risk'
+      : '⚡ Strike Warning - Late Cancellation';
+
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: userEmail,
+      subject,
+      html: emailHtml,
+    });
+
+    if (error) {
+      console.error('[EMAIL] Failed to send strike warning email:', error);
+      return false;
+    }
+
+    console.log(`[EMAIL] Strike warning sent to ${userEmail}`);
+    return true;
+  } catch (error) {
+    console.error('[EMAIL] Error sending strike warning email:', error);
+    return false;
+  }
+}
+
+/**
+ * Send account restored email (after 48h suspension expires)
+ * Notifies Pro when their suspension period ends
+ */
+export async function sendAccountRestoredEmail(
+  userEmail: string,
+  userName: string,
+  currentStrikes: number,
+  shiftsUntilStrikeRemoval: number
+): Promise<boolean> {
+  if (!isEmailServiceAvailable() || !resend) {
+    console.warn('[EMAIL] Email service not available, skipping account restored email');
+    return false;
+  }
+
+  try {
+    const emailHtml = await render(
+      AccountRestoredEmail({
+        userName,
+        currentStrikes,
+        shiftsUntilStrikeRemoval,
+      })
+    );
+
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: userEmail,
+      subject: '✅ Your HospoGo Account Has Been Restored',
+      html: emailHtml,
+    });
+
+    if (error) {
+      console.error('[EMAIL] Failed to send account restored email:', error);
+      return false;
+    }
+
+    console.log(`[EMAIL] Account restored email sent to ${userEmail}`);
+    return true;
+  } catch (error) {
+    console.error('[EMAIL] Error sending account restored email:', error);
+    return false;
+  }
+}

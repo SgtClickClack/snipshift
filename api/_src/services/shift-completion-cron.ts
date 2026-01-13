@@ -2,11 +2,16 @@
  * Shift Completion Cron Service
  * 
  * Automatically flags shifts as "pending_completion" 1 hour after their endTime
+ * Also handles pro verification status updates:
+ * - Top Rated badge sync
+ * - Low rating warnings
  */
 
 import { eq, and, sql, lt, isNotNull, or, isNull } from 'drizzle-orm';
 import { shifts } from '../db/schema.js';
 import { getDb } from '../db/index.js';
+import * as proVerificationService from './pro-verification.service.js';
+import * as reputationService from '../lib/reputation-service.js';
 
 const CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check every 5 minutes
 const HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
@@ -79,6 +84,60 @@ async function checkPendingCompletions(): Promise<void> {
 }
 
 /**
+ * Sync pro verification statuses (Top Rated badges, rating warnings)
+ * Runs every hour to ensure consistency
+ */
+let lastVerificationSyncTime = 0;
+const VERIFICATION_SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+
+async function syncProVerificationStatuses(): Promise<void> {
+  const now = Date.now();
+  
+  // Only run hourly
+  if (now - lastVerificationSyncTime < VERIFICATION_SYNC_INTERVAL_MS) {
+    return;
+  }
+  
+  lastVerificationSyncTime = now;
+
+  try {
+    console.log('[SHIFT_CRON] Running pro verification status sync...');
+    
+    // Sync Top Rated badges
+    const badgesSynced = await proVerificationService.syncTopRatedBadges();
+    if (badgesSynced > 0) {
+      console.log(`[SHIFT_CRON] Synced ${badgesSynced} Top Rated badge(s)`);
+    }
+
+    // Sync verification statuses for rating changes
+    const { usersWarned, usersRestored } = await proVerificationService.syncVerificationStatusForLowRatings();
+    if (usersWarned > 0) {
+      console.log(`[SHIFT_CRON] Warned ${usersWarned} user(s) about low ratings`);
+    }
+    if (usersRestored > 0) {
+      console.log(`[SHIFT_CRON] Restored ${usersRestored} user(s) from at_risk status`);
+    }
+  } catch (error) {
+    console.error('[SHIFT_CRON] Error syncing pro verification statuses:', error);
+  }
+}
+
+/**
+ * Check for expired suspensions and send reactivation emails
+ * Runs every 5 minutes to catch suspension expirations promptly
+ */
+async function checkSuspensionExpirations(): Promise<void> {
+  try {
+    const { processed, emailsSent } = await reputationService.checkAndSendReactivationEmails();
+    if (emailsSent > 0) {
+      console.log(`[SHIFT_CRON] Sent ${emailsSent} reactivation email(s) to restored accounts`);
+    }
+  } catch (error) {
+    console.error('[SHIFT_CRON] Error checking suspension expirations:', error);
+  }
+}
+
+/**
  * Start the cron job
  */
 export function startShiftCompletionCron(): void {
@@ -91,10 +150,14 @@ export function startShiftCompletionCron(): void {
   
   // Run immediately on start
   checkPendingCompletions();
+  syncProVerificationStatuses();
+  checkSuspensionExpirations();
 
   // Then run every 5 minutes
   intervalId = setInterval(() => {
     checkPendingCompletions();
+    syncProVerificationStatuses();
+    checkSuspensionExpirations();
   }, CHECK_INTERVAL_MS);
 }
 

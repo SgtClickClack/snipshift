@@ -1,4 +1,5 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -70,6 +71,18 @@ interface Review {
   reviewerName?: string;
 }
 
+interface ReputationStats {
+  strikes: number;
+  reliabilityScore: 'highly_reliable' | 'good' | 'at_risk' | 'suspended';
+  reliabilityLabel: string;
+  shiftsSinceLastStrike: number;
+  shiftsUntilStrikeRemoval: number;
+  suspendedUntil: string | null;
+  isSuspended: boolean;
+  completedShiftCount: number;
+  noShowCount: number;
+}
+
 interface ProfessionalProfile {
   displayName: string;
   professionalTitle?: string;
@@ -97,6 +110,8 @@ interface ProfessionalProfile {
   jobSuccessScore?: number;
   totalShiftsCompleted?: number;
   onTimeRate?: number;
+  // Reputation stats
+  reputationStats?: ReputationStats;
 }
 
 interface ProfessionalDigitalResumeProps {
@@ -158,6 +173,24 @@ export default function ProfessionalDigitalResume({
     ...defaultProfile,
     ...initialProfile,
   });
+
+  // Fetch reputation stats
+  const { data: reputationStats } = useQuery<ReputationStats>({
+    queryKey: ['/api/me/reputation'],
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Update profile with reputation stats when they load
+  useEffect(() => {
+    if (reputationStats) {
+      setProfile(prev => ({
+        ...prev,
+        reputationStats,
+        totalShiftsCompleted: reputationStats.completedShiftCount,
+      }));
+    }
+  }, [reputationStats]);
 
   const handleIdentityUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -819,7 +852,64 @@ export default function ProfessionalDigitalResume({
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                  {/* Reliability Score - New prominent stat */}
+                  <div className={`flex items-center gap-3 p-3 rounded-lg ${
+                    profile.reputationStats?.reliabilityScore === 'highly_reliable' 
+                      ? 'bg-green-50 dark:bg-green-900/20' 
+                      : profile.reputationStats?.reliabilityScore === 'good'
+                      ? 'bg-blue-50 dark:bg-blue-900/20'
+                      : profile.reputationStats?.reliabilityScore === 'at_risk'
+                      ? 'bg-yellow-50 dark:bg-yellow-900/20'
+                      : profile.reputationStats?.reliabilityScore === 'suspended'
+                      ? 'bg-red-50 dark:bg-red-900/20'
+                      : 'bg-muted/50'
+                  }`}>
+                    <div className={`p-2 rounded-lg ${
+                      profile.reputationStats?.reliabilityScore === 'highly_reliable' 
+                        ? 'bg-green-100 dark:bg-green-800/30' 
+                        : profile.reputationStats?.reliabilityScore === 'good'
+                        ? 'bg-blue-100 dark:bg-blue-800/30'
+                        : profile.reputationStats?.reliabilityScore === 'at_risk'
+                        ? 'bg-yellow-100 dark:bg-yellow-800/30'
+                        : profile.reputationStats?.reliabilityScore === 'suspended'
+                        ? 'bg-red-100 dark:bg-red-800/30'
+                        : 'bg-primary/10'
+                    }`}>
+                      <CheckCircle2 className={`h-5 w-5 ${
+                        profile.reputationStats?.reliabilityScore === 'highly_reliable' 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : profile.reputationStats?.reliabilityScore === 'good'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : profile.reputationStats?.reliabilityScore === 'at_risk'
+                          ? 'text-yellow-600 dark:text-yellow-400'
+                          : profile.reputationStats?.reliabilityScore === 'suspended'
+                          ? 'text-red-600 dark:text-red-400'
+                          : 'text-primary'
+                      }`} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Reliability Score</p>
+                      <p className={`text-lg font-bold ${
+                        profile.reputationStats?.reliabilityScore === 'highly_reliable' 
+                          ? 'text-green-700 dark:text-green-300' 
+                          : profile.reputationStats?.reliabilityScore === 'good'
+                          ? 'text-blue-700 dark:text-blue-300'
+                          : profile.reputationStats?.reliabilityScore === 'at_risk'
+                          ? 'text-yellow-700 dark:text-yellow-300'
+                          : profile.reputationStats?.reliabilityScore === 'suspended'
+                          ? 'text-red-700 dark:text-red-300'
+                          : ''
+                      }`}>
+                        {profile.reputationStats?.reliabilityLabel || 'Highly Reliable'}
+                      </p>
+                      {profile.reputationStats?.shiftsUntilStrikeRemoval && profile.reputationStats.shiftsUntilStrikeRemoval > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {profile.reputationStats.shiftsUntilStrikeRemoval} shifts until improvement
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                     <div className="p-2 bg-primary/10 rounded-lg">
                       <Star className="h-5 w-5 text-primary" />

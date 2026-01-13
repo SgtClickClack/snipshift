@@ -8,7 +8,14 @@ import * as notificationsRepo from '../repositories/notifications.repository.js'
 import * as usersRepo from '../repositories/users.repository.js';
 import { notificationBus } from '../services/notification.service.js';
 
-export type NotificationType = 'SHIFT_INVITE' | 'SHIFT_CONFIRMED' | 'SHIFT_CANCELLED' | 'SYSTEM';
+export type NotificationType = 'SHIFT_INVITE' | 'SHIFT_CONFIRMED' | 'SHIFT_CANCELLED' | 'SYSTEM' | 'STRIKE_ADDED' | 'STRIKE_REMOVED';
+
+export interface CreateNotificationParams {
+  type: string;
+  title: string;
+  message: string;
+  data?: Record<string, any>;
+}
 
 export interface ShiftDetails {
   id: string;
@@ -59,6 +66,29 @@ export async function createInAppNotification(
     });
     throw error;
   }
+}
+
+/**
+ * Create a notification (wrapper for createInAppNotification with flexible params)
+ * Used by services like reputation-service.ts
+ */
+export async function createNotification(
+  userId: string,
+  params: CreateNotificationParams
+): Promise<any> {
+  // Map custom types to base notification types
+  let notificationType: NotificationType = 'SYSTEM';
+  if (params.type === 'strike_added' || params.type === 'strike_removed') {
+    notificationType = 'SYSTEM';
+  }
+
+  return createInAppNotification(
+    userId,
+    notificationType,
+    params.title,
+    params.message,
+    params.data
+  );
 }
 
 /**
