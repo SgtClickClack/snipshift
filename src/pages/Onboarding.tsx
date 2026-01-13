@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/seo/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { useUserSync } from '@/hooks/useUserSync';
 import { apiRequest } from '@/lib/queryClient';
 import { auth } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, SkipForward, AlertCircle, Building2, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SkipForward, AlertCircle, Building2, User, Loader2 } from 'lucide-react';
 import { RSALocker } from '@/components/profile/RSALocker';
 import { GovernmentIDLocker } from '@/components/profile/GovernmentIDLocker';
 import PayoutSettings from '@/components/payments/payout-settings';
@@ -33,9 +34,10 @@ type StaffOnboardingData = {
 };
 
 export default function Onboarding() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, isAuthenticated, isAuthReady, isLoading, token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isSynced, isPolling } = useUserSync({ enabled: true });
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,8 +45,46 @@ export default function Onboarding() {
   const [documentsSkipped, setDocumentsSkipped] = useState(false);
   const [payoutSkipped, setPayoutSkipped] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'professional' | 'venue' | null>(null);
+  const [isVerifyingUser, setIsVerifyingUser] = useState(true);
+
+  // Wait for auth to be ready and verify user exists in database before showing onboarding
+  useEffect(() => {
+    if (!isAuthReady) return;
+    
+    // Force session refresh if user is stale or missing
+    const refreshSessionIfNeeded = async () => {
+      if (!user && !isLoading && isAuthenticated) {
+        console.log('[Onboarding] User object is null but authenticated, refreshing session...');
+        try {
+          await refreshUser();
+        } catch (error) {
+          console.error('[Onboarding] Failed to refresh session:', error);
+        }
+      }
+    };
+    
+    refreshSessionIfNeeded();
+    
+    // If auth is ready but no user, redirect to login
+    if (!user && !isLoading) {
+      // Give a small grace period for the user profile to load
+      const timeout = setTimeout(() => {
+        if (!user) {
+          navigate('/login', { replace: true });
+        }
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+    
+    // User is verified, allow onboarding to proceed
+    if (user && user.id) {
+      setIsVerifyingUser(false);
+    }
+  }, [isAuthReady, isLoading, isAuthenticated, user, navigate, refreshUser]);
 
   useEffect(() => {
+    if (isVerifyingUser) return; // Don't process role preferences until user is verified
+    
     const rolePreference = sessionStorage.getItem('signupRolePreference');
     if (rolePreference === 'hub') {
       sessionStorage.removeItem('signupRolePreference');
@@ -54,7 +94,7 @@ export default function Onboarding() {
       setSelectedRole('professional');
       setCurrentStep(1);
     }
-  }, [navigate]);
+  }, [navigate, isVerifyingUser]);
 
   const [formData, setFormData] = useState<StaffOnboardingData>(() => ({
     displayName: user?.displayName || user?.name || '',
@@ -65,6 +105,7 @@ export default function Onboarding() {
     hourlyRatePreference: user?.hourlyRatePreference != null ? String(user.hourlyRatePreference) : '',
     bio: user?.bio || '',
   }));
+
   const hasInitializedFromUser = useRef(false);
   useEffect(() => {
     if (!user) return;
@@ -104,31 +145,103 @@ export default function Onboarding() {
   const updateFormData = (updates: Partial<StaffOnboardingData>) => setFormData((prev) => ({ ...prev, ...updates }));
 
   const saveStepData = async () => {
-    if (!user) return;
-    if (currentStep === 1) {
-      await apiRequest('PUT', '/api/me', { displayName: formData.displayName, phone: formData.phone, location: formData.location, avatarUrl: formData.avatarUrl || undefined });
-      await refreshUser();
+    // Explicit null check with detailed error logging
+    if (!user?.id) {
+      console.error('[Onboarding] saveStepData: User ID not found', { 
+        hasUser: !!user, 
+        userId: user?.id,
+        currentStep 
+      });
+      throw new Error('User session not available. Please refresh the page.');
     }
-    if (currentStep === 3) {
-      await apiRequest('PUT', '/api/me', { hospitalityRole: formData.hospitalityRole || undefined, hourlyRatePreference: formData.hourlyRatePreference || undefined, bio: formData.bio || undefined });
-      await refreshUser();
+    
+    try {
+      if (currentStep === 1) {
+        await apiRequest('PUT', '/api/me', { 
+          displayName: formData.displayName, 
+          phone: formData.phone, 
+          location: formData.location, 
+          avatarUrl: formData.avatarUrl || undefined 
+        });
+        await refreshUser();
+      }
+      if (currentStep === 3) {
+        await apiRequest('PUT', '/api/me', { 
+          hospitalityRole: formData.hospitalityRole || undefined, 
+          hourlyRatePreference: formData.hourlyRatePreference || undefined, 
+          bio: formData.bio || undefined 
+        });
+        await refreshUser();
+      }
+    } catch (error: any) {
+      console.error('[Onboarding] Error saving step data:', {
+        error: error?.message || error,
+        currentStep,
+        userId: user?.id,
+        status: error?.status,
+        response: error?.response
+      });
+      throw error; // Re-throw so handleNext can catch it
     }
   };
 
   const handleNext = async () => {
     if (!canProceed) return;
     if (currentStep >= TOTAL_STEPS - 1) return;
+    
+    // CRITICAL: Check user.id before proceeding to prevent crash
+    if (!user?.id) {
+      console.error('[Onboarding] User ID not found, attempting to refresh session...');
+      toast({ 
+        title: 'Session expired', 
+        description: 'Please wait while we refresh your session...', 
+        variant: 'destructive' 
+      });
+      try {
+        await refreshUser();
+        // If still no user after refresh, show error
+        if (!user?.id) {
+          toast({ 
+            title: 'Authentication required', 
+            description: 'Please sign in again to continue.', 
+            variant: 'destructive' 
+          });
+          navigate('/login', { replace: true });
+        }
+      } catch (refreshError) {
+        console.error('[Onboarding] Failed to refresh user:', refreshError);
+        toast({ 
+          title: 'Session error', 
+          description: 'Please sign in again to continue.', 
+          variant: 'destructive' 
+        });
+        navigate('/login', { replace: true });
+      }
+      return;
+    }
+    
+    // Step 0: Role selection - no API call needed, just transition
     if (currentStep === 0) {
-      if (selectedRole === 'venue') { navigate('/onboarding/hub', { replace: true }); return; }
+      if (selectedRole === 'venue') { 
+        navigate('/onboarding/hub', { replace: true }); 
+        return; 
+      }
       setCurrentStep(1);
       return;
     }
+    
+    // Steps 1+: Save data before proceeding
     setIsSavingStep(true);
     try {
       await saveStepData();
       setCurrentStep((prev) => prev + 1);
     } catch (error: any) {
-      toast({ title: 'Could not save', description: error?.message || 'Please try again.', variant: 'destructive' });
+      console.error('[Onboarding] Error saving step data:', error);
+      toast({ 
+        title: 'Could not save', 
+        description: error?.message || 'Please try again.', 
+        variant: 'destructive' 
+      });
     } finally {
       setIsSavingStep(false);
     }
@@ -137,7 +250,7 @@ export default function Onboarding() {
   const handleBack = () => { if (currentStep <= 0) return; setCurrentStep((prev) => prev - 1); };
 
   const handleComplete = async () => {
-    if (!user) return;
+    if (!user?.id) return; // Use optional chaining to prevent crash if user is null
     if (!canProceed) return;
     setIsSubmitting(true);
     try {
@@ -146,13 +259,16 @@ export default function Onboarding() {
       await apiRequest('POST', '/api/onboarding/complete', { role: 'professional', displayName: formData.displayName, phone: formData.phone, bio: formData.bio || undefined, location: formData.location, avatarUrl: formData.avatarUrl || undefined });
       // Force refresh token to get updated claims
       if (auth.currentUser) await auth.currentUser.getIdToken(true);
+      // Refresh user data and navigate to dashboard
       await refreshUser();
       navigate('/dashboard', { replace: true });
     } catch (error: any) {
+      console.error('Onboarding completion error:', error);
       toast({ title: 'Setup Failed', description: error?.message || 'Failed to complete onboarding. Please try again.', variant: 'destructive' });
-    setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
+
   const renderStep = () => {
     switch (currentStep) {
       case 0:
@@ -163,12 +279,44 @@ export default function Onboarding() {
               <p className="text-gray-300">Select your role to get started</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button type="button" onClick={() => setSelectedRole('professional')} className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  // Hydration guard: prevent crash if user is not yet loaded
+                  if (!user || !user.id) {
+                    toast({ 
+                      title: 'Please wait', 
+                      description: 'Your profile is still loading. Please try again in a moment.', 
+                      variant: 'destructive' 
+                    });
+                    return;
+                  }
+                  setSelectedRole('professional');
+                }}
+                disabled={!user || !user.id || isPolling}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(!user || !user.id || isPolling) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 <div className={`p-4 rounded-full mb-4 ${selectedRole === 'professional' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><User className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${selectedRole === 'professional' ? 'text-brand-neon' : 'text-white'}`}>I'm looking for shifts</h3>
                 <p className="text-sm text-gray-400 text-center">Pick up hospitality shifts and get paid</p>
               </button>
-              <button type="button" onClick={() => setSelectedRole('venue')} className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  // Hydration guard: prevent crash if user is not yet loaded
+                  if (!user || !user.id) {
+                    toast({ 
+                      title: 'Please wait', 
+                      description: 'Your profile is still loading. Please try again in a moment.', 
+                      variant: 'destructive' 
+                    });
+                    return;
+                  }
+                  setSelectedRole('venue');
+                }}
+                disabled={!user || !user.id || isPolling}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(!user || !user.id || isPolling) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 <div className={`p-4 rounded-full mb-4 ${selectedRole === 'venue' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><Building2 className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${selectedRole === 'venue' ? 'text-brand-neon' : 'text-white'}`}>I need to fill shifts</h3>
                 <p className="text-sm text-gray-400 text-center">Post shifts and find reliable staff</p>
@@ -196,7 +344,7 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Document Verification</h2><p className="text-gray-300">To accept shifts, you'll need to verify your identity and credentials.</p></div>
             {!documentsSkipped && (<div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"><div className="flex items-start gap-3"><div className="rounded-full bg-brand-neon/20 p-2 mt-0.5"><SkipForward className="h-4 w-4 text-brand-neon" /></div><div className="flex-1"><h3 className="font-medium text-white mb-1">Want to explore first?</h3><p className="text-sm text-gray-400 mb-3">Skip this step and upload your documents later from your profile settings.</p><Button type="button" variant="outline" onClick={() => setDocumentsSkipped(true)} className="border-zinc-600 hover:bg-zinc-700"><SkipForward className="h-4 w-4 mr-2" />Skip for now</Button></div></div></div>)}
-            {documentsSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can upload your documents anytime from <span className="font-semibold">Settings - Verification</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => setDocumentsSkipped(false)} className="w-full text-gray-400 hover:text-white">Changed your mind? Upload documents now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">- or upload now -</p></div><RSALocker /><GovernmentIDLocker /></div>)}
+            {documentsSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can upload your documents anytime from <span className="font-semibold">Settings → Verification</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => setDocumentsSkipped(false)} className="w-full text-gray-400 hover:text-white">Changed your mind? Upload documents now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">— or upload now —</p></div><RSALocker /><GovernmentIDLocker /></div>)}
           </div>
         );
       case 3:
@@ -215,13 +363,41 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Stripe Payout Setup</h2><p className="text-gray-300">Set up your payout account so you can get paid automatically.</p></div>
             {!payoutSkipped && (<div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"><div className="flex items-start gap-3"><div className="rounded-full bg-brand-neon/20 p-2 mt-0.5"><SkipForward className="h-4 w-4 text-brand-neon" /></div><div className="flex-1"><h3 className="font-medium text-white mb-1">Set up payouts later?</h3><p className="text-sm text-gray-400 mb-3">Skip this step and set up your bank account later from your profile settings.</p><Button type="button" variant="outline" onClick={() => setPayoutSkipped(true)} className="border-zinc-600 hover:bg-zinc-700"><SkipForward className="h-4 w-4 mr-2" />Skip for now</Button></div></div></div>)}
-            {payoutSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can set up your payout account anytime from <span className="font-semibold">Settings - Payments</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => setPayoutSkipped(false)} className="w-full text-gray-400 hover:text-white">Changed your mind? Set up payouts now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">- or set up now -</p></div><div className="bg-white rounded-lg p-4"><PayoutSettings /></div></div>)}
+            {payoutSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can set up your payout account anytime from <span className="font-semibold">Settings → Payments</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => setPayoutSkipped(false)} className="w-full text-gray-400 hover:text-white">Changed your mind? Set up payouts now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">— or set up now —</p></div><div className="bg-white rounded-lg p-4"><PayoutSettings /></div></div>)}
           </div>
         );
       default:
         return null;
     }
   };
+
+  // Check if there's a Firebase session (user might have signed in but profile not yet created)
+  const hasFirebaseSession = !!auth.currentUser || !!token;
+  
+  // Show loader until:
+  // 1. Auth is ready
+  // 2. We have either a Firebase session OR user is authenticated
+  // 3. For step 0, we need user to be fully synced with an ID before showing role selector
+  // 4. For other steps, we can show content but guard against undefined user in handlers
+  const shouldShowLoader = !isAuthReady || 
+    !hasFirebaseSession || 
+    (currentStep === 0 && (!isSynced || !user?.id || isPolling));
+
+  if (shouldShowLoader) {
+    return (
+      <>
+        <SEO title="Staff Onboarding" description="Complete your staff profile to start browsing shifts." url="/onboarding" />
+        <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-brand-neon mx-auto" />
+            <h2 className="text-xl font-semibold text-white">Preparing your HospoGo Workspace...</h2>
+            <p className="text-gray-400">Setting up your account, just a moment</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <SEO title="Staff Onboarding" description="Complete your staff profile to start browsing shifts." url="/onboarding" />
@@ -241,9 +417,28 @@ export default function Onboarding() {
               <div className="flex justify-between mt-8 pt-6 border-t border-zinc-800">
                 <Button type="button" variant="outline" onClick={handleBack} disabled={currentStep === 0 || isSavingStep || isSubmitting} className="steel" data-testid="onboarding-back"><ChevronLeft className="h-4 w-4 mr-2" />Back</Button>
                 {currentStep < TOTAL_STEPS - 1 ? (
-                  <Button type="button" onClick={handleNext} disabled={!canProceed || isSavingStep} variant="accent" className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" data-testid="onboarding-next">{isSavingStep ? 'Saving...' : 'Next'}<ChevronRight className="h-4 w-4 ml-2" /></Button>
+                  <Button 
+                    type="button" 
+                    onClick={handleNext} 
+                    disabled={!canProceed || isSavingStep || !user?.id} 
+                    variant="accent" 
+                    className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" 
+                    data-testid="onboarding-next"
+                  >
+                    {isSavingStep ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
                 ) : (
-                  <Button type="button" onClick={handleComplete} disabled={!canProceed || isSubmitting} variant="accent" className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" data-testid="onboarding-complete">{isSubmitting ? 'Completing...' : 'Complete Onboarding'}</Button>
+                  <Button type="button" onClick={handleComplete} disabled={!canProceed || isSubmitting || !user?.id} variant="accent" className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" data-testid="onboarding-complete">{isSubmitting ? 'Completing...' : 'Complete Onboarding'}</Button>
                 )}
               </div>
             </CardContent>

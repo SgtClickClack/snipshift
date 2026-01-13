@@ -614,10 +614,53 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   }
 
   // Update user in database
-  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  let updatedUser;
+  try {
+    updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  } catch (dbError: any) {
+    // Detailed error logging for database write failures
+    console.error('[PUT /api/me] Database write failed:', {
+      userId: req.user.id,
+      error: dbError?.message || dbError,
+      errorCode: dbError?.code,
+      errorName: dbError?.name,
+      updates: Object.keys(updates),
+      // Check for common database errors
+      isUniqueConstraint: dbError?.code === '23505' || dbError?.message?.includes('unique constraint'),
+      isNullConstraint: dbError?.code === '23502' || dbError?.message?.includes('null constraint'),
+      isForeignKeyConstraint: dbError?.code === '23503' || dbError?.message?.includes('foreign key'),
+      stack: dbError?.stack
+    });
+    
+    // Return appropriate error response
+    if (dbError?.code === '23505' || dbError?.message?.includes('unique constraint')) {
+      res.status(409).json({ 
+        message: 'A record with this information already exists. Please check your input.',
+        error: 'UNIQUE_CONSTRAINT_VIOLATION'
+      });
+      return;
+    }
+    if (dbError?.code === '23502' || dbError?.message?.includes('null constraint')) {
+      res.status(400).json({ 
+        message: 'Required field is missing. Please check all required fields are filled.',
+        error: 'NULL_CONSTRAINT_VIOLATION'
+      });
+      return;
+    }
+    
+    // Generic database error
+    res.status(500).json({ 
+      message: 'Failed to update profile. Please try again.',
+      error: 'DATABASE_ERROR'
+    });
+    return;
+  }
 
   if (!updatedUser) {
-    console.error('[PUT /api/me] User not found:', req.user.id);
+    console.error('[PUT /api/me] User not found after update attempt:', {
+      userId: req.user.id,
+      updates: Object.keys(updates)
+    });
     res.status(404).json({ message: 'User not found' });
     return;
   }
