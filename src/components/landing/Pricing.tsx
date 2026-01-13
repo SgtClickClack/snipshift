@@ -98,7 +98,7 @@ export default function Pricing() {
               }`}
             >
               {plan.badge && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20" data-testid="pricing-badge">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20" data-testid={`pricing-badge-${plan.name.toLowerCase()}`}>
                   <span className="bg-[#BFFF00] text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
                     {plan.badge}
                   </span>
@@ -151,9 +151,10 @@ export default function Pricing() {
                     </Button>
                   </Link>
                 ) : plan.cta === "Start 14-Day Free Trial" ? (
-                  <Link to="/signup?plan=business&trial=true" className="w-full">
+                  <Link to="/signup?plan=business&trial=true" className="w-full" data-testid="business-trial-cta">
                     <Button
                       className="w-full font-black py-4 rounded-full bg-[#BFFF00] text-black hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300"
+                      data-testid="business-trial-button"
                     >
                       {plan.cta}
                     </Button>
