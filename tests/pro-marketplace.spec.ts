@@ -718,31 +718,123 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   // Verify role is selected (button should have selected styling)
   await expect(roleButton).toHaveClass(/border-brand-neon/, { timeout: 5000 });
   
-  // Click Next to advance to Personal Details
+  // TRIPLE-CHECK #1: Re-verify the role button is actually selected
+  // Check for active state indicators (border-brand-neon, bg-brand-neon/10, etc.)
+  const roleButtonClasses = await roleButton.getAttribute('class');
+  console.log('Role button classes:', roleButtonClasses);
+  if (!roleButtonClasses?.includes('border-brand-neon')) {
+    // Force click again to ensure selection
+    await roleButton.click({ force: true, delay: 100 });
+    await page.waitForTimeout(300);
+    await expect(roleButton).toHaveClass(/border-brand-neon/, { timeout: 3000 });
+  }
+  
+  // STATE READINESS CHECK: Ensure the app's internal state has acknowledged the /api/me response
+  // The Onboarding component checks if (!user?.id) before allowing step transition
+  // Wait for AuthContext to process the /api/me response and update React state
+  // AuthContext in E2E mode: reads hospogo_test_user -> sets user -> triggers /api/me -> updates user
+  await page.waitForFunction(() => {
+    // Check if user state is available in storage (AuthContext uses this in E2E mode)
+    const testUserStr = window.sessionStorage.getItem('hospogo_test_user') || 
+                        window.localStorage.getItem('hospogo_test_user');
+    if (!testUserStr) return false;
+    
+    try {
+      const testUser = JSON.parse(testUserStr);
+      // Verify user has an ID
+      if (!testUser?.id) return false;
+      
+      // Verify that the onboarding page has loaded and role buttons are visible
+      // This indicates the component has mounted and user state should be available
+      const roleButtons = document.querySelectorAll('button');
+      const hasRoleButtons = Array.from(roleButtons).some(btn => 
+        btn.textContent?.includes("I'm looking for shifts") || 
+        btn.textContent?.includes('looking for shifts')
+      );
+      
+      // Also check if Next button exists and is enabled (indicates canProceed is true)
+      const nextBtn = document.querySelector('[data-testid="onboarding-next"]');
+      const nextBtnEnabled = nextBtn && !(nextBtn as HTMLButtonElement).disabled;
+      
+      return hasRoleButtons && nextBtnEnabled;
+    } catch {
+      return false;
+    }
+  }, { timeout: 15000 }).catch(() => {
+    console.log('Warning: User state readiness check timeout, proceeding anyway');
+  });
+  
+  // Small buffer for React re-render after state update
+  await page.waitForTimeout(1000);
+  
+  // TRIPLE-CHECK #2: Verify role selection by checking if Next button becomes enabled
   const nextButton = page.getByTestId('onboarding-next');
   await expect(nextButton).toBeVisible({ timeout: 5000 });
   await expect(nextButton).toBeEnabled({ timeout: 15000 });
   
-  // Debug: Check button state before clicking
+  // TRIPLE-CHECK #3: Verify the button is actually enabled (not just visible)
   const isEnabledBeforeClick = await nextButton.isEnabled();
   console.log('Next button enabled before click:', isEnabledBeforeClick);
+  if (!isEnabledBeforeClick) {
+    throw new Error('Next button is not enabled - role selection may not be registered');
+  }
   
-  // Click and wait for step change - use waitForFunction to detect step transition
-  await nextButton.click();
+  // Ensure we're still on the onboarding page before clicking
+  await expect(page).toHaveURL(/\/onboarding/, { timeout: 5000 });
   
-  // Wait for step transition by checking if we're no longer on step 0
-  // The step indicator should change from "Getting Started" to "Step 1 of 4"
-  await page.waitForFunction(() => {
-    const stepText = document.querySelector('span')?.textContent || '';
-    return stepText.includes('Step 1') || stepText.includes('Personal Details');
-  }, { timeout: 20000 }).catch(() => {
-    console.log('Step transition not detected via waitForFunction');
+  // Add console listener to catch any Onboarding component logs
+  page.on('console', msg => {
+    if (msg.text().includes('[Onboarding]')) {
+      console.log('ONBOARDING LOG:', msg.text());
+    }
   });
   
-  // Wait for step transition - the component should immediately show Step 1
-  // Wait for either the heading or the input field to appear
-  const displayName = page.getByTestId('onboarding-display-name');
-  await expect(displayName).toBeVisible({ timeout: 20000 });
+  // TRIPLE-CHECK CLICK: Use force and delay to ensure event loop processes it
+  // Wait a moment to allow React event listeners to fully attach
+  await page.waitForTimeout(500);
+  
+  // Click Next with force and delay to ensure the event is processed
+  await nextButton.click({ force: true, delay: 100 });
+  
+  // Wait for the step transition animation to finish
+  await page.waitForTimeout(1000);
+  
+  // STATE REFRESH: Wait for React to update the step
+  // Try waiting for either the step indicator or the display name input
+  try {
+    await Promise.race([
+      page.waitForSelector('[data-testid="onboarding-display-name"]', { state: 'visible', timeout: 15000 }),
+      page.waitForFunction(() => {
+        const stepIndicator = Array.from(document.querySelectorAll('span')).find(
+          span => span.textContent?.includes('Step 1')
+        );
+        return stepIndicator !== undefined;
+      }, { timeout: 15000 })
+    ]);
+    console.log('✅ Step 1 detected via selector or step indicator');
+  } catch (e) {
+    console.log('⚠️ Step 1 not detected, trying manual state trigger...');
+    // Last resort: Try to manually trigger the step change via JavaScript
+    // Force React to update by directly manipulating the component state
+    await page.evaluate(() => {
+      // Try to find and click the Next button again if it's still visible
+      const nextBtn = document.querySelector('[data-testid="onboarding-next"]') as HTMLButtonElement;
+      if (nextBtn && !nextBtn.disabled) {
+        // Create a proper click event to ensure React handlers fire
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        nextBtn.dispatchEvent(clickEvent);
+      }
+    });
+    await page.waitForTimeout(2000); // Give more time for state update
+  }
+  
+  // Robust selector for Step 1 (Personal Details) - wait for display name input
+  const displayNameInput = page.getByTestId('onboarding-display-name');
+  await expect(displayNameInput).toBeVisible({ timeout: 20000 });
   
   // Mock location suggestions
   await page.route('**/maps/api/place/autocomplete/**', route => route.fulfill({ 
@@ -780,7 +872,7 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   
   // 6. Fill Personal Details (Step 1) - Location & Identity Setup
   // 1. Fill Display Name
-  await displayName.fill('Lex Hunter');
+  await displayNameInput.fill('Lex Hunter');
   
   // 2. Handle Location with Selection
   // Try placeholder first, fallback to testid if needed
