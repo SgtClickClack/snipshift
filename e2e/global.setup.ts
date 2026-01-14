@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 async function globalSetup(config: FullConfig) {
   console.log('Global Setup: Initializing Test Environment...');
 
-  const dbUrl = 'postgresql://test:test@localhost:5433/hospogo_test';
+  const dbUrl = 'postgresql://postgres:test@localhost:5433/hospogo_test';
   process.env.DATABASE_URL = dbUrl;
 
   // 1. Wait for DB to be ready
