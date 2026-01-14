@@ -148,6 +148,22 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
           description: "Please allow popups for this site to sign in with Google.",
           variant: "destructive",
         });
+      } else if (errorCode === 'auth/popup-timeout' || errorMessage.includes('popup-timeout')) {
+        // Popup timed out - likely COOP blocking communication
+        console.warn('[GoogleAuthButton] Popup timed out - switching to redirect flow');
+        toast({
+          title: "Switching to redirect",
+          description: "Popup timed out. Redirecting to complete sign-in...",
+          variant: "default",
+        });
+        // The redirect should have been triggered in firebase.ts, but we'll wait a moment
+        // and check if we need to manually trigger it
+        setTimeout(() => {
+          if (window.location.pathname === '/login' || window.location.pathname === '/signup') {
+            // Redirect flow should have started, but if we're still here, something went wrong
+            console.error('[GoogleAuthButton] Redirect flow did not start after timeout');
+          }
+        }, 1000);
       } else if (errorCode === 'auth/popup-closed-by-user') {
         // User closed popup - silently ignore, no toast needed
         logger.debug('GoogleAuthButton', 'User closed Google auth popup');
@@ -157,12 +173,16 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
           description: "This domain is not authorized for Google Auth. Please contact support.",
           variant: "destructive",
         });
-        console.error("Instruction for User: Please add this domain to Google Cloud Console > APIs & Services > Credentials > Authorized Javascript Origins");
+        console.error('[GoogleAuthButton] Unauthorized domain. Check:');
+        console.error('  1. Firebase Console > Authentication > Settings > Authorized domains');
+        console.error('  2. Google Cloud Console > APIs & Services > Credentials > Authorized JavaScript origins');
+        console.error('  3. Current domain:', window.location.hostname);
       } else {
         // Log actual authentication errors (not user-cancelled)
         console.error('[GoogleAuthButton] Google sign-in failed:', {
           code: errorCode,
           message: errorMessage,
+          error,
         });
         toast({
           title: "Authentication failed",

@@ -86,14 +86,35 @@ googleProvider.addScope('profile');
 // Force Google to show the account picker (helps bypass stale/broken sessions from legacy domains).
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-// Google sign-in methods
+/**
+ * Google sign-in with popup timeout detection and COOP-aware fallback.
+ * 
+ * COOP (Cross-Origin-Opener-Policy) can block popup communication, causing infinite loading.
+ * This function:
+ * 1. Attempts popup sign-in with a timeout (30s)
+ * 2. Falls back to redirect if popup times out or is blocked
+ * 3. Provides clear error messages for configuration issues
+ */
 export const signInWithGoogle = async () => {
   try {
     // CRITICAL: Set persistence BEFORE signing in to prevent logout on refresh
     // browserLocalPersistence stores auth state in localStorage, surviving page reloads
     await setPersistence(auth, browserLocalPersistence);
     
-    const result = await signInWithPopup(auth, googleProvider);
+    // Create a timeout promise to detect stuck popups (COOP blocking)
+    const POPUP_TIMEOUT_MS = 30000; // 30 seconds
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('auth/popup-timeout'));
+      }, POPUP_TIMEOUT_MS);
+    });
+    
+    // Race between popup sign-in and timeout
+    const result = await Promise.race([
+      signInWithPopup(auth, googleProvider),
+      timeoutPromise,
+    ]);
+    
     return result.user;
   } catch (error: unknown) {
     const code =
@@ -101,9 +122,38 @@ export const signInWithGoogle = async () => {
         ? String((error as { code: unknown }).code)
         : '';
     
+    const errorMessage =
+      typeof error === 'object' && error && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : '';
+    
+    // Handle timeout (stuck popup due to COOP)
+    if (code === 'auth/popup-timeout' || errorMessage === 'auth/popup-timeout') {
+      console.warn('[Firebase] Popup sign-in timed out (likely COOP blocking). Falling back to redirect...');
+      
+      // Local dev: do NOT fallback to redirect; popup-only avoids redirect_uri mismatches on localhost.
+      if (
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ) {
+        throw new Error('auth/popup-timeout: Popup timed out. This may be due to browser security settings blocking cross-origin communication.');
+      }
+      
+      // Fallback to redirect for production
+      console.log('[Firebase] Switching to redirect flow due to popup timeout');
+      await signInWithRedirect(auth, googleProvider);
+      return null; // Will be handled by redirect result
+    }
+    
     // Don't log user-cancelled popups - this is expected behavior
     if (code !== 'auth/popup-closed-by-user') {
-      console.error('[Firebase] Google sign-in error (exact object):', error);
+      console.error('[Firebase] Google sign-in error:', {
+        code,
+        message: errorMessage,
+        error,
+        authDomain: firebaseConfig.authDomain,
+        currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+      });
     }
     
     // If popup is blocked, fallback to redirect
@@ -116,9 +166,20 @@ export const signInWithGoogle = async () => {
         throw error;
       }
       // Persistence is already set above, so redirect will also persist
+      console.log('[Firebase] Popup blocked, switching to redirect flow');
       await signInWithRedirect(auth, googleProvider);
       return null; // Will be handled by redirect result
     }
+    
+    // Check for unauthorized domain (configuration issue)
+    if (code === 'auth/unauthorized-domain') {
+      console.error('[Firebase] Unauthorized domain error. Check:');
+      console.error('  1. Firebase Console > Authentication > Settings > Authorized domains');
+      console.error('  2. Google Cloud Console > APIs & Services > Credentials > Authorized JavaScript origins');
+      console.error('  3. Current authDomain:', firebaseConfig.authDomain);
+      console.error('  4. Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
+    }
+    
     throw error;
   }
 };
