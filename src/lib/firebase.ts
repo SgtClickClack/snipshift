@@ -39,15 +39,28 @@ const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string
 // Load Firebase configuration from environment variables.
 // We intentionally fail fast if required env vars are missing to avoid silently
 // initializing against the wrong Firebase project in production.
+// SECURITY: Strict project ID enforcement - only allow 'snipshift-75b04'
+const REQUIRED_PROJECT_ID = 'snipshift-75b04';
+
+const rawAuthDomain =
+  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_AUTH_DOMAIN;
+
+const sanitizedAuthDomain = sanitizeEnv(
+  rawAuthDomain,
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'hospogo.com'
+);
+
+const authDomain =
+  sanitizedAuthDomain === 'snipshift-75b04.firebaseapp.com'
+    ? 'hospogo.com'
+    : sanitizedAuthDomain;
+
 const firebaseConfig = {
   apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY'),
   // ESSENTIAL: Forces the rebrand domain for auth handshakes
-  // Can be overridden via VITE_FIREBASE_AUTH_DOMAIN if needed.
-  authDomain: sanitizeEnv(
-    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    'VITE_FIREBASE_AUTH_DOMAIN',
-    'hospogo.com'
-  ),
+  // Can be overridden via VITE_FIREBASE_AUTH_DOMAIN / VITE_AUTH_DOMAIN if needed.
+  authDomain,
   projectId: sanitizeEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'VITE_FIREBASE_PROJECT_ID'),
   storageBucket: sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'VITE_FIREBASE_STORAGE_BUCKET'),
   messagingSenderId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, 'VITE_FIREBASE_MESSAGING_SENDER_ID'),
@@ -55,8 +68,19 @@ const firebaseConfig = {
   measurementId: sanitizeEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'VITE_FIREBASE_MEASUREMENT_ID'),
 };
 
+// SECURITY: Validate project ID before initialization
+if (firebaseConfig.projectId !== REQUIRED_PROJECT_ID) {
+  throw new Error(`Unauthorized Project ID: Expected '${REQUIRED_PROJECT_ID}', got '${firebaseConfig.projectId}'`);
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// SECURITY: Double-check the initialized app's project ID
+if (app.options.projectId !== REQUIRED_PROJECT_ID) {
+  throw new Error(`Unauthorized Project ID: Initialized app project_id '${app.options.projectId}' does not match required '${REQUIRED_PROJECT_ID}'`);
+}
+
 export const auth = getAuth(app);
 
 // Connect to Firebase Auth Emulator in E2E mode if available

@@ -1,3 +1,57 @@
+#### 2026-01-15: Align Auth Domain + Remove Force Sync + Navbar Profile Menu
+
+**Core Components**
+- Firebase client config (`src/lib/firebase.ts`)
+- Auth init guard (`src/contexts/AuthContext.tsx`)
+- Loading UI (`src/components/ui/loading-screen.tsx`)
+- Navbar profile dropdown (`src/components/layout/Navbar.tsx`)
+
+**Key Features**
+- Aligned Firebase `authDomain` to `hospogo.com` with legacy-domain override and env alias support.
+- Added a redirect-result fallback timer so auth loading clears even when `getRedirectResult()` is null.
+- Removed the Force Sync button and logic from the loading screen.
+- Updated the profile dropdown labels and removed the redundant dashboard entry from the mobile menu.
+
+**Integration Points**
+- Firebase Auth redirect flow (`getRedirectResult`, `onAuthStateChanged`)
+- Navbar navigation (`/profile`, `/dashboard`, `/settings`)
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/components/ui/loading-screen.tsx`
+- `src/components/layout/Navbar.tsx`
+
+**Next Priority Task**
+- Verify Google sign-in completes instantly on `hospogo.com` without a loading loop.
+
+**Code Organization & Quality**
+- Kept auth guard changes localized to AuthContext without introducing new patterns.
+
+---
+#### 2026-01-15: Holistic Codebase Audit v1 (HospoGo)
+
+**Core Components**
+- Full repo audit coverage (API, frontend, schema, infra)
+- Audit report artifact (`HOSPOGO_AUDIT_REPORT.md`)
+
+**Key Features**
+- Completed end-to-end audit focusing on infra/security, auth/onboarding flow, separation of concerns, dead code, UI/UX, and schema scalability.
+- Documented critical findings and hardening checklist in a single root report for stakeholder review.
+
+**Integration Points**
+- Docs: `HOSPOGO_AUDIT_REPORT.md`
+
+**File Paths**
+- `HOSPOGO_AUDIT_REPORT.md`
+
+**Next Priority Task**
+- Remove committed service account JSON and enforce Firebase project id allowlist.
+
+**Code Organization & Quality**
+- Kept changes doc-only; no production code paths modified during audit.
+
+---
 #### 2026-01-13: Automated Strike Recovery Service
 
 **Core Components**

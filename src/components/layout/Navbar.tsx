@@ -260,11 +260,11 @@ export default function Navbar() {
                     <DropdownMenuGroup>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/profile')}>
                         <User className="mr-2 h-4 w-4" />
-                        <span>View Profile</span>
+                        <span>My Profile</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <LayoutDashboard className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
+                        <span>Business Dashboard</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/settings')}>
                          <Settings className="mr-2 h-4 w-4" />
@@ -325,14 +325,6 @@ export default function Navbar() {
                              Current: {currentRoleLabel}
                            </div>
                         </div>
-
-                        <SheetClose asChild>
-                          <Link to="/dashboard">
-                            <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800">
-                              Dashboard
-                            </Button>
-                          </Link>
-                        </SheetClose>
 
                         <SheetClose asChild>
                           <Link to="/jobs">

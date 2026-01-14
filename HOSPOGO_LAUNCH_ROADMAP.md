@@ -8,6 +8,34 @@
 
 ---
 
+### Update: 2026-01-15 - Auth Domain Alignment + Loading Loop Fix (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Aligned frontend Firebase `authDomain` with `hospogo.com` and guarded against legacy domain drift.
+- Added an AuthContext fallback to clear loading when `getRedirectResult()` returns null.
+- Removed the temporary “Force Sync” UI from the loading screen.
+- Re-labeled the profile dropdown menu to “My Profile / Business Dashboard / Settings / Sign Out” and removed the duplicate mobile dashboard button.
+
+**Impact:**
+- Reduces cross-origin auth handshake failures and prevents infinite loading when redirect results are empty.
+
+---
+
+### Update: 2026-01-15 - Holistic Codebase Audit v1 (HospoGo)
+
+**Status:** ✅ **COMPLETED**
+
+**Action Taken:**
+- Performed a full-stack audit across infrastructure, security, auth/onboarding, architecture, UI/UX, and schema scalability.
+- Produced a consolidated audit report in `HOSPOGO_AUDIT_REPORT.md` with critical issues, performance optimizations, and security hardening checklist.
+
+**Impact:**
+- Clear, prioritized visibility into security/config risks and scalability considerations ahead of the Brisbane launch.
+
+---
+
 ### Update: 2026-01-12 - Auth Redirect Hardening (Keep `/` Public) + Remove Legacy OAuth Code-Flow
 
 **Status:** ✅ **UPDATED**

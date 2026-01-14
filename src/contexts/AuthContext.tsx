@@ -93,6 +93,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const hasResolvedAuthState = useRef(false);
+  const redirectFallbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -355,6 +357,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
         setToken(null);
       } finally {
+        hasResolvedAuthState.current = true;
         setIsLoading(false);
         setIsAuthReady(true);
       }
@@ -369,6 +372,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Step 1: MUST call getRedirectResult FIRST to 'claim' the result from the URL
         // If this isn't called, Firebase often fails to persist the session after redirect
         const redirectUser = await handleGoogleRedirectResult();
+        if (!redirectUser) {
+          if (redirectFallbackTimeout.current) {
+            clearTimeout(redirectFallbackTimeout.current);
+          }
+          redirectFallbackTimeout.current = setTimeout(() => {
+            if (!hasResolvedAuthState.current) {
+              logger.debug('AuthContext', 'No auth state change after redirect result; clearing loading state');
+              setIsLoading(false);
+              setIsAuthReady(true);
+              setIsRedirecting(false);
+              pendingRedirect.current = false;
+            }
+          }, 3000);
+        }
         if (redirectUser) {
           logger.debug('AuthContext', 'Processed Google redirect result for user:', redirectUser.uid);
           
@@ -423,6 +440,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Step 2: ONLY AFTER getRedirectResult completes, start listening for state changes
       // This prevents the race condition where onAuthStateChange sees null user before redirect is processed
       return onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
+        hasResolvedAuthState.current = true;
+        if (redirectFallbackTimeout.current) {
+          clearTimeout(redirectFallbackTimeout.current);
+          redirectFallbackTimeout.current = null;
+        }
         // GATEKEEPER: Prevent concurrent profile fetches for the same user
         const newUid = firebaseUser?.uid || null;
         const previousUid = currentAuthUid.current;
@@ -678,6 +700,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
       }
+      if (redirectFallbackTimeout.current) {
+        clearTimeout(redirectFallbackTimeout.current);
+        redirectFallbackTimeout.current = null;
+      }
       // Reset refs on cleanup (for HMR or unmount)
       hasInitialized.current = false;
       isProcessingAuth.current = false;
@@ -685,6 +711,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       pendingRedirect.current = false;
       last401RetryTime.current = 0;
       consecutive401Count.current = 0;
+      hasResolvedAuthState.current = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // No dependencies - listener should only be set up once
