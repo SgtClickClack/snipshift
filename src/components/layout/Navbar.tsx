@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, ChevronDown, Check, PlusCircle, Menu, RefreshCw, User, Settings, AlertCircle } from "lucide-react";
+import { MessageCircle, LogOut, Shield, ChevronDown, Check, PlusCircle, Menu, RefreshCw, User, Settings, AlertCircle, LayoutDashboard } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -201,11 +201,6 @@ export default function Navbar() {
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Dashboard Link */}
-                  <Link to="/dashboard">
-                    <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10">Dashboard</Button>
-                  </Link>
-
                   {/* Find Shifts Link */}
                   <Link to="/jobs">
                     <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10" data-testid="link-find-shifts-desktop">Find Shifts</Button>
@@ -240,7 +235,7 @@ export default function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ml-2 ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-shrink-0" data-testid="button-profile-menu" aria-label="User menu">
-                      <UserAvatar />
+                      <UserAvatar className="h-10 w-10" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56 bg-popover dark:bg-steel-800 border-border dark:border-steel-600 text-popover-foreground dark:text-white z-floating" align="end">
@@ -265,9 +260,13 @@ export default function Navbar() {
                     <DropdownMenuGroup>
                       <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/profile')}>
                         <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
+                        <span>View Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/profile/edit')}>
+                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/settings')}>
                          <Settings className="mr-2 h-4 w-4" />
                          <span>Settings</span>
                       </DropdownMenuItem>
@@ -281,9 +280,9 @@ export default function Navbar() {
                       )}
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator className="bg-steel-600" />
-                    <DropdownMenuItem onClick={handleLogout} className="focus:bg-steel-700 focus:text-white cursor-pointer" data-testid="button-logout">
+                    <DropdownMenuItem onClick={handleLogout} className="!text-red-600 dark:!text-red-400 !focus:bg-red-600 !focus:text-white hover:!bg-red-600 hover:!text-white cursor-pointer" data-testid="button-logout">
                       <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
+                      <span>Sign Out</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
