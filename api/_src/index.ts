@@ -166,6 +166,35 @@ app.get('/api/debug', async (req, res) => {
       FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
     };
 
+    // Test Firebase initialization and token verification capability
+    let firebaseTestResult = 'not_tested';
+    let firebaseInitError = null;
+    try {
+      const { auth, getFirebaseInitError } = await import('./config/firebase.js');
+      const initError = getFirebaseInitError();
+      if (initError) {
+        firebaseInitError = initError.message || String(initError);
+        firebaseTestResult = `init_error: ${firebaseInitError}`;
+      } else if (auth) {
+        // Try to get the auth instance to verify it's actually working
+        try {
+          // Just check if we can access the auth object (don't actually verify a token)
+          const authInstance = auth;
+          if (authInstance && typeof authInstance.verifyIdToken === 'function') {
+            firebaseTestResult = 'ready';
+          } else {
+            firebaseTestResult = 'not_ready';
+          }
+        } catch (e: any) {
+          firebaseTestResult = `error: ${e?.message || 'unknown'}`;
+        }
+      } else {
+        firebaseTestResult = 'not_initialized';
+      }
+    } catch (error: any) {
+      firebaseTestResult = `import_error: ${error?.message || 'unknown'}`;
+    }
+
     // Test database connection
     const db = getDatabase();
     const dbStatus = db ? 'pool_initialized' : 'not_initialized';
@@ -196,6 +225,8 @@ app.get('/api/debug', async (req, res) => {
         },
         firebase: {
           initialized: !!auth,
+          test: firebaseTestResult,
+          initError: firebaseInitError,
         },
       },
       timestamp: new Date().toISOString(),
