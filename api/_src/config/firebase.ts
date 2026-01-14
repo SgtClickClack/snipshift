@@ -44,8 +44,26 @@ function initializeFirebase(): admin.auth.Auth | null {
     }
 
     if (!app) {
-      // 1. Try parsing FIREBASE_SERVICE_ACCOUNT JSON string
-      if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      // 1. PRIORITY: Try individual environment variables first (more reliable than JSON string)
+      if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+        try {
+          app = firebaseAdmin.initializeApp({
+              credential: firebaseAdmin.credential.cert({
+              projectId: process.env.FIREBASE_PROJECT_ID,
+              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+              privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+              }),
+              projectId: process.env.FIREBASE_PROJECT_ID,
+          }, appName);
+          console.log('[FIREBASE] Admin initialized successfully via individual env vars');
+        } catch (e: any) {
+            console.error('[FIREBASE] Init Failed (individual vars):', e?.message || e);
+            console.error('[FIREBASE] Stack:', e?.stack);
+            initError = e;
+        }
+      } 
+      // 2. FALLBACK: Try parsing FIREBASE_SERVICE_ACCOUNT JSON string
+      else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         try {
           // Handle potential newline escaping issues (common Vercel gotcha)
           const cleanedJson = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n');
@@ -99,24 +117,6 @@ function initializeFirebase(): admin.auth.Auth | null {
                console.error('[FIREBASE] Stack:', fallbackErr?.stack);
                initError = fallbackErr;
           }
-        }
-      } 
-      // 2. Try individual environment variables
-      else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-        try {
-          app = firebaseAdmin.initializeApp({
-              credential: firebaseAdmin.credential.cert({
-              projectId: process.env.FIREBASE_PROJECT_ID,
-              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-              privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-              }),
-              projectId: process.env.FIREBASE_PROJECT_ID,
-          }, appName);
-          console.log('[FIREBASE] Admin initialized successfully via individual env vars');
-        } catch (e: any) {
-            console.error('[FIREBASE] Init Failed (individual vars):', e?.message || e);
-            console.error('[FIREBASE] Stack:', e?.stack);
-            initError = e;
         }
       }
       // 3. Fallback to application default credentials
