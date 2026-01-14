@@ -10,6 +10,7 @@ import {
   sendPasswordResetEmail,
   setPersistence,
   browserLocalPersistence,
+  connectAuthEmulator,
   type User as FirebaseAuthUser,
 } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
@@ -57,6 +58,24 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Connect to Firebase Auth Emulator in E2E mode if available
+// This allows tests to use the emulator instead of hitting production Firebase
+if (import.meta.env.VITE_E2E === "1" && typeof window !== 'undefined') {
+  try {
+    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    console.log('[Firebase] Connected to Auth Emulator for E2E tests');
+  } catch (error: any) {
+    // If emulator connection fails (e.g., emulator not running or already connected), continue without it
+    // The test will use API mocking instead (see tests/core-marketplace.spec.ts)
+    if (error?.message?.includes('already') || error?.code === 'auth/emulator-config-failed') {
+      console.log('[Firebase] Auth Emulator already connected');
+    } else {
+      console.log('[Firebase] Auth Emulator not available, will use API mocking in tests');
+    }
+  }
+}
+
 export const googleProvider = new GoogleAuthProvider();
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const storage = getStorage(app);

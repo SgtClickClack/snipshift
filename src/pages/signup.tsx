@@ -170,6 +170,7 @@ export default function SignupPage() {
         updatedAt: new Date(),
         displayName: userData.displayName || userData.name || formData.email.split('@')[0],
         profileImage: userData.profileImage || '',
+        isOnboarded: userData.isOnboarded ?? false, // Ensure isOnboarded is set for AuthGuard
       };
       
       // Removed test bypass - E2E tests need to use proper authentication

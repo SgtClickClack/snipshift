@@ -112,107 +112,18 @@ export function authenticateUser(
 
     // Bypass for E2E Testing - Only allow in test environment for security
     // This prevents production exploitation while maintaining E2E test reliability
-    if (token === 'mock-test-token' && process.env.NODE_ENV === 'test') {
-      const mockUserId = '00000000-0000-0000-0000-000000000001';
-      const mockEmail = 'test@hospogo.com';
-      
-      // Ensure the user exists in the database with the specific ID
-      Promise.resolve().then(async () => {
-        try {
-          // First check if user exists by ID
-          let user = await usersRepo.getUserById(mockUserId);
-          
-          if (!user) {
-            // Check if user exists by email (might have different ID)
-            const userByEmail = await usersRepo.getUserByEmail(mockEmail);
-            
-            if (userByEmail) {
-              // User exists but with different ID - try to update it to use the expected ID
-              // First, check if the expected ID is available (not used by another user)
-              const userWithExpectedId = await usersRepo.getUserById(mockUserId);
-              
-              if (!userWithExpectedId) {
-                // Expected ID is free, but user exists with different ID
-                // For E2E tests, we'll use the existing user's ID to avoid conflicts
-                user = userByEmail;
-                console.log(`[AUTH E2E] Using existing user with ID: ${user.id} (test will use this ID)`);
-              } else {
-                // Expected ID is taken by another user, use existing user
-                user = userByEmail;
-                console.log(`[AUTH E2E] Using existing user with ID: ${user.id}`);
-              }
-            } else {
-              // Create the user with the specific ID using direct database insert
-              const { getDb } = await import('../db/index.js');
-              const { users } = await import('../db/schema.js');
-              const db = getDb();
-              
-              if (db) {
-                try {
-                  const [newUser] = await db
-                    .insert(users)
-                    .values({
-                      id: mockUserId,
-                      email: mockEmail,
-                      name: 'Test User',
-                      role: 'professional',
-                      roles: ['professional'],
-                    })
-                    .returning();
-                  
-                  user = newUser;
-                  console.log(`[AUTH E2E] Created test user in database: ${user.id}`);
-                } catch (insertError: any) {
-                  // If insert fails (e.g., duplicate), try to get the user again
-                  if (insertError?.code === '23505') { // Unique violation
-                    user = await usersRepo.getUserByEmail(mockEmail);
-                    if (user) {
-                      console.log(`[AUTH E2E] User already exists: ${user.id}`);
-                    }
-                  } else {
-                    throw insertError;
-                  }
-                }
-              } else {
-                console.warn('[AUTH E2E] Database not available, using mock user');
-              }
-            }
-          }
-          
-          // Set user on request
-          req.user = {
-            id: user?.id || mockUserId,
-            email: user?.email || mockEmail,
-            name: user?.name || 'Test User',
-            role: (user?.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub') || 'professional',
-            uid: 'test-firebase-uid'
-          };
-          
-          next();
-        } catch (error: any) {
-          console.error('[AUTH E2E] Error ensuring test user exists:', error);
-          // Fallback to hardcoded user if database operation fails
-          req.user = {
-            id: mockUserId,
-            email: mockEmail,
-            name: 'Test User',
-            role: 'professional',
-            uid: 'test-firebase-uid'
-          };
-          next();
-        }
-      }).catch((error: any) => {
-        console.error('[AUTH E2E] Promise rejection:', error);
-        // Fallback to hardcoded user
-        req.user = {
-          id: mockUserId,
-          email: mockEmail,
-          name: 'Test User',
-          role: 'professional',
-          uid: 'test-firebase-uid'
-        };
-        next();
-      });
+    // Accept both 'mock-test-id-token' and 'mock-test-token' for test flexibility
+    if ((token === 'mock-test-id-token' || token === 'mock-test-token') && process.env.NODE_ENV === 'test') {
+      // Return specific mock user object for E2E tests
+      // This bypasses Firebase token verification
+      req.user = {
+        id: '8eaee523-79a2-4077-8f5b-4b7fd4058ede',
+        email: 'test-owner@example.com',
+        name: 'Test Owner',
+        role: 'business', // 'client' maps to 'business' role
+        uid: 'mock-user-owner-123'
+      };
+      next();
       return;
     }
 

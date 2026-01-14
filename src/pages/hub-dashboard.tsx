@@ -19,6 +19,7 @@ import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
 import { format } from "date-fns";
+import { formatDateSafe, toISOStringSafe, toDateSafe } from "@/utils/date-formatter";
 import { createShift, fetchShopShifts, updateShiftStatus, decideApplication, getShiftApplications, updateApplicationStatus, ShiftApplication } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -265,7 +266,7 @@ export default function HubDashboard() {
                 job.status === 'invited' ? 'invited' :
                 job.status === 'open' ? 'pending' : 
                 job.status === 'filled' ? 'confirmed' : 'completed',
-        appliedAt: job.createdAt,
+        appliedAt: job.createdAt ? toISOStringSafe(job.createdAt) : new Date().toISOString(),
       };
       
       // Add job or shift based on type
@@ -322,11 +323,13 @@ export default function HubDashboard() {
       let endTimeISO = new Date().toISOString();
 
       if (dateStr && startTimeStr) {
-        const start = new Date(`${dateStr}T${startTimeStr}`);
-        startTimeISO = start.toISOString();
-        // Default to 8 hour shift
-        const end = new Date(start.getTime() + 8 * 60 * 60 * 1000);
-        endTimeISO = end.toISOString();
+        const start = toDateSafe(`${dateStr}T${startTimeStr}`);
+        if (start) {
+          startTimeISO = start.toISOString();
+          // Default to 8 hour shift
+          const end = new Date(start.getTime() + 8 * 60 * 60 * 1000);
+          endTimeISO = end.toISOString();
+        }
       }
 
       const payload = {
@@ -753,7 +756,7 @@ export default function HubDashboard() {
                       <div>
                         <h4 className="font-medium">{job.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {job.applicants?.length || 0} applications â€¢ Posted {format(new Date(job.createdAt), "MMM d")}
+                          {job.applicants?.length || 0} applications â€¢ Posted {formatDateSafe(job.createdAt, "MMM d")}
                         </p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -1063,14 +1066,7 @@ export default function HubDashboard() {
                                 <div className="flex items-center">
                                   <Calendar className="mr-2 h-4 w-4 text-primary" />
                                   <span data-testid={`text-job-date-${job.id}`}>
-                                    {job.date ? (() => {
-                                      try {
-                                        const date = new Date(job.date);
-                                        return isNaN(date.getTime()) ? 'Date TBD' : format(date, "EEE, MMM d, yyyy");
-                                      } catch {
-                                        return 'Date TBD';
-                                      }
-                                    })() : 'Date TBD'}
+                                    {formatDateSafe(job.date, "EEE, MMM d, yyyy", 'Date TBD')}
                                   </span>
                                 </div>
                                 <div className="flex items-center">
@@ -1332,11 +1328,19 @@ export default function HubDashboard() {
         }}
         initialDate={selectedDateForShift}
         isLoading={createShiftMutation.isPending}
-        existingShifts={jobs?.map((job) => ({
-          id: job.id,
-          startTime: job.startTime || job.date,
-          endTime: job.endTime || new Date(new Date(job.startTime || job.date).getTime() + 8 * 60 * 60 * 1000).toISOString(),
-        })) || []}
+        existingShifts={jobs?.map((job) => {
+          const startTime = job.startTime || job.date;
+          const startDate = toDateSafe(startTime);
+          const endTime = job.endTime || (startDate 
+            ? toISOStringSafe(new Date(startDate.getTime() + 8 * 60 * 60 * 1000))
+            : new Date().toISOString());
+          
+          return {
+            id: job.id,
+            startTime: startTime || new Date().toISOString(),
+            endTime: endTime,
+          };
+        }) || []}
       />
 
       {/* Candidates Dialog */}

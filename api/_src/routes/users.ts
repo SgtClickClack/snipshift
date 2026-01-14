@@ -211,11 +211,13 @@ router.post('/register', asyncHandler(async (req, res) => {
       return;
     }
 
-    // Send welcome email (non-blocking)
-    emailService.sendWelcomeEmail(email, finalName).catch(error => {
-      console.error('Failed to send welcome email:', error);
-      // Don't fail the request if email fails
-    });
+    // Send welcome email (non-blocking) - skip in test environment to prevent Resend 403 errors
+    if (process.env.NODE_ENV !== 'test') {
+      emailService.sendWelcomeEmail(email, finalName).catch(error => {
+        console.error('Failed to send welcome email:', error);
+        // Don't fail the request if email fails
+      });
+    }
 
     res.status(201).json({
       id: verifiedUser.id,

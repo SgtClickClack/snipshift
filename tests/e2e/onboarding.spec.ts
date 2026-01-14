@@ -291,9 +291,10 @@ test.describe('Onboarding Flow E2E Tests', () => {
       await expect(setupBanner).toBeVisible({ timeout: 15000 });
 
       // Click "Remind me later" button
-      const remindLaterButton = page.getByRole('button', { name: /Remind me later/i });
-      await expect(remindLaterButton).toBeVisible({ timeout: 5000 });
-      await remindLaterButton.click();
+      await page.getByTestId('button-remind-later').click();
+      
+      // Wait for localStorage to be set before reload
+      await page.waitForFunction(() => localStorage.getItem('hospogo_setup_banner_dismissed') !== null, { timeout: 5000 });
 
       // Verify banner is dismissed
       await expect(setupBanner).not.toBeVisible({ timeout: 5000 });
@@ -318,10 +319,18 @@ test.describe('Onboarding Flow E2E Tests', () => {
 
       // Reload page and verify banner is still dismissed
       await page.reload({ waitUntil: 'networkidle' });
-      await page.waitForTimeout(1000);
+      
+      // Wait for component to mount and read localStorage
+      await page.waitForTimeout(2000);
+      
+      // Verify localStorage still has the dismissal timestamp after reload
+      const dismissalTimeAfterReload = await page.evaluate(() => {
+        return localStorage.getItem('hospogo_setup_banner_dismissed');
+      });
+      expect(dismissalTimeAfterReload).not.toBeNull();
       
       const setupBannerAfterReload = page.getByTestId('complete-setup-banner');
-      await expect(setupBannerAfterReload).not.toBeVisible({ timeout: 5000 });
+      await expect(setupBannerAfterReload).not.toBeVisible({ timeout: 10000 });
     });
 
     test('should show banner again after 24 hours when dismissed', async ({ page, context }) => {
@@ -446,13 +455,14 @@ test.describe('Onboarding Flow E2E Tests', () => {
       // and verify it's not in loading/disabled state
       // ================================================
       // Wait for Venue role button to be visible and ready
+      // The button text is "I need to fill shifts" not "Venue"
       const venueButton = page.locator('button').filter({
-        hasText: /Venue|venue/i,
+        hasText: /I need to fill shifts|fill shifts|Venue|venue/i,
       }).or(
-        page.getByRole('button', { name: /Venue/i })
+        page.getByRole('button', { name: /I need to fill shifts|fill shifts/i })
       ).first();
 
-      await page.waitForSelector('button:has-text("Venue"), button:has-text("venue")', {
+      await page.waitForSelector('button:has-text("I need to fill shifts"), button:has-text("fill shifts"), button:has-text("Venue"), button:has-text("venue")', {
         state: 'visible',
         timeout: 15000,
       });

@@ -23,6 +23,7 @@ import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { fetchShifts } from "@/lib/api";
 import { Mail } from "lucide-react";
+import { QuickNav } from "@/components/navigation/QuickNav";
 
 // Lazy load heavy view components to reduce initial bundle size
 const ProfessionalOverview = lazy(() => import("@/components/dashboard/professional-overview"));
@@ -58,6 +59,7 @@ export default function ProfessionalDashboard() {
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
       newParams.set('view', view);
+      // Preserve all other existing search params (like reputation=true)
       return newParams;
     });
   };
@@ -615,6 +617,11 @@ export default function ProfessionalDashboard() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Quick Navigation */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <QuickNav onViewChange={setActiveView} />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

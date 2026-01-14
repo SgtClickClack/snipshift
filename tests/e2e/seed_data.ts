@@ -18,9 +18,9 @@ export interface TestUser {
 }
 
 export const TEST_VENUE_OWNER: TestUser = {
-  id: 'e2e-venue-owner-001',
+  id: '00000000-0000-4000-a000-000000000001',
   email: 'venue-owner-e2e@hospogo.com',
-  name: 'E2E Venue Owner',
+  name: 'Hospogo E2E Venue Owner',
   roles: ['business'],
   currentRole: 'business',
   isOnboarded: true,
@@ -29,8 +29,12 @@ export const TEST_VENUE_OWNER: TestUser = {
 // Legacy alias for backward compatibility
 export const TEST_SHOP_OWNER = TEST_VENUE_OWNER;
 
+// Stable UUID constants for use across all specs
+export const TEST_VENUE_ID = TEST_VENUE_OWNER.id;
+export const TEST_PRO_ID = '00000000-0000-4000-a000-000000000002'; // Defined before TEST_PROFESSIONAL for reference
+
 export const TEST_PROFESSIONAL: TestUser = {
-  id: 'e2e-professional-001',
+  id: TEST_PRO_ID,
   email: 'professional-e2e@hospogo.com',
   name: 'E2E Test Professional',
   roles: ['professional'],
@@ -39,7 +43,7 @@ export const TEST_PROFESSIONAL: TestUser = {
 };
 
 export const TEST_MULTI_ROLE_USER: TestUser = {
-  id: 'e2e-multi-role-001',
+  id: '00000000-0000-4000-a000-000000000003',
   email: 'multi-role-e2e@hospogo.com',
   name: 'E2E Multi-Role User',
   roles: ['professional', 'business'],

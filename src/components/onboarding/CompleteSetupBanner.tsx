@@ -118,6 +118,7 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
               variant="ghost"
               size="sm"
               className="text-amber-700 hover:text-amber-800 hover:bg-amber-500/10"
+              data-testid="button-remind-later"
             >
               Remind me later
             </Button>

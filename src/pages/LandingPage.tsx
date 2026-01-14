@@ -197,9 +197,9 @@ export default function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
-                  <span className="text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-1">01</span>
+                  <span className="relative z-badge text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-1">01</span>
                   <div className="w-14 h-14 rounded-xl bg-[#BFFF00]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                     <UserPlus className="h-7 w-7 text-[#BFFF00]" />
                   </div>
@@ -210,9 +210,9 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
-                  <span className="text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-2">02</span>
+                  <span className="relative z-badge text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-2">02</span>
                   <div className="w-14 h-14 rounded-xl bg-[#BFFF00]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                     <FileText className="h-7 w-7 text-[#BFFF00]" />
                   </div>
@@ -226,9 +226,9 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
-                  <span className="text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-3">03</span>
+                  <span className="relative z-badge text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-3">03</span>
                   <div className="w-14 h-14 rounded-xl bg-[#BFFF00]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                     <Handshake className="h-7 w-7 text-[#BFFF00]" />
                   </div>
@@ -240,9 +240,9 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group">
+              <Card className="bg-[#161616] border border-zinc-800 p-10 rounded-3xl hover:border-[#BFFF00]/50 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group overflow-visible">
                 <CardContent className="pt-0">
-                  <span className="text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-4">04</span>
+                  <span className="relative z-badge text-zinc-600 font-mono text-sm mb-2 block" data-testid="step-badge-4">04</span>
                   <div className="w-14 h-14 rounded-xl bg-[#BFFF00]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                     <CheckCircle className="h-7 w-7 text-[#BFFF00]" />
                   </div>

@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, Plus } from "lucide-react";
 import { View } from "react-big-calendar";
 
 type JobStatus = 'all' | 'pending' | 'confirmed' | 'completed';
@@ -24,6 +24,8 @@ interface CalendarToolbarProps {
   // Legacy props - no longer used but kept for compatibility
   onSmartFillClick?: () => void;
   isCalculatingMatches?: boolean;
+  // Create Availability button (professional mode only)
+  onCreateAvailability?: () => void;
 }
 
 export function CalendarToolbar({
@@ -34,6 +36,7 @@ export function CalendarToolbar({
   onSettingsClick,
   statusFilter = 'all',
   onStatusFilterChange,
+  onCreateAvailability,
 }: CalendarToolbarProps) {
   return (
     <CardHeader className="border-b bg-gradient-to-r from-background via-purple-50/5 to-blue-50/5 dark:from-background dark:via-purple-950/10 dark:to-blue-950/10">
@@ -47,6 +50,20 @@ export function CalendarToolbar({
             Schedule
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
+            {/* Create Availability Button - Only show in professional mode */}
+            {mode === 'professional' && onCreateAvailability && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onCreateAvailability}
+                data-testid="button-create-availability"
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Availability
+              </Button>
+            )}
+            
             {/* Calendar Settings Button - Only show in business mode */}
             {mode === 'business' && (
               <Button

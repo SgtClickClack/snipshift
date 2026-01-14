@@ -21,7 +21,12 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "db:clean": "cd api && npm run db:clean"
+    "db:clean": "cd api && npm run db:clean",
+    "db:audit:test": "npx tsx scripts/audit-test-db.ts",
+    "db:seed:test": "npx tsx scripts/seed-test-db.ts",
+    "db:migrate:test": "npx tsx scripts/migrate-test-db.ts",
+    "test:readiness": "npx tsx scripts/test-readiness.ts",
+    "test:readiness:force": "npx tsx scripts/test-readiness.ts --force-seed"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "1.16.8",
@@ -112,6 +117,7 @@
     "tailwindcss": "^3.4.4",
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.5.3",
     "vite": "^6.4.1",
     "vite-plugin-pwa": "^1.1.0"

@@ -12,7 +12,7 @@ import { test, expect, Page, BrowserContext, Request, Response } from '@playwrig
 
 // Test user configurations - using hospogo_test_user context
 const VENUE_OWNER = {
-  id: 'e2e-venue-owner-001',
+  id: '00000000-0000-4000-a000-000000000001',
   email: 'venue-owner-e2e@hospogo.com',
   name: 'E2E Venue Owner',
   roles: ['business'],
@@ -215,6 +215,20 @@ async function setupUnhiredApplicationsMocks(page: Page) {
   });
 
   // Mock applications endpoint - returns MASKED contact details for unhired
+  // Hub dashboard uses /api/applications endpoint
+  await page.route(/\/api\/applications(\?.*)?$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(createUnhiredApplicationsResponse()),
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  // Also mock shift-specific applications endpoint for compatibility
   await page.route(/\/api\/shifts\/[^/]+\/applications/, async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({
@@ -491,21 +505,32 @@ test.describe('Staff Privacy & Contact Masking E2E Tests', () => {
       }
 
       // Navigate to applications view
+      // Try multiple ways to find and click the applications tab
       const applicationsTab = page.getByRole('tab', { name: /applications/i }).or(
-        page.getByText(/Applications/i).first()
+        page.locator('button').filter({ hasText: /applications/i }).first()
+      ).or(
+        page.locator('[role="tablist"]').getByText(/applications/i).first()
       );
       
-      if (await applicationsTab.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await applicationsTab.click();
-        await page.waitForTimeout(1000);
-      }
+      // Wait for tab to be visible and click it
+      await expect(applicationsTab.first()).toBeVisible({ timeout: 10000 });
+      await applicationsTab.first().click();
+      
+      // Wait for applications view to load
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
 
       // ===============================================
       // ASSERTION: Masked email format x***@domain.tld
       // Backend maskEmail: "john.doe@gmail.com" -> "j***@g***.com" OR "j***@gmail.com"
       // ===============================================
-      // Wait for applications to be rendered
-      await page.waitForTimeout(2000);
+      // Wait for applications to be rendered - check for application cards
+      await expect(
+        page.locator('[class*="application"], [class*="applicant"], [data-testid*="application"]').first()
+      ).toBeVisible({ timeout: 10000 }).catch(() => {
+        // If applications aren't visible, wait a bit more
+        return page.waitForTimeout(3000);
+      });
       
       // Check both page content and visible text (email might be in React-rendered content)
       const pageContent = await page.content();

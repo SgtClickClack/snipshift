@@ -2266,6 +2266,7 @@ export default function ProfessionalCalendar({
             isCalculatingMatches={isCalculatingMatches}
             statusFilter={statusFilter}
             onStatusFilterChange={(value) => setStatusFilter(value)}
+            onCreateAvailability={() => setShowCreateModal(true)}
           />
           <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden" style={{ minHeight: '750px' }}>
             {isLoading ? (
@@ -2312,9 +2313,6 @@ export default function ProfessionalCalendar({
                 {/* Calendar component - filteredEvents is always an array due to defensive coding */}
                 {/* Ensure events is always a valid array for react-big-calendar */}
                 {(() => {
-                  console.log('[CALENDAR RENDER] Starting Calendar render function');
-                  console.log('[CALENDAR RENDER] isLoading:', isLoading);
-                  console.log('[CALENDAR RENDER] filteredEvents count:', Array.isArray(filteredEvents) ? filteredEvents.length : 'not array');
                   try {
                     // Comprehensive prop validation
                     const safeEvents = Array.isArray(filteredEvents) ? filteredEvents : [];
@@ -2364,14 +2362,6 @@ export default function ProfessionalCalendar({
                     if (invalidEvents.length > 0) {
                       console.warn('[CALENDAR WARNING] Found invalid events:', invalidEvents.length);
                     }
-                    
-                    // Log prop validation success
-                    console.log('[CALENDAR DEBUG] Props validated:', {
-                      eventsCount: safeEvents.length,
-                      localizerType: typeof localizer,
-                      currentDate: currentDate.toISOString(),
-                      view: view
-                    });
                     
                     // Calculate height based on view for stable rendering.
                     // Important: the legend + date range live above the calendar inside this CardContent,
