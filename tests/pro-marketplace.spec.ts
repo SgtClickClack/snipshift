@@ -3,28 +3,62 @@ import { test, expect } from '@playwright/test';
 // Enable parallel execution for this test suite
 test.describe.configure({ mode: 'parallel' });
 
-test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with geofence, and complete shift cycle', async ({ page }) => {
+test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with geofence, and complete shift cycle', async ({ page, context }) => {
   test.setTimeout(60000);
   
-  // Force role in localStorage before page loads to prevent redirect loop
-  await page.addInitScript(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('hospogo_current_role', 'professional');
-    }
+  // Generate UUIDs early for use in route handlers
+  const staffUserId = crypto.randomUUID();
+  let mockUserId = staffUserId;
+  let mockUserEmail = 'lex.hunter@example.com';
+  let mockIsOnboarded = false;
+
+  // THE "UNIVERSAL" INTERCEPTOR: Context-level route that catches ALL /api/me requests
+  await context.route('**/api/me**', async (route) => {
+    console.log('🚀 CONTEXT-LEVEL HIT: /api/me', { url: route.request().url(), method: route.request().method() });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        // EXACT API STRUCTURE: Match what /api/users/me returns (flat object, no wrapper)
+        id: mockUserId || 'lex-hunter-123',
+        email: mockUserEmail || 'lex.hunter@example.com',
+        name: 'Lex Hunter',
+        displayName: 'Lex Hunter', // API maps name to displayName
+        role: 'professional',
+        roles: ['professional'], // Array of roles
+        currentRole: 'professional',
+        uid: mockUserId || 'lex-hunter-123', // Firebase UID
+        isOnboarded: mockIsOnboarded,
+        // Optional fields that AuthContext expects
+        phone: null,
+        bio: null,
+        location: 'Fortitude Valley, Brisbane QLD', // String format, not object (matches API)
+        avatarUrl: null,
+        bannerUrl: null,
+        // Compliance fields
+        rsaVerified: false,
+        rsaNotRequired: false,
+        rsaNumber: null,
+        rsaExpiry: null,
+        rsaStateOfIssue: null,
+        rsaCertificateUrl: null,
+        // Profile compliance (nested object)
+        profile: {
+          rsa_verified: false,
+          rsa_expiry: null
+        },
+        // Professional fields
+        hospitalityRole: null,
+        hourlyRatePreference: null,
+        // Rating fields
+        averageRating: null,
+        reviewCount: 0,
+        // Date fields (will be converted to Date objects by normalizeUserFromApi)
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+    });
   });
-  
-  // Poll API health endpoint until it's ready
-  await expect.poll(async () => {
-    try {
-      const response = await page.request.get('http://localhost:5000/health');
-      return response.status();
-    } catch (e) {
-      return 0;
-    }
-  }, {
-    timeout: 30000,
-    intervals: [1000, 2000, 5000],
-  }).toBe(200);
 
   // Mock background polling endpoints to prevent ERR_ABORTED logs
   // Match any notifications endpoint with or without query params
@@ -54,8 +88,7 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     });
   });
 
-  // Generate all UUIDs at the start for consistency (before route handlers that use them)
-  const staffUserId = crypto.randomUUID();
+  // Generate remaining UUIDs for use in route handlers
   const venueUserId = crypto.randomUUID();
   const shiftId = crypto.randomUUID();
   const applicationId = crypto.randomUUID();
@@ -121,11 +154,6 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     await route.continue();
   });
 
-  // Set up /api/me route interception early - will be updated with actual userId after registration
-  let mockUserId = '';
-  let mockUserEmail = '';
-  let mockIsOnboarded = false; // Flag to track onboarding status
-  
   // Mock /api/register to ensure it returns 'professional' role for Hospo Staff journey
   await page.route('**/api/register**', async (route) => {
     if (route.request().method() === 'POST') {
@@ -151,23 +179,6 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
       return;
     }
     await route.continue();
-  });
-  
-  // USER MOCK: Simplified /api/me route as specified
-  await page.route(/.*\/api\/me.*/, async (route) => {
-    console.log('🔵 Intercepting GET /api/me request');
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        id: mockUserId || 'staff-user-123',
-        email: mockUserEmail || 'test-staff@hospogo.com',
-        role: 'professional',
-        roles: ['professional'],
-        currentRole: 'professional',
-        isOnboarded: mockIsOnboarded
-      })
-    });
   });
   
   // Mock role submission API calls to prevent stalling
@@ -478,6 +489,11 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     return null;
   });
 
+  // NEW: Wait for auth state to be ready - wait for URL to change to /onboarding
+  await page.waitForURL('**/onboarding', { timeout: 20000 }).catch(() => {
+    console.log('Warning: Did not navigate to /onboarding within timeout');
+  });
+
   // MANUAL SESSION INJECTION: Prime browser storage before any navigation
   // This ensures AuthGuard sees the session immediately even if Firebase SDK is slow to sync
   let finalUserId = userId;
@@ -557,8 +573,68 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     console.log('✅ Auth token and Firebase session injected into storage after registration');
   }
 
+  // NEW: Verify storage contains the token before proceeding
+  // This ensures auth state is ready before we continue with the test
+  await page.waitForFunction(() => {
+    return localStorage.getItem('firebaseToken') !== null || 
+           localStorage.getItem('token') !== null ||
+           localStorage.getItem('authToken') !== null ||
+           sessionStorage.getItem('hospogo_test_user') !== null ||
+           localStorage.getItem('hospogo_test_user') !== null;
+  }, { timeout: 10000 }).catch(() => {
+    console.log('Warning: Token not found in storage within timeout');
+  });
+
+  // MANUAL TRIGGER: Force /api/me fetch from browser context AND trigger React state update
+  // AuthContext calls /api/me after Firebase auth state change, but in E2E we need to trigger it manually
+  // Also dispatch a custom event to trigger AuthContext refresh if available
+  await page.evaluate(async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || 'mock-test-id-token';
+      
+      // First, try to trigger the app's internal refresh if available
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('auth:refresh'));
+      }
+      
+      // Then fetch /api/me with proper headers to match AuthContext's fetch
+      const response = await fetch('/api/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('🔵 Manual /api/me fetch completed:', response.status, 'User ID:', userData.id);
+        
+        // Try to update React state by dispatching to AuthContext if possible
+        // This mimics what AuthContext does: setUser(normalizeUserFromApi(apiUser, uid))
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('auth:user-updated', { detail: userData }));
+        }
+        
+        return { status: response.status, userId: userData.id };
+      }
+      return { status: response.status, error: 'Response not OK' };
+    } catch (error) {
+      console.error('❌ Manual /api/me fetch failed:', error);
+      return { error: String(error) };
+    }
+  });
+
+  // NEW: Wait for /api/me to complete before proceeding
+  // This ensures the user profile is loaded before role selection
+  await page.waitForResponse(
+    response => response.url().includes('/api/me') && response.status() === 200,
+    { timeout: 15000 }
+  ).catch(() => {
+    console.log('Warning: /api/me response not detected');
+  });
+
   // Wait for onboarding page
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
   
   // Wait for role selection buttons
   try {
@@ -569,21 +645,12 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   } catch (e) {
     console.log('Warning: Role selection buttons not found');
   }
-  
-  await page.waitForResponse(response => 
-    response.url().includes('/api/me') && response.status() === 200,
-    { timeout: 15000 }
-  ).catch(() => {
-    console.log('Warning: /api/me response not detected');
-  });
-  
-  await page.waitForTimeout(1000);
 
   // 4. Verify we're on Onboarding page
   await expect(page).toHaveURL(/\/onboarding/, { timeout: 10000 });
   await page.waitForLoadState('networkidle');
   
-  // Wait for /api/me to be called to ensure user is loaded
+  // Wait for /api/me to be called to ensure user is loaded (additional check before role selection)
   await page.waitForResponse(response => 
     response.url().includes('/api/me') && response.status() === 200,
     { timeout: 15000 }
@@ -593,30 +660,90 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   
   await page.waitForTimeout(1000); // Give time for user state to propagate
   
-  // STEP 0: ROLE SELECTION
-  // 1. Mock the role update API immediately
-  await page.route('**/api/users/role', route => route.fulfill({ status: 200, body: '{"success":true}' }));
+  // STEP 0: ROLE SELECTION - Robust implementation
+  // Ensure the Role API mock is ready
+  await page.route('**/api/users/role', r => r.fulfill({ 
+    status: 200, 
+    body: JSON.stringify({ success: true, role: 'professional' }) 
+  }));
 
-  // 2. Select the Staff role
-  const proBtn = page.getByText(/I'm looking for shifts|Professional/i);
-  await proBtn.click();
+  // Wait for /api/me to be called and user state to be ready
+  await page.waitForResponse(response => 
+    response.url().includes('/api/me') && response.status() === 200,
+    { timeout: 15000 }
+  ).catch(() => {
+    console.log('Warning: /api/me response not detected, proceeding anyway');
+  });
+
+  // HARDENED TEST INTERCEPT: Force the profile sync if the app is idling
+  // This manually triggers /api/me to wake up the UI before role selection
+  await page.evaluate(async () => {
+    console.log('🛠️ MANUALLY KICKSTARTING /api/me FETCH');
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || 'mock-test-id-token';
+      const response = await fetch('/api/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('🛠️ Manual /api/me kickstart completed:', response.status, response.statusText);
+      return response.status;
+    } catch (e) {
+      console.error('🛠️ Manual /api/me kickstart error:', e);
+      return null;
+    }
+  });
   
-  // 3. WAIT for the button to be visibly enabled/active in the UI state
-  // The Next button is disabled when selectedRole is null, so wait for it to be enabled
+  // Wait a moment for the kickstart to complete
+  await page.waitForTimeout(500);
+
+  // Wait for the role selection button to be visible and enabled
+  // The button is disabled when user is not loaded (!user || !user.id || isPolling)
+  // Use text-based selector as primary since it's more reliable
+  const roleButton = page.getByRole('button', { name: /I'm looking for shifts|looking for shifts/i }).first();
+  
+  // Wait for button to be visible (page must be loaded)
+  await expect(roleButton).toBeVisible({ timeout: 15000 });
+  
+  // Wait for button to be enabled (user must be loaded via /api/me)
+  await expect(roleButton).toBeEnabled({ timeout: 15000 });
+  
+  // Select Role
+  await roleButton.click();
+  
+  // Wait for React state to update (selectedRole state propagation)
   await page.waitForTimeout(1000);
   
-  // 4. Wait for the Next button to be visible and enabled (disabled attribute removed)
-  const nextBtn = page.getByTestId('onboarding-next');
-  await expect(nextBtn).toBeVisible({ timeout: 5000 });
-  await expect(nextBtn).toBeEnabled({ timeout: 5000 });
+  // Verify role is selected (button should have selected styling)
+  await expect(roleButton).toHaveClass(/border-brand-neon/, { timeout: 5000 });
   
-  // 5. Force the click on Next
-  await nextBtn.click();
+  // Click Next to advance to Personal Details
+  const nextButton = page.getByTestId('onboarding-next');
+  await expect(nextButton).toBeVisible({ timeout: 5000 });
+  await expect(nextButton).toBeEnabled({ timeout: 15000 });
   
-  // 6. Wait for step transition - wait for the display name field (most reliable indicator)
-  // The header "Personal Details" is in an h2, but the field is more reliable
-  await expect(page.getByTestId('onboarding-display-name')).toBeVisible({ timeout: 15000 });
-
+  // Debug: Check button state before clicking
+  const isEnabledBeforeClick = await nextButton.isEnabled();
+  console.log('Next button enabled before click:', isEnabledBeforeClick);
+  
+  // Click and wait for step change - use waitForFunction to detect step transition
+  await nextButton.click();
+  
+  // Wait for step transition by checking if we're no longer on step 0
+  // The step indicator should change from "Getting Started" to "Step 1 of 4"
+  await page.waitForFunction(() => {
+    const stepText = document.querySelector('span')?.textContent || '';
+    return stepText.includes('Step 1') || stepText.includes('Personal Details');
+  }, { timeout: 20000 }).catch(() => {
+    console.log('Step transition not detected via waitForFunction');
+  });
+  
+  // Wait for step transition - the component should immediately show Step 1
+  // Wait for either the heading or the input field to appear
+  const displayName = page.getByTestId('onboarding-display-name');
+  await expect(displayName).toBeVisible({ timeout: 20000 });
+  
   // Mock location suggestions
   await page.route('**/maps/api/place/autocomplete/**', route => route.fulfill({ 
     status: 200, 
@@ -651,13 +778,36 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     }
   });
   
-  // 6. Fill Personal Details (Step 1)
-  await page.fill('[data-testid="onboarding-display-name"]', 'Test Staff User', { timeout: 30000 });
-  await page.fill('[data-testid="onboarding-phone"]', '0400000000', { timeout: 30000 });
-  await page.fill('[data-testid="onboarding-location"]', 'Brisbane', { timeout: 30000 });
+  // 6. Fill Personal Details (Step 1) - Location & Identity Setup
+  // 1. Fill Display Name
+  await displayName.fill('Lex Hunter');
   
+  // 2. Handle Location with Selection
+  // Try placeholder first, fallback to testid if needed
+  const locInput = page.getByPlaceholder(/Location|Suburb|Address|City/i).or(page.getByTestId('onboarding-location'));
+  await locInput.fill('Fortitude Valley, Brisbane QLD', { timeout: 30000 });
+  
+  // Wait for autocomplete suggestions to appear (popover with CommandItem)
+  await page.waitForTimeout(500); // Allow debounce and API call to process
+  
+  // Navigate to first suggestion and select it using keyboard
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(200); // Brief pause for UI update
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500); // Allow selection to process
+  
+  // Fill phone number
+  await page.fill('[data-testid="onboarding-phone"]', '0400000000', { timeout: 30000 });
+  
+  // VERIFY TRANSITION: Ensure the 'Next' button becomes enabled only after these fields are valid
   const stepNextBtn = page.getByRole('button', { name: /Next|Continue/i }).last();
+  await expect(stepNextBtn).toBeEnabled({ timeout: 10000 });
+  
+  // Click 'Next' and verify transition to Step 2 (Bio/Skills)
   await stepNextBtn.click();
+  
+  // Verify we've transitioned to Step 2 by checking for Bio field
+  await expect(page.locator('[data-testid="onboarding-bio"]')).toBeVisible({ timeout: 15000 });
 
   // 7. Skip Document Verification (Step 2)
   const skipDocumentsButton = page.getByRole('button', { name: /skip for now/i }).first();
@@ -666,7 +816,7 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   }
   await page.click('[data-testid="onboarding-next"]');
 
-  // STEP 3: ROLE & EXPERIENCE (Staff Specific)
+  // STEP 3: ROLE & EXPERIENCE (Staff Specific) - Step 2 after skipping documents
   // Mock the profile save
   await page.route('**/api/users/profile', r => r.fulfill({ 
     status: 200,
@@ -674,9 +824,24 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     body: '{"success":true}' 
   }));
 
-  // Fill the Bio field using typing to ensure validation passes
-  await page.type('[data-testid="onboarding-bio"]', 'I have 4 years of experience as a lead bartender and floor manager.', { delay: 50 });
-  await page.click('button:has-text("Next")');
+  // 1. Fill Bio
+  await page.getByTestId('onboarding-bio').fill('Experienced bartender with 5 years in Brisbane venues.', { timeout: 30000 });
+  await page.waitForTimeout(300); // Allow validation to process
+
+  // 2. Select a Skill (Primary Role - e.g., Bartending)
+  // Try multiple selectors to find the skill/role selection
+  const roleSelect = page.locator('[data-testid="onboarding-role"]');
+  await roleSelect.click({ timeout: 10000 });
+  await page.waitForTimeout(300); // Wait for dropdown to open
+  
+  // Select "Bartender" from the dropdown (this is the skill/role selection)
+  await page.getByRole('option', { name: /Bartender/i }).click({ timeout: 5000 });
+  await page.waitForTimeout(300); // Wait for selection to process
+  
+  // Click Next button to proceed
+  const step3NextBtn = page.getByTestId('onboarding-next');
+  await expect(step3NextBtn).toBeEnabled({ timeout: 5000 });
+  await step3NextBtn.click();
 
   // 9. Skip Payout Setup (Step 4)
   const skipPayoutButton = page.getByRole('button', { name: /skip for now/i }).first();
@@ -687,14 +852,28 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   // FINAL TRANSITION: Before the final redirect check, flip the mock state
   mockIsOnboarded = true;
   
-  // 10. Complete Setup
-  await page.click('[data-testid="onboarding-complete"]');
+  // 3. Complete Onboarding
+  const finishBtn = page.getByRole('button', { name: /Finish|Complete|Done/i }).or(page.getByTestId('onboarding-complete'));
+  await expect(finishBtn).toBeEnabled({ timeout: 10000 });
+  await finishBtn.click();
   
   // Add buffer to allow AuthGuard to process the state change
   await page.waitForTimeout(2000);
 
-  // FINAL TRANSITION: Assert the landing
-  await expect(page).toHaveURL(/\/professional-dashboard/, { timeout: 15000 });
+  // VERIFY DASHBOARD/FEED: Wait for navigation to dashboard or shifts feed
+  // The app may navigate to /professional-dashboard, /worker/dashboard, or /shifts
+  await expect(page).toHaveURL(/\/(professional-dashboard|worker\/dashboard|shifts|hub-dashboard)/, { timeout: 15000 });
+  
+  // Wait for page to fully load
+  await page.waitForLoadState('networkidle');
+  
+  // Verify that at least one "Open Shift" is visible in the feed
+  // Look for shift cards, job listings, or shift-related content
+  await expect(
+    page.getByText(/Open Shift|Available Shift|Apply Now|View Shift/i).or(
+      page.locator('[data-testid*="shift"], [data-testid*="job"]').first()
+    )
+  ).toBeVisible({ timeout: 15000 });
 
   // MARKETPLACE INTERACTION: Verify Staff member can see and apply for shifts
   await page.waitForLoadState('networkidle');

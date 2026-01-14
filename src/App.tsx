@@ -26,6 +26,7 @@ import { Footer } from '@/components/layout/Footer';
 
 // Core pages - load immediately for fast initial render (critical for FCP/LCP)
 import LandingPage from '@/pages/landing';
+import { WaitlistPage } from '@/pages/Waitlist';
 import HomePage from '@/pages/home';
 import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
@@ -110,6 +111,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         {/* Public routes */}
         {/* IMPORTANT: Landing must remain fully public (no auth guard / no protected route wrapper). */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/waitlist" element={<WaitlistPage />} />
         
         <Route path="/home" element={
           <AuthGuard>
