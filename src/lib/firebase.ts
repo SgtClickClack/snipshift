@@ -145,6 +145,11 @@ export const signInWithGoogle = async () => {
 export const handleGoogleRedirectResult = async () => {
   try {
     const result = await getRedirectResult(auth);
+    if (result?.user) {
+      // CRITICAL: Force token refresh to ensure it's persisted and ready for backend
+      // This prevents race conditions where onAuthStateChange fires before token is ready
+      await result.user.getIdToken(true);
+    }
     return result?.user || null;
   } catch (error) {
     console.error('Google redirect error:', error);

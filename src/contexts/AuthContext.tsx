@@ -375,7 +375,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // IMPORTANT: Ensure user exists in database BEFORE onAuthStateChange tries to fetch profile
           // This prevents race conditions where /api/me fails because user doesn't exist yet
           try {
-            const token = await redirectUser.getIdToken();
+            // CRITICAL: Force token refresh to ensure it's persisted and ready for backend
+            // Even though handleGoogleRedirectResult already refreshes, we do it again here
+            // to ensure we have the absolute latest token with all claims
+            const token = await redirectUser.getIdToken(true);
             const registerRes = await fetch("/api/register", {
               method: "POST",
               headers: {
@@ -787,17 +790,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const refreshUser = async () => {
+    logger.debug('AuthContext', 'refreshUser called');
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) {
+      logger.debug('AuthContext', 'refreshUser: No Firebase user, clearing state');
       setUser(null);
       setToken(null);
       return;
     }
 
     try {
+      logger.debug('AuthContext', 'refreshUser: Force refreshing token for user', { uid: firebaseUser.uid });
       // Force refresh token to ensure we have latest claims/session
       const token = await firebaseUser.getIdToken(true);
       setToken(token);
+      
+      // Small delay to ensure token is fully persisted and backend can verify it
+      // This helps prevent race conditions where backend hasn't processed the new token yet
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      logger.debug('AuthContext', 'refreshUser: Token refreshed, fetching user profile');
       const res = await fetch('/api/me', {
         cache: 'no-store',
         headers: {
@@ -808,6 +820,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       
       if (res.ok) {
+        logger.debug('AuthContext', 'refreshUser: Successfully fetched user profile');
         const apiUser = await res.json();
         const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
         setUser(nextUser);
@@ -821,9 +834,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         pendingRedirect.current = false;
       } else if (res.status === 401) {
         // 401 means token is invalid or expired - try to refresh token once
+        logger.debug('AuthContext', 'refreshUser: Received 401, retrying with fresh token');
         try {
           const refreshedToken = await firebaseUser.getIdToken(true);
           setToken(refreshedToken);
+          
+          // Small delay to ensure token is fully persisted
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          logger.debug('AuthContext', 'refreshUser: Retrying /api/me with refreshed token');
           const retryRes = await fetch('/api/me', {
             cache: 'no-store',
             headers: {
@@ -834,6 +853,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
           
           if (retryRes.ok) {
+            logger.debug('AuthContext', 'refreshUser: Retry successful, user profile fetched');
             const apiUser = await retryRes.json();
             const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
             setUser(nextUser);
@@ -867,6 +887,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         logger.error('AuthContext', 'Failed to refresh user profile', res.status);
       }
     } catch (error) {
+      logger.error('AuthContext', 'Error refreshing user profile:', error);
       console.error('Error refreshing user profile:', error);
     }
   };
