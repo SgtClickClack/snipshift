@@ -98,6 +98,10 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       // This prevents race conditions where /api/me fails because user doesn't exist yet
       await ensureUserInDatabase(firebaseUser);
       
+      // Add cooldown to allow DB replication if using a distributed database
+      // This ensures the user record is available when /api/me is called
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Step 3: Show success toast with HospoGo brand neon green styling
       toast({
         title: "Welcome!",
@@ -112,6 +116,10 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       } catch (refreshError) {
         logger.debug('GoogleAuthButton', 'refreshUser failed, navigating to onboarding', refreshError);
       }
+      
+      // NEW: Wait for AuthContext to process before checking redirect
+      // This prevents race conditions where we check redirect before AuthContext has finished
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Step 5: Force redirect to onboarding as fallback (AuthContext should handle this, 
       // but we add a fallback to ensure navigation happens)

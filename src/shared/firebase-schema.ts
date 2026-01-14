@@ -2,6 +2,8 @@
  * Shared Firebase schema types used across the application
  */
 
+import type { ShiftLocation } from './types';
+
 export interface Job {
   id: string;
   title: string;
@@ -72,7 +74,7 @@ export interface Shift {
   date: string; // ISO datetime string (startTime)
   startTime?: string; // ISO datetime string
   endTime?: string; // ISO datetime string
-  location?: string;
+  location?: string | ShiftLocation; // Supports both legacy string format and structured object
   pay?: string | number; // Hourly rate (alias for hourlyRate)
   hourlyRate?: string | number;
   requirements?: string; // Description/requirements (alias for description)
@@ -84,8 +86,16 @@ export interface Shift {
   // Shop branding fields
   shopName?: string | null;
   shopAvatarUrl?: string | null;
-  // Location coordinates
+  // Location coordinates (legacy support - prefer structured location object)
   lat?: string | number | null;
   lng?: string | number | null;
 }
 
+export interface WaitlistEntry {
+  id: string;
+  role: 'venue' | 'staff';
+  name: string;      // Venue Name or Full Name
+  contact: string;   // Email or Mobile
+  location: string;  // Standardized (e.g., 'Brisbane, AU')
+  createdAt: string; // ISO 8601 UTC
+}

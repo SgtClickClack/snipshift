@@ -228,11 +228,28 @@ export function authenticateUser(
 
         next();
       } catch (error: any) {
-        console.error('[AUTH ERROR] Token verification failed:', error?.message || error);
-        console.error('[AUTH ERROR] Stack:', error?.stack);
+        const errorCode = error?.code || 'unknown';
+        const errorMessage = error?.message || 'Token verification failed';
+        
+        // Log detailed error information for debugging
+        console.error('[AUTH ERROR] Token verification failed:', {
+          code: errorCode,
+          message: errorMessage,
+          path: req.path,
+          hasToken: !!token,
+          tokenLength: token?.length,
+          tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
+        });
+        
+        // Only log stack in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[AUTH ERROR] Stack:', error?.stack);
+        }
+        
         res.status(401).json({ 
           message: 'Unauthorized: Invalid token',
-          error: error?.message || 'Token verification failed'
+          error: errorMessage,
+          code: errorCode
         });
       }
     }).catch((error: any) => {

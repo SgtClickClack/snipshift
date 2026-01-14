@@ -6,6 +6,7 @@
 
 import { EventEmitter } from 'events';
 import * as notificationsRepo from '../repositories/notifications.repository.js';
+import type { WaitlistEntry } from '../repositories/waitlist.repository.js';
 
 // Event bus for real-time notifications
 export const notificationBus = new EventEmitter();
@@ -202,4 +203,176 @@ export async function notifyApplicationDeclined(
       status: 'rejected'
     }
   });
+}
+
+/**
+ * Notification Provider Interface
+ * Supports different notification delivery methods (email, SMS, push, etc.)
+ */
+export interface NotificationProvider {
+  send(payload: NotificationPayload): Promise<boolean>;
+}
+
+export interface NotificationPayload {
+  to: string;
+  subject: string;
+  body: string;
+  metadata: {
+    name: string;
+    role: 'venue' | 'staff';
+    approvedAt: string; // Localized Brisbane time string
+    entryId: string;
+  };
+}
+
+/**
+ * Mock Notification Provider
+ * Logs notification payload to console for development/testing
+ */
+class MockNotificationProvider implements NotificationProvider {
+  async send(payload: NotificationPayload): Promise<boolean> {
+    console.log('='.repeat(80));
+    console.log('🔔 [NOTIFICATION SERVICE] Waitlist Approval Notification');
+    console.log('='.repeat(80));
+    console.log('To:', payload.to);
+    console.log('Subject:', payload.subject);
+    console.log('Body:', payload.body);
+    console.log('Metadata:', JSON.stringify(payload.metadata, null, 2));
+    console.log('='.repeat(80));
+    console.log('');
+    return true;
+  }
+}
+
+/**
+ * Format date to Brisbane Local Time (AEST)
+ * Returns a human-readable string in Brisbane timezone
+ */
+function formatBrisbaneDateTime(date: Date | null | undefined): string {
+  if (!date) {
+    return 'N/A';
+  }
+
+  try {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return 'N/A';
+    }
+
+    // Format as 'MMM d, yyyy HH:mm AEST' in Brisbane timezone
+    const formatter = new Intl.DateTimeFormat('en-AU', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Australia/Brisbane',
+    });
+
+    const formatted = formatter.format(dateObj);
+    return `${formatted} AEST`;
+  } catch (error) {
+    console.error('[NOTIFICATION] Error formatting Brisbane date:', error);
+    return 'N/A';
+  }
+}
+
+/**
+ * Send approval notification for waitlist entry
+ * 
+ * This function is called when a waitlist entry status is updated to 'approved'.
+ * It generates a notification payload with localized Brisbane time and sends it
+ * via the configured notification provider (Mock for now).
+ * 
+ * @param entry - Waitlist entry that was approved
+ * @param provider - Notification provider to use (defaults to Mock)
+ */
+export async function sendApprovalNotification(
+  entry: WaitlistEntry,
+  provider?: NotificationProvider
+): Promise<boolean> {
+  // Use Mock provider if none specified
+  const notificationProvider = provider || new MockNotificationProvider();
+
+  // Validate entry has required data
+  if (!entry.name || !entry.contact) {
+    console.error('[NOTIFICATION] Invalid waitlist entry: missing name or contact', {
+      entryId: entry.id,
+      hasName: !!entry.name,
+      hasContact: !!entry.contact,
+    });
+    return false;
+  }
+
+  // Format approvedAt to Brisbane Local Time (AEST)
+  const approvedAtBrisbane = formatBrisbaneDateTime(entry.approvedAt);
+
+  // Determine role display name
+  const roleDisplayName = entry.role === 'venue' ? 'Venue' : 'Staff';
+
+  // Generate notification body with high-energy, professional Brisbane-centric branding
+  const notificationBody = `
+🎉 Welcome to Neon Valley: Your HospoGo Access is Approved!
+
+Hey ${entry.name},
+
+Massive news! Your waitlist application has been approved, and you're now part of the HospoGo Brisbane community!
+
+Your Details:
+• Role: ${roleDisplayName}
+• Location: ${entry.location || 'Brisbane, AU'}
+• Approved: ${approvedAtBrisbane}
+
+What's Next?
+Get ready to dive into Brisbane's hospitality scene! Whether you're looking for shifts or need to fill them, HospoGo is your platform to connect, work, and thrive in the Neon Valley.
+
+Ready to get started? Head over to HospoGo and complete your profile setup.
+
+Welcome aboard! 🚀
+
+---
+HospoGo Brisbane
+Neon Valley Hospitality Platform
+  `.trim();
+
+  // Create notification payload
+  const payload: NotificationPayload = {
+    to: entry.contact,
+    subject: 'Welcome to Neon Valley: Your HospoGo Access',
+    body: notificationBody,
+    metadata: {
+      name: entry.name,
+      role: entry.role,
+      approvedAt: approvedAtBrisbane,
+      entryId: entry.id,
+    },
+  };
+
+  try {
+    // Send notification via provider
+    const success = await notificationProvider.send(payload);
+
+    if (success) {
+      console.log('[NOTIFICATION] Approval notification sent successfully', {
+        entryId: entry.id,
+        contact: entry.contact,
+        role: entry.role,
+      });
+    } else {
+      console.error('[NOTIFICATION] Failed to send approval notification', {
+        entryId: entry.id,
+        contact: entry.contact,
+      });
+    }
+
+    return success;
+  } catch (error: any) {
+    console.error('[NOTIFICATION] Error sending approval notification:', {
+      error: error?.message || error,
+      entryId: entry.id,
+      contact: entry.contact,
+    });
+    return false;
+  }
 }

@@ -7,8 +7,14 @@ import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as paymentsRepo from '../repositories/payments.repository.js';
 import * as reportsRepo from '../repositories/reports.repository.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
+import * as waitlistRepo from '../repositories/waitlist.repository.js';
+import * as venuesRepo from '../repositories/venues.repository.js';
 import * as emailService from '../services/email.service.js';
+import * as notificationService from '../services/notification.service.js';
 import { z } from 'zod';
+import { eq, sql, and, inArray } from 'drizzle-orm';
+import { waitlist, users, venues } from '../db/schema.js';
+import { getDb } from '../db/index.js';
 
 const router = express.Router();
 
@@ -370,6 +376,218 @@ router.patch('/reports/:id/status', asyncHandler(async (req: AuthenticatedReques
   });
 }));
 
+/**
+ * GET /api/admin/reports/launch-readiness
+ * 
+ * Launch readiness report for Brisbane onboarding progress
+ * - Counts approved waitlist entries
+ * - Identifies approved leads who haven't completed Step 2 (Venue Profile)
+ * - Groups by postcode (4000-4199) for spatial analysis
+ */
+router.get('/reports/launch-readiness', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ error: 'Database connection unavailable' });
+    return;
+  }
+
+  try {
+    // 1. Count total approved waitlist entries
+    const [approvedCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(waitlist)
+      .where(eq(waitlist.approvalStatus, 'approved'));
+    const totalApproved = Number(approvedCountResult.count);
+
+    // 2. Count users with business or professional roles
+    const [businessCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.role, 'business'));
+    const totalBusinessUsers = Number(businessCountResult.count);
+
+    const [professionalCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.role, 'professional'));
+    const totalProfessionalUsers = Number(professionalCountResult.count);
+
+    // 3. Get all approved waitlist entries
+    const approvedWaitlistEntries = await db
+      .select()
+      .from(waitlist)
+      .where(eq(waitlist.approvalStatus, 'approved'));
+
+    // 4. Find approved leads who have NOT completed Step 2 (Venue Profile)
+    // For venues: check if they have a venue profile
+    // For staff: check if they have isOnboarded: true
+    const stuckInFunnel: Array<{
+      waitlistId: string;
+      contact: string;
+      name: string;
+      role: 'venue' | 'staff';
+      location: string;
+      approvedAt: Date | null;
+      reason: 'no_venue_profile' | 'not_onboarded';
+    }> = [];
+
+    for (const entry of approvedWaitlistEntries) {
+      if (entry.role === 'venue') {
+        // Check if venue has completed Step 2 (venue profile exists)
+        const venue = await venuesRepo.getVenueByWaitlistId(entry.id);
+        if (!venue) {
+          stuckInFunnel.push({
+            waitlistId: entry.id,
+            contact: entry.contact,
+            name: entry.name,
+            role: 'venue',
+            location: entry.location,
+            approvedAt: entry.approvedAt,
+            reason: 'no_venue_profile',
+          });
+        }
+      } else if (entry.role === 'staff') {
+        // For staff, check if user exists and is onboarded
+        // Find user by email (contact field for staff is typically email)
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, entry.contact))
+          .limit(1);
+        
+        if (!user || !user.isOnboarded) {
+          stuckInFunnel.push({
+            waitlistId: entry.id,
+            contact: entry.contact,
+            name: entry.name,
+            role: 'staff',
+            location: entry.location,
+            approvedAt: entry.approvedAt,
+            reason: 'not_onboarded',
+          });
+        }
+      }
+    }
+
+    // 5. Find users who are approved but have isOnboarded: false
+    // Get all users linked to approved waitlist entries
+    const approvedWaitlistIds = approvedWaitlistEntries.map(e => e.id);
+    const venuesWithApprovedWaitlist = await db
+      .select()
+      .from(venues)
+      .where(inArray(venues.waitlistId, approvedWaitlistIds));
+
+    const approvedUserIds = venuesWithApprovedWaitlist.map(v => v.userId);
+    const approvedButNotOnboarded: Array<{
+      userId: string;
+      email: string;
+      name: string;
+      waitlistId: string | null;
+    }> = [];
+
+    if (approvedUserIds.length > 0) {
+      const usersNotOnboarded = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            inArray(users.id, approvedUserIds),
+            eq(users.isOnboarded, false)
+          )
+        );
+
+      for (const user of usersNotOnboarded) {
+        const venue = venuesWithApprovedWaitlist.find(v => v.userId === user.id);
+        approvedButNotOnboarded.push({
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+          waitlistId: venue?.waitlistId || null,
+        });
+      }
+    }
+
+    // 6. Spatial filtering: Group by postcode (4000-4199)
+    // Extract postcodes from venue addresses
+    const postcodeGroups: Record<string, {
+      postcode: string;
+      count: number;
+      venues: Array<{
+        venueName: string;
+        contact: string;
+        hasProfile: boolean;
+      }>;
+    }> = {};
+
+    for (const entry of approvedWaitlistEntries) {
+      if (entry.role === 'venue') {
+        const venue = await venuesRepo.getVenueByWaitlistId(entry.id);
+        const postcode = venue?.address?.postcode || 'unknown';
+        
+        // Only include Brisbane postcodes (4000-4199)
+        const postcodeNum = parseInt(postcode);
+        if (postcodeNum >= 4000 && postcodeNum <= 4199) {
+          if (!postcodeGroups[postcode]) {
+            postcodeGroups[postcode] = {
+              postcode,
+              count: 0,
+              venues: [],
+            };
+          }
+          postcodeGroups[postcode].count++;
+          postcodeGroups[postcode].venues.push({
+            venueName: entry.name,
+            contact: entry.contact,
+            hasProfile: !!venue,
+          });
+        }
+      }
+    }
+
+    // Calculate conversion rate
+    const totalOnboarded = totalBusinessUsers + totalProfessionalUsers;
+    const conversionRate = totalApproved > 0 
+      ? Math.round((totalOnboarded / totalApproved) * 100) 
+      : 0;
+
+    res.status(200).json({
+      summary: {
+        totalApproved,
+        totalBusinessUsers,
+        totalProfessionalUsers,
+        totalOnboarded,
+        conversionRate, // Percentage of approved -> onboarded
+      },
+      stuckInFunnel: {
+        count: stuckInFunnel.length,
+        entries: stuckInFunnel.map(entry => ({
+          contact: entry.contact,
+          name: entry.name,
+          role: entry.role,
+          location: entry.location,
+          approvedAt: entry.approvedAt?.toISOString() || null,
+          reason: entry.reason,
+        })),
+      },
+      approvedButNotOnboarded: {
+        count: approvedButNotOnboarded.length,
+        users: approvedButNotOnboarded,
+      },
+      spatialAnalysis: {
+        postcodeGroups: Object.values(postcodeGroups).sort((a, b) => 
+          parseInt(a.postcode) - parseInt(b.postcode)
+        ),
+      },
+    });
+  } catch (error: any) {
+    console.error('[ADMIN] Error generating launch readiness report:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error?.message || 'Failed to generate launch readiness report',
+    });
+  }
+}));
+
 // Test email endpoint (Admin only)
 // Note: This was at /api/test-email, not /api/admin/test-email, but instructions say "Move any admin-related endpoints here".
 // Since it requires admin, it fits here. I will mount this router at /api/admin, so it will become /api/admin/test-email.
@@ -449,6 +667,163 @@ router.post('/test-email', asyncHandler(async (req: AuthenticatedRequest, res) =
     console.error('Error sending test email:', error);
     res.status(500).json({ 
       message: 'Error sending test email: ' + (error.message || 'Unknown error') 
+    });
+  }
+}));
+
+/**
+ * GET /api/admin/waitlist/export
+ * 
+ * Export all waitlist entries as CSV
+ * Admin-only endpoint
+ */
+router.get('/waitlist/export', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  try {
+    // Fetch all waitlist entries ordered by creation date (newest first)
+    const entries = await waitlistRepo.getAllWaitlistEntries();
+    
+    if (!entries || entries.length === 0) {
+      res.status(404).json({ message: 'No waitlist entries found' });
+      return;
+    }
+
+    // Convert to CSV format with Brisbane local time
+    const formatBrisbaneDateTime = (date: Date | string | null | undefined): string => {
+      if (!date) return 'N/A';
+      
+      try {
+        const dateObj = date instanceof Date ? date : new Date(date);
+        if (isNaN(dateObj.getTime())) return 'N/A';
+        
+        // Format as 'YYYY-MM-DD HH:mm' in Brisbane timezone (AEST)
+        const formatter = new Intl.DateTimeFormat('en-AU', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Australia/Brisbane',
+          hour12: false,
+        });
+        
+        // Format returns "DD/MM/YYYY, HH:mm" - need to convert to "YYYY-MM-DD HH:mm"
+        const parts = formatter.formatToParts(dateObj);
+        const year = parts.find(p => p.type === 'year')?.value || '';
+        const month = parts.find(p => p.type === 'month')?.value.padStart(2, '0') || '';
+        const day = parts.find(p => p.type === 'day')?.value.padStart(2, '0') || '';
+        const hour = parts.find(p => p.type === 'hour')?.value.padStart(2, '0') || '';
+        const minute = parts.find(p => p.type === 'minute')?.value.padStart(2, '0') || '';
+        
+        return `${year}-${month}-${day} ${hour}:${minute}`;
+      } catch {
+        return 'N/A';
+      }
+    };
+
+    // CSV Headers
+    const headers = ['Timestamp (Brisbane)', 'Role', 'Name/Venue', 'Contact', 'Location'];
+    
+    // CSV Rows
+    const rows = entries.map(entry => {
+      const timestamp = formatBrisbaneDateTime(entry.createdAt);
+      const role = entry.role === 'venue' ? 'Venue' : 'Staff';
+      const name = entry.name || 'N/A';
+      const contact = entry.contact || 'N/A';
+      const location = entry.location || 'Brisbane, AU';
+      
+      // Escape CSV values (handle commas and quotes)
+      const escapeCsv = (value: string): string => {
+        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      };
+      
+      return [
+        escapeCsv(timestamp),
+        escapeCsv(role),
+        escapeCsv(name),
+        escapeCsv(contact),
+        escapeCsv(location),
+      ].join(',');
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    
+    // Generate filename with timestamp
+    const exportTimestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const filename = `hospogo_waitlist_export_${exportTimestamp}.csv`;
+    
+    // Set response headers for CSV download
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    // Send CSV content with BOM for Excel UTF-8 support
+    res.status(200).send('\ufeff' + csvContent);
+  } catch (error: any) {
+    console.error('[ADMIN] Error exporting waitlist:', error);
+    res.status(500).json({ 
+      message: 'Error exporting waitlist',
+      error: error?.message || 'Unknown error'
+    });
+  }
+}));
+
+/**
+ * PATCH /api/admin/waitlist/:id/status
+ * 
+ * Update waitlist entry approval status
+ * Admin-only endpoint
+ * Body: { status: 'approved' | 'rejected' }
+ */
+router.patch('/waitlist/:id/status', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  // Validate status
+  if (!status || !['approved', 'rejected'].includes(status)) {
+    res.status(400).json({
+      error: 'Validation error',
+      message: 'Status must be either "approved" or "rejected"'
+    });
+    return;
+  }
+
+  try {
+    const updatedEntry = await waitlistRepo.updateWaitlistStatus(id, status);
+
+    if (!updatedEntry) {
+      res.status(404).json({
+        error: 'Not found',
+        message: 'Waitlist entry not found'
+      });
+      return;
+    }
+
+    // Trigger approval notification if status is 'approved'
+    if (status === 'approved' && updatedEntry.approvalStatus === 'approved') {
+      // Fire notification asynchronously (don't block the response)
+      notificationService.sendApprovalNotification(updatedEntry).catch((error) => {
+        console.error('[ADMIN] Error sending approval notification:', error);
+        // Log but don't fail the request - notification is non-critical
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: updatedEntry.id,
+        approvalStatus: updatedEntry.approvalStatus,
+        approvedAt: updatedEntry.approvedAt?.toISOString() || null,
+      },
+    });
+  } catch (error: any) {
+    console.error('[ADMIN] Error updating waitlist status:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error?.message || 'Failed to update waitlist status'
     });
   }
 }));

@@ -52,6 +52,9 @@ import stripeConnectRouter from './routes/stripe-connect.js';
 import paymentsRouter from './routes/payments.js';
 import leadsRouter from './routes/leads.js';
 import appealsRouter from './routes/appeals.js';
+import waitlistRouter from './routes/waitlist.js';
+import onboardingRouter from './routes/onboarding.js';
+import reportsRouter from './routes/reports.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { stripe } from './lib/stripe.js';
@@ -223,6 +226,9 @@ app.use('/api/stripe-connect', stripeConnectRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/leads', leadsRouter);
 app.use('/api/appeals', appealsRouter);
+app.use('/api/waitlist', waitlistRouter);
+app.use('/api/onboarding', onboardingRouter);
+app.use('/api/admin/reports', reportsRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic

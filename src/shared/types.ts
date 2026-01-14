@@ -1,3 +1,15 @@
+/**
+ * Structured location object following ISO standards
+ */
+export interface ShiftLocation {
+  address: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  countryCode: string; // ISO 3166-1 alpha-2 country code (e.g., 'AU', 'US', 'GB')
+}
+
 export interface Shift {
   id: string;
   employerId: string;
@@ -7,7 +19,7 @@ export interface Shift {
   endTime: string;
   hourlyRate: string;
   status: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
-  location?: string;
+  location?: string | ShiftLocation; // Supports both legacy string format and structured object
   autoAccept?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -26,7 +38,8 @@ export interface Shift {
   shopName?: string | null; // Shop's business name
   shopAvatarUrl?: string | null; // Shop's profile picture URL
   
-  // Location coordinates for distance filtering
+  // Location coordinates for distance filtering (legacy support)
+  // Prefer using structured location object when available
   lat?: string | number | null; // Latitude
   lng?: string | number | null; // Longitude
 

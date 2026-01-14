@@ -6,6 +6,10 @@ interface SEOProps {
   image?: string;
   url?: string;
   /**
+   * Canonical URL for the page. If not provided, uses the url prop.
+   */
+  canonical?: string;
+  /**
    * Optional override for social share titles (OpenGraph/Twitter).
    * Useful when you want a different title than the document <title>.
    */
@@ -35,6 +39,7 @@ export function SEO({
   description = defaultDescription,
   image = defaultImage,
   url = defaultUrl,
+  canonical,
   socialTitle,
   ogDescription,
   twitterDescription,
@@ -47,6 +52,9 @@ export function SEO({
   const resolvedTwitterDescription = twitterDescription ?? description;
   const fullImageUrl = image.startsWith('http') ? image : `${defaultUrl}${image}`;
   const fullUrl = url.startsWith('http') ? url : `${defaultUrl}${url}`;
+  const canonicalUrl = canonical 
+    ? (canonical.startsWith('http') ? canonical : `${defaultUrl}${canonical}`)
+    : fullUrl;
 
   return (
     <Helmet>
@@ -56,6 +64,7 @@ export function SEO({
       <meta name="description" content={description} />
       <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       <meta name="theme-color" content="#1A1A1A" />
+      <link rel="canonical" href={canonicalUrl} />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />

@@ -97,7 +97,7 @@ test.describe('Authentication Tests', () => {
         const redirectUri = url.searchParams.get('redirect_uri');
         
         // The redirect_uri should contain the Firebase project domain
-        // Based on the firebase.ts config, this should be 'hospogo-75b04.firebaseapp.com'
+        // Based on the firebase.ts config, this should be 'hospogo.com'
         // or the custom auth domain if configured
         if (redirectUri) {
           expect(redirectUri).toContain('firebaseapp.com');
@@ -242,7 +242,7 @@ test.describe('Authentication Tests', () => {
           const redirectUri = url.searchParams.get('redirect_uri');
           
           // The redirect_uri should contain the Firebase auth domain
-          // This should be hospogo-75b04.firebaseapp.com
+          // This should be hospogo.com (or firebaseapp.com if using default)
           // depending on the VITE_FIREBASE_AUTH_DOMAIN environment variable
           if (redirectUri) {
             // Verify it's a valid Firebase redirect URI

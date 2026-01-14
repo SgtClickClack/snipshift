@@ -26,6 +26,7 @@ export function AuthGuard({
   const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
   // Show loading spinner while checking authentication or waiting for auth to be ready
+  // CRITICAL: This check must happen FIRST, before any redirect logic
   if (isLoading || !isAuthReady) {
     return <LoadingScreen />;
   }
@@ -42,6 +43,18 @@ export function AuthGuard({
       new URLSearchParams(window.location.search).get('e2e') === 'true' ||
       localStorage.getItem('E2E_MODE') === 'true'
     ));
+  
+  // NEW: If we have a Firebase session but user isn't authenticated yet, 
+  // we're still loading - don't redirect
+  // This prevents race conditions where Firebase auth exists but profile hasn't loaded yet
+  if (hasFirebaseSession && !isAuthenticated && !isE2E) {
+    logger.debug('AuthGuard', 'Firebase session exists but user not authenticated yet, showing loading', {
+      hasFirebaseSession,
+      isAuthenticated,
+      pathname: location.pathname
+    });
+    return <LoadingScreen />;
+  }
   const hasE2EAuthState = isE2E && typeof window !== 'undefined' && 
     sessionStorage.getItem('hospogo_auth_state') === 'authenticated';
   const hasE2EToken = isE2E && (

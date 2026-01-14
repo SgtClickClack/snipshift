@@ -25,8 +25,9 @@ Google Sign-In with Firebase requires proper configuration in **three places**:
 Add the following origins (if not already present):
 
 ```
-https://hospogo-75b04.web.app
+https://hospogo.com
 https://www.hospogo.com
+https://hospogo-75b04.web.app
 https://hospogo-75b04.firebaseapp.com
 ```
 
@@ -41,8 +42,9 @@ https://hospogo-75b04.firebaseapp.com
 Add the following redirect URIs (these are Firebase's auth handler endpoints):
 
 ```
-https://hospogo-75b04.web.app/__/auth/handler
+https://hospogo.com/__/auth/handler
 https://www.hospogo.com/__/auth/handler
+https://hospogo-75b04.web.app/__/auth/handler
 https://hospogo-75b04.firebaseapp.com/__/auth/handler
 ```
 
@@ -98,7 +100,7 @@ Ensure your frontend environment has these Firebase variables:
 ```env
 # Firebase Configuration
 VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=hospogo-75b04.firebaseapp.com
+VITE_FIREBASE_AUTH_DOMAIN=hospogo.com
 VITE_FIREBASE_PROJECT_ID=hospogo-75b04
 VITE_FIREBASE_STORAGE_BUCKET=hospogo-75b04.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
@@ -112,8 +114,9 @@ The `VITE_FIREBASE_AUTH_DOMAIN` controls what domain appears in the Google sign-
 
 | Value | Effect |
 |-------|--------|
-| `hospogo-75b04.firebaseapp.com` | Shows "hospogo-75b04" in popup (default) |
+| `hospogo.com` | Shows "hospogo.com" in popup (default - branded) |
 | `www.hospogo.com` | Shows "www.hospogo.com" in popup (requires custom domain setup in Firebase) |
+| `hospogo-75b04.firebaseapp.com` | Shows "hospogo-75b04" in popup (Firebase default) |
 
 ---
 
@@ -186,11 +189,13 @@ This is usually a persistence issue.
 
 | Setting | Value |
 |---------|-------|
-| **Authorized JavaScript Origins** | `https://hospogo-75b04.web.app` |
+| **Authorized JavaScript Origins** | `https://hospogo.com` |
 | | `https://www.hospogo.com` |
+| | `https://hospogo-75b04.web.app` |
 | | `https://hospogo-75b04.firebaseapp.com` |
-| **Authorized Redirect URIs** | `https://hospogo-75b04.web.app/__/auth/handler` |
+| **Authorized Redirect URIs** | `https://hospogo.com/__/auth/handler` |
 | | `https://www.hospogo.com/__/auth/handler` |
+| | `https://hospogo-75b04.web.app/__/auth/handler` |
 | | `https://hospogo-75b04.firebaseapp.com/__/auth/handler` |
 
 ### Required Firebase Console Settings

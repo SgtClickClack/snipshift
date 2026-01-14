@@ -706,30 +706,49 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   await expect(page).toHaveURL(/\/onboarding/, { timeout: 10000 });
   await page.waitForLoadState('networkidle');
   
-  // Wait for the onboarding component to finish verifying user
-  // The component shows a loading screen until isVerifyingUser is false
-  // Wait for the "What brings you to HospoGo?" heading to appear (indicates step 0 is rendered)
-  await page.waitForSelector('h2:has-text("What brings you to HospoGo?")', { timeout: 15000 }).catch(() => {
-    // Fallback: wait for any heading that indicates onboarding is ready
-    console.log('Warning: Onboarding heading not found, waiting for role buttons...');
+  // Wait for the onboarding component to finish verifying user and syncing
+  // The component shows "Preparing your HospoGo Workspace..." until:
+  // - isAuthReady is true
+  // - hasFirebaseSession is true  
+  // - For step 0: isSynced is true AND user?.id exists AND !isPolling
+  // Wait for that loading screen to disappear and step 0 to render
+  await page.waitForFunction(() => {
+    // Check if the loading screen is gone (no "Preparing your HospoGo Workspace" text)
+    const loadingText = Array.from(document.querySelectorAll('*')).some(el => 
+      el.textContent?.includes('Preparing your HospoGo Workspace') ||
+      el.textContent?.includes('Setting up your account')
+    );
+    if (loadingText) return false;
+    
+    // Check if step 0 content is present (heading or role buttons)
+    const hasHeading = Array.from(document.querySelectorAll('h2')).some(h2 => 
+      h2.textContent?.includes('What brings you to HospoGo') || 
+      h2.textContent?.includes('brings you')
+    );
+    const hasRoleButton = document.querySelector('[data-testid="button-select-professional"]') !== null;
+    const hasRoleText = Array.from(document.querySelectorAll('button')).some(btn => 
+      btn.textContent?.includes("I'm looking for shifts") || 
+      btn.textContent?.includes('looking for shifts')
+    );
+    
+    return hasHeading || hasRoleButton || hasRoleText;
+  }, { timeout: 20000 }).catch(() => {
+    console.log('Warning: Onboarding step 0 not detected, proceeding anyway');
   });
   
-  // Wait for the onboarding component to render (check for step 0 content)
-  await page.waitForFunction(() => {
-    // Check if role selection buttons are in the DOM
-    const buttons = document.querySelectorAll('button');
-    return Array.from(buttons).some(btn => 
-      btn.textContent?.includes("I'm looking for shifts") || 
-      btn.textContent?.includes('looking for shifts') ||
-      btn.getAttribute('data-testid') === 'button-select-professional'
-    );
-  }, { timeout: 15000 }).catch(() => {
-    console.log('Warning: Role selection buttons not found in DOM');
-  });
+  // Additional wait to ensure React has fully rendered
+  await page.waitForTimeout(1000);
 
-  // Wait for the role selection button to be visible and enabled
-  // Use data-testid selector for reliability
-  const proRole = page.getByTestId('button-select-professional');
+  // Wait for the role selection button - try multiple selectors for robustness
+  // First try testid, then text-based, then any button with the role text
+  let proRole = page.getByTestId('button-select-professional');
+  
+  // Verify button exists and is visible
+  const isVisible = await proRole.isVisible({ timeout: 2000 }).catch(() => false);
+  if (!isVisible) {
+    console.log('TestID selector not found, trying text-based selector...');
+    proRole = page.getByRole('button', { name: /I'm looking for shifts|looking for shifts/i }).first();
+  }
   
   // Wait for button to be visible (page must be loaded)
   await expect(proRole).toBeVisible({ timeout: 15000 });
@@ -740,25 +759,20 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   // Select Role
   await proRole.click();
   
-  // TEST STABILIZATION: Wait for /api/me call inside role selection block
-  // This ensures the network loop is closed before clicking Next
-  await page.waitForResponse(response => 
-    response.url().includes('/api/me') && response.status() === 200,
-    { timeout: 10000 }
-  ).catch(() => {
-    console.log('Warning: /api/me response not detected after role selection');
-  });
-  
   // Force a wait for the 'active' state to ensure React state has committed
   // Check for multiple possible active state indicators (border-blue-500, bg-blue-50, or border-brand-neon)
   await expect(proRole).toHaveClass(/border-blue-500|bg-blue-50|border-brand-neon/, { timeout: 5000 });
   
   // Additional verification: Wait for React state to fully update
-  // Check that the button has the active state classes
+  // Check that the button has the active state classes (use text-based search since testid might not be reliable)
   await page.waitForFunction(() => {
-    const button = document.querySelector('[data-testid="button-select-professional"]');
-    if (!button) return false;
-    const className = button.className || '';
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const proButton = buttons.find(btn => 
+      btn.textContent?.includes("I'm looking for shifts") || 
+      btn.textContent?.includes('looking for shifts')
+    );
+    if (!proButton) return false;
+    const className = proButton.className || '';
     // Check for active state indicators (multiple patterns for robustness)
     return className.includes('border-brand-neon') || 
            className.includes('border-blue-500') ||
@@ -773,10 +787,24 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   
   // Get Next button and verify it's enabled
   const nextBtn = page.getByTestId('onboarding-next');
+  await expect(nextBtn).toBeVisible({ timeout: 5000 });
   await expect(nextBtn).toBeEnabled({ timeout: 15000 });
   
+  // Debug: Check if Next button is actually enabled before clicking
+  const isNextEnabled = await nextBtn.isEnabled();
+  console.log(`Next button enabled: ${isNextEnabled}`);
+  
   // Click Next with force to ensure the event is processed
-  await nextBtn.click({ force: true });
+  // Increased timeout to ensure React has time to process the state change
+  await nextBtn.click({ force: true, timeout: 30000 });
+  
+  // Wait for React to process the click and update state
+  await page.waitForTimeout(1000);
+  
+  // Wait for step transition - directly wait for display name input
+  // This is the most reliable indicator that Step 1 has loaded
+  const displayNameInput = page.getByTestId('onboarding-display-name');
+  await expect(displayNameInput).toBeVisible({ timeout: 20000 });
   
   // Additional verification: Check that the button has the active state
   // The selected button should have 'bg-brand-neon/10' class
@@ -910,77 +938,20 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     console.log('🛠️ Set signupRolePreference in sessionStorage to trigger auto-advance');
   });
   
-  // TRIPLE-CHECK CLICK: Use force and delay to ensure event loop processes it
   // Wait a moment to allow React event listeners to fully attach
   await page.waitForTimeout(500);
   
-  // Click Next with force and delay to ensure the event is processed
+  // Click Next - FSM will handle the transition deterministically
   await nextButton.click({ force: true, delay: 100 });
   
   // Wait for the step transition animation to finish
   await page.waitForTimeout(1000);
   
   // STATE REFRESH: Wait for React to update the step
-  // Try waiting for either the step indicator or the display name input
-  try {
-    await Promise.race([
-      page.waitForSelector('[data-testid="onboarding-display-name"]', { state: 'visible', timeout: 15000 }),
-      page.waitForFunction(() => {
-        const stepIndicator = Array.from(document.querySelectorAll('span')).find(
-          span => span.textContent?.includes('Step 1')
-        );
-        return stepIndicator !== undefined;
-      }, { timeout: 15000 })
-    ]);
-    console.log('✅ Step 1 detected via selector or step indicator');
-  } catch (e) {
-    console.log('⚠️ Step 1 not detected, trying EMERGENCY OVERRIDE...');
-    // EMERGENCY OVERRIDE: Force Step 1 transition via sessionStorage + direct state manipulation
-    await page.evaluate(() => {
-      console.log('🛠️ EMERGENCY OVERRIDE: Forcing Step 1 transition');
-      
-      // Strategy 1: Set sessionStorage to trigger the useEffect that auto-advances
-      // The Onboarding component checks for 'signupRolePreference' === 'professional'
-      // and automatically sets selectedRole and currentStep to 1
-      sessionStorage.setItem('signupRolePreference', 'professional');
-      
-      // Strategy 2: Try to find and click the Next button with multiple event types
-      const nextBtn = document.querySelector('[data-testid="onboarding-next"]') as HTMLButtonElement;
-      if (nextBtn && !nextBtn.disabled) {
-        // Create multiple event types to ensure React handlers fire
-        const events = [
-          new MouseEvent('click', { bubbles: true, cancelable: true, view: window }),
-          new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }),
-          new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window })
-        ];
-        events.forEach(evt => nextBtn.dispatchEvent(evt));
-        // Also try direct click
-        nextBtn.click();
-      }
-      
-      // Strategy 3: Dispatch custom event that the component might listen to
-      window.dispatchEvent(new CustomEvent('force-step-1', { detail: { step: 1 } }));
-      
-      // Strategy 4: Try to trigger a re-render by forcing a state update event
-      const event = new Event('state-update', { bubbles: true });
-      document.dispatchEvent(event);
-    });
-    
-    // Wait for the emergency override to take effect
-    // The sessionStorage change should trigger the useEffect in Onboarding component
-    await page.waitForTimeout(2000);
-    
-    // Try one more time to find the display name input
-    const displayNameAfterOverride = page.getByTestId('onboarding-display-name');
-    const isVisible = await displayNameAfterOverride.isVisible({ timeout: 5000 }).catch(() => false);
-    if (!isVisible) {
-      console.log('⚠️ Emergency override did not trigger Step 1 transition');
-    }
-  }
-  
-  // Robust selector for Step 1 (Personal Details) - wait for display name input
-  const displayNameInput = page.getByTestId('onboarding-display-name');
+  // Wait specifically for the Step 1 data-testid as required
+  // displayNameInput is already declared above after Next button click
   await expect(displayNameInput).toBeVisible({ timeout: 20000 });
+  console.log('✅ Step 1 detected via onboarding-display-name data-testid');
   
   // Mock location suggestions
   await page.route('**/maps/api/place/autocomplete/**', route => route.fulfill({ 

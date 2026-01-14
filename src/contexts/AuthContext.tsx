@@ -194,6 +194,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isProcessingAuth = useRef(false);
   const currentAuthUid = useRef<string | null>(null);
   const hasInitialized = useRef(false);
+  const last401RetryTime = useRef<number>(0);
+  const consecutive401Count = useRef<number>(0);
   const pendingRedirect = useRef(false);
 
   const deriveRoleHome = (u: User | null): string => {
@@ -306,15 +308,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const roles = Array.isArray(parsed.roles) ? parsed.roles : (parsed.currentRole ? [parsed.currentRole] : []);
           const currentRole = (parsed.currentRole || roles[0] || null) as User['currentRole'];
 
-          setUser({
+          const e2eUser = {
             ...(parsed as User),
             roles: roles as User['roles'],
             currentRole,
             isOnboarded: parsed.isOnboarded ?? true,
             createdAt: parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
             updatedAt: parsed.updatedAt ? new Date(parsed.updatedAt) : new Date(),
-          });
+          };
+          setUser(e2eUser);
           setToken('mock-test-token');
+          
+          // CRITICAL: In E2E mode, trigger /api/me to sync profile and wake up the UI
+          // This ensures the app doesn't wait indefinitely for a Firebase token refresh that won't happen
+          if (e2eUser.uid || e2eUser.id) {
+            logger.debug('AuthContext', 'E2E mode: Triggering /api/me to sync profile', { uid: e2eUser.uid || e2eUser.id });
+            fetch('/api/me', {
+              headers: {
+                'Authorization': 'Bearer mock-test-token',
+                'Content-Type': 'application/json'
+              }
+            })
+              .then(res => {
+                if (res.ok) {
+                  return res.json().then(apiUser => {
+                    logger.debug('AuthContext', 'E2E mode: /api/me sync successful', { userId: apiUser.id });
+                    const syncedUser = normalizeUserFromApi(apiUser, e2eUser.uid || e2eUser.id || '');
+                    setUser(syncedUser);
+                    handleRedirect(syncedUser);
+                  });
+                } else {
+                  logger.debug('AuthContext', 'E2E mode: /api/me returned non-OK status', { status: res.status });
+                }
+              })
+              .catch(error => {
+                logger.debug('AuthContext', 'E2E mode: /api/me fetch error (non-critical)', error);
+              });
+          }
         } else {
           setUser(null);
           setToken(null);
@@ -429,10 +459,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           if (firebaseUser) {
             try {
-              // Always get a fresh token to ensure validity
-              const token = await firebaseUser.getIdToken(/* forceRefresh */ false);
+              // GATEKEEPER: Ensure we have a valid uid before making /api/me call
+              // This prevents calls when Firebase token refresh is pending or mocked
+              if (!firebaseUser.uid) {
+                logger.debug('AuthContext', 'Skipping /api/me - no Firebase user uid available');
+                setUser(null);
+                setToken(null);
+                setIsLoading(false);
+                setIsAuthReady(true);
+                return;
+              }
+              
+              // CRITICAL: Force refresh token to get latest custom claims after Google signup
+              // This ensures onboardingStatus and role are available before we set loading=false
+              // Use getIdTokenResult(true) to force refresh and get claims
+              const tokenResult = await firebaseUser.getIdTokenResult(true);
+              const token = tokenResult.token;
               setToken(token);
-              logger.debug('AuthContext', 'Fetching user profile from /api/me');
+              logger.debug('AuthContext', 'Token refreshed with latest claims, fetching user profile from /api/me', {
+                isNewSignIn,
+                uid: firebaseUser.uid,
+                claims: tokenResult.claims
+              });
               const res = await fetch('/api/me', {
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -441,13 +489,51 @@ export function AuthProvider({ children }: AuthProviderProps) {
               });
               
               if (res.ok) {
+                // Success - reset 401 counter
+                consecutive401Count.current = 0;
                 const apiUser = await res.json();
                 const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                 setUser(nextUser);
                 handleRedirect(nextUser);
+                
+                // CRITICAL: Only set loading false AFTER user is set and normalized
+                setIsLoading(false);
+                setIsAuthReady(true);
               } else if (res.status === 401) {
                 // 401 means token is invalid or expired - force refresh token and retry once
-                logger.debug('AuthContext', 'Received 401 from /api/me, refreshing token...');
+                const now = Date.now();
+                const timeSinceLastRetry = now - last401RetryTime.current;
+                consecutive401Count.current += 1;
+                
+                // Detect E2E mode for faster cooldown during tests
+                const isE2E = 
+                  import.meta.env.VITE_E2E === '1' ||
+                  import.meta.env.MODE === 'test' ||
+                  (typeof window !== 'undefined' && (
+                    new URLSearchParams(window.location.search).get('e2e') === 'true' ||
+                    localStorage.getItem('E2E_MODE') === 'true'
+                  ));
+                
+                // Prevent rapid-fire retries: wait at least 2 seconds between retries (500ms in E2E mode)
+                // If we've had 3+ consecutive 401s, wait 10 seconds before retrying (2 seconds in E2E mode)
+                const cooldownMs = isE2E 
+                  ? (consecutive401Count.current >= 3 ? 2000 : 500)
+                  : (consecutive401Count.current >= 3 ? 10000 : 2000);
+                
+                if (timeSinceLastRetry < cooldownMs) {
+                  logger.debug('AuthContext', `Skipping 401 retry - cooldown active (${cooldownMs - timeSinceLastRetry}ms remaining)`);
+                  // User exists in Firebase but token is persistently invalid
+                  // This might indicate the user needs to re-authenticate
+                  setUser(null);
+                  setToken(null);
+                  setIsRedirecting(false);
+                  pendingRedirect.current = false;
+                  return;
+                }
+                
+                last401RetryTime.current = now;
+                logger.debug('AuthContext', `Received 401 from /api/me (attempt ${consecutive401Count.current}), refreshing token...`);
+                
                 try {
                   const refreshedToken = await firebaseUser.getIdToken(/* forceRefresh */ true);
                   setToken(refreshedToken);
@@ -460,13 +546,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   });
                   
                   if (retryRes.ok) {
+                    // Success - reset 401 counter
+                    consecutive401Count.current = 0;
                     const apiUser = await retryRes.json();
                     const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                     setUser(nextUser);
                     handleRedirect(nextUser);
+                    
+                    // CRITICAL: Only set loading false AFTER user is set and normalized
+                    setIsLoading(false);
+                    setIsAuthReady(true);
                   } else if (retryRes.status === 404 || retryRes.status === 401) {
-                    // User exists in Firebase but not in our database
-                    logger.debug('AuthContext', 'Firebase user has no profile after retry');
+                    // User exists in Firebase but not in our database, or token still invalid
+                    logger.debug('AuthContext', 'Firebase user has no profile after retry, or token still invalid');
                     setUser(null);
                     setToken(refreshedToken);
                     // ONLY redirect to onboarding if NOT on a protected public path
@@ -476,16 +568,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     }
                     setIsRedirecting(false);
                     pendingRedirect.current = false;
+                    
+                    // Set loading false after handling the error
+                    setIsLoading(false);
+                    setIsAuthReady(true);
                   } else {
                     // Other error - user is logged out
+                    consecutive401Count.current = 0;
                     setUser(null);
                     handleRedirect(null);
+                    
+                    // Set loading false after handling the error
+                    setIsLoading(false);
+                    setIsAuthReady(true);
                   }
-                } catch {
+                } catch (error) {
                   // Token refresh failed - user is logged out
+                  logger.error('AuthContext', 'Token refresh failed:', error);
+                  consecutive401Count.current = 0;
                   setUser(null);
                   setToken(null);
                   handleRedirect(null);
+                  
+                  // Set loading false after handling the error
+                  setIsLoading(false);
+                  setIsAuthReady(true);
                 }
               } else if (res.status === 404) {
                 // User exists in Firebase but not in our database
@@ -499,24 +606,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
                 setIsRedirecting(false);
                 pendingRedirect.current = false;
+                
+                // Set loading false after handling the error
+                setIsLoading(false);
+                setIsAuthReady(true);
               } else {
                 logger.error('AuthContext', 'User authenticated in Firebase but profile fetch failed', res.status);
                 // For other errors, redirect to onboarding to allow user to complete profile
                 setUser(null);
                 setToken(null);
                 handleRedirect(null);
+                
+                // Set loading false after handling the error
+                setIsLoading(false);
+                setIsAuthReady(true);
               }
             } catch (error) {
               console.error('Error fetching user profile:', error);
               setUser(null);
               setToken(null);
               handleRedirect(null);
+              
+              // Set loading false after handling the error
+              setIsLoading(false);
+              setIsAuthReady(true);
             }
           } else {
             setUser(null);
             setToken(null);
             // If we've explicitly triggered a redirect but auth resolves to null user, send to onboarding.
             handleRedirect(null);
+            
+            // Set loading false after state is cleared
+            setIsLoading(false);
+            setIsAuthReady(true);
           }
         } catch (error) {
           // Catch any unexpected errors in the callback itself
@@ -524,12 +647,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(null);
           setToken(null);
           handleRedirect(null);
-        } finally {
-          // CRITICAL: Always set loading states, even if there's an error
-          // This prevents the "Flash of Doom" where the app renders before auth check completes
-          isProcessingAuth.current = false;
+          
+          // Set loading false after handling the error
           setIsLoading(false);
           setIsAuthReady(true);
+        } finally {
+          // Only cleanup refs here, don't set loading states
+          isProcessingAuth.current = false;
         }
       });
     } catch (error) {
@@ -549,6 +673,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isProcessingAuth.current = false;
       currentAuthUid.current = null;
       pendingRedirect.current = false;
+      last401RetryTime.current = 0;
+      consecutive401Count.current = 0;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // No dependencies - listener should only be set up once
@@ -579,6 +705,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Reset tracking refs before sign out
       currentAuthUid.current = null;
+      last401RetryTime.current = 0;
+      consecutive401Count.current = 0;
       
       // Sign out from Firebase
       await signOutUser();
@@ -595,6 +723,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Logout error', e);
       // Even if there's an error, clear state and navigate
       currentAuthUid.current = null;
+      last401RetryTime.current = 0;
+      consecutive401Count.current = 0;
       setUser(null);
       setToken(null);
       if (typeof window !== 'undefined') {

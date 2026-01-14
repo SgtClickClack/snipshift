@@ -80,6 +80,7 @@ const ProfessionalMessagesPage = lazy(() => import('@/pages/professional-message
 const SalonCreateJobPage = lazy(() => import('@/pages/salon-create-job'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
+const AdminLeadsPage = lazy(() => import('@/pages/admin/Leads'));
 
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
@@ -465,7 +466,15 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/admin/overview" element={<Navigate to="/admin/dashboard" replace />} />
-
+        
+        <Route path="/admin/leads" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <AdminLeadsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+        
         <Route path="/profile" element={
           <ProtectedRoute>
             <Suspense fallback={<PageLoadingFallback />}>

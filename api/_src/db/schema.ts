@@ -17,6 +17,8 @@ import { comments } from './schema/comments.js';
 import { trainingModules, trainingLevelEnum } from './schema/training-modules.js';
 import { trainingPurchases } from './schema/training-purchases.js';
 import { leads, leadInquiryTypeEnum, leadStatusEnum } from './schema/leads.js';
+import { waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum } from './schema/waitlist.js';
+import { venues } from './schema/venues.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -27,6 +29,7 @@ export {
   profiles,
   notifications, notificationTypeEnum, 
   shifts, shiftStatusEnum,
+  venues,
   shiftOffers, shiftOfferStatusEnum,
   shiftInvitations,
   attendanceStatusEnum,
@@ -36,7 +39,8 @@ export {
   comments,
   trainingModules, trainingLevelEnum,
   trainingPurchases,
-  leads, leadInquiryTypeEnum, leadStatusEnum
+  leads, leadInquiryTypeEnum, leadStatusEnum,
+  waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum
 };
 
 /**
