@@ -197,6 +197,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const last401RetryTime = useRef<number>(0);
   const consecutive401Count = useRef<number>(0);
   const pendingRedirect = useRef(false);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const deriveRoleHome = (u: User | null): string => {
     // No app user => send to login (onboarding is auth-protected, so redirecting there can cause
@@ -657,21 +658,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     // Wrap listener setup in try-catch to ensure loading states are always set
-    let unsubscribe: (() => void) | null = null;
-    try {
-      // CRITICAL: Await initAuth to ensure getRedirectResult completes before listener starts
-      unsubscribe = await initAuth();
-    } catch (error) {
-      // If listener setup fails, still set loading states to prevent infinite loading
-      console.error('Error setting up auth state listener:', error);
-      isProcessingAuth.current = false;
-      setIsLoading(false);
-      setIsAuthReady(true);
-    }
+    (async () => {
+      try {
+        // CRITICAL: Await initAuth to ensure getRedirectResult completes before listener starts
+        unsubscribeRef.current = await initAuth();
+      } catch (error) {
+        // If listener setup fails, still set loading states to prevent infinite loading
+        console.error('Error setting up auth state listener:', error);
+        isProcessingAuth.current = false;
+        setIsLoading(false);
+        setIsAuthReady(true);
+      }
+    })();
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
       }
       // Reset refs on cleanup (for HMR or unmount)
       hasInitialized.current = false;
