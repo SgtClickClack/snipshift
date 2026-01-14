@@ -44,20 +44,6 @@ export default function AdminLeadsPage() {
   const queryClient = useQueryClient();
   const [isExporting, setIsExporting] = useState(false);
 
-  // Fetch launch readiness metrics
-  const { data: launchReadiness, isLoading: isLoadingReadiness } = useQuery({
-    queryKey: ['launch-readiness'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/admin/reports/launch-readiness');
-      if (!response.ok) {
-        throw new Error('Failed to fetch launch readiness metrics');
-      }
-      const result = await response.json();
-      return result.data;
-    },
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
-
   // Fetch last 10 waitlist entries for preview
   const { data: previewData, isLoading, error, refetch } = useQuery({
     queryKey: ['waitlist', 'preview'],
