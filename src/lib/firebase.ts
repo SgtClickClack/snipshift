@@ -87,13 +87,14 @@ googleProvider.addScope('profile');
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 /**
- * Google sign-in with popup timeout detection and COOP-aware fallback.
+ * Google sign-in using redirect flow (permanent fix for COOP issues).
  * 
- * COOP (Cross-Origin-Opener-Policy) can block popup communication, causing infinite loading.
- * This function:
- * 1. Attempts popup sign-in with a timeout (30s)
- * 2. Falls back to redirect if popup times out or is blocked
- * 3. Provides clear error messages for configuration issues
+ * Redirect flow is 100% reliable against COOP (Cross-Origin-Opener-Policy) blocking
+ * because it doesn't rely on popup-to-window communication. The user is redirected
+ * to Google, then back to the app, where handleGoogleRedirectResult() processes the result.
+ * 
+ * This is the recommended approach for production after the HospoGo rebrand to avoid
+ * infinite loading screens caused by COOP blocking the popup handshake.
  */
 export const signInWithGoogle = async () => {
   try {
@@ -101,21 +102,12 @@ export const signInWithGoogle = async () => {
     // browserLocalPersistence stores auth state in localStorage, surviving page reloads
     await setPersistence(auth, browserLocalPersistence);
     
-    // Create a timeout promise to detect stuck popups (COOP blocking)
-    const POPUP_TIMEOUT_MS = 30000; // 30 seconds
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error('auth/popup-timeout'));
-      }, POPUP_TIMEOUT_MS);
-    });
+    // Use redirect flow - 100% reliable against COOP blocking
+    console.log('[Firebase] Initiating Google sign-in with redirect flow');
+    await signInWithRedirect(auth, googleProvider);
     
-    // Race between popup sign-in and timeout
-    const result = await Promise.race([
-      signInWithPopup(auth, googleProvider),
-      timeoutPromise,
-    ]);
-    
-    return result.user;
+    // Return null - the redirect will happen and handleGoogleRedirectResult() will process it
+    return null;
   } catch (error: unknown) {
     const code =
       typeof error === 'object' && error && 'code' in error
@@ -127,58 +119,23 @@ export const signInWithGoogle = async () => {
         ? String((error as { message: unknown }).message)
         : '';
     
-    // Handle timeout (stuck popup due to COOP)
-    if (code === 'auth/popup-timeout' || errorMessage === 'auth/popup-timeout') {
-      console.warn('[Firebase] Popup sign-in timed out (likely COOP blocking). Falling back to redirect...');
-      
-      // Local dev: do NOT fallback to redirect; popup-only avoids redirect_uri mismatches on localhost.
-      if (
-        typeof window !== 'undefined' &&
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ) {
-        throw new Error('auth/popup-timeout: Popup timed out. This may be due to browser security settings blocking cross-origin communication.');
-      }
-      
-      // Fallback to redirect for production
-      console.log('[Firebase] Switching to redirect flow due to popup timeout');
-      await signInWithRedirect(auth, googleProvider);
-      return null; // Will be handled by redirect result
-    }
-    
-    // Don't log user-cancelled popups - this is expected behavior
-    if (code !== 'auth/popup-closed-by-user') {
-      console.error('[Firebase] Google sign-in error:', {
-        code,
-        message: errorMessage,
-        error,
-        authDomain: firebaseConfig.authDomain,
-        currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
-      });
-    }
-    
-    // If popup is blocked, fallback to redirect
-    if (code === 'auth/popup-blocked') {
-      // Local dev: do NOT fallback to redirect; popup-only avoids redirect_uri mismatches on localhost.
-      if (
-        typeof window !== 'undefined' &&
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ) {
-        throw error;
-      }
-      // Persistence is already set above, so redirect will also persist
-      console.log('[Firebase] Popup blocked, switching to redirect flow');
-      await signInWithRedirect(auth, googleProvider);
-      return null; // Will be handled by redirect result
-    }
-    
     // Check for unauthorized domain (configuration issue)
     if (code === 'auth/unauthorized-domain') {
       console.error('[Firebase] Unauthorized domain error. Check:');
       console.error('  1. Firebase Console > Authentication > Settings > Authorized domains');
       console.error('  2. Google Cloud Console > APIs & Services > Credentials > Authorized JavaScript origins');
-      console.error('  3. Current authDomain:', firebaseConfig.authDomain);
-      console.error('  4. Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
+      console.error('  3. Google Cloud Console > Authorized redirect URIs must include: https://hospogo.com/__/auth/handler');
+      console.error('  4. Current authDomain:', firebaseConfig.authDomain);
+      console.error('  5. Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
     }
+    
+    console.error('[Firebase] Google redirect sign-in error:', {
+      code,
+      message: errorMessage,
+      error,
+      authDomain: firebaseConfig.authDomain,
+      currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+    });
     
     throw error;
   }

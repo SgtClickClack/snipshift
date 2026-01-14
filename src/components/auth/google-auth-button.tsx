@@ -85,15 +85,22 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     }
     
     try {
-      // Step 1: Firebase authentication (popup flow - COOP warning is expected but auth works)
+      // Step 1: Firebase authentication
+      // In production, this uses redirect flow (100% reliable against COOP blocking)
+      // In localhost, this uses popup flow for development convenience
       const firebaseUser = await signInWithGoogleDevAware();
       
+      // If null is returned, it means redirect flow was initiated
+      // The page will redirect to Google, then back to the app
+      // AuthContext will handle the redirect result via handleGoogleRedirectResult()
       if (!firebaseUser) {
-        // Popup was closed without completing auth
-        logger.debug('GoogleAuthButton', 'No user returned from Google auth');
-        return;
+        // Redirect flow: user will be redirected away, so we don't need to do anything here
+        // The loading state will persist until redirect happens
+        logger.debug('GoogleAuthButton', 'Redirect flow initiated - user will be redirected to Google');
+        return; // Don't reset state - redirect is happening
       }
       
+      // Popup flow (localhost only): Handle the user immediately
       // Step 2: Ensure user exists in our database BEFORE AuthContext tries to fetch profile
       // This prevents race conditions where /api/me fails because user doesn't exist yet
       await ensureUserInDatabase(firebaseUser);
@@ -148,22 +155,6 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
           description: "Please allow popups for this site to sign in with Google.",
           variant: "destructive",
         });
-      } else if (errorCode === 'auth/popup-timeout' || errorMessage.includes('popup-timeout')) {
-        // Popup timed out - likely COOP blocking communication
-        console.warn('[GoogleAuthButton] Popup timed out - switching to redirect flow');
-        toast({
-          title: "Switching to redirect",
-          description: "Popup timed out. Redirecting to complete sign-in...",
-          variant: "default",
-        });
-        // The redirect should have been triggered in firebase.ts, but we'll wait a moment
-        // and check if we need to manually trigger it
-        setTimeout(() => {
-          if (window.location.pathname === '/login' || window.location.pathname === '/signup') {
-            // Redirect flow should have started, but if we're still here, something went wrong
-            console.error('[GoogleAuthButton] Redirect flow did not start after timeout');
-          }
-        }, 1000);
       } else if (errorCode === 'auth/popup-closed-by-user') {
         // User closed popup - silently ignore, no toast needed
         logger.debug('GoogleAuthButton', 'User closed Google auth popup');
@@ -176,7 +167,8 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         console.error('[GoogleAuthButton] Unauthorized domain. Check:');
         console.error('  1. Firebase Console > Authentication > Settings > Authorized domains');
         console.error('  2. Google Cloud Console > APIs & Services > Credentials > Authorized JavaScript origins');
-        console.error('  3. Current domain:', window.location.hostname);
+        console.error('  3. Google Cloud Console > Authorized redirect URIs must include: https://hospogo.com/__/auth/handler');
+        console.error('  4. Current domain:', window.location.hostname);
       } else {
         // Log actual authentication errors (not user-cancelled)
         console.error('[GoogleAuthButton] Google sign-in failed:', {
@@ -191,7 +183,9 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         });
       }
     } finally {
-      // Always reset state
+      // Reset state
+      // Note: For redirect flow, the page will navigate away before this executes,
+      // so state will be reset when the page reloads after redirect anyway
       isAuthInProgress.current = false;
       setIsLoading(false);
     }

@@ -94,8 +94,11 @@ export async function signInWithGoogleLocalDevPopup() {
 
 /**
  * Environment-aware Google sign-in:
- * - localhost => popup flow (COOP warnings are expected but auth still works)
- * - everything else => use the existing implementation (popup with redirect fallback)
+ * - localhost => popup flow (for development convenience)
+ * - production => redirect flow (permanent fix for COOP issues after HospoGo rebrand)
+ * 
+ * Redirect flow is used in production to avoid infinite loading screens caused by
+ * COOP (Cross-Origin-Opener-Policy) blocking popup-to-window communication.
  */
 export async function signInWithGoogleDevAware() {
   await maybeResetFirebaseSession();
@@ -104,10 +107,11 @@ export async function signInWithGoogleDevAware() {
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   if (isLocalhost) {
-    // Use popup flow - COOP warning is expected but auth completes via postMessage
+    // Use popup flow for local development - COOP warning is expected but auth completes via postMessage
     return await signInWithGoogleLocalDevPopup();
   }
 
+  // Production: Use redirect flow (100% reliable against COOP blocking)
   const { signInWithGoogle } = await import('./firebase');
   try {
     return await signInWithGoogle();
