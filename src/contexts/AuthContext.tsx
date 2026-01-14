@@ -360,10 +360,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    // Handle Google OAuth redirect result at app level
-    // This ensures redirect is processed regardless of which page user lands on
-    const processRedirectResult = async () => {
+    // CRITICAL: Initialize auth by processing redirect result FIRST, then setting up listener
+    // This ensures getRedirectResult() completes before onAuthStateChange fires, preventing
+    // the infinite loading loop where the listener sees null user before redirect is processed
+    const initAuth = async () => {
       try {
+        // Step 1: MUST call getRedirectResult FIRST to 'claim' the result from the URL
+        // If this isn't called, Firebase often fails to persist the session after redirect
         const redirectUser = await handleGoogleRedirectResult();
         if (redirectUser) {
           logger.debug('AuthContext', 'Processed Google redirect result for user:', redirectUser.uid);
@@ -404,23 +407,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } catch (registerError) {
             logger.error('AuthContext', 'Error registering redirect user:', registerError);
           }
-          
-          // The auth state listener will pick up this user and fetch their profile
+        } else {
+          logger.debug('AuthContext', 'No redirect result - user did not return from Google sign-in');
         }
       } catch (error) {
         // Silently handle - redirect result errors are non-critical
         // User can retry sign-in manually
         logger.debug('AuthContext', 'No redirect result or error processing redirect:', error);
       }
-    };
-    
-    // Process redirect result (await to ensure DB write completes before auth state change)
-    processRedirectResult();
 
-    // Wrap listener setup in try-catch to ensure loading states are always set
-    let unsubscribe: (() => void) | null = null;
-    try {
-      unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
+      // Step 2: ONLY AFTER getRedirectResult completes, start listening for state changes
+      // This prevents the race condition where onAuthStateChange sees null user before redirect is processed
+      return onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
         // GATEKEEPER: Prevent concurrent profile fetches for the same user
         const newUid = firebaseUser?.uid || null;
         const previousUid = currentAuthUid.current;
@@ -656,6 +654,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isProcessingAuth.current = false;
         }
       });
+    };
+
+    // Wrap listener setup in try-catch to ensure loading states are always set
+    let unsubscribe: (() => void) | null = null;
+    try {
+      // CRITICAL: Await initAuth to ensure getRedirectResult completes before listener starts
+      unsubscribe = await initAuth();
     } catch (error) {
       // If listener setup fails, still set loading states to prevent infinite loading
       console.error('Error setting up auth state listener:', error);
