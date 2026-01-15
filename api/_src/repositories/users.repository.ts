@@ -6,6 +6,51 @@ import { users } from '../db/schema.js';
 export let mockUsers: typeof users.$inferSelect[] = [];
 
 /**
+ * Normalize role values: 'venue' maps to 'business' internally for permissions.
+ * This ensures consistent role handling across the system.
+ */
+function normalizeRole(role: string | null | undefined): 'professional' | 'business' | 'admin' | 'trainer' | 'hub' {
+  if (!role) return 'professional';
+  const normalized = role.toLowerCase();
+  // Map 'venue' to 'business' for internal consistency
+  if (normalized === 'venue') return 'business';
+  // Return valid roles as-is, default to 'professional' for unknown values
+  if (['professional', 'business', 'admin', 'trainer', 'hub'].includes(normalized)) {
+    return normalized as 'professional' | 'business' | 'admin' | 'trainer' | 'hub';
+  }
+  return 'professional';
+}
+
+/**
+ * Normalize roles array: applies normalizeRole to each role and removes duplicates.
+ */
+function normalizeRolesArray(roles: string[] | null | undefined): Array<'professional' | 'business' | 'admin' | 'trainer' | 'hub'> {
+  if (!Array.isArray(roles) || roles.length === 0) return [];
+  const normalized = roles.map(r => normalizeRole(r));
+  return Array.from(new Set(normalized)) as Array<'professional' | 'business' | 'admin' | 'trainer' | 'hub'>;
+}
+
+/**
+ * Normalize a user object's role and roles array.
+ * This ensures 'venue' is always mapped to 'business' for permissions.
+ */
+function normalizeUserRoles(user: typeof users.$inferSelect): typeof users.$inferSelect {
+  const normalizedRole = normalizeRole(user.role);
+  const normalizedRoles = normalizeRolesArray(user.roles);
+  
+  // If roles array is empty or doesn't include the normalized role, add it
+  const finalRoles = normalizedRoles.length > 0 
+    ? (normalizedRoles.includes(normalizedRole) ? normalizedRoles : [...normalizedRoles, normalizedRole])
+    : [normalizedRole];
+  
+  return {
+    ...user,
+    role: normalizedRole,
+    roles: finalRoles,
+  };
+}
+
+/**
  * Get total number of users
  */
 export async function getUserCount(): Promise<number> {
@@ -24,14 +69,15 @@ export async function getUserCount(): Promise<number> {
 export async function getAllUsers(limit: number, offset: number): Promise<{ data: typeof users.$inferSelect[], total: number, limit: number, offset: number } | null> {
   const db = getDb();
   if (!db) {
-    const data = mockUsers.slice(offset, offset + limit);
+    const data = mockUsers.slice(offset, offset + limit).map(normalizeUserRoles);
     return { data, total: mockUsers.length, limit, offset };
   }
 
   const [totalResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
   const total = Number(totalResult.count);
 
-  const data = await db.select().from(users).limit(limit).offset(offset);
+  const rawData = await db.select().from(users).limit(limit).offset(offset);
+  const data = rawData.map(normalizeUserRoles);
 
   return { data, total, limit, offset };
 }
@@ -57,8 +103,8 @@ export async function createUser(
       id: `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       email: userData.email,
       name: userData.name,
-      role: userData.role || 'professional',
-      roles: [userData.role || 'professional'],
+      role: normalizeRole(userData.role),
+      roles: [normalizeRole(userData.role)],
       passwordHash: userData.passwordHash || null,
       bio: null,
       phone: null,
@@ -101,40 +147,45 @@ export async function createUser(
   }
 
   // Try to insert user, handle duplicate email gracefully if needed (though caller should handle unique constraint violation)
+  // Normalize role before inserting
+  const normalizedRole = normalizeRole(userData.role);
+  
   const [newUser] = await db
     .insert(users)
     .values({
       email: userData.email,
       name: userData.name,
       passwordHash: userData.passwordHash || null,
-      role: userData.role || 'professional',
-      roles: [userData.role || 'professional'],
+      role: normalizedRole,
+      roles: [normalizedRole],
       isActive: true, // Explicitly set isActive to ensure it's always provided
       stripeOnboardingComplete: false, // Explicitly set to ensure it's always provided
     })
     .returning();
 
-  return newUser || null;
+  return newUser ? normalizeUserRoles(newUser) : null;
 }
 
 export async function getUserByEmail(email: string): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
   if (!db) {
-    return mockUsers.find((u) => u.email === email) || null;
+    const user = mockUsers.find((u) => u.email === email);
+    return user ? normalizeUserRoles(user) : null;
   }
 
   const [user] = await db.select().from(users).where(eq(users.email, email));
-  return user || null;
+  return user ? normalizeUserRoles(user) : null;
 }
 
 export async function getUserById(id: string): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
   if (!db) {
-    return mockUsers.find((u) => u.id === id) || null;
+    const user = mockUsers.find((u) => u.id === id);
+    return user ? normalizeUserRoles(user) : null;
   }
 
   const [user] = await db.select().from(users).where(eq(users.id, id));
-  return user || null;
+  return user ? normalizeUserRoles(user) : null;
 }
 
 export async function getOrCreateMockBusinessUser(): Promise<typeof users.$inferSelect | null> {
@@ -176,7 +227,7 @@ export async function updateUser(
     if (index === -1) return null;
     
     mockUsers[index] = { ...mockUsers[index], ...userData, updatedAt: new Date() };
-    return mockUsers[index];
+    return normalizeUserRoles(mockUsers[index]);
   }
 
   const [updatedUser] = await db
@@ -185,7 +236,7 @@ export async function updateUser(
     .where(eq(users.id, id))
     .returning();
     
-  return updatedUser || null;
+  return updatedUser ? normalizeUserRoles(updatedUser) : null;
 }
 
 // Delete user function (for cleanup)

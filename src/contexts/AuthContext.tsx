@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
 import { getDashboardRoute } from '@/lib/roles';
 import { useToast } from '@/hooks/useToast';
 
-const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_handoff';
+const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
 
 export interface User {
   id: string;
@@ -235,6 +235,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!u) return '/login';
     if (u.isOnboarded === false) return '/onboarding';
 
+    // CRITICAL: If user is authenticated but has NO role assigned yet, redirect to onboarding
+    // This ensures new signups complete onboarding before accessing dashboards
+    if (!u.currentRole || u.currentRole === 'client') {
+      // Check if user has any roles in the roles array
+      const hasAnyRole = u.roles && u.roles.length > 0 && u.roles.some(r => r !== 'client');
+      if (!hasAnyRole) {
+        return '/onboarding';
+      }
+      return '/role-selection';
+    }
+
     // If the backend ever sends clean-break role labels, honor them explicitly.
     const apiRole = normalizeRoleValue((u as any)?.role);
     if (apiRole === 'business' || apiRole === 'hub') return '/venue/dashboard';
@@ -245,7 +256,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (u.currentRole === 'business' || u.currentRole === 'hub') return '/venue/dashboard';
 
     // Fallback to existing dashboard routing for other roles / legacy surfaces.
-    if (!u.currentRole || u.currentRole === 'client') return '/role-selection';
     return getDashboardRoute(u.currentRole);
   };
 

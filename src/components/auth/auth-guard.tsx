@@ -200,7 +200,7 @@ export function AuthGuard({
     const hasRequiredRole = 
       user.currentRole === requiredRole ||
       (user.roles && user.roles.includes(requiredRole as any)) ||
-      // Special case: allow 'venue' role to access 'business' routes
+      // Special case: allow 'venue' role to access 'business' routes (normalized in backend)
       (requiredRole === 'business' && user.roles && user.roles.includes('venue' as any));
     
     if (!hasRequiredRole) {

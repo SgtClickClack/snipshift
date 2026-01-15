@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_handoff';
+const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
 const MAX_COOKIE_AGE_SECONDS = 120;
 
 const setBridgeCookie = (uid: string) => {

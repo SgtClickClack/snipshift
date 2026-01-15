@@ -2711,7 +2711,7 @@
 **Integration Points**
 - Firebase Auth popup: `signInWithPopup`
 - Route: `/auth/bridge`
-- Cookie: `hospogo_auth_handoff`
+- Cookie: `hospogo_auth_bridge`
 
 **File Paths**
 - `src/pages/auth/Bridge.tsx`
