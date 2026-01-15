@@ -160,6 +160,10 @@ export const signInWithGoogle = async () => {
 // Handle redirect result (call this on app load)
 export const handleGoogleRedirectResult = async () => {
   try {
+    // CRITICAL: Set persistence BEFORE getRedirectResult to help browser remember session across domains
+    // This ensures the session is persisted even if the redirect handshake is blocked
+    await setPersistence(auth, browserLocalPersistence);
+    
     const result = await getRedirectResult(auth);
     if (result?.user) {
       // CRITICAL: Force token refresh to ensure it's persisted and ready for backend
@@ -169,6 +173,8 @@ export const handleGoogleRedirectResult = async () => {
     return result?.user || null;
   } catch (error) {
     console.error('Google redirect error:', error);
+    // Log full error details for debugging cross-origin issues
+    console.dir(error, { depth: null });
     throw error;
   }
 };

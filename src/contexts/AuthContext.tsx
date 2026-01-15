@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult, googleProvider } from '../lib/firebase';
-import { User as FirebaseUser } from 'firebase/auth';
+import { User as FirebaseUser, onIdTokenChanged } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { getDashboardRoute } from '@/lib/roles';
 import { useToast } from '@/hooks/useToast';
@@ -80,6 +80,7 @@ interface AuthContextType {
   getToken: () => Promise<string | null>;
   refreshUser: () => Promise<void>;
   triggerPostAuthRedirect: () => void;
+  startManualAuthPolling: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,6 +106,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const userRef = useRef<User | null>(null);
   const toastRef = useRef(toast);
   const refreshUserRef = useRef<() => Promise<void>>(async () => {});
+  const manualPollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasReloadedRef = useRef(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -251,6 +255,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
       pathname === '/oauth/callback' ||
       pathname === '/__/auth/handler'
     );
+  };
+
+  const forceAuthNavigation = (firebaseUser: FirebaseUser | null, nextUser?: User | null) => {
+    if (!firebaseUser) return;
+    const pathname = locationRef.current.pathname;
+    if (pathname !== '/login' && pathname !== '/signup') return;
+
+    const target =
+      nextUser?.isOnboarded === false
+        ? '/onboarding'
+        : '/dashboard';
+
+    if (pathname !== target) {
+      navigateRef.current(target);
+    }
+  };
+
+  const startManualAuthPolling = () => {
+    if (manualPollingIntervalRef.current) {
+      clearInterval(manualPollingIntervalRef.current);
+    }
+
+    manualPollingIntervalRef.current = setInterval(() => {
+      if (!auth.currentUser) return;
+
+      if (manualPollingIntervalRef.current) {
+        clearInterval(manualPollingIntervalRef.current);
+        manualPollingIntervalRef.current = null;
+      }
+
+      setIsLoading(false);
+      setIsAuthReady(true);
+      setIsRedirecting(false);
+      pendingRedirect.current = false;
+      navigateRef.current('/onboarding');
+    }, 500);
   };
 
   // Paths that should NEVER be auto-redirected away from (even for auth failures)
@@ -422,15 +462,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }, 5000);
 
+      // CRITICAL: Set persistence BEFORE checking redirect result to help browser remember session
+      try {
+        const { setPersistence, browserLocalPersistence } = await import('firebase/auth');
+        await setPersistence(auth, browserLocalPersistence);
+        logger.debug('AuthContext', 'Session persistence set to browserLocalPersistence');
+      } catch (persistenceError) {
+        logger.error('AuthContext', 'Failed to set persistence:', persistenceError);
+        // Continue anyway - persistence failure shouldn't block auth
+      }
+
+      // Check if URL contains auth/handler parameters (indicates we're returning from redirect)
+      const urlHasAuthHandler = typeof window !== 'undefined' && (
+        window.location.pathname.includes('/__/auth/handler') ||
+        window.location.search.includes('auth/handler') ||
+        window.location.hash.includes('auth/handler')
+      );
+
+      let redirectUser: FirebaseUser | null = null;
+
       try {
         // Step 1: MUST call getRedirectResult FIRST to 'claim' the result from the URL
         // If this isn't called, Firebase often fails to persist the session after redirect
-        const redirectUser = await handleGoogleRedirectResult();
+        redirectUser = await handleGoogleRedirectResult();
         
         // Clear the safety timeout if we got a redirect result
         clearTimeout(getRedirectResultTimeout);
         
         if (!redirectUser) {
+          // If we have auth/handler in URL but no redirect result, trigger popup fallback immediately
+          if (urlHasAuthHandler) {
+            logger.debug('AuthContext', 'URL contains auth/handler but getRedirectResult returned null - triggering popup fallback');
+            try {
+              const { signInWithPopup } = await import('firebase/auth');
+              logger.debug('AuthContext', 'Attempting popup fallback after redirect failure');
+              await signInWithPopup(auth, googleProvider);
+              // Popup will trigger onAuthStateChange - the listener below will handle it
+              // Don't return early - let the normal flow continue
+            } catch (popupError) {
+              logger.error('AuthContext', 'Popup fallback failed:', popupError);
+              console.dir(popupError, { depth: null });
+            }
+          }
+
           if (redirectFallbackTimeout.current) {
             clearTimeout(redirectFallbackTimeout.current);
           }
@@ -490,9 +564,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
           logger.debug('AuthContext', 'No redirect result - user did not return from Google sign-in');
         }
       } catch (error) {
-        // CATCH-ALL: Clear loading state on any error to prevent infinite loading
-        logger.debug('AuthContext', 'Error processing redirect result, clearing loading state:', error);
-        await attemptPopupFallback(error);
+        // CATCH-ALL: Log FULL error object with console.dir to catch cross-origin blocks
+        logger.error('AuthContext', 'Error processing redirect result:', error);
+        console.error('[AuthContext] getRedirectResult() failed with error:');
+        console.dir(error, { depth: null });
+        
+        // Check for cross-origin related errors
+        const errorCode = (error as { code?: string })?.code;
+        const errorMessage = (error as { message?: string })?.message;
+        const errorString = String(error);
+        
+        if (
+          errorCode?.includes('cross-origin') ||
+          errorMessage?.includes('cross-origin') ||
+          errorString.includes('cross-origin') ||
+          errorCode === 'auth/network-request-failed'
+        ) {
+          logger.debug('AuthContext', 'Cross-origin or network error detected in redirect result');
+        }
+
+        // If URL has auth/handler parameters, trigger popup fallback immediately
+        if (urlHasAuthHandler) {
+          logger.debug('AuthContext', 'URL contains auth/handler and redirect failed - triggering popup fallback');
+          try {
+            const { signInWithPopup } = await import('firebase/auth');
+            logger.debug('AuthContext', 'Attempting popup fallback after redirect error');
+            await signInWithPopup(auth, googleProvider);
+            // Popup will trigger onAuthStateChange - the listener below will handle it
+            // Don't return early - let the normal flow continue
+            clearTimeout(getRedirectResultTimeout);
+          } catch (popupError) {
+            logger.error('AuthContext', 'Popup fallback failed:', popupError);
+            console.dir(popupError, { depth: null });
+            // Only attempt network fallback if popup also failed
+            await attemptPopupFallback(error);
+          }
+        } else {
+          // Only attempt network fallback if it's a network error (not cross-origin)
+          await attemptPopupFallback(error);
+        }
+        
         clearTimeout(getRedirectResultTimeout);
         // Don't clear loading here - let the fallback timeout handle it
         // This ensures we always clear after 3 seconds even if there's an error
@@ -523,18 +634,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         
         // CRITICAL: If transitioning from no-user to user (sign-in happening),
-        // set loading to true to show loading screen and prevent login page flash
+        // clear loading immediately to avoid a stuck spinner during popup handshakes
         const isNewSignIn = previousUid === null && newUid !== null;
         if (isNewSignIn) {
-          logger.debug('AuthContext', 'New sign-in detected, showing loading screen');
-          setIsLoading(true);
-        // Only auto-redirect from auth/callback pages (NOT from normal browsing pages like "/").
-        // This prevents hard-refreshing public pages from being yanked to /login when the API/profile
-        // handshake is temporarily unavailable.
-        if (shouldAutoRedirectFromPath(locationRef.current.pathname)) {
-          pendingRedirect.current = true;
-          setIsRedirecting(true);
-        }
+          logger.debug('AuthContext', 'New sign-in detected, forcing immediate UI response');
+          setIsLoading(false);
+          setIsAuthReady(true);
+          // Only auto-redirect from auth/callback pages (NOT from normal browsing pages like "/").
+          // This prevents hard-refreshing public pages from being yanked to /login when the API/profile
+          // handshake is temporarily unavailable.
+          if (shouldAutoRedirectFromPath(locationRef.current.pathname)) {
+            pendingRedirect.current = true;
+            setIsRedirecting(true);
+          }
         }
         
         // Mark as processing and track current user
@@ -543,6 +655,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         try {
           if (firebaseUser) {
+            // Forced cleanup + push: kill spinner and move immediately on login/signup.
+            setIsLoading(false);
+            setIsAuthReady(true);
+            forceAuthNavigation(firebaseUser, userRef.current);
+
             try {
               // GATEKEEPER: Ensure we have a valid uid before making /api/me call
               // This prevents calls when Firebase token refresh is pending or mocked
@@ -828,6 +945,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (redirectFallbackTimeout.current) {
         clearTimeout(redirectFallbackTimeout.current);
         redirectFallbackTimeout.current = null;
+      }
+      if (manualPollingIntervalRef.current) {
+        clearInterval(manualPollingIntervalRef.current);
+        manualPollingIntervalRef.current = null;
+      }
+      if (reloadTimeoutRef.current) {
+        clearTimeout(reloadTimeoutRef.current);
+        reloadTimeoutRef.current = null;
       }
       if (safetyTimeoutRef.current) {
         clearTimeout(safetyTimeoutRef.current);
@@ -1140,6 +1265,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) return;
+      hasResolvedAuthState.current = true;
+
+      // CRITICAL: kill loading spinner the moment a token-backed user appears.
+      setIsLoading(false);
+      setIsAuthReady(true);
+      forceAuthNavigation(firebaseUser, userRef.current);
+
+      if (!userRef.current || isLoadingRef.current) {
+        await attemptHardSync('idTokenChanged');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const allowedOrigins = new Set<string>([
@@ -1218,6 +1361,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [isLoading]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      if (reloadTimeoutRef.current) {
+        clearTimeout(reloadTimeoutRef.current);
+        reloadTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (reloadTimeoutRef.current) {
+      clearTimeout(reloadTimeoutRef.current);
+    }
+
+    reloadTimeoutRef.current = setTimeout(() => {
+      if (!isLoadingRef.current || hasReloadedRef.current) return;
+      hasReloadedRef.current = true;
+      window.location.reload();
+    }, 10000);
+
+    return () => {
+      if (reloadTimeoutRef.current) {
+        clearTimeout(reloadTimeoutRef.current);
+        reloadTimeoutRef.current = null;
+      }
+    };
+  }, [isLoading]);
+
   const triggerPostAuthRedirect = () => {
     pendingRedirect.current = true;
     setIsRedirecting(true);
@@ -1243,6 +1413,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     getToken,
     refreshUser,
     triggerPostAuthRedirect,
+    startManualAuthPolling,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

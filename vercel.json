@@ -43,6 +43,10 @@
           "value": "no-store, max-age=0"
         },
         {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://hospogo.com"
+        },
+        {
           "key": "Content-Security-Policy",
           "value": "script-src 'self' https://apis.google.com https://*.gstatic.com"
         }
@@ -62,6 +66,10 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://hospogo.com"
         }
       ]
     },

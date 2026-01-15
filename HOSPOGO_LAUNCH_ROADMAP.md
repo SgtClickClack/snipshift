@@ -8,6 +8,34 @@
 
 ---
 
+### Update: 2026-01-15 - Forced Auth Token Observer + Immediate Post-Login Push (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a secondary `onIdTokenChanged` listener in AuthContext to catch popup token handshakes that bypass `onAuthStateChanged`.
+- Forced immediate navigation off `/login` and `/signup` to `/onboarding` or `/dashboard` as soon as a user token is detected.
+- Cleared `loading` the moment a Firebase user is detected to kill infinite spinner loops.
+
+**Impact:**
+- Main window reacts instantly after Google popup completion, pushing users into the onboarding FSM without waiting.
+
+---
+
+### Update: 2026-01-15 - Manual Auth Polling Bridge + 10s Reload Safety (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a manual 500ms polling bridge triggered on Google sign-in click to detect `auth.currentUser` and force onboarding navigation.
+- Added a 10-second loading reload safety to reset stalled auth state from COOP/storage partitioning.
+- Hardcoded `Access-Control-Allow-Origin: https://hospogo.com` in Vercel headers for exact production alignment.
+
+**Impact:**
+- Main window is actively “poked” until it sees the user and pushes into onboarding/dashboard without waiting for blocked postMessage/redirect events.
+
+---
+
 ### Update: 2026-01-15 - Auth Hard Sync + Handler Cache Bust (HospoGo)
 
 **Status:** ✅ **UPDATED**

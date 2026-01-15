@@ -1,3 +1,58 @@
+#### 2026-01-15: Manual Auth Polling Bridge + 10s Reload Safety
+
+**Core Components**
+- Auth context provider (`src/contexts/AuthContext.tsx`)
+- Google auth button (`src/components/auth/google-auth-button.tsx`)
+- Vercel headers (`vercel.json`)
+
+**Key Features**
+- Added a manual 500ms auth polling interval triggered by Google sign-in clicks to detect `auth.currentUser` and push onboarding immediately.
+- Added a 10-second loading safety reload to recover from COOP/storage-partitioned auth stalls.
+- Hardcoded `Access-Control-Allow-Origin: https://hospogo.com` in Vercel headers for production alignment.
+
+**Integration Points**
+- Firebase Auth: `auth.currentUser`
+- Router navigation via `useNavigate`
+- Vercel headers for `/__/auth/*` and app shell
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/components/auth/google-auth-button.tsx`
+- `vercel.json`
+
+**Next Priority Task**
+- Validate popup sign-in now forces immediate onboarding/dashboard transition in production.
+
+**Code Organization & Quality**
+- Kept polling and recovery logic centralized in AuthContext with a single entrypoint from the Google auth button.
+
+---
+
+#### 2026-01-15: Forced Auth Token Observer + Immediate Post-Login Push
+
+**Core Components**
+- Auth context provider (`src/contexts/AuthContext.tsx`)
+
+**Key Features**
+- Added a secondary Firebase `onIdTokenChanged` observer to catch popup token handshakes that miss `onAuthStateChanged`.
+- Forced immediate navigation away from `/login` and `/signup` to `/onboarding` or `/dashboard` as soon as a user token is detected.
+- Cleared the global loading state the moment a Firebase user is detected to avoid infinite spinners.
+
+**Integration Points**
+- Firebase Auth listeners: `onIdTokenChanged`, `onAuthStateChange`
+- Router navigation via `useNavigate`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+
+**Next Priority Task**
+- Verify popup sign-in instantly routes to onboarding/dashboard on production.
+
+**Code Organization & Quality**
+- Kept changes localized to the auth context and reused existing hard-sync helpers.
+
+---
+
 #### 2026-01-15: Auth Hard Sync + Handler Cache Bust
 
 **Core Components**
