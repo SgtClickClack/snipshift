@@ -2761,3 +2761,39 @@
 
 **Code Organization & Quality**
 - Kept bridge logic localized to auth surfaces with a short-lived cookie and minimal UI.
+
+---
+
+#### 2026-01-16: Venue Dashboard Migration (Hub → Venue URL)
+
+**Core Components**
+- Venue dashboard page (`src/pages/venue-dashboard.tsx`)
+- App routing (`src/App.tsx`)
+- Auth redirect logic (`src/contexts/AuthContext.tsx`)
+- Venue onboarding flow redirects (`src/pages/onboarding/hub.tsx`)
+- Role selection routing (`src/pages/home.tsx`)
+
+**Key Features**
+- Migrated the full Hub dashboard content into the new Venue dashboard and renamed the component to `VenueDashboard`.
+- Routed `/venue/dashboard` exclusively to the new `VenueDashboard` implementation.
+- Removed the legacy Hub dashboard file and updated legacy `/hub-dashboard` redirects to point at `/venue/dashboard`.
+- Ensured business-role redirects and onboarding flows land on `/venue/dashboard`.
+
+**Integration Points**
+- Router: `/venue/dashboard`
+- Auth role home resolution (`deriveRoleHome`)
+- Venue onboarding completion flow
+
+**File Paths**
+- `src/pages/venue-dashboard.tsx`
+- `src/pages/hub-dashboard.tsx` (deleted)
+- `src/App.tsx`
+- `src/contexts/AuthContext.tsx`
+- `src/pages/onboarding/hub.tsx`
+- `src/pages/home.tsx`
+
+**Next Priority Task**
+- Validate `/venue/dashboard` renders Calendar, Jobs, Applications tabs and the Stripe setup banner in a real session.
+
+**Code Organization & Quality**
+- Reused the existing dashboard implementation and consolidated venue routing to a single canonical path.

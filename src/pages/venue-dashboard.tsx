@@ -52,7 +52,7 @@ import {
 
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar';
 
-const HubDashboardSkeleton = () => (
+const VenueDashboardSkeleton = () => (
   <div className="min-h-screen bg-background p-4 md:p-6">
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header skeleton */}
@@ -78,18 +78,18 @@ const HubDashboardSkeleton = () => (
   </div>
 );
 
-export default function HubDashboard() {
+export default function VenueDashboard() {
   const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading } = useAuth();
   const hasValidRole = isBusinessRole(user?.currentRole);
 
   if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
-    return <HubDashboardSkeleton />;
+    return <VenueDashboardSkeleton />;
   }
 
-  return <HubDashboardContent />;
+  return <VenueDashboardContent />;
 }
 
-function HubDashboardContent() {
+function VenueDashboardContent() {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   
@@ -466,7 +466,7 @@ function HubDashboardContent() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, type }: { id: string; status: 'open' | 'filled' | 'completed'; type: 'shift' | 'job' }) => {
-      // Hub dashboard can show a mixed list (jobs + shifts). Route to the correct API.
+      // Dashboard can show a mixed list (jobs + shifts). Route to the correct API.
       if (type === 'shift') {
         return updateShiftStatus(id, status);
       }
@@ -607,7 +607,7 @@ function HubDashboardContent() {
     monthlyHires: dashboardStats?.summary?.monthlyHires ?? 0
   };
 
-  if (!user || (user.currentRole !== "hub" && user.currentRole !== "business")) {
+  if (!user || !isBusinessRole(user.currentRole)) {
     return <div>Access denied</div>;
   }
 

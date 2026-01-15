@@ -136,7 +136,11 @@ export default function HubOnboardingPage() {
     venueName: '',
     location: '',
     description: '',
+    city: '',
+    state: '',
   });
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [blurredFields, setBlurredFields] = useState<Set<string>>(new Set());
 
   // Wait for auth to be ready and verify user exists before showing onboarding
   useEffect(() => {
@@ -187,7 +191,7 @@ export default function HubOnboardingPage() {
     try {
       const res = await apiRequest('GET', '/api/subscriptions/plans');
       const data = await res.json();
-      const plans = data.plans || [];
+      const plans = data?.plans || [];
       
       // Find the plan that matches the preference (case-insensitive)
       const matchedPlan = plans.find((p: any) => 
@@ -211,6 +215,27 @@ export default function HubOnboardingPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Mark field as touched when user starts typing
+    if (!touchedFields.has(name)) {
+      setTouchedFields(prev => new Set(prev).add(name));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = e.target;
+    // Mark field as blurred for validation
+    if (!blurredFields.has(name)) {
+      setBlurredFields(prev => new Set(prev).add(name));
+    }
+  };
+
+  const getFieldError = (name: string, value: string, required: boolean = false): string | null => {
+    // Only show validation errors if field has been blurred and is required
+    if (!blurredFields.has(name) || !required) return null;
+    if (required && !value.trim()) {
+      return `${name === 'venueName' ? 'Venue name' : name === 'location' ? 'Location' : name} is required`;
+    }
+    return null;
   };
 
   const handleVenueDetailsSubmit = async (e: React.FormEvent) => {
@@ -275,7 +300,7 @@ export default function HubOnboardingPage() {
       } else {
         // No payment needed (Starter tier), go directly to dashboard
         clearSessionStorage();
-        navigate('/hub-dashboard');
+        navigate('/venue/dashboard');
       }
     } catch (error: any) {
       console.error('Onboarding error:', error);
@@ -298,7 +323,7 @@ export default function HubOnboardingPage() {
       const res = await apiRequest('POST', '/api/stripe-connect/setup-intent');
       const data = await res.json();
       
-      if (data.clientSecret) {
+      if (data?.clientSecret) {
         setClientSecret(data.clientSecret);
       } else {
         throw new Error('Failed to initialize payment setup');
@@ -333,7 +358,7 @@ export default function HubOnboardingPage() {
         throw new Error(error.message || 'Failed to create subscription');
       }
 
-      const data = await res.json();
+      await res.json();
 
       toast({
         title: "Subscription Activated!",
@@ -344,7 +369,7 @@ export default function HubOnboardingPage() {
       });
 
       clearSessionStorage();
-      navigate('/hub-dashboard');
+      navigate('/venue/dashboard');
     } catch (error: any) {
       console.error('Subscription error:', error);
       toast({
@@ -354,7 +379,7 @@ export default function HubOnboardingPage() {
       });
       // Still navigate to dashboard even if subscription fails
       clearSessionStorage();
-      navigate('/hub-dashboard');
+      navigate('/venue/dashboard');
     } finally {
       setIsSubmitting(false);
     }
@@ -373,7 +398,7 @@ export default function HubOnboardingPage() {
       variant: "default",
     });
     clearSessionStorage();
-    navigate('/hub-dashboard');
+    navigate('/venue/dashboard');
   };
 
   // Determine total steps
@@ -483,7 +508,7 @@ export default function HubOnboardingPage() {
                 {currentStep === 2 && <CreditCard className="h-6 w-6 text-brand-dark" />}
                 {currentStep === 3 && <CheckCircle className="h-6 w-6 text-brand-dark" />}
               </div>
-              <CardTitle className="text-2xl text-steel-900">
+              <CardTitle className="text-2xl text-gray-100 font-semibold">
                 {currentStep === 1 && 'Create Venue Profile'}
                 {currentStep === 2 && 'Add Payment Method'}
                 {currentStep === 3 && 'Setting Up Your Account'}
@@ -505,43 +530,76 @@ export default function HubOnboardingPage() {
             <CardContent>
               {/* Step 1: Venue Details */}
               {currentStep === 1 && (
-                <form onSubmit={handleVenueDetailsSubmit} className="space-y-6">
+                <form onSubmit={handleVenueDetailsSubmit} className="space-y-6" noValidate>
                   <div className="space-y-2">
-                    <Label htmlFor="venueName" className="text-steel-700">Venue Name *</Label>
+                    <Label htmlFor="venueName" className="text-steel-200 font-medium">Venue Name *</Label>
                     <Input
                       id="venueName"
                       name="venueName"
                       value={formData.venueName}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="e.g. The Grand Hotel"
                       required
-                      className="bg-card"
+                      className={`bg-card text-foreground placeholder:text-steel-500/80 focus-visible:ring-brand-neon focus-visible:border-brand-neon ${
+                        getFieldError('venueName', formData.venueName, true) 
+                          ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500' 
+                          : ''
+                      }`}
                     />
+                    {getFieldError('venueName', formData.venueName, true) && (
+                      <p className="text-xs text-red-400">{getFieldError('venueName', formData.venueName, true)}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="location" className="text-steel-700">Location *</Label>
+                    <Label htmlFor="location" className="text-steel-200 font-medium">Location *</Label>
                     <LocationInput
                       value={formData.location}
-                      onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
-                      placeholder="City, State or Address"
-                      className="bg-card"
+                      onChange={(val) => {
+                        setFormData(prev => ({ ...prev, location: val }));
+                        if (!touchedFields.has('location')) {
+                          setTouchedFields(prev => new Set(prev).add('location'));
+                        }
+                      }}
+                      onSelect={(location) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          location: location.address,
+                          city: location.city || '',
+                          state: location.state || '',
+                        }));
+                        // Mark as blurred when selected
+                        if (!blurredFields.has('location')) {
+                          setBlurredFields(prev => new Set(prev).add('location'));
+                        }
+                      }}
+                      placeholder="Start typing a city or address..."
+                      className={`bg-card text-foreground placeholder:text-steel-500/80 ${
+                        getFieldError('location', formData.location, true) 
+                          ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500' 
+                          : ''
+                      }`}
                     />
-                    <p className="text-xs text-steel-500">
-                      Use a generic location like "Downtown Metro" or full address.
+                    {getFieldError('location', formData.location, true) && (
+                      <p className="text-xs text-red-400">{getFieldError('location', formData.location, true)}</p>
+                    )}
+                    <p className="text-xs text-steel-500/80">
+                      Select a location from the suggestions as you type.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description" className="text-steel-700">Description</Label>
+                    <Label htmlFor="description" className="text-steel-200 font-medium">Description</Label>
                     <Textarea
                       id="description"
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="Briefly describe your venue..."
                       rows={4}
-                      className="bg-card"
+                      className="bg-card text-foreground placeholder:text-steel-500/80"
                     />
                   </div>
 

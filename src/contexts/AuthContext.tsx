@@ -249,8 +249,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // CRITICAL: If user is already on a valid business dashboard, stay there
-    // This prevents redirect loops where /hub-dashboard redirects to /venue/dashboard
-    const validBusinessDashboards = ['/hub-dashboard', '/venue/dashboard', '/shop-dashboard'];
+    const validBusinessDashboards = ['/venue/dashboard', '/shop-dashboard'];
     if (currentPath && validBusinessDashboards.includes(currentPath)) {
       const isBusinessUser = isBusinessRole(u.currentRole) || 
         (u.roles && u.roles.some(r => isBusinessRole(r)));
@@ -354,8 +353,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // CRITICAL: If user is already on a valid business dashboard, DO NOT redirect
-    // This prevents redirect loops where /hub-dashboard redirects to /venue/dashboard
-    const validBusinessDashboards = ['/hub-dashboard', '/venue/dashboard', '/shop-dashboard'];
+    const validBusinessDashboards = ['/venue/dashboard', '/shop-dashboard'];
     if (validBusinessDashboards.includes(pathname) && u) {
       const isBusinessUser = isBusinessRole(u.currentRole || '') || 
         (u.roles && u.roles.some(r => isBusinessRole(r)));

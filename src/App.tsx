@@ -66,7 +66,7 @@ const ReviewPage = lazy(() => import('@/pages/review'));
 const PostJobPage = lazy(() => import('@/pages/post-job'));
 const ManageJobsPage = lazy(() => import('@/pages/manage-jobs'));
 const NotificationsPage = lazy(() => import('@/pages/notifications'));
-const HubDashboard = lazy(() => import('@/pages/hub-dashboard'));
+const VenueDashboard = lazy(() => import('@/pages/venue-dashboard'));
 const ShopDashboard = lazy(() => import('@/pages/shop-dashboard'));
 const ShopSchedulePage = lazy(() => import('@/pages/shop/schedule'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
@@ -345,14 +345,6 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </ProtectedRoute>
         } />
 
-        <Route path="/hub-dashboard" element={
-          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <HubDashboard />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-
         {/* Legacy/compat route: billing + venue dashboard surfaces */}
         <Route path="/shop-dashboard" element={
           <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
@@ -427,7 +419,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         <Route path="/venue/dashboard" element={
           <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
-              <ShopDashboard />
+              <VenueDashboard />
             </Suspense>
           </ProtectedRoute>
         } />

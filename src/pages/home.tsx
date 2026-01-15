@@ -40,7 +40,7 @@ export default function HomePage() {
 
       // Redirect to dashboard for this role
       const dashboardMap = {
-        hub: '/hub-dashboard',
+        hub: '/venue/dashboard',
         professional: '/professional-dashboard',
         brand: '/brand-dashboard',
         trainer: '/trainer-dashboard'

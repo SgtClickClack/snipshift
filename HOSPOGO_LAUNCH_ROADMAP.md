@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-16 - Venue Dashboard Migration (Hub → Venue URL)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Cloned the Hub dashboard implementation into the Venue dashboard and renamed the component to `VenueDashboard`.
+- Pointed `/venue/dashboard` exclusively to the new Venue dashboard implementation.
+- Removed the legacy Hub dashboard page and updated onboarding/role redirects to land on `/venue/dashboard`.
+
+**Impact:**
+- Business users now land on the Venue URL while retaining the full Hub dashboard feature set (Calendar, Jobs, Applications, Stripe setup banner).
+
+---
+
 ### Update: 2026-01-15 - Systemic Resilience Cleanup (Auth Roles + Socket.IO Removal)
 
 **Status:** ✅ **UPDATED**
