@@ -27,7 +27,7 @@ export function initializeSocketIO(httpServer: HttpServer): SocketIOServer {
   });
 
   // Authentication middleware for socket connections
-  io.use(async (socket: Socket, next) => {
+  io.use(async (socket: Socket, next: (err?: Error) => void) => {
     try {
       const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
       
