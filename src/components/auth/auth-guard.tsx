@@ -117,13 +117,14 @@ export function AuthGuard({
 
   // CRITICAL: If authenticated AND role is null AND not on /onboarding -> Redirect to /onboarding
   // This ensures users without a role complete onboarding before accessing other pages
-  const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
+  const publicRoutes = ['/onboarding', '/onboarding/hub', '/onboarding/professional', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
   if (isAuthenticated && user) {
     // Check if user has a role (currentRole is set and not null/undefined/client)
     const hasRole = user.currentRole && user.currentRole !== 'client';
     
-    // If user doesn't have a role and is not on onboarding, redirect to onboarding
-    if (!hasRole && location.pathname !== '/onboarding' && !publicRoutes.includes(location.pathname)) {
+    // If user doesn't have a role and is not on an onboarding page, redirect to onboarding
+    const isOnboardingPage = location.pathname.startsWith('/onboarding');
+    if (!hasRole && !isOnboardingPage && !publicRoutes.includes(location.pathname)) {
       logger.debug('AuthGuard', 'User authenticated but no role set, redirecting to onboarding', {
         currentRole: user.currentRole,
         isOnboarded: user.isOnboarded,
