@@ -1,3 +1,36 @@
+#### 2026-01-15: Legacy Auth Domain Reset + Brute-Force Message Sync
+
+**Core Components**
+- Firebase SDK init (`src/lib/firebase.ts`)
+- Auth context message handling (`src/contexts/AuthContext.tsx`)
+- Signup UX (`src/pages/signup.tsx`)
+- Vercel headers (`vercel.json`)
+
+**Key Features**
+- Forced Firebase SDK init to use the legacy auth domain `snipshift-75b04.firebaseapp.com` to avoid storage partitioning during the handshake.
+- Added a brute-force window `message` listener that reacts to any payload containing `uid` or `stsTokenManager`, with token extraction from `stsTokenManager` when available.
+- Replaced the Signup loading block with a lightweight "Connecting..." toast to keep the UI accessible during auth stalls.
+- Removed CSP and COOP headers from Vercel to return to default security behavior while debugging auth flow.
+
+**Integration Points**
+- Firebase Auth SDK initialization
+- Firebase proxy iframe postMessage bridge
+- Vercel edge headers for auth handler and app shell
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/pages/signup.tsx`
+- `vercel.json`
+
+**Next Priority Task**
+- Validate production login completes and the UI stays interactive even if auto-redirect fails.
+
+**Code Organization & Quality**
+- Reused existing hard-sync helpers in AuthContext; changes remain localized to auth plumbing and hosting headers.
+
+---
+
 #### 2026-01-15: Manual Auth Polling Bridge + 10s Reload Safety
 
 **Core Components**

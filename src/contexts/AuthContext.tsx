@@ -1194,6 +1194,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         (payload.token as string | undefined) ??
         (payload.idToken as string | undefined) ??
         (payload.accessToken as string | undefined) ??
+        ((payload.stsTokenManager as { accessToken?: string; idToken?: string } | undefined)?.accessToken) ??
+        ((payload.stsTokenManager as { accessToken?: string; idToken?: string } | undefined)?.idToken) ??
         ((payload.detail as { token?: string } | undefined)?.token) ??
         ((payload.data as { token?: string } | undefined)?.token);
 
@@ -1293,7 +1295,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ]);
 
     const handleMessage = (event: MessageEvent) => {
-      if (!allowedOrigins.has(event.origin)) return;
+      const isObjectPayload = typeof event.data === 'object' && event.data !== null;
+      const payload = isObjectPayload ? (event.data as Record<string, unknown>) : null;
+      const hasUid = !!payload && 'uid' in payload;
+      const hasStsTokenManager = !!payload && 'stsTokenManager' in payload;
+      const isBruteForceAuthPayload = hasUid || hasStsTokenManager;
+
+      if (!allowedOrigins.has(event.origin) && !isBruteForceAuthPayload) return;
       if (hasMessageHardSynced.current && userRef.current) return;
 
       const tokenValue = extractAuthTokenFromMessage(event.data);
@@ -1303,7 +1311,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           : '';
       const looksLikeAuthEvent = messageType.toLowerCase().includes('auth');
 
-      if (!tokenValue && !looksLikeAuthEvent) return;
+      if (!tokenValue && !looksLikeAuthEvent && !isBruteForceAuthPayload) return;
       if (!isLoadingRef.current && userRef.current) return;
 
       hasMessageHardSynced.current = true;

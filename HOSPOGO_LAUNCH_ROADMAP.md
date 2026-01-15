@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-15 - Legacy Auth Domain Reset + Brute-Force Message Listener (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Forced Firebase SDK init to use the legacy auth domain (`snipshift-75b04.firebaseapp.com`) to bypass browser storage partitioning during handshake.
+- Added a brute-force `window.message` listener that reacts to any payload containing `uid` or `stsTokenManager`, and extracts tokens from `stsTokenManager` when present.
+- Replaced the Signup loading block with a lightweight “Connecting…” toast to keep the UI accessible if redirects stall.
+- Removed CSP and COOP headers from Vercel to return to default security behavior during auth debugging.
+
+**Impact:**
+- Auth handshakes now run through the native Firebase domain while the app uses a broad capture net to unlock the UI even when `currentUser` stalls.
+
+---
+
 ### Update: 2026-01-15 - Forced Auth Token Observer + Immediate Post-Login Push (HospoGo)
 
 **Status:** ✅ **UPDATED**

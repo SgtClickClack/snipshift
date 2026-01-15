@@ -42,12 +42,8 @@ const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string
 // SECURITY: Strict project ID enforcement - only allow 'snipshift-75b04'
 const REQUIRED_PROJECT_ID = 'snipshift-75b04';
 
-// CRITICAL: Auth domain must be hospogo.com for production auth handler proxying.
-const authDomain = sanitizeEnv(
-  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? import.meta.env.VITE_AUTH_DOMAIN,
-  'VITE_FIREBASE_AUTH_DOMAIN',
-  'hospogo.com'
-);
+// CRITICAL: Force legacy Firebase auth domain for SDK init to bypass storage partitioning.
+const authDomain = 'snipshift-75b04.firebaseapp.com';
 
 const firebaseConfig = {
   apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY'),

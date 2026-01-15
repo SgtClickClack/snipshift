@@ -45,24 +45,12 @@
         {
           "key": "Access-Control-Allow-Origin",
           "value": "https://hospogo.com"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "script-src 'self' https://apis.google.com https://*.gstatic.com"
         }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "Cross-Origin-Embedder-Policy",
-          "value": "unsafe-none"
-        },
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin-allow-popups"
-        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=0, must-revalidate"

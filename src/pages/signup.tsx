@@ -29,6 +29,7 @@ export default function SignupPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   // Prevent double execution in React Strict Mode
   const hasProcessedOAuthCallback = useRef(false);
+  const hasShownConnectingToast = useRef(false);
 
   // Check for email, role, and plan in query params (e.g. redirect from login, landing page, or pricing)
   useEffect(() => {
@@ -111,6 +112,20 @@ export default function SignupPage() {
       return;
     }
   }, [navigate, toast]);
+
+  useEffect(() => {
+    if (isLoading && !hasShownConnectingToast.current) {
+      hasShownConnectingToast.current = true;
+      toast({
+        title: "Connecting...",
+        description: "Finishing sign-up. If redirect stalls, you can navigate manually.",
+      });
+    }
+
+    if (!isLoading) {
+      hasShownConnectingToast.current = false;
+    }
+  }, [isLoading, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
