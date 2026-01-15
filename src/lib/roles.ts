@@ -1,8 +1,8 @@
 export type AppRole = 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'client' | 'business';
 
 export const roleToRoute: Record<AppRole, string> = {
-  hub: '/hub-dashboard',
-  business: '/hub-dashboard', // Map business to hub dashboard
+  hub: '/venue/dashboard', // Aligned with business - both use /venue/dashboard
+  business: '/venue/dashboard', // Primary URL for business role users
   professional: '/professional-dashboard',
   brand: '/brand-dashboard',
   trainer: '/trainer-dashboard',
