@@ -22,6 +22,7 @@ import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange
 import { getDb } from '../db/index.js';
 import { toISOStringSafe } from '../lib/date.js';
 import * as reputationService from '../lib/reputation-service.js';
+import { triggerShiftInvite } from '../services/pusher.service.js';
 
 const router = Router();
 
@@ -257,6 +258,17 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
           hourlyRate: (newShift as any).hourlyRate,
           employerId: newShift.employerId,
         });
+
+        // Trigger Pusher real-time event for shift invite
+        const venue = await usersRepo.getUserById(newShift.employerId);
+        if (venue) {
+          await triggerShiftInvite(assignedStaffId, {
+            shiftId: newShift.id,
+            shiftTitle: newShift.title,
+            venueName: venue.name,
+            venueId: newShift.employerId,
+          });
+        }
       } catch (error) {
         console.error('[POST /api/shifts] Failed to notify invited professional:', error);
       }
@@ -1273,7 +1285,10 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
     return;
   }
 
-  // Send notifications to all invited professionals
+  // Get venue information for Pusher events
+  const venue = await usersRepo.getUserById(shift.employerId);
+
+  // Send notifications and Pusher events to all invited professionals
   for (const profId of targetProfessionalIds) {
     try {
       await notificationsService.notifyProfessionalOfInvite(profId, {
@@ -1285,6 +1300,16 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
         hourlyRate: shift.hourlyRate,
         employerId: shift.employerId,
       });
+
+      // Trigger Pusher real-time event for shift invite
+      if (venue) {
+        await triggerShiftInvite(profId, {
+          shiftId: shift.id,
+          shiftTitle: shift.title,
+          venueName: venue.name,
+          venueId: shift.employerId,
+        });
+      }
     } catch (error) {
       // Log error but don't fail the request
       console.error('[POST /api/shifts/:id/invite] Error sending notification to', profId, ':', error);
