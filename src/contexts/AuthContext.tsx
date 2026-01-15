@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult, googleProvider } from '../lib/firebase';
 import { User as FirebaseUser, onIdTokenChanged } from 'firebase/auth';
 import { logger } from '@/lib/logger';
-import { getDashboardRoute } from '@/lib/roles';
+import { getDashboardRoute, normalizeVenueToBusiness } from '@/lib/roles';
 import { useToast } from '@/hooks/useToast';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
@@ -126,16 +126,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
    *   - venue-side: `business` | `hub`
    *   - worker-side: `professional`
    * - Some backend responses (or legacy docs) may refer to these as `venue` / `worker`.
+   * - Uses centralized venue->business mapping from @/lib/roles for consistency.
    */
   const normalizeRoleValue = (raw: unknown): User['currentRole'] | null => {
     if (typeof raw !== 'string') return null;
     const r = raw.toLowerCase();
 
-    // Clean-break aliases
-    if (r === 'worker') return 'professional';
-    if (r === 'venue') return 'business';
+    // Use centralized venue->business mapping (imported at top of file)
+    const normalized = normalizeVenueToBusiness(r);
+    if (normalized) return normalized;
 
     // Legacy aliases / common variants
+    if (r === 'worker') return 'professional';
     if (r === 'pro') return 'professional';
     if (r === 'shop') return 'business';
     if (r === 'employer') return 'business';
@@ -1452,8 +1454,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const AUTH_BRIDGE_TOKEN_KEY = 'hospogo_bridge_token';
+
     const clearBridgeCookie = () => {
       document.cookie = `${AUTH_BRIDGE_COOKIE_NAME}=; Path=/; Max-Age=0`;
+    };
+
+    const clearBridgeToken = () => {
+      localStorage.removeItem(AUTH_BRIDGE_TOKEN_KEY);
     };
 
     const readBridgeCookie = (): { uid?: string; ts?: number } | null => {
@@ -1471,22 +1479,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    const checkBridgeCookie = () => {
-      const payload = readBridgeCookie();
-      if (!payload?.uid) return;
-
-      const ageMs = payload.ts ? Date.now() - payload.ts : 0;
-      if (payload.ts && ageMs > 120000) {
-        clearBridgeCookie();
-        return;
+    const readBridgeToken = (): { token?: string; uid?: string; ts?: number } | null => {
+      try {
+        const tokenData = localStorage.getItem(AUTH_BRIDGE_TOKEN_KEY);
+        if (!tokenData) return null;
+        return JSON.parse(tokenData) as { token?: string; uid?: string; ts?: number };
+      } catch (error) {
+        logger.debug('AuthContext', 'Failed to parse bridge token', error);
+        return null;
       }
-
-      clearBridgeCookie();
-      window.location.assign('/onboarding');
     };
 
-    checkBridgeCookie();
-    const interval = setInterval(checkBridgeCookie, 500);
+    const checkBridge = async () => {
+      // Check cookie first
+      const cookiePayload = readBridgeCookie();
+      if (cookiePayload?.uid) {
+        const ageMs = cookiePayload.ts ? Date.now() - cookiePayload.ts : 0;
+        if (cookiePayload.ts && ageMs > 120000) {
+          clearBridgeCookie();
+        } else {
+          clearBridgeCookie();
+          logger.debug('AuthContext', 'Bridge cookie detected, triggering refreshUser and redirect', {
+            uid: cookiePayload.uid
+          });
+          await refreshUserRef.current();
+          window.location.assign('/onboarding');
+          return;
+        }
+      }
+
+      // Check localStorage token as fallback
+      const tokenPayload = readBridgeToken();
+      if (tokenPayload && (tokenPayload.uid || tokenPayload.token)) {
+        const ageMs = tokenPayload.ts ? Date.now() - tokenPayload.ts : 0;
+        if (tokenPayload.ts && ageMs > 120000) {
+          clearBridgeToken();
+        } else {
+          clearBridgeToken();
+          logger.debug('AuthContext', 'Bridge token detected, triggering refreshUser and redirect', {
+            uid: tokenPayload.uid,
+            hasToken: !!tokenPayload.token
+          });
+          // If we have a token, set it before refreshing
+          if (tokenPayload.token) {
+            setToken(tokenPayload.token);
+          }
+          await refreshUserRef.current();
+          window.location.assign('/onboarding');
+          return;
+        }
+      }
+    };
+
+    checkBridge();
+    const interval = setInterval(checkBridge, 500);
 
     return () => clearInterval(interval);
   }, []);

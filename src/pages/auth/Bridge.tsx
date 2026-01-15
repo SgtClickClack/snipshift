@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { auth } from '@/lib/firebase';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
+const AUTH_BRIDGE_TOKEN_KEY = 'hospogo_bridge_token';
 const MAX_COOKIE_AGE_SECONDS = 120;
 
 const setBridgeCookie = (uid: string) => {
@@ -15,22 +17,49 @@ const setBridgeCookie = (uid: string) => {
 export default function AuthBridgePage() {
   const [searchParams] = useSearchParams();
 
-  // EMERGENCY EXIT: Alert at the very top to confirm bridge page is reached
   useEffect(() => {
-    window.alert("BRIDGE PAGE REACHED");
-  }, []);
+    const handleBridge = async () => {
+      const uid = searchParams.get('uid');
 
-  useEffect(() => {
-    const uid = searchParams.get('uid');
+      if (uid) {
+        // Set cookie (existing behavior)
+        setBridgeCookie(uid);
+        
+        // MULTI-CHANNEL BRIDGE: Also write token to localStorage as fallback
+        // This ensures auth works even if popup is blocked or cookie fails
+        try {
+          const currentUser = auth.currentUser;
+          if (currentUser && currentUser.uid === uid) {
+            // Get fresh token from Firebase
+            const token = await currentUser.getIdToken(true);
+            const tokenPayload = JSON.stringify({ token, uid, ts: Date.now() });
+            localStorage.setItem(AUTH_BRIDGE_TOKEN_KEY, tokenPayload);
+            console.log('[Bridge] Token written to localStorage as fallback');
+          } else {
+            // Fallback: store uid only if we can't get token
+            const fallbackPayload = JSON.stringify({ uid, ts: Date.now() });
+            localStorage.setItem(AUTH_BRIDGE_TOKEN_KEY, fallbackPayload);
+            console.log('[Bridge] UID written to localStorage (token unavailable)');
+          }
+        } catch (error) {
+          console.warn('[Bridge] Failed to get token, storing uid only', error);
+          // Still store uid as fallback
+          const fallbackPayload = JSON.stringify({ uid, ts: Date.now() });
+          localStorage.setItem(AUTH_BRIDGE_TOKEN_KEY, fallbackPayload);
+        }
+      }
 
-    if (uid) {
-      setBridgeCookie(uid);
-      // EMERGENCY EXIT: Alert after cookie is set to confirm cookie was written
-      window.alert("COOKIE SET: " + document.cookie);
-    }
+      // Close immediately; the opener will handle the redirect after it sees the cookie/token.
+      // COOP header 'same-origin-allow-popups' allows window.close() to work
+      try {
+        window.close();
+      } catch (closeError) {
+        // COOP may block window.close() in some cases, but cookie/token are already set
+        console.debug('[Bridge] window.close() blocked (non-critical)', closeError);
+      }
+    };
 
-    // Close immediately; the opener will handle the redirect after it sees the cookie.
-    window.close();
+    handleBridge();
   }, [searchParams]);
 
   return (

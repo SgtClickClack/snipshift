@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDashboardRoute } from '@/lib/roles';
+import { getDashboardRoute, isBusinessRole } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { logger } from '@/lib/logger';
 import { auth } from '@/lib/firebase';
@@ -195,15 +195,36 @@ export function AuthGuard({
   }
 
   // If specific role is required but user's currentRole doesn't match
-  // Also check roles array and handle venue->business mapping
+  // Also check roles array and handle venue->business mapping using centralized helper
   if (requiredRole && user) {
+    // Check if user has the required role (using centralized mapping)
     const hasRequiredRole = 
       user.currentRole === requiredRole ||
       (user.roles && user.roles.includes(requiredRole as any)) ||
-      // Special case: allow 'venue' role to access 'business' routes (normalized in backend)
-      (requiredRole === 'business' && user.roles && user.roles.includes('venue' as any));
+      // Special case: allow business-related roles to access business routes
+      (requiredRole === 'business' && isBusinessRole(user.currentRole || '')) ||
+      (requiredRole === 'business' && user.roles && user.roles.some(r => isBusinessRole(r)));
     
     if (!hasRequiredRole) {
+      // GLOBAL REDIRECTION: If user has no role after authentication, redirect to onboarding
+      // instead of showing "Access denied". This allows them to (re)select their role.
+      const hasAnyRole = user.currentRole && user.currentRole !== 'client' && 
+                        user.roles && user.roles.length > 0 && 
+                        user.roles.some(r => r !== 'client');
+      
+      if (!hasAnyRole) {
+        // User is authenticated but has no role - redirect to onboarding
+        if (shouldDebug) {
+          logger.debug('AuthGuard', 'User authenticated but no role - redirecting to onboarding:', {
+            userCurrentRole: user.currentRole,
+            userRoles: user.roles,
+            attemptedPath: location.pathname
+          });
+        }
+        return <Navigate to="/onboarding" replace />;
+      }
+      
+      // User has a role but not the required one - show unauthorized
       // Debug logging for E2E tests
       if (shouldDebug) {
         logger.debug('AuthGuard', 'Role mismatch - redirecting to unauthorized:', {
