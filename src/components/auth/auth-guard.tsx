@@ -21,13 +21,19 @@ export function AuthGuard({
   allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
-  const { user, isLoading, isAuthenticated, isAuthReady, token } = useAuth();
+  const { user, isLoading, isAuthenticated, isAuthReady, isRoleLoading, token } = useAuth();
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
   // Show loading spinner while checking authentication or waiting for auth to be ready
   // CRITICAL: This check must happen FIRST, before any redirect logic
   if (isLoading || !isAuthReady) {
+    return <LoadingScreen />;
+  }
+
+  // Show loading spinner while role is being loaded from Postgres
+  // This prevents race conditions where role check happens before role is mapped
+  if (isRoleLoading) {
     return <LoadingScreen />;
   }
 
@@ -189,19 +195,28 @@ export function AuthGuard({
   }
 
   // If specific role is required but user's currentRole doesn't match
-  if (requiredRole && user && user.currentRole !== requiredRole) {
-    // Debug logging for E2E tests
-    if (shouldDebug) {
-      logger.debug('AuthGuard', 'Role mismatch - redirecting to unauthorized:', {
-        requiredRole,
-        userCurrentRole: user.currentRole,
-        userRoles: user.roles,
-        attemptedPath: location.pathname
-      });
+  // Also check roles array and handle venue->business mapping
+  if (requiredRole && user) {
+    const hasRequiredRole = 
+      user.currentRole === requiredRole ||
+      (user.roles && user.roles.includes(requiredRole as any)) ||
+      // Special case: allow 'venue' role to access 'business' routes
+      (requiredRole === 'business' && user.roles && user.roles.includes('venue' as any));
+    
+    if (!hasRequiredRole) {
+      // Debug logging for E2E tests
+      if (shouldDebug) {
+        logger.debug('AuthGuard', 'Role mismatch - redirecting to unauthorized:', {
+          requiredRole,
+          userCurrentRole: user.currentRole,
+          userRoles: user.roles,
+          attemptedPath: location.pathname
+        });
+      }
+      // Redirect to unauthorized page instead of silently redirecting to dashboard
+      // This makes it clear to users they don't have access
+      return <Navigate to="/unauthorized" state={{ from: location, requiredRole }} replace />;
     }
-    // Redirect to unauthorized page instead of silently redirecting to dashboard
-    // This makes it clear to users they don't have access
-    return <Navigate to="/unauthorized" state={{ from: location, requiredRole }} replace />;
   }
   
   // Debug: Log successful role check
@@ -214,16 +229,26 @@ export function AuthGuard({
   }
 
   // If multiple roles are allowed, check if user's role is in the allowed list
-  if (allowedRoles && user && user.currentRole && !allowedRoles.includes(user.currentRole as typeof allowedRoles[number])) {
-    // Debug logging
-    if (shouldDebug) {
-      logger.debug('AuthGuard', 'Role not in allowed list - redirecting to unauthorized:', {
-        allowedRoles,
-        userCurrentRole: user.currentRole,
-        attemptedPath: location.pathname
-      });
+  // Check both currentRole and roles array (for venue/business compatibility)
+  if (allowedRoles && user) {
+    const hasAllowedRole = 
+      (user.currentRole && allowedRoles.includes(user.currentRole as typeof allowedRoles[number])) ||
+      (user.roles && user.roles.some(role => allowedRoles.includes(role as typeof allowedRoles[number]))) ||
+      // Special case: allow 'venue' role to access 'business' routes
+      (user.roles && user.roles.includes('venue' as any) && allowedRoles.includes('business'));
+    
+    if (!hasAllowedRole) {
+      // Debug logging
+      if (shouldDebug) {
+        logger.debug('AuthGuard', 'Role not in allowed list - redirecting to unauthorized:', {
+          allowedRoles,
+          userCurrentRole: user.currentRole,
+          userRoles: user.roles,
+          attemptedPath: location.pathname
+        });
+      }
+      return <Navigate to="/unauthorized" state={{ from: location, allowedRoles }} replace />;
     }
-    return <Navigate to="/unauthorized" state={{ from: location, allowedRoles }} replace />;
   }
 
   // If custom redirect is specified

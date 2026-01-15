@@ -68,6 +68,7 @@ export interface User {
 }
 
 interface AuthContextType {
+  isRoleLoading: boolean;
   user: User | null;
   token: string | null;
   isLoading: boolean;
@@ -97,6 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isRoleLoading, setIsRoleLoading] = useState(false);
   const { toast } = useToast();
   const hasResolvedAuthState = useRef(false);
   const redirectFallbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -685,6 +687,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 uid: firebaseUser.uid,
                 claims: tokenResult.claims
               });
+              setIsRoleLoading(true);
               const res = await fetch('/api/me', {
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -698,6 +701,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 const apiUser = await res.json();
                 const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                 setUser(nextUser);
+                setIsRoleLoading(false);
                 handleRedirect(nextUser);
                 
                 // CRITICAL: Only set loading false AFTER user is set and normalized
@@ -760,6 +764,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     const apiUser = await retryRes.json();
                     const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                     setUser(nextUser);
+                    setIsRoleLoading(false);
                     handleRedirect(nextUser);
                     
                     // CRITICAL: Only set loading false AFTER user is set and normalized
@@ -775,6 +780,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     logger.debug('AuthContext', 'Firebase user has no profile after retry, or token still invalid');
                     setUser(null);
                     setToken(refreshedToken);
+                    setIsRoleLoading(false);
                     // ONLY redirect to onboarding if NOT on a protected public path
                     // The landing page should always be viewable
                     if (!isProtectedPublicPath(locationRef.current.pathname)) {
@@ -795,6 +801,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     // Other error - user is logged out
                     consecutive401Count.current = 0;
                     setUser(null);
+                    setIsRoleLoading(false);
                     handleRedirect(null);
                     
                     // Set loading false after handling the error
@@ -812,6 +819,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   consecutive401Count.current = 0;
                   setUser(null);
                   setToken(null);
+                  setIsRoleLoading(false);
                   handleRedirect(null);
                   
                   // Set loading false after handling the error
@@ -827,6 +835,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // User exists in Firebase but not in our database
                 logger.debug('AuthContext', 'Firebase user has no profile (404)');
                 setUser(null);
+                setIsRoleLoading(false);
                 
                 // Clear any local onboarding flags and state
                 try {
@@ -911,6 +920,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.error('Unexpected error in auth state change callback:', error);
           setUser(null);
           setToken(null);
+          setIsRoleLoading(false);
           handleRedirect(null);
           
           // Set loading false after handling the error
@@ -1023,6 +1033,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear user state immediately
       setUser(null);
       setToken(null);
+      setIsRoleLoading(false);
       
       // Navigate to login page
       if (typeof window !== 'undefined') {
@@ -1036,6 +1047,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       consecutive401Count.current = 0;
       setUser(null);
       setToken(null);
+      setIsRoleLoading(false);
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }
@@ -1088,15 +1100,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return null;
   };
 
-  const refreshUser = async () => {
-    logger.debug('AuthContext', 'refreshUser called');
+  const refreshUser = async (retryCount = 0) => {
+    logger.debug('AuthContext', 'refreshUser called', { retryCount });
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) {
       logger.debug('AuthContext', 'refreshUser: No Firebase user, clearing state');
       setUser(null);
       setToken(null);
+      setIsRoleLoading(false);
       return;
     }
+
+    // Set role loading state when profile fetch starts
+    setIsRoleLoading(true);
 
     try {
       logger.debug('AuthContext', 'refreshUser: Force refreshing token for user', { uid: firebaseUser.uid });
@@ -1123,11 +1139,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const apiUser = await res.json();
         const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
         setUser(nextUser);
+        // Role is successfully mapped - set isRoleLoading to false
+        setIsRoleLoading(false);
         handleRedirect(nextUser, { force: true });
       } else if (res.status === 404) {
-        // User exists in Firebase but not in our database - redirect to signup for fresh start
+        // User exists in Firebase but not in our database
+        // If user is authenticated via Firebase, retry once after 500ms before giving up
+        if (firebaseUser && retryCount === 0) {
+          logger.debug('AuthContext', 'refreshUser: 404 received, retrying after 500ms', { retryCount });
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return refreshUser(1); // Retry once
+        }
+        
         logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404), redirecting to signup');
         setUser(null);
+        setIsRoleLoading(false);
         
         // Clear any local onboarding flags and state
         try {
@@ -1172,12 +1198,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const apiUser = await retryRes.json();
             const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
             setUser(nextUser);
+            setIsRoleLoading(false);
             handleRedirect(nextUser, { force: true });
           } else if (retryRes.status === 404 || retryRes.status === 401) {
             // User exists in Firebase but not in our database - redirect to signup for fresh start
             // Also handle 401 as "no profile" since user just signed in with Firebase
             logger.debug('AuthContext', 'refreshUser: Firebase user has no profile, redirecting to signup');
             setUser(null);
+            setIsRoleLoading(false);
             
             // Clear any local onboarding flags and state
             try {
@@ -1201,6 +1229,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Other error - still redirect to signup since user has valid Firebase session but no profile
             logger.debug('AuthContext', 'refreshUser: API error but Firebase user exists, redirecting to signup');
             setUser(null);
+            setIsRoleLoading(false);
             
             // Clear any local onboarding flags and state
             try {
@@ -1226,6 +1255,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           logger.debug('AuthContext', 'refreshUser: Token refresh failed, redirecting to signup');
           setUser(null);
           setToken(null);
+          setIsRoleLoading(false);
           
           // Clear any local onboarding flags and state
           try {
@@ -1248,10 +1278,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } else {
         logger.error('AuthContext', 'Failed to refresh user profile', res.status);
+        setIsRoleLoading(false);
       }
     } catch (error) {
       logger.error('AuthContext', 'Error refreshing user profile:', error);
       console.error('Error refreshing user profile:', error);
+      setIsRoleLoading(false);
     }
   };
 
@@ -1574,6 +1606,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [isLoading]);
 
+  // EMERGENCY EXIT: Aggressive State Break Watchdog
+  // Check auth.currentUser every 1 second. If user exists but isLoading is still true,
+  // force break the loading state and redirect to onboarding
+  useEffect(() => {
+    const watchdogInterval = setInterval(() => {
+      const currentUser = auth.currentUser;
+      if (currentUser && isLoadingRef.current) {
+        logger.debug('AuthContext', 'WATCHDOG: currentUser exists but isLoading is true - forcing break', {
+          uid: currentUser.uid,
+          isLoading: isLoadingRef.current
+        });
+        setIsLoading(false);
+        setIsAuthReady(true);
+        setIsRedirecting(false);
+        pendingRedirect.current = false;
+        window.location.assign('/onboarding');
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(watchdogInterval);
+    };
+  }, []);
+
   const triggerPostAuthRedirect = () => {
     pendingRedirect.current = true;
     setIsRedirecting(true);
@@ -1591,6 +1647,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: !!user,
     isAuthReady,
     isRedirecting,
+    isRoleLoading,
     login,
     logout,
     setCurrentRole,

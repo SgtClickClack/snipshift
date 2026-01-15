@@ -56,6 +56,10 @@
           "value": "public, max-age=0, must-revalidate"
         },
         {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        },
+        {
           "key": "Access-Control-Allow-Origin",
           "value": "https://hospogo.com"
         }

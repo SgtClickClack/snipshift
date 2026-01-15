@@ -8,6 +8,35 @@
 
 ---
 
+### Update: 2026-01-15 - COOP Relaxation for OAuth Popups (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Set the `Cross-Origin-Opener-Policy` header to `same-origin-allow-popups` to keep the Google OAuth popup connected to the opener window.
+
+**Impact:**
+- Removes COOP handshake blocks so the popup can close and the main window can finalize login reliably.
+
+---
+
+### Update: 2026-01-15 - URL-Param Auth Bridge (Cookie Handoff + Popup Redirect)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a new `/auth/bridge` page that reads `uid` from URL params, writes a short-lived same-origin cookie, and closes itself.
+- Updated Google popup sign-in to open a bridge popup to `/auth/bridge?uid=...` on success, bypassing storage partitioning.
+- Added a cookie observer in AuthContext that hard-redirects to `/onboarding` when the bridge cookie is detected.
+- Allowed `/auth/bridge` to render even while global auth loading is active (prevents the loader from blocking the bridge page).
+- Added a “Manual Dashboard” backup link on the Signup page if loading exceeds 3 seconds.
+
+**Impact:**
+- Auth handoff now uses same-origin URL routing + cookies, which browsers cannot partition/block like localStorage or SDK handshake channels.
+- Main window forces a deterministic redirect once the bridge cookie is detected.
+
+---
+
 ### Update: 2026-01-15 - Legacy Auth Domain Reset + Brute-Force Message Listener (HospoGo)
 
 **Status:** ✅ **UPDATED**
@@ -20,6 +49,21 @@
 
 **Impact:**
 - Auth handshakes now run through the native Firebase domain while the app uses a broad capture net to unlock the UI even when `currentUser` stalls.
+
+---
+
+### Update: 2026-01-15 - Manual LocalStorage Bridge Auth (Bypass SDK Handshake)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added manual localStorage bridge write after `signInWithPopup` resolves in popup window.
+- Added `storage` event listener in AuthContext that detects bridge key and immediately triggers `auth.reload()` and redirects to `/onboarding`.
+- Added immediate redirect guard in Signup page that checks for bridge key on mount; if present and < 30s old, shows "Finalizing..." spinner and redirects without showing signup UI.
+
+**Impact:**
+- Bypasses all COOP/CORS/Partitioning issues by using localStorage cross-window communication instead of SDK handshake.
+- Main window immediately detects popup auth completion and forces user into app.
 
 ---
 

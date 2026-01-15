@@ -1,3 +1,25 @@
+#### 2026-01-15: COOP Relaxation for OAuth Popups
+
+**Core Components**
+- Vercel edge headers (`vercel.json`)
+
+**Key Features**
+- Set `Cross-Origin-Opener-Policy` to `same-origin-allow-popups` so Google OAuth popups can communicate with the opener without breaking the auth handshake.
+
+**Integration Points**
+- Vercel headers for the app shell
+
+**File Paths**
+- `vercel.json`
+
+**Next Priority Task**
+- Verify the Google popup login completes without COOP blocked-window warnings in production.
+
+**Code Organization & Quality**
+- Scoped the COOP relaxation to the shared app header set without introducing new routing or auth logic.
+
+---
+
 #### 2026-01-15: Legacy Auth Domain Reset + Brute-Force Message Sync
 
 **Core Components**
@@ -28,6 +50,36 @@
 
 **Code Organization & Quality**
 - Reused existing hard-sync helpers in AuthContext; changes remain localized to auth plumbing and hosting headers.
+
+---
+
+#### 2026-01-15: Manual LocalStorage Bridge Auth (Bypass SDK Handshake)
+
+**Core Components**
+- Google popup auth function (`src/lib/auth.ts`)
+- Auth context storage listener (`src/contexts/AuthContext.tsx`)
+- Signup page redirect guard (`src/pages/signup.tsx`)
+
+**Key Features**
+- **Popup Manual Write**: After `signInWithPopup` resolves, manually writes `hospogo_auth_bridge` to localStorage with `uid` and timestamp.
+- **Main Window Listener**: Added `storage` event listener in AuthContext that detects bridge key changes and immediately triggers `auth.reload()` and redirects to `/onboarding`.
+- **Immediate Redirect Guard**: Signup page checks for bridge key on mount; if present and < 30s old, shows "Finalizing..." spinner and redirects immediately without showing signup UI.
+
+**Integration Points**
+- Firebase Auth: `signInWithPopup` → localStorage bridge → `storage` event → `auth.reload()` → redirect
+- Router navigation via `useNavigate` and `navigateRef`
+- localStorage cross-window communication (bypasses COOP/CORS/Partitioning)
+
+**File Paths**
+- `src/lib/auth.ts` - Added localStorage bridge write after popup auth
+- `src/contexts/AuthContext.tsx` - Added storage event listener for bridge detection
+- `src/pages/signup.tsx` - Added immediate redirect guard with "Finalizing..." state
+
+**Next Priority Task**
+- Deploy to production and verify popup auth completion immediately triggers main window redirect.
+
+**Code Organization & Quality**
+- Kept bridge logic centralized: popup writes, main window listens, signup guards. All bridge operations are timestamped and age-validated (30s window).
 
 ---
 
@@ -2637,3 +2689,39 @@
 
 **Code Organization & Quality**
 - Kept logic isolated to existing auth UI + auth utility wrapper; reset behavior is best-effort and does not block sign-in attempts if cleanup fails.
+
+---
+
+#### 2026-01-15: URL-Param Auth Bridge (Cookie Handoff + Popup Redirect)
+
+**Core Components**
+- Auth bridge page (`src/pages/auth/Bridge.tsx`)
+- Auth popup flow (`src/lib/auth.ts`)
+- Auth observer + redirect logic (`src/contexts/AuthContext.tsx`)
+- Signup UI fallback (`src/pages/signup.tsx`)
+- Route wiring (`src/App.tsx`)
+
+**Key Features**
+- Added a dedicated `/auth/bridge` page that reads `uid` from URL params, writes a short-lived same-origin cookie, and closes itself.
+- Updated Google popup sign-in to open a bridge popup to `/auth/bridge?uid=...` on success to bypass storage partitioning.
+- Added a cookie observer in AuthContext that hard-redirects to `/onboarding` when the bridge cookie is detected.
+- Allowed `/auth/bridge` to render even while global auth loading is active (prevents the loader from blocking the bridge page).
+- Added a "Manual Dashboard" backup link on the Signup page if loading exceeds 3 seconds.
+
+**Integration Points**
+- Firebase Auth popup: `signInWithPopup`
+- Route: `/auth/bridge`
+- Cookie: `hospogo_auth_handoff`
+
+**File Paths**
+- `src/pages/auth/Bridge.tsx`
+- `src/lib/auth.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/pages/signup.tsx`
+- `src/App.tsx`
+
+**Next Priority Task**
+- Verify production Google popup flow: popup → `/auth/bridge` cookie → main window hard redirect to `/onboarding`.
+
+**Code Organization & Quality**
+- Kept bridge logic localized to auth surfaces with a short-lived cookie and minimal UI.

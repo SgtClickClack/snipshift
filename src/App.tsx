@@ -10,7 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
-import { SocketProvider } from '@/contexts/SocketContext';
+import { PusherProvider } from '@/contexts/PusherContext';
 import { NotificationToast } from '@/components/notifications/notification-toast';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -51,6 +51,7 @@ const ContactPage = lazy(() => import('@/pages/company/contact'));
 // Utility pages - lazy load
 const DashboardRedirect = lazy(() => import('@/pages/dashboard-redirect'));
 const ComingSoonPage = lazy(() => import('@/pages/coming-soon'));
+const AuthBridgePage = lazy(() => import('@/pages/auth/Bridge'));
 
 // Dashboard pages - lazy load to reduce initial bundle
 const UserDashboard = lazy(() => import('@/pages/user-dashboard'));
@@ -89,18 +90,19 @@ const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const location = useLocation();
   const { isLoading } = useAuth();
-  const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/';
-  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/forgot-password'].includes(location.pathname);
+  const isBridgeRoute = location.pathname === '/auth/bridge';
+  const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || isBridgeRoute;
+  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/forgot-password', '/auth/bridge'].includes(location.pathname);
   
   // Show loading screen while auth is initializing to prevent errors
   // BUT only after HTML splash has been removed to avoid duplicate loading screens
-  if (isLoading && splashHandled) {
+  if (isLoading && splashHandled && !isBridgeRoute) {
     return <LoadingScreen />;
   }
   
   // If still loading but HTML splash hasn't been removed yet, render nothing
   // The HTML splash in index.html will handle displaying the loading state
-  if (isLoading && !splashHandled) {
+  if (isLoading && !splashHandled && !isBridgeRoute) {
     return null;
   }
   
@@ -145,6 +147,12 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           <AuthGuard>
             <ForgotPasswordPage />
           </AuthGuard>
+        } />
+
+        <Route path="/auth/bridge" element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AuthBridgePage />
+          </Suspense>
         } />
 
         <Route path="/role-selection" element={
@@ -583,7 +591,7 @@ function App() {
           <TooltipProvider>
             <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <AuthProvider>
-                <SocketProvider>
+                <PusherProvider>
                   <NotificationProvider>
                     <RouteProgressBar />
                     <Toaster />
@@ -596,7 +604,7 @@ function App() {
                     <Analytics />
                     <SpeedInsights />
                   </NotificationProvider>
-                </SocketProvider>
+                </PusherProvider>
               </AuthProvider>
             </Router>
           </TooltipProvider>

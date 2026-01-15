@@ -32,6 +32,7 @@ export default function SignupPage() {
   const hasShownConnectingToast = useRef(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [showManualDashboardLink, setShowManualDashboardLink] = useState(false);
+  const [showConnectionDelayedButton, setShowConnectionDelayedButton] = useState(false);
 
   // REDIRECT: If user is authenticated in Firebase but has no database record (404 case),
   // redirect them to onboarding to complete their profile and choose their role
@@ -177,6 +178,7 @@ export default function SignupPage() {
   useEffect(() => {
     if (!isLoading) {
       setShowManualDashboardLink(false);
+      setShowConnectionDelayedButton(false);
       return;
     }
 
@@ -184,7 +186,16 @@ export default function SignupPage() {
       setShowManualDashboardLink(true);
     }, 3000);
 
-    return () => clearTimeout(timeout);
+    // EMERGENCY EXIT: Show "Stuck? Click here to force refresh" button when connection is delayed
+    // This matches the timing when "Connection delayed" toast appears in AuthContext (4 seconds)
+    const connectionDelayedTimeout = setTimeout(() => {
+      setShowConnectionDelayedButton(true);
+    }, 4000);
+
+    return () => {
+      clearTimeout(timeout);
+      clearTimeout(connectionDelayedTimeout);
+    };
   }, [isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -475,6 +486,22 @@ export default function SignupPage() {
                 <Link to="/dashboard" className="text-primary hover:underline font-medium">
                   Manual Dashboard
                 </Link>
+              </div>
+            )}
+
+            {/* EMERGENCY EXIT: Skip button when connection is delayed */}
+            {showConnectionDelayedButton && (
+              <div className="text-center mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                  className="w-full font-medium"
+                >
+                  Stuck? Click here to force refresh
+                </Button>
               </div>
             )}
             

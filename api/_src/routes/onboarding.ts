@@ -142,12 +142,13 @@ router.post(
       return;
     }
 
-    // Update user role to 'business' if not already set
+    // Update user role to 'business' and ensure isOnboarded is true
     const currentUser = await usersRepo.getUserById(req.user.id);
-    if (currentUser && currentUser.role !== 'business') {
+    if (currentUser) {
       const existingRoles = currentUser.roles || [];
       const rolesToStore = Array.from(new Set([...existingRoles, 'business', 'venue']));
       
+      // Always update to ensure role='business' and isOnboarded=true
       await usersRepo.updateUser(req.user.id, {
         role: 'business',
         roles: rolesToStore,

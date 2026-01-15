@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSocket } from '@/contexts/SocketContext';
+import { usePusher } from '@/contexts/PusherContext';
 import { useToast } from '@/hooks/useToast';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -120,7 +120,7 @@ export default function MessagesPage() {
   const selectedConversationId = searchParams.get('conversation');
   const [messageContent, setMessageContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { isConnected, joinConversation, leaveConversation, sendMessage: socketSendMessage, onMessage, onError } = useSocket();
+  const { isConnected, joinConversation, leaveConversation, sendMessage: pusherSendMessage, onMessage, onError } = usePusher();
 
   // Fetch conversations list (no polling - real-time updates via socket)
   const { data: conversations = [], isLoading: isLoadingConversations } = useQuery<Conversation[]>({
@@ -160,7 +160,7 @@ export default function MessagesPage() {
     }
   }, [selectedConversationId, conversationDetail, toast]);
 
-  // Listen for real-time messages via Socket.io
+  // Listen for real-time messages via Pusher
   useEffect(() => {
     const unsubscribe = onMessage((message: Message) => {
       // Update conversation detail if this message belongs to the current conversation
@@ -216,8 +216,8 @@ export default function MessagesPage() {
       return;
     }
 
-    // Send via Socket.io for real-time delivery
-    socketSendMessage(selectedConversationId, messageContent.trim());
+    // Send via Pusher for real-time delivery
+    pusherSendMessage(selectedConversationId, messageContent.trim());
     setMessageContent('');
     
     // Optimistically update UI (socket will send the actual message)

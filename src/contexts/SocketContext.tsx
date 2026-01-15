@@ -42,6 +42,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const messageCallbacksRef = useRef<Set<(message: Message) => void>>(new Set());
   const errorCallbacksRef = useRef<Set<(error: { message: string }) => void>>(new Set());
+  const errorLogThrottleRef = useRef<{ lastError: number; count: number }>({ lastError: 0, count: 0 });
 
   useEffect(() => {
     if (!user || !token) {
@@ -97,6 +98,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     newSocket.on('connect', () => {
       logger.debug('SOCKET', 'Connected to server');
       setIsConnected(true);
+      // Reset error throttle on successful connection
+      errorLogThrottleRef.current = { lastError: 0, count: 0 };
     });
 
     newSocket.on('disconnect', () => {
@@ -105,7 +108,18 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     });
 
     newSocket.on('connect_error', (error) => {
-      logger.error('SOCKET', 'Connection error:', error);
+      // Throttle error logging to reduce console noise
+      const now = Date.now();
+      const throttle = errorLogThrottleRef.current;
+      
+      // Only log first error, then every 10 seconds if errors persist
+      if (throttle.lastError === 0 || now - throttle.lastError > 10000) {
+        logger.error('SOCKET', 'Connection error:', error);
+        throttle.lastError = now;
+        throttle.count = 1;
+      } else {
+        throttle.count++;
+      }
       setIsConnected(false);
     });
 
@@ -126,13 +140,28 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     });
 
     newSocket.on('error', (error: { message: string }) => {
-      logger.error('SOCKET', 'Socket error:', error);
+      // Throttle error logging to reduce console noise
+      const now = Date.now();
+      const throttle = errorLogThrottleRef.current;
+      
+      // Only log first error, then every 10 seconds if errors persist
+      if (throttle.lastError === 0 || now - throttle.lastError > 10000) {
+        logger.error('SOCKET', 'Socket error:', error);
+        throttle.lastError = now;
+        throttle.count = 1;
+      } else {
+        throttle.count++;
+      }
+      
       // Notify all registered error callbacks
       errorCallbacksRef.current.forEach((callback) => {
         try {
           callback(error);
         } catch (err) {
-          logger.error('SOCKET', 'Error in error callback:', err);
+          // Suppress callback errors to prevent error loops
+          if (throttle.lastError === 0 || now - throttle.lastError > 10000) {
+            logger.error('SOCKET', 'Error in error callback:', err);
+          }
         }
       });
     });

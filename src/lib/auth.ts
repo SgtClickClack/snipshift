@@ -75,6 +75,29 @@ export async function signInWithGoogleLocalDevPopup() {
     await setPersistence(auth, browserLocalPersistence);
     // Popup flow - COOP warning is expected but auth still works via postMessage
     const result = await signInWithPopup(auth, googleProvider);
+    
+    // URL-PARAM BRIDGE: Redirect a lightweight popup to /auth/bridge with uid in query params.
+    // This avoids storage partitioning issues by using same-origin routing + cookies.
+    if (result?.user && typeof window !== 'undefined') {
+      const bridgeUrl = new URL('/auth/bridge', window.location.origin);
+      bridgeUrl.searchParams.set('uid', result.user.uid);
+
+      try {
+        const bridgeWindow = window.open(bridgeUrl.toString(), 'hospogo_auth_bridge', 'width=420,height=560');
+        if (bridgeWindow) {
+          bridgeWindow.focus();
+        } else {
+          console.warn('[Auth] Bridge popup was blocked; falling back to localStorage bridge.');
+          localStorage.setItem(
+            'hospogo_auth_bridge',
+            JSON.stringify({ uid: result.user.uid, ts: Date.now() })
+          );
+        }
+      } catch (bridgeError) {
+        console.warn('[Auth] Failed to open bridge popup (non-critical):', bridgeError);
+      }
+    }
+    
     return result.user;
   } catch (error) {
     const code = (error as any)?.code;
@@ -94,27 +117,15 @@ export async function signInWithGoogleLocalDevPopup() {
 
 /**
  * Environment-aware Google sign-in:
- * - localhost => popup flow (for development convenience)
- * - production => redirect flow (permanent fix for COOP issues after HospoGo rebrand)
- * 
- * Redirect flow is used in production to avoid infinite loading screens caused by
- * COOP (Cross-Origin-Opener-Policy) blocking popup-to-window communication.
+ * - Use popup flow everywhere.
+ * - On success, the popup redirects to /auth/bridge to set a same-origin cookie
+ *   that the main window can detect without relying on storage APIs.
  */
 export async function signInWithGoogleDevAware() {
   await maybeResetFirebaseSession();
-  const isLocalhost =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-  if (isLocalhost) {
-    // Use popup flow for local development - COOP warning is expected but auth completes via postMessage
-    return await signInWithGoogleLocalDevPopup();
-  }
-
-  // Production: Use redirect flow (100% reliable against COOP blocking)
-  const { signInWithGoogle } = await import('./firebase');
   try {
-    return await signInWithGoogle();
+    return await signInWithGoogleLocalDevPopup();
   } catch (error) {
     if (isHttp400StyleAuthFailure(error)) {
       shouldResetFirebaseSessionBeforeNextAttempt = true;

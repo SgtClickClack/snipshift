@@ -55,8 +55,11 @@ import appealsRouter from './routes/appeals.js';
 import waitlistRouter from './routes/waitlist.js';
 import onboardingRouter from './routes/onboarding.js';
 import reportsRouter from './routes/reports.js';
+import pusherRouter from './routes/pusher.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
+import { initializePusher } from './services/pusher.service.js';
+import { triggerConversationEvent } from './services/pusher.service.js';
 import { stripe } from './lib/stripe.js';
 import type Stripe from 'stripe';
 
@@ -133,6 +136,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Initialize Pusher service
+initializePusher();
+
 // Routes
 app.use('/api', usersRouter);
 app.use('/api/chats', chatsRouter);
@@ -152,6 +158,7 @@ app.use('/api/appeals', appealsRouter);
 app.use('/api/waitlist', waitlistRouter);
 app.use('/api/onboarding', onboardingRouter);
 app.use('/api/admin/reports', reportsRouter);
+app.use('/api/pusher', pusherRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
@@ -2087,6 +2094,28 @@ app.post('/api/messages', authenticateUser, asyncHandler(async (req: Authenticat
   if (conversation.jobId) {
     const job = await jobsRepo.getJobById(conversation.jobId);
     jobTitle = job?.title || null;
+  }
+
+  // Trigger Pusher event for real-time message delivery
+  try {
+    const messagePayload = {
+      id: newMessage.id,
+      conversationId: newMessage.conversationId,
+      senderId: newMessage.senderId,
+      content: newMessage.content,
+      isRead: false,
+      createdAt: newMessage.createdAt.toISOString(),
+      sender: sender ? {
+        id: sender.id,
+        name: sender.name,
+        email: sender.email,
+      } : undefined,
+    };
+
+    await triggerConversationEvent(conversationId, 'new_message', messagePayload);
+  } catch (error: any) {
+    console.error('[PUSHER] Error triggering message event:', error);
+    // Don't fail the request if Pusher fails
   }
 
   res.status(201).json({
