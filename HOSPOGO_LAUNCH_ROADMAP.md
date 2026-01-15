@@ -8,6 +8,34 @@
 
 ---
 
+### Update: 2026-01-15 - Auth Hard Sync + Handler Cache Bust (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added an AuthContext hard-sync listener to catch auth tokens from the Firebase proxy iframe via `window.message` events.
+- Added a 4-second circuit breaker to clear loading, show a recovery toast, and attempt a silent auth reload.
+- Enforced `Cache-Control: no-store` for `/__/auth/handler` to avoid stale auth handler caches.
+
+**Impact:**
+- Prevents indefinite loading screens and recovers auth state even when `onAuthStateChanged` is throttled.
+
+---
+
+### Update: 2026-01-15 - Auth Proxy CSP + Popup Fallback (HospoGo)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Ensured Firebase auth domain respects `VITE_FIREBASE_AUTH_DOMAIN` with a `hospogo.com` fallback.
+- Added a redirect failure fallback to popup sign-in for `auth/network-request-failed`.
+- Applied CSP + no-store headers to `/__/auth/*` so Google auth scripts load cleanly via the proxy.
+
+**Impact:**
+- Fixes the Firebase auth handler network failure and prevents redirect loops on hospogo.com.
+
+---
+
 ### Update: 2026-01-15 - Auth Handler Proxy Rewrite (Vercel)
 
 **Status:** ✅ **UPDATED**

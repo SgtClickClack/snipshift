@@ -1,10 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult } from '../lib/firebase';
+import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult, googleProvider } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { getDashboardRoute } from '@/lib/roles';
+import { useToast } from '@/hooks/useToast';
 
 export interface User {
   id: string;
@@ -93,8 +94,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const { toast } = useToast();
   const hasResolvedAuthState = useRef(false);
   const redirectFallbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hardSyncInProgress = useRef(false);
+  const hardSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasMessageHardSynced = useRef(false);
+  const networkFallbackAttempted = useRef(false);
+  const isLoadingRef = useRef(isLoading);
+  const userRef = useRef<User | null>(null);
+  const toastRef = useRef(toast);
+  const refreshUserRef = useRef<() => Promise<void>>(async () => {});
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -191,6 +201,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     locationRef.current = location;
   }, [location]);
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
   
   // Refs to prevent Strict Mode double-firing and race conditions
   const isProcessingAuth = useRef(false);
@@ -373,6 +392,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // CRITICAL: Initialize auth by processing redirect result FIRST, then setting up listener
     // This ensures getRedirectResult() completes before onAuthStateChange fires, preventing
     // the infinite loading loop where the listener sees null user before redirect is processed
+    const attemptPopupFallback = async (error: unknown) => {
+      const code = (error as { code?: string })?.code;
+      if (code !== 'auth/network-request-failed') return;
+      if (networkFallbackAttempted.current) return;
+
+      networkFallbackAttempted.current = true;
+      logger.debug('AuthContext', 'auth/network-request-failed detected, attempting popup fallback');
+
+      try {
+        const { signInWithPopup, setPersistence, browserLocalPersistence } = await import('firebase/auth');
+        await setPersistence(auth, browserLocalPersistence);
+        await signInWithPopup(auth, googleProvider);
+      } catch (popupError) {
+        logger.debug('AuthContext', 'Popup fallback failed or was blocked', popupError);
+      }
+    };
+
     const initAuth = async () => {
       // SAFETY TIMEOUT: Ensure loading is cleared after 5 seconds if getRedirectResult hasn't finished
       // This prevents infinite loading when COOP/handshake blocks the redirect
@@ -456,6 +492,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         // CATCH-ALL: Clear loading state on any error to prevent infinite loading
         logger.debug('AuthContext', 'Error processing redirect result, clearing loading state:', error);
+        await attemptPopupFallback(error);
         clearTimeout(getRedirectResultTimeout);
         // Don't clear loading here - let the fallback timeout handle it
         // This ensures we always clear after 3 seconds even if there's an error
@@ -1010,6 +1047,176 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Error refreshing user profile:', error);
     }
   };
+
+  useEffect(() => {
+    refreshUserRef.current = refreshUser;
+  }, [refreshUser]);
+
+  const extractAuthTokenFromMessage = (data: unknown): string | null => {
+    if (!data) return null;
+
+    if (typeof data === 'string') {
+      const tokenLike = data.trim();
+      if (tokenLike.split('.').length === 3) {
+        return tokenLike;
+      }
+      return null;
+    }
+
+    if (typeof data === 'object') {
+      const payload = data as Record<string, unknown>;
+      const tokenCandidate =
+        (payload.token as string | undefined) ??
+        (payload.idToken as string | undefined) ??
+        (payload.accessToken as string | undefined) ??
+        ((payload.detail as { token?: string } | undefined)?.token) ??
+        ((payload.data as { token?: string } | undefined)?.token);
+
+      if (typeof tokenCandidate === 'string' && tokenCandidate.split('.').length === 3) {
+        return tokenCandidate;
+      }
+    }
+
+    return null;
+  };
+
+  const hardSyncWithToken = async (tokenValue: string, source: string) => {
+    logger.debug('AuthContext', 'Hard sync token received, fetching profile', { source });
+    const res = await fetch('/api/me', {
+      cache: 'no-store',
+      headers: {
+        'Authorization': `Bearer ${tokenValue}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Pragma': 'no-cache',
+      },
+    });
+
+    if (!res.ok) {
+      logger.debug('AuthContext', 'Hard sync token fetch failed', { source, status: res.status });
+      return;
+    }
+
+    const apiUser = await res.json();
+    const firebaseUid =
+      (apiUser?.uid as string | undefined) ||
+      (apiUser?.id as string | undefined) ||
+      auth.currentUser?.uid ||
+      '';
+    const nextUser = normalizeUserFromApi(apiUser, firebaseUid);
+    setToken(tokenValue);
+    setUser(nextUser);
+    setIsLoading(false);
+    setIsAuthReady(true);
+    setIsRedirecting(false);
+    pendingRedirect.current = false;
+    hasResolvedAuthState.current = true;
+    handleRedirect(nextUser);
+  };
+
+  const attemptHardSync = async (source: string, tokenValue?: string) => {
+    if (hardSyncInProgress.current) return;
+
+    hardSyncInProgress.current = true;
+    try {
+      if (tokenValue) {
+        await hardSyncWithToken(tokenValue, source);
+        return;
+      }
+
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        logger.debug('AuthContext', 'Hard sync skipped - no Firebase user', { source });
+        return;
+      }
+
+      await firebaseUser.getIdToken(true);
+      await refreshUserRef.current();
+    } catch (error) {
+      logger.debug('AuthContext', 'Hard sync failed', { source, error });
+    } finally {
+      hardSyncInProgress.current = false;
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const allowedOrigins = new Set<string>([
+      window.location.origin,
+      'https://hospogo.com',
+      'https://www.hospogo.com',
+      'https://snipshift-75b04.firebaseapp.com',
+    ]);
+
+    const handleMessage = (event: MessageEvent) => {
+      if (!allowedOrigins.has(event.origin)) return;
+      if (hasMessageHardSynced.current && userRef.current) return;
+
+      const tokenValue = extractAuthTokenFromMessage(event.data);
+      const messageType =
+        typeof event.data === 'object' && event.data
+          ? String((event.data as { type?: string }).type || '')
+          : '';
+      const looksLikeAuthEvent = messageType.toLowerCase().includes('auth');
+
+      if (!tokenValue && !looksLikeAuthEvent) return;
+      if (!isLoadingRef.current && userRef.current) return;
+
+      hasMessageHardSynced.current = true;
+      attemptHardSync('postMessage', tokenValue || undefined);
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (hardSyncTimeoutRef.current) {
+        clearTimeout(hardSyncTimeoutRef.current);
+        hardSyncTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (hardSyncTimeoutRef.current) {
+      clearTimeout(hardSyncTimeoutRef.current);
+    }
+
+    hardSyncTimeoutRef.current = setTimeout(async () => {
+      if (!isLoadingRef.current) return;
+      if (userRef.current || auth.currentUser) return;
+
+      logger.debug('AuthContext', 'Circuit breaker triggered after 4s without auth state');
+      setIsLoading(false);
+      setIsAuthReady(true);
+      setIsRedirecting(false);
+      pendingRedirect.current = false;
+      toastRef.current({
+        title: 'Connection delayed - Refreshing session...',
+        variant: 'destructive',
+      });
+
+      try {
+        await auth.currentUser?.reload();
+        if (auth.currentUser) {
+          await refreshUserRef.current();
+        }
+      } catch (error) {
+        logger.debug('AuthContext', 'Silent auth reload failed', error);
+      }
+    }, 4000);
+
+    return () => {
+      if (hardSyncTimeoutRef.current) {
+        clearTimeout(hardSyncTimeoutRef.current);
+        hardSyncTimeoutRef.current = null;
+      }
+    };
+  }, [isLoading]);
 
   const triggerPostAuthRedirect = () => {
     pendingRedirect.current = true;

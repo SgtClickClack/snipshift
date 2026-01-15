@@ -31,9 +31,15 @@ function initializeFirebase(): admin.auth.Auth | null {
     
     // Use a named app instance to avoid stale default app issues in Vercel warm containers
     const appName = process.env.FIREBASE_ADMIN_APP_NAME || 'hospogo-worker-v2';
-    // IMPORTANT: Do not hardcode a Firebase project id. Use env/service account so
-    // the app can be cleanly separated from any legacy projects.
+    // SECURITY: Strict project ID enforcement - only allow 'snipshift-75b04'
+    const REQUIRED_PROJECT_ID = 'snipshift-75b04';
     let targetProjectId = process.env.FIREBASE_PROJECT_ID?.trim() || undefined;
+    
+    // Enforce project ID validation
+    if (targetProjectId && targetProjectId !== REQUIRED_PROJECT_ID) {
+      throw new Error(`Unauthorized Project ID: Expected '${REQUIRED_PROJECT_ID}', got '${targetProjectId}'`);
+    }
+    
     let app: admin.app.App | undefined;
 
     try {
@@ -47,13 +53,14 @@ function initializeFirebase(): admin.auth.Auth | null {
       // 1. PRIORITY: Try individual environment variables first (more reliable than JSON string)
       if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
         try {
+          const projectId = process.env.FIREBASE_PROJECT_ID.trim();
           app = firebaseAdmin.initializeApp({
               credential: firebaseAdmin.credential.cert({
-              projectId: process.env.FIREBASE_PROJECT_ID,
-              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-              privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+              projectId: projectId,
+              clientEmail: process.env.FIREBASE_CLIENT_EMAIL.trim(),
+              privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
               }),
-              projectId: process.env.FIREBASE_PROJECT_ID,
+              projectId: projectId,
           }, appName);
           console.log('[FIREBASE] Admin initialized successfully via individual env vars');
         } catch (e: any) {
@@ -83,10 +90,21 @@ function initializeFirebase(): admin.auth.Auth | null {
             targetProjectId = String(serviceAccount.project_id);
           }
 
+          // SECURITY: Validate project ID from service account
+          if (serviceAccount?.project_id && serviceAccount.project_id !== REQUIRED_PROJECT_ID) {
+            throw new Error(`Unauthorized Project ID: Service account project_id '${serviceAccount.project_id}' does not match required '${REQUIRED_PROJECT_ID}'`);
+          }
+
           // If FIREBASE_PROJECT_ID is explicitly set, ensure it wins.
           if (targetProjectId && serviceAccount?.project_id && serviceAccount.project_id !== targetProjectId) {
             console.log(`[FIREBASE] Overriding service account project_id to match FIREBASE_PROJECT_ID: ${targetProjectId}`);
             serviceAccount.project_id = targetProjectId;
+          }
+          
+          // SECURITY: Final validation before initialization
+          const finalProjectId = targetProjectId || serviceAccount?.project_id;
+          if (finalProjectId && finalProjectId !== REQUIRED_PROJECT_ID) {
+            throw new Error(`Unauthorized Project ID: Final project_id '${finalProjectId}' does not match required '${REQUIRED_PROJECT_ID}'`);
           }
           
           app = firebaseAdmin.initializeApp(
@@ -151,8 +169,14 @@ function initializeFirebase(): admin.auth.Auth | null {
 
     // Only try to get auth if an app was initialized
     if (app) {
+      // SECURITY: Final validation - verify the initialized app's project ID
+      const initializedProjectId = app.options.projectId;
+      if (initializedProjectId && initializedProjectId !== REQUIRED_PROJECT_ID) {
+        throw new Error(`Unauthorized Project ID: Initialized app project_id '${initializedProjectId}' does not match required '${REQUIRED_PROJECT_ID}'`);
+      }
+      
       authInstance = firebaseAdmin.auth(app);
-      console.log('[FIREBASE] Auth instance created');
+      console.log('[FIREBASE] Auth instance created with validated project ID:', REQUIRED_PROJECT_ID);
     } else {
       console.warn('[FIREBASE] No Firebase app initialized - auth will fail');
     }

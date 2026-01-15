@@ -43,7 +43,11 @@ const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string
 const REQUIRED_PROJECT_ID = 'snipshift-75b04';
 
 // CRITICAL: Auth domain must be hospogo.com for production auth handler proxying.
-const authDomain = 'hospogo.com';
+const authDomain = sanitizeEnv(
+  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? import.meta.env.VITE_AUTH_DOMAIN,
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'hospogo.com'
+);
 
 const firebaseConfig = {
   apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY'),

@@ -1,3 +1,60 @@
+#### 2026-01-15: Auth Hard Sync + Handler Cache Bust
+
+**Core Components**
+- AuthContext hard sync handling (`src/contexts/AuthContext.tsx`)
+- Vercel headers (`vercel.json`)
+
+**Key Features**
+- Added a message listener to capture auth tokens from the Firebase proxy iframe and trigger a hard sync.
+- Added a 4-second circuit breaker to clear loading, show a recovery toast, and attempt a silent Firebase reload.
+- Forced `Cache-Control: no-store` on `/__/auth/handler` to avoid stale auth handler caching.
+
+**Integration Points**
+- Firebase auth handshake (`onAuthStateChanged`, proxy handler postMessage)
+- API: `GET /api/me`
+- Vercel headers for `/__/auth/handler`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `vercel.json`
+
+**Next Priority Task**
+- Deploy and confirm the loading spinner clears within 4 seconds on auth flows.
+
+**Code Organization & Quality**
+- Kept changes localized to auth context hardening and Vercel header config without new auth patterns.
+
+---
+
+#### 2026-01-15: Network-Request-Failed Proxy + Popup Fallback
+
+**Core Components**
+- Firebase auth config (`src/lib/firebase.ts`)
+- AuthContext redirect handling (`src/contexts/AuthContext.tsx`)
+- Vercel headers (`vercel.json`)
+
+**Key Features**
+- Ensured Firebase auth domain uses `VITE_FIREBASE_AUTH_DOMAIN` with a `hospogo.com` fallback.
+- Added a `auth/network-request-failed` fallback that attempts a popup sign-in to bypass redirect failures.
+- Applied CSP + no-store headers for `/__/auth/*` to allow Google scripts and avoid stale handler caching.
+
+**Integration Points**
+- Firebase Auth: `getRedirectResult`, `signInWithPopup`
+- Vercel header rules for `/__/auth/:path*`
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/contexts/AuthContext.tsx`
+- `vercel.json`
+
+**Next Priority Task**
+- Verify `/__/auth/handler` returns 200 OK and login completes without a loading loop.
+
+**Code Organization & Quality**
+- Reused existing Firebase provider configuration and kept fallback logic scoped to AuthContext.
+
+---
+
 #### 2026-01-15: Auth Handler Proxy Rewrite + COOP Alignment
 
 **Core Components**
