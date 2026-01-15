@@ -161,9 +161,8 @@ export default function ShopDashboard() {
     createShiftMutation.mutate(formData);
   };
 
-  if (!user || user.currentRole !== "hub") {
-    return <div>Access denied</div>;
-  }
+  // Access control is handled by ProtectedRoute wrapper in App.tsx
+  // No need for component-level access check - route protection handles this
 
   return (
     <div className="min-h-screen bg-background">

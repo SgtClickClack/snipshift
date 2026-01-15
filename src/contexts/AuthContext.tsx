@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult, googleProvider } from '../lib/firebase';
 import { User as FirebaseUser, onIdTokenChanged } from 'firebase/auth';
 import { logger } from '@/lib/logger';
-import { getDashboardRoute, normalizeVenueToBusiness } from '@/lib/roles';
+import { getDashboardRoute, normalizeVenueToBusiness, isBusinessRole } from '@/lib/roles';
 import { useToast } from '@/hooks/useToast';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
@@ -231,7 +231,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const deriveRoleHome = (u: User | null): string => {
+  const deriveRoleHome = (u: User | null, currentPath?: string): string => {
     // No app user => send to login (onboarding is auth-protected, so redirecting there can cause
     // confusing bounces like "/" -> "/onboarding" -> "/login" on hard refresh when /api/me fails).
     if (!u) return '/login';
@@ -246,6 +246,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return '/onboarding';
       }
       return '/role-selection';
+    }
+
+    // CRITICAL: If user is already on a valid business dashboard, stay there
+    // This prevents redirect loops where /hub-dashboard redirects to /venue/dashboard
+    const validBusinessDashboards = ['/hub-dashboard', '/venue/dashboard', '/shop-dashboard'];
+    if (currentPath && validBusinessDashboards.includes(currentPath)) {
+      const isBusinessUser = isBusinessRole(u.currentRole) || 
+        (u.roles && u.roles.some(r => isBusinessRole(r)));
+      if (isBusinessUser) {
+        return currentPath; // Stay on current valid dashboard
+      }
     }
 
     // If the backend ever sends clean-break role labels, honor them explicitly.
@@ -342,7 +353,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    const target = deriveRoleHome(u);
+    // CRITICAL: If user is already on a valid business dashboard, DO NOT redirect
+    // This prevents redirect loops where /hub-dashboard redirects to /venue/dashboard
+    const validBusinessDashboards = ['/hub-dashboard', '/venue/dashboard', '/shop-dashboard'];
+    if (validBusinessDashboards.includes(pathname) && u) {
+      const isBusinessUser = isBusinessRole(u.currentRole || '') || 
+        (u.roles && u.roles.some(r => isBusinessRole(r)));
+      if (isBusinessUser) {
+        pendingRedirect.current = false;
+        setIsRedirecting(false);
+        return; // Stay on current valid dashboard
+      }
+    }
+
+    const target = deriveRoleHome(u, pathname);
 
     // Avoid redirect loops / churn.
     if (pathname === target) {

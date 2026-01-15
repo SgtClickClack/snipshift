@@ -209,11 +209,12 @@ export function AuthGuard({
         (user.roles && user.roles.some(r => isBusinessRole(r)))
       );
     
-    // Special case: If requiredRole is 'venue' or 'hub', also accept 'business'
+    // Special case: If requiredRole is 'venue' or 'hub', also accept 'business' (and vice versa)
+    // Use isBusinessRole helper for consistency
     const hasVenueHubMatch = 
       (requiredRole === 'venue' || requiredRole === 'hub') && (
-        user.currentRole === 'business' ||
-        (user.roles && user.roles.includes('business' as any))
+        isBusinessRole(user.currentRole || '') ||
+        (user.roles && user.roles.some(r => isBusinessRole(r)))
       );
     
     const hasRequiredRole = hasDirectMatch || hasBusinessRoleMatch || hasVenueHubMatch;
