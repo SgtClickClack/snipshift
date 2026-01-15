@@ -1,3 +1,39 @@
+#### 2026-01-15: Auth Resilience Cleanup (Role Guards + Socket.IO Removal)
+
+**Core Components**
+- Auth guard (`src/components/auth/auth-guard.tsx`)
+- Dashboard pages (`src/pages/professional-dashboard.tsx`, `src/pages/hub-dashboard.tsx`)
+- Calendar component (`src/components/calendar/professional-calendar.tsx`)
+- Hosting headers (`vercel.json`)
+- Frontend dependencies (`package.json`)
+
+**Key Features**
+- Redirects authenticated users with `role === null` directly to `/onboarding` after loading; Access Denied only shows for true role mismatches.
+- Added role-loading guards so dashboard and calendar views mount only after roles resolve, avoiding hydration crashes.
+- Removed Socket.IO client usage to eliminate websocket error spam.
+- Aligned COOP headers for `/__/auth/*` with Firebase popup requirements.
+
+**Integration Points**
+- Auth routing guards (`AuthGuard`, `ProtectedRoute`)
+- Vercel headers for Firebase auth handler (`/__/auth/*`)
+- Frontend dependency cleanup (Socket.IO client removal)
+
+**File Paths**
+- `src/components/auth/auth-guard.tsx`
+- `src/pages/professional-dashboard.tsx`
+- `src/pages/hub-dashboard.tsx`
+- `src/components/calendar/professional-calendar.tsx`
+- `vercel.json`
+- `package.json`
+
+**Next Priority Task**
+- Verify onboarding redirect and dashboard/calendar stability across role-loading edge cases.
+
+**Code Organization & Quality**
+- Used lightweight wrapper guards to prevent premature component initialization and removed unused realtime context.
+
+---
+
 #### 2026-01-15: COOP Relaxation for OAuth Popups
 
 **Core Components**

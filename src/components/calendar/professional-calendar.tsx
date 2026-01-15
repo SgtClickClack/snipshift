@@ -69,6 +69,7 @@ import { AutoSlotAssignmentModal } from "./auto-slot-assignment-modal";
 import { fetchProfessionals, ProfessionalListItem } from "@/lib/api";
 import { ShiftAssignmentModal } from "./shift-assignment-modal";
 import { CalendarToolbar } from "./CalendarToolbar";
+import { isBusinessRole } from "@/lib/roles";
 
 // Import react-big-calendar CSS
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -227,7 +228,20 @@ function CurrentTimeIndicator({
   );
 }
 
-export default function ProfessionalCalendar({
+export default function ProfessionalCalendar(props: ProfessionalCalendarProps) {
+  const { user, isRoleLoading } = useAuth();
+  const hasValidRole = props.mode === 'business'
+    ? isBusinessRole(user?.currentRole)
+    : user?.currentRole === 'professional';
+
+  if (isRoleLoading || !hasValidRole) {
+    return null;
+  }
+
+  return <ProfessionalCalendarContent {...props} />;
+}
+
+function ProfessionalCalendarContent({
   bookings = [],
   isLoading = false,
   onDateSelect,

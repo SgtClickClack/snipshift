@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { isBusinessRole } from "@/lib/roles";
 import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
@@ -51,38 +52,47 @@ import {
 
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar';
 
-export default function HubDashboard() {
-  const { user, refreshUser, isLoading: isAuthLoading, isAuthReady } = useAuth();
-  const { toast } = useToast();
-  
-  // Show loading skeleton if session is still loading to prevent "ages to appear" lag perception
-  if (isAuthLoading || !isAuthReady) {
-    return (
-      <div className="min-h-screen bg-background p-4 md:p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Header skeleton */}
-          <div className="h-16 bg-muted animate-pulse rounded-lg" />
-          {/* Stats skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
-            ))}
-          </div>
-          {/* Content skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <div className="h-64 bg-muted animate-pulse rounded-lg" />
-              <div className="h-64 bg-muted animate-pulse rounded-lg" />
-            </div>
-            <div className="space-y-4">
-              <div className="h-48 bg-muted animate-pulse rounded-lg" />
-              <div className="h-48 bg-muted animate-pulse rounded-lg" />
-            </div>
-          </div>
+const HubDashboardSkeleton = () => (
+  <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header skeleton */}
+      <div className="h-16 bg-muted animate-pulse rounded-lg" />
+      {/* Stats skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+        ))}
+      </div>
+      {/* Content skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+        </div>
+        <div className="space-y-4">
+          <div className="h-48 bg-muted animate-pulse rounded-lg" />
+          <div className="h-48 bg-muted animate-pulse rounded-lg" />
         </div>
       </div>
-    );
+    </div>
+  </div>
+);
+
+export default function HubDashboard() {
+  const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading } = useAuth();
+  const hasValidRole = isBusinessRole(user?.currentRole);
+
+  if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
+    return <HubDashboardSkeleton />;
   }
+
+  return <HubDashboardContent />;
+}
+
+function HubDashboardContent() {
+  const { user, refreshUser } = useAuth();
+  const { toast } = useToast();
+  
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

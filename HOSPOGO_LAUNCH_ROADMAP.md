@@ -8,6 +8,24 @@
 
 ---
 
+### Update: 2026-01-15 - Systemic Resilience Cleanup (Auth Roles + Socket.IO Removal)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Redirects authenticated users with `role === null` straight to `/onboarding` after loading completes.
+- Restricts “Access Denied” to true role mismatches on role-specific routes.
+- Added role-loading guards to dashboards and calendar views to avoid hydration crashes.
+- Removed Socket.IO client usage to eliminate WebSocket error spam.
+- Ensured COOP headers apply to the Firebase auth handler path.
+
+**Impact:**
+- New users never get stuck on Access Denied and are routed to onboarding.
+- Console noise from socket errors is eliminated.
+- Dashboards and calendar no longer crash during auth role handshakes.
+
+---
+
 ### Update: 2026-01-15 - COOP Relaxation for OAuth Popups (HospoGo)
 
 **Status:** ✅ **UPDATED**

@@ -45,6 +45,10 @@
         {
           "key": "Access-Control-Allow-Origin",
           "value": "https://hospogo.com"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
         }
       ]
     },

@@ -121,24 +121,22 @@ export function AuthGuard({
     return <Navigate to={userDashboard} replace />;
   }
 
-  // CRITICAL: If authenticated AND role is null AND not on /onboarding -> Redirect to /onboarding
-  // This ensures users without a role complete onboarding before accessing other pages
   const publicRoutes = ['/onboarding', '/onboarding/hub', '/onboarding/professional', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
   if (isAuthenticated && user) {
-    // Check if user has a role (currentRole is set and not null/undefined/client)
     const hasRole = user.currentRole && user.currentRole !== 'client';
-    
-    // If user doesn't have a role and is not on an onboarding page, redirect to onboarding
     const isOnboardingPage = location.pathname.startsWith('/onboarding');
-    if (!hasRole && !isOnboardingPage && !publicRoutes.includes(location.pathname)) {
-      logger.debug('AuthGuard', 'User authenticated but no role set, redirecting to onboarding', {
+    const isRoleMissing = user.currentRole == null;
+
+    // CRITICAL: If authenticated AND role is null AND not on /onboarding -> Redirect to /onboarding
+    if (isRoleMissing && !isOnboardingPage) {
+      logger.debug('AuthGuard', 'User authenticated but role is null - redirecting to onboarding', {
         currentRole: user.currentRole,
         isOnboarded: user.isOnboarded,
         pathname: location.pathname
       });
       return <Navigate to="/onboarding" replace />;
     }
-    
+
     // CRITICAL: If authenticated AND role is set AND on /onboarding -> Redirect to dashboard
     // This prevents users with completed onboarding from accessing onboarding again
     // EXCEPTION: Allow users to stay on /onboarding if onboarding is not complete
@@ -205,15 +203,13 @@ export function AuthGuard({
       (requiredRole === 'business' && isBusinessRole(user.currentRole || '')) ||
       (requiredRole === 'business' && user.roles && user.roles.some(r => isBusinessRole(r)));
     
+    const hasAnyRole = 
+      (user.currentRole && user.currentRole !== 'client') ||
+      (user.roles && user.roles.some(r => r && r !== 'client'));
+
     if (!hasRequiredRole) {
-      // GLOBAL REDIRECTION: If user has no role after authentication, redirect to onboarding
-      // instead of showing "Access denied". This allows them to (re)select their role.
-      const hasAnyRole = user.currentRole && user.currentRole !== 'client' && 
-                        user.roles && user.roles.length > 0 && 
-                        user.roles.some(r => r !== 'client');
-      
+      // If user has no role, always route them to onboarding instead of Access Denied
       if (!hasAnyRole) {
-        // User is authenticated but has no role - redirect to onboarding
         if (shouldDebug) {
           logger.debug('AuthGuard', 'User authenticated but no role - redirecting to onboarding:', {
             userCurrentRole: user.currentRole,
@@ -259,6 +255,20 @@ export function AuthGuard({
       (user.roles && user.roles.includes('venue' as any) && allowedRoles.includes('business'));
     
     if (!hasAllowedRole) {
+      const hasAnyRole = 
+        (user.currentRole && user.currentRole !== 'client') ||
+        (user.roles && user.roles.some(role => role && role !== 'client'));
+
+      if (!hasAnyRole) {
+        if (shouldDebug) {
+          logger.debug('AuthGuard', 'User authenticated but no role - redirecting to onboarding:', {
+            userCurrentRole: user.currentRole,
+            userRoles: user.roles,
+            attemptedPath: location.pathname
+          });
+        }
+        return <Navigate to="/onboarding" replace />;
+      }
       // Debug logging
       if (shouldDebug) {
         logger.debug('AuthGuard', 'Role not in allowed list - redirecting to unauthorized:', {
