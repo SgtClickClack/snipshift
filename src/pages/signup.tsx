@@ -18,7 +18,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isAuthReady, user } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -30,6 +30,53 @@ export default function SignupPage() {
   // Prevent double execution in React Strict Mode
   const hasProcessedOAuthCallback = useRef(false);
   const hasShownConnectingToast = useRef(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [showManualDashboardLink, setShowManualDashboardLink] = useState(false);
+
+  // REDIRECT: If user is authenticated in Firebase but has no database record (404 case),
+  // redirect them to onboarding to complete their profile and choose their role
+  useEffect(() => {
+    if (!isAuthReady) return;
+    
+    // If user is authenticated in Firebase (has token) but no user object (404 from backend),
+    // redirect to onboarding to complete profile setup
+    if (isAuthenticated && !user && auth.currentUser) {
+      console.log('[Signup] User authenticated in Firebase but no database record, redirecting to onboarding');
+      navigate('/onboarding', { replace: true });
+      return;
+    }
+  }, [isAuthReady, isAuthenticated, user, navigate]);
+
+  // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount
+  // If popup just completed auth, immediately redirect without showing signup UI
+  useEffect(() => {
+    try {
+      const bridgeData = localStorage.getItem('hospogo_auth_bridge');
+      if (!bridgeData) return;
+
+      const parsed = JSON.parse(bridgeData) as { uid?: string; ts?: number };
+      if (!parsed.uid || !parsed.ts) return;
+
+      // Only process if bridge is recent (less than 30 seconds old)
+      const age = Date.now() - parsed.ts;
+      if (age > 30000) {
+        // Bridge is stale, clean it up
+        localStorage.removeItem('hospogo_auth_bridge');
+        return;
+      }
+
+      // Bridge is fresh - popup just completed auth
+      console.log('[Signup] localStorage bridge detected, finalizing auth...', { uid: parsed.uid, age });
+      setIsFinalizing(true);
+      
+      // Show "Finalizing..." state and redirect immediately
+      setTimeout(() => {
+        navigate('/onboarding', { replace: true });
+      }, 500);
+    } catch (error) {
+      console.debug('[Signup] Failed to check localStorage bridge', error);
+    }
+  }, [navigate]);
 
   // Check for email, role, and plan in query params (e.g. redirect from login, landing page, or pricing)
   useEffect(() => {
@@ -126,6 +173,19 @@ export default function SignupPage() {
       hasShownConnectingToast.current = false;
     }
   }, [isLoading, toast]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setShowManualDashboardLink(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setShowManualDashboardLink(true);
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,6 +312,25 @@ export default function SignupPage() {
   };
 
 
+
+  // Show "Finalizing..." spinner if bridge detected
+  if (isFinalizing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm max-w-md mx-4">
+          <CardContent className="p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-brand-neon rounded-full shadow-neon-realistic animate-pulse">
+                <FastForward className="h-8 w-8 text-brand-dark" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold text-card-foreground mb-2">Finalizing...</CardTitle>
+            <p className="text-muted-foreground">Completing your sign-up</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-6 md:py-12">
@@ -390,6 +469,14 @@ export default function SignupPage() {
             </div>
 
             <GoogleAuthButton mode="signup" />
+
+            {showManualDashboardLink && (
+              <div className="text-center mt-4">
+                <Link to="/dashboard" className="text-primary hover:underline font-medium">
+                  Manual Dashboard
+                </Link>
+              </div>
+            )}
             
             <div className="text-center mt-6">
               <p className="text-muted-foreground">

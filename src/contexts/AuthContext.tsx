@@ -7,6 +7,8 @@ import { logger } from '@/lib/logger';
 import { getDashboardRoute } from '@/lib/roles';
 import { useToast } from '@/hooks/useToast';
 
+const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_handoff';
+
 export interface User {
   id: string;
   email: string;
@@ -825,11 +827,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // User exists in Firebase but not in our database
                 logger.debug('AuthContext', 'Firebase user has no profile (404)');
                 setUser(null);
-                // Keep the token so the user can complete onboarding
-                // ONLY redirect to onboarding if NOT on a protected public path
+                
+                // Clear any local onboarding flags and state
+                try {
+                  localStorage.removeItem('onboarding_step');
+                  localStorage.removeItem('redirect_url');
+                  localStorage.removeItem('pending_redirect');
+                  localStorage.removeItem('hospogo_auth_bridge');
+                  sessionStorage.removeItem('signupRolePreference');
+                  sessionStorage.removeItem('signupPlanPreference');
+                  sessionStorage.removeItem('signupTrialMode');
+                  sessionStorage.removeItem('oauth_state');
+                } catch (storageError) {
+                  // Ignore storage errors (e.g., private browsing mode)
+                  logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
+                }
+                
+                // Redirect to /signup for fresh start (user will choose role there)
+                // ONLY redirect if NOT on a protected public path
                 // The landing page should always be viewable
                 if (!isProtectedPublicPath(locationRef.current.pathname)) {
-                  navigateRef.current('/onboarding', { replace: true });
+                  navigateRef.current('/signup', { replace: true });
                 }
                 setIsRedirecting(false);
                 pendingRedirect.current = false;
@@ -1107,10 +1125,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(nextUser);
         handleRedirect(nextUser, { force: true });
       } else if (res.status === 404) {
-        // User exists in Firebase but not in our database - redirect to onboarding
-        logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404), redirecting to onboarding');
+        // User exists in Firebase but not in our database - redirect to signup for fresh start
+        logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404), redirecting to signup');
         setUser(null);
-        navigateRef.current('/onboarding', { replace: true });
+        
+        // Clear any local onboarding flags and state
+        try {
+          localStorage.removeItem('onboarding_step');
+          localStorage.removeItem('redirect_url');
+          localStorage.removeItem('pending_redirect');
+          localStorage.removeItem('hospogo_auth_bridge');
+          sessionStorage.removeItem('signupRolePreference');
+          sessionStorage.removeItem('signupPlanPreference');
+          sessionStorage.removeItem('signupTrialMode');
+          sessionStorage.removeItem('oauth_state');
+        } catch (storageError) {
+          // Ignore storage errors (e.g., private browsing mode)
+          logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
+        }
+        
+        navigateRef.current('/signup', { replace: true });
         setIsRedirecting(false);
         pendingRedirect.current = false;
       } else if (res.status === 401) {
@@ -1140,27 +1174,75 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(nextUser);
             handleRedirect(nextUser, { force: true });
           } else if (retryRes.status === 404 || retryRes.status === 401) {
-            // User exists in Firebase but not in our database - redirect to onboarding
+            // User exists in Firebase but not in our database - redirect to signup for fresh start
             // Also handle 401 as "no profile" since user just signed in with Firebase
-            logger.debug('AuthContext', 'refreshUser: Firebase user has no profile, redirecting to onboarding');
+            logger.debug('AuthContext', 'refreshUser: Firebase user has no profile, redirecting to signup');
             setUser(null);
-            navigateRef.current('/onboarding', { replace: true });
+            
+            // Clear any local onboarding flags and state
+            try {
+              localStorage.removeItem('onboarding_step');
+              localStorage.removeItem('redirect_url');
+              localStorage.removeItem('pending_redirect');
+              localStorage.removeItem('hospogo_auth_bridge');
+              sessionStorage.removeItem('signupRolePreference');
+              sessionStorage.removeItem('signupPlanPreference');
+              sessionStorage.removeItem('signupTrialMode');
+              sessionStorage.removeItem('oauth_state');
+            } catch (storageError) {
+              // Ignore storage errors (e.g., private browsing mode)
+              logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
+            }
+            
+            navigateRef.current('/signup', { replace: true });
             setIsRedirecting(false);
             pendingRedirect.current = false;
           } else {
-            // Other error - still redirect to onboarding since user has valid Firebase session
-            logger.debug('AuthContext', 'refreshUser: API error but Firebase user exists, redirecting to onboarding');
+            // Other error - still redirect to signup since user has valid Firebase session but no profile
+            logger.debug('AuthContext', 'refreshUser: API error but Firebase user exists, redirecting to signup');
             setUser(null);
-            navigateRef.current('/onboarding', { replace: true });
+            
+            // Clear any local onboarding flags and state
+            try {
+              localStorage.removeItem('onboarding_step');
+              localStorage.removeItem('redirect_url');
+              localStorage.removeItem('pending_redirect');
+              localStorage.removeItem('hospogo_auth_bridge');
+              sessionStorage.removeItem('signupRolePreference');
+              sessionStorage.removeItem('signupPlanPreference');
+              sessionStorage.removeItem('signupTrialMode');
+              sessionStorage.removeItem('oauth_state');
+            } catch (storageError) {
+              // Ignore storage errors (e.g., private browsing mode)
+              logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
+            }
+            
+            navigateRef.current('/signup', { replace: true });
             setIsRedirecting(false);
             pendingRedirect.current = false;
           }
         } catch {
-          // Token refresh failed but Firebase user exists - redirect to onboarding
-          logger.debug('AuthContext', 'refreshUser: Token refresh failed, redirecting to onboarding');
+          // Token refresh failed but Firebase user exists - redirect to signup for fresh start
+          logger.debug('AuthContext', 'refreshUser: Token refresh failed, redirecting to signup');
           setUser(null);
           setToken(null);
-          navigateRef.current('/onboarding', { replace: true });
+          
+          // Clear any local onboarding flags and state
+          try {
+            localStorage.removeItem('onboarding_step');
+            localStorage.removeItem('redirect_url');
+            localStorage.removeItem('pending_redirect');
+            localStorage.removeItem('hospogo_auth_bridge');
+            sessionStorage.removeItem('signupRolePreference');
+            sessionStorage.removeItem('signupPlanPreference');
+            sessionStorage.removeItem('signupTrialMode');
+            sessionStorage.removeItem('oauth_state');
+          } catch (storageError) {
+            // Ignore storage errors (e.g., private browsing mode)
+            logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
+          }
+          
+          navigateRef.current('/signup', { replace: true });
           setIsRedirecting(false);
           pendingRedirect.current = false;
         }
@@ -1286,6 +1368,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (window.location.pathname === '/auth/bridge') return;
 
     const allowedOrigins = new Set<string>([
       window.location.origin,
@@ -1321,6 +1404,101 @@ export function AuthProvider({ children }: AuthProviderProps) {
     window.addEventListener('message', handleMessage);
     return () => {
       window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const clearBridgeCookie = () => {
+      document.cookie = `${AUTH_BRIDGE_COOKIE_NAME}=; Path=/; Max-Age=0`;
+    };
+
+    const readBridgeCookie = (): { uid?: string; ts?: number } | null => {
+      const cookie = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith(`${AUTH_BRIDGE_COOKIE_NAME}=`));
+      if (!cookie) return null;
+
+      try {
+        const rawValue = decodeURIComponent(cookie.split('=')[1] || '');
+        return JSON.parse(rawValue) as { uid?: string; ts?: number };
+      } catch (error) {
+        logger.debug('AuthContext', 'Failed to parse bridge cookie', error);
+        return null;
+      }
+    };
+
+    const checkBridgeCookie = () => {
+      const payload = readBridgeCookie();
+      if (!payload?.uid) return;
+
+      const ageMs = payload.ts ? Date.now() - payload.ts : 0;
+      if (payload.ts && ageMs > 120000) {
+        clearBridgeCookie();
+        return;
+      }
+
+      clearBridgeCookie();
+      window.location.assign('/onboarding');
+    };
+
+    checkBridgeCookie();
+    const interval = setInterval(checkBridgeCookie, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // MANUAL LOCALSTORAGE BRIDGE: Listen for popup auth completion via storage events
+  // This bypasses COOP/CORS/Partitioning by using localStorage cross-window communication
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorage = async (event: StorageEvent) => {
+      // Only react to our bridge key
+      if (event.key !== 'hospogo_auth_bridge') return;
+      if (!event.newValue) return;
+
+      try {
+        const bridgeData = JSON.parse(event.newValue) as { uid?: string; ts?: number };
+        if (!bridgeData.uid || !bridgeData.ts) return;
+
+        // Only process if bridge is recent (less than 30 seconds old)
+        const age = Date.now() - bridgeData.ts;
+        if (age > 30000) {
+          logger.debug('AuthContext', 'localStorage bridge too old, ignoring', { age });
+          return;
+        }
+
+        logger.debug('AuthContext', 'localStorage bridge detected, forcing auth reload and redirect', {
+          uid: bridgeData.uid,
+          age
+        });
+
+        // Force Firebase auth reload to sync state
+        try {
+          await auth.currentUser?.reload();
+        } catch (reloadError) {
+          logger.debug('AuthContext', 'Auth reload failed (non-critical)', reloadError);
+        }
+
+        // Force user refresh and redirect
+        await refreshUserRef.current();
+        
+        // Force immediate redirect to onboarding
+        navigateRef.current('/onboarding', { replace: true });
+        setIsLoading(false);
+        setIsAuthReady(true);
+        setIsRedirecting(false);
+        pendingRedirect.current = false;
+      } catch (error) {
+        logger.debug('AuthContext', 'Failed to process localStorage bridge', error);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
