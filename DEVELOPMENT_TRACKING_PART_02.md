@@ -1,3 +1,32 @@
+#### 2026-01-15: Auth Handler Proxy Rewrite + COOP Alignment
+
+**Core Components**
+- Vercel routing config (`vercel.json`)
+- Firebase client config (`src/lib/firebase.ts`)
+- Auth redirect safety clear (`src/contexts/AuthContext.tsx`)
+
+**Key Features**
+- Added a Vercel rewrite to proxy `/__/auth/**` to the Firebase auth handler so popup completion stays on `hospogo.com`.
+- Enforced `authDomain = hospogo.com` in the Firebase client to align the redirect handler with the production hostname.
+- Preserved the 5-second redirect-result safety clear and fixed the timeout cleanup path to avoid stalled loading states.
+
+**Integration Points**
+- Vercel rewrites (`/__/auth/:path*`)
+- Firebase Auth redirect flow (`getRedirectResult`)
+- Security headers: COOP `same-origin-allow-popups`
+
+**File Paths**
+- `vercel.json`
+- `src/lib/firebase.ts`
+- `src/contexts/AuthContext.tsx`
+
+**Next Priority Task**
+- Verify `https://hospogo.com/__/auth/handler` responds without 404 after deploy.
+
+**Code Organization & Quality**
+- Kept changes localized to auth config + redirect safety handling without new patterns.
+
+---
 #### 2026-01-15: Align Auth Domain + Remove Force Sync + Navbar Profile Menu
 
 **Core Components**

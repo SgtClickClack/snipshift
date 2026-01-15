@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-15 - Auth Handler Proxy Rewrite (Vercel)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a Vercel rewrite to proxy `/__/auth/**` to the Firebase auth handler (`https://snipshift-75b04.firebaseapp.com/__/auth/:path*`).
+- Enforced `authDomain = hospogo.com` in the Firebase client to keep redirect completion on the production hostname.
+- Retained a 5-second redirect-result safety clear in AuthContext to prevent a stuck loading screen.
+
+**Impact:**
+- Google sign-in popup completes reliably on `hospogo.com` without silent 404s, and the app clears loading when redirects fail.
+
+---
+
 ### Update: 2026-01-15 - Auth Domain Alignment + Loading Loop Fix (HospoGo)
 
 **Status:** ✅ **UPDATED**

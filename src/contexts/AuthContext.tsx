@@ -200,6 +200,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const consecutive401Count = useRef<number>(0);
   const pendingRedirect = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const deriveRoleHome = (u: User | null): string => {
     // No app user => send to login (onboarding is auth-protected, so redirecting there can cause
@@ -360,6 +361,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasResolvedAuthState.current = true;
         setIsLoading(false);
         setIsAuthReady(true);
+        // Clear safety timeout since E2E mode resolved auth state
+        if (safetyTimeoutRef.current) {
+          clearTimeout(safetyTimeoutRef.current);
+          safetyTimeoutRef.current = null;
+        }
       }
       return;
     }
@@ -368,10 +374,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // This ensures getRedirectResult() completes before onAuthStateChange fires, preventing
     // the infinite loading loop where the listener sees null user before redirect is processed
     const initAuth = async () => {
+      // SAFETY TIMEOUT: Ensure loading is cleared after 5 seconds if getRedirectResult hasn't finished
+      // This prevents infinite loading when COOP/handshake blocks the redirect
+      const getRedirectResultTimeout = setTimeout(() => {
+        if (!hasResolvedAuthState.current) {
+          logger.debug('AuthContext', 'getRedirectResult safety timeout: Clearing loading state after 5 seconds');
+          setIsLoading(false);
+          setIsAuthReady(true);
+          setIsRedirecting(false);
+          pendingRedirect.current = false;
+        }
+      }, 5000);
+
       try {
         // Step 1: MUST call getRedirectResult FIRST to 'claim' the result from the URL
         // If this isn't called, Firebase often fails to persist the session after redirect
         const redirectUser = await handleGoogleRedirectResult();
+        
+        // Clear the safety timeout if we got a redirect result
+        clearTimeout(getRedirectResultTimeout);
+        
         if (!redirectUser) {
           if (redirectFallbackTimeout.current) {
             clearTimeout(redirectFallbackTimeout.current);
@@ -432,9 +454,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           logger.debug('AuthContext', 'No redirect result - user did not return from Google sign-in');
         }
       } catch (error) {
-        // Silently handle - redirect result errors are non-critical
-        // User can retry sign-in manually
-        logger.debug('AuthContext', 'No redirect result or error processing redirect:', error);
+        // CATCH-ALL: Clear loading state on any error to prevent infinite loading
+        logger.debug('AuthContext', 'Error processing redirect result, clearing loading state:', error);
+        clearTimeout(getRedirectResultTimeout);
+        // Don't clear loading here - let the fallback timeout handle it
+        // This ensures we always clear after 3 seconds even if there's an error
       }
 
       // Step 2: ONLY AFTER getRedirectResult completes, start listening for state changes
@@ -523,6 +547,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // CRITICAL: Only set loading false AFTER user is set and normalized
                 setIsLoading(false);
                 setIsAuthReady(true);
+                // Clear safety timeout since auth succeeded
+                if (safetyTimeoutRef.current) {
+                  clearTimeout(safetyTimeoutRef.current);
+                  safetyTimeoutRef.current = null;
+                }
               } else if (res.status === 401) {
                 // 401 means token is invalid or expired - force refresh token and retry once
                 const now = Date.now();
@@ -580,6 +609,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     // CRITICAL: Only set loading false AFTER user is set and normalized
                     setIsLoading(false);
                     setIsAuthReady(true);
+                    // Clear safety timeout since auth succeeded
+                    if (safetyTimeoutRef.current) {
+                      clearTimeout(safetyTimeoutRef.current);
+                      safetyTimeoutRef.current = null;
+                    }
                   } else if (retryRes.status === 404 || retryRes.status === 401) {
                     // User exists in Firebase but not in our database, or token still invalid
                     logger.debug('AuthContext', 'Firebase user has no profile after retry, or token still invalid');
@@ -596,6 +630,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     // Set loading false after handling the error
                     setIsLoading(false);
                     setIsAuthReady(true);
+                    // Clear safety timeout since we've resolved auth state
+                    if (safetyTimeoutRef.current) {
+                      clearTimeout(safetyTimeoutRef.current);
+                      safetyTimeoutRef.current = null;
+                    }
                   } else {
                     // Other error - user is logged out
                     consecutive401Count.current = 0;
@@ -605,6 +644,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     // Set loading false after handling the error
                     setIsLoading(false);
                     setIsAuthReady(true);
+                    // Clear safety timeout since we've resolved auth state
+                    if (safetyTimeoutRef.current) {
+                      clearTimeout(safetyTimeoutRef.current);
+                      safetyTimeoutRef.current = null;
+                    }
                   }
                 } catch (error) {
                   // Token refresh failed - user is logged out
@@ -617,6 +661,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   // Set loading false after handling the error
                   setIsLoading(false);
                   setIsAuthReady(true);
+                  // Clear safety timeout since we've resolved auth state
+                  if (safetyTimeoutRef.current) {
+                    clearTimeout(safetyTimeoutRef.current);
+                    safetyTimeoutRef.current = null;
+                  }
                 }
               } else if (res.status === 404) {
                 // User exists in Firebase but not in our database
@@ -634,6 +683,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // Set loading false after handling the error
                 setIsLoading(false);
                 setIsAuthReady(true);
+                // Clear safety timeout since we've resolved auth state
+                if (safetyTimeoutRef.current) {
+                  clearTimeout(safetyTimeoutRef.current);
+                  safetyTimeoutRef.current = null;
+                }
               } else {
                 logger.error('AuthContext', 'User authenticated in Firebase but profile fetch failed', res.status);
                 // For other errors, redirect to onboarding to allow user to complete profile
@@ -644,6 +698,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // Set loading false after handling the error
                 setIsLoading(false);
                 setIsAuthReady(true);
+                // Clear safety timeout since we've resolved auth state
+                if (safetyTimeoutRef.current) {
+                  clearTimeout(safetyTimeoutRef.current);
+                  safetyTimeoutRef.current = null;
+                }
               }
             } catch (error) {
               console.error('Error fetching user profile:', error);
@@ -654,6 +713,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Set loading false after handling the error
               setIsLoading(false);
               setIsAuthReady(true);
+              // Clear safety timeout since we've resolved auth state
+              if (safetyTimeoutRef.current) {
+                clearTimeout(safetyTimeoutRef.current);
+                safetyTimeoutRef.current = null;
+              }
             }
           } else {
             setUser(null);
@@ -664,6 +728,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Set loading false after state is cleared
             setIsLoading(false);
             setIsAuthReady(true);
+            // Clear safety timeout since we've resolved auth state
+            if (safetyTimeoutRef.current) {
+              clearTimeout(safetyTimeoutRef.current);
+              safetyTimeoutRef.current = null;
+            }
           }
         } catch (error) {
           // Catch any unexpected errors in the callback itself
@@ -675,6 +744,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Set loading false after handling the error
           setIsLoading(false);
           setIsAuthReady(true);
+          // Clear safety timeout since we've resolved auth state
+          if (safetyTimeoutRef.current) {
+            clearTimeout(safetyTimeoutRef.current);
+            safetyTimeoutRef.current = null;
+          }
         } finally {
           // Only cleanup refs here, don't set loading states
           isProcessingAuth.current = false;
@@ -696,6 +770,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })();
 
+    // SAFETY TIMEOUT: Force loading to false after 6 seconds if no Firebase user is detected
+    // This prevents users from being stuck behind a spinner when the auth handshake is blocked
+    // by browser security headers (COOP/CORS) or other issues
+    safetyTimeoutRef.current = setTimeout(() => {
+      if (isLoading && !user && !auth.currentUser) {
+        logger.debug('AuthContext', 'Safety timeout: Forcing loading state to false after 6 seconds without Firebase user');
+        setIsLoading(false);
+        setIsAuthReady(true);
+        setIsRedirecting(false);
+        pendingRedirect.current = false;
+        // Clear loading state so user can at least see the landing page to try again
+      }
+    }, 6000);
+
     return () => {
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
@@ -703,6 +791,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (redirectFallbackTimeout.current) {
         clearTimeout(redirectFallbackTimeout.current);
         redirectFallbackTimeout.current = null;
+      }
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current);
+        safetyTimeoutRef.current = null;
       }
       // Reset refs on cleanup (for HMR or unmount)
       hasInitialized.current = false;
