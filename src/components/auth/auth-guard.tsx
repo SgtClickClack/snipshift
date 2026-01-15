@@ -9,8 +9,8 @@ import { auth } from '@/lib/firebase';
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  requiredRole?: 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business';
-  allowedRoles?: Array<'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business'>;
+  requiredRole?: 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business' | 'venue';
+  allowedRoles?: Array<'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business' | 'venue'>;
   redirectTo?: string;
 }
 
@@ -194,14 +194,29 @@ export function AuthGuard({
 
   // If specific role is required but user's currentRole doesn't match
   // Also check roles array and handle venue->business mapping using centralized helper
+  // CRITICAL: If requiredRole is 'business', also allow 'venue' and 'hub' to prevent lockouts
   if (requiredRole && user) {
     // Check if user has the required role (using centralized mapping)
-    const hasRequiredRole = 
+    const hasDirectMatch = 
       user.currentRole === requiredRole ||
-      (user.roles && user.roles.includes(requiredRole as any)) ||
-      // Special case: allow business-related roles to access business routes
-      (requiredRole === 'business' && isBusinessRole(user.currentRole || '')) ||
-      (requiredRole === 'business' && user.roles && user.roles.some(r => isBusinessRole(r)));
+      (user.roles && user.roles.includes(requiredRole as any));
+    
+    // Special case: allow business-related roles to access business routes
+    // If requiredRole is 'business', also accept 'venue' and 'hub'
+    const hasBusinessRoleMatch = 
+      requiredRole === 'business' && (
+        isBusinessRole(user.currentRole || '') ||
+        (user.roles && user.roles.some(r => isBusinessRole(r)))
+      );
+    
+    // Special case: If requiredRole is 'venue' or 'hub', also accept 'business'
+    const hasVenueHubMatch = 
+      (requiredRole === 'venue' || requiredRole === 'hub') && (
+        user.currentRole === 'business' ||
+        (user.roles && user.roles.includes('business' as any))
+      );
+    
+    const hasRequiredRole = hasDirectMatch || hasBusinessRoleMatch || hasVenueHubMatch;
     
     const hasAnyRole = 
       (user.currentRole && user.currentRole !== 'client') ||
@@ -247,12 +262,35 @@ export function AuthGuard({
 
   // If multiple roles are allowed, check if user's role is in the allowed list
   // Check both currentRole and roles array (for venue/business compatibility)
+  // CRITICAL: If a route allows 'business', it must also allow 'venue' and 'hub' to prevent lockouts
   if (allowedRoles && user) {
-    const hasAllowedRole = 
-      (user.currentRole && allowedRoles.includes(user.currentRole as typeof allowedRoles[number])) ||
-      (user.roles && user.roles.some(role => allowedRoles.includes(role as typeof allowedRoles[number]))) ||
-      // Special case: allow 'venue' role to access 'business' routes
-      (user.roles && user.roles.includes('venue' as any) && allowedRoles.includes('business'));
+    // Check if route allows business-related roles
+    const allowsBusiness = allowedRoles.includes('business');
+    const allowsVenue = allowedRoles.includes('venue' as any);
+    const allowsHub = allowedRoles.includes('hub');
+    
+    // Normalize user roles to check against allowed roles
+    const userCurrentRole = user.currentRole;
+    const userRoles = user.roles || [];
+    
+    // Check if user has any of the allowed roles directly
+    const hasDirectMatch = 
+      (userCurrentRole && allowedRoles.includes(userCurrentRole as typeof allowedRoles[number])) ||
+      userRoles.some(role => allowedRoles.includes(role as typeof allowedRoles[number]));
+    
+    // Special case: If route allows 'business', also allow users with 'venue' or 'hub' roles
+    const hasBusinessRoleMatch = allowsBusiness && (
+      isBusinessRole(userCurrentRole || '') ||
+      userRoles.some(r => isBusinessRole(r))
+    );
+    
+    // Special case: If route allows 'venue' or 'hub', also allow users with 'business' role
+    const hasVenueHubMatch = (allowsVenue || allowsHub) && (
+      userCurrentRole === 'business' ||
+      userRoles.includes('business' as any)
+    );
+    
+    const hasAllowedRole = hasDirectMatch || hasBusinessRoleMatch || hasVenueHubMatch;
     
     if (!hasAllowedRole) {
       const hasAnyRole = 

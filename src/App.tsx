@@ -346,7 +346,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/hub-dashboard" element={
-          <ProtectedRoute allowedRoles={['hub', 'business']}>
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <HubDashboard />
             </Suspense>
@@ -355,7 +355,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 
         {/* Legacy/compat route: billing + venue dashboard surfaces */}
         <Route path="/shop-dashboard" element={
-          <ProtectedRoute allowedRoles={['hub', 'business']}>
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <ShopDashboard />
             </Suspense>
@@ -363,7 +363,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/shop/schedule" element={
-          <ProtectedRoute allowedRoles={['hub', 'business']}>
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <ShopSchedulePage />
             </Suspense>
@@ -372,7 +372,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 
         {/* Branded alias for schedule (preferred) */}
         <Route path="/venue/schedule" element={
-          <ProtectedRoute allowedRoles={['hub', 'business']}>
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <ShopSchedulePage />
             </Suspense>
@@ -380,7 +380,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/salon/create-job" element={
-          <ProtectedRoute allowedRoles={['hub', 'business']}>
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <SalonCreateJobPage />
             </Suspense>
@@ -425,7 +425,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 
         {/* Branded dashboard paths (keep underlying pages stable) */}
         <Route path="/venue/dashboard" element={
-          <ProtectedRoute allowedRoles={['hub', 'business']}>
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <ShopDashboard />
             </Suspense>

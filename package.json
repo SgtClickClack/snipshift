@@ -29,7 +29,8 @@
     "db:seed:test": "npx tsx scripts/seed-test-db.ts",
     "db:migrate:test": "npx tsx scripts/migrate-test-db.ts",
     "test:readiness": "npx tsx scripts/test-readiness.ts",
-    "test:readiness:force": "npx tsx scripts/test-readiness.ts --force-seed"
+    "test:readiness:force": "npx tsx scripts/test-readiness.ts --force-seed",
+    "verify:onboarding-recovery": "npx tsx scripts/verify-onboarding-recovery.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "1.16.8",

@@ -17,7 +17,7 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     email: string;
     name: string;
-    role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub';
+    role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue';
     uid: string; // Firebase UID
   };
 }
@@ -140,7 +140,7 @@ export function authenticateUser(
                     id: user.id,
                     email: user.email,
                     name: user.name,
-                    role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub',
+                    role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue',
                     uid: `mock-uid-${user.id}`
                 };
                 next();
@@ -222,7 +222,7 @@ export function authenticateUser(
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub',
+          role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue',
           uid: uid
         };
 

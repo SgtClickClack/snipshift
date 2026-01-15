@@ -31,8 +31,9 @@ router.get('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest,
     applications = await applicationsRepo.getApplicationsForUser(userId, {
       status: status as 'pending' | 'accepted' | 'rejected' | undefined
     });
-  } else if (role === 'business' || role === 'hub') {
+  } else if (role === 'business' || role === 'hub' || role === 'venue') {
     // Fetch applications received FOR this business's jobs
+    // CRITICAL: Allow 'venue', 'hub', and 'business' to access business routes
     applications = await applicationsRepo.getApplicationsForBusiness(userId, {
       status: status as 'pending' | 'accepted' | 'rejected' | undefined
     });

@@ -17,7 +17,7 @@ export function VenueRoute() {
   }
 
   return (
-    <ProtectedRoute allowedRoles={['hub', 'business']}>
+    <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
       <Outlet />
     </ProtectedRoute>
   );

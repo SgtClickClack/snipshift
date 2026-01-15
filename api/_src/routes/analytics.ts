@@ -28,8 +28,9 @@ router.get('/dashboard', authenticateUser, asyncHandler(async (req: Authenticate
     charts: {},
   };
 
-  if (role === 'hub' || role === 'business') {
+  if (role === 'hub' || role === 'business' || role === 'venue') {
     // Get counts for business dashboard
+    // CRITICAL: Allow 'venue', 'hub', and 'business' to access business analytics
     const jobs = await jobsRepo.getJobs({ businessId: userId });
     const totalJobs = jobs?.total || 0;
     

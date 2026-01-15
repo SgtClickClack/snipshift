@@ -250,12 +250,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // If the backend ever sends clean-break role labels, honor them explicitly.
     const apiRole = normalizeRoleValue((u as any)?.role);
-    if (apiRole === 'business' || apiRole === 'hub') return '/venue/dashboard';
+    // CRITICAL: Allow 'venue', 'hub', or 'business' to access '/venue/dashboard'
+    if (apiRole === 'business' || apiRole === 'hub' || apiRole === 'venue') return '/venue/dashboard';
     if (apiRole === 'professional') return '/worker/dashboard';
 
     // "Clean break" role homes
+    // CRITICAL: Allow 'venue', 'hub', or 'business' to access '/venue/dashboard'
     if (u.currentRole === 'professional') return '/worker/dashboard';
-    if (u.currentRole === 'business' || u.currentRole === 'hub') return '/venue/dashboard';
+    if (u.currentRole === 'business' || u.currentRole === 'hub' || u.currentRole === 'venue') return '/venue/dashboard';
 
     // Fallback to existing dashboard routing for other roles / legacy surfaces.
     return getDashboardRoute(u.currentRole);

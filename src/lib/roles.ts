@@ -30,12 +30,15 @@ export function hasRole(roles: AppRole[] | undefined | null, role: AppRole): boo
  * - 'hub' → 'business' (business owner role)
  * - 'brand' → 'business' (brand/company role)
  * - All other roles map to themselves
+ * 
+ * CRITICAL: This function ensures BOTH 'venue' and 'hub' map to 'business' to prevent
+ * access denied errors due to terminology mismatches.
  */
 export function normalizeVenueToBusiness(role: string | null | undefined): AppRole | null {
   if (!role || typeof role !== 'string') return null;
   const normalized = role.toLowerCase();
   
-  // Map venue-related roles to business
+  // Map venue-related roles to business (CRITICAL: both 'venue' and 'hub' must map to 'business')
   if (normalized === 'venue' || normalized === 'hub' || normalized === 'brand') {
     return 'business';
   }
