@@ -890,8 +890,10 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
   const { role, shopName, location, description } = validationResult.data;
   const updates: any = {};
   
-  if (role === 'hub') {
-    updates.role = 'business'; // Map 'hub' to 'business'
+  // Map frontend roles to backend database roles
+  // 'venue' and 'hub' both map to 'business' in the database
+  if (role === 'hub' || role === 'venue') {
+    updates.role = 'business'; // Map 'hub' and 'venue' to 'business'
     if (shopName) updates.name = shopName;
     if (location) updates.location = location;
     if (description) updates.bio = description;
@@ -916,8 +918,21 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
     const existingRoles = currentUser.roles || [];
     const newRole = updates.role;
     
+    // Store both the frontend role name (venue/hub) and the database role (business) in roles array
+    const rolesToAdd = [];
     if (newRole && !existingRoles.includes(newRole)) {
-      updates.roles = [...existingRoles, newRole];
+      rolesToAdd.push(newRole);
+    }
+    // Also add the frontend role name if it's different from the DB role
+    if (role === 'venue' && !existingRoles.includes('venue')) {
+      rolesToAdd.push('venue');
+    }
+    if (role === 'hub' && !existingRoles.includes('hub')) {
+      rolesToAdd.push('hub');
+    }
+    
+    if (rolesToAdd.length > 0) {
+      updates.roles = [...existingRoles, ...rolesToAdd];
     }
   }
 
