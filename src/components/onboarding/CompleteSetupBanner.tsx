@@ -82,22 +82,22 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
 
   return (
     <div 
-      className={`bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-orange-500/10 border border-amber-500/30 rounded-lg p-4 mb-6 ${className}`}
+      className={`bg-gradient-to-r from-amber-600/15 via-amber-500/10 to-yellow-600/15 border border-amber-500/40 rounded-lg p-4 mb-6 ${className}`}
       role="alert"
       data-testid="complete-setup-banner"
     >
       <div className="flex items-start gap-4">
         <div className="flex-shrink-0">
-          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <div className="w-10 h-10 rounded-full bg-amber-500/25 flex items-center justify-center">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
           </div>
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200 mb-1">
+          <h3 className="text-sm font-semibold text-amber-100 mb-1">
             Complete Your Setup
           </h3>
-          <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
+          <p className="text-sm text-amber-200/90 mb-3">
             Your subscription setup is incomplete. Without an active subscription, a{' '}
             <strong>$20 booking fee</strong> will apply to each shift booking. 
             Subscribe to the Business plan to waive all booking fees.
@@ -107,7 +107,7 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
             <Button
               onClick={handleCompleteSetup}
               size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-amber-500 hover:bg-amber-600 text-white border-amber-400/30"
             >
               <CreditCard className="h-4 w-4 mr-2" />
               Complete Setup
@@ -117,7 +117,7 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
               onClick={handleDismiss}
               variant="ghost"
               size="sm"
-              className="text-amber-700 hover:text-amber-800 hover:bg-amber-500/10"
+              className="text-amber-200 hover:text-amber-100 hover:bg-amber-500/20"
               data-testid="button-remind-later"
             >
               Remind me later
@@ -127,10 +127,10 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
 
         <button
           onClick={handleDismiss}
-          className="flex-shrink-0 p-1 rounded-full hover:bg-amber-500/20 transition-colors"
+          className="flex-shrink-0 p-1 rounded-full hover:bg-amber-500/25 transition-colors"
           aria-label="Dismiss banner"
         >
-          <X className="h-4 w-4 text-amber-600" />
+          <X className="h-4 w-4 text-amber-300" />
         </button>
       </div>
     </div>

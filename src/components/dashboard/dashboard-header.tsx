@@ -623,19 +623,23 @@ export default function DashboardHeader({
   return (
     <div className={cn("relative w-full max-w-full mb-16", className)}>
       {/* Banner Image or Gradient Fallback */}
-      <div className="relative w-full max-w-full h-32 md:h-48 rounded-t-lg overflow-hidden bg-gradient-to-r from-blue-500 to-cyan-500">
+      <div className="relative w-full max-w-full h-32 md:h-48 rounded-t-lg overflow-hidden">
         {displayBannerUrl ? (
-          <OptimizedImage
-            key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
-            src={displayBannerUrl}
-            alt="Banner"
-            priority={true}
-            fallbackType="banner"
-            className="w-full max-w-full h-full object-cover"
-            containerClassName="w-full h-full"
-          />
+          <>
+            <OptimizedImage
+              key={`banner-${displayBannerUrl}`} // Force re-render when URL changes (include full URL for cache-busting)
+              src={displayBannerUrl}
+              alt="Banner"
+              priority={true}
+              fallbackType="banner"
+              className="w-full max-w-full h-full object-cover"
+              containerClassName="w-full h-full"
+            />
+            {/* 60% black overlay for better text contrast */}
+            <div className="absolute inset-0 bg-black/60" />
+          </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500" />
+          <div className="w-full h-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-transparent" />
         )}
       </div>
 

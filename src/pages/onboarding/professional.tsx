@@ -23,6 +23,8 @@ export default function ProfessionalOnboardingPage() {
     location: user?.location || '',
     profession: 'Staff', // Default profession
     bio: user?.bio || '',
+    city: '',
+    state: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -116,15 +118,15 @@ export default function ProfessionalOnboardingPage() {
                <div className="mx-auto w-12 h-12 bg-brand-neon rounded-full flex items-center justify-center mb-4 shadow-neon-realistic">
                   <User className="h-6 w-6 text-brand-dark" />
                </div>
-              <CardTitle className="text-2xl text-steel-900">Create Pro Profile</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-2xl text-white font-semibold">Create Pro Profile</CardTitle>
+              <CardDescription className="text-steel-200">
                 Tell us about yourself to start finding work
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <div className="space-y-2">
-                  <Label htmlFor="displayName" className="text-steel-700">Display Name *</Label>
+                  <Label htmlFor="displayName" className="text-steel-200 font-medium">Display Name *</Label>
                   <Input
                     id="displayName"
                     name="displayName"
@@ -132,12 +134,12 @@ export default function ProfessionalOnboardingPage() {
                     onChange={handleChange}
                     placeholder="e.g. John Doe"
                     required
-                    className="bg-card"
+                    className="bg-card text-foreground placeholder:text-steel-400 focus-visible:ring-brand-neon focus-visible:border-brand-neon"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="profession" className="text-steel-700">Profession *</Label>
+                  <Label htmlFor="profession" className="text-steel-200 font-medium">Profession *</Label>
                   <Input
                     id="profession"
                     name="profession"
@@ -145,33 +147,42 @@ export default function ProfessionalOnboardingPage() {
                     onChange={handleChange}
                     placeholder="e.g. Staff, Bartender, etc."
                     required
-                    className="bg-card"
+                    className="bg-card text-foreground placeholder:text-steel-400 focus-visible:ring-brand-neon focus-visible:border-brand-neon"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="location" className="text-steel-700">Location *</Label>
+                  <Label htmlFor="location" className="text-steel-200 font-medium">Location *</Label>
                   <LocationInput
                     value={formData.location}
                     onChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
-                    placeholder="City, State or Address"
-                    className="bg-card"
+                    onSelect={(location) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        location: location.address,
+                        city: location.city || '',
+                        state: location.state || '',
+                      }));
+                    }}
+                    placeholder="Start typing a city or address..."
+                    className="bg-card text-foreground placeholder:text-steel-400"
                   />
-                  <p className="text-xs text-steel-500">
-                    This helps us show you relevant job opportunities.
+                  <p className="text-xs text-steel-400">
+                    Select a location from the suggestions as you type.
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bio" className="text-steel-700">Bio / Experience</Label>
+                  <Label htmlFor="bio" className="text-steel-200 font-medium">Bio / Experience</Label>
                   <Textarea
                     id="bio"
                     name="bio"
                     value={formData.bio}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     placeholder="Tell us about your experience..."
                     rows={4}
-                    className="bg-card"
+                    className="bg-card text-foreground placeholder:text-steel-500/80"
                   />
                 </div>
 

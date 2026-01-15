@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 interface LocationInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSelect?: (location: { lat: number; lng: number; address: string }) => void;
+  onSelect?: (location: { lat: number; lng: number; address: string; city?: string; state?: string }) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -72,7 +72,23 @@ const PlacesAutocompleteInternal = ({
       try {
         const results = await getGeocode({ address });
         const { lat, lng } = await getLatLng(results[0]);
-        onSelect({ lat, lng, address });
+        
+        // Extract city and state from address components
+        let city: string | undefined;
+        let state: string | undefined;
+        
+        if (results[0]?.address_components) {
+          for (const component of results[0].address_components) {
+            if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+              city = component.long_name;
+            }
+            if (component.types.includes('administrative_area_level_1')) {
+              state = component.long_name;
+            }
+          }
+        }
+        
+        onSelect({ lat, lng, address, city, state });
       } catch (error) {
         logger.debug('LocationInput', 'Places geocode failed (selection kept):', error);
       }
@@ -94,7 +110,7 @@ const PlacesAutocompleteInternal = ({
             }}
             disabled={disabled}
             placeholder={placeholder}
-            className={cn("pr-10", className)}
+            className={cn("pr-10 focus-visible:ring-brand-neon focus-visible:border-brand-neon", className)}
             autoComplete="off"
             data-testid={dataTestId}
           />
@@ -102,15 +118,15 @@ const PlacesAutocompleteInternal = ({
         </div>
       </PopoverTrigger>
       <PopoverContent 
-        className="p-0 w-full max-w-xs bg-card border border-border shadow-lg z-[100]"
+        className="p-0 w-full max-w-xs bg-zinc-900 border border-zinc-700 shadow-lg z-[100]"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <Command shouldFilter={false}>
+        <Command shouldFilter={false} className="bg-zinc-900 text-white">
           {/* We hide the command input because we use the trigger input */}
-          <CommandList>
+          <CommandList className="bg-zinc-900">
             {status === "OK" && (
-              <CommandGroup heading="Suggestions">
+              <CommandGroup heading="Suggestions" className="text-white">
                 {data.map(({ place_id, description }) => (
                   <CommandItem
                     key={place_id}
@@ -120,8 +136,9 @@ const PlacesAutocompleteInternal = ({
                       const original = data.find(d => d.description.toLowerCase() === currentValue.toLowerCase());
                       handleSelect(original ? original.description : currentValue);
                     }}
+                    className="text-white hover:bg-brand-neon/20 hover:text-brand-neon focus:bg-brand-neon/20 focus:text-brand-neon data-[selected=true]:bg-brand-neon/20 data-[selected=true]:text-brand-neon"
                   >
-                    <MapPin className="mr-2 h-4 w-4" />
+                    <MapPin className="mr-2 h-4 w-4 text-brand-neon" />
                     {description}
                   </CommandItem>
                 ))}
