@@ -137,6 +137,17 @@ export function AuthGuard({
       return <Navigate to="/onboarding" replace />;
     }
 
+    // CRITICAL: Exception for onboarding routes - allow users to complete onboarding
+    // even if they have a role set (prevents redirect loops during onboarding submission)
+    if (isOnboardingPage && (location.pathname === '/onboarding/professional' || location.pathname === '/onboarding/hub')) {
+      logger.debug('AuthGuard', 'User on specific onboarding route, allowing access to complete onboarding', {
+        currentRole: user.currentRole,
+        isOnboarded: user.isOnboarded,
+        pathname: location.pathname
+      });
+      return <>{children}</>;
+    }
+
     // CRITICAL: If authenticated AND role is set AND on /onboarding -> Redirect to dashboard
     // This prevents users with completed onboarding from accessing onboarding again
     // EXCEPTION: Allow users to stay on /onboarding if onboarding is not complete

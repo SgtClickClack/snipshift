@@ -997,6 +997,11 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
         if (shopName) updates.name = shopName;
         if (location) updates.location = location;
         if (description) updates.bio = description;
+        // CRITICAL: Set isOnboarded to true for professional role to complete onboarding
+        // This prevents redirect loops back to role selector
+        if (role === 'professional') {
+          updates.isOnboarded = true;
+        }
      } else {
         res.status(400).json({ message: 'Invalid role for this endpoint' });
         return;

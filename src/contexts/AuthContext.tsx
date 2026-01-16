@@ -351,6 +351,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    // CRITICAL: Never redirect away from onboarding pages during active onboarding
+    // This prevents redirect loops when user state updates during onboarding submission
+    if (pathname.startsWith('/onboarding')) {
+      logger.debug('AuthContext', 'handleRedirect: User on onboarding page, skipping redirect to prevent loops', {
+        pathname,
+        currentRole: u?.currentRole,
+        isOnboarded: u?.isOnboarded
+      });
+      pendingRedirect.current = false;
+      setIsRedirecting(false);
+      return;
+    }
+
     if (!force && !pendingRedirect.current && !shouldAutoRedirectFromPath(pathname)) {
       return;
     }

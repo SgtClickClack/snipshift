@@ -32,6 +32,10 @@ export default function ProfessionalOnboardingPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleBlur = () => {
+    // No-op handler for bio textarea
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -71,13 +75,20 @@ export default function ProfessionalOnboardingPage() {
 
       const updatedUser = await response.json();
 
+      // CRITICAL: Set currentRole immediately in local state to prevent guard redirects
+      // This ensures the Guard doesn't kick the user out during onboarding
+      const userWithRole = {
+        ...updatedUser,
+        currentRole: 'professional' as const,
+        isOnboarded: updatedUser.isOnboarded ?? true, // Ensure isOnboarded is set
+        createdAt: updatedUser.createdAt ? new Date(updatedUser.createdAt) : new Date(),
+        updatedAt: updatedUser.updatedAt ? new Date(updatedUser.updatedAt) : new Date(),
+      };
+
       // Manually update user state with response to ensure immediate UI update
-      if (login && updatedUser) {
-        login({
-          ...updatedUser,
-          createdAt: updatedUser.createdAt ? new Date(updatedUser.createdAt) : new Date(),
-          updatedAt: updatedUser.updatedAt ? new Date(updatedUser.updatedAt) : new Date(),
-        });
+      // This must happen BEFORE any redirects to prevent guard interference
+      if (login && userWithRole) {
+        login(userWithRole);
       }
 
       // Force token refresh to get updated claims/roles
@@ -85,12 +96,23 @@ export default function ProfessionalOnboardingPage() {
         await auth.currentUser.getIdToken(true);
       }
 
+      // CRITICAL: Wait a brief moment to ensure state is fully propagated
+      // before navigating to prevent race conditions
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Refresh user from server to get final state, but don't let it trigger redirects
+      // We'll navigate manually after state is confirmed
       if (refreshUser) {
-        await refreshUser();
+        try {
+          await refreshUser();
+        } catch (err) {
+          // If refresh fails, proceed anyway - we already have the updated user
+          console.warn('User refresh failed, proceeding with local state:', err);
+        }
       }
       
-      // Redirect to professional dashboard
-      navigate('/professional-dashboard');
+      // Redirect to professional dashboard - state is now fully updated
+      navigate('/professional-dashboard', { replace: true });
 
     } catch (error: any) {
       console.error('Onboarding error:', error);
