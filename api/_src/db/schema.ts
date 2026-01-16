@@ -9,7 +9,7 @@ import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, i
 import { relations } from 'drizzle-orm';
 import { users, userRoleEnum, hospitalityRoleEnum } from './schema/users.js';
 import { notifications, notificationTypeEnum } from './schema/notifications.js';
-import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations } from './schema/shifts.js';
+import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations, shiftLogs } from './schema/shifts.js';
 import { profiles } from './schema/profiles.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
@@ -19,6 +19,7 @@ import { trainingPurchases } from './schema/training-purchases.js';
 import { leads, leadInquiryTypeEnum, leadStatusEnum } from './schema/leads.js';
 import { waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum } from './schema/waitlist.js';
 import { venues, venueStatusEnum } from './schema/venues.js';
+import { shiftApplications, shiftApplicationStatusEnum } from './schema/shift-applications.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -30,18 +31,19 @@ export {
   venues, venueStatusEnum,
   notifications, notificationTypeEnum, 
   shifts, shiftStatusEnum,
-  venues,
   shiftOffers, shiftOfferStatusEnum,
   shiftInvitations,
   attendanceStatusEnum,
   shiftReviews, shiftReviewTypeEnum,
+  shiftLogs,
   posts, postTypeEnum,
   postLikes,
   comments,
   trainingModules, trainingLevelEnum,
   trainingPurchases,
   leads, leadInquiryTypeEnum, leadStatusEnum,
-  waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum
+  waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum,
+  shiftApplications, shiftApplicationStatusEnum
 };
 
 /**
@@ -299,7 +301,7 @@ export const payments = pgTable('payments', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   subscriptionId: uuid('subscription_id').references(() => subscriptions.id, { onDelete: 'set null' }),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  currency: varchar('currency', { length: 3 }).notNull().default('usd'),
+  currency: varchar('currency', { length: 3 }).notNull().default('aud'),
   status: paymentStatusEnum('status').notNull().default('UNPAID'),
   stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).unique(),
   stripeChargeId: varchar('stripe_charge_id', { length: 255 }),

@@ -10,6 +10,7 @@ import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
 import * as shiftInvitationsRepo from '../repositories/shift-invitations.repository.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
+import * as shiftApplicationsRepo from '../repositories/shift-applications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
 import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
@@ -22,7 +23,10 @@ import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange
 import { getDb } from '../db/index.js';
 import { toISOStringSafe } from '../lib/date.js';
 import * as reputationService from '../lib/reputation-service.js';
-import { triggerShiftInvite } from '../services/pusher.service.js';
+import { triggerShiftInvite, triggerUserEvent } from '../services/pusher.service.js';
+import { calculateDistance, validateLocationProximity } from '../utils/geofencing.js';
+import * as shiftLogsRepo from '../repositories/shift-logs.repository.js';
+import * as venuesRepo from '../repositories/venues.repository.js';
 
 const router = Router();
 
@@ -1442,84 +1446,107 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   const commissionAmount = Math.round(shiftAmount * commissionRate);
   const barberAmount = shiftAmount - commissionAmount;
 
-  // Create and confirm PaymentIntent with manual capture
-  let paymentIntentId: string | null = null;
-  try {
-    paymentIntentId = await stripeConnectService.createAndConfirmPaymentIntent(
-      shiftAmount,
-      'aud', // Using AUD for Australian market
-      customerId,
-      paymentMethodId,
-      commissionAmount,
-      {
-        destination: barber.stripeAccountId,
-      },
-      {
-        shiftId: shift.id,
-        barberId: userId,
-        shopId: shift.employerId,
-        type: 'shift_payment',
-      }
-    );
-  } catch (error: any) {
-    console.error('[SHIFT_ACCEPT] Error creating PaymentIntent:', error);
-    res.status(500).json({ message: 'Failed to create payment authorization', error: error.message });
-    return;
-  }
-
-  if (!paymentIntentId) {
-    res.status(500).json({ message: 'Failed to create payment authorization' });
-    return;
-  }
-
-  // TRANSACTION: Use atomic update to prevent race condition
-  // This uses a WHERE clause that includes assigneeId IS NULL to ensure atomic claim
+  // ATOMIC TRANSACTION: Lock shift, verify availability, create payment, update shift
+  // If any step fails, rollback transaction and cancel PaymentIntent
   const db = getDb();
   if (!db) {
     res.status(500).json({ message: 'Database not available' });
     return;
   }
 
+  let paymentIntentId: string | null = null;
+  let updatedShift: typeof shifts.$inferSelect | null = null;
+
   try {
-    // Atomic update: only succeeds if assigneeId is still NULL
-    const [updatedShift] = await db
-      .update(shifts)
-      .set({
-        assigneeId: userId,
-        status: 'confirmed',
-        paymentStatus: 'AUTHORIZED',
-        paymentIntentId: paymentIntentId,
-        applicationFeeAmount: commissionAmount,
-        transferAmount: barberAmount,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(shifts.id, id),
-        sql`${shifts.assigneeId} IS NULL` // Critical: atomic check
-      ))
-      .returning();
+    // Use Drizzle transaction to ensure atomicity
+    updatedShift = await db.transaction(async (tx) => {
+      // Step 1: Lock the shift row with FOR UPDATE to prevent race conditions
+      const lockedShiftResult = await (tx as any).execute(
+        sql`SELECT * FROM shifts WHERE id = ${id} FOR UPDATE`
+      );
+      
+      // Handle different result formats
+      const lockedShift = Array.isArray(lockedShiftResult) 
+        ? lockedShiftResult[0] 
+        : lockedShiftResult?.rows?.[0] || lockedShiftResult?.[0];
 
-    if (!updatedShift) {
-      // Race condition: someone else got it first
-      res.status(409).json({ 
-        message: 'Already Taken', 
-        error: 'This shift was just accepted by another professional' 
-      });
-      return;
-    }
+      if (!lockedShift) {
+        throw new Error('Shift not found');
+      }
 
-    // Expire all other invitations for this shift
-    const expiredCount = await shiftInvitationsRepo.expireAllPendingInvitationsForShift(id, userId);
-    console.log(`[SHIFT_ACCEPT] Expired ${expiredCount} other invitations for shift ${id}`);
+      // Step 2: Verify shift is still available (double-check after lock)
+      if (lockedShift.assignee_id) {
+        throw new Error('Shift has already been accepted by another professional');
+      }
 
-    // Also update legacy shift offers
-    await shiftOffersRepo.declineAllPendingOffersForShift(id);
+      if (lockedShift.status !== 'invited' && lockedShift.status !== 'pending' && lockedShift.status !== 'open') {
+        throw new Error('Shift is not in a valid status for acceptance');
+      }
+
+      // Step 3: Create PaymentIntent (external API call - must succeed before DB update)
+      // This is outside the transaction but we'll handle rollback if it fails
+      try {
+        paymentIntentId = await stripeConnectService.createAndConfirmPaymentIntent(
+          shiftAmount,
+          'aud', // Using AUD for Australian market
+          customerId,
+          paymentMethodId,
+          commissionAmount,
+          {
+            destination: barber.stripeAccountId,
+          },
+          {
+            shiftId: shift.id,
+            barberId: userId,
+            shopId: shift.employerId,
+            type: 'shift_payment',
+          }
+        );
+      } catch (stripeError: any) {
+        console.error('[SHIFT_ACCEPT] Error creating PaymentIntent:', stripeError);
+        // Throw to trigger transaction rollback
+        throw new Error(`Failed to create payment authorization: ${stripeError.message}`);
+      }
+
+      if (!paymentIntentId) {
+        throw new Error('Failed to create payment authorization');
+      }
+
+      // Step 4: Update shift with assignee and payment info (within transaction)
+      const [updated] = await tx
+        .update(shifts)
+        .set({
+          assigneeId: userId,
+          status: 'confirmed',
+          paymentStatus: 'AUTHORIZED',
+          paymentIntentId: paymentIntentId,
+          applicationFeeAmount: commissionAmount,
+          transferAmount: barberAmount,
+          updatedAt: new Date(),
+        })
+        .where(eq(shifts.id, id))
+        .returning();
+
+      if (!updated) {
+        throw new Error('Failed to update shift');
+      }
+
+      // Step 5: Expire all other invitations for this shift (within transaction)
+      await shiftInvitationsRepo.expireAllPendingInvitationsForShift(id, userId);
+      await shiftOffersRepo.declineAllPendingOffersForShift(id);
+
+      // Transaction will commit automatically if no errors thrown
+      return updated;
+    });
+
+    // Transaction succeeded - shift is now assigned and payment is authorized
+    console.log(`[SHIFT_ACCEPT] Successfully accepted shift ${id} with PaymentIntent ${paymentIntentId}`);
 
     // Get professional information
     const professional = await usersRepo.getUserById(userId);
     const professionalName = professional?.name || 'Professional';
 
-    // Send notification to business
+    // Send notification to business (non-blocking)
     try {
       await notificationsService.notifyBusinessOfAcceptance(
         shift.employerId,
@@ -1541,7 +1568,33 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     res.status(200).json(updatedShift);
   } catch (error: any) {
     console.error('[SHIFT_ACCEPT] Transaction error:', error);
-    res.status(500).json({ message: 'Failed to accept shift', error: error.message });
+    
+    // CRITICAL: If PaymentIntent was created but transaction failed, cancel it
+    if (paymentIntentId) {
+      console.log(`[SHIFT_ACCEPT] Attempting to cancel orphaned PaymentIntent ${paymentIntentId}`);
+      try {
+        const canceled = await stripeConnectService.cancelPaymentIntent(paymentIntentId);
+        if (canceled) {
+          console.log(`[SHIFT_ACCEPT] Successfully canceled orphaned PaymentIntent ${paymentIntentId}`);
+        } else {
+          console.error(`[SHIFT_ACCEPT] Failed to cancel PaymentIntent ${paymentIntentId} - manual intervention may be required`);
+        }
+      } catch (cancelError) {
+        console.error(`[SHIFT_ACCEPT] Error canceling PaymentIntent ${paymentIntentId}:`, cancelError);
+      }
+    }
+
+    // Return appropriate error response
+    if (error.message?.includes('already been accepted')) {
+      res.status(409).json({ 
+        message: 'Already Taken', 
+        error: 'This shift was just accepted by another professional' 
+      });
+    } else if (error.message?.includes('payment authorization')) {
+      res.status(500).json({ message: 'Failed to create payment authorization', error: error.message });
+    } else {
+      res.status(500).json({ message: 'Failed to accept shift', error: error.message });
+    }
   }
 }));
 
@@ -1769,58 +1822,113 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
       
       const barberAmount = shiftAmount - commissionAmount;
 
-      // Create payment intent
+      // ATOMIC TRANSACTION: Lock shift, verify availability, create payment, update shift
       let paymentIntentId: string | null = null;
+      let updatedShift: typeof shifts.$inferSelect | null = null;
+
       try {
-        paymentIntentId = await stripeConnectService.createAndConfirmPaymentIntent(
-          shiftAmount,
-          'aud',
-          customerId,
-          paymentMethodId,
-          commissionAmount,
-          { destination: barber.stripeAccountId },
-          { shiftId: shift.id, barberId: userId, shopId: shift.employerId, type: 'shift_payment' }
-        );
+        // Use Drizzle transaction to ensure atomicity per shift
+        updatedShift = await db.transaction(async (tx) => {
+          // Step 1: Lock the shift row with FOR UPDATE to prevent race conditions
+          const lockedShiftResult = await (tx as any).execute(
+            sql`SELECT * FROM shifts WHERE id = ${shiftId} FOR UPDATE`
+          );
+          
+          // Handle different result formats
+          const lockedShift = Array.isArray(lockedShiftResult) 
+            ? lockedShiftResult[0] 
+            : lockedShiftResult?.rows?.[0] || lockedShiftResult?.[0];
+
+          if (!lockedShift) {
+            throw new Error('Shift not found');
+          }
+
+          // Step 2: Verify shift is still available (double-check after lock)
+          if (lockedShift.assignee_id) {
+            throw new Error('Shift has already been accepted by another professional');
+          }
+
+          if (lockedShift.status !== 'invited' && lockedShift.status !== 'pending' && lockedShift.status !== 'open') {
+            throw new Error('Shift is not in a valid status for acceptance');
+          }
+
+          // Step 3: Create PaymentIntent (external API call - must succeed before DB update)
+          try {
+            paymentIntentId = await stripeConnectService.createAndConfirmPaymentIntent(
+              shiftAmount,
+              'aud',
+              customerId,
+              paymentMethodId,
+              commissionAmount,
+              { destination: barber.stripeAccountId },
+              { shiftId: shift.id, barberId: userId, shopId: shift.employerId, type: 'shift_payment' }
+            );
+          } catch (stripeError: any) {
+            console.error(`[BULK_ACCEPT] Error creating PaymentIntent for shift ${shiftId}:`, stripeError);
+            throw new Error(`Failed to create payment authorization: ${stripeError.message}`);
+          }
+
+          if (!paymentIntentId) {
+            throw new Error('Failed to create payment authorization');
+          }
+
+          // Step 4: Update shift with assignee and payment info (within transaction)
+          const [updated] = await tx
+            .update(shifts)
+            .set({
+              assigneeId: userId,
+              status: 'confirmed',
+              paymentStatus: 'AUTHORIZED',
+              paymentIntentId: paymentIntentId,
+              applicationFeeAmount: commissionAmount,
+              transferAmount: barberAmount,
+              updatedAt: new Date(),
+            })
+            .where(eq(shifts.id, shiftId))
+            .returning();
+
+          if (!updated) {
+            throw new Error('Failed to update shift');
+          }
+
+          // Step 5: Expire all other invitations for this shift (within transaction)
+          await shiftInvitationsRepo.expireAllPendingInvitationsForShift(shiftId, userId);
+          await shiftOffersRepo.declineAllPendingOffersForShift(shiftId);
+
+          // Transaction will commit automatically if no errors thrown
+          return updated;
+        });
+
+        // Transaction succeeded for this shift
+        results.accepted.push(shiftId);
       } catch (error: any) {
-        results.failed.push(shiftId);
-        results.errors.push({ shiftId, error: 'Payment authorization failed' });
-        continue;
+        console.error(`[BULK_ACCEPT] Error processing shift ${shiftId}:`, error);
+        
+        // CRITICAL: If PaymentIntent was created but transaction failed, cancel it
+        if (paymentIntentId) {
+          console.log(`[BULK_ACCEPT] Attempting to cancel orphaned PaymentIntent ${paymentIntentId} for shift ${shiftId}`);
+          try {
+            const canceled = await stripeConnectService.cancelPaymentIntent(paymentIntentId);
+            if (canceled) {
+              console.log(`[BULK_ACCEPT] Successfully canceled orphaned PaymentIntent ${paymentIntentId}`);
+            } else {
+              console.error(`[BULK_ACCEPT] Failed to cancel PaymentIntent ${paymentIntentId} - manual intervention may be required`);
+            }
+          } catch (cancelError) {
+            console.error(`[BULK_ACCEPT] Error canceling PaymentIntent ${paymentIntentId}:`, cancelError);
+          }
+        }
+
+        // Categorize the error
+        if (error.message?.includes('already been accepted') || error.message?.includes('already taken')) {
+          results.alreadyTaken.push(shiftId);
+        } else if (error.message?.includes('not found')) {
+          results.notFound.push(shiftId);
+        } else {
+          results.failed.push(shiftId);
+          results.errors.push({ shiftId, error: error.message || 'Unknown error' });
+        }
       }
-
-      if (!paymentIntentId) {
-        results.failed.push(shiftId);
-        results.errors.push({ shiftId, error: 'Payment authorization failed' });
-        continue;
-      }
-
-      // Atomic update with race condition protection
-      const [updatedShift] = await db
-        .update(shifts)
-        .set({
-          assigneeId: userId,
-          status: 'confirmed',
-          paymentStatus: 'AUTHORIZED',
-          paymentIntentId: paymentIntentId,
-          applicationFeeAmount: commissionAmount,
-          transferAmount: barberAmount,
-          updatedAt: new Date(),
-        })
-        .where(and(
-          eq(shifts.id, shiftId),
-          sql`${shifts.assigneeId} IS NULL`
-        ))
-        .returning();
-
-      if (!updatedShift) {
-        results.alreadyTaken.push(shiftId);
-        continue;
-      }
-
-      // Expire other invitations
-      await shiftInvitationsRepo.expireAllPendingInvitationsForShift(shiftId, userId);
-      await shiftOffersRepo.declineAllPendingOffersForShift(shiftId);
-
-      results.accepted.push(shiftId);
 
       // Send notification to business
       try {
@@ -2519,17 +2627,10 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
     return;
   }
 
-  // Check if user has already applied for this shift
-  const existingApplication = await applicationsRepo.hasUserApplied(id, 'shift', userId);
-  if (existingApplication) {
+  // Check if user has already applied for this shift (using new shift_applications table)
+  const hasApplied = await shiftApplicationsRepo.hasWorkerApplied(id, userId);
+  if (hasApplied) {
     res.status(409).json({ message: 'You have already applied for this shift' });
-    return;
-  }
-
-  // Get user information for application
-  const user = await usersRepo.getUserById(userId);
-  if (!user) {
-    res.status(404).json({ message: 'User not found' });
     return;
   }
 
@@ -2537,6 +2638,13 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
   const autoAccept = shift.autoAccept || false;
 
   if (autoAccept) {
+    // Create application record in shift_applications table for tracking
+    await shiftApplicationsRepo.createShiftApplication({
+      shiftId: id,
+      workerId: userId,
+      venueId: shift.employerId,
+      message: message || null,
+    });
     // Instant accept: Update shift to CONFIRMED and assign professional
     const { getDb } = await import('../db/index.js');
     const db = getDb();
@@ -2592,13 +2700,12 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
       throw error;
     }
   } else {
-    // Create application record
-    const application = await applicationsRepo.createApplication({
+    // Create application record in shift_applications table
+    const application = await shiftApplicationsRepo.createShiftApplication({
       shiftId: id,
-      userId: userId,
-      name: user.name || 'Professional',
-      email: user.email || '',
-      coverLetter: `Application for shift: ${shift.title}`,
+      workerId: userId,
+      venueId: shift.employerId,
+      message: message || null,
     });
 
     if (!application) {
@@ -2606,7 +2713,7 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
       return;
     }
 
-    // Send notification to shop
+    // Send notification to venue owner
     try {
       await notificationsService.notifyBusinessOfApplication(
         shift.employerId,
@@ -2623,7 +2730,15 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
 
     res.status(201).json({
       message: 'Application submitted successfully',
-      application,
+      application: {
+        id: application.id,
+        shiftId: application.shiftId,
+        workerId: application.workerId,
+        venueId: application.venueId,
+        status: application.status,
+        message: application.message,
+        createdAt: application.createdAt,
+      },
       instantAccept: false,
     });
   }
@@ -2928,6 +3043,275 @@ router.post('/:id/no-show', authenticateUser, asyncHandler(async (req: Authentic
     totalStrikes: noShowResult.strikeCount,
     suspendedUntil: noShowResult.suspendedUntil,
     reliabilityScore: noShowResult.reliabilityScore,
+  });
+}));
+
+// Clock In - Staff action to clock in for a shift with geofencing validation
+// POST /api/shifts/:id/clock-in
+router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Validate request body
+  const { latitude, longitude, accuracy, timestamp } = req.body;
+
+  if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+    res.status(400).json({ 
+      message: 'Invalid coordinates. latitude and longitude are required and must be numbers.',
+      error: 'INVALID_COORDINATES'
+    });
+    return;
+  }
+
+  // Validate coordinate ranges
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    res.status(400).json({ 
+      message: 'Invalid coordinate values. Latitude must be between -90 and 90, longitude between -180 and 180.',
+      error: 'INVALID_COORDINATE_RANGE'
+    });
+    return;
+  }
+
+  // Get the shift
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Verify the user is the assigned staff member for this shift
+  if (shift.assigneeId !== userId) {
+    res.status(403).json({ 
+      message: 'Only the assigned staff member can clock in for this shift',
+      error: 'UNAUTHORIZED'
+    });
+    return;
+  }
+
+  // Check if shift is already clocked in
+  if (shift.clockInTime) {
+    res.status(400).json({ 
+      message: 'Shift has already been clocked in',
+      error: 'ALREADY_CLOCKED_IN',
+      clockInTime: shift.clockInTime instanceof Date ? shift.clockInTime.toISOString() : shift.clockInTime
+    });
+    return;
+  }
+
+  // Validate that the current time is within a reasonable window of the shift start time (30 mins before)
+  const shiftStartTime = new Date(shift.startTime);
+  const now = new Date();
+  const thirtyMinutesBefore = new Date(shiftStartTime.getTime() - 30 * 60 * 1000);
+  
+  if (now < thirtyMinutesBefore) {
+    res.status(400).json({ 
+      message: 'Cannot clock in more than 30 minutes before shift start time',
+      error: 'TOO_EARLY',
+      shiftStartTime: shiftStartTime.toISOString(),
+      earliestClockIn: thirtyMinutesBefore.toISOString()
+    });
+    return;
+  }
+
+  // Validate timestamp freshness if provided (location must be < 1 minute old)
+  if (timestamp && typeof timestamp === 'number') {
+    const locationAge = Date.now() - timestamp;
+    if (locationAge > 60000) { // 1 minute in milliseconds
+      res.status(400).json({ 
+        message: 'Location data is too old. Please refresh your location and try again.',
+        error: 'STALE_LOCATION',
+        locationAgeMs: locationAge
+      });
+      return;
+    }
+  }
+
+  // Get venue coordinates
+  // First try to get coordinates from shift's lat/lng fields
+  let venueLat: number | null = null;
+  let venueLng: number | null = null;
+
+  const shiftLatRaw = (shift as any).lat;
+  const shiftLngRaw = (shift as any).lng;
+  
+  if (shiftLatRaw !== null && shiftLatRaw !== undefined && shiftLngRaw !== null && shiftLngRaw !== undefined) {
+    const shiftLatParsed = typeof shiftLatRaw === 'number' ? shiftLatRaw : typeof shiftLatRaw === 'string' ? parseFloat(shiftLatRaw) : NaN;
+    const shiftLngParsed = typeof shiftLngRaw === 'number' ? shiftLngRaw : typeof shiftLngRaw === 'string' ? parseFloat(shiftLngRaw) : NaN;
+    
+    if (Number.isFinite(shiftLatParsed) && Number.isFinite(shiftLngParsed)) {
+      venueLat = shiftLatParsed;
+      venueLng = shiftLngParsed;
+    }
+  }
+
+  // If shift doesn't have coordinates, try to get them from the venue
+  if (venueLat === null || venueLng === null) {
+    const venue = await venuesRepo.getVenueByUserId(shift.employerId);
+    if (venue && venue.address?.lat && venue.address?.lng) {
+      venueLat = typeof venue.address.lat === 'number' ? venue.address.lat : parseFloat(venue.address.lat.toString());
+      venueLng = typeof venue.address.lng === 'number' ? venue.address.lng : parseFloat(venue.address.lng.toString());
+    }
+  }
+
+  // If still no coordinates, reject the request
+  if (venueLat === null || venueLng === null) {
+    res.status(400).json({ 
+      message: 'Venue location coordinates are not available. Cannot validate geofencing.',
+      error: 'VENUE_COORDINATES_MISSING'
+    });
+    return;
+  }
+
+  // Calculate distance using Haversine formula
+  const maxRadiusMeters = parseFloat(process.env.CLOCK_IN_MAX_RADIUS_METERS || '200');
+  const proximityCheck = validateLocationProximity(
+    latitude,
+    longitude,
+    venueLat,
+    venueLng,
+    maxRadiusMeters
+  );
+
+  // Reject if too far from venue
+  if (!proximityCheck.isValid) {
+    // Log the failed attempt
+    await shiftLogsRepo.createShiftLog({
+      shiftId,
+      staffId: userId,
+      eventType: 'CLOCK_IN_ATTEMPT_FAILED',
+      latitude,
+      longitude,
+      venueLatitude: venueLat,
+      venueLongitude: venueLng,
+      distanceMeters: proximityCheck.distance,
+      accuracy: accuracy || null,
+      metadata: JSON.stringify({ reason: 'TOO_FAR_FROM_VENUE', maxRadiusMeters })
+    });
+
+    res.status(403).json({
+      success: false,
+      error: 'TOO_FAR_FROM_VENUE',
+      message: `You must be within ${maxRadiusMeters} meters of the venue to clock in`,
+      distance: proximityCheck.distance,
+      maxDistance: maxRadiusMeters
+    });
+    return;
+  }
+
+  // Validate GPS accuracy if provided (require accuracy within 50 meters)
+  if (accuracy !== undefined && accuracy !== null) {
+    if (typeof accuracy !== 'number' || accuracy > 50) {
+      res.status(400).json({ 
+        message: 'GPS accuracy insufficient. Please ensure you have a clear view of the sky.',
+        error: 'INSUFFICIENT_GPS_ACCURACY',
+        accuracy
+      });
+      return;
+    }
+  }
+
+  // All validations passed - proceed with clock-in
+  const clockInTime = new Date();
+
+  // Update shift status and clock-in time in a transaction
+  // Use 'IN_PROGRESS' or 'CLOCKED_IN' status - checking what statuses are available
+  // Based on the schema, we'll use 'filled' status and set clockInTime
+  const updatedShift = await shiftsRepo.updateShift(shiftId, {
+    status: 'filled', // Shift is now in progress
+    clockInTime: clockInTime,
+    attendanceStatus: 'completed', // Mark attendance as completed (clocked in)
+  });
+
+  if (!updatedShift) {
+    res.status(500).json({ 
+      message: 'Failed to update shift status',
+      error: 'UPDATE_FAILED'
+    });
+    return;
+  }
+
+  // Log the successful clock-in event
+  await shiftLogsRepo.createShiftLog({
+    shiftId,
+    staffId: userId,
+    eventType: 'CLOCK_IN',
+    latitude,
+    longitude,
+    venueLatitude: venueLat,
+    venueLongitude: venueLng,
+    distanceMeters: proximityCheck.distance,
+    accuracy: accuracy || null,
+    metadata: JSON.stringify({ 
+      clockInTime: clockInTime.toISOString(),
+      shiftStartTime: shiftStartTime.toISOString(),
+      timeDifferenceMinutes: Math.round((clockInTime.getTime() - shiftStartTime.getTime()) / (1000 * 60))
+    })
+  });
+
+  // Get staff member details for notification
+  const staffMember = await usersRepo.getUserById(userId);
+  const venueOwner = await usersRepo.getUserById(shift.employerId);
+
+  // Trigger Pusher notification to the venue owner
+  try {
+    await triggerUserEvent(shift.employerId, 'STAFF_CLOCKED_IN', {
+      shiftId,
+      shiftTitle: shift.title,
+      staffId: userId,
+      staffName: staffMember?.name || 'Staff member',
+      clockInTime: clockInTime.toISOString(),
+      distance: proximityCheck.distance,
+      location: {
+        latitude,
+        longitude
+      }
+    });
+  } catch (error: any) {
+    console.error('[CLOCK_IN] Error triggering Pusher notification:', error);
+    // Don't fail the request if Pusher fails
+  }
+
+  // Send in-app notification to venue owner
+  try {
+    await notificationsService.createNotification(shift.employerId, {
+      type: 'shift_status_change',
+      title: 'Staff Clocked In',
+      message: `${staffMember?.name || 'A staff member'} has clocked in for shift: ${shift.title}`,
+      data: {
+        shiftId,
+        staffId: userId,
+        clockInTime: clockInTime.toISOString(),
+        link: `/shifts/${shiftId}`
+      }
+    });
+  } catch (error: any) {
+    console.error('[CLOCK_IN] Error creating notification:', error);
+    // Don't fail the request if notification fails
+  }
+
+  res.status(200).json({
+    success: true,
+    clockInTime: clockInTime.toISOString(),
+    message: 'Clocked in successfully',
+    distance: proximityCheck.distance,
+    maxDistance: maxRadiusMeters,
+    shift: {
+      id: shift.id,
+      title: shift.title,
+      status: updatedShift.status,
+      clockInTime: clockInTime.toISOString()
+    }
   });
 }));
 
