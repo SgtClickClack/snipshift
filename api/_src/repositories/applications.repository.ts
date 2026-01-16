@@ -4,7 +4,7 @@
  * Encapsulates database queries for applications with pagination and filtering
  */
 
-import { eq, and, desc, sql, count, or, isNotNull } from 'drizzle-orm';
+import { eq, and, desc, sql, count, or, isNotNull, inArray } from 'drizzle-orm';
 import { applications, jobs, shifts, users } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
@@ -656,4 +656,135 @@ export async function declinePendingApplicationsForShift(
     .returning();
 
   return result.length;
+}
+
+/**
+ * Batch fetch application counts for multiple shifts and/or jobs (optimized for N+1 prevention)
+ * Returns a Map of (shiftId|jobId) -> count for O(1) lookups
+ * 
+ * @param shiftIds - Array of shift IDs to get counts for
+ * @param jobIds - Array of job IDs to get counts for
+ * @returns Map with keys like "shift:${id}" or "job:${id}" and count values
+ */
+export async function getApplicationCountsBatch(
+  shiftIds: string[] = [],
+  jobIds: string[] = []
+): Promise<Map<string, number>> {
+  const db = getDb();
+  const countMap = new Map<string, number>();
+
+  if (!db) {
+    return countMap;
+  }
+
+  if (shiftIds.length === 0 && jobIds.length === 0) {
+    return countMap;
+  }
+
+  try {
+    // Fetch counts for shifts
+    if (shiftIds.length > 0) {
+      const shiftCounts = await db
+        .select({
+          shiftId: applications.shiftId,
+          count: sql<number>`count(*)`,
+        })
+        .from(applications)
+        .where(
+          and(
+            inArray(applications.shiftId, shiftIds),
+            isNotNull(applications.shiftId)
+          )
+        )
+        .groupBy(applications.shiftId);
+
+      shiftCounts.forEach((row) => {
+        if (row.shiftId) {
+          countMap.set(`shift:${row.shiftId}`, Number(row.count) || 0);
+        }
+      });
+    }
+
+    // Fetch counts for jobs
+    if (jobIds.length > 0) {
+      const jobCounts = await db
+        .select({
+          jobId: applications.jobId,
+          count: sql<number>`count(*)`,
+        })
+        .from(applications)
+        .where(
+          and(
+            inArray(applications.jobId, jobIds),
+            isNotNull(applications.jobId)
+          )
+        )
+        .groupBy(applications.jobId);
+
+      jobCounts.forEach((row) => {
+        if (row.jobId) {
+          countMap.set(`job:${row.jobId}`, Number(row.count) || 0);
+        }
+      });
+    }
+  } catch (error: any) {
+    // Graceful degradation: if shift_id column doesn't exist, fall back to jobs-only
+    if (shouldFallbackToJobsOnly(error) && shiftIds.length > 0) {
+      console.warn('[getApplicationCountsBatch] Falling back to jobs-only query:', {
+        message: error?.message,
+        code: error?.code,
+      });
+
+      // Retry with jobs only
+      if (jobIds.length > 0) {
+        try {
+          const jobCounts = await db
+            .select({
+              jobId: applications.jobId,
+              count: sql<number>`count(*)`,
+            })
+            .from(applications)
+            .where(
+              and(
+                inArray(applications.jobId, jobIds),
+                isNotNull(applications.jobId)
+              )
+            )
+            .groupBy(applications.jobId);
+
+          jobCounts.forEach((row) => {
+            if (row.jobId) {
+              countMap.set(`job:${row.jobId}`, Number(row.count) || 0);
+            }
+          });
+        } catch (fallbackError: any) {
+          console.error('[getApplicationCountsBatch] Fallback query also failed:', {
+            message: fallbackError?.message,
+            code: fallbackError?.code,
+          });
+        }
+      }
+    } else {
+      console.error('[getApplicationCountsBatch] Database error:', {
+        message: error?.message,
+        code: error?.code,
+        shiftIdsCount: shiftIds.length,
+        jobIdsCount: jobIds.length,
+      });
+    }
+  }
+
+  // Ensure all requested IDs have entries (even if count is 0)
+  shiftIds.forEach(id => {
+    if (!countMap.has(`shift:${id}`)) {
+      countMap.set(`shift:${id}`, 0);
+    }
+  });
+  jobIds.forEach(id => {
+    if (!countMap.has(`job:${id}`)) {
+      countMap.set(`job:${id}`, 0);
+    }
+  });
+
+  return countMap;
 }
