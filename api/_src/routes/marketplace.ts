@@ -54,15 +54,15 @@ router.get('/venues', asyncHandler(async (req, res) => {
       .limit(limit)
       .offset(offset);
 
-    // Get total count for pagination
-    const countQuery = db
-      .select()
+    // Get total count for pagination (efficient count query)
+    const { sql, count } = await import('drizzle-orm');
+    const countResult = await db
+      .select({ count: count() })
       .from(venues)
       .innerJoin(users, eq(venues.userId, users.id))
       .where(whereClause);
 
-    const allMatchingVenues = await countQuery;
-    const totalCount = allMatchingVenues.length;
+    const totalCount = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(totalCount / limit);
 
     // Transform data for frontend
