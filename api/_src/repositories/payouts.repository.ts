@@ -4,9 +4,9 @@
  * Database operations for payouts
  */
 
-import { eq } from 'drizzle-orm';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
-import { payouts } from '../db/schema.js';
+import { payouts, shifts, users } from '../db/schema.js';
 
 export interface CreatePayoutInput {
   shiftId: string;
@@ -93,6 +93,68 @@ export async function getPayoutByShiftId(
   } catch (error) {
     console.error('[PAYOUTS REPO] Error getting payout by shift ID:', error);
     return null;
+  }
+}
+
+/**
+ * Get payouts for a worker with shift and venue details
+ */
+export async function getPayoutsForWorker(
+  workerId: string,
+  filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    status?: 'pending' | 'processing' | 'completed' | 'failed';
+  }
+): Promise<Array<Payout & {
+  shift: typeof shifts.$inferSelect | null;
+  venue: typeof users.$inferSelect | null;
+}>> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const conditions = [eq(payouts.workerId, workerId)];
+    
+    if (filters?.startDate) {
+      conditions.push(gte(payouts.createdAt, filters.startDate));
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(lte(payouts.createdAt, filters.endDate));
+    }
+    
+    if (filters?.status) {
+      conditions.push(eq(payouts.status, filters.status));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const result = await db
+      .select({
+        payout: payouts,
+        shift: shifts,
+        venue: users,
+      })
+      .from(payouts)
+      .leftJoin(shifts, eq(payouts.shiftId, shifts.id))
+      .leftJoin(users, eq(payouts.venueId, users.id))
+      .where(whereClause)
+      .orderBy(desc(payouts.createdAt));
+
+    return result.map((row) => ({
+      ...row.payout,
+      shift: row.shift,
+      venue: row.venue,
+    })) as Array<Payout & {
+      shift: typeof shifts.$inferSelect | null;
+      venue: typeof users.$inferSelect | null;
+    }>;
+  } catch (error) {
+    console.error('[PAYOUTS REPO] Error getting payouts for worker:', error);
+    return [];
   }
 }
 
