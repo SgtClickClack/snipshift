@@ -23,6 +23,7 @@ import cors from 'cors';
 import { JobSchema, ApplicationSchema, LoginSchema, ApplicationStatusSchema, PurchaseSchema, JobStatusUpdateSchema, ReviewSchema } from './validation/schemas.js';
 import { errorHandler, asyncHandler } from './middleware/errorHandler.js';
 import { authenticateUser, AuthenticatedRequest } from './middleware/auth.js';
+import { correlationIdMiddleware } from './middleware/correlation-id.js';
 import * as jobsRepo from './repositories/jobs.repository.js';
 import * as applicationsRepo from './repositories/applications.repository.js';
 import * as usersRepo from './repositories/users.repository.js';
@@ -124,11 +125,15 @@ app.use('/api/webhooks', webhooksRouter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Correlation ID middleware - MUST be before request logging
+app.use(correlationIdMiddleware);
+
 // Request logging middleware - log ALL incoming API requests AFTER body parsing
 app.use((req, res, next) => {
   // Only log API routes to avoid noise
   if (req.path.startsWith('/api/')) {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`, {
+      correlationId: req.correlationId,
       hasBody: !!req.body,
       bodyKeys: req.body ? Object.keys(req.body) : [],
       hasAuth: !!req.headers.authorization,
@@ -190,16 +195,14 @@ app.get('/health', asyncHandler(async (req, res) => {
 
 // API Health check endpoint (accessible via /api/health)
 app.get('/api/health', asyncHandler(async (req, res) => {
-  const db = getDatabase();
-  const dbStatus = db ? 'connected' : 'not configured';
+  const { performHealthChecks } = await import('./services/health-check.service.js');
+  const healthCheck = await performHealthChecks();
   
-  res.status(200).json({ 
-    status: 'ok', 
-    message: 'HospoGo API is running',
-    database: dbStatus,
-    version: '2024-01-12-auto-create-users', // Deployment marker
-    timestamp: new Date().toISOString(),
-  });
+  // Return appropriate status code based on health
+  const statusCode = healthCheck.status === 'unhealthy' ? 503 : 
+                     healthCheck.status === 'degraded' ? 200 : 200;
+  
+  res.status(statusCode).json(healthCheck);
 }));
 
 // API login endpoint

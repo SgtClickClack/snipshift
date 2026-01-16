@@ -346,9 +346,10 @@ export default function ProfileHeader({
           console.error('Banner - Failed to extract valid URL string from API response:', responseData);
         }
 
-        // Show success toast
+        // Show success toast - user stays on the page to continue editing
+        // NOTE: Image upload does NOT trigger navigation - user remains in edit mode
         toast({
-          title: "Banner updated",
+          title: "Image uploaded successfully",
           description: "Your banner image has been successfully uploaded.",
         });
       } catch (apiError: any) {
@@ -526,11 +527,13 @@ export default function ProfileHeader({
       setLocalAvatarUrl(newUrl);
       
       // Call parent callback with the new URL
+      // NOTE: This only updates form data - does NOT trigger navigation or form submission
+      // The user remains in edit mode and can continue editing other fields
       onAvatarUpload?.(newUrl);
 
-      // Only show success if API succeeded
+      // Show success toast - user stays on the page to continue editing
       toast({
-        title: "Profile picture updated",
+        title: "Image uploaded successfully",
         description: "Your profile picture has been successfully uploaded.",
       });
     } catch (error: any) {

@@ -83,6 +83,28 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
     imageURL: ""
   });
 
+  // Capture initial profile state snapshot when editing starts (component mounts)
+  const initialProfileStateRef = useRef<{
+    displayName: string;
+    bio?: string;
+    location?: { city: string; state: string };
+    businessName?: string;
+    businessDescription?: string;
+  } | null>(null);
+
+  // Initialize snapshot on mount
+  useEffect(() => {
+    if (!initialProfileStateRef.current) {
+      initialProfileStateRef.current = {
+        displayName: profile.displayName || "",
+        bio: profile.bio || "",
+        location: profile.location ? { ...profile.location } : undefined,
+        businessName: profile.businessName || "",
+        businessDescription: profile.businessDescription || "",
+      };
+    }
+  }, []); // Only run on mount
+
   const updateFormData = (updates: Partial<UserProfile>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
@@ -191,12 +213,41 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
     onSave(formData);
   };
 
+  const handleCancel = () => {
+    // Revert text fields to initial state while preserving images
+    if (initialProfileStateRef.current) {
+      setFormData(prev => ({
+        ...prev,
+        displayName: initialProfileStateRef.current!.displayName,
+        bio: initialProfileStateRef.current!.bio,
+        location: initialProfileStateRef.current!.location 
+          ? { ...initialProfileStateRef.current!.location } 
+          : undefined,
+        businessName: initialProfileStateRef.current!.businessName,
+        businessDescription: initialProfileStateRef.current!.businessDescription,
+        // Note: profileImageURL and bannerImageURL are NOT reverted - they keep any successfully uploaded images
+      }));
+    }
+    
+    // Reset temporary form fields
+    setNewSkill("");
+    setNewPortfolioItem({ imageURL: "", caption: "", category: "" });
+    setNewTeamMember({ name: "", role: "", imageURL: "" });
+    
+    toast({
+      title: "Changes discarded",
+      description: "Your text changes have been reverted. Uploaded images are preserved.",
+    });
+    
+    onCancel();
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Edit Profile</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel} data-testid="button-cancel-edit">
+          <Button variant="outline" onClick={handleCancel} data-testid="button-cancel-edit">
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSaving} data-testid="button-save-profile">
@@ -216,6 +267,9 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
                 avatarUrl={formData.profileImageURL}
                 displayName={formData.displayName}
                 editable={true}
+                // NOTE: Image uploads only update form data - they do NOT trigger form submission or navigation
+                // The user remains in edit mode and can continue editing other fields
+                // Only the Save button at the bottom triggers form submission
                 onBannerUpload={(url) => updateFormData({ bannerImageURL: url })}
                 onAvatarUpload={(url) => updateFormData({ profileImageURL: url })}
               />

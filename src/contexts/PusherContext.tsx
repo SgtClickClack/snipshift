@@ -56,6 +56,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const pusherRef = useRef<Pusher | null>(null);
+  const userChannelRef = useRef<Pusher.Channel | null>(null);
   const channelsRef = useRef<Map<string, Pusher.Channel>>(new Map());
   const messageCallbacksRef = useRef<Set<(message: Message) => void>>(new Set());
   const shiftStatusCallbacksRef = useRef<Set<(update: ShiftStatusUpdate) => void>>(new Set());
@@ -66,6 +67,12 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
     if (!user || !token) {
       // Disconnect if user logs out
       if (pusherRef.current) {
+        // Clean up user channel if it exists
+        if (userChannelRef.current) {
+          userChannelRef.current.unbind_all();
+          pusherRef.current.unsubscribe(`private-user-${user?.id || ''}`);
+          userChannelRef.current = null;
+        }
         pusherRef.current.disconnect();
         pusherRef.current = null;
         channelsRef.current.clear();
@@ -83,6 +90,12 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
 
     if (isE2E) {
       if (pusherRef.current) {
+        // Clean up user channel if it exists
+        if (userChannelRef.current) {
+          userChannelRef.current.unbind_all();
+          pusherRef.current.unsubscribe(`private-user-${user?.id || ''}`);
+          userChannelRef.current = null;
+        }
         pusherRef.current.disconnect();
         pusherRef.current = null;
         channelsRef.current.clear();
@@ -136,6 +149,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
 
     // Subscribe to user's private channel for notifications
     const userChannel = pusher.subscribe(`private-user-${user.id}`);
+    userChannelRef.current = userChannel;
     
     userChannel.bind('pusher:subscription_succeeded', () => {
       logger.debug('PUSHER', `Subscribed to user channel: user-${user.id}`);
@@ -168,8 +182,23 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
     pusherRef.current = pusher;
 
     return () => {
-      pusher.disconnect();
-      pusherRef.current = null;
+      // Clean up user channel: unbind all event listeners and unsubscribe
+      if (userChannelRef.current) {
+        userChannelRef.current.unbind_all();
+        const channelName = `private-user-${user.id}`;
+        if (pusherRef.current) {
+          pusherRef.current.unsubscribe(channelName);
+        }
+        userChannelRef.current = null;
+      }
+      
+      // Disconnect Pusher connection
+      if (pusherRef.current) {
+        pusherRef.current.disconnect();
+        pusherRef.current = null;
+      }
+      
+      // Clear conversation channels
       channelsRef.current.clear();
       setIsConnected(false);
     };

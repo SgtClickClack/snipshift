@@ -23,6 +23,27 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
 
   if (!sig || !webhookSecret) {
     console.error('Missing Stripe signature or webhook secret');
+    
+    // Report critical error to error tracking service
+    const { errorReporting } = await import('../services/error-reporting.service.js');
+    await errorReporting.captureCritical(
+      'Stripe webhook signature verification failed: Missing signature or webhook secret',
+      undefined,
+      {
+        correlationId: req.correlationId,
+        path: req.path,
+        method: req.method,
+        metadata: {
+          hasSignature: !!sig,
+          hasWebhookSecret: !!webhookSecret,
+        },
+        tags: {
+          eventType: 'stripe_webhook_failure',
+          failureReason: 'missing_credentials',
+        },
+      }
+    );
+    
     res.status(400).json({ error: 'Missing signature or webhook secret' });
     return;
   }
@@ -38,6 +59,27 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
     );
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message);
+    
+    // Report critical error to error tracking service
+    const { errorReporting } = await import('../services/error-reporting.service.js');
+    await errorReporting.captureCritical(
+      `Stripe webhook signature verification failed: ${err.message}`,
+      err instanceof Error ? err : new Error(err.message),
+      {
+        correlationId: req.correlationId,
+        path: req.path,
+        method: req.method,
+        metadata: {
+          signatureLength: sig?.length || 0,
+          errorType: err?.type || 'unknown',
+        },
+        tags: {
+          eventType: 'stripe_webhook_failure',
+          failureReason: 'signature_verification_failed',
+        },
+      }
+    );
+    
     res.status(400).json({ error: `Webhook Error: ${err.message}` });
     return;
   }
@@ -92,7 +134,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
         await paymentsRepo.createPayment({
           userId,
           amount,
-          currency: session.currency || 'usd',
+          currency: session.currency || 'aud',
           status: 'PAID',
           stripePaymentIntentId: session.payment_intent,
           description: `Subscription: ${plan.name}`,

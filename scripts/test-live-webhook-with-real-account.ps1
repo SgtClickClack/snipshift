@@ -30,7 +30,7 @@ try {
             
             # Update the account to trigger account.updated webhook
             # Note: In test mode, we can't fully enable accounts, but we can trigger the event
-            $updateResult = stripe accounts update $realAccountId --business-profile[name]="Test Venue" 2>&1
+            $updateResult = stripe accounts update $realAccountId --email "test-updated@hospogo.test" 2>&1
             
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "   [OK] Account updated - webhook should be triggered" -ForegroundColor Green

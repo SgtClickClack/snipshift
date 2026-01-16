@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { errorReporting } from '../services/error-reporting.service.js';
+import { getCorrelationId } from './correlation-id.js';
 
 /**
  * Centralized error handling middleware
@@ -158,8 +160,34 @@ export const errorHandler = (
     };
   }
 
+  // Get correlation ID from request
+  const correlationId = getCorrelationId(req);
+  
   // Log full error details server-side with critical prefix for Vercel logs visibility
-  console.error('🔥 CRITICAL SERVER CRASH [errorHandler]:', errorLog);
+  console.error('🔥 CRITICAL SERVER CRASH [errorHandler]:', {
+    ...errorLog,
+    correlationId,
+  });
+
+  // Report to error tracking service
+  const severity = res.statusCode >= 500 ? 'error' : 'warning';
+  await errorReporting.captureError(
+    err.message || 'Unhandled error',
+    err,
+    {
+      correlationId,
+      path: req.path,
+      method: req.method,
+      metadata: {
+        statusCode: res.statusCode,
+        ...(isDatabaseError && { databaseError: errorLog.databaseError }),
+      },
+      tags: {
+        errorType: err instanceof ZodError ? 'validation' : 'runtime',
+        statusCode: res.statusCode.toString(),
+      },
+    }
+  );
 
   // Handle Zod validation errors
   if (err instanceof ZodError) {

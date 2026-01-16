@@ -52,7 +52,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar';
+type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'shift-applications';
 
 const VenueDashboardSkeleton = () => (
   <div className="min-h-screen bg-background p-4 md:p-6">

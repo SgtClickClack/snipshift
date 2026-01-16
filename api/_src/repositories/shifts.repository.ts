@@ -72,6 +72,7 @@ export interface ShiftFilters {
 export type ShiftWithShop = typeof shifts.$inferSelect & {
   shopName: string | null;
   shopAvatarUrl: string | null;
+  clockInTime?: Date | null;
 };
 
 export interface PaginatedShifts {
@@ -158,6 +159,7 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
         isRecurring: shifts.isRecurring,
         autoAccept: shifts.autoAccept,
         parentShiftId: shifts.parentShiftId,
+        clockInTime: shifts.clockInTime,
         createdAt: shifts.createdAt,
         updatedAt: shifts.updatedAt,
         // Employer (shop) fields
@@ -248,6 +250,7 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       isRecurring: shifts.isRecurring,
       autoAccept: shifts.autoAccept,
       parentShiftId: shifts.parentShiftId,
+      clockInTime: shifts.clockInTime,
       createdAt: shifts.createdAt,
       updatedAt: shifts.updatedAt,
       // Employer (shop) fields
@@ -893,6 +896,7 @@ export async function updateShift(
     killFeeAmount?: string | null;
     staffCancellationReason?: string | null;
     isEmergencyFill?: boolean;
+    clockInTime?: Date | string | null;
   }
 ): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
@@ -911,6 +915,9 @@ export async function updateShift(
   }
   if (updates.endTime && typeof updates.endTime === 'string') {
     updateData.endTime = new Date(updates.endTime);
+  }
+  if (updates.clockInTime && typeof updates.clockInTime === 'string') {
+    updateData.clockInTime = new Date(updates.clockInTime);
   }
 
   const [updatedShift] = await db

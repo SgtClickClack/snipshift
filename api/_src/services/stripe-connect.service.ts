@@ -463,3 +463,47 @@ export async function capturePaymentIntentWithChargeId(paymentIntentId: string):
     throw error;
   }
 }
+
+/**
+ * Cancel a PaymentIntent
+ * 
+ * Used to clean up PaymentIntents that were created but the associated
+ * operation (e.g., shift acceptance) failed or was rolled back.
+ * 
+ * @param paymentIntentId - The Stripe PaymentIntent ID to cancel
+ * @returns True if cancellation succeeded, false otherwise
+ */
+export async function cancelPaymentIntent(paymentIntentId: string): Promise<boolean> {
+  if (!stripe) {
+    console.error('[STRIPE_CONNECT] Cannot cancel PaymentIntent: Stripe not configured');
+    return false;
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.cancel(paymentIntentId);
+    
+    // PaymentIntent can be in various states, check if cancellation was successful
+    if (paymentIntent.status === 'canceled') {
+      console.log(`[STRIPE_CONNECT] Successfully canceled PaymentIntent ${paymentIntentId}`);
+      return true;
+    }
+    
+    // If already canceled or in a terminal state, consider it successful
+    if (['canceled', 'succeeded', 'processing'].includes(paymentIntent.status)) {
+      console.log(`[STRIPE_CONNECT] PaymentIntent ${paymentIntentId} already in terminal state: ${paymentIntent.status}`);
+      return true;
+    }
+    
+    console.warn(`[STRIPE_CONNECT] PaymentIntent ${paymentIntentId} cancellation returned unexpected status: ${paymentIntent.status}`);
+    return false;
+  } catch (error: any) {
+    // If PaymentIntent is already canceled or doesn't exist, that's fine
+    if (error.code === 'resource_missing' || error.message?.includes('already canceled')) {
+      console.log(`[STRIPE_CONNECT] PaymentIntent ${paymentIntentId} already canceled or missing`);
+      return true;
+    }
+    
+    console.error(`[STRIPE_CONNECT] Error canceling PaymentIntent ${paymentIntentId}:`, error);
+    return false;
+  }
+}

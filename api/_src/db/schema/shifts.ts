@@ -51,6 +51,7 @@ export const shifts = pgTable('shifts', {
   isRecurring: boolean('is_recurring').notNull().default(false),
   autoAccept: boolean('auto_accept').notNull().default(false),
   parentShiftId: uuid('parent_shift_id').references((): any => shifts.id, { onDelete: 'cascade' }),
+  clockInTime: timestamp('clock_in_time'), // Timestamp when staff member clocked in
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
@@ -133,3 +134,28 @@ export const shiftReviews = pgTable('shift_reviews', {
   shiftReviewerUnique: index('shift_reviews_shift_reviewer_unique').on(table.shiftId, table.reviewerId, table.type),
 }));
 
+/**
+ * Shift Logs table
+ * Stores detailed attendance logs for clock-in events with geofencing data
+ */
+export const shiftLogs = pgTable('shift_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  shiftId: uuid('shift_id').notNull().references(() => shifts.id, { onDelete: 'cascade' }),
+  staffId: uuid('staff_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  eventType: varchar('event_type', { length: 50 }).notNull(), // 'CLOCK_IN', 'CLOCK_OUT', etc.
+  latitude: decimal('latitude', { precision: 10, scale: 7 }), // Staff location latitude
+  longitude: decimal('longitude', { precision: 10, scale: 7 }), // Staff location longitude
+  venueLatitude: decimal('venue_latitude', { precision: 10, scale: 7 }), // Venue location latitude
+  venueLongitude: decimal('venue_longitude', { precision: 10, scale: 7 }), // Venue location longitude
+  distanceMeters: integer('distance_meters'), // Calculated distance in meters
+  accuracy: decimal('accuracy', { precision: 10, scale: 2 }), // GPS accuracy in meters (if provided)
+  timestamp: timestamp('timestamp').notNull().defaultNow(), // When the event occurred
+  metadata: text('metadata'), // JSON string for additional data (GPS accuracy, device info, etc.)
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  shiftIdIdx: index('shift_logs_shift_id_idx').on(table.shiftId),
+  staffIdIdx: index('shift_logs_staff_id_idx').on(table.staffId),
+  eventTypeIdx: index('shift_logs_event_type_idx').on(table.eventType),
+  timestampIdx: index('shift_logs_timestamp_idx').on(table.timestamp),
+  shiftStaffIdx: index('shift_logs_shift_staff_idx').on(table.shiftId, table.staffId),
+}));

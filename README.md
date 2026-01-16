@@ -119,30 +119,21 @@ HospoGo is a marketplace platform that connects hospitality venues with talented
 
 3. **Set up environment variables**
 
-   Create a `.env` file in the root directory:
-   ```env
-   # Database
-   DATABASE_URL=postgresql://user:password@localhost:5432/hospogo
-
-   # Firebase
-   VITE_FIREBASE_API_KEY=your_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   VITE_FIREBASE_APP_ID=your_app_id
-
-   # Stripe
-   VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   STRIPE_SECRET_KEY=your_stripe_secret_key
-
-   # Resend
-   RESEND_API_KEY=your_resend_api_key
-
-   # API
-   PORT=5000
-   NODE_ENV=development
+   Copy the `.env.example` file to `.env` and fill in your values:
+   ```bash
+   cp .env.example .env
    ```
+
+   The `.env.example` file includes all required environment variables with documentation:
+   - Database configuration (PostgreSQL)
+   - Firebase configuration (backend and frontend)
+   - Stripe configuration (including webhook secrets)
+   - Pusher configuration (for real-time features)
+   - Email configuration (Resend)
+   - Business logic settings (commission rates, clock-in radius, etc.)
+   - Admin configuration
+
+   **Important**: Never commit your `.env` file to version control. The `.env.example` file serves as a template.
 
 4. **Run database migrations**
    ```bash
@@ -231,7 +222,30 @@ hospogo/
 
 ## 🔐 Environment Variables
 
-See the [Getting Started](#getting-started) section for required environment variables. Make sure to set up all services before running the application.
+See the [Getting Started](#getting-started) section for required environment variables. A comprehensive `.env.example` file is provided in the root directory with all required variables documented.
+
+### Key Environment Variables
+
+- **Database**: `DATABASE_URL` or `POSTGRES_URL` - PostgreSQL connection string
+- **Firebase**: `FIREBASE_SERVICE_ACCOUNT` (or individual vars) for backend, `VITE_FIREBASE_*` for frontend
+- **Stripe**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `VITE_STRIPE_PUBLISHABLE_KEY`
+- **Pusher**: `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `VITE_PUSHER_APP_KEY`
+- **Clock-in Geofencing**: `CLOCK_IN_MAX_RADIUS_METERS` (default: 200 meters for Brisbane launch)
+
+### Payment Configuration
+
+HospoGo uses **AUD (Australian Dollar)** as the primary currency for the Brisbane launch:
+- All Stripe payment intents are created with `currency: 'aud'`
+- Database schema defaults to `'aud'` for payments table
+- Frontend currency formatting defaults to AUD
+
+### Clock-in Geofencing
+
+Staff members must be within the configured radius (default 200 meters) of the venue to clock in:
+- Configured via `CLOCK_IN_MAX_RADIUS_METERS` environment variable
+- Uses Haversine formula for accurate distance calculation
+- GPS accuracy validation ensures reliable location data
+- Failed attempts are logged for audit purposes
 
 ## 🧪 Testing
 

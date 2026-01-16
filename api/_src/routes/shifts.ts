@@ -3329,8 +3329,10 @@ router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: Authenti
   if (venueLat === null || venueLng === null) {
     const venue = await venuesRepo.getVenueByUserId(shift.employerId);
     if (venue && venue.address?.lat && venue.address?.lng) {
-      venueLat = typeof venue.address.lat === 'number' ? venue.address.lat : parseFloat(venue.address.lat.toString());
-      venueLng = typeof venue.address.lng === 'number' ? venue.address.lng : parseFloat(venue.address.lng.toString());
+      const latValue = venue.address.lat;
+      const lngValue = venue.address.lng;
+      venueLat = typeof latValue === 'number' ? latValue : parseFloat(String(latValue));
+      venueLng = typeof lngValue === 'number' ? lngValue : parseFloat(String(lngValue));
     }
   }
 
