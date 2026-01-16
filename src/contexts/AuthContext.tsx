@@ -353,11 +353,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // CRITICAL: Never redirect away from onboarding pages during active onboarding
     // This prevents redirect loops when user state updates during onboarding submission
+    // This check must happen even when force=true to prevent loops during refreshUser()
     if (pathname.startsWith('/onboarding')) {
       logger.debug('AuthContext', 'handleRedirect: User on onboarding page, skipping redirect to prevent loops', {
         pathname,
         currentRole: u?.currentRole,
-        isOnboarded: u?.isOnboarded
+        isOnboarded: u?.isOnboarded,
+        force
       });
       pendingRedirect.current = false;
       setIsRedirecting(false);

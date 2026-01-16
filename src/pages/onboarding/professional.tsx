@@ -75,15 +75,22 @@ export default function ProfessionalOnboardingPage() {
 
       const updatedUser = await response.json();
 
-      // CRITICAL: Set currentRole immediately in local state to prevent guard redirects
-      // This ensures the Guard doesn't kick the user out during onboarding
+      // CRITICAL: Ensure the API response has the correct structure
+      // The API should return currentRole, but we'll set it explicitly to be safe
       const userWithRole = {
         ...updatedUser,
-        currentRole: 'professional' as const,
-        isOnboarded: updatedUser.isOnboarded ?? true, // Ensure isOnboarded is set
+        currentRole: (updatedUser.currentRole || updatedUser.role || 'professional') as const,
+        isOnboarded: updatedUser.isOnboarded ?? true, // Ensure isOnboarded is set to true
+        roles: updatedUser.roles || ['professional'], // Ensure roles array is set
         createdAt: updatedUser.createdAt ? new Date(updatedUser.createdAt) : new Date(),
         updatedAt: updatedUser.updatedAt ? new Date(updatedUser.updatedAt) : new Date(),
       };
+
+      // Validate that we have the required fields
+      if (!userWithRole.currentRole || userWithRole.currentRole === 'client') {
+        console.error('Professional onboarding: API did not return valid currentRole', updatedUser);
+        throw new Error('Failed to set professional role. Please try again.');
+      }
 
       // Manually update user state with response to ensure immediate UI update
       // This must happen BEFORE any redirects to prevent guard interference
@@ -96,20 +103,13 @@ export default function ProfessionalOnboardingPage() {
         await auth.currentUser.getIdToken(true);
       }
 
-      // CRITICAL: Wait a brief moment to ensure state is fully propagated
-      // before navigating to prevent race conditions
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // CRITICAL: Wait for state to propagate and verify it's set correctly
+      // We need to ensure React has processed the state update before navigation
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Refresh user from server to get final state, but don't let it trigger redirects
-      // We'll navigate manually after state is confirmed
-      if (refreshUser) {
-        try {
-          await refreshUser();
-        } catch (err) {
-          // If refresh fails, proceed anyway - we already have the updated user
-          console.warn('User refresh failed, proceeding with local state:', err);
-        }
-      }
+      // DO NOT call refreshUser() here - it triggers handleRedirect with force:true
+      // which bypasses onboarding protection and causes redirect loops
+      // We already have the updated user state from the API response via login()
       
       // Redirect to professional dashboard - state is now fully updated
       navigate('/professional-dashboard', { replace: true });

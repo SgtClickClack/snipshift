@@ -110,6 +110,15 @@ export function AuthGuard({
       currentRole: user.currentRole,
     });
     
+    // CRITICAL: Exception - If current path starts with /onboarding, do not redirect
+    // This prevents redirect loops during onboarding flow
+    if (location.pathname.startsWith('/onboarding')) {
+      logger.debug('AuthGuard', 'User on onboarding path, allowing access', {
+        pathname: location.pathname,
+      });
+      return <>{children}</>;
+    }
+    
     // Redirect based on onboarding/role status
     if (user.isOnboarded === false) {
       return <Navigate to="/onboarding" replace />;
@@ -122,9 +131,21 @@ export function AuthGuard({
   }
 
   const publicRoutes = ['/onboarding', '/onboarding/hub', '/onboarding/professional', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
+  
+  // CRITICAL: Exception - If current path starts with /onboarding, do not redirect to role selector
+  // This prevents redirect loops during onboarding flow, especially on new devices
+  const isOnboardingPage = location.pathname.startsWith('/onboarding');
+  if (isAuthenticated && user && isOnboardingPage) {
+    logger.debug('AuthGuard', 'User on onboarding path, allowing access without role check', {
+      pathname: location.pathname,
+      currentRole: user.currentRole,
+      isOnboarded: user.isOnboarded,
+    });
+    return <>{children}</>;
+  }
+  
   if (isAuthenticated && user) {
     const hasRole = user.currentRole && user.currentRole !== 'client';
-    const isOnboardingPage = location.pathname.startsWith('/onboarding');
     const isRoleMissing = user.currentRole == null;
 
     // CRITICAL: If authenticated AND role is null AND not on /onboarding -> Redirect to /onboarding

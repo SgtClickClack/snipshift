@@ -84,5 +84,11 @@
       "maxDuration": 30,
       "includeFiles": "api/_src/**"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/health-check",
+      "schedule": "*/10 * * * *"
+    }
+  ]
 }

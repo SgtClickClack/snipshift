@@ -21,9 +21,9 @@ interface HealthCheckResponse {
 
 // Service name mapping for display
 const serviceDisplayNames: Record<string, string> = {
-  database: 'Marketplace Database',
-  pusher: 'Real-time Notifications (Pusher)',
-  stripe: 'Payment Processing (Stripe)',
+  database: 'Database',
+  pusher: 'Pusher',
+  stripe: 'Stripe',
 };
 
 // Fetch health status (public endpoint, no auth required)
@@ -177,12 +177,12 @@ export default function StatusPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* API Gateway Status (always healthy if we can reach the endpoint) */}
+                {/* API Status (always healthy if we can reach the endpoint) */}
                 <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-3">
                     {getStatusIcon('healthy')}
                     <div>
-                      <h3 className="font-semibold text-foreground">API Gateway</h3>
+                      <h3 className="font-semibold text-foreground">API</h3>
                       <p className="text-sm text-muted-foreground">
                         Endpoint accessible
                       </p>

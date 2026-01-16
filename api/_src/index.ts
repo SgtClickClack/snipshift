@@ -64,6 +64,7 @@ import marketplaceRouter from './routes/marketplace.js';
 import workerRouter from './routes/worker.js';
 import reviewsRouter from './routes/reviews.js';
 import pushTokensRouter from './routes/push-tokens.js';
+import cronHealthCheckRouter from './routes/cron/health-check.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { initializePusher } from './services/pusher.service.js';
@@ -212,6 +213,7 @@ app.use('/api/marketplace', marketplaceRouter);
 app.use('/api/worker', workerRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/push-tokens', pushTokensRouter);
+app.use('/api/cron', cronHealthCheckRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
