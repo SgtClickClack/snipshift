@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useRef, useEffect } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,12 +37,17 @@ interface VenueListResponse {
  */
 export function VenueListContainer() {
   const [verifiedOnly, setVerifiedOnly] = useState(true);
-  const [page, setPage] = useState(1);
-  const [allVenues, setAllVenues] = useState<Venue[]>([]);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Fetch venues with pagination
-  const { data, isLoading, isFetching, hasNextPage, fetchNextPage } = useQuery({
+  // Fetch venues with infinite scroll pagination
+  const {
+    data,
+    isLoading,
+    isFetching,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<VenueListResponse>({
     queryKey: ['marketplace-venues', verifiedOnly],
     queryFn: async ({ pageParam = 1 }) => {
       const params = new URLSearchParams({
@@ -55,7 +60,7 @@ export function VenueListContainer() {
       if (!res.ok) {
         throw new Error('Failed to fetch venues');
       }
-      return res.json() as Promise<VenueListResponse>;
+      return res.json();
     },
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined;
@@ -63,25 +68,14 @@ export function VenueListContainer() {
     initialPageParam: 1,
   });
 
-  // Update all venues when data changes
-  useEffect(() => {
-    if (data?.pages) {
-      const venues = data.pages.flatMap((page) => page.venues);
-      setAllVenues(venues);
-    }
-  }, [data]);
-
-  // Reset to page 1 when filter changes
-  useEffect(() => {
-    setPage(1);
-    setAllVenues([]);
-  }, [verifiedOnly]);
+  // Flatten all venues from all pages
+  const allVenues = data?.pages.flatMap((page) => page.venues) || [];
 
   // Infinite scroll using Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetching) {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
           fetchNextPage();
         }
       },
@@ -98,7 +92,7 @@ export function VenueListContainer() {
         observer.unobserve(currentTarget);
       }
     };
-  }, [hasNextPage, isFetching, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleVerifiedToggle = (checked: boolean) => {
     setVerifiedOnly(checked);
@@ -170,7 +164,7 @@ export function VenueListContainer() {
           {/* Infinite Scroll Trigger */}
           {hasNextPage && (
             <div ref={observerTarget} className="flex justify-center py-8">
-              {isFetching && (
+              {isFetchingNextPage && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Loading more venues...</span>
