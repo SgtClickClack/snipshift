@@ -62,6 +62,7 @@ export async function getGoogleProvider() {
 /**
  * Local-dev focused Google sign-in:
  * - Uses popup with resilient handling for COOP (Cross-Origin-Opener-Policy) issues
+ * - Falls back to redirect flow if popup is blocked or fails
  * - COOP only affects window.closed detection, not the actual auth result
  * - Auth completes via postMessage/iframe even with COOP blocking
  */
@@ -69,7 +70,7 @@ export async function signInWithGoogleLocalDevPopup() {
   await maybeResetFirebaseSession();
   const { auth } = await import('./firebase');
   const googleProvider = await getGoogleProvider();
-  const { signInWithPopup, setPersistence, browserLocalPersistence } = await import('firebase/auth');
+  const { signInWithPopup, signInWithRedirect, setPersistence, browserLocalPersistence } = await import('firebase/auth');
 
   try {
     await setPersistence(auth, browserLocalPersistence);
@@ -101,6 +102,22 @@ export async function signInWithGoogleLocalDevPopup() {
     return result.user;
   } catch (error) {
     const code = (error as any)?.code;
+    
+    // Fallback to redirect flow if popup is blocked or fails due to COOP policy
+    // This handles cases where browsers block popups or COOP prevents communication
+    if (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' || 
+        (typeof window !== 'undefined' && code?.includes('popup'))) {
+      console.warn('[Auth] Popup blocked or failed, falling back to redirect flow');
+      try {
+        const { signInWithRedirect } = await import('firebase/auth');
+        await signInWithRedirect(auth, googleProvider);
+        // Return null - redirect will happen and handleGoogleRedirectResult() will process it
+        return null;
+      } catch (redirectError) {
+        console.error('[Auth] Redirect fallback also failed:', redirectError);
+        throw redirectError;
+      }
+    }
     
     // Don't log user-cancelled popups - this is expected behavior
     if (code !== 'auth/popup-closed-by-user') {

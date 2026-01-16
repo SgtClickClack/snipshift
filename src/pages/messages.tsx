@@ -15,6 +15,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
 import { ReportButton } from '@/components/report/report-button';
 import { SEO } from '@/components/seo/SEO';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Conversation {
   id: string;
@@ -263,10 +264,12 @@ export default function MessagesPage() {
               </div>
               <div className="flex-1 overflow-y-auto">
                 {conversations.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No conversations yet</p>
-                    <p className="text-sm mt-2">Start a conversation from a job application</p>
+                  <div className="p-8">
+                    <EmptyState
+                      icon={MessageSquare}
+                      title="No messages yet - start a conversation!"
+                      description="Start a conversation from a job application to connect with professionals or venues."
+                    />
                   </div>
                 ) : (
                   <div className="divide-y divide-border">

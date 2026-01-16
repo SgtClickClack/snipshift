@@ -5,6 +5,7 @@ import { fetchShifts } from '@/lib/api';
 import { Shift, Job } from '@shared/firebase-schema';
 import { Button } from '@/components/ui/button';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
+import { JobCardSkeleton } from '@/components/loading/skeleton-loaders';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { EnhancedJobFilters } from '@/components/job-feed/enhanced-job-filters';
 import { EnhancedJobCard } from '@/components/job-feed/enhanced-job-card';
@@ -12,12 +13,13 @@ import { JobCardData } from '@/components/job-feed/JobCard';
 import { LocationInput } from '@/components/ui/location-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation, SlidersHorizontal } from 'lucide-react';
+import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation, SlidersHorizontal, Search } from 'lucide-react';
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import { calculateDistance, reverseGeocodeToCity, geocodeAddress } from '@/lib/google-maps';
 import { useIsStaffCompliant } from '@/hooks/useCompliance';
 import { useAuth } from '@/contexts/AuthContext';
+import { EmptyState } from '@/components/ui/empty-state';
 
 type SortOption = 'highest-rate' | 'closest' | 'soonest';
 type ViewMode = 'list' | 'map';
@@ -417,9 +419,7 @@ export default function JobFeedPage() {
   };
 
   // Show loading state if query is loading or data is not yet available
-  if (isLoading || shifts === undefined) {
-    return <PageLoadingFallback />;
-  }
+  // We'll show skeleton loaders in the content area instead of full page fallback
 
   if (error) {
     return (
@@ -556,34 +556,24 @@ export default function JobFeedPage() {
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             <div className="bg-card rounded-lg border shadow-sm p-6 min-h-[600px]">
-              {viewMode === 'list' ? (
+              {isLoading || shifts === undefined ? (
+                <JobCardSkeleton count={6} />
+              ) : viewMode === 'list' ? (
                 <>
                   {filteredAndSortedJobs.length === 0 ? (
                     <div className="flex items-center justify-center h-full min-h-[500px]">
-                      <div className="text-center py-8 md:py-16 w-full">
-                        <div className="flex flex-col items-center justify-center text-muted-foreground mb-6">
-                          <div className="bg-card p-4 rounded-full shadow-sm border border-border mb-4">
-                            <SearchX className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                          <p className="text-xl font-bold text-foreground mb-2">No shifts found</p>
-                          <p className="text-muted-foreground max-w-md mx-auto">
-                            {searchParams.toString() 
-                              ? "We couldn't find any jobs matching your filters. Try adjusting your search criteria or increasing the radius."
-                              : "There are no shifts available at the moment. Please check back later!"}
-                          </p>
-                        </div>
-                        {searchParams.toString() && (
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setSearchParams({}, { replace: true });
-                            }}
-                            className="mt-2"
-                          >
-                            Clear All Filters
-                          </Button>
-                        )}
-                      </div>
+                      <EmptyState
+                        icon={Search}
+                        title="No shifts found in your area"
+                        description={searchParams.toString() 
+                          ? "We couldn't find any jobs matching your filters. Try adjusting your search criteria or increasing the radius."
+                          : "There are no shifts available at the moment. Please check back later!"}
+                        action={searchParams.toString() ? {
+                          label: "Clear All Filters",
+                          onClick: () => setSearchParams({}, { replace: true }),
+                          variant: "outline"
+                        } : undefined}
+                      />
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

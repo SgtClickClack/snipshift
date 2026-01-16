@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { messagingService } from '@/lib/messaging';
 import { useAuth } from '@/contexts/AuthContext';
 import { Message } from '@shared/firebase-schema';
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { EmptyState } from '@/components/ui/empty-state';
+import { useToast } from '@/hooks/useToast';
 
 interface ConversationProps {
   chatId: string;
@@ -16,31 +19,102 @@ interface ConversationProps {
   onBack?: () => void;
 }
 
+// Extended Message type to include optimistic state
+interface OptimisticMessage extends Message {
+  isOptimistic?: boolean;
+  error?: boolean;
+  tempId?: string;
+}
+
 export default function Conversation({ chatId, otherUser, onBack }: ConversationProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const queryKey = ['conversation-messages', chatId];
 
+  // Fetch messages using React Query with polling
+  const { data: messages = [], isLoading } = useQuery<Message[]>({
+    queryKey,
+    queryFn: () => messagingService.getChatMessages(chatId),
+    enabled: !!chatId && !!user,
+    refetchInterval: 2000, // Poll every 2 seconds for new messages
+  });
+
+  // Mark messages as read when conversation is opened or messages change
   useEffect(() => {
-    if (!chatId) return;
+    if (chatId && user && messages.length > 0) {
+      messagingService.markMessagesAsRead(chatId, user.id).catch((error) => {
+        console.error('Failed to mark messages as read:', error);
+      });
+    }
+  }, [chatId, user, messages.length]);
 
-    // Mark messages as read when opening conversation
-    messagingService.markMessagesAsRead(chatId, user?.id || '');
+  // Mutation for sending messages with optimistic updates
+  const sendMessageMutation = useMutation({
+    mutationFn: async (content: string) => {
+      await messagingService.sendMessage(chatId, user!.id, otherUser.id, content);
+      // Refetch messages to get the server response with proper id and timestamp
+      return messagingService.getChatMessages(chatId);
+    },
+    onMutate: async (content: string) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey });
 
-    const unsubscribe = messagingService.onMessagesChange(chatId, (updatedMessages) => {
-      setMessages(updatedMessages);
-      setIsLoading(false);
-      // Mark messages as read when new ones arrive
-      setTimeout(() => {
-        messagingService.markMessagesAsRead(chatId, user?.id || '');
-      }, 1000);
-    });
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData<Message[]>(queryKey) || [];
 
-    return unsubscribe;
-  }, [chatId, user]);
+      // Optimistically update with temporary message
+      const tempId = `temp-${Date.now()}-${Math.random()}`;
+      const timestamp = new Date();
+      const optimisticMessage: OptimisticMessage = {
+        id: tempId,
+        chatId,
+        senderId: user!.id,
+        content: content.trim(),
+        timestamp: timestamp as any, // Firebase timestamp or Date
+        read: false,
+        isOptimistic: true,
+        tempId,
+      };
+
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) => [...old, optimisticMessage]);
+
+      // Return context with snapshot and tempId for rollback
+      return { previousMessages, tempId };
+    },
+    onError: (error: any, content: string, context) => {
+      // Rollback to previous state on error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(queryKey, context.previousMessages);
+      }
+
+      // Mark the optimistic message as errored (if it still exists)
+      queryClient.setQueryData<OptimisticMessage[]>(queryKey, (old = []) =>
+        old.map((msg) =>
+          msg.tempId === context?.tempId
+            ? { ...msg, error: true, isOptimistic: true }
+            : msg
+        )
+      );
+
+      const errorMessage = error.message || 'Failed to send message';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    },
+    onSuccess: (data: Message[]) => {
+      // Replace optimistic messages with server response
+      queryClient.setQueryData<Message[]>(queryKey, data);
+    },
+    onSettled: () => {
+      // Refetch to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
 
   useEffect(() => {
     scrollToBottom();
@@ -52,16 +126,17 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || isSending || !user) return;
+    if (!newMessage.trim() || sendMessageMutation.isPending || !user) return;
 
-    setIsSending(true);
-    try {
-      await messagingService.sendMessage(chatId, user.id, otherUser.id, newMessage.trim());
-      setNewMessage('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    } finally {
-      setIsSending(false);
+    const content = newMessage.trim();
+    setNewMessage('');
+    sendMessageMutation.mutate(content);
+  };
+
+  const handleRetryFailedMessage = (tempId: string) => {
+    const failedMessage = messages.find((msg) => (msg as OptimisticMessage).tempId === tempId);
+    if (failedMessage && !sendMessageMutation.isPending) {
+      sendMessageMutation.mutate(failedMessage.content);
     }
   };
 
@@ -130,9 +205,12 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
               <div className="text-muted-foreground">Loading messages...</div>
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="text-no-messages">
-              <div className="text-muted-foreground mb-2">No messages yet</div>
-              <div className="text-sm text-muted-foreground">Send a message to start the conversation</div>
+            <div className="flex flex-col items-center justify-center py-8" data-testid="text-no-messages">
+              <EmptyState
+                icon={MessageSquare}
+                title="No messages yet - start a conversation!"
+                description="Send a message to start the conversation and connect with your team."
+              />
             </div>
           ) : (
             messages.map((message, index) => {

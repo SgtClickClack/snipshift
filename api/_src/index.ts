@@ -855,16 +855,33 @@ app.post('/api/jobs/:id/apply', asyncHandler(async (req: AuthenticatedRequest, r
 }));
 
 // Handler for fetching applications (for professional dashboard)
-app.get('/api/applications', asyncHandler(async (req, res) => {
+// SECURITY: Requires authentication and enforces ownership - users can only view their own applications
+app.get('/api/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const currentUserId = req.user?.id;
+  
+  if (!currentUserId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
   // Parse query parameters for filtering and pagination
   const userId = req.query.userId as string | undefined;
   const status = req.query.status as 'pending' | 'accepted' | 'rejected' | undefined;
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
 
-  // If userId is provided, get applications with job details (JOIN to avoid N+1)
-  if (userId) {
-    const applications = await applicationsRepo.getApplicationsForUser(userId, { status });
+  // SECURITY: If userId is provided, enforce ownership - users can only query their own applications
+  if (userId && userId !== currentUserId) {
+    res.status(403).json({ message: 'Forbidden: You can only view your own applications' });
+    return;
+  }
+
+  // Use current user's ID if no userId provided (default to authenticated user)
+  const targetUserId = userId || currentUserId;
+
+  // If userId is provided (or using current user), get applications with job details (JOIN to avoid N+1)
+  if (targetUserId) {
+    const applications = await applicationsRepo.getApplicationsForUser(targetUserId, { status });
     if (applications) {
       // Transform to match frontend expectations
       const transformed = applications.map((app) => ({
@@ -884,9 +901,9 @@ app.get('/api/applications', asyncHandler(async (req, res) => {
     }
   }
 
-  // Otherwise, get paginated applications
+  // Otherwise, get paginated applications (default to current user)
   const result = await applicationsRepo.getApplications({
-    userId,
+    userId: targetUserId,
     status,
     limit,
     offset,

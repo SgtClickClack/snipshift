@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Chat } from '@shared/firebase-schema';
 import { MessageCircle, Search, User } from 'lucide-react';
 import { format } from 'date-fns';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface ChatListProps {
   onSelectChat: (chatId: string, otherUser: { id: string, name: string, role: string }) => void;
@@ -85,14 +86,12 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
               <div className="text-muted-foreground">Loading conversations...</div>
             </div>
           ) : filteredChats.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 px-4 text-center" data-testid="text-no-chats">
-              <MessageCircle className="h-12 w-12 text-muted-foreground mb-2" />
-              <div className="text-muted-foreground">
-                {searchTerm ? 'No conversations found' : 'No messages yet'}
-              </div>
-              <div className="text-sm text-muted-foreground mt-1">
-                {searchTerm ? 'Try a different search term' : 'Start a conversation from a job application'}
-              </div>
+            <div className="py-8 px-4" data-testid="text-no-chats">
+              <EmptyState
+                icon={MessageCircle}
+                title={searchTerm ? 'No conversations found' : 'No messages yet - start a conversation!'}
+                description={searchTerm ? 'Try a different search term' : 'Start a conversation from a job application to connect with professionals or venues.'}
+              />
             </div>
           ) : (
             <div className="space-y-2 md:space-y-1">

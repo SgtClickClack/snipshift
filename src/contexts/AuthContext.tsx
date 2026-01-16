@@ -483,11 +483,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logger.debug('AuthContext', 'auth/network-request-failed detected, attempting popup fallback');
 
       try {
-        const { signInWithPopup, setPersistence, browserLocalPersistence } = await import('firebase/auth');
+        const { signInWithPopup, signInWithRedirect, setPersistence, browserLocalPersistence } = await import('firebase/auth');
         await setPersistence(auth, browserLocalPersistence);
-        await signInWithPopup(auth, googleProvider);
-      } catch (popupError) {
-        logger.debug('AuthContext', 'Popup fallback failed or was blocked', popupError);
+        try {
+          await signInWithPopup(auth, googleProvider);
+        } catch (popupError: any) {
+          // If popup fails due to COOP or blocking, fallback to redirect
+          if (popupError?.code === 'auth/popup-blocked' || popupError?.code?.includes('popup')) {
+            logger.debug('AuthContext', 'Popup blocked, falling back to redirect');
+            await signInWithRedirect(auth, googleProvider);
+          } else {
+            throw popupError;
+          }
+        }
+      } catch (fallbackError) {
+        logger.debug('AuthContext', 'Popup/redirect fallback failed or was blocked', fallbackError);
       }
     };
 
@@ -536,14 +546,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (urlHasAuthHandler) {
             logger.debug('AuthContext', 'URL contains auth/handler but getRedirectResult returned null - triggering popup fallback');
             try {
-              const { signInWithPopup } = await import('firebase/auth');
+              const { signInWithPopup, signInWithRedirect } = await import('firebase/auth');
               logger.debug('AuthContext', 'Attempting popup fallback after redirect failure');
-              await signInWithPopup(auth, googleProvider);
-              // Popup will trigger onAuthStateChange - the listener below will handle it
-              // Don't return early - let the normal flow continue
-            } catch (popupError) {
-              logger.error('AuthContext', 'Popup fallback failed:', popupError);
-              console.dir(popupError, { depth: null });
+              try {
+                await signInWithPopup(auth, googleProvider);
+                // Popup will trigger onAuthStateChange - the listener below will handle it
+                // Don't return early - let the normal flow continue
+              } catch (popupError: any) {
+                // If popup fails due to COOP or blocking, fallback to redirect
+                if (popupError?.code === 'auth/popup-blocked' || popupError?.code?.includes('popup')) {
+                  logger.debug('AuthContext', 'Popup blocked, falling back to redirect');
+                  await signInWithRedirect(auth, googleProvider);
+                } else {
+                  throw popupError;
+                }
+              }
+            } catch (fallbackError) {
+              logger.error('AuthContext', 'Popup/redirect fallback failed:', fallbackError);
+              console.dir(fallbackError, { depth: null });
             }
           }
 
@@ -629,11 +649,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (urlHasAuthHandler) {
           logger.debug('AuthContext', 'URL contains auth/handler and redirect failed - triggering popup fallback');
           try {
-            const { signInWithPopup } = await import('firebase/auth');
+            const { signInWithPopup, signInWithRedirect } = await import('firebase/auth');
             logger.debug('AuthContext', 'Attempting popup fallback after redirect error');
-            await signInWithPopup(auth, googleProvider);
-            // Popup will trigger onAuthStateChange - the listener below will handle it
-            // Don't return early - let the normal flow continue
+            try {
+              await signInWithPopup(auth, googleProvider);
+              // Popup will trigger onAuthStateChange - the listener below will handle it
+              // Don't return early - let the normal flow continue
+            } catch (popupError: any) {
+              // If popup fails due to COOP or blocking, fallback to redirect
+              if (popupError?.code === 'auth/popup-blocked' || popupError?.code?.includes('popup')) {
+                logger.debug('AuthContext', 'Popup blocked, falling back to redirect');
+                await signInWithRedirect(auth, googleProvider);
+              } else {
+                throw popupError;
+              }
+            }
             clearTimeout(getRedirectResultTimeout);
           } catch (popupError) {
             logger.error('AuthContext', 'Popup fallback failed:', popupError);

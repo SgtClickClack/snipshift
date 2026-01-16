@@ -25,9 +25,11 @@ import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import { CompleteSetupBanner } from "@/components/onboarding/CompleteSetupBanner";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { StripeConnectBanner } from "@/components/payments/StripeConnectBanner";
+import { DashboardStatsSkeleton, ApplicantCardSkeleton, ShiftListSkeleton } from "@/components/loading/skeleton-loaders";
 import { VenueStatusCard } from "@/components/venues/VenueStatusCard";
 import { VenueAnalyticsDashboard } from "@/components/venues/VenueAnalyticsDashboard";
 import { SEO } from "@/components/seo/SEO";
+import { EmptyState } from "@/components/ui/empty-state";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
 import { format } from "date-fns";
@@ -643,7 +645,7 @@ function VenueDashboardContent() {
     }
   };
 
-  const { data: dashboardStats } = useQuery({
+  const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/analytics/dashboard");
@@ -834,7 +836,11 @@ function VenueDashboardContent() {
         {activeView === 'overview' && (
           <div className="space-y-6">
             {/* Dashboard Stats */}
-            <DashboardStats role="hub" stats={stats} onStatClick={handleStatClick} />
+            {isLoadingStats ? (
+              <DashboardStatsSkeleton />
+            ) : (
+              <DashboardStats role="hub" stats={stats} onStatClick={handleStatClick} />
+            )}
             
             <Card className="bg-card rounded-lg border border-border shadow-sm">
               <CardHeader className="bg-card border-b border-border">
@@ -1052,26 +1058,18 @@ function VenueDashboardContent() {
                   </CardHeader>
                   <CardContent className="p-6">
                     {isLoading ? (
-                      <div className="flex items-center justify-center py-8" data-testid="text-loading">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
-                        <span className="text-muted-foreground">Loading jobs...</span>
-                      </div>
+                      <ShiftListSkeleton count={3} />
                     ) : jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground" data-testid="text-no-jobs">
-                          {statusFilter === 'all' ? "No jobs posted yet." : `No ${statusFilter} jobs found.`}
-                        </p>
-                        {statusFilter === 'all' && (
-                          <Button 
-                            onClick={() => setShowForm(true)}
-                            className="mt-4"
-                            variant="outline"
-                            data-testid="button-post-first-job"
-                          >
-                            Post Your First Job
-                          </Button>
-                        )}
-                      </div>
+                      <EmptyState
+                        icon={Briefcase}
+                        title={statusFilter === 'all' ? "No posted shifts" : `No ${statusFilter} jobs found`}
+                        description={statusFilter === 'all' ? "You haven't posted any shifts yet. Create your first job posting to start attracting professionals." : `No ${statusFilter} jobs match your current filter.`}
+                        action={statusFilter === 'all' ? {
+                          label: "Post Your First Job",
+                          onClick: () => setShowForm(true),
+                          variant: "outline"
+                        } : undefined}
+                      />
                     ) : (
                       <div className="space-y-4">
                         {(jobs || []).filter(job => statusFilter === 'all' || job.status === statusFilter).map((job) => {
@@ -1370,15 +1368,13 @@ function VenueDashboardContent() {
               </CardHeader>
               <CardContent className="p-6">
                 {isLoadingApplications ? (
-                   <div className="text-center py-8 text-muted-foreground">Loading applications...</div>
+                   <ApplicantCardSkeleton count={3} />
                 ) : applications.length === 0 ? (
-                  <div className="text-center py-6 md:py-12">
-                    <div className="mb-4 bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                       <Users className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-medium text-foreground">No applications yet</h3>
-                    <p className="text-muted-foreground mt-1">When professionals apply to your jobs, they will appear here.</p>
-                  </div>
+                  <EmptyState
+                    icon={Users}
+                    title="No active applications"
+                    description="When professionals apply to your jobs, they will appear here. Make sure your job postings are clear and attractive to get more applications."
+                  />
                 ) : (
                   <div className="space-y-4">
                      {(applications || []).map((app: any) => (

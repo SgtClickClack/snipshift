@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageCircle, Search, Send, Paperclip, ArrowLeft, Circle } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { SEO } from '@/components/seo/SEO';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export interface ChatMessage {
   id: string;
@@ -185,16 +186,14 @@ export default function ProfessionalMessagesPage() {
           {/* Conversation List */}
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <MessageCircle className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-                <p className="text-muted-foreground">
-                  {searchQuery ? 'No conversations found' : 'No messages yet'}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {searchQuery
+              <div className="flex flex-col items-center justify-center h-full p-8">
+                <EmptyState
+                  icon={MessageCircle}
+                  title={searchQuery ? 'No conversations found' : 'No messages yet - start a conversation!'}
+                  description={searchQuery
                     ? 'Try a different search term'
-                    : 'Start a conversation from a job application'}
-                </p>
+                    : 'Start a conversation from a job application to connect with professionals or venues.'}
+                />
               </div>
             ) : (
               <div className="divide-y divide-border">

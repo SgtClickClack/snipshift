@@ -11,11 +11,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
 import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import QuickActions from "@/components/dashboard/quick-actions";
+import { DashboardStatsSkeleton, ShiftListSkeleton } from "@/components/loading/skeleton-loaders";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/advanced-job-filters";
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
@@ -435,7 +437,7 @@ function ProfessionalDashboardContent() {
   };
 
   // Only fetch dashboard stats when on overview
-  const { data: dashboardStats } = useQuery({
+  const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/analytics/dashboard");
@@ -679,6 +681,8 @@ function ProfessionalDashboardContent() {
               bookings={bookings}
               jobs={jobs}
               onViewChange={setActiveView}
+              stats={stats}
+              isLoadingStats={isLoadingStats}
             />
           </Suspense>
         )}
@@ -801,26 +805,26 @@ function ProfessionalDashboardContent() {
                     </CardHeader>
                     <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">Loading jobs...</div>
+              <ShiftListSkeleton count={3} />
             ) : filteredJobs.length === 0 ? (
-              <div className="text-center py-8">
-                {jobs.length === 0 ? (
-                  <>
-                    <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-neutral-600 mb-2">No jobs available at the moment.</p>
-                    <p className="text-sm text-neutral-500">Check back later for new opportunities!</p>
-                  </>
-                ) : (
-                  <>
-                    <Filter className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-neutral-600 mb-2">No jobs match your current filters.</p>
-                    <p className="text-sm text-neutral-500 mb-4">Try adjusting your search criteria to see more results.</p>
-                    <Button onClick={handleClearFilters} variant="outline">
-                      Clear All Filters
-                    </Button>
-                  </>
-                )}
-              </div>
+              jobs.length === 0 ? (
+                <EmptyState
+                  icon={Search}
+                  title="No jobs available at the moment"
+                  description="Check back later for new opportunities!"
+                />
+              ) : (
+                <EmptyState
+                  icon={Filter}
+                  title="No jobs match your current filters"
+                  description="Try adjusting your search criteria to see more results."
+                  action={{
+                    label: "Clear All Filters",
+                    onClick: handleClearFilters,
+                    variant: "outline"
+                  }}
+                />
+              )
             ) : (
               <div className="space-y-6">
                 {(filteredJobs || []).map((job) => {
@@ -986,7 +990,7 @@ function ProfessionalDashboardContent() {
               </CardHeader>
               <CardContent>
                 {isLoadingOpenShifts ? (
-                  <div className="text-sm text-muted-foreground">Loading opportunities…</div>
+                  <ShiftListSkeleton count={3} />
                 ) : openShiftOpportunities.length === 0 ? (
                   <div className="text-sm text-muted-foreground">No open shifts right now.</div>
                 ) : (

@@ -25,6 +25,9 @@ import { Job } from "@shared/firebase-schema";
 import { RecommendedShifts } from "@/components/shifts/RecommendedShifts";
 import { StandbyShiftsSection } from "./standby-shifts-section";
 import { StandbyHeroBadge } from "./StandbyHeroBadge";
+import DashboardStats from "@/components/dashboard/dashboard-stats";
+import { DashboardStatsSkeleton } from "@/components/loading/skeleton-loaders";
+import { EmptyState } from "@/components/ui/empty-state";
 // Application type not needed - Booking is defined locally
 
 interface Booking {
@@ -43,12 +46,21 @@ interface ProfessionalOverviewProps {
   bookings: Booking[];
   jobs: Job[];
   onViewChange?: (view: string) => void;
+  stats?: {
+    activeApplications?: number;
+    upcomingBookings?: number;
+    unreadMessages?: number;
+    averageRating?: number;
+  };
+  isLoadingStats?: boolean;
 }
 
 export default function ProfessionalOverview({ 
   bookings, 
   jobs,
-  onViewChange 
+  onViewChange,
+  stats,
+  isLoadingStats = false
 }: ProfessionalOverviewProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -334,6 +346,13 @@ export default function ProfessionalOverview({
 
   return (
     <div className="space-y-6">
+      {/* Dashboard Stats */}
+      {isLoadingStats ? (
+        <DashboardStatsSkeleton />
+      ) : stats ? (
+        <DashboardStats role="professional" stats={stats} />
+      ) : null}
+
       {/* Welcome Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2">
@@ -511,18 +530,17 @@ export default function ProfessionalOverview({
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No upcoming shifts</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => onViewChange?.('jobs')}
-                  >
-                    Browse Jobs
-                  </Button>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="No upcoming jobs"
+                  description="You don't have any upcoming shifts scheduled. Browse available jobs to find your next opportunity."
+                  action={{
+                    label: "Browse Jobs",
+                    onClick: () => onViewChange?.('jobs'),
+                    variant: "outline",
+                    size: "sm"
+                  }}
+                />
               )}
             </CardContent>
           </Card>

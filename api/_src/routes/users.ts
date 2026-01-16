@@ -10,6 +10,8 @@ import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 import { z } from 'zod';
 import { uploadProfileImages } from '../middleware/upload.js';
 import admin from 'firebase-admin';
+import { errorReporting } from '../services/error-reporting.service.js';
+import { getCorrelationId } from '../middleware/correlation-id.js';
 
 const router = Router();
 
@@ -76,6 +78,8 @@ const RegisterSchema = z.object({
 
     // Register new user (creates user and sends welcome email)
 router.post('/register', asyncHandler(async (req, res) => {
+  const correlationId = getCorrelationId(req);
+  
   try {
     const validationResult = RegisterSchema.safeParse(req.body);
     if (!validationResult.success) {
@@ -119,7 +123,8 @@ router.post('/register', asyncHandler(async (req, res) => {
           if (auth) {
             const decodedToken = await auth.verifyIdToken(token);
             // Extract name from token (displayName or name field)
-            name = decodedToken.name || decodedToken.display_name || decodedToken.email?.split('@')[0] || 'User';
+            // Handle both displayName and photoURL from Google provider
+            name = decodedToken.name || decodedToken.display_name || decodedToken.picture ? decodedToken.email?.split('@')[0] : decodedToken.email?.split('@')[0] || 'User';
           }
         } catch (tokenError: any) {
           // If token verification fails, we'll use email as fallback
@@ -180,6 +185,34 @@ router.post('/register', asyncHandler(async (req, res) => {
         });
         return;
       }
+      
+      // Log exact error to error reporting service
+      const errorToReport = dbError instanceof Error ? dbError : new Error(String(dbError?.message || 'Database operation failed'));
+      await errorReporting.captureError(
+        'Failed to create user in database during Google Auth registration',
+        errorToReport,
+        {
+          correlationId,
+          path: req.path,
+          method: req.method,
+          userId: email, // Use email as identifier since user doesn't exist yet
+          userEmail: email,
+          metadata: {
+            email,
+            name: finalName,
+            role: dbRole,
+            errorCode: dbError?.code,
+            errorName: dbError?.name,
+            isUniqueConstraint: dbError?.code === '23505' || dbError?.message?.includes('unique constraint'),
+            isNullConstraint: dbError?.code === '23502' || dbError?.message?.includes('null constraint'),
+          },
+          tags: {
+            endpoint: 'register',
+            errorType: 'database_error',
+          },
+        }
+      );
+      
       console.error('[REGISTER ERROR] Database error creating user:', dbError);
       console.error('[REGISTER ERROR] Database error stack:', dbError?.stack);
       res.status(500).json({ 
@@ -227,6 +260,29 @@ router.post('/register', asyncHandler(async (req, res) => {
       isOnboarded: verifiedUser.isOnboarded ?? false,
     });
   } catch (error: any) {
+    // Log exact error to error reporting service
+    const errorToReport = error instanceof Error ? error : new Error(String(error?.message || 'Unknown error'));
+    await errorReporting.captureError(
+      'Unhandled error in /api/register during Google Auth registration',
+      errorToReport,
+      {
+        correlationId,
+        path: req.path,
+        method: req.method,
+        userEmail: req.body?.email,
+        metadata: {
+          email: req.body?.email,
+          hasAuthHeader: !!req.headers.authorization,
+          errorCode: error?.code,
+          errorName: error?.name,
+        },
+        tags: {
+          endpoint: 'register',
+          errorType: 'unhandled_error',
+        },
+      }
+    );
+    
     console.error('[REGISTER ERROR]', error);
     console.error('[REGISTER ERROR] Stack:', error?.stack);
     res.status(500).json({ 

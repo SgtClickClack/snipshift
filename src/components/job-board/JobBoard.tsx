@@ -10,9 +10,10 @@ import { useToast } from '@/hooks/useToast';
 import { fetchShifts, applyToShift } from '@/lib/api';
 import { Shift } from '@/shared/types';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
-import { MapPin, Clock, DollarSign, Calendar, Filter, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Calendar, Filter, X, CheckCircle2, Loader2, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { calculateDistance } from '@/lib/google-maps';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface JobBoardFilters {
   dateRangeStart?: string;
@@ -397,12 +398,14 @@ export default function JobBoard() {
         </div>
       ) : shiftsWithDistance.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              {filteredShifts.length === 0 && shifts.length > 0
+          <CardContent>
+            <EmptyState
+              icon={Search}
+              title="No shifts found in your area"
+              description={filteredShifts.length === 0 && shifts.length > 0
                 ? 'No shifts match your filters. Try adjusting your search criteria.'
                 : 'No open shifts available at the moment. Check back later!'}
-            </p>
+            />
           </CardContent>
         </Card>
       ) : (

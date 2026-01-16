@@ -137,9 +137,12 @@ export const signInWithGoogle = async () => {
       console.error('[Firebase] Unauthorized domain error. Check:');
       console.error('  1. Firebase Console > Authentication > Settings > Authorized domains');
       console.error('  2. Google Cloud Console > APIs & Services > Credentials > Authorized JavaScript origins');
-      console.error('  3. Google Cloud Console > Authorized redirect URIs must include: https://hospogo.com/__/auth/handler');
+      // Use dynamic domain instead of hardcoded hospogo.com
+      const currentDomain = typeof window !== 'undefined' ? window.location.hostname : 'hospogo.com';
+      const redirectUri = `https://${currentDomain}/__/auth/handler`;
+      console.error(`  3. Google Cloud Console > Authorized redirect URIs must include: ${redirectUri}`);
       console.error('  4. Current authDomain:', firebaseConfig.authDomain);
-      console.error('  5. Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
+      console.error('  5. Current hostname:', currentDomain);
     }
     
     console.error('[Firebase] Google redirect sign-in error:', {

@@ -188,6 +188,19 @@ export default {
             opacity: "0.98",
           },
         },
+        "shimmer": {
+          "0%": {
+            transform: "translateX(-100%)",
+            opacity: "0",
+          },
+          "50%": {
+            opacity: "0.05",
+          },
+          "100%": {
+            transform: "translateX(100%)",
+            opacity: "0",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -195,6 +208,7 @@ export default {
         "neon-pulse": "neon-pulse 2s infinite ease-in-out",
         "neon-flicker": "neon-flicker 3.25s infinite ease-in-out",
         "steady-hum": "steady-hum 2.5s infinite ease-in-out",
+        "shimmer": "shimmer 2s infinite ease-in-out",
       },
     },
   },
