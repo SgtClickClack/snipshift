@@ -32,6 +32,7 @@ import HomePage from '@/pages/home';
 import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
 import ForgotPasswordPage from '@/pages/forgot-password';
+import StatusPage from '@/pages/status';
 import { OAuthCallback } from '@/pages/oauth-callback';
 import NotFound from '@/pages/not-found';
 
@@ -122,6 +123,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         {/* IMPORTANT: Landing must remain fully public (no auth guard / no protected route wrapper). */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
+        <Route path="/status" element={<StatusPage />} />
         
         {/* Public marketplace routes */}
         <Route path="/marketplace/:id" element={

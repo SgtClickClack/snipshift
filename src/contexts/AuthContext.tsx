@@ -336,6 +336,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       '/contact',
       '/refunds',
       '/forgot-password',
+      '/status',     // Status page
     ];
     return publicPaths.includes(pathname);
   };
