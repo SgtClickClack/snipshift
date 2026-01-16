@@ -144,26 +144,34 @@ try {
 
 Write-Host ""
 
-# Step 5: Webhook Tunneling (Optional)
-Write-Host "5️⃣  Webhook Tunneling Setup" -ForegroundColor Yellow
+# Step 5: Webhook Tunneling
+Write-Host "5️⃣  Starting Webhook Tunneling..." -ForegroundColor Yellow
 Write-Host ""
 
-$startTunnel = Read-Host "Would you like to start webhook tunneling now? (y/n)"
-if ($startTunnel -eq "y" -or $startTunnel -eq "Y") {
-    Write-Host ""
-    Write-Host "   Starting webhook tunnel..." -ForegroundColor Cyan
-    Write-Host "   Forwarding to: localhost:5000/api/webhooks/stripe" -ForegroundColor Gray
-    Write-Host "   Press Ctrl+C to stop" -ForegroundColor Yellow
-    Write-Host ""
+Write-Host "   Starting webhook tunnel in background..." -ForegroundColor Cyan
+Write-Host "   Forwarding to: localhost:5000/api/webhooks/stripe" -ForegroundColor Gray
+Write-Host "   Note: Tunnel is running in background. Check output for webhook secret." -ForegroundColor Yellow
+Write-Host ""
+
+# Start the tunnel in a new window
+$tunnelCmd = "stripe listen --forward-to localhost:5000/api/webhooks/stripe"
+try {
+    $tunnelProcess = Start-Process -FilePath "powershell" -ArgumentList "-NoProfile", "-NoExit", "-Command", $tunnelCmd -PassThru
     
-    # Start the tunnel
-    stripe listen --forward-to localhost:5000/api/webhooks/stripe
-} else {
-    Write-Host ""
-    Write-Host "   To start webhook tunneling manually, run:" -ForegroundColor Cyan
-    $tunnelCmd = "stripe listen --forward-to localhost:5000/api/webhooks/stripe"
+    if ($tunnelProcess) {
+        Write-Host "   ✅ Webhook tunnel started in new window (PID: $($tunnelProcess.Id))" -ForegroundColor Green
+        Write-Host "   Check the new PowerShell window for the webhook signing secret (whsec_...)" -ForegroundColor Yellow
+        Write-Host "   Update your api/.env with: STRIPE_WEBHOOK_SECRET=whsec_..." -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "   To stop the tunnel, close the window or run:" -ForegroundColor Gray
+        Write-Host "   Stop-Process -Id $($tunnelProcess.Id)" -ForegroundColor Gray
+    } else {
+        throw "Failed to start process"
+    }
+} catch {
+    Write-Host "   ⚠️  Could not start tunnel automatically: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "   To start manually, run in a new terminal:" -ForegroundColor Cyan
     Write-Host "   $tunnelCmd" -ForegroundColor Green
-    Write-Host ""
 }
 
 Write-Host "✅ Stripe CLI setup complete!" -ForegroundColor Green
