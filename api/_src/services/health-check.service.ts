@@ -44,7 +44,7 @@ async function checkDatabase(): Promise<HealthCheckResult> {
 
     // Perform a simple query to verify connectivity
     // Using a lightweight query that doesn't require specific table access
-    await db.execute('SELECT 1');
+    await db.query('SELECT 1');
     
     return {
       service: 'database',
@@ -146,9 +146,9 @@ async function checkStripe(): Promise<HealthCheckResult> {
     }
 
     // Perform a lightweight API call to verify connectivity
-    // Using getAccount() which is a simple read operation
+    // Using accounts.retrieve() which is a simple read operation
     try {
-      await stripe.account.retrieve();
+      await stripe.accounts.retrieve();
       
       return {
         service: 'stripe',

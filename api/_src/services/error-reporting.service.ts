@@ -42,7 +42,7 @@ export interface ErrorReportingService {
 class ConsoleErrorReporting implements ErrorReportingService {
   async captureError(report: ErrorReport): Promise<void> {
     const logLevel = report.severity === 'critical' ? 'error' : report.severity;
-    const logMethod = console[logLevel] || console.error;
+    const logMethod = (logLevel === 'warning' ? console.warn : logLevel === 'error' ? console.error : logLevel === 'info' ? console.info : console.log) || console.error;
     
     const logData: any = {
       severity: report.severity,

@@ -90,12 +90,12 @@ function extractDatabaseErrorDetails(error: any): {
  * - Handles Zod validation errors gracefully
  * - Extracts and logs detailed database error information
  */
-export const errorHandler = (
+export const errorHandler = async (
   err: Error | ZodError,
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   // Extract database error details if this is a database-related error
   const isDatabaseError = 
     err.message?.toLowerCase().includes('query') ||

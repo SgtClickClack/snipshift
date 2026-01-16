@@ -4,7 +4,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { ShiftSchema, ShiftInviteSchema, ShiftReviewSchema, BulkAcceptSchema } from '../validation/schemas.js';
-import { shiftOffers, shifts, shiftApplications } from '../db/schema.js';
+import { shiftOffers, shifts, shiftApplications, users } from '../db/schema.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
 import * as shiftInvitationsRepo from '../repositories/shift-invitations.repository.js';
@@ -860,52 +860,77 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
 
     const jobs = jobsResult?.data || [];
 
+  // OPTIMIZED: Batch fetch all application counts in a single query (N+1 prevention)
+  const shiftIds = shifts.map(s => s.id);
+  const jobIds = jobs.map(j => j.id);
+  
+  let applicationCountMap: Map<string, number> = new Map();
+  try {
+    applicationCountMap = await applicationsRepo.getApplicationCountsBatch(shiftIds, jobIds);
+    
+    // Log optimization success (for monitoring)
+    console.log(`[GET /shop/:userId] Batch fetched application counts for ${shiftIds.length} shifts and ${jobIds.length} jobs`, {
+      correlationId: req.correlationId,
+      userId: currentUserId,
+      totalCounts: applicationCountMap.size,
+    });
+  } catch (error: any) {
+    const errorReporting = await import('../services/error-reporting.service.js');
+    await errorReporting.errorReporting.captureError(
+      'Failed to batch fetch application counts for shop dashboard',
+      error as Error,
+      {
+        correlationId: req.correlationId,
+        userId: currentUserId,
+        path: req.path,
+        method: req.method,
+        metadata: { shiftIdsCount: shiftIds.length, jobIdsCount: jobIds.length },
+      }
+    );
+    // Continue with empty map (graceful degradation)
+  }
+
   // Normalize shifts to unified format
-  const normalizedShifts = await Promise.all(
-    shifts.map(async (shift) => {
-      // Get application count for shift
-      const shiftApplications = await applicationsRepo.getApplications({ shiftId: shift.id });
-      const applicationCount = shiftApplications?.total || 0;
+  const normalizedShifts = shifts.map((shift) => {
+    // Get application count from batch-fetched map
+    const applicationCount = applicationCountMap.get(`shift:${shift.id}`) || 0;
 
-      // Build location string
-      const location = shift.location || null;
+    // Build location string
+    const location = shift.location || null;
 
-      // Convert startTime to date string for compatibility
-      const startTimeISO = toISOStringSafe(shift.startTime);
-      const endTimeISO = toISOStringSafe(shift.endTime);
-      const createdAtISO = toISOStringSafe(shift.createdAt);
-      const dateStr = startTimeISO.split('T')[0];
+    // Convert startTime to date string for compatibility
+    const startTimeISO = toISOStringSafe(shift.startTime);
+    const endTimeISO = toISOStringSafe(shift.endTime);
+    const createdAtISO = toISOStringSafe(shift.createdAt);
+    const dateStr = startTimeISO.split('T')[0];
 
-      return {
-        id: shift.id,
-        role: (shift as any).role ?? null,
-        title: shift.title,
-        payRate: shift.hourlyRate,
-        date: dateStr,
-        startTime: startTimeISO,
-        endTime: endTimeISO,
-        shiftLengthHours: computeShiftLengthHours(shift.startTime, shift.endTime),
-        status: shift.status,
-        location,
-        applicationCount,
-        createdAt: createdAtISO,
-        employerId: shift.employerId,
-        uniformRequirements: (shift as any).uniformRequirements ?? null,
-        rsaRequired: (shift as any).rsaRequired ?? false,
-        expectedPax: (shift as any).expectedPax ?? null,
-        isEmergencyFill: (shift as any).isEmergencyFill ?? false,
-        // Add type indicator for debugging (optional)
-        _type: 'shift'
-      };
-    })
-  );
+    return {
+      id: shift.id,
+      role: (shift as any).role ?? null,
+      title: shift.title,
+      payRate: shift.hourlyRate,
+      date: dateStr,
+      startTime: startTimeISO,
+      endTime: endTimeISO,
+      shiftLengthHours: computeShiftLengthHours(shift.startTime, shift.endTime),
+      status: shift.status,
+      location,
+      applicationCount,
+      createdAt: createdAtISO,
+      employerId: shift.employerId,
+      uniformRequirements: (shift as any).uniformRequirements ?? null,
+      rsaRequired: (shift as any).rsaRequired ?? false,
+      expectedPax: (shift as any).expectedPax ?? null,
+      isEmergencyFill: (shift as any).isEmergencyFill ?? false,
+      // Add type indicator for debugging (optional)
+      _type: 'shift'
+    };
+  });
 
   // Normalize jobs to unified format
-  const normalizedJobs = await Promise.all(
-    jobs.map(async (job) => {
-      // Get application count for job
-      const jobApplications = await applicationsRepo.getApplications({ jobId: job.id });
-      const applicationCount = jobApplications?.total || 0;
+  const normalizedJobs = jobs.map((job) => {
+    // Get application count from batch-fetched map
+    const applicationCount = applicationCountMap.get(`job:${job.id}`) || 0;
 
       // Build location string
       const locationParts = [job.address, job.city, job.state].filter(Boolean);
@@ -982,8 +1007,7 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
         // Add type indicator for debugging (optional)
         _type: 'job'
       };
-    })
-  );
+    });
 
     // Combine and sort by createdAt (newest first)
     const allListings = [...normalizedShifts, ...normalizedJobs].sort((a, b) => {
@@ -1103,12 +1127,44 @@ router.get('/invitations/pending', authenticateUser, asyncHandler(async (req: Au
     // Continue with empty legacy shifts - don't fail the whole request
   }
 
+  // OPTIMIZED: Batch fetch all employer users in a single query (N+1 prevention)
+  const employerIds = new Set<string>();
+  invitations.forEach(({ shift }) => employerIds.add(shift.employerId));
+  legacyShifts.forEach(shift => employerIds.add(shift.employerId));
+
+  let employerMap: Map<string, typeof users.$inferSelect> = new Map();
+  try {
+    employerMap = await usersRepo.getUsersByIds(Array.from(employerIds));
+    
+    // Log optimization success (for monitoring)
+    console.log(`[GET /invitations/pending] Batch fetched ${employerMap.size} employers for ${employerIds.size} unique IDs`, {
+      correlationId: req.correlationId,
+      userId,
+      invitationsCount: invitations.length,
+      legacyShiftsCount: legacyShifts.length,
+    });
+  } catch (error: any) {
+    const errorReporting = await import('../services/error-reporting.service.js');
+    await errorReporting.errorReporting.captureError(
+      'Failed to batch fetch employer users for invitations',
+      error as Error,
+      {
+        correlationId: req.correlationId,
+        userId,
+        path: req.path,
+        method: req.method,
+        metadata: { employerIdsCount: employerIds.size },
+      }
+    );
+    // Continue with empty map (graceful degradation)
+  }
+
   // Combine and enrich with business information
   const shiftMap = new Map<string, any>();
 
   // Process new-style invitations
   for (const { invitation, shift } of invitations) {
-    const employer = await usersRepo.getUserById(shift.employerId);
+    const employer = employerMap.get(shift.employerId);
     
     shiftMap.set(shift.id, {
       id: shift.id,
@@ -1132,7 +1188,7 @@ router.get('/invitations/pending', authenticateUser, asyncHandler(async (req: Au
   // Process legacy shifts
   for (const shift of legacyShifts) {
     if (!shiftMap.has(shift.id)) {
-      const employer = await usersRepo.getUserById(shift.employerId);
+      const employer = employerMap.get(shift.employerId);
       
       shiftMap.set(shift.id, {
         id: shift.id,
@@ -3000,7 +3056,11 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
         }
       }
 
-      // 3. Create payout record
+      // 3. Create payout record (only if assigneeId exists)
+      if (!shift.assigneeId) {
+        throw new Error('Cannot create payout: shift has no assigned worker');
+      }
+
       const payout = await payoutsRepo.createPayout({
         shiftId: id,
         workerId: shift.assigneeId,
@@ -3029,19 +3089,18 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
         .where(eq(shifts.id, id));
 
       // 5. Update worker's total earnings
-      const { users: usersTable } = await import('../db/schema.js');
       const worker = await usersRepo.getUserById(shift.assigneeId);
       if (worker) {
         const currentTotal = parseInt(worker.totalEarnedCents?.toString() || '0', 10);
         const newTotal = currentTotal + amountCents;
         
         await tx
-          .update(usersTable)
+          .update(users)
           .set({
             totalEarnedCents: newTotal,
             updatedAt: new Date(),
           })
-          .where(eq(usersTable.id, shift.assigneeId));
+          .where(eq(users.id, shift.assigneeId));
       }
     });
 

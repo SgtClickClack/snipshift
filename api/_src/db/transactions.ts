@@ -7,11 +7,12 @@
 
 import { getDb } from './index.js';
 import type { ExtractTablesWithRelations } from 'drizzle-orm';
+import type { NodePgQueryResultHKT } from 'drizzle-orm/node-postgres';
 import type { PgTransaction } from 'drizzle-orm/pg-core';
 import type * as schema from './schema.js';
 
 type Transaction = PgTransaction<
-  'postgres',
+  NodePgQueryResultHKT,
   typeof schema,
   ExtractTablesWithRelations<typeof schema>
 >;

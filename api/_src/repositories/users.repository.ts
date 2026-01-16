@@ -1,4 +1,4 @@
-import { eq, sql, and } from 'drizzle-orm';
+import { eq, sql, and, inArray } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
 import { users } from '../db/schema.js';
 
@@ -132,6 +132,7 @@ export async function createUser(
       strikes: 0,
       lastStrikeDate: null,
       shiftsSinceLastStrike: 0,
+      totalEarnedCents: 0,
       recoveryProgress: 0,
       suspendedUntil: null,
       isOnboarded: false,
@@ -186,6 +187,50 @@ export async function getUserById(id: string): Promise<typeof users.$inferSelect
 
   const [user] = await db.select().from(users).where(eq(users.id, id));
   return user ? normalizeUserRoles(user) : null;
+}
+
+/**
+ * Batch fetch users by IDs (optimized for N+1 prevention)
+ * Returns a Map of userId -> user for O(1) lookups
+ */
+export async function getUsersByIds(ids: string[]): Promise<Map<string, typeof users.$inferSelect>> {
+  const db = getDb();
+  const userMap = new Map<string, typeof users.$inferSelect>();
+
+  if (!db) {
+    // Mock mode: filter from in-memory store
+    ids.forEach(id => {
+      const user = mockUsers.find((u) => u.id === id);
+      if (user) {
+        userMap.set(id, normalizeUserRoles(user));
+      }
+    });
+    return userMap;
+  }
+
+  if (ids.length === 0) {
+    return userMap;
+  }
+
+  try {
+    const fetchedUsers = await db
+      .select()
+      .from(users)
+      .where(inArray(users.id, ids));
+
+    fetchedUsers.forEach(user => {
+      userMap.set(user.id, normalizeUserRoles(user));
+    });
+  } catch (error: any) {
+    console.error('[getUsersByIds] Database error:', {
+      message: error?.message,
+      code: error?.code,
+      idsCount: ids.length,
+    });
+    // Return empty map on error (graceful degradation)
+  }
+
+  return userMap;
 }
 
 export async function getOrCreateMockBusinessUser(): Promise<typeof users.$inferSelect | null> {
