@@ -121,7 +121,7 @@ export async function requestBackupFromWaitlist(
     for (const entry of topWorkers) {
       try {
         const worker = await usersRepo.getUserById(entry.workerId);
-        const workerName = worker?.name || worker?.displayName || 'Worker';
+        const workerName = worker?.name || 'Worker';
 
         const title = '🚨 Immediate Start Available!';
         const message = `"${shift.title}" needs immediate backup. First to accept gets the shift!`;
@@ -309,7 +309,7 @@ export async function acceptBackupShift(
     // Notify venue owner
     const venueOwner = await usersRepo.getUserById(shift.employerId);
     const backupWorker = await usersRepo.getUserById(workerId);
-    const backupWorkerName = backupWorker?.name || backupWorker?.displayName || 'Worker';
+    const backupWorkerName = backupWorker?.name || 'Worker';
 
     await notificationsService.createInAppNotification(
       shift.employerId,

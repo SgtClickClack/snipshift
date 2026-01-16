@@ -994,14 +994,24 @@ router.delete('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   }
 }));
 
-// Get shifts by employer (authenticated, owner only or public?)
-// Currently implementing as authenticated for shop dashboard usage
+// Get shifts by employer (authenticated, owner only)
+// SECURITY: Only allows users to view their own shop shifts
 // FIXED: Now also fetches legacy jobs to ensure all listings are visible
 router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const { userId } = req.params;
   const currentUserId = req.user?.id;
 
-  // Allow users to see their own shifts, or potentially public profile shifts
+  if (!currentUserId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // SECURITY: Strict ownership check - users can only view their own shop shifts
+  if (userId !== currentUserId) {
+    res.status(403).json({ message: 'Forbidden: You can only view your own shop shifts' });
+    return;
+  }
+
   // For Shop Dashboard, we typically want to see all statuses
   
   try {
@@ -4871,7 +4881,7 @@ router.post('/:id/late-arrival', authenticateUser, asyncHandler(async (req: Auth
 
     // Get worker name
     const worker = await usersRepo.getUserById(userId);
-    const workerName = worker?.name || worker?.displayName || 'Worker';
+    const workerName = worker?.name || 'Worker';
 
     // Calculate new expected arrival time
     const expectedArrivalTime = new Date(shiftStart.getTime() + eta * 60 * 1000);
