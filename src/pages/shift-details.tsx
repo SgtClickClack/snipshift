@@ -2,16 +2,29 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { fetchShiftDetails, createApplication, fetchMyApplications, ShiftDetails } from '@/lib/api';
+import { fetchShiftDetails, createApplication, fetchMyApplications, ShiftDetails, checkInShift, requestSubstitute, clockOutShift, joinWaitlist, leaveWaitlist, getWaitlistStatus } from '@/lib/api';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText, Navigation, UserX, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { CameraCapture } from '@/components/shifts/CameraCapture';
+import { WaitlistButton } from '@/components/shifts/WaitlistButton';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { ReportButton } from '@/components/report/report-button';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { calculateDistance } from '@/lib/google-maps';
 import { SEO } from "@/components/seo/SEO";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 
@@ -23,6 +36,11 @@ export default function ShiftDetailsPage() {
   const queryClient = useQueryClient();
   const [applicationState, setApplicationState] = useState<'idle' | 'applying' | 'applied'>('idle');
   const [isSaved, setIsSaved] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+  const [showSubstituteDialog, setShowSubstituteDialog] = useState(false);
+  const [showClockOutCamera, setShowClockOutCamera] = useState(false);
+  const [isClockOut, setIsClockOut] = useState(false);
 
   // TODO: Saved shifts feature - Currently using local state only
   const toggleSave = () => {
@@ -31,6 +49,190 @@ export default function ShiftDetailsPage() {
       title: !isSaved ? "Shift Saved" : "Shift Removed from Saved",
       description: !isSaved ? "This shift has been added to your saved shifts." : "This shift has been removed from your saved shifts.",
     });
+  });
+
+  const checkInMutation = useMutation({
+    mutationFn: ({ shiftId, latitude, longitude }: { shiftId: string; latitude: number; longitude: number }) =>
+      checkInShift(shiftId, latitude, longitude),
+    onSuccess: (data) => {
+      setIsCheckingIn(false);
+      setCheckInError(null);
+      toast({
+        title: 'Checked In Successfully!',
+        description: `You checked in ${data.distance.toFixed(0)}m from the venue.`,
+      });
+      // Invalidate shift details to update UI
+      queryClient.invalidateQueries({ queryKey: ['shift', id] });
+    },
+    onError: (error: any) => {
+      setIsCheckingIn(false);
+      const errorMessage = error.message || '';
+      
+      // Check for geofence failure
+      if (errorMessage.includes('TOO_FAR_FROM_VENUE') || errorMessage.includes('must be at the venue')) {
+        const distanceMatch = errorMessage.match(/(\d+)\s*m/);
+        const distance = distanceMatch ? distanceMatch[1] : 'unknown';
+        setCheckInError(`You must be at the venue to check in. You are ${distance}m away (maximum 200m).`);
+      } else {
+        setCheckInError(errorMessage || 'Failed to check in. Please try again.');
+      }
+      
+      toast({
+        title: 'Check-in Failed',
+        description: errorMessage || 'Failed to check in. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const substituteMutation = useMutation({
+    mutationFn: (shiftId: string) => requestSubstitute(shiftId),
+    onSuccess: (data) => {
+      setShowSubstituteDialog(false);
+      toast({
+        title: 'Substitution Requested',
+        description: `Your request has been submitted. ${data.notifiedWorkers} workers have been notified.`,
+      });
+      // Invalidate shift details to update UI
+      queryClient.invalidateQueries({ queryKey: ['shift', id] });
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || 'Failed to request substitution. Please try again.';
+      toast({
+        title: 'Request Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const clockOutMutation = useMutation({
+    mutationFn: ({ shiftId, proofImage }: { shiftId: string; proofImage: File }) =>
+      clockOutShift(shiftId, proofImage),
+    onSuccess: (data) => {
+      setShowClockOutCamera(false);
+      setIsClockOut(false);
+      toast({
+        title: 'Clocked Out Successfully',
+        description: data.message || 'Your shift is pending venue owner review.',
+      });
+      // Invalidate shift details to update UI
+      queryClient.invalidateQueries({ queryKey: ['shift', id] });
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || 'Failed to clock out. Please try again.';
+      toast({
+        title: 'Clock Out Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleClockOutCapture = (file: File) => {
+    if (!id) return;
+    clockOutMutation.mutate({ shiftId: id, proofImage: file });
+  };
+
+  const handleCheckIn = async () => {
+    if (!user || !id || !shift) {
+      return;
+    }
+
+    // Check if user is assigned to this shift
+    if (shift.assigneeId !== user.id) {
+      toast({
+        title: 'Not Assigned',
+        description: 'You are not assigned to this shift.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if already checked in
+    if ((shift as any).attendanceStatus === 'checked_in') {
+      toast({
+        title: 'Already Checked In',
+        description: 'You have already checked in to this shift.',
+      });
+      return;
+    }
+
+    // Check if shift has coordinates
+    const shiftLat = shift.lat ? (typeof shift.lat === 'string' ? parseFloat(shift.lat) : shift.lat) : null;
+    const shiftLng = shift.lng ? (typeof shift.lng === 'string' ? parseFloat(shift.lng) : shift.lng) : null;
+
+    if (!shiftLat || !shiftLng || isNaN(shiftLat) || isNaN(shiftLng)) {
+      toast({
+        title: 'Location Unavailable',
+        description: 'Venue location is not available. Cannot check in.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsCheckingIn(true);
+    setCheckInError(null);
+
+    // Request GPS coordinates
+    if (!navigator.geolocation) {
+      setIsCheckingIn(false);
+      toast({
+        title: 'Location Unavailable',
+        description: 'Geolocation is not supported by your browser.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+
+        // Calculate distance using Haversine formula (client-side validation)
+        const distance = calculateDistance(
+          { lat: userLat, lng: userLng },
+          { lat: shiftLat, lng: shiftLng }
+        );
+
+        // Convert to meters
+        const distanceMeters = distance * 1000;
+
+        // Check if within 200m radius
+        if (distanceMeters > 200) {
+          setIsCheckingIn(false);
+          setCheckInError(`You must be at the venue to check in. You are ${Math.round(distanceMeters)}m away (maximum 200m).`);
+          toast({
+            title: 'Too Far From Venue',
+            description: `You are ${Math.round(distanceMeters)}m away. Please move within 200m of the venue to check in.`,
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Proceed with check-in API call
+        checkInMutation.mutate({
+          shiftId: id,
+          latitude: userLat,
+          longitude: userLng,
+        });
+      },
+      (error) => {
+        setIsCheckingIn(false);
+        setCheckInError('Failed to get your location. Please enable location services and try again.');
+        toast({
+          title: 'Location Error',
+          description: 'Could not get your location. Please enable location services.',
+          variant: 'destructive',
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const { data: shift, isLoading, error } = useQuery({
@@ -56,6 +258,26 @@ export default function ShiftDetailsPage() {
       }
     }
   }, [myApplications, id, user]);
+
+  // Check for waitlist conversion (when user accepts from waitlist)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const instantAccept = urlParams.get('instantAccept') === 'true';
+    
+    if (instantAccept && shift && user && shift.assigneeId === user.id) {
+      // User was on waitlist and successfully accepted the shift
+      toast({
+        title: '🎉 Waitlist Conversion!',
+        description: `Congratulations! You've been moved from the waitlist and assigned to "${shift.title}".`,
+        duration: 5000,
+      });
+      
+        // Clean up URL parameter
+        urlParams.delete('instantAccept');
+        const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
+        window.history.replaceState({}, '', newUrl);
+    }
+  }, [shift, user, toast]);
 
   const applyMutation = useMutation({
     mutationFn: (applicationData: { shiftId: string; coverLetter?: string }) => createApplication(applicationData),
@@ -571,11 +793,102 @@ export default function ShiftDetailsPage() {
             </Card>
           )}
 
-          {/* Apply Button - Sticky on mobile, prominent on desktop */}
+          {/* Check-in or Apply Button - Sticky on mobile, prominent on desktop */}
           <div className="sticky bottom-0 bg-background border-t border-border p-4 -mx-4 md:static md:border-0 md:p-0 md:mt-6 overflow-x-hidden" data-testid="shift-apply-container">
             <Card className="bg-card rounded-lg border border-border shadow-sm md:shadow-lg">
               <CardContent className="p-6">
-                {applicationState === 'applied' ? (
+                {/* Show Check-in/Clock-out buttons if user is assigned to this shift */}
+                {user && shift?.assigneeId === user.id ? (
+                  (shift as any).attendanceStatus === 'checked_in' ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center gap-2 text-success">
+                        <CheckCircle2 className="h-5 w-5" />
+                        <span className="font-semibold">Checked In</span>
+                        {(shift as any).actualStartTime && (
+                          <span className="text-sm text-muted-foreground ml-2">
+                            at {new Date((shift as any).actualStartTime).toLocaleTimeString()}
+                          </span>
+                        )}
+                      </div>
+                      {/* Clock Out button - only show if shift is not already pending completion */}
+                      {shift?.status !== 'pending_completion' && shift?.status !== 'completed' && (
+                        <Button
+                          onClick={() => setShowClockOutCamera(true)}
+                          disabled={clockOutMutation.isPending}
+                          variant="outline"
+                          className="w-full text-lg py-6"
+                          size="lg"
+                          data-testid="button-clock-out"
+                        >
+                          {clockOutMutation.isPending ? (
+                            <>
+                              <Navigation className="h-5 w-5 mr-2 animate-spin" />
+                              Clocking Out...
+                            </>
+                          ) : (
+                            <>
+                              <LogOut className="h-5 w-5 mr-2" />
+                              Clock Out
+                            </>
+                          )}
+                        </Button>
+                      )}
+                      {/* Show status if shift is pending completion */}
+                      {shift?.status === 'pending_completion' && (
+                        <div className="text-center text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                          Shift completed. Waiting for venue owner review.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Button
+                        onClick={handleCheckIn}
+                        disabled={isCheckingIn}
+                        className="w-full text-lg py-6"
+                        size="lg"
+                        data-testid="button-check-in"
+                      >
+                        {isCheckingIn ? (
+                          <>
+                            <Navigation className="h-5 w-5 mr-2 animate-spin" />
+                            Checking In...
+                          </>
+                        ) : (
+                          <>
+                            <Navigation className="h-5 w-5 mr-2" />
+                            Check In
+                          </>
+                        )}
+                      </Button>
+                      {checkInError && (
+                        <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                          {checkInError}
+                        </div>
+                      )}
+                      {/* Request Substitute button - only show if shift is at least 24 hours away */}
+                      {shift && (() => {
+                        const shiftStart = new Date(shift.startTime);
+                        const now = new Date();
+                        const hoursUntilStart = (shiftStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+                        const canRequestSubstitute = hoursUntilStart >= 24;
+                        
+                        return canRequestSubstitute ? (
+                          <Button
+                            onClick={() => setShowSubstituteDialog(true)}
+                            disabled={substituteMutation.isPending}
+                            variant="outline"
+                            className="w-full"
+                            data-testid="button-request-substitute"
+                          >
+                            <UserX className="h-4 w-4 mr-2" />
+                            {substituteMutation.isPending ? 'Requesting...' : 'Request Substitute'}
+                          </Button>
+                        ) : null;
+                      })()}
+                    </div>
+                  )
+                ) : applicationState === 'applied' ? (
                   <div className="flex items-center justify-center gap-2 text-success">
                     <CheckCircle2 className="h-5 w-5" />
                     <span className="font-semibold">Application Sent</span>
@@ -584,6 +897,19 @@ export default function ShiftDetailsPage() {
                   <div className="text-center text-muted-foreground">
                     <p className="font-medium">This is your shift listing</p>
                     <p className="text-sm mt-1">View applications in your dashboard</p>
+                  </div>
+                ) : shift?.status === 'filled' || shift?.status === 'confirmed' ? (
+                  <div className="space-y-3">
+                    <WaitlistButton 
+                      shiftId={shift.id} 
+                      shiftStatus={shift.status}
+                      className="w-full text-lg py-6"
+                    />
+                    {shift?.waitlistCount !== undefined && shift.waitlistCount > 0 && (
+                      <p className="text-sm text-center text-muted-foreground">
+                        {shift.waitlistCount} {shift.waitlistCount === 1 ? 'person' : 'people'} on waitlist
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <Button
@@ -601,6 +927,50 @@ export default function ShiftDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Substitution Request Dialog */}
+      <AlertDialog open={showSubstituteDialog} onOpenChange={setShowSubstituteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Request Substitute?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to request a substitute for "{shift?.title}"? 
+              The shift will be reopened and recommended workers will be notified. 
+              Once a substitute is found and approved by the venue owner, you will be released from this shift.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={substituteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => id && substituteMutation.mutate(id)}
+              disabled={substituteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {substituteMutation.isPending ? 'Requesting...' : 'Request Substitute'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clock Out Camera Dialog */}
+      <AlertDialog open={showClockOutCamera} onOpenChange={setShowClockOutCamera}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clock Out - Proof Photo Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please capture a photo as proof of shift completion. This photo will be reviewed by the venue owner before your payout is processed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <CameraCapture
+              onCapture={handleClockOutCapture}
+              onCancel={() => setShowClockOutCamera(false)}
+            />
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </ErrorBoundary>
   );
 }

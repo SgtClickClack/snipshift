@@ -3,6 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { isBusinessRole } from "@/lib/roles";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -18,6 +26,7 @@ import { CompleteSetupBanner } from "@/components/onboarding/CompleteSetupBanner
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { StripeConnectBanner } from "@/components/payments/StripeConnectBanner";
 import { VenueStatusCard } from "@/components/venues/VenueStatusCard";
+import { VenueAnalyticsDashboard } from "@/components/venues/VenueAnalyticsDashboard";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
@@ -52,7 +61,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'shift-applications';
+type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'shift-applications' | 'analytics';
 
 const VenueDashboardSkeleton = () => (
   <div className="min-h-screen bg-background p-4 md:p-6">
@@ -114,6 +123,7 @@ function VenueDashboardContent() {
   const [selectedDateForShift, setSelectedDateForShift] = useState<Date | undefined>();
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [isCandidatesDialogOpen, setIsCandidatesDialogOpen] = useState(false);
+  const [shiftToComplete, setShiftToComplete] = useState<{ id: string; proofImageUrl?: string } | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -764,6 +774,18 @@ function VenueDashboardContent() {
               <span className="hidden md:inline">Calendar</span>
             </button>
             <button
+              onClick={() => setActiveView('analytics')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
+                activeView === 'analytics'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-steel-500 hover:text-steel-700 dark:text-steel-400 dark:hover:text-steel-300'
+              }`}
+              data-testid="tab-analytics"
+            >
+              <BarChart3 className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="hidden md:inline">Analytics</span>
+            </button>
+            <button
               id="profile-tab-trigger"
               onClick={() => setActiveView('profile')}
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 py-2 px-2 md:px-1 pb-3 border-b-2 font-medium text-sm ${
@@ -1154,17 +1176,25 @@ function VenueDashboardContent() {
                                 </div>
                               )}
                               {/* Complete Shift Button - Only show for filled/confirmed shifts after end time */}
-                              {isShift && isOwner && (job.status === 'filled' || job.status === 'confirmed') && job.assigneeId && (() => {
+                              {isShift && isOwner && (job.status === 'filled' || job.status === 'confirmed' || job.status === 'pending_completion') && job.assigneeId && (() => {
                                 try {
                                   const endTime = job.endTime ? new Date(job.endTime) : null;
                                   const now = new Date();
                                   const canComplete = endTime && now >= endTime && job.status !== 'completed';
-                                  return canComplete ? (
+                                  const isPendingCompletion = job.status === 'pending_completion';
+                                  return canComplete || isPendingCompletion ? (
                                     <div className="mt-3">
                                       <Button
                                         variant="default"
                                         size="sm"
-                                        onClick={() => completeShiftMutation.mutate(job.id)}
+                                        onClick={() => {
+                                          // Show proof photo if available, otherwise complete directly
+                                          if ((job as any).proofImageUrl) {
+                                            setShiftToComplete({ id: job.id, proofImageUrl: (job as any).proofImageUrl });
+                                          } else {
+                                            completeShiftMutation.mutate(job.id);
+                                          }
+                                        }}
                                         disabled={completeShiftMutation.isPending}
                                         className="w-full bg-green-600 hover:bg-green-700 text-white"
                                       >
@@ -1176,7 +1206,7 @@ function VenueDashboardContent() {
                                         ) : (
                                           <>
                                             <CheckCircle className="mr-2 h-4 w-4" />
-                                            Complete Shift
+                                            {isPendingCompletion ? 'Review & Complete' : 'Complete Shift'}
                                           </>
                                         )}
                                       </Button>
@@ -1402,6 +1432,13 @@ function VenueDashboardContent() {
             </Card>
           </div>
         )}
+
+        {/* Analytics Tab */}
+        {activeView === 'analytics' && (
+          <div className="space-y-6">
+            <VenueAnalyticsDashboard />
+          </div>
+        )}
       </div>
 
       {/* Create Shift Modal */}
@@ -1442,6 +1479,63 @@ function VenueDashboardContent() {
           }}
         />
       )}
+
+      {/* Shift Completion Modal with Proof Photo */}
+      <Dialog open={!!shiftToComplete} onOpenChange={(open) => !open && setShiftToComplete(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Review Shift Completion</DialogTitle>
+            <DialogDescription>
+              Please review the proof photo before completing the shift and processing the payout.
+            </DialogDescription>
+          </DialogHeader>
+          {shiftToComplete?.proofImageUrl && (
+            <div className="space-y-4">
+              <div className="relative rounded-lg overflow-hidden border-2 border-border bg-muted">
+                <img
+                  src={shiftToComplete.proofImageUrl}
+                  alt="Shift completion proof"
+                  className="w-full h-auto max-h-96 object-contain"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Worker has provided this photo as proof of shift completion.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShiftToComplete(null)}
+              disabled={completeShiftMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (shiftToComplete) {
+                  completeShiftMutation.mutate(shiftToComplete.id);
+                  setShiftToComplete(null);
+                }
+              }}
+              disabled={completeShiftMutation.isPending}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {completeShiftMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Completing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Approve & Complete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

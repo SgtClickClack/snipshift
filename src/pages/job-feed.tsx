@@ -15,8 +15,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation, SlidersHorizontal } from 'lucide-react';
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
-import { calculateDistance, reverseGeocodeToCity } from '@/lib/google-maps';
+import { calculateDistance, reverseGeocodeToCity, geocodeAddress } from '@/lib/google-maps';
 import { useIsStaffCompliant } from '@/hooks/useCompliance';
+import { useAuth } from '@/contexts/AuthContext';
 
 type SortOption = 'highest-rate' | 'closest' | 'soonest';
 type ViewMode = 'list' | 'map';
@@ -24,6 +25,7 @@ type ViewMode = 'list' | 'map';
 export default function JobFeedPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const isStaffCompliant = useIsStaffCompliant();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -33,10 +35,10 @@ export default function JobFeedPage() {
   const [isLocating, setIsLocating] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
-  // Dynamic location state (no more hardcoded defaults)
-  // Default to Sydney, Australia as fallback when GPS is denied
-  const DEFAULT_LOCATION = { lat: -33.8688, lng: 151.2093 };
-  const DEFAULT_CITY = 'Sydney';
+  // Dynamic location state
+  // Default to Brisbane, Australia as fallback (HospoGo is Brisbane-focused)
+  const DEFAULT_LOCATION = { lat: -27.4705, lng: 153.0260 };
+  const DEFAULT_CITY = 'Brisbane';
   
   const [centerLocation, setCenterLocation] = useState<{ lat: number; lng: number }>(DEFAULT_LOCATION);
   const [radius] = useState(50);
@@ -79,12 +81,31 @@ export default function JobFeedPage() {
           
           setIsLocating(false);
         },
-        (error) => {
-          // GPS permission denied or error - use default fallback
+        async (error) => {
+          // GPS permission denied or error - try to use user's home suburb
           console.warn('Geolocation error:', error.message);
-          setUserLocation(DEFAULT_LOCATION);
-          setCenterLocation(DEFAULT_LOCATION);
-          setSearchLocation(DEFAULT_CITY);
+          
+          let fallbackLocation = DEFAULT_LOCATION;
+          let fallbackCity = DEFAULT_CITY;
+          
+          // Try to geocode user's location if available
+          if (user?.location) {
+            try {
+              const coords = await geocodeAddress(user.location);
+              if (coords) {
+                fallbackLocation = coords;
+                // Extract city from location string
+                const locationParts = user.location.split(',').map(s => s.trim());
+                fallbackCity = locationParts[0] || DEFAULT_CITY;
+              }
+            } catch (geocodeError) {
+              console.warn('Failed to geocode user location:', geocodeError);
+            }
+          }
+          
+          setUserLocation(fallbackLocation);
+          setCenterLocation(fallbackLocation);
+          setSearchLocation(fallbackCity);
           setIsLocating(false);
         },
         // HIGH ACCURACY GPS OPTIONS
@@ -150,14 +171,49 @@ export default function JobFeedPage() {
         
         setIsLocating(false);
       },
-      (error) => {
+      async (error) => {
         console.warn('Geolocation error:', error.message);
+        
+        // Try to use user's home suburb as fallback
+        let fallbackLocation = DEFAULT_LOCATION;
+        let fallbackCity = DEFAULT_CITY;
+        
+        if (user?.location) {
+          try {
+            const coords = await geocodeAddress(user.location);
+            if (coords) {
+              fallbackLocation = coords;
+              const locationParts = user.location.split(',').map(s => s.trim());
+              fallbackCity = locationParts[0] || DEFAULT_CITY;
+              
+              setUserLocation(fallbackLocation);
+              setCenterLocation(fallbackLocation);
+              setSearchLocation(fallbackCity);
+              
+              toast({
+                title: 'Using Your Home Location',
+                description: `Using ${fallbackCity} from your profile since GPS is unavailable.`,
+              });
+            } else {
+              throw new Error('Geocoding failed');
+            }
+          } catch (geocodeError) {
+            console.warn('Failed to geocode user location:', geocodeError);
+            toast({
+              title: 'Location Error',
+              description: 'Could not get your location. Please search for a location manually.',
+              variant: 'destructive',
+            });
+          }
+        } else {
+          toast({
+            title: 'Location Error',
+            description: 'Could not get your location. Please search for a location manually.',
+            variant: 'destructive',
+          });
+        }
+        
         setIsLocating(false);
-        toast({
-          title: 'Location Error',
-          description: 'Could not get your location. Please search for a location manually.',
-          variant: 'destructive',
-        });
       },
       {
         enableHighAccuracy: true,
@@ -172,10 +228,18 @@ export default function JobFeedPage() {
   const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
   const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : undefined;
 
-  // Use search params in query key to trigger refetch when filters change
+  // Use search params and location in query key to trigger refetch when filters or location change
   const { data: shifts, isLoading, error } = useQuery({
-    queryKey: ['shifts', searchParams.toString()],
-    queryFn: () => fetchShifts({ status, limit, offset }),
+    queryKey: ['shifts', searchParams.toString(), userLocation?.lat, userLocation?.lng, radius],
+    queryFn: () => fetchShifts({ 
+      status, 
+      limit, 
+      offset,
+      lat: userLocation?.lat,
+      lng: userLocation?.lng,
+      radius: radius,
+    }),
+    enabled: !isLocating, // Only fetch when location is determined
   });
 
   // Normalize job data
@@ -220,9 +284,14 @@ export default function JobFeedPage() {
         shiftLng = typeof shift.lng === 'string' ? parseFloat(shift.lng) : shift.lng;
       }
 
-      // Calculate distance if we have coordinates
+      // Use distance from API if available (from marketplace endpoint), otherwise calculate client-side
       let distance: number | undefined = undefined;
-      if (userLocation && shiftLat !== undefined && shiftLng !== undefined && !isNaN(shiftLat) && !isNaN(shiftLng)) {
+      if ((shift as any).distance !== undefined && (shift as any).distance !== null) {
+        distance = typeof (shift as any).distance === 'string' 
+          ? parseFloat((shift as any).distance) 
+          : (shift as any).distance;
+      } else if (userLocation && shiftLat !== undefined && shiftLng !== undefined && !isNaN(shiftLat) && !isNaN(shiftLng)) {
+        // Fallback to client-side calculation if API didn't provide distance
         distance = calculateDistance(userLocation, { lat: shiftLat, lng: shiftLng });
       }
 

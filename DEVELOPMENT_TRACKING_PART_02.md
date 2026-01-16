@@ -1,3 +1,89 @@
+#### 2026-01-16: Geofenced Check-in Verification
+
+**Core Components**
+- Updated attendance_status enum to include 'checked_in' (`api/_src/db/schema/shifts.ts`)
+- Added actual_start_time field to shifts table
+- Check-in API endpoint (`PATCH /api/shifts/:id/check-in`)
+- Check-in button on shift detail page (`src/pages/shift-details.tsx`)
+- Client-side geofencing validation with Haversine formula
+
+**Key Features**
+- Geofenced check-in system restricts 'Check-in' action to workers within 200m of venue
+- Client-side distance calculation using Haversine formula before API call
+- Server-side validation with precise distance logging for audit purposes
+- Clear error messages when geofence check fails (e.g., "You must be at the venue to check in")
+- Distance logged in shift_logs table for audit trail
+- Sets attendance_status = 'checked_in' and actual_start_time = NOW() on successful check-in
+
+**Integration Points**
+- Check-in endpoint: `PATCH /api/shifts/:id/check-in` with latitude/longitude in request body
+- GPS coordinates requested only when Check-in button is pressed
+- Distance validation: < 200m required (client-side and server-side)
+- Failed attempts logged with eventType 'CHECK_IN_ATTEMPT_FAILED'
+- Successful check-ins logged with eventType 'CHECK_IN' including precise distance
+
+**File Paths**
+- `api/_src/db/schema/shifts.ts` (added 'checked_in' to enum, added actualStartTime field)
+- `api/_src/routes/shifts.ts` (added PATCH /:id/check-in endpoint, updated GET /:id to return new fields)
+- `api/_src/repositories/shifts.repository.ts` (added actualStartTime support)
+- `src/lib/api.ts` (added checkInShift function, updated ShiftDetails interface)
+- `src/pages/shift-details.tsx` (added Check-in button with geofencing logic)
+
+**Next Priority Task**
+- Test geofencing with various distances and edge cases
+- Verify distance logging in shift_logs table
+- Test check-in flow for assigned workers
+
+**Code Organization & Quality**
+- Client-side validation prevents unnecessary API calls when user is too far
+- Server-side validation ensures security and logs precise distance for audit
+- Error messages clearly indicate distance and maximum allowed radius
+- Uses existing geofencing utilities for consistency
+
+---
+
+#### 2026-01-16: Geo Proximity Shift Discovery
+
+**Core Components**
+- Marketplace shifts endpoint with proximity search (`api/_src/routes/marketplace.ts`)
+- Haversine formula distance calculation in SQL
+- Updated fetchShifts API function (`src/lib/api.ts`)
+- Enhanced job feed with location-based search (`src/pages/job-feed.tsx`)
+
+**Key Features**
+- Proximity-based shift search using GET /api/marketplace/shifts?lat=-27.47&lng=153.02&radius=10
+- Database-side distance calculation using Haversine formula for efficient pagination
+- Distance displayed on shift cards (e.g., "1.2 km away" or "500m away")
+- "Use My Location" button functionality (already existed, enhanced with fallback)
+- Automatic fallback to user's home suburb when GPS permissions are denied
+- Geocoding of user's location string when GPS is unavailable
+
+**Integration Points**
+- Marketplace shifts endpoint: `/api/marketplace/shifts` with lat/lng/radius parameters
+- Distance calculation performed on database side for pagination efficiency
+- Frontend automatically uses marketplace endpoint when location is available
+- Falls back to regular `/api/shifts` endpoint when location is not provided
+- Enhanced job cards display distance from API response or calculate client-side as fallback
+
+**File Paths**
+- `api/_src/routes/marketplace.ts` (added /shifts endpoint)
+- `src/lib/api.ts` (updated fetchShifts to support lat/lng/radius)
+- `src/pages/job-feed.tsx` (enhanced location handling with fallback)
+- `src/components/job-feed/enhanced-job-card.tsx` (already supports distance display)
+
+**Next Priority Task**
+- Test proximity search with various locations and radius values
+- Verify distance calculations match expected results
+- Ensure pagination works correctly with distance-based sorting
+
+**Code Organization & Quality**
+- Haversine formula implemented in SQL for database-side calculation
+- Efficient query with proper indexing on lat/lng columns
+- Graceful fallback to user's home suburb when GPS is denied
+- Distance displayed in user-friendly format (meters for <1km, km for >=1km)
+
+---
+
 #### 2026-01-16: Push Notification Engine Integration
 
 **Core Components**

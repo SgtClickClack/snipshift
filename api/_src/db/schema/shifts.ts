@@ -9,7 +9,7 @@ export const shiftStatusEnum = pgEnum('shift_status', ['draft', 'pending', 'invi
 /**
  * Attendance status enum
  */
-export const attendanceStatusEnum = pgEnum('attendance_status', ['pending', 'completed', 'no_show']);
+export const attendanceStatusEnum = pgEnum('attendance_status', ['pending', 'completed', 'no_show', 'checked_in']);
 
 /**
  * Payment status enum
@@ -52,6 +52,9 @@ export const shifts = pgTable('shifts', {
   autoAccept: boolean('auto_accept').notNull().default(false),
   parentShiftId: uuid('parent_shift_id').references((): any => shifts.id, { onDelete: 'cascade' }),
   clockInTime: timestamp('clock_in_time'), // Timestamp when staff member clocked in
+  actualStartTime: timestamp('actual_start_time'), // Server-side timestamp when check-in occurred
+  substitutionRequestedBy: uuid('substitution_requested_by').references(() => users.id, { onDelete: 'set null' }), // Worker who requested substitution
+  proofImageUrl: text('proof_image_url'), // URL of proof photo uploaded by worker upon clock-out
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({

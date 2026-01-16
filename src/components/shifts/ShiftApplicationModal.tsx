@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle, CheckCircle2, User, Phone, FileText } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { Loader2, AlertCircle, CheckCircle2, User, Phone, FileText, Clock } from 'lucide-react';
+import { apiRequest, fetchShiftDetails } from '@/lib/queryClient';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 interface ShiftApplicationModalProps {
   shiftId: string;
@@ -36,6 +37,31 @@ export function ShiftApplicationModal({
   const queryClient = useQueryClient();
   const [message, setMessage] = useState('');
   const [profileErrors, setProfileErrors] = useState<string[]>([]);
+  const [conflictWarning, setConflictWarning] = useState<{
+    hasConflict: boolean;
+    conflictingShift: { id: string; title: string; startTime: string; endTime: string } | null;
+  } | null>(null);
+
+  // Check for conflicts when modal opens
+  useEffect(() => {
+    if (isOpen && shiftId && user) {
+      checkForConflicts();
+    }
+  }, [isOpen, shiftId, user]);
+
+  const checkForConflicts = async () => {
+    try {
+      // Fetch shift details to get start/end times
+      const shiftDetails = await fetchShiftDetails(shiftId);
+      
+      // Check for conflicts by attempting to apply (this will return conflict info)
+      // We'll use a separate endpoint or check before applying
+      // For now, we'll check in the apply mutation error handler
+      setConflictWarning(null);
+    } catch (error) {
+      // Silently fail - we'll catch conflicts during application
+    }
+  };
 
   // Check profile completeness when modal opens
   useEffect(() => {
@@ -59,7 +85,10 @@ export function ShiftApplicationModal({
       const res = await apiRequest('POST', `/api/shifts/${shiftId}/apply`, applicationData);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Failed to submit application' }));
-        throw new Error(errorData.message || 'Failed to submit application');
+        const error = new Error(errorData.message || 'Failed to submit application');
+        // Attach error details for conflict handling
+        (error as any).details = errorData;
+        throw error;
       }
       return res.json();
     },
@@ -80,6 +109,29 @@ export function ShiftApplicationModal({
     },
     onError: (error: any) => {
       const errorMessage = error.message || 'Failed to submit application';
+      
+      // Handle shift conflict error
+      if (errorMessage.includes('SHIFT_CONFLICT') || errorMessage.includes('conflicts') || errorMessage.includes('conflict')) {
+        try {
+          // Try to parse error details from the error object
+          const errorData = (error as any)?.details || (error as any)?.response?.data || {};
+          setConflictWarning({
+            hasConflict: true,
+            conflictingShift: errorData.conflictingShift || null,
+          });
+          toast({
+            title: 'Shift Conflict Detected',
+            description: 'This shift overlaps with an existing accepted shift.',
+            variant: 'destructive',
+          });
+        } catch {
+          setConflictWarning({
+            hasConflict: true,
+            conflictingShift: null,
+          });
+        }
+        return;
+      }
       
       // Handle profile incomplete error
       if (errorMessage.includes('PROFILE_INCOMPLETE') || errorMessage.includes('Profile incomplete')) {
@@ -170,6 +222,34 @@ export function ShiftApplicationModal({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Conflict Warning */}
+          {conflictWarning?.hasConflict && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p className="font-semibold">Shift Conflict Detected</p>
+                  <p className="text-sm">
+                    This shift overlaps with an existing accepted shift.
+                  </p>
+                  {conflictWarning.conflictingShift && (
+                    <div className="mt-2 p-2 bg-destructive/10 rounded text-sm">
+                      <p className="font-medium">Conflicting Shift:</p>
+                      <p>{conflictWarning.conflictingShift.title}</p>
+                      <div className="flex items-center gap-1 mt-1 text-xs">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {format(new Date(conflictWarning.conflictingShift.startTime), 'MMM d, h:mm a')} -{' '}
+                          {format(new Date(conflictWarning.conflictingShift.endTime), 'h:mm a')}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Profile Completeness Alert */}
           {profileErrors.length > 0 && (
             <Alert variant="destructive">
@@ -235,7 +315,7 @@ export function ShiftApplicationModal({
           {profileErrors.length === 0 && (
             <Button
               onClick={handleSubmit}
-              disabled={applyMutation.isPending}
+              disabled={applyMutation.isPending || conflictWarning?.hasConflict}
             >
               {applyMutation.isPending ? (
                 <>

@@ -1101,6 +1101,16 @@ router.get('/users/:id', asyncHandler(async (req, res) => {
     return;
   }
 
+  // Calculate reliability score if user is a professional
+  let reliabilityScore: number | null = null;
+  let noShowCount: number = 0;
+  
+  if (user.role === 'professional') {
+    const reputationService = await import('../lib/reputation-service.js');
+    reliabilityScore = await reputationService.calculateReliabilityScore(user.id);
+    noShowCount = user.noShowCount ?? 0;
+  }
+
   // Return public profile data
   res.status(200).json({
     id: user.id,
@@ -1115,6 +1125,9 @@ router.get('/users/:id', asyncHandler(async (req, res) => {
     reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
     joinedDate: user.createdAt.toISOString(),
     verified: user.isOnboarded,
+    // Reliability metrics (for professionals)
+    reliabilityScore: reliabilityScore,
+    noShowCount: noShowCount,
   });
 }));
 

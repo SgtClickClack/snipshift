@@ -159,6 +159,63 @@ export async function getPayoutsForWorker(
 }
 
 /**
+ * Get payouts for a venue with shift details
+ */
+export async function getPayoutsForVenue(
+  venueId: string,
+  filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    status?: 'pending' | 'processing' | 'completed' | 'failed';
+  }
+): Promise<Array<Payout & {
+  shift: typeof shifts.$inferSelect | null;
+}>> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const conditions = [eq(payouts.venueId, venueId)];
+    
+    if (filters?.startDate) {
+      conditions.push(gte(payouts.createdAt, filters.startDate));
+    }
+    
+    if (filters?.endDate) {
+      conditions.push(lte(payouts.createdAt, filters.endDate));
+    }
+    
+    if (filters?.status) {
+      conditions.push(eq(payouts.status, filters.status));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const result = await db
+      .select({
+        payout: payouts,
+        shift: shifts,
+      })
+      .from(payouts)
+      .leftJoin(shifts, eq(payouts.shiftId, shifts.id))
+      .where(whereClause)
+      .orderBy(desc(payouts.createdAt));
+
+    return result.map((row) => ({
+      ...row.payout,
+      shift: row.shift,
+    })) as Array<Payout & {
+      shift: typeof shifts.$inferSelect | null;
+    }>;
+  } catch (error) {
+    console.error('[PAYOUTS REPO] Error getting payouts for venue:', error);
+    return [];
+  }
+}
+
+/**
  * Update payout status
  */
 export async function updatePayoutStatus(

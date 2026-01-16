@@ -1736,7 +1736,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
           paymentIntentId: paymentIntentId,
           applicationFeeAmount: commissionAmount,
           transferAmount: barberAmount,
-          substitutionRequestedBy: null as any, // Clear substitution flag
+          substitutionRequestedBy: null,
           updatedAt: new Date(),
         })
         .where(eq(shifts.id, id))
@@ -3133,7 +3133,7 @@ router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: Aut
           .set({
             assigneeId: application.workerId,
             status: 'filled',
-            substitutionRequestedBy: null as any, // Clear substitution flag
+            substitutionRequestedBy: null,
             updatedAt: new Date(),
           })
           .where(eq(shifts.id, application.shiftId));
@@ -3522,7 +3522,7 @@ router.patch('/:id/request-substitute', authenticateUser, asyncHandler(async (re
         .update(shifts)
         .set({
           status: 'open',
-          substitutionRequestedBy: userId as any,
+          substitutionRequestedBy: userId,
           updatedAt: new Date(),
         })
         .where(eq(shifts.id, id));

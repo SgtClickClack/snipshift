@@ -20,6 +20,8 @@ import { leads, leadInquiryTypeEnum, leadStatusEnum } from './schema/leads.js';
 import { waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum } from './schema/waitlist.js';
 import { venues, venueStatusEnum } from './schema/venues.js';
 import { shiftApplications, shiftApplicationStatusEnum } from './schema/shift-applications.js';
+import { shiftWaitlist, waitlistStatusEnum } from './schema/shift-waitlist.js';
+import { priorityBoostTokens } from './schema/priority-boost-tokens.js';
 import { payouts } from './schema/payouts.js';
 import { userPushTokens } from './schema/push-tokens.js';
 
@@ -46,6 +48,8 @@ export {
   leads, leadInquiryTypeEnum, leadStatusEnum,
   waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum,
   shiftApplications, shiftApplicationStatusEnum,
+  shiftWaitlist, waitlistStatusEnum,
+  priorityBoostTokens,
   payouts,
   userPushTokens
 };

@@ -182,6 +182,124 @@ export async function handleNoShow(userId: string, shiftId: string): Promise<Rep
 }
 
 /**
+ * Deduct rating points for no-show
+ * Reduces average rating by specified amount (default 0.5)
+ */
+export async function deductRatingForNoShow(userId: string, deductionAmount: number = 0.5): Promise<void> {
+  const db = getDb();
+  if (!db) {
+    console.error('[REPUTATION] Database not available for rating deduction');
+    return;
+  }
+
+  try {
+    const user = await usersRepo.getUserById(userId);
+    if (!user) {
+      console.error(`[REPUTATION] User ${userId} not found for rating deduction`);
+      return;
+    }
+
+    const currentRating = user.averageRating ? parseFloat(user.averageRating.toString()) : null;
+    if (currentRating === null || currentRating === 0) {
+      // No rating to deduct from
+      console.log(`[REPUTATION] User ${userId} has no rating to deduct from`);
+      return;
+    }
+
+    // Deduct the amount, but don't go below 1.0 (minimum rating)
+    const newRating = Math.max(1.0, currentRating - deductionAmount);
+
+    await db
+      .update(users)
+      .set({
+        averageRating: newRating.toFixed(2),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    console.log(`[REPUTATION] Rating deducted for user ${userId}: ${currentRating} -> ${newRating.toFixed(2)} (-${deductionAmount})`);
+
+    // Recalculate reliability score
+    await calculateAndUpdateReliabilityScore(userId);
+  } catch (error) {
+    console.error(`[REPUTATION] Error deducting rating for user ${userId}:`, error);
+  }
+}
+
+/**
+ * Calculate reliability score as a percentage
+ * Formula: (completed_shifts / (completed_shifts + no_shows)) * 100
+ * Returns a percentage (0-100)
+ */
+export async function calculateReliabilityScore(userId: string): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 100; // Default to 100% if database unavailable
+  }
+
+  try {
+    // Get completed shifts count
+    const [completedResult] = await db
+      .select({
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(shifts)
+      .where(
+        and(
+          eq(shifts.assigneeId, userId),
+          eq(shifts.status, 'completed'),
+          sql`${shifts.attendanceStatus} != 'no_show'`
+        )
+      );
+
+    const completedShifts = Number(completedResult?.count || 0);
+
+    // Get no-show count from user record (more efficient than querying shifts)
+    const user = await usersRepo.getUserById(userId);
+    const noShows = user?.noShowCount ?? 0;
+
+    // Calculate percentage
+    const totalShifts = completedShifts + noShows;
+    if (totalShifts === 0) {
+      return 100; // No shifts yet, default to 100%
+    }
+
+    const reliabilityPercentage = Math.round((completedShifts / totalShifts) * 100);
+    return Math.max(0, Math.min(100, reliabilityPercentage)); // Clamp to 0-100
+  } catch (error) {
+    console.error(`[REPUTATION] Error calculating reliability score for user ${userId}:`, error);
+    return 100; // Default to 100% on error
+  }
+}
+
+/**
+ * Calculate and update reliability score in user record
+ */
+export async function calculateAndUpdateReliabilityScore(userId: string): Promise<number> {
+  const db = getDb();
+  if (!db) {
+    return 100;
+  }
+
+  try {
+    const reliabilityPercentage = await calculateReliabilityScore(userId);
+
+    await db
+      .update(users)
+      .set({
+        reliabilityScore: reliabilityPercentage,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    return reliabilityPercentage;
+  } catch (error) {
+    console.error(`[REPUTATION] Error updating reliability score for user ${userId}:`, error);
+    return 100;
+  }
+}
+
+/**
  * Handle late cancellation event
  * - Increments strikes by 1 if cancellation is within 4 hours of shift start
  * - Resets shifts since last strike counter

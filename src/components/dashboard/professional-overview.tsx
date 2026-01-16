@@ -22,6 +22,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useNavigate } from "react-router-dom";
 import { Job } from "@shared/firebase-schema";
+import { RecommendedShifts } from "@/components/shifts/RecommendedShifts";
+import { StandbyShiftsSection } from "./standby-shifts-section";
+import { StandbyHeroBadge } from "./StandbyHeroBadge";
 // Application type not needed - Booking is defined locally
 
 interface Booking {
@@ -363,6 +366,15 @@ export default function ProfessionalOverview({
           </CardContent>
         </Card>
       </div>
+
+      {/* Standby Hero Badge */}
+      <StandbyHeroBadge />
+
+      {/* Recommended Shifts */}
+      <RecommendedShifts />
+
+      {/* My Standby Shifts (Waitlist) */}
+      <StandbyShiftsSection />
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

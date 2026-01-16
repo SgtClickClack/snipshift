@@ -66,6 +66,7 @@ export const users = pgTable('users', {
   completedShiftCount: integer('completed_shift_count').notNull().default(0),
   noShowCount: integer('no_show_count').notNull().default(0),
   lastNoShowAt: timestamp('last_no_show_at'),
+  reliabilityScore: integer('reliability_score'), // Percentage (0-100) based on completed shifts vs no-shows
   consecutiveFiveStarCount: integer('consecutive_five_star_count').notNull().default(0),
   topRatedBadge: boolean('top_rated_badge').notNull().default(false),
   ratingWarningAt: timestamp('rating_warning_at'), // When 4.0 warning was sent

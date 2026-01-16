@@ -7,17 +7,22 @@
  * - Low rating warnings
  */
 
-import { eq, and, sql, lt, isNotNull, or, isNull } from 'drizzle-orm';
+import { eq, and, sql, lt, isNotNull, or, isNull, gte, lte } from 'drizzle-orm';
 import { shifts } from '../db/schema.js';
+import { notifications } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 import * as proVerificationService from './pro-verification.service.js';
 import * as reputationService from '../lib/reputation-service.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as shiftWaitlistRepo from '../repositories/shift-waitlist.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
+import * as notificationService from './notification.service.js';
+import * as pushNotificationService from './push-notification.service.js';
+import * as priorityBoostService from './priority-boost.service.js';
 
 const CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check every 5 minutes
 const HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 let intervalId: NodeJS.Timeout | null = null;
 
@@ -236,6 +241,316 @@ async function checkNoShows(): Promise<void> {
 }
 
 /**
+ * Generate Google Maps URL from latitude and longitude
+ */
+function generateMapLink(lat: number | string | null, lng: number | string | null, location?: string | null): string {
+  if (lat && lng) {
+    const latNum = typeof lat === 'string' ? parseFloat(lat) : lat;
+    const lngNum = typeof lng === 'string' ? parseFloat(lng) : lng;
+    if (!isNaN(latNum) && !isNaN(lngNum)) {
+      return `https://www.google.com/maps?q=${latNum},${lngNum}`;
+    }
+  }
+  // Fallback to location search if coordinates not available
+  if (location) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+  }
+  return 'https://www.google.com/maps';
+}
+
+/**
+ * Check if a reminder has already been sent for a shift
+ */
+async function hasReminderBeenSent(
+  userId: string,
+  shiftId: string,
+  reminderType: 'one_hour' | 'fifteen_min'
+): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+
+  try {
+    // Fetch recent notifications for the user (last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentNotifications = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          gte(notifications.createdAt, oneDayAgo)
+        )
+      );
+
+    // Check if any notification matches the shift and reminder type
+    for (const notification of recentNotifications) {
+      const data = notification.data as any;
+      if (data?.shiftId === shiftId && data?.reminderType === reminderType) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (error) {
+    console.error('[SHIFT_CRON] Error checking for existing reminders:', error);
+    return false; // Default to false to allow sending if check fails
+  }
+}
+
+/**
+ * Get current time (shifts are stored in UTC, comparisons work with UTC)
+ * We format times for display in Brisbane timezone, but comparisons use UTC
+ */
+function getCurrentTime(): Date {
+  return new Date();
+}
+
+/**
+ * Format a date for display in Brisbane timezone
+ */
+function formatBrisbaneTime(date: Date | string): string {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  return dateObj.toLocaleString('en-AU', {
+    timeZone: 'Australia/Brisbane',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * Check for shifts that need 1-hour reminders
+ * Sends 'Shift Starting Soon' notification 1 hour before shift start
+ */
+async function checkOneHourReminders(): Promise<void> {
+  const db = getDb();
+  if (!db) {
+    console.error('[SHIFT_CRON] Database connection not available');
+    return;
+  }
+
+  try {
+    const now = getCurrentTime();
+    const oneHourFromNow = new Date(now.getTime() + HOUR_MS);
+    const fiftyFiveMinutesFromNow = new Date(now.getTime() + 55 * 60 * 1000); // 55 min window start
+    const sixtyFiveMinutesFromNow = new Date(now.getTime() + 65 * 60 * 1000); // 65 min window end
+
+    // Find shifts that:
+    // - Have an assignee (filled/confirmed)
+    // - Status is 'filled' or 'confirmed'
+    // - Start time is between 55 minutes and 65 minutes from now (10 min window to catch shifts)
+    // - Status is not 'completed' or 'cancelled'
+    const shiftsNeedingReminders = await db
+      .select({
+        id: shifts.id,
+        assigneeId: shifts.assigneeId,
+        startTime: shifts.startTime,
+        title: shifts.title,
+        location: shifts.location,
+        lat: shifts.lat,
+        lng: shifts.lng,
+        status: shifts.status,
+      })
+      .from(shifts)
+      .where(
+        and(
+          isNotNull(shifts.assigneeId),
+          sql`${shifts.status} IN ('filled', 'confirmed')`,
+          gte(shifts.startTime, fiftyFiveMinutesFromNow), // Start time is at least 55 min from now
+          lte(shifts.startTime, sixtyFiveMinutesFromNow), // Start time is at most 65 min from now
+          sql`${shifts.status} != 'completed'`,
+          sql`${shifts.status} != 'cancelled'`
+        )
+      );
+
+    if (shiftsNeedingReminders.length === 0) {
+      return;
+    }
+
+    console.log(`[SHIFT_CRON] Found ${shiftsNeedingReminders.length} shift(s) needing 1-hour reminders`);
+
+    for (const shift of shiftsNeedingReminders) {
+      if (!shift.assigneeId) continue;
+
+      try {
+        // Check if reminder already sent
+        const alreadySent = await hasReminderBeenSent(shift.assigneeId, shift.id, 'one_hour');
+        if (alreadySent) {
+          continue;
+        }
+
+        // Format start time for display in Brisbane timezone
+        const formattedTime = formatBrisbaneTime(shift.startTime);
+
+        const title = 'Shift Starting Soon';
+        const message = `Your shift "${shift.title}" starts in 1 hour (${formattedTime}). Don't forget to check in when you arrive!`;
+        const mapLink = generateMapLink(shift.lat, shift.lng, shift.location);
+
+        // Create in-app notification
+        await notificationsService.createInAppNotification(
+          shift.assigneeId,
+          'SYSTEM',
+          title,
+          message,
+          {
+            shiftId: shift.id,
+            shiftTitle: shift.title,
+            startTime: shift.startTime.toISOString(),
+            location: shift.location,
+            reminderType: 'one_hour',
+            actionButton: {
+              text: "Confirm I'm on my way",
+              link: `/shifts/${shift.id}?action=confirm_way`,
+            },
+            mapLink,
+            link: `/shifts/${shift.id}`,
+          }
+        );
+
+        // Send push notification
+        await pushNotificationService.sendGenericPushNotification(
+          shift.assigneeId,
+          title,
+          message,
+          {
+            type: 'shift_reminder',
+            shiftId: shift.id,
+            reminderType: 'one_hour',
+            link: `/shifts/${shift.id}`,
+            actionButton: "Confirm I'm on my way",
+            mapLink,
+          }
+        );
+
+        console.log(`[SHIFT_CRON] Sent 1-hour reminder for shift ${shift.id} to worker ${shift.assigneeId}`);
+      } catch (error) {
+        console.error(`[SHIFT_CRON] Error sending 1-hour reminder for shift ${shift.id}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('[SHIFT_CRON] Error checking 1-hour reminders:', error);
+  }
+}
+
+/**
+ * Check for shifts that need 15-minute final reminders
+ * Sends 'Final Reminder' notification 15 minutes before shift start if user is not checked in
+ */
+async function checkFifteenMinuteReminders(): Promise<void> {
+  const db = getDb();
+  if (!db) {
+    console.error('[SHIFT_CRON] Database connection not available');
+    return;
+  }
+
+  try {
+    const now = getCurrentTime();
+    const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000); // 10 min window start
+    const twentyMinutesFromNow = new Date(now.getTime() + 20 * 60 * 1000); // 20 min window end
+
+    // Find shifts that:
+    // - Have an assignee (filled/confirmed)
+    // - Status is 'filled' or 'confirmed'
+    // - Start time is between 10 minutes and 20 minutes from now (10 min window to catch shifts)
+    // - attendanceStatus is NOT 'checked_in' (user hasn't checked in yet)
+    // - Status is not 'completed' or 'cancelled'
+    const shiftsNeedingReminders = await db
+      .select({
+        id: shifts.id,
+        assigneeId: shifts.assigneeId,
+        startTime: shifts.startTime,
+        title: shifts.title,
+        location: shifts.location,
+        lat: shifts.lat,
+        lng: shifts.lng,
+        attendanceStatus: shifts.attendanceStatus,
+        status: shifts.status,
+      })
+      .from(shifts)
+      .where(
+        and(
+          isNotNull(shifts.assigneeId),
+          sql`${shifts.status} IN ('filled', 'confirmed')`,
+          gte(shifts.startTime, tenMinutesFromNow), // Start time is at least 10 min from now
+          lte(shifts.startTime, twentyMinutesFromNow), // Start time is at most 20 min from now
+          sql`${shifts.attendanceStatus} != 'checked_in'`, // Not checked in
+          sql`${shifts.status} != 'completed'`,
+          sql`${shifts.status} != 'cancelled'`
+        )
+      );
+
+    if (shiftsNeedingReminders.length === 0) {
+      return;
+    }
+
+    console.log(`[SHIFT_CRON] Found ${shiftsNeedingReminders.length} shift(s) needing 15-minute reminders`);
+
+    for (const shift of shiftsNeedingReminders) {
+      if (!shift.assigneeId) continue;
+
+      try {
+        // Check if reminder already sent
+        const alreadySent = await hasReminderBeenSent(shift.assigneeId, shift.id, 'fifteen_min');
+        if (alreadySent) {
+          continue;
+        }
+
+        // Format start time for display in Brisbane timezone
+        const formattedTime = formatBrisbaneTime(shift.startTime);
+
+        const title = 'Final Reminder: Shift Starting Soon';
+        const message = `Your shift "${shift.title}" starts in 15 minutes (${formattedTime}). Please check in when you arrive at the venue.`;
+        const mapLink = generateMapLink(shift.lat, shift.lng, shift.location);
+
+        // Create in-app notification
+        await notificationsService.createInAppNotification(
+          shift.assigneeId,
+          'SYSTEM',
+          title,
+          message,
+          {
+            shiftId: shift.id,
+            shiftTitle: shift.title,
+            startTime: shift.startTime.toISOString(),
+            location: shift.location,
+            reminderType: 'fifteen_min',
+            actionButton: {
+              text: "Confirm I'm on my way",
+              link: `/shifts/${shift.id}?action=confirm_way`,
+            },
+            mapLink,
+            link: `/shifts/${shift.id}`,
+          }
+        );
+
+        // Send push notification
+        await pushNotificationService.sendGenericPushNotification(
+          shift.assigneeId,
+          title,
+          message,
+          {
+            type: 'shift_reminder',
+            shiftId: shift.id,
+            reminderType: 'fifteen_min',
+            link: `/shifts/${shift.id}`,
+            actionButton: "Confirm I'm on my way",
+            mapLink,
+          }
+        );
+
+        console.log(`[SHIFT_CRON] Sent 15-minute reminder for shift ${shift.id} to worker ${shift.assigneeId}`);
+      } catch (error) {
+        console.error(`[SHIFT_CRON] Error sending 15-minute reminder for shift ${shift.id}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('[SHIFT_CRON] Error checking 15-minute reminders:', error);
+  }
+}
+
+/**
  * Notify top 3 waitlisted workers when a shift becomes available
  */
 async function notifyWaitlistedWorkers(shiftId: string): Promise<void> {
@@ -299,6 +614,10 @@ export function startShiftCompletionCron(): void {
   syncProVerificationStatuses();
   checkSuspensionExpirations();
   checkNoShows();
+  checkOneHourReminders();
+  checkFifteenMinuteReminders();
+  priorityBoostService.checkWaitlistsAndGrantTokens();
+  priorityBoostService.expireOldTokens();
 
   // Then run every 5 minutes
   intervalId = setInterval(() => {
@@ -306,6 +625,10 @@ export function startShiftCompletionCron(): void {
     syncProVerificationStatuses();
     checkSuspensionExpirations();
     checkNoShows();
+    checkOneHourReminders();
+    checkFifteenMinuteReminders();
+    priorityBoostService.checkWaitlistsAndGrantTokens();
+    priorityBoostService.expireOldTokens();
   }, CHECK_INTERVAL_MS);
 }
 

@@ -56,6 +56,9 @@ export const uploadProfileImages = upload.fields([
   { name: 'governmentId', maxCount: 1 },
 ]);
 
+// Middleware for proof image upload (shift completion)
+export const uploadProofImage = upload.single('proofImage');
+
 // Middleware for single file upload (for backward compatibility)
 export const uploadSingle = upload.single('file');
 

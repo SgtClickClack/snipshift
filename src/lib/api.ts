@@ -122,14 +122,42 @@ export async function fetchJobs(params: JobFilterParams = {}) {
   }
 }
 
-export async function fetchShifts(params: { status?: 'open' | 'filled' | 'completed'; limit?: number; offset?: number } = {}) {
+export async function fetchShifts(params: { 
+  status?: 'open' | 'filled' | 'completed'; 
+  limit?: number; 
+  offset?: number;
+  lat?: number;
+  lng?: number;
+  radius?: number;
+} = {}) {
   try {
+    // Use marketplace endpoint if location is provided for proximity search
+    const useMarketplace = params.lat !== undefined && params.lng !== undefined;
+    const endpoint = useMarketplace ? '/api/marketplace/shifts' : '/api/shifts';
+    
     const query = new URLSearchParams();
     if (params.status) query.append('status', params.status);
     if (params.limit) query.append('limit', params.limit.toString());
     if (params.offset) query.append('offset', params.offset.toString());
-    const res = await apiRequest('GET', `/api/shifts?${query.toString()}`);
+    
+    // Add location parameters for marketplace endpoint
+    if (useMarketplace) {
+      query.append('lat', params.lat!.toString());
+      query.append('lng', params.lng!.toString());
+      if (params.radius) {
+        query.append('radius', params.radius.toString());
+      }
+    }
+    
+    const res = await apiRequest('GET', `${endpoint}?${query.toString()}`);
     const data = await safeJson<any>(res, []);
+    
+    // Marketplace endpoint returns { shifts, pagination, searchParams }
+    if (useMarketplace && data.shifts) {
+      return data.shifts;
+    }
+    
+    // Regular endpoint returns array or { data: [] }
     return Array.isArray(data) ? data : (data?.data || []);
   } catch {
     return [];
@@ -541,6 +569,106 @@ export async function updateShiftStatus(
   }
 }
 
+export async function requestSubstitute(shiftId: string): Promise<{ message: string; shift: any; notifiedWorkers: number }> {
+  try {
+    const res = await apiRequest('PATCH', `/api/shifts/${shiftId}/request-substitute`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'requestSubstitute');
+  }
+}
+
+export async function getNoShowHistory(): Promise<{ noShows: Array<{
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  location: string | null;
+  employerName: string;
+  createdAt: string;
+}>; count: number }> {
+  try {
+    const res = await apiRequest('GET', '/api/worker/no-show-history');
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'getNoShowHistory');
+  }
+}
+
+export async function appealNoShow(
+  shiftId: string,
+  certificateFile: File,
+  additionalNotes?: string
+): Promise<{ success: boolean; message: string; status: 'approved' | 'manual_review' }> {
+  try {
+    const formData = new FormData();
+    formData.append('certificate', certificateFile);
+    formData.append('shiftId', shiftId);
+    if (additionalNotes) {
+      formData.append('additionalNotes', additionalNotes);
+    }
+
+    const res = await apiRequest('POST', '/api/appeals/upload-certificate', formData, {
+      skipContentType: true,
+    });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'appealNoShow');
+  }
+}
+
+export async function joinWaitlist(shiftId: string): Promise<{ message: string; entry: { id: string; shiftId: string; rank: number; status: string } }> {
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/waitlist`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'joinWaitlist');
+  }
+}
+
+export async function leaveWaitlist(shiftId: string): Promise<{ message: string }> {
+  try {
+    const res = await apiRequest('DELETE', `/api/shifts/${shiftId}/waitlist`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'leaveWaitlist');
+  }
+}
+
+export async function getWaitlistStatus(shiftId: string): Promise<{ isOnWaitlist: boolean; waitlistCount: number; maxWaitlistSize: number }> {
+  try {
+    const res = await apiRequest('GET', `/api/shifts/${shiftId}/waitlist`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'getWaitlistStatus');
+  }
+}
+
+export async function getWaitlistedShifts(): Promise<{
+  shifts: Array<{
+    id: string;
+    shiftId: string;
+    rank: number;
+    shift: {
+      id: string;
+      title: string;
+      startTime: string;
+      endTime: string;
+      location: string | null;
+      hourlyRate: string;
+      status: string;
+    };
+  }>;
+  count: number;
+}> {
+  try {
+    const res = await apiRequest('GET', '/api/worker/waitlisted-shifts');
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'getWaitlistedShifts');
+  }
+}
+
 // Shift offer functions
 export interface ShiftOffer {
   id: string;
@@ -833,11 +961,13 @@ export interface ShiftDetails {
     | 'confirmed'
     | 'cancelled'
     | 'pending_completion';
+  attendanceStatus?: 'pending' | 'completed' | 'no_show' | 'checked_in' | null;
   employerId: string;
   assigneeId?: string | null;
   shopName?: string | null;
   shopAvatarUrl?: string | null;
   requirements?: string[];
+  actualStartTime?: string | null;
   createdAt: string;
   updatedAt: string;
   // Frontend compatibility fields
@@ -870,6 +1000,67 @@ export async function fetchShiftDetails(id: string): Promise<ShiftDetails> {
     };
   } catch (error) {
     throw toApiError(error, 'fetchShiftDetails');
+  }
+}
+
+/**
+ * Check in to a shift with geofencing validation
+ * @param shiftId - The shift ID to check in to
+ * @param latitude - User's current latitude
+ * @param longitude - User's current longitude
+ * @returns Promise resolving to check-in response
+ */
+export async function clockOutShift(
+  shiftId: string,
+  proofImageFile: File
+): Promise<{ success: boolean; message: string; proofImageUrl: string; shift: any }> {
+  try {
+    const formData = new FormData();
+    formData.append('proofImage', proofImageFile);
+
+    // Use fetch directly for FormData to ensure proper Content-Type handling
+    const auth = (await import('./firebase')).auth;
+    const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+    
+    const headers: Record<string, string> = {
+      'X-HospoGo-CSRF': '1',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`/api/shifts/${shiftId}/clock-out`, {
+      method: 'PATCH',
+      headers,
+      body: formData,
+      credentials: 'include',
+    });
+    
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ message: 'Failed to clock out' }));
+      throw new Error(error.message || 'Failed to clock out');
+    }
+    
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'clockOutShift');
+  }
+}
+
+export async function checkInShift(
+  shiftId: string,
+  latitude: number,
+  longitude: number
+): Promise<{ success: boolean; actualStartTime: string; distance: number; message: string }> {
+  try {
+    const res = await apiRequest('PATCH', `/api/shifts/${shiftId}/check-in`, {
+      latitude,
+      longitude,
+    });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'checkInShift');
   }
 }
 
@@ -951,5 +1142,147 @@ export async function submitEnterpriseLead(data: EnterpriseLeadData): Promise<En
     return await res.json();
   } catch (error) {
     throw toApiError(error, 'submitEnterpriseLead');
+  }
+}
+
+// Venue Analytics
+export interface VenueAnalytics {
+  period: {
+    startDate: string;
+    endDate: string;
+    range: '30d' | '3m' | 'ytd';
+  };
+  metrics: {
+    totalSpend: number;
+    totalSpendChange: number;
+    fillRate: number;
+    fillRateChange: number;
+    reliabilityScore: number;
+    reliabilityChange: number;
+    totalShifts: number;
+    filledOrCompletedShifts: number;
+    shiftsWithActualStart: number;
+    reliableShifts: number;
+  };
+  spendOverTime: Array<{
+    date: string;
+    spend: number;
+  }>;
+}
+
+/**
+ * Fetch venue analytics for the current user's venue
+ * @param range - Date range: '30d' (default), '3m', or 'ytd'
+ * @returns Promise resolving to venue analytics data
+ */
+export async function fetchVenueAnalytics(range: '30d' | '3m' | 'ytd' = '30d'): Promise<VenueAnalytics> {
+  try {
+    const res = await apiRequest('GET', `/api/venues/me/analytics?range=${range}`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'fetchVenueAnalytics');
+  }
+}
+
+// Worker Recommendations
+export interface ShiftRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  hourlyRate: string;
+  location: string | null;
+  lat: string | null;
+  lng: string | null;
+  distanceKm: number;
+  matchReason: string;
+  score: number;
+  venue: {
+    id: string;
+    name: string;
+    averageRating: number | null;
+    reviewCount: number;
+  };
+  createdAt: string;
+}
+
+export interface WorkerRecommendations {
+  recommendations: ShiftRecommendation[];
+  count: number;
+}
+
+/**
+ * Fetch personalized shift recommendations for the current worker
+ * @param lat - Worker's latitude (optional, will use current location if available)
+ * @param lng - Worker's longitude (optional, will use current location if available)
+ * @returns Promise resolving to shift recommendations
+ */
+export async function fetchWorkerRecommendations(
+  lat?: number,
+  lng?: number
+): Promise<WorkerRecommendations> {
+  try {
+    const params = new URLSearchParams();
+    if (lat !== undefined) params.append('lat', lat.toString());
+    if (lng !== undefined) params.append('lng', lng.toString());
+    
+    const queryString = params.toString();
+    const url = `/api/worker/recommendations${queryString ? `?${queryString}` : ''}`;
+    const res = await apiRequest('GET', url);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'fetchWorkerRecommendations');
+  }
+}
+
+// Priority Boost
+export interface PriorityBoostStatus {
+  hasActiveBoost: boolean;
+  token?: {
+    id: string;
+    grantedAt: string;
+    expiresAt: string;
+    hoursRemaining: number;
+  };
+  shift?: {
+    id: string;
+    title: string;
+    startTime: string;
+  };
+  boostMultiplier?: number;
+  message?: string;
+}
+
+/**
+ * Fetch active priority boost status for the current worker
+ * @returns Promise resolving to priority boost status
+ */
+export async function fetchPriorityBoostStatus(): Promise<PriorityBoostStatus> {
+  try {
+    const res = await apiRequest('GET', '/api/worker/priority-boost');
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'fetchPriorityBoostStatus');
+  }
+}
+
+// Calendar Sync
+export interface CalendarSyncResponse {
+  calendarUrl: string;
+  token: string;
+  message: string;
+}
+
+/**
+ * Get calendar sync URL for worker's shifts
+ * @returns Promise resolving to calendar sync URL and token
+ */
+export async function getCalendarSyncUrl(): Promise<CalendarSyncResponse> {
+  try {
+    const res = await apiRequest('GET', '/api/worker/calendar/sync');
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'getCalendarSyncUrl');
   }
 }

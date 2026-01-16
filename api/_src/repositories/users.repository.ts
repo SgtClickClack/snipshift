@@ -134,7 +134,7 @@ export async function createUser(
       shiftsSinceLastStrike: 0,
       totalEarnedCents: 0,
       recoveryProgress: 0,
-      reliabilityScore: null as any,
+      reliabilityScore: null,
       suspendedUntil: null,
       isOnboarded: false,
       isActive: true,

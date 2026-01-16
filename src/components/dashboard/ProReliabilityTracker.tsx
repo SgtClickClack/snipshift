@@ -5,9 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp, FileCheck } from 'lucide-react';
+import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp, FileCheck, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MedicalCertificateUpload } from '@/components/appeals/MedicalCertificateUpload';
+import { fetchPriorityBoostStatus } from '@/lib/api';
 
 interface ReputationStats {
   strikes: number;
@@ -261,6 +262,14 @@ export function ProReliabilityTracker() {
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: priorityBoost } = useQuery({
+    queryKey: ['/api/worker/priority-boost'],
+    queryFn: fetchPriorityBoostStatus,
+    enabled: !!user?.id,
+    staleTime: 60 * 1000, // Cache for 1 minute
     refetchOnWindowFocus: true,
   });
 

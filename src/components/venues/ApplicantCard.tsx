@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Star, User, FileText } from 'lucide-react';
+import { Star, User, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { format } from 'date-fns';
 
@@ -13,6 +13,9 @@ interface Worker {
   avatarUrl: string | null;
   bio: string | null;
   phone: string | null;
+  averageRating?: number | null;
+  reliabilityScore?: number | null;
+  noShowCount?: number;
 }
 
 interface Shift {
@@ -130,6 +133,36 @@ export function ApplicantCard({ application, onViewProfile }: ApplicantCardProps
                   ? 'Rejected'
                   : 'Pending'}
               </Badge>
+            </div>
+
+            {/* Rating and Reliability */}
+            <div className="flex items-center gap-4 mb-2">
+              {worker.averageRating && (
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-medium">{worker.averageRating.toFixed(1)}</span>
+                </div>
+              )}
+              {worker.reliabilityScore !== null && worker.reliabilityScore !== undefined && (
+                <div className="flex items-center gap-1">
+                  {worker.reliabilityScore >= 90 ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : worker.reliabilityScore >= 70 ? (
+                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {worker.reliabilityScore}% Reliability
+                  </span>
+                </div>
+              )}
+              {worker.noShowCount !== undefined && worker.noShowCount > 0 && (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{worker.noShowCount} no-show{worker.noShowCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
             </div>
 
             {/* Bio Snippet */}

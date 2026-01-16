@@ -18,7 +18,11 @@ import {
   XCircle,
   AlertCircle,
   Building2,
-  RefreshCw
+  RefreshCw,
+  Calendar,
+  Copy,
+  Check,
+  Loader2
 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
@@ -39,6 +43,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { mapRoleToApiRole, getDashboardRoute, AppRole } from '@/lib/roles';
+import { getCalendarSyncUrl } from '@/lib/api';
 
 type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business';
 
@@ -51,6 +56,9 @@ export default function SettingsPage() {
   const [roleChangeDialogOpen, setRoleChangeDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
   const [isChangingRole, setIsChangingRole] = useState(false);
+  const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
+  const [isLoadingCalendarUrl, setIsLoadingCalendarUrl] = useState(false);
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
   // Account form state
   const [accountData, setAccountData] = useState({
@@ -345,6 +353,108 @@ export default function SettingsPage() {
                       {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
+
+                  <Separator className="my-8" />
+
+                  {/* Calendar Sync Section - Only for professional/worker users */}
+                  {user?.currentRole === 'professional' && (
+                    <div className="rounded-lg border border-border/50 bg-muted/30 p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="rounded-full bg-primary/10 p-2">
+                          <Calendar className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-foreground mb-2">
+                            Sync to Calendar
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Get an iCal feed URL to sync your accepted shifts with your personal calendar (Google Calendar, Apple Calendar, Outlook, etc.)
+                          </p>
+                          {!calendarUrl ? (
+                            <Button
+                              variant="outline"
+                              onClick={async () => {
+                                setIsLoadingCalendarUrl(true);
+                                try {
+                                  const response = await getCalendarSyncUrl();
+                                  setCalendarUrl(response.calendarUrl);
+                                } catch (error: any) {
+                                  toast({
+                                    title: 'Failed to generate calendar URL',
+                                    description: error?.message || 'Please try again later',
+                                    variant: 'destructive',
+                                  });
+                                } finally {
+                                  setIsLoadingCalendarUrl(false);
+                                }
+                              }}
+                              disabled={isLoadingCalendarUrl}
+                            >
+                              {isLoadingCalendarUrl ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <Calendar className="mr-2 h-4 w-4" />
+                                  Generate Calendar Sync URL
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 p-3 bg-background rounded-md border">
+                                <code className="flex-1 text-sm break-all">{calendarUrl}</code>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      await navigator.clipboard.writeText(calendarUrl);
+                                      setCopiedToClipboard(true);
+                                      setTimeout(() => setCopiedToClipboard(false), 2000);
+                                      toast({
+                                        title: 'Copied to clipboard',
+                                        description: 'Calendar URL copied! Add it to your calendar app.',
+                                      });
+                                    } catch (error) {
+                                      toast({
+                                        title: 'Failed to copy',
+                                        description: 'Please copy the URL manually',
+                                        variant: 'destructive',
+                                      });
+                                    }
+                                  }}
+                                >
+                                  {copiedToClipboard ? (
+                                    <Check className="h-4 w-4 text-green-600" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                              <div className="text-xs text-muted-foreground space-y-1">
+                                <p><strong>How to use:</strong></p>
+                                <ul className="list-disc list-inside space-y-1 ml-2">
+                                  <li>Google Calendar: Settings → Add calendar → From URL</li>
+                                  <li>Apple Calendar: File → New Calendar Subscription → Paste URL</li>
+                                  <li>Outlook: Add calendar → Subscribe from web → Paste URL</li>
+                                </ul>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCalendarUrl(null)}
+                              >
+                                Generate New URL
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <Separator className="my-8" />
 
