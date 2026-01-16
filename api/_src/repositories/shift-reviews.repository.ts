@@ -40,6 +40,7 @@ export async function createShiftReview(
       type: data.type,
       rating: data.rating.toString(),
       comment: data.comment || null,
+      isAnonymous: true, // Start as anonymous (double-blind)
     })
     .returning();
 
