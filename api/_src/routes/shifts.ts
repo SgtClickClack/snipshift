@@ -4,7 +4,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { ShiftSchema, ShiftInviteSchema, ShiftReviewSchema, BulkAcceptSchema } from '../validation/schemas.js';
-import { shiftOffers, shifts } from '../db/schema.js';
+import { shiftOffers, shifts, shiftApplications } from '../db/schema.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
 import * as shiftInvitationsRepo from '../repositories/shift-invitations.repository.js';
@@ -1493,7 +1493,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
           paymentMethodId,
           commissionAmount,
           {
-            destination: barber.stripeAccountId,
+            destination: barber.stripeAccountId || '',
           },
           {
             shiftId: shift.id,
@@ -1860,7 +1860,7 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
               customerId,
               paymentMethodId,
               commissionAmount,
-              { destination: barber.stripeAccountId },
+              { destination: barber.stripeAccountId || '' },
               { shiftId: shift.id, barberId: userId, shopId: shift.employerId, type: 'shift_payment' }
             );
           } catch (stripeError: any) {
@@ -2637,6 +2637,9 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
   // Check if shift has autoAccept enabled
   const autoAccept = shift.autoAccept || false;
 
+  // Get message from request body
+  const { message } = req.body;
+
   if (autoAccept) {
     // Create application record in shift_applications table for tracking
     await shiftApplicationsRepo.createShiftApplication({
@@ -2668,11 +2671,14 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
       // Fetch updated shift
       const updatedShift = await shiftsRepo.getShiftById(id);
 
+      // Get user details for notification
+      const user = await usersRepo.getUserById(userId);
+
       // Send notification to shop
       try {
         await notificationsService.notifyBusinessOfAcceptance(
           shift.employerId,
-          user.name || 'Professional',
+          user?.name || 'Professional',
           {
             id: shift.id,
             title: shift.title,
@@ -2713,6 +2719,9 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
       return;
     }
 
+    // Get user details for notification
+    const user = await usersRepo.getUserById(userId);
+
     // Send notification to venue owner
     try {
       await notificationsService.notifyBusinessOfApplication(
@@ -2720,7 +2729,7 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
         {
           id: application.id,
           shiftId: shift.id,
-          professionalName: user.name || 'Professional',
+          professionalName: user?.name || 'Professional',
           shiftTitle: shift.title,
         }
       );
@@ -2740,6 +2749,167 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
         createdAt: application.createdAt,
       },
       instantAccept: false,
+    });
+  }
+}));
+
+// Update shift application status (accept/reject) - Venue owner only
+router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const { status, reason } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (!status || !['accepted', 'rejected'].includes(status)) {
+    res.status(400).json({ message: 'Invalid status. Must be "accepted" or "rejected"' });
+    return;
+  }
+
+  // Get the application
+  const application = await shiftApplicationsRepo.getShiftApplicationById(id);
+  if (!application) {
+    res.status(404).json({ message: 'Application not found' });
+    return;
+  }
+
+  // Verify ownership - check if the application is for a shift owned by this user
+  if (application.venueId !== userId) {
+    res.status(403).json({ message: 'Forbidden: You do not own this shift' });
+    return;
+  }
+
+  // Get shift to verify it exists
+  const shift = await shiftsRepo.getShiftById(application.shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Get worker info for notifications
+  const worker = await usersRepo.getUserById(application.workerId);
+  const workerName = worker?.name || 'Worker';
+
+  if (status === 'accepted') {
+    // Use transaction to ensure atomicity
+    const { getDb } = await import('../db/index.js');
+    const db = getDb();
+    if (!db) {
+      res.status(500).json({ message: 'Database not available' });
+      return;
+    }
+
+    try {
+      await db.transaction(async (tx) => {
+        // 1. Lock the shift row to prevent race conditions
+        const result = await (tx as any).execute(
+          sql`SELECT * FROM shifts WHERE id = ${application.shiftId} FOR UPDATE`
+        );
+        
+        const lockedShift = Array.isArray(result) ? result[0] : result?.rows?.[0] || result?.[0];
+
+        if (!lockedShift) {
+          throw new Error('Shift not found');
+        }
+
+        // Check if shift is already assigned
+        if (lockedShift.assignee_id) {
+          throw new Error('Shift has already been filled by another applicant');
+        }
+
+        // 2. Update application status to accepted
+        await tx
+          .update(shiftApplications)
+          .set({
+            status: 'accepted',
+            updatedAt: new Date(),
+          })
+          .where(eq(shiftApplications.id, id));
+
+        // 3. Update shift with assignee and mark as filled
+        await tx
+          .update(shifts)
+          .set({
+            assigneeId: application.workerId,
+            status: 'filled',
+            updatedAt: new Date(),
+          })
+          .where(eq(shifts.id, application.shiftId));
+
+        // 4. Auto-reject other pending applications for this shift
+        await tx
+          .update(shiftApplications)
+          .set({
+            status: 'rejected',
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(shiftApplications.shiftId, application.shiftId),
+              eq(shiftApplications.status, 'pending'),
+              sql`${shiftApplications.id} != ${id}`
+            )
+          );
+      });
+
+      // Fetch updated application
+      const updatedApplication = await shiftApplicationsRepo.getShiftApplicationById(id);
+
+      // Notify the worker
+      try {
+        await notificationsService.notifyApplicationApproved(
+          application.workerId,
+          shift,
+          null
+        );
+      } catch (error) {
+        console.error('[PATCH /api/shifts/applications/:id] Error sending approval notification:', error);
+      }
+
+      res.status(200).json({
+        message: 'Application accepted successfully',
+        application: updatedApplication,
+      });
+    } catch (error: any) {
+      console.error('[PATCH /api/shifts/applications/:id] Error accepting application:', {
+        message: error?.message,
+        code: error?.code,
+        detail: error?.detail,
+      });
+      
+      if (error.message.includes('already been filled')) {
+        res.status(409).json({ message: error.message });
+        return;
+      }
+      
+      throw error;
+    }
+  } else {
+    // REJECTED
+    const updatedApplication = await shiftApplicationsRepo.updateApplicationStatus(id, 'rejected');
+
+    if (!updatedApplication) {
+      res.status(500).json({ message: 'Failed to update application' });
+      return;
+    }
+
+    // Notify the worker
+    try {
+      await notificationsService.notifyApplicationDeclined(
+        application.workerId,
+        shift,
+        null
+      );
+    } catch (error) {
+      console.error('[PATCH /api/shifts/applications/:id] Error sending decline notification:', error);
+    }
+
+    res.status(200).json({
+      message: 'Application rejected',
+      application: updatedApplication,
     });
   }
 }));
@@ -2987,11 +3157,11 @@ router.post('/:id/no-show', authenticateUser, asyncHandler(async (req: Authentic
 
   // Check if shift is in a valid state for no-show reporting
   // Valid states: assigned (confirmed), filled, pending_completion
-  const validStatuses = ['assigned', 'confirmed', 'filled', 'pending_completion'];
+  const validStatuses: string[] = ['assigned', 'confirmed', 'filled', 'pending_completion'];
   if (!validStatuses.includes(shift.status)) {
     res.status(400).json({ 
       message: `Cannot report no-show for a shift with status: ${shift.status}`,
-      currentStatus: shift.status
+      currentStatus: String(shift.status)
     });
     return;
   }
@@ -3198,6 +3368,31 @@ router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: Authenti
       accuracy: accuracy || null,
       metadata: JSON.stringify({ reason: 'TOO_FAR_FROM_VENUE', maxRadiusMeters })
     });
+
+    // Report failed geofence attempt to error tracking service
+    const { errorReporting } = await import('../services/error-reporting.service.js');
+    await errorReporting.captureWarning(
+      `Failed geofence clock-in attempt: User ${userId} attempted to clock in ${proximityCheck.distance}m from venue (max: ${maxRadiusMeters}m)`,
+      {
+        correlationId: req.correlationId,
+        userId,
+        path: req.path,
+        method: req.method,
+        metadata: {
+          shiftId,
+          distance: proximityCheck.distance,
+          maxRadiusMeters,
+          latitude,
+          longitude,
+          venueLatitude: venueLat,
+          venueLongitude: venueLng,
+        },
+        tags: {
+          eventType: 'geofence_failure',
+          shiftId,
+        },
+      }
+    );
 
     res.status(403).json({
       success: false,

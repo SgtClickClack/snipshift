@@ -4,9 +4,9 @@
  * Database operations for shift applications
  */
 
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
-import { shiftApplications } from '../db/schema.js';
+import { shiftApplications, shifts, users } from '../db/schema.js';
 import { count } from 'drizzle-orm';
 
 export interface CreateShiftApplicationInput {
@@ -165,24 +165,48 @@ export async function getApplicationsByWorker(
 }
 
 /**
- * Get all applications for a venue
+ * Get all applications for a venue with worker and shift details
  */
 export async function getApplicationsForVenue(
-  venueId: string
-): Promise<ShiftApplication[]> {
+  venueId: string,
+  filters?: { status?: 'pending' | 'accepted' | 'rejected' }
+): Promise<Array<ShiftApplication & {
+  worker: typeof users.$inferSelect | null;
+  shift: typeof shifts.$inferSelect | null;
+}>> {
   const db = getDb();
   if (!db) {
     return [];
   }
 
   try {
-    const applications = await db
-      .select()
-      .from(shiftApplications)
-      .where(eq(shiftApplications.venueId, venueId))
-      .orderBy(shiftApplications.createdAt);
+    const conditions = [eq(shiftApplications.venueId, venueId)];
+    if (filters?.status) {
+      conditions.push(eq(shiftApplications.status, filters.status));
+    }
 
-    return applications as ShiftApplication[];
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const result = await db
+      .select({
+        application: shiftApplications,
+        worker: users,
+        shift: shifts,
+      })
+      .from(shiftApplications)
+      .leftJoin(users, eq(shiftApplications.workerId, users.id))
+      .leftJoin(shifts, eq(shiftApplications.shiftId, shifts.id))
+      .where(whereClause)
+      .orderBy(desc(shiftApplications.createdAt));
+
+    return result.map((row) => ({
+      ...row.application,
+      worker: row.worker,
+      shift: row.shift,
+    })) as Array<ShiftApplication & {
+      worker: typeof users.$inferSelect | null;
+      shift: typeof shifts.$inferSelect | null;
+    }>;
   } catch (error) {
     console.error('[SHIFT_APPLICATIONS REPO] Error getting applications for venue:', error);
     return [];

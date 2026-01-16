@@ -68,6 +68,7 @@ const ManageJobsPage = lazy(() => import('@/pages/manage-jobs'));
 const NotificationsPage = lazy(() => import('@/pages/notifications'));
 const VenueDashboard = lazy(() => import('@/pages/venue-dashboard'));
 const VenueProfilePage = lazy(() => import('@/pages/venue-profile'));
+const VenueApplicationsPage = lazy(() => import('@/pages/venue-applications'));
 const ShopDashboard = lazy(() => import('@/pages/shop-dashboard'));
 const ShopSchedulePage = lazy(() => import('@/pages/shop/schedule'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
