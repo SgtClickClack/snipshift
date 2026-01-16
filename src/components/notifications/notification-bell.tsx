@@ -110,7 +110,7 @@ export default function NotificationBell({
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div ref={dropdownRef} className="relative z-[9999]" data-testid="notification-dropdown">
+        <div ref={dropdownRef} className="absolute z-[9999]" data-testid="notification-dropdown">
           <NotificationDropdown
             notifications={notifications}
             onNotificationClick={handleNotificationClickWrapper}
