@@ -16,6 +16,7 @@ import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import { CompleteSetupBanner } from "@/components/onboarding/CompleteSetupBanner";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
+import { StripeConnectBanner } from "@/components/payments/StripeConnectBanner";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
@@ -744,6 +745,9 @@ function VenueDashboardContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Onboarding Incomplete Banner - Shows when hub user has no active subscription */}
         <CompleteSetupBanner />
+
+        {/* Stripe Connect Incomplete Banner */}
+        <StripeConnectBanner />
 
         {/* Overview Tab */}
         {activeView === 'overview' && (

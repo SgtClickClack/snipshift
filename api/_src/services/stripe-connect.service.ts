@@ -68,6 +68,110 @@ export async function createConnectAccount(email: string, userId: string): Promi
 }
 
 /**
+ * Create a Stripe Connect Express account with identity verification requirement
+ */
+export async function createConnectAccountWithIdentity(
+  email: string,
+  userId: string,
+  location?: string
+): Promise<string | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'AU',
+      email: email,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      metadata: {
+        userId: userId,
+        location: location || 'Brisbane',
+      },
+      // Request identity verification for Brisbane venues
+      settings: {
+        payouts: {
+          schedule: {
+            interval: 'daily',
+          },
+        },
+      },
+    });
+
+    return account.id;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating Connect account with identity:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create an account link with identity verification requirement
+ */
+export async function createAccountLinkWithIdentity(
+  accountId: string,
+  returnUrl: string,
+  refreshUrl: string
+): Promise<string | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: refreshUrl,
+      return_url: returnUrl,
+      type: 'account_onboarding',
+    });
+
+    return accountLink.url;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating account link with identity:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create an identity verification session for a Stripe Connect account
+ */
+export async function createIdentityVerificationSession(
+  accountId: string,
+  returnUrl: string
+): Promise<string | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const verificationSession = await stripe.identity.verificationSessions.create({
+      type: 'document',
+      metadata: {
+        account_id: accountId,
+      },
+      return_url: returnUrl,
+      options: {
+        document: {
+          allowed_types: ['driving_license', 'id_card', 'passport'],
+          require_id_number: true,
+          require_live_capture: true,
+          require_matching_selfie: false,
+        },
+      },
+    });
+
+    return verificationSession.url || null;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error creating identity verification session:', error);
+    throw error;
+  }
+}
+
+/**
  * Get Connect account details
  */
 export async function getConnectAccount(accountId: string) {

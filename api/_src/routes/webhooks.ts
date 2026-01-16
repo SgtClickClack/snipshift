@@ -255,6 +255,42 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
         break;
       }
 
+      case 'identity.verification_session.verified': {
+        // Handle identity verification completion
+        const verificationSession = event.data.object as any;
+        const accountId = verificationSession.metadata?.account_id;
+
+        if (!accountId) {
+          console.warn('⚠️  Identity verification session verified but no account_id in metadata');
+          break;
+        }
+
+        // Find user by stripeAccountId
+        const db = await import('../db/index.js').then(m => m.getDb());
+        if (!db) break;
+
+        const { users } = await import('../db/schema.js');
+        const { eq } = await import('drizzle-orm');
+        
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.stripeAccountId, accountId))
+          .limit(1);
+
+        if (user) {
+          // Identity verification is complete
+          // The account.updated webhook will handle the full onboarding status
+          console.info(`✅ Identity verification completed for user ${user.id}, account ${accountId}`);
+          
+          // Optionally, we could add a field to track identity verification separately
+          // For now, the account.updated event will update stripeOnboardingComplete
+        } else {
+          console.warn(`⚠️  Identity verification completed for account ${accountId}, but user not found`);
+        }
+        break;
+      }
+
       case 'payment_intent.succeeded': {
         // Handle successful payment intent (after capture)
         // Fail-safe: Ensure payment status is set to PAID even if manual capture flow missed it
