@@ -338,6 +338,7 @@ router.get('/me/can-work-alcohol-shifts', authenticateUser, asyncHandler(async (
  *
  * Returns a lightweight list of professionals for business scheduling/invites.
  * Auth is required to avoid public scraping.
+ * SECURITY: Contact info (email) is masked until professional relationship is established.
  *
  * Query Parameters:
  * - search: optional free-text search (name/email)
@@ -347,6 +348,12 @@ router.get('/me/can-work-alcohol-shifts', authenticateUser, asyncHandler(async (
  * - offset: pagination offset (default 0)
  */
 router.get('/professionals', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const viewerId = req.user?.id;
+  if (!viewerId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
   const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
   const rsaRequired = req.query.rsaRequired === 'true';
   const prioritized = req.query.prioritized === 'true';
@@ -364,7 +371,22 @@ router.get('/professionals', authenticateUser, asyncHandler(async (req: Authenti
       offset,
     });
 
-    res.status(200).json(result);
+    // SECURITY: Mask email addresses until professional relationship is established
+    const maskedData = await Promise.all(
+      result.data.map(async (pro) => {
+        const hasRelationship = await hasProfessionalRelationship(viewerId, pro.id);
+        return {
+          ...pro,
+          email: hasRelationship ? pro.email : maskEmail(pro.email),
+          contactRevealed: hasRelationship,
+        };
+      })
+    );
+
+    res.status(200).json({
+      ...result,
+      data: maskedData,
+    });
     return;
   }
 
@@ -375,7 +397,19 @@ router.get('/professionals', authenticateUser, asyncHandler(async (req: Authenti
     offset,
   });
 
-  res.status(200).json(result);
+  // SECURITY: Mask email addresses until professional relationship is established
+  const maskedData = await Promise.all(
+    result.map(async (pro) => {
+      const hasRelationship = await hasProfessionalRelationship(viewerId, pro.id);
+      return {
+        ...pro,
+        email: hasRelationship ? pro.email : maskEmail(pro.email),
+        contactRevealed: hasRelationship,
+      };
+    })
+  );
+
+  res.status(200).json(maskedData);
 }));
 
 // Update current user profile
@@ -1090,9 +1124,98 @@ router.patch('/users/:id/current-role', authenticateUser, asyncHandler(async (re
   });
 }));
 
+/**
+ * Check if there's a professional relationship between two users
+ * A professional relationship exists if:
+ * - User A is an employer and User B is assigned to one of User A's shifts (or vice versa)
+ * - The shift status is 'filled', 'confirmed', or 'completed'
+ */
+async function hasProfessionalRelationship(
+  viewerId: string | undefined,
+  profileUserId: string
+): Promise<boolean> {
+  if (!viewerId || viewerId === profileUserId) {
+    return false; // Can't have relationship with self, or no viewer
+  }
+
+  try {
+    const shiftsRepo = await import('../repositories/shifts.repository.js');
+    const { getDb } = await import('../db/index.js');
+    const { shifts } = await import('../db/schema.js');
+    const { eq, or, and, inArray } = await import('drizzle-orm');
+    
+    const db = getDb();
+    if (!db) {
+      return false;
+    }
+
+    // Check if viewer is employer and profile user is assignee
+    const employerShifts = await db
+      .select({ id: shifts.id })
+      .from(shifts)
+      .where(
+        and(
+          eq(shifts.employerId, viewerId),
+          eq(shifts.assigneeId, profileUserId),
+          inArray(shifts.status, ['filled', 'confirmed', 'completed'])
+        )
+      )
+      .limit(1);
+
+    if (employerShifts.length > 0) {
+      return true;
+    }
+
+    // Check if viewer is assignee and profile user is employer
+    const assigneeShifts = await db
+      .select({ id: shifts.id })
+      .from(shifts)
+      .where(
+        and(
+          eq(shifts.assigneeId, viewerId),
+          eq(shifts.employerId, profileUserId),
+          inArray(shifts.status, ['filled', 'confirmed', 'completed'])
+        )
+      )
+      .limit(1);
+
+    return assigneeShifts.length > 0;
+  } catch (error) {
+    console.error('[hasProfessionalRelationship] Error:', error);
+    return false; // Fail closed - don't reveal contact info on error
+  }
+}
+
+/**
+ * Mask email address to prevent platform leakage before professional relationship
+ * Example: "john.doe@gmail.com" -> "j***@g***.com"
+ */
+function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return '***@***.***';
+  const [local, domain] = email.split('@');
+  const domainParts = domain.split('.');
+  const maskedLocal = local.charAt(0) + '***';
+  const maskedDomain = domainParts[0].charAt(0) + '***.' + domainParts.slice(1).join('.');
+  return `${maskedLocal}@${maskedDomain}`;
+}
+
+/**
+ * Mask phone number to prevent platform leakage before professional relationship
+ * Example: "+61412345678" -> "+61***678"
+ */
+function maskPhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const cleaned = phone.replace(/\s/g, '');
+  if (cleaned.length < 6) return '***';
+  return cleaned.slice(0, 3) + '***' + cleaned.slice(-3);
+}
+
 // Get public user profile by ID
 router.get('/users/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
+  
+  // Get viewer ID from auth token if present (optional for public profiles)
+  const viewerId = (req as any).user?.id;
   
   const user = await usersRepo.getUserById(id);
   
@@ -1111,7 +1234,13 @@ router.get('/users/:id', asyncHandler(async (req, res) => {
     noShowCount = user.noShowCount ?? 0;
   }
 
+  // SECURITY: Check if viewer has a professional relationship with this user
+  // Only reveal contact info (email/phone) if there's an accepted shift relationship
+  const hasRelationship = await hasProfessionalRelationship(viewerId, user.id);
+  const isOwnProfile = viewerId === user.id;
+
   // Return public profile data
+  // SECURITY: Mask sensitive contact information unless professional relationship exists
   res.status(200).json({
     id: user.id,
     name: user.name,
@@ -1128,6 +1257,11 @@ router.get('/users/:id', asyncHandler(async (req, res) => {
     // Reliability metrics (for professionals)
     reliabilityScore: reliabilityScore,
     noShowCount: noShowCount,
+    // SECURITY: Only reveal contact info if professional relationship exists or viewing own profile
+    email: (hasRelationship || isOwnProfile) ? user.email : maskEmail(user.email),
+    phone: (hasRelationship || isOwnProfile) ? (user.phone || null) : maskPhone(user.phone),
+    // Flag to indicate if contact details are revealed
+    contactRevealed: hasRelationship || isOwnProfile,
   });
 }));
 

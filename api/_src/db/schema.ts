@@ -24,6 +24,7 @@ import { shiftWaitlist, waitlistStatusEnum } from './schema/shift-waitlist.js';
 import { priorityBoostTokens } from './schema/priority-boost-tokens.js';
 import { payouts } from './schema/payouts.js';
 import { userPushTokens } from './schema/push-tokens.js';
+import { userCalendarTokens } from './schema/calendar-tokens.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -51,7 +52,8 @@ export {
   shiftWaitlist, waitlistStatusEnum,
   priorityBoostTokens,
   payouts,
-  userPushTokens
+    userPushTokens,
+    userCalendarTokens
 };
 
 /**

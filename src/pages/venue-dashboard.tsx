@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { isBusinessRole } from "@/lib/roles";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -32,7 +32,7 @@ import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
 import { format } from "date-fns";
 import { formatDateSafe, toISOStringSafe, toDateSafe } from "@/utils/date-formatter";
-import { createShift, fetchShopShifts, updateShiftStatus, decideApplication, getShiftApplications, updateApplicationStatus, ShiftApplication } from "@/lib/api";
+import { createShift, fetchShopShifts, updateShiftStatus, decideApplication, getShiftApplications, updateApplicationStatus, ShiftApplication, requestBackupFromWaitlist } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
 import {
   Dialog,
@@ -528,6 +528,24 @@ function VenueDashboardContent() {
         variant: "destructive"
       });
     }
+  });
+
+  const requestBackupMutation = useMutation({
+    mutationFn: (shiftId: string) => requestBackupFromWaitlist(shiftId),
+    onSuccess: (data) => {
+      toast({
+        title: 'Backup Requested',
+        description: data.message || `Notified ${data.notifiedWorkers} waitlisted worker(s)`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Request Failed',
+        description: error?.message || 'Failed to request backup',
+        variant: 'destructive',
+      });
+    },
   });
 
   const deleteItemMutation = useMutation({
@@ -1173,6 +1191,104 @@ function VenueDashboardContent() {
                                     <Users className="mr-2 h-4 w-4" />
                                     View Candidates
                                   </Button>
+                                </div>
+                              )}
+                              {/* Late Arrival ETA Alert - Show when worker has reported being late */}
+                              {isShift && isOwner && (job as any).lateArrivalSignalSent && (job as any).lateArrivalEtaMinutes && (() => {
+                                const etaMinutes = (job as any).lateArrivalEtaMinutes;
+                                const etaSetAt = (job as any).lateArrivalEtaSetAt;
+                                const shiftStart = job.startTime ? new Date(job.startTime) : null;
+                                const expectedArrival = shiftStart ? new Date(shiftStart.getTime() + etaMinutes * 60 * 1000) : null;
+                                
+                                return (
+                                  <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-500/50 rounded-md">
+                                    <div className="flex items-start gap-2">
+                                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                                          Worker Running Late
+                                        </p>
+                                        <p className="text-sm text-amber-800 dark:text-amber-200">
+                                          Expected arrival: {expectedArrival ? expectedArrival.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }) : 'TBD'} ({etaMinutes} min delay)
+                                        </p>
+                                        {etaSetAt && (
+                                          <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                            Reported {new Date(etaSetAt).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                              {/* Find Backup Button - Show when worker is >5 min late without check-in */}
+                              {isShift && isOwner && (job.status === 'filled' || job.status === 'confirmed') && job.assigneeId && (() => {
+                                const shiftStart = job.startTime ? new Date(job.startTime) : null;
+                                const now = new Date();
+                                const attendanceStatus = (job as any).attendanceStatus;
+                                const backupRequested = (job as any).backupRequestedAt;
+                                const backupAssigned = (job as any).backupWorkerId;
+                                
+                                if (!shiftStart) return null;
+                                
+                                const minutesLate = (now.getTime() - shiftStart.getTime()) / (1000 * 60);
+                                const isCheckedIn = attendanceStatus === 'checked_in';
+                                const isLate = minutesLate > 5;
+                                const canRequestBackup = isLate && !isCheckedIn && !backupRequested && !backupAssigned;
+                                
+                                if (!canRequestBackup) return null;
+                                
+                                return (
+                                  <div className="mt-3">
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm('Request backup from waitlist? This will notify the top 3 waitlisted workers. Once a backup accepts, the original worker will be cancelled with late-cancel penalties.')) {
+                                          requestBackupMutation.mutate(job.id);
+                                        }
+                                      }}
+                                      disabled={requestBackupMutation.isPending}
+                                      className="w-full"
+                                    >
+                                      {requestBackupMutation.isPending ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Requesting...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Users className="mr-2 h-4 w-4" />
+                                          Find Backup ({Math.round(minutesLate)} min late)
+                                        </>
+                                      )}
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                                      Worker is {Math.round(minutesLate)} minutes late without check-in
+                                    </p>
+                                  </div>
+                                );
+                              })()}
+                              {/* Backup Requested Status */}
+                              {isShift && isOwner && (job as any).backupRequestedAt && !(job as any).backupWorkerId && (
+                                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-500/50 rounded-md">
+                                  <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                    <p className="text-sm text-blue-900 dark:text-blue-100">
+                                      Backup requested - Waiting for waitlisted worker to accept
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                              {/* Backup Assigned Status */}
+                              {isShift && isOwner && (job as any).backupWorkerId && (
+                                <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 border border-green-500/50 rounded-md">
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                    <p className="text-sm text-green-900 dark:text-green-100">
+                                      Backup worker assigned - Original worker cancelled
+                                    </p>
+                                  </div>
                                 </div>
                               )}
                               {/* Complete Shift Button - Only show for filled/confirmed shifts after end time */}

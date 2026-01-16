@@ -476,7 +476,6 @@ function ProfessionalCalendarContent({
         setCalendarSettings((prev) => (prev === null ? prev : null));
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings, areCalendarSettingsEqual]);
   
   // Listen for storage events and custom events to sync settings when they're updated from other components

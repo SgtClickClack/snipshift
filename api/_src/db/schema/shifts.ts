@@ -55,6 +55,12 @@ export const shifts = pgTable('shifts', {
   actualStartTime: timestamp('actual_start_time'), // Server-side timestamp when check-in occurred
   substitutionRequestedBy: uuid('substitution_requested_by').references(() => users.id, { onDelete: 'set null' }), // Worker who requested substitution
   proofImageUrl: text('proof_image_url'), // URL of proof photo uploaded by worker upon clock-out
+  lateArrivalEtaMinutes: integer('late_arrival_eta_minutes'), // ETA in minutes when worker signals they're running late
+  lateArrivalEtaSetAt: timestamp('late_arrival_eta_set_at'), // When the ETA was set
+  lateArrivalSignalSent: boolean('late_arrival_signal_sent').notNull().default(false), // Whether a late signal has been sent (limit to one per shift)
+  backupRequestedAt: timestamp('backup_requested_at'), // When venue owner requested backup from waitlist
+  backupWorkerId: uuid('backup_worker_id').references(() => users.id, { onDelete: 'set null' }), // Worker who accepted backup (if any)
+  originalWorkerId: uuid('original_worker_id').references(() => users.id, { onDelete: 'set null' }), // Original worker who was replaced
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({

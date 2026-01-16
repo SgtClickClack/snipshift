@@ -644,6 +644,35 @@ export async function getWaitlistStatus(shiftId: string): Promise<{ isOnWaitlist
   }
 }
 
+export async function reportLateArrival(shiftId: string, etaMinutes: number): Promise<{ message: string; etaMinutes: number; expectedArrivalTime: string }> {
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/late-arrival`, {
+      etaMinutes,
+    });
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'reportLateArrival');
+  }
+}
+
+export async function requestBackupFromWaitlist(shiftId: string): Promise<{ message: string; notifiedWorkers: number }> {
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/request-backup`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'requestBackupFromWaitlist');
+  }
+}
+
+export async function acceptBackupShift(shiftId: string): Promise<{ message: string; shift: any }> {
+  try {
+    const res = await apiRequest('POST', `/api/shifts/${shiftId}/accept-backup`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'acceptBackupShift');
+  }
+}
+
 export async function getWaitlistedShifts(): Promise<{
   shifts: Array<{
     id: string;

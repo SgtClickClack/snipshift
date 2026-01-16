@@ -4644,6 +4644,12 @@ router.get('/:id', asyncHandler(async (req, res) => {
     shopAvatarUrl: employer?.avatarUrl ?? null,
     actualStartTime: (shift as any).actualStartTime ? toISOStringSafe((shift as any).actualStartTime) : null,
     proofImageUrl: (shift as any).proofImageUrl ?? null,
+    lateArrivalEtaMinutes: (shift as any).lateArrivalEtaMinutes ?? null,
+    lateArrivalEtaSetAt: (shift as any).lateArrivalEtaSetAt ? toISOStringSafe((shift as any).lateArrivalEtaSetAt) : null,
+    lateArrivalSignalSent: (shift as any).lateArrivalSignalSent ?? false,
+    backupRequestedAt: (shift as any).backupRequestedAt ? toISOStringSafe((shift as any).backupRequestedAt) : null,
+    backupWorkerId: (shift as any).backupWorkerId ?? null,
+    originalWorkerId: (shift as any).originalWorkerId ?? null,
     createdAt: toISOStringSafe((shift as any).createdAt),
     updatedAt: toISOStringSafe((shift as any).updatedAt),
     // Get waitlist count if shift is filled
@@ -4776,6 +4782,203 @@ router.get('/:id/waitlist', authenticateUser, asyncHandler(async (req: Authentic
     isOnWaitlist,
     waitlistCount,
     maxWaitlistSize: 5,
+  });
+}));
+
+// Report late arrival with ETA
+// POST /api/shifts/:id/late-arrival
+router.post('/:id/late-arrival', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+  const { etaMinutes } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Validate ETA
+  const validEtaOptions = [5, 10, 15];
+  const eta = typeof etaMinutes === 'number' ? etaMinutes : parseInt(etaMinutes, 10);
+  if (!validEtaOptions.includes(eta)) {
+    res.status(400).json({ message: 'Invalid ETA. Must be 5, 10, or 15 minutes' });
+    return;
+  }
+
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ message: 'Database not available' });
+    return;
+  }
+
+  // Get shift
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Verify worker is assigned to this shift
+  if (shift.assigneeId !== userId) {
+    res.status(403).json({ message: 'You are not assigned to this shift' });
+    return;
+  }
+
+  // Check if shift is in valid state
+  if (shift.status !== 'filled' && shift.status !== 'confirmed') {
+    res.status(400).json({ message: 'Can only report late arrival for filled or confirmed shifts' });
+    return;
+  }
+
+  // Check if late signal already sent (limit to one per shift)
+  if ((shift as any).lateArrivalSignalSent) {
+    res.status(400).json({ message: 'Late arrival signal has already been sent for this shift' });
+    return;
+  }
+
+  // Check if shift starts within 15 minutes (button should only appear 15 min before)
+  const now = new Date();
+  const shiftStart = new Date(shift.startTime);
+  const minutesUntilStart = (shiftStart.getTime() - now.getTime()) / (1000 * 60);
+  
+  if (minutesUntilStart > 15) {
+    res.status(400).json({ message: 'Can only report late arrival within 15 minutes of shift start' });
+    return;
+  }
+
+  if (minutesUntilStart < -30) {
+    res.status(400).json({ message: 'Shift has already started or is too far in the past' });
+    return;
+  }
+
+  try {
+    // Update shift with ETA
+    await db
+      .update(shifts)
+      .set({
+        lateArrivalEtaMinutes: eta,
+        lateArrivalEtaSetAt: now,
+        lateArrivalSignalSent: true,
+        updatedAt: now,
+      })
+      .where(eq(shifts.id, shiftId));
+
+    // Get worker name
+    const worker = await usersRepo.getUserById(userId);
+    const workerName = worker?.name || worker?.displayName || 'Worker';
+
+    // Calculate new expected arrival time
+    const expectedArrivalTime = new Date(shiftStart.getTime() + eta * 60 * 1000);
+
+    // Send high-priority notification to venue owner
+    const title = '⚠️ Worker Running Late';
+    const message = `${workerName} is running late. Expected arrival: ${expectedArrivalTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })} (${eta} min delay)`;
+    
+    await notificationsService.createInAppNotification(
+      shift.employerId,
+      'SYSTEM',
+      title,
+      message,
+      {
+        type: 'worker_late_arrival',
+        shiftId: shift.id,
+        shiftTitle: shift.title,
+        workerName,
+        etaMinutes: eta,
+        expectedArrivalTime: expectedArrivalTime.toISOString(),
+        link: `/venue/dashboard?shift=${shift.id}`,
+      }
+    );
+
+    // Send push notification
+    const pushNotificationService = await import('../services/push-notification.service.js');
+    await pushNotificationService.sendGenericPushNotification(
+      shift.employerId,
+      title,
+      message,
+      {
+        type: 'worker_late_arrival',
+        shiftId: shift.id,
+        link: `/venue/dashboard?shift=${shift.id}`,
+      }
+    );
+
+    res.status(200).json({
+      message: 'Late arrival ETA sent successfully',
+      etaMinutes: eta,
+      expectedArrivalTime: expectedArrivalTime.toISOString(),
+    });
+  } catch (error) {
+    console.error('[POST /api/shifts/:id/late-arrival] Error:', error);
+    res.status(500).json({ message: 'Failed to report late arrival' });
+  }
+}));
+
+// Request backup from waitlist (venue owner only)
+// POST /api/shifts/:id/request-backup
+router.post('/:id/request-backup', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  const backupRequestService = await import('../services/backup-request.service.js');
+  const result = await backupRequestService.requestBackupFromWaitlist(shiftId, userId);
+
+  if (!result.success) {
+    res.status(400).json({ message: result.message });
+    return;
+  }
+
+  res.status(200).json({
+    message: result.message,
+    notifiedWorkers: result.notifiedWorkers,
+  });
+}));
+
+// Accept backup shift (waitlisted worker)
+// POST /api/shifts/:id/accept-backup
+router.post('/:id/accept-backup', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  const backupRequestService = await import('../services/backup-request.service.js');
+  const result = await backupRequestService.acceptBackupShift(shiftId, userId);
+
+  if (!result.success) {
+    res.status(400).json({ message: result.message });
+    return;
+  }
+
+  res.status(200).json({
+    message: result.message,
+    shift: result.shift,
   });
 }));
 

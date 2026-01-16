@@ -13,11 +13,11 @@ import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as shiftApplicationsRepo from '../repositories/shift-applications.repository.js';
 import * as shiftWaitlistRepo from '../repositories/shift-waitlist.repository.js';
 import * as priorityBoostTokensRepo from '../repositories/priority-boost-tokens.repository.js';
+import * as calendarTokensRepo from '../repositories/calendar-tokens.repository.js';
 import { getDb } from '../db/index.js';
 import { shifts, users } from '../db/schema.js';
 import { eq, and, ne, inArray, gte, isNotNull, sql } from 'drizzle-orm';
 import { calculateDistance } from '../utils/geofencing.js';
-import crypto from 'crypto';
 
 const router = Router();
 
@@ -407,6 +407,7 @@ router.get('/no-show-history', authenticateUser, asyncHandler(async (req: Authen
  * GET /api/worker/calendar/sync
  * 
  * Generate a secure iCal feed URL for the worker's accepted shifts
+ * Creates or retrieves an active calendar token for the authenticated user
  */
 router.get('/calendar/sync', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
@@ -416,39 +417,75 @@ router.get('/calendar/sync', authenticateUser, asyncHandler(async (req: Authenti
     return;
   }
 
-  // Generate a unique secure token for this user
-  // In production, you might want to store this in the database and rotate it periodically
-  const token = crypto.randomBytes(32).toString('hex');
-  
-  // Store token in user's profile or a separate table (for now, we'll generate it on-demand)
-  // For production, consider storing this in a user_calendar_tokens table
-  
-  // Generate the iCal feed URL
-  const baseUrl = process.env.API_BASE_URL || process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : `http://localhost:${process.env.PORT || 5000}`;
-  
-  const calendarUrl = `${baseUrl}/api/worker/calendar/feed/${userId}/${token}`;
+  try {
+    // Check if user already has an active token
+    let tokenRecord = await calendarTokensRepo.getActiveTokenForUser(userId);
+    
+    // If no active token exists, create a new one
+    if (!tokenRecord) {
+      // Create token with optional expiration (1 year from now)
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      
+      tokenRecord = await calendarTokensRepo.createCalendarToken({
+        userId,
+        expiresAt,
+      });
+    }
 
-  res.status(200).json({
-    calendarUrl,
-    token, // Return token for frontend to display
-    message: 'Use this URL to sync your shifts to your calendar app',
-  });
+    if (!tokenRecord) {
+      res.status(500).json({ message: 'Failed to generate calendar token' });
+      return;
+    }
+
+    // Generate the iCal feed URL
+    const baseUrl = process.env.API_BASE_URL || process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : `http://localhost:${process.env.PORT || 5000}`;
+    
+    const calendarUrl = `${baseUrl}/api/worker/calendar/feed/${userId}/${tokenRecord.token}`;
+
+    res.status(200).json({
+      calendarUrl,
+      token: tokenRecord.token, // Return token for frontend to display
+      message: 'Use this URL to sync your shifts to your calendar app',
+    });
+  } catch (error: any) {
+    console.error('[GET /api/worker/calendar/sync] Error:', error);
+    res.status(500).json({ message: 'Failed to generate calendar sync URL' });
+  }
 }));
 
 /**
  * GET /api/worker/calendar/feed/:userId/:token
  * 
  * Generate iCal feed for worker's accepted shifts
- * This endpoint is public but secured by the token
+ * This endpoint is public but secured by token validation
+ * SECURITY: Validates token matches userId before returning any data
  */
 router.get('/calendar/feed/:userId/:token', asyncHandler(async (req, res) => {
   const { userId, token } = req.params;
 
-  // In production, validate the token against stored tokens
-  // For now, we'll accept any valid UUID + token combination
-  // TODO: Implement token validation against database
+  // SECURITY: Validate UUID format to prevent injection
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(userId)) {
+    res.status(400).json({ message: 'Invalid user ID format' });
+    return;
+  }
+
+  // SECURITY: Validate token format (64 hex characters)
+  const tokenRegex = /^[0-9a-f]{64}$/i;
+  if (!tokenRegex.test(token)) {
+    res.status(400).json({ message: 'Invalid token format' });
+    return;
+  }
+
+  // SECURITY: Validate token belongs to this user
+  const isValidToken = await calendarTokensRepo.validateCalendarToken(token, userId);
+  if (!isValidToken) {
+    res.status(403).json({ message: 'Invalid or expired calendar token' });
+    return;
+  }
 
   // Get all accepted shifts for this worker
   // 1. Get confirmed/filled shifts (assigned)

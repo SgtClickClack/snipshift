@@ -165,10 +165,11 @@ async function checkNoShows(): Promise<void> {
     // - Have an assignee (filled/confirmed)
     // - Status is 'filled' or 'confirmed'
     // - Start time was more than 30 minutes ago (15 min grace period + 15 min late = 30 min total)
+    //   OR if lateArrivalEtaMinutes is set, start time + ETA was more than 30 minutes ago
     // - attendanceStatus is NOT 'checked_in' (no check-in event)
     // - attendanceStatus is NOT already 'no_show' (not already flagged)
     // - Status is not 'completed' or 'cancelled'
-    const potentialNoShows = await db
+    const allShifts = await db
       .select({
         id: shifts.id,
         assigneeId: shifts.assigneeId,
@@ -176,13 +177,14 @@ async function checkNoShows(): Promise<void> {
         title: shifts.title,
         attendanceStatus: shifts.attendanceStatus,
         status: shifts.status,
+        lateArrivalEtaMinutes: shifts.lateArrivalEtaMinutes,
       })
       .from(shifts)
       .where(
         and(
           isNotNull(shifts.assigneeId), // Has an assignee
           sql`${shifts.status} IN ('filled', 'confirmed')`, // Is filled or confirmed
-          lt(shifts.startTime, thirtyMinutesAgo), // Started more than 30 minutes ago
+          lt(shifts.startTime, now), // Shift has started
           or(
             eq(shifts.attendanceStatus, 'pending'),
             isNull(shifts.attendanceStatus)
@@ -192,6 +194,15 @@ async function checkNoShows(): Promise<void> {
           sql`${shifts.status} != 'cancelled'` // Not cancelled
         )
       );
+
+    // Filter shifts based on ETA delay: if ETA is set, add it to the threshold
+    const potentialNoShows = allShifts.filter((shift) => {
+      const shiftStart = new Date(shift.startTime);
+      const etaMinutes = shift.lateArrivalEtaMinutes ? Number(shift.lateArrivalEtaMinutes) : 0;
+      // Calculate threshold: 30 minutes + ETA delay
+      const threshold = new Date(now.getTime() - (30 + etaMinutes) * 60 * 1000);
+      return shiftStart < threshold;
+    });
 
     if (potentialNoShows.length === 0) {
       return; // No shifts to process

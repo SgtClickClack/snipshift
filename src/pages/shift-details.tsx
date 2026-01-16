@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { fetchShiftDetails, createApplication, fetchMyApplications, ShiftDetails, checkInShift, requestSubstitute, clockOutShift, joinWaitlist, leaveWaitlist, getWaitlistStatus, reportLateArrival } from '@/lib/api';
+import { fetchShiftDetails, createApplication, fetchMyApplications, ShiftDetails, checkInShift, requestSubstitute, clockOutShift, joinWaitlist, leaveWaitlist, getWaitlistStatus, reportLateArrival, acceptBackupShift } from '@/lib/api';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -162,6 +162,35 @@ export default function ShiftDetailsPage() {
     lateArrivalMutation.mutate({ shiftId: id, etaMinutes });
   };
 
+  const acceptBackupMutation = useMutation({
+    mutationFn: (shiftId: string) => acceptBackupShift(shiftId),
+    onSuccess: (data) => {
+      toast({
+        title: '✅ Backup Shift Accepted!',
+        description: `You've been assigned to "${data.shift?.title || 'this shift'}". The original worker has been cancelled.`,
+      });
+      // Invalidate shift details to update UI
+      queryClient.invalidateQueries({ queryKey: ['shift', id] });
+      // Navigate to check-in or shift details
+      navigate(`/shifts/${id}`);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || 'Failed to accept backup shift. It may have already been taken.';
+      toast({
+        title: 'Accept Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleAcceptBackup = () => {
+    if (!id) return;
+    if (confirm('Accept this backup shift? You will be immediately assigned and the original worker will be cancelled with late-cancel penalties. This action cannot be undone.')) {
+      acceptBackupMutation.mutate(id);
+    }
+  };
+
   const handleCheckIn = async () => {
     if (!user || !id || !shift) {
       return;
@@ -286,6 +315,16 @@ export default function ShiftDetailsPage() {
       }
     }
   }, [myApplications, id, user]);
+
+  // Check waitlist status for backup acceptance
+  const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const isBackupRequest = urlParams.get('backup') === 'true';
+  const { data: waitlistStatus } = useQuery({
+    queryKey: ['waitlist-status', id],
+    queryFn: () => getWaitlistStatus(id!),
+    enabled: !!user && !!id && !!shift && isBackupRequest && !!(shift as any)?.backupRequestedAt && !(shift as any)?.backupWorkerId,
+    staleTime: 10 * 1000, // Cache for 10 seconds
+  });
 
   // Check for waitlist conversion (when user accepts from waitlist)
   useEffect(() => {
@@ -949,6 +988,28 @@ export default function ShiftDetailsPage() {
                   </div>
                 ) : shift?.status === 'filled' || shift?.status === 'confirmed' ? (
                   <div className="space-y-3">
+                    {/* Backup Acceptance Button - Show if backup requested and user is on waitlist */}
+                    {isBackupRequest && (shift as any).backupRequestedAt && !(shift as any).backupWorkerId && waitlistStatus?.isOnWaitlist && (
+                      <Button
+                        onClick={handleAcceptBackup}
+                        disabled={acceptBackupMutation.isPending}
+                        className="w-full text-lg py-6 bg-green-600 hover:bg-green-700 text-white"
+                        size="lg"
+                        data-testid="button-accept-backup"
+                      >
+                        {acceptBackupMutation.isPending ? (
+                          <>
+                            <Navigation className="h-5 w-5 mr-2 animate-spin" />
+                            Accepting...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-5 w-5 mr-2" />
+                            Accept Backup Shift - Immediate Start! 🚨
+                          </>
+                        )}
+                      </Button>
+                    )}
                     <WaitlistButton 
                       shiftId={shift.id} 
                       shiftStatus={shift.status}

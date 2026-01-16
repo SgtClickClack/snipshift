@@ -357,6 +357,12 @@ export function ProReliabilityTracker() {
                   {strikes} active strike{strikes > 1 ? 's' : ''}
                 </span>
               )}
+              {priorityBoost?.hasActiveBoost && (
+                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                  <Zap className="h-3.5 w-3.5" />
+                  Priority Boost: +10% ({Math.round(priorityBoost.token?.hoursRemaining ?? 0)}h)
+                </span>
+              )}
             </div>
 
             {/* Strike Recovery Progress */}
