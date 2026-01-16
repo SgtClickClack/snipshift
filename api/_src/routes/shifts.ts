@@ -3245,7 +3245,7 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
     }
   }
 
-  // Create review
+  // Create review (initially anonymous for double-blind)
   const newReview = await shiftReviewsRepo.createShiftReview({
     shiftId,
     reviewerId: userId,
@@ -3258,6 +3258,12 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
   if (!newReview) {
     res.status(500).json({ message: 'Failed to create review' });
     return;
+  }
+
+  // Check if both parties have now reviewed (reveal both reviews if so)
+  const bothReviewed = await shiftReviewsRepo.haveBothPartiesReviewed(shiftId);
+  if (bothReviewed) {
+    await shiftReviewsRepo.revealReviewsForShift(shiftId);
   }
 
   // If shop is reviewing barber, mark attendance as completed (unless no-show)

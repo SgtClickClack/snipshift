@@ -48,8 +48,12 @@ export async function createShiftReview(
 
 /**
  * Get all reviews for a user (with reviewer details)
+ * Respects anonymity: only shows reviewer details if review is not anonymous
  */
-export async function getShiftReviewsForUser(userId: string): Promise<Array<{
+export async function getShiftReviewsForUser(
+  userId: string,
+  options?: { includeAnonymous?: boolean }
+): Promise<Array<{
   id: string;
   shiftId: string;
   reviewerId: string;
@@ -57,13 +61,15 @@ export async function getShiftReviewsForUser(userId: string): Promise<Array<{
   type: string;
   rating: string;
   comment: string | null;
+  isAnonymous: boolean;
+  revealedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   reviewer: {
     id: string;
-    name: string;
-    email: string;
-  };
+    name: string | null;
+    email: string | null;
+  } | null;
   shift: {
     id: string;
     title: string;
@@ -83,6 +89,8 @@ export async function getShiftReviewsForUser(userId: string): Promise<Array<{
       type: shiftReviews.type,
       rating: shiftReviews.rating,
       comment: shiftReviews.comment,
+      isAnonymous: shiftReviews.isAnonymous,
+      revealedAt: shiftReviews.revealedAt,
       createdAt: shiftReviews.createdAt,
       updatedAt: shiftReviews.updatedAt,
       reviewer: {
@@ -96,12 +104,22 @@ export async function getShiftReviewsForUser(userId: string): Promise<Array<{
       },
     })
     .from(shiftReviews)
-    .innerJoin(users, eq(shiftReviews.reviewerId, users.id))
+    .leftJoin(users, eq(shiftReviews.reviewerId, users.id))
     .innerJoin(shifts, eq(shiftReviews.shiftId, shifts.id))
     .where(eq(shiftReviews.revieweeId, userId))
     .orderBy(sql`${shiftReviews.createdAt} DESC`);
 
-  return result;
+  // Filter out anonymous reviews if requested, or mask reviewer info for anonymous reviews
+  return result.map((row) => {
+    if (row.isAnonymous && !options?.includeAnonymous) {
+      // Mask reviewer info for anonymous reviews
+      return {
+        ...row,
+        reviewer: null, // Don't reveal reviewer identity
+      };
+    }
+    return row;
+  });
 }
 
 /**
@@ -145,6 +163,81 @@ export async function getReviewsForShift(shiftId: string): Promise<Array<typeof 
     .where(eq(shiftReviews.shiftId, shiftId));
 
   return result;
+}
+
+/**
+ * Check if both parties have reviewed a shift
+ */
+export async function haveBothPartiesReviewed(shiftId: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) {
+    return false;
+  }
+
+  // Get shift to determine parties
+  const { shifts } = await import('../db/schema.js');
+  const [shift] = await db
+    .select()
+    .from(shifts)
+    .where(eq(shifts.id, shiftId))
+    .limit(1);
+
+  if (!shift || !shift.assigneeId || !shift.employerId) {
+    return false;
+  }
+
+  // Check if shop has reviewed barber
+  const shopReview = await db
+    .select()
+    .from(shiftReviews)
+    .where(
+      and(
+        eq(shiftReviews.shiftId, shiftId),
+        eq(shiftReviews.reviewerId, shift.employerId),
+        eq(shiftReviews.type, 'SHOP_REVIEWING_BARBER')
+      )
+    )
+    .limit(1);
+
+  // Check if barber has reviewed shop
+  const barberReview = await db
+    .select()
+    .from(shiftReviews)
+    .where(
+      and(
+        eq(shiftReviews.shiftId, shiftId),
+        eq(shiftReviews.reviewerId, shift.assigneeId),
+        eq(shiftReviews.type, 'BARBER_REVIEWING_SHOP')
+      )
+    )
+    .limit(1);
+
+  return shopReview.length > 0 && barberReview.length > 0;
+}
+
+/**
+ * Reveal anonymous reviews for a shift (lift anonymity)
+ */
+export async function revealReviewsForShift(shiftId: string): Promise<void> {
+  const db = getDb();
+  if (!db) {
+    return;
+  }
+
+  const now = new Date();
+  await db
+    .update(shiftReviews)
+    .set({
+      isAnonymous: false,
+      revealedAt: now,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(shiftReviews.shiftId, shiftId),
+        eq(shiftReviews.isAnonymous, true)
+      )
+    );
 }
 
 /**

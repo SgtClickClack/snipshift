@@ -125,12 +125,15 @@ export const shiftReviews = pgTable('shift_reviews', {
   type: shiftReviewTypeEnum('type').notNull(),
   rating: decimal('rating', { precision: 1, scale: 0 }).notNull(), // 1-5 integer stored as decimal
   comment: text('comment'),
+  isAnonymous: boolean('is_anonymous').notNull().default(true), // Double-blind: anonymous until both parties submit or time limit passes
+  revealedAt: timestamp('revealed_at'), // When anonymity is lifted
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   shiftIdIdx: index('shift_reviews_shift_id_idx').on(table.shiftId),
   reviewerIdIdx: index('shift_reviews_reviewer_id_idx').on(table.reviewerId),
   revieweeIdIdx: index('shift_reviews_reviewee_id_idx').on(table.revieweeId),
+  isAnonymousIdx: index('shift_reviews_is_anonymous_idx').on(table.isAnonymous),
   shiftReviewerUnique: index('shift_reviews_shift_reviewer_unique').on(table.shiftId, table.reviewerId, table.type),
 }));
 
