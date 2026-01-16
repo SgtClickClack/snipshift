@@ -134,7 +134,7 @@ export const getQueryFn: <T>(options: {
 
 // Global error handlers for queries and mutations
 const queryCache = new QueryCache({
-  onError: (error) => {
+  onError: (error, query) => {
     // Don't show toast for auth errors that shouldn't reload - let UI handle gracefully
     if (error instanceof Error && (error as any).shouldNotReload) {
       // Silently handle - AuthContext will update state
@@ -144,6 +144,11 @@ const queryCache = new QueryCache({
     const errorMessage = error instanceof Error ? error.message : 'An error occurred';
     // Don't show toast for 401 errors - they're handled by auth state
     if (errorMessage.includes('401:')) {
+      return;
+    }
+    
+    // Don't show toast for 404 errors on /api/venues/me - it's expected when user doesn't have a venue
+    if (errorMessage.includes('404:') && query.queryKey.includes('venue-status')) {
       return;
     }
     

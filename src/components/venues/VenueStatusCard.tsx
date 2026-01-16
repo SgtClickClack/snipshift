@@ -57,21 +57,32 @@ export function VenueStatusCard() {
   }, [searchParams, toast, queryClient, user?.id, setSearchParams]);
 
   // Fetch venue status
-  const { data: venue, isLoading, error } = useQuery<VenueData>({
+  const { data: venue, isLoading, error } = useQuery<VenueData | null>({
     queryKey: ['venue-status', user?.id],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/venues/me');
-      if (res.status === 404) {
-        return null; // No venue found
+      try {
+        const res = await apiRequest('GET', '/api/venues/me');
+        return res.json();
+      } catch (err) {
+        // Handle 404 gracefully - it's expected when user doesn't have a venue
+        if (err instanceof Error && err.message.includes('404:')) {
+          return null;
+        }
+        // Re-throw other errors
+        throw err;
       }
-      if (!res.ok) {
-        throw new Error('Failed to fetch venue status');
-      }
-      return res.json();
     },
     enabled: !!user?.id && (user.currentRole === 'hub' || user.currentRole === 'business'),
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     refetchInterval: 30 * 1000, // Refetch every 30 seconds to catch status updates
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors (user doesn't have a venue)
+      if (error instanceof Error && error.message.includes('404:')) {
+        return false;
+      }
+      return false; // Don't retry other errors either
+    },
+    throwOnError: false, // Don't throw on 404 - it's expected
   });
 
   // Create Stripe account link mutation

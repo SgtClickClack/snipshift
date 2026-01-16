@@ -117,7 +117,7 @@ export async function getFCMToken(): Promise<string | null> {
 
     // Get FCM token
     if (!VAPID_KEY) {
-      logger.error('push-notifications', 'VAPID key not configured');
+      logger.warn('push-notifications', 'VAPID key not configured - push notifications will be disabled');
       return null;
     }
 

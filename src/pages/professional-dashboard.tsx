@@ -78,7 +78,8 @@ const ProfessionalDashboardSkeleton = () => (
 
 export default function ProfessionalDashboard() {
   const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading } = useAuth();
-  const hasValidRole = !!user?.currentRole && user.currentRole !== 'client';
+  // CRITICAL: Strictly check for 'professional' role only - prevent business/venue users from accessing
+  const hasValidRole = user?.currentRole === 'professional';
 
   if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
     return <ProfessionalDashboardSkeleton />;

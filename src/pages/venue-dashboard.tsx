@@ -93,6 +93,8 @@ const VenueDashboardSkeleton = () => (
 
 export default function VenueDashboard() {
   const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading } = useAuth();
+  // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
+  // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
   const hasValidRole = isBusinessRole(user?.currentRole);
 
   if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
