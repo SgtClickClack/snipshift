@@ -78,7 +78,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-sticky pt-safe overflow-x-hidden w-full">
+    <nav className="relative bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[50] pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-20 min-w-0">
           <Link
