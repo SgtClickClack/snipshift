@@ -107,4 +107,76 @@ function formatLocation(address: any): string {
   return parts.join(', ') || '';
 }
 
+/**
+ * GET /api/marketplace/venues/:id
+ * Public endpoint to fetch a single venue by ID
+ * Returns 404 if venue is pending (not active)
+ */
+router.get('/venues/:id', asyncHandler(async (req, res) => {
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ message: 'Database not available' });
+    return;
+  }
+
+  const { id } = req.params;
+
+  try {
+    // Fetch venue with user data
+    const [venue] = await db
+      .select({
+        id: venues.id,
+        userId: venues.userId,
+        venueName: venues.venueName,
+        liquorLicenseNumber: venues.liquorLicenseNumber,
+        address: venues.address,
+        operatingHours: venues.operatingHours,
+        status: venues.status,
+        createdAt: venues.createdAt,
+        updatedAt: venues.updatedAt,
+        // User data for images and bio
+        userAvatarUrl: users.avatarUrl,
+        userBannerUrl: users.bannerUrl,
+        userName: users.name,
+        userBio: users.bio,
+        userEmail: users.email,
+      })
+      .from(venues)
+      .innerJoin(users, eq(venues.userId, users.id))
+      .where(eq(venues.id, id))
+      .limit(1);
+
+    if (!venue) {
+      res.status(404).json({ message: 'Venue not found' });
+      return;
+    }
+
+    // Only show active venues publicly
+    if (venue.status !== 'active') {
+      res.status(404).json({ message: 'Venue is not available' });
+      return;
+    }
+
+    // Transform data for frontend
+    res.status(200).json({
+      id: venue.id,
+      userId: venue.userId,
+      name: venue.venueName,
+      description: venue.userBio || null,
+      location: venue.address ? formatLocation(venue.address) : null,
+      address: venue.address,
+      operatingHours: venue.operatingHours,
+      imageUrl: venue.userBannerUrl || venue.userAvatarUrl || null,
+      avatarUrl: venue.userAvatarUrl || null,
+      liquorLicenseNumber: venue.liquorLicenseNumber || null,
+      status: venue.status,
+      createdAt: venue.createdAt.toISOString(),
+      updatedAt: venue.updatedAt.toISOString(),
+    });
+  } catch (error: any) {
+    console.error('[MARKETPLACE] Error fetching venue:', error);
+    res.status(500).json({ message: 'Failed to fetch venue', error: error.message });
+  }
+}));
+
 export default router;

@@ -116,6 +116,13 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         <Route path="/" element={<LandingPage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
         
+        {/* Public marketplace routes */}
+        <Route path="/marketplace/venue/:id" element={
+          <Suspense fallback={<PageLoadingFallback />}>
+            <VenueProfilePage />
+          </Suspense>
+        } />
+        
         <Route path="/home" element={
           <AuthGuard>
             <HomePage />
