@@ -1,3 +1,60 @@
+#### 2026-01-16: Push Notification Engine Integration
+
+**Core Components**
+- Push tokens database schema (`api/_src/db/schema/push-tokens.ts`)
+- Firebase Cloud Messaging service worker (`public/firebase-messaging-sw.js`)
+- Client-side push notification service (`src/lib/push-notifications.ts`)
+- Push notification hook (`src/hooks/usePushNotifications.ts`)
+- Push tokens repository (`api/_src/repositories/push-tokens.repository.ts`)
+- Push tokens API routes (`api/_src/routes/push-tokens.ts`)
+- Push notification dispatcher service (`api/_src/services/push-notification.service.ts`)
+
+**Key Features**
+- Integrated Firebase Cloud Messaging (FCM) for real-time push notifications
+- Service worker registration and permission request flow
+- User push token management (register, update, deactivate)
+- Push notification dispatcher with active user checking (only sends if user is not viewing the conversation)
+- Integration with existing notification service for messages and application status changes
+- Brisbane timezone support (inherited from existing notification service)
+
+**Integration Points**
+- Push token registration API (`POST /api/push-tokens`)
+- Push token deactivation API (`DELETE /api/push-tokens/:token`)
+- Automatic push notification sending on:
+  - New messages (only if user not active in conversation)
+  - Application status changes (accepted/rejected)
+  - New applications received (for venue owners)
+- Firebase Admin SDK for server-side push sending
+- Client-side FCM token registration on user login
+
+**File Paths**
+- `api/_src/db/schema/push-tokens.ts`
+- `api/_src/db/schema.ts` (updated exports)
+- `public/firebase-messaging-sw.js`
+- `src/lib/push-notifications.ts`
+- `src/lib/firebase.ts` (exported app instance)
+- `src/hooks/usePushNotifications.ts`
+- `src/App.tsx` (added hook initialization)
+- `api/_src/repositories/push-tokens.repository.ts`
+- `api/_src/routes/push-tokens.ts`
+- `api/_src/index.ts` (registered push-tokens router)
+- `api/_src/services/push-notification.service.ts`
+- `api/_src/services/notification.service.ts` (integrated push notifications)
+- `api/_src/index.ts` (added push notification for messages)
+
+**Next Priority Task**
+- Add VAPID key to environment variables and configure Firebase Cloud Messaging
+- Test push notifications in development and production environments
+- Write tests for push notification functionality
+
+**Code Organization & Quality**
+- Follows existing repository and service patterns
+- Proper error handling for invalid tokens (auto-deactivation)
+- Non-blocking push notification sending to avoid impacting main request flow
+- Active user detection prevents unnecessary push notifications when user is viewing content
+
+---
+
 #### 2026-01-15: Auth Resilience Cleanup (Role Guards + Socket.IO Removal)
 
 **Core Components**
@@ -2797,3 +2854,51 @@
 
 **Code Organization & Quality**
 - Reused the existing dashboard implementation and consolidated venue routing to a single canonical path.
+
+---
+
+#### 2026-01-16: Shift Instant Messaging Channel Implementation
+
+**Core Components**
+- Shift messages database schema (`api/_src/db/schema/shifts.ts`)
+- Shift messages repository (`api/_src/repositories/shift-messages.repository.ts`)
+- Shift messages API endpoints (`api/_src/routes/shifts.ts`)
+- Shift messaging service (`src/lib/shift-messaging.ts`)
+- Shift chat component (`src/components/shifts/shift-chat.tsx`)
+- Dashboard unread badge integration (`src/pages/venue-dashboard.tsx`, `src/pages/professional-dashboard.tsx`)
+
+**Key Features**
+- Created `shift_messages` table for ephemeral chat channels between venue owners and assigned workers
+- Implemented POST `/api/shifts/:id/messages` and GET `/api/shifts/:id/messages` endpoints
+- Added authorization checks: only assigned worker and venue owner can access shift threads
+- Implemented archive/disable logic: channels are disabled 24 hours after shift completion
+- Created ShiftChat component using existing ChatBubble UI patterns
+- Added unread notification badge to dashboard stats (combines regular messages + shift messages)
+- Messages are automatically marked as read when fetching the thread
+
+**Integration Points**
+- API endpoints: `/api/shifts/:id/messages` (GET, POST), `/api/shifts/messages/unread-count` (GET)
+- Database migration: `0030_add_shift_messages.sql`
+- Dashboard stats integration for unread count
+- Real-time polling for message updates (2-second interval)
+
+**File Paths**
+- `api/_src/db/schema/shifts.ts` (added shiftMessages table)
+- `api/_src/db/schema.js` (exported shiftMessages)
+- `api/_src/db/migrations/0030_add_shift_messages.sql`
+- `api/_src/repositories/shift-messages.repository.ts`
+- `api/_src/routes/shifts.ts` (added message endpoints)
+- `src/lib/shift-messaging.ts`
+- `src/components/shifts/shift-chat.tsx`
+- `src/pages/venue-dashboard.tsx` (added unread count query)
+- `src/pages/professional-dashboard.tsx` (added unread count query)
+
+**Next Priority Task**
+- Write tests for shift messaging functionality (API endpoints, repository, component)
+- Integrate ShiftChat component into shift details page or dashboard for easy access
+
+**Code Organization & Quality**
+- Followed existing patterns from messaging service and conversation component
+- Used proper authorization checks and validation
+- Implemented graceful error handling and loading states
+- Messages are ephemeral and automatically archived after 24 hours post-completion

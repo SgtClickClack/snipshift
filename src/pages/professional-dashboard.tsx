@@ -445,12 +445,24 @@ function ProfessionalDashboardContent() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  // Fetch shift message unread count
+  const { data: shiftMessageUnreadData } = useQuery({
+    queryKey: ['shift-messages-unread-count'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/shifts/messages/unread-count");
+      return res.json();
+    },
+    enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
   // Stats
-  const stats = dashboardStats?.summary || {
+  const stats = {
+    ...(dashboardStats?.summary || {}),
     activeApplications: jobs.filter(job => job.applicants?.includes(user?.id || '')).length,
     upcomingBookings: bookings.length,
-    unreadMessages: 0,
-    averageRating: 0
+    unreadMessages: (dashboardStats?.summary?.unreadMessages ?? 0) + (shiftMessageUnreadData?.unreadCount ?? 0), // Include shift messages
+    averageRating: dashboardStats?.summary?.averageRating ?? 0
   };
 
 

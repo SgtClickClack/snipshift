@@ -69,6 +69,7 @@ if (app.options.projectId !== REQUIRED_PROJECT_ID) {
   throw new Error(`Unauthorized Project ID: Initialized app project_id '${app.options.projectId}' does not match required '${REQUIRED_PROJECT_ID}'`);
 }
 
+export { app };
 export const auth = getAuth(app);
 
 // Connect to Firebase Auth Emulator in E2E mode if available

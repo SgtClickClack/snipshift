@@ -62,10 +62,12 @@ import venuesRouter from './routes/venues.js';
 import marketplaceRouter from './routes/marketplace.js';
 import workerRouter from './routes/worker.js';
 import reviewsRouter from './routes/reviews.js';
+import pushTokensRouter from './routes/push-tokens.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { initializePusher } from './services/pusher.service.js';
 import { triggerConversationEvent } from './services/pusher.service.js';
+import * as pushNotificationService from './services/push-notification.service.js';
 import { stripe } from './lib/stripe.js';
 import type Stripe from 'stripe';
 
@@ -208,6 +210,7 @@ app.use('/api/venues', venuesRouter);
 app.use('/api/marketplace', marketplaceRouter);
 app.use('/api/worker', workerRouter);
 app.use('/api/reviews', reviewsRouter);
+app.use('/api/push-tokens', pushTokensRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
@@ -2123,6 +2126,19 @@ app.post('/api/messages', authenticateUser, asyncHandler(async (req: Authenticat
       message: `New message from ${sender?.name || 'Someone'}`,
       link: `/messages?conversation=${conversationId}`,
     });
+    
+    // Send push notification (only if user is not active in conversation)
+    if (sender) {
+      pushNotificationService.sendMessagePushNotification(
+        recipientId,
+        sender.name,
+        content.trim(),
+        conversationId,
+        `/messages?conversation=${conversationId}`
+      ).catch((error) => {
+        console.error('[Messages] Error sending push notification:', error);
+      });
+    }
     
     // Send email notification
     if (sender && recipient.email) {

@@ -21,6 +21,7 @@ import { waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum } from './schema
 import { venues, venueStatusEnum } from './schema/venues.js';
 import { shiftApplications, shiftApplicationStatusEnum } from './schema/shift-applications.js';
 import { payouts } from './schema/payouts.js';
+import { userPushTokens } from './schema/push-tokens.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -45,7 +46,8 @@ export {
   leads, leadInquiryTypeEnum, leadStatusEnum,
   waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum,
   shiftApplications, shiftApplicationStatusEnum,
-  payouts
+  payouts,
+  userPushTokens
 };
 
 /**

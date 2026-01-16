@@ -624,6 +624,17 @@ function VenueDashboardContent() {
     enabled: !!user,
   });
 
+  // Fetch shift message unread count
+  const { data: shiftMessageUnreadData } = useQuery({
+    queryKey: ['shift-messages-unread-count'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/shifts/messages/unread-count");
+      return res.json();
+    },
+    enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
   // Use API data for stats, but prefer local jobs calculation for consistency with the list view
   const openJobsCount = jobs.filter(job => job.status === 'open').length;
   
@@ -631,7 +642,7 @@ function VenueDashboardContent() {
     ...(dashboardStats?.summary || {}),
     openJobs: openJobsCount, // Override with local calculation
     totalApplications: pendingApplications.length,
-    unreadMessages: dashboardStats?.summary?.unreadMessages ?? 0,
+    unreadMessages: (dashboardStats?.summary?.unreadMessages ?? 0) + (shiftMessageUnreadData?.unreadCount ?? 0), // Include shift messages
     monthlyHires: dashboardStats?.summary?.monthlyHires ?? 0
   };
 

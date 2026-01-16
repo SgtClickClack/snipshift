@@ -162,3 +162,24 @@ export const shiftLogs = pgTable('shift_logs', {
   timestampIdx: index('shift_logs_timestamp_idx').on(table.timestamp),
   shiftStaffIdx: index('shift_logs_shift_staff_idx').on(table.shiftId, table.staffId),
 }));
+
+/**
+ * Shift Messages table
+ * Stores ephemeral chat messages for filled shifts between venue owner and assigned worker
+ * Channels are archived/disabled 24 hours after shift completion
+ */
+export const shiftMessages = pgTable('shift_messages', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  shiftId: uuid('shift_id').notNull().references(() => shifts.id, { onDelete: 'cascade' }),
+  senderId: uuid('sender_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  recipientId: uuid('recipient_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  readAt: timestamp('read_at'), // NULL means unread, timestamp means read
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  shiftIdIdx: index('shift_messages_shift_id_idx').on(table.shiftId),
+  senderIdIdx: index('shift_messages_sender_id_idx').on(table.senderId),
+  recipientIdIdx: index('shift_messages_recipient_id_idx').on(table.recipientId),
+  shiftCreatedAtIdx: index('shift_messages_shift_created_at_idx').on(table.shiftId, table.createdAt),
+  readAtIdx: index('shift_messages_read_at_idx').on(table.readAt),
+}));

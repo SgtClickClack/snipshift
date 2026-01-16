@@ -23,6 +23,7 @@ import { PwaUpdateHandler } from '@/components/pwa/pwa-update-handler';
 import { RouteProgressBar } from '@/components/ui/route-progress-bar';
 import Navbar from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 // Core pages - load immediately for fast initial render (critical for FCP/LCP)
 import LandingPage from '@/pages/landing';
@@ -96,6 +97,9 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const isBridgeRoute = location.pathname === '/auth/bridge';
   const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || isBridgeRoute;
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/forgot-password', '/auth/bridge'].includes(location.pathname);
+  
+  // Initialize push notifications when user is authenticated
+  usePushNotifications();
   
   // Show loading screen while auth is initializing to prevent errors
   // BUT only after HTML splash has been removed to avoid duplicate loading screens

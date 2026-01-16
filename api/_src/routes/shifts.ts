@@ -27,6 +27,7 @@ import { triggerShiftInvite, triggerUserEvent } from '../services/pusher.service
 import { calculateDistance, validateLocationProximity } from '../utils/geofencing.js';
 import * as shiftLogsRepo from '../repositories/shift-logs.repository.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
+import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
 
 const router = Router();
 
@@ -702,6 +703,156 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
   }
 
   res.status(200).json(updatedShift);
+}));
+
+// Get shift messages (authenticated, only assigned worker and venue owner)
+// IMPORTANT: This route MUST come before DELETE /:id to avoid route conflicts
+router.get('/:id/messages', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Get shift to verify access
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Check authorization: only employer or assignee can access
+  const isAuthorized = shift.employerId === userId || shift.assigneeId === userId;
+  if (!isAuthorized) {
+    res.status(403).json({ message: 'Forbidden: You can only access messages for shifts you own or are assigned to' });
+    return;
+  }
+
+  // Check if shift is filled (required for messaging)
+  if (shift.status !== 'filled' && shift.status !== 'completed' && shift.status !== 'confirmed') {
+    res.status(400).json({ message: 'Messaging is only available for filled shifts' });
+    return;
+  }
+
+  // Get messages
+  const messages = await shiftMessagesRepo.getShiftMessages(id, userId);
+
+  // Mark messages as read when fetching
+  if (messages.length > 0) {
+    await shiftMessagesRepo.markShiftMessagesAsRead(id, userId);
+  }
+
+  res.status(200).json(messages);
+}));
+
+// Send shift message (authenticated, only assigned worker and venue owner)
+// IMPORTANT: This route MUST come before DELETE /:id to avoid route conflicts
+router.post('/:id/messages', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const { content } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(id)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Validate content
+  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    res.status(400).json({ message: 'Message content is required' });
+    return;
+  }
+
+  if (content.length > 5000) {
+    res.status(400).json({ message: 'Message content must be less than 5000 characters' });
+    return;
+  }
+
+  // Get shift to verify access
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Check authorization: only employer or assignee can send messages
+  const isAuthorized = shift.employerId === userId || shift.assigneeId === userId;
+  if (!isAuthorized) {
+    res.status(403).json({ message: 'Forbidden: You can only send messages for shifts you own or are assigned to' });
+    return;
+  }
+
+  // Check if shift is filled (required for messaging)
+  if (shift.status !== 'filled' && shift.status !== 'completed' && shift.status !== 'confirmed') {
+    res.status(400).json({ message: 'Messaging is only available for filled shifts' });
+    return;
+  }
+
+  // Check if channel is archived (24 hours after completion)
+  if (shift.status === 'completed' || shift.status === 'confirmed') {
+    const completedAt = shift.updatedAt || shift.createdAt;
+    if (completedAt) {
+      const completedDate = new Date(completedAt);
+      const now = new Date();
+      const hoursSinceCompletion = (now.getTime() - completedDate.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursSinceCompletion > 24) {
+        res.status(400).json({ message: 'This chat channel has been archived. Messaging is only available for 24 hours after shift completion.' });
+        return;
+      }
+    }
+  }
+
+  // Determine recipient (the other party in the conversation)
+  const recipientId = shift.employerId === userId ? shift.assigneeId : shift.employerId;
+  
+  if (!recipientId) {
+    res.status(400).json({ message: 'Cannot send message: shift has no assigned worker' });
+    return;
+  }
+
+  // Create message
+  const message = await shiftMessagesRepo.createShiftMessage({
+    shiftId: id,
+    senderId: userId,
+    recipientId: recipientId,
+    content: content.trim(),
+  });
+
+  if (!message) {
+    res.status(500).json({ message: 'Failed to send message' });
+    return;
+  }
+
+  res.status(201).json(message);
+}));
+
+// Get unread shift message count for current user
+// IMPORTANT: This route MUST come before DELETE /:id to avoid route conflicts
+router.get('/messages/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const unreadCount = await shiftMessagesRepo.getUnreadShiftMessageCount(userId);
+  res.status(200).json({ unreadCount });
 }));
 
 // Clear all shifts AND jobs for the current user (dangerous - use with caution)

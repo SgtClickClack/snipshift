@@ -7,6 +7,7 @@
 import { EventEmitter } from 'events';
 import * as notificationsRepo from '../repositories/notifications.repository.js';
 import type { WaitlistEntry } from '../repositories/waitlist.repository.js';
+import * as pushNotificationService from './push-notification.service.js';
 
 // Event bus for real-time notifications
 export const notificationBus = new EventEmitter();
@@ -78,6 +79,24 @@ export async function createNotification(data: CreateNotificationData) {
       } 
     });
     
+    // Send push notification (non-blocking)
+    // Skip push for message_received - handled separately with active user check
+    if (data.type !== 'message_received') {
+      pushNotificationService.sendGenericPushNotification(
+        data.userId,
+        data.title,
+        data.message,
+        {
+          type: data.type,
+          link: data.link || '',
+          notificationId: notification.id,
+          ...data.metadata,
+        }
+      ).catch((error) => {
+        console.error('[Notification] Error sending push notification:', error);
+      });
+    }
+    
     // Integration with Email Service is handled by specific notification functions
   }
 
@@ -101,6 +120,15 @@ export async function notifyApplicationReceived(
     link: `/manage-jobs`,
     metadata: { jobId }
   });
+
+  // Send push notification
+  await pushNotificationService.sendNewApplicationPushNotification(
+    jobOwnerId,
+    applicantName,
+    jobTitle,
+    jobId,
+    '/manage-jobs'
+  );
 }
 
 /**
@@ -116,14 +144,26 @@ export async function notifyApplicationStatusChange(
   // If we have userId, create notification
   if (candidateUserId) {
     const statusText = status === 'accepted' ? 'approved' : 'rejected';
+    const title = status === 'accepted' ? 'Application Approved!' : 'Application Update';
+    const message = `Your application for "${jobTitle}" has been ${statusText}.`;
+    
     await createNotification({
       userId: candidateUserId,
       type: 'application_status_change',
-      title: status === 'accepted' ? 'Application Approved!' : 'Application Update',
-      message: `Your application for "${jobTitle}" has been ${statusText}.`,
+      title,
+      message,
       link: `/my-applications`,
       metadata: { jobId, status }
     });
+
+    // Send push notification
+    await pushNotificationService.sendApplicationStatusPushNotification(
+      candidateUserId,
+      title,
+      message,
+      '/my-applications',
+      { jobId, status }
+    );
   }
 }
 
