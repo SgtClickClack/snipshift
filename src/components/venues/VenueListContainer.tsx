@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -189,8 +190,17 @@ export function VenueListContainer() {
  * VenueCard - Individual venue card component
  */
 function VenueCard({ venue }: { venue: Venue }) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/marketplace/venue/${venue.id}`);
+  };
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
+    <Card
+      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+      onClick={handleClick}
+    >
       {/* Venue Image */}
       <div className="relative h-48 bg-muted overflow-hidden">
         {venue.imageUrl ? (
