@@ -68,34 +68,57 @@ Write-Host ""
 Write-Host "3️⃣  Configuring Stripe CLI with API key..." -ForegroundColor Yellow
 Write-Host ""
 
-# Stripe CLI stores config in ~/.config/stripe/config.toml
-# We'll set the API key via environment variable and config file
-$stripeConfigDir = Join-Path $env:USERPROFILE ".config\stripe"
-$stripeConfigFile = Join-Path $stripeConfigDir "config.toml"
+# Stripe CLI uses STRIPE_API_KEY environment variable for non-interactive auth
+# We'll set it for the current session and optionally persist it
 
 try {
-    # Create config directory if it doesn't exist
-    if (-not (Test-Path $stripeConfigDir)) {
-        New-Item -ItemType Directory -Path $stripeConfigDir -Force | Out-Null
-    }
-
-    # Write config file with API key
-    $configContent = @"
-[test_mode]
-api_key = "$stripeSecretKey"
-"@
-    
-    Set-Content -Path $stripeConfigFile -Value $configContent -Force
-    Write-Host "   ✅ Stripe CLI configured successfully" -ForegroundColor Green
-    Write-Host "   Config file: $stripeConfigFile" -ForegroundColor Gray
-    
-    # Also set as environment variable for current session
+    # Set environment variable for current session
     $env:STRIPE_API_KEY = $stripeSecretKey
     Write-Host "   ✅ Environment variable set for current session" -ForegroundColor Green
+    
+    # Try to persist to user environment variables
+    try {
+        [System.Environment]::SetEnvironmentVariable("STRIPE_API_KEY", $stripeSecretKey, "User")
+        Write-Host "   ✅ Environment variable persisted to user profile" -ForegroundColor Green
+        Write-Host "   Note: Restart terminal for persistent variable to take effect" -ForegroundColor Gray
+    } catch {
+        Write-Host "   ⚠️  Could not persist to user profile: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "   Environment variable is set for current session only" -ForegroundColor Gray
+    }
+    
+    # Also try to write to Stripe CLI config file (if it exists or we can create it)
+    $stripeConfigDir = Join-Path $env:USERPROFILE ".config\stripe"
+    $stripeConfigFile = Join-Path $stripeConfigDir "config.toml"
+    
+    try {
+        if (-not (Test-Path $stripeConfigDir)) {
+            New-Item -ItemType Directory -Path $stripeConfigDir -Force | Out-Null
+        }
+        
+        # Read existing config if it exists
+        $existingConfig = ""
+        if (Test-Path $stripeConfigFile) {
+            $existingConfig = Get-Content $stripeConfigFile -Raw
+        }
+        
+        # Write/update config with API key
+        if ($existingConfig -match "\[test_mode\]") {
+            # Update existing test_mode section
+            $configContent = $existingConfig -replace "(?s)\[test_mode\].*?(?=\[|$)", "[test_mode]`r`napi_key = `"$stripeSecretKey`"`r`n"
+        } else {
+            # Append new test_mode section
+            $configContent = $existingConfig + "`r`n[test_mode]`r`napi_key = `"$stripeSecretKey`"`r`n"
+        }
+        
+        Set-Content -Path $stripeConfigFile -Value $configContent.Trim() -Force
+        Write-Host "   ✅ Config file updated: $stripeConfigFile" -ForegroundColor Green
+    } catch {
+        Write-Host "   ⚠️  Could not write config file: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "   Using environment variable only (this is sufficient)" -ForegroundColor Gray
+    }
 } catch {
     Write-Host "   ❌ Configuration error: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "   Falling back to environment variable only" -ForegroundColor Yellow
-    $env:STRIPE_API_KEY = $stripeSecretKey
+    exit 1
 }
 
 Write-Host ""
