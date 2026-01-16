@@ -449,6 +449,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
             </Suspense>
           </ProtectedRoute>
         } />
+        
+        <Route path="/worker/earnings" element={
+          <ProtectedRoute requiredRole="professional">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <WorkerEarningsView />
+            </Suspense>
+          </ProtectedRoute>
+        } />
 
         {/* Protected feature routes - Disabled for stability */}
         <Route path="/community" element={
