@@ -715,13 +715,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // CRITICAL: Force refresh token to get latest custom claims after Google signup
               // This ensures onboardingStatus and role are available before we set loading=false
               // Use getIdTokenResult(true) to force refresh and get claims
-              const tokenResult = await firebaseUser.getIdTokenResult(true);
-              const token = tokenResult.token;
+              let token: string;
+              try {
+                const tokenResult = await firebaseUser.getIdTokenResult(true);
+                token = tokenResult.token;
+                if (!token || token.length === 0) {
+                  logger.debug('AuthContext', 'Skipping /api/me - no valid token available');
+                  setUser(null);
+                  setToken(null);
+                  setIsLoading(false);
+                  setIsAuthReady(true);
+                  return;
+                }
+              } catch (tokenError) {
+                logger.debug('AuthContext', 'Skipping /api/me - token fetch failed', tokenError);
+                setUser(null);
+                setToken(null);
+                setIsLoading(false);
+                setIsAuthReady(true);
+                return;
+              }
+              
               setToken(token);
               logger.debug('AuthContext', 'Token refreshed with latest claims, fetching user profile from /api/me', {
                 isNewSignIn,
                 uid: firebaseUser.uid,
-                claims: tokenResult.claims
               });
               setIsRoleLoading(true);
               const res = await fetch('/api/me', {

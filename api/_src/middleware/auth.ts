@@ -156,6 +156,12 @@ export function authenticateUser(
     }
 
     if (!token) {
+      // Suppress logging for expected 401s (when user is not authenticated)
+      // Only log if this is not a common public endpoint that might be called without auth
+      const isPublicEndpoint = req.path === '/api/me' || req.path.startsWith('/api/notifications');
+      if (!isPublicEndpoint) {
+        console.log(`[AUTH] No token provided for ${req.method} ${req.path}`);
+      }
       res.status(401).json({ message: 'Unauthorized: No token provided' });
       return;
     }
@@ -231,19 +237,28 @@ export function authenticateUser(
         const errorCode = error?.code || 'unknown';
         const errorMessage = error?.message || 'Token verification failed';
         
-        // Log detailed error information for debugging
-        console.error('[AUTH ERROR] Token verification failed:', {
-          code: errorCode,
-          message: errorMessage,
-          path: req.path,
-          hasToken: !!token,
-          tokenLength: token?.length,
-          tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
-        });
+        // Suppress detailed logging for expected 401s on public endpoints
+        // (e.g., when user is not authenticated and tries to access /api/me)
+        const isPublicEndpoint = req.path === '/api/me' || req.path.startsWith('/api/notifications');
+        const isExpectedError = errorCode === 'auth/id-token-expired' || 
+                                errorCode === 'auth/argument-error' ||
+                                errorMessage.includes('Decoding Firebase ID token failed');
         
-        // Only log stack in development
-        if (process.env.NODE_ENV === 'development') {
-          console.error('[AUTH ERROR] Stack:', error?.stack);
+        if (!isPublicEndpoint || !isExpectedError) {
+          // Log detailed error information for debugging (only for unexpected errors)
+          console.error('[AUTH ERROR] Token verification failed:', {
+            code: errorCode,
+            message: errorMessage,
+            path: req.path,
+            hasToken: !!token,
+            tokenLength: token?.length,
+            tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
+          });
+          
+          // Only log stack in development
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[AUTH ERROR] Stack:', error?.stack);
+          }
         }
         
         res.status(401).json({ 
