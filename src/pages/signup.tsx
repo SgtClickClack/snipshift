@@ -13,6 +13,7 @@ import { FastForward, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { trackSignup } from "@/lib/analytics";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -287,6 +288,10 @@ export default function SignupPage() {
       
       login(newUser);
       
+      // Track signup event (non-blocking - doesn't delay redirect)
+      // This will silently fail if GTM is blocked by ad-blocker
+      trackSignup('email');
+      
       toast({
         title: "Account created successfully",
         description: "Welcome to HospoGo! Let's set up your profile.",
@@ -300,6 +305,7 @@ export default function SignupPage() {
       sessionStorage.removeItem('signupRolePreference');
 
       // Force navigation to ensure we leave the page
+      // NOTE: Navigation happens immediately, not waiting for analytics
       window.location.href = onboardingPath;
     } catch (error: unknown) {
       console.error("Signup error:", error);

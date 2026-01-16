@@ -5,6 +5,28 @@ import "./index.css";
 // Import react-big-calendar CSS globally to ensure it loads
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { StartupErrorBoundary } from "@/components/error/StartupErrorBoundary";
+import { initializeGTM } from "@/lib/analytics";
+
+// Global GTM Guard: Define dummy gtag function if blocked by ad-blockers/privacy extensions
+// This prevents 'undefined' errors throughout the app when tracking scripts are blocked
+try {
+  if (typeof window !== 'undefined') {
+    // Initialize dataLayer if it doesn't exist
+    window.dataLayer = window.dataLayer || [];
+    
+    // Define gtag function if it doesn't exist (blocked by ad-blocker)
+    if (typeof window.gtag === 'undefined') {
+      window.gtag = function() {
+        // Dummy function that does nothing - prevents errors when tracking is blocked
+        // Arguments are ignored silently to maintain API compatibility
+      };
+      console.debug('[Analytics] gtag function not available (likely blocked), using dummy implementation');
+    }
+  }
+} catch (error) {
+  // Never block app startup if analytics initialization fails
+  console.debug('[Analytics] Failed to initialize gtag guard:', error);
+}
 
 // TEMP (Local Dev): Clear legacy session ghosts on localhost.
 // Note: We can't place this *before* imports in an ES module; this is the earliest safe spot.
@@ -52,6 +74,14 @@ window.addEventListener('error', (e) => {
     }
   }
 });
+
+// Initialize GTM early (non-blocking, resilient to ad-blockers)
+try {
+  initializeGTM();
+} catch (error) {
+  // Silently fail - analytics should never block app startup
+  console.debug('[Main] GTM initialization failed (non-blocking):', error);
+}
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

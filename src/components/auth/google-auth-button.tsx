@@ -6,6 +6,8 @@ import { Chrome } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { trackSignup, trackLogin } from "@/lib/analytics";
+import { trackSignup, trackLogin } from "@/lib/analytics";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
@@ -141,8 +143,27 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         variant: "success",
       });
       
-      // Step 4: Refresh user profile and redirect
+      // NON-BLOCKING Analytics: Track signup/login event (never await - redirect happens immediately)
+      // This call is wrapped in try-catch internally and will never block the auth flow
+      try {
+        // Determine if this is signup or login based on whether user already existed
+        // For simplicity, we'll track as signup if we just created the user, login otherwise
+        // The ensureUserInDatabase function returns 201 for new users, 409 for existing
+        // Since we can't easily check that here, we'll use the mode prop if available
+        // For now, we'll track based on the component's mode prop
+        if (mode === 'signup') {
+          trackSignup('google');
+        } else {
+          trackLogin('google');
+        }
+      } catch (error) {
+        // Silently ignore analytics errors - authentication should never fail due to tracking
+        logger.debug('GoogleAuthButton', 'Analytics tracking failed (non-blocking):', error);
+      }
+      
+      // Step 6: Refresh user profile and redirect
       // This triggers AuthContext to fetch the profile and determine the correct redirect
+      // NOTE: Analytics tracking above is non-blocking and doesn't delay this flow
       try {
         await refreshUser();
       } catch (refreshError) {
@@ -153,9 +174,10 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       // This prevents race conditions where we check redirect before AuthContext has finished
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Step 5: Force redirect to onboarding as fallback (AuthContext should handle this, 
+      // Step 7: Force redirect to onboarding as fallback (AuthContext should handle this, 
       // but we add a fallback to ensure navigation happens)
       // Give AuthContext a moment to process, then navigate if still on auth pages
+      // NOTE: Navigation happens immediately, not waiting for analytics
       setTimeout(() => {
         const currentPath = window.location.pathname;
         if (currentPath === '/login' || currentPath === '/signup') {
