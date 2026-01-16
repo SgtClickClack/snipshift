@@ -259,9 +259,15 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
         // Handle identity verification completion
         const verificationSession = event.data.object as any;
         const accountId = verificationSession.metadata?.account_id;
+        const verificationSessionId = verificationSession.id;
+
+        console.info(`[WEBHOOK] Identity verification session verified: ${verificationSessionId}`);
 
         if (!accountId) {
           console.warn('⚠️  Identity verification session verified but no account_id in metadata');
+          console.warn('   This is normal - account.updated event will handle the status update');
+          // For Express accounts, identity verification is part of onboarding
+          // The account.updated event will fire when verification completes
           break;
         }
 
@@ -282,9 +288,10 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           // Identity verification is complete
           // The account.updated webhook will handle the full onboarding status
           console.info(`✅ Identity verification completed for user ${user.id}, account ${accountId}`);
+          console.info(`   Waiting for account.updated event to finalize onboarding status`);
           
-          // Optionally, we could add a field to track identity verification separately
-          // For now, the account.updated event will update stripeOnboardingComplete
+          // Note: For Express accounts, we rely on account.updated to set stripeOnboardingComplete
+          // because identity verification is part of the overall onboarding flow
         } else {
           console.warn(`⚠️  Identity verification completed for account ${accountId}, but user not found`);
         }
