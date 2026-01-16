@@ -2,12 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { fetchShiftDetails, createApplication, fetchMyApplications, ShiftDetails, checkInShift, requestSubstitute, clockOutShift, joinWaitlist, leaveWaitlist, getWaitlistStatus } from '@/lib/api';
+import { fetchShiftDetails, createApplication, fetchMyApplications, ShiftDetails, checkInShift, requestSubstitute, clockOutShift, joinWaitlist, leaveWaitlist, getWaitlistStatus, reportLateArrival } from '@/lib/api';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText, Navigation, UserX, LogOut } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText, Navigation, UserX, LogOut, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import {
   AlertDialog,
@@ -41,6 +41,7 @@ export default function ShiftDetailsPage() {
   const [showSubstituteDialog, setShowSubstituteDialog] = useState(false);
   const [showClockOutCamera, setShowClockOutCamera] = useState(false);
   const [isClockOut, setIsClockOut] = useState(false);
+  const [showLateArrivalDialog, setShowLateArrivalDialog] = useState(false);
 
   // TODO: Saved shifts feature - Currently using local state only
   const toggleSave = () => {
@@ -49,7 +50,7 @@ export default function ShiftDetailsPage() {
       title: !isSaved ? "Shift Saved" : "Shift Removed from Saved",
       description: !isSaved ? "This shift has been added to your saved shifts." : "This shift has been removed from your saved shifts.",
     });
-  });
+  };
 
   const checkInMutation = useMutation({
     mutationFn: ({ shiftId, latitude, longitude }: { shiftId: string; latitude: number; longitude: number }) =>
@@ -132,6 +133,33 @@ export default function ShiftDetailsPage() {
   const handleClockOutCapture = (file: File) => {
     if (!id) return;
     clockOutMutation.mutate({ shiftId: id, proofImage: file });
+  };
+
+  const lateArrivalMutation = useMutation({
+    mutationFn: ({ shiftId, etaMinutes }: { shiftId: string; etaMinutes: number }) =>
+      reportLateArrival(shiftId, etaMinutes),
+    onSuccess: (data) => {
+      setShowLateArrivalDialog(false);
+      toast({
+        title: 'Late Arrival Reported',
+        description: `Venue owner has been notified. Expected arrival: ${new Date(data.expectedArrivalTime).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}`,
+      });
+      // Invalidate shift details to update UI
+      queryClient.invalidateQueries({ queryKey: ['shift', id] });
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || 'Failed to report late arrival. Please try again.';
+      toast({
+        title: 'Report Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleLateArrival = (etaMinutes: number) => {
+    if (!id) return;
+    lateArrivalMutation.mutate({ shiftId: id, etaMinutes });
   };
 
   const handleCheckIn = async () => {
@@ -866,6 +894,27 @@ export default function ShiftDetailsPage() {
                           {checkInError}
                         </div>
                       )}
+                      {/* Running Late button - only show 15 minutes before shift start */}
+                      {shift && (() => {
+                        const shiftStart = new Date(shift.startTime);
+                        const now = new Date();
+                        const minutesUntilStart = (shiftStart.getTime() - now.getTime()) / (1000 * 60);
+                        const canShowLateButton = minutesUntilStart <= 15 && minutesUntilStart >= -30;
+                        const lateSignalSent = (shift as any).lateArrivalSignalSent;
+                        
+                        return canShowLateButton && !lateSignalSent ? (
+                          <Button
+                            onClick={() => setShowLateArrivalDialog(true)}
+                            disabled={lateArrivalMutation.isPending}
+                            variant="outline"
+                            className="w-full border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                            data-testid="button-running-late"
+                          >
+                            <AlertCircle className="h-4 w-4 mr-2" />
+                            {lateArrivalMutation.isPending ? 'Sending...' : 'Running Late?'}
+                          </Button>
+                        ) : null;
+                      })()}
                       {/* Request Substitute button - only show if shift is at least 24 hours away */}
                       {shift && (() => {
                         const shiftStart = new Date(shift.startTime);
@@ -927,6 +976,50 @@ export default function ShiftDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Late Arrival ETA Dialog */}
+      <AlertDialog open={showLateArrivalDialog} onOpenChange={setShowLateArrivalDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Running Late?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Select your estimated arrival time. The venue owner will be notified immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-4">
+            <Button
+              onClick={() => handleLateArrival(5)}
+              disabled={lateArrivalMutation.isPending}
+              variant="outline"
+              className="w-full justify-start"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              5 minutes
+            </Button>
+            <Button
+              onClick={() => handleLateArrival(10)}
+              disabled={lateArrivalMutation.isPending}
+              variant="outline"
+              className="w-full justify-start"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              10 minutes
+            </Button>
+            <Button
+              onClick={() => handleLateArrival(15)}
+              disabled={lateArrivalMutation.isPending}
+              variant="outline"
+              className="w-full justify-start"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              15+ minutes
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={lateArrivalMutation.isPending}>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Substitution Request Dialog */}
       <AlertDialog open={showSubstituteDialog} onOpenChange={setShowSubstituteDialog}>
