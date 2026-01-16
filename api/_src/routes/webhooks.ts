@@ -221,9 +221,17 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
         const account = event.data.object as any;
         const accountId = account.id;
 
+        console.info(`[WEBHOOK] Account updated event received for account: ${accountId}`);
+        console.info(`   Details submitted: ${account.details_submitted}`);
+        console.info(`   Charges enabled: ${account.charges_enabled}`);
+        console.info(`   Payouts enabled: ${account.payouts_enabled}`);
+
         // Find user by stripeAccountId
         const db = await import('../db/index.js').then(m => m.getDb());
-        if (!db) break;
+        if (!db) {
+          console.warn(`[WEBHOOK] Database connection not available`);
+          break;
+        }
 
         const { users } = await import('../db/schema.js');
         const { eq } = await import('drizzle-orm');
@@ -241,6 +249,9 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
                             account.charges_enabled === true && 
                             account.payouts_enabled === true;
 
+          console.info(`[WEBHOOK] Found user ${user.id} (${user.email}) for account ${accountId}`);
+          console.info(`[WEBHOOK] Onboarding complete: ${isComplete}`);
+
           // Update user's onboarding status
           await usersRepo.updateUser(user.id, {
             stripeOnboardingComplete: isComplete,
@@ -251,6 +262,9 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           } else {
             console.info(`✅ Updated Connect account status for user ${user.id} - fully onboarded`);
           }
+        } else {
+          console.warn(`[WEBHOOK] No user found with stripeAccountId: ${accountId}`);
+          console.warn(`   This is normal for test events that don't match existing accounts`);
         }
         break;
       }
