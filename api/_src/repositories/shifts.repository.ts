@@ -69,10 +69,14 @@ export interface ShiftFilters {
   offset?: number;
 }
 
-export type ShiftWithShop = typeof shifts.$inferSelect & {
+export type ShiftWithShop = Omit<typeof shifts.$inferSelect, 'attendanceStatus'> & {
   shopName: string | null;
   shopAvatarUrl: string | null;
   clockInTime?: Date | null;
+  actualStartTime?: Date | null;
+  substitutionRequestedBy?: string | null;
+  proofImageUrl?: string | null;
+  attendanceStatus: 'pending' | 'completed' | 'no_show' | 'checked_in' | null;
 };
 
 export interface PaginatedShifts {

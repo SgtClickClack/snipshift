@@ -11,6 +11,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import * as reputationService from '../lib/reputation-service.js';
 import * as ocrService from '../services/ocr.service.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import * as shiftsRepo from '../repositories/shifts.repository.js';
 import { getDb } from '../db/index.js';
 import { getStorage } from 'firebase-admin/storage';
 import admin from 'firebase-admin';
@@ -83,18 +84,31 @@ router.post(
       return;
     }
 
-    // Verify user is actually suspended
+    // Verify user has a no-show for this shift (either suspended or just wants to appeal)
     const user = await usersRepo.getUserById(userId);
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;
     }
 
-    const isSuspended = user.suspendedUntil && new Date(user.suspendedUntil) > new Date();
-    if (!isSuspended) {
-      res.status(400).json({ message: 'You are not currently suspended. No appeal needed.' });
+    // Verify the shift exists and is a no-show for this user
+    const shift = await shiftsRepo.getShiftById(shiftId);
+    if (!shift) {
+      res.status(404).json({ message: 'Shift not found' });
       return;
     }
+
+    if (shift.assigneeId !== userId) {
+      res.status(403).json({ message: 'This shift is not assigned to you' });
+      return;
+    }
+
+    if (shift.attendanceStatus !== 'no_show') {
+      res.status(400).json({ message: 'This shift is not marked as a no-show' });
+      return;
+    }
+
+    const isSuspended = user.suspendedUntil && new Date(user.suspendedUntil) > new Date();
 
     // Upload certificate to Firebase Storage
     let certificateUrl: string;
