@@ -26,6 +26,7 @@ export interface Venue {
   liquorLicenseNumber: string | null;
   address: VenueAddress;
   operatingHours: OperatingHours;
+  status: 'pending' | 'active';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -111,7 +112,7 @@ export async function getVenueByWaitlistId(waitlistId: string): Promise<Venue | 
  */
 export async function updateVenue(
   venueId: string,
-  updates: Partial<Omit<CreateVenueInput, 'userId' | 'waitlistId'>>
+  updates: Partial<Omit<CreateVenueInput, 'userId' | 'waitlistId'> & { status?: 'pending' | 'active' }>
 ): Promise<Venue | null> {
   const db = getDb();
   if (!db) {
@@ -131,6 +132,35 @@ export async function updateVenue(
     return updatedVenue as Venue | null;
   } catch (error) {
     console.error('[VENUES REPO] Error updating venue:', error);
+    return null;
+  }
+}
+
+/**
+ * Update venue status by user ID
+ */
+export async function updateVenueStatusByUserId(
+  userId: string,
+  status: 'pending' | 'active'
+): Promise<Venue | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  try {
+    const [updatedVenue] = await db
+      .update(venues)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(venues.userId, userId))
+      .returning();
+
+    return updatedVenue as Venue | null;
+  } catch (error) {
+    console.error('[VENUES REPO] Error updating venue status:', error);
     return null;
   }
 }

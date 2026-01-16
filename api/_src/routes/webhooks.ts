@@ -252,15 +252,80 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
           console.info(`[WEBHOOK] Found user ${user.id} (${user.email}) for account ${accountId}`);
           console.info(`[WEBHOOK] Onboarding complete: ${isComplete}`);
 
-          // Update user's onboarding status
-          await usersRepo.updateUser(user.id, {
-            stripeOnboardingComplete: isComplete,
-          });
+          // Check if payouts are enabled (key indicator for venue activation)
+          const payoutsEnabled = account.payouts_enabled === true;
 
-          if (!isComplete) {
-            console.warn(`⚠️  Connect account ${accountId} lost verification. User ${user.id} locked from accepting shifts.`);
-          } else {
-            console.info(`✅ Updated Connect account status for user ${user.id} - fully onboarded`);
+          // Use database transaction to atomically update both user and venue
+          try {
+            await db.transaction(async (tx) => {
+              const { users: usersTable, venues: venuesTable } = await import('../db/schema.js');
+              const { eq } = await import('drizzle-orm');
+              
+              // Update user's onboarding status within transaction
+              await tx
+                .update(usersTable)
+                .set({
+                  stripeOnboardingComplete: isComplete,
+                  updatedAt: new Date(),
+                })
+                .where(eq(usersTable.id, user.id));
+
+              // If payouts are enabled, activate the venue
+              if (payoutsEnabled) {
+                // Find venue associated with this user within transaction
+                const [venue] = await tx
+                  .select()
+                  .from(venuesTable)
+                  .where(eq(venuesTable.userId, user.id))
+                  .limit(1);
+                
+                if (venue) {
+                  // Update venue status to active within transaction
+                  await tx
+                    .update(venuesTable)
+                    .set({
+                      status: 'active',
+                      updatedAt: new Date(),
+                    })
+                    .where(eq(venuesTable.id, venue.id));
+                  
+                  console.info(`🎉 VENUE ACTIVATED: Venue "${venue.venueName}" (ID: ${venue.id}) is now LIVE on the marketplace`);
+                  console.info(`   User: ${user.email} (${user.id})`);
+                  console.info(`   Stripe Account: ${accountId}`);
+                  console.info(`   Activated at: ${new Date().toISOString()}`);
+                } else {
+                  console.info(`[WEBHOOK] No venue found for user ${user.id} - user may not be a venue owner`);
+                }
+              } else {
+                // Payouts disabled - ensure venue is set to pending if it exists
+                const [venue] = await tx
+                  .select()
+                  .from(venuesTable)
+                  .where(eq(venuesTable.userId, user.id))
+                  .limit(1);
+                
+                if (venue && venue.status === 'active') {
+                  await tx
+                    .update(venuesTable)
+                    .set({
+                      status: 'pending',
+                      updatedAt: new Date(),
+                    })
+                    .where(eq(venuesTable.id, venue.id));
+                  
+                  console.warn(`⚠️  VENUE DEACTIVATED: Venue "${venue.venueName}" (ID: ${venue.id}) - payouts disabled`);
+                }
+              }
+            });
+
+            if (!isComplete) {
+              console.warn(`⚠️  Connect account ${accountId} lost verification. User ${user.id} locked from accepting shifts.`);
+            } else {
+              console.info(`✅ Updated Connect account status for user ${user.id} - fully onboarded`);
+            }
+          } catch (transactionError: any) {
+            console.error(`[WEBHOOK] Transaction failed for user ${user.id}:`, transactionError);
+            throw transactionError; // Re-throw to trigger webhook error handling
           }
         } else {
           console.warn(`[WEBHOOK] No user found with stripeAccountId: ${accountId}`);

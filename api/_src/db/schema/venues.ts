@@ -4,7 +4,7 @@
  * Stores venue profile data for Brisbane-based hospitality venues
  */
 
-import { pgTable, uuid, varchar, text, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, jsonb, timestamp, index, pgEnum } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 import { waitlist } from './waitlist.js';
 
@@ -42,6 +42,13 @@ export interface OperatingHours {
 }
 
 /**
+ * Venue Status Enum
+ * pending: Venue created but Stripe onboarding not complete
+ * active: Venue is live on marketplace (Stripe payouts enabled)
+ */
+export const venueStatusEnum = pgEnum('venue_status', ['pending', 'active']);
+
+/**
  * Venues table
  * Stores venue profile data linked to users and optionally waitlist entries
  */
@@ -60,6 +67,9 @@ export const venues = pgTable('venues', {
   // Operating Hours (JSONB per day)
   operatingHours: jsonb('operating_hours').notNull().$type<OperatingHours>(),
   
+  // Status: pending (awaiting Stripe onboarding) or active (payouts enabled)
+  status: venueStatusEnum('status').notNull().default('pending'),
+  
   // Metadata
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -67,4 +77,5 @@ export const venues = pgTable('venues', {
   userIdIdx: index('venues_user_id_idx').on(table.userId),
   waitlistIdIdx: index('venues_waitlist_id_idx').on(table.waitlistId),
   venueNameIdx: index('venues_venue_name_idx').on(table.venueName),
+  statusIdx: index('venues_status_idx').on(table.status),
 }));
