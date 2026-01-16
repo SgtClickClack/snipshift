@@ -1685,8 +1685,9 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   let updatedShift: typeof shifts.$inferSelect | null = null;
 
   try {
-    // Use Drizzle transaction to ensure atomicity
-    updatedShift = await db.transaction(async (tx) => {
+    // SECURITY AUDIT: Use REPEATABLE READ isolation for shift updates to prevent deadlocks
+    const { withTransactionIsolation } = await import('../db/transactions.js');
+    updatedShift = await withTransactionIsolation(async (tx) => {
       // Step 1: Lock the shift row with FOR UPDATE to prevent race conditions
       const lockedShiftResult = await (tx as any).execute(
         sql`SELECT * FROM shifts WHERE id = ${id} FOR UPDATE`
@@ -1790,7 +1791,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
 
       // Transaction will commit automatically if no errors thrown
       return updated;
-    });
+    }, 'REPEATABLE READ');
 
     // Transaction succeeded - shift is now assigned and payment is authorized
     console.log(`[SHIFT_ACCEPT] Successfully accepted shift ${id} with PaymentIntent ${paymentIntentId}`);
@@ -2098,8 +2099,9 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
       let updatedShift: typeof shifts.$inferSelect | null = null;
 
       try {
-        // Use Drizzle transaction to ensure atomicity per shift
-        updatedShift = await db.transaction(async (tx) => {
+        // SECURITY AUDIT: Use REPEATABLE READ isolation for shift updates to prevent deadlocks
+        const { withTransactionIsolation } = await import('../db/transactions.js');
+        updatedShift = await withTransactionIsolation(async (tx) => {
           // Step 1: Lock the shift row with FOR UPDATE to prevent race conditions
           const lockedShiftResult = await (tx as any).execute(
             sql`SELECT * FROM shifts WHERE id = ${shiftId} FOR UPDATE`
@@ -2168,7 +2170,7 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
 
           // Transaction will commit automatically if no errors thrown
           return updated;
-        });
+        }, 'REPEATABLE READ');
 
         // Transaction succeeded for this shift
         results.accepted.push(shiftId);
@@ -4097,7 +4099,7 @@ router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: Authenti
 
   // Reject if too far from venue
   if (!proximityCheck.isValid) {
-    // Log the failed attempt
+    // Log the failed attempt with correlationId for searchability
     await shiftLogsRepo.createShiftLog({
       shiftId,
       staffId: userId,
@@ -4108,7 +4110,15 @@ router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: Authenti
       venueLongitude: venueLng,
       distanceMeters: proximityCheck.distance,
       accuracy: accuracy || null,
-      metadata: JSON.stringify({ reason: 'TOO_FAR_FROM_VENUE', maxRadiusMeters })
+      metadata: JSON.stringify({ 
+        reason: 'TOO_FAR_FROM_VENUE', 
+        maxRadiusMeters,
+        correlationId: req.correlationId,
+        userId,
+        shiftId,
+        userCoordinates: { latitude, longitude },
+        venueCoordinates: { latitude: venueLat, longitude: venueLng }
+      })
     });
 
     // Report failed geofence attempt to error tracking service
@@ -4364,7 +4374,7 @@ router.patch('/:id/check-in', authenticateUser, asyncHandler(async (req: Authent
 
   // Reject if too far from venue
   if (!proximityCheck.isValid) {
-    // Log the failed attempt for audit
+    // Log the failed attempt for audit with correlationId for searchability
     await shiftLogsRepo.createShiftLog({
       shiftId,
       staffId: userId,
@@ -4375,7 +4385,16 @@ router.patch('/:id/check-in', authenticateUser, asyncHandler(async (req: Authent
       venueLongitude: venueLng,
       distanceMeters: proximityCheck.distance,
       accuracy: null,
-      metadata: JSON.stringify({ reason: 'TOO_FAR_FROM_VENUE', maxRadiusMeters, distance: proximityCheck.distance })
+      metadata: JSON.stringify({ 
+        reason: 'TOO_FAR_FROM_VENUE', 
+        maxRadiusMeters, 
+        distance: proximityCheck.distance,
+        correlationId: req.correlationId,
+        userId,
+        shiftId,
+        userCoordinates: { latitude, longitude },
+        venueCoordinates: { latitude: venueLat, longitude: venueLng }
+      })
     });
 
     res.status(403).json({
@@ -4610,6 +4629,8 @@ router.patch('/:id/clock-out', authenticateUser, uploadProofImage, asyncHandler(
 // - /shop/:userId
 // - /offers/me
 // - /pending-review
+// SECURITY AUDIT: Public route - returns full data for open shifts, sanitized for others
+// TODO: Add optional authentication middleware to return full data for authorized users
 router.get('/:id', asyncHandler(async (req, res) => {
   const id = normalizeParam(req.params.id);
 
@@ -4624,6 +4645,10 @@ router.get('/:id', asyncHandler(async (req, res) => {
     res.status(404).json({ message: 'Shift not found' });
     return;
   }
+
+  // SECURITY: For non-open shifts, exclude sensitive fields if not authenticated
+  // Open shifts are public and can show full data
+  const isPublicShift = shift.status === 'open';
 
   // Enrich with employer info for nicer UI
   const employer = await usersRepo.getUserById(shift.employerId);
@@ -4654,9 +4679,9 @@ router.get('/:id', asyncHandler(async (req, res) => {
     rsaRequired: (shift as any).rsaRequired ?? false,
     expectedPax: (shift as any).expectedPax ?? null,
     status: shift.status,
-    attendanceStatus: shift.attendanceStatus ?? null,
-    employerId: shift.employerId,
-    assigneeId: shift.assigneeId ?? null,
+    attendanceStatus: isPublicShift ? (shift.attendanceStatus ?? null) : null,
+    employerId: isPublicShift ? shift.employerId : undefined, // Hide for non-open shifts
+    assigneeId: isPublicShift ? (shift.assigneeId ?? null) : null, // Hide for non-open shifts
     shopName: employer?.name ?? null,
     shopAvatarUrl: employer?.avatarUrl ?? null,
     actualStartTime: (shift as any).actualStartTime ? toISOStringSafe((shift as any).actualStartTime) : null,

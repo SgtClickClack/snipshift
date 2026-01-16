@@ -5,6 +5,7 @@ import * as subscriptionsRepo from '../repositories/subscriptions.repository.js'
 import * as paymentsRepo from '../repositories/payments.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
+import * as payoutsRepo from '../repositories/payouts.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
 
 const router = express.Router();
@@ -422,6 +423,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
       case 'payment_intent.succeeded': {
         // Handle successful payment intent (after capture)
         // Fail-safe: Ensure payment status is set to PAID even if manual capture flow missed it
+        // CRITICAL: Update shift AND payout atomically within a transaction
         const paymentIntent = event.data.object as any;
         const paymentIntentId = paymentIntent.id;
         const shiftId = paymentIntent.metadata?.shiftId;
@@ -450,20 +452,62 @@ router.post('/stripe', express.raw({ type: 'application/json' }), asyncHandler(a
         }
 
         if (shift) {
-          // Update shift payment status to PAID (fail-safe)
-          await shiftsRepo.updateShift(shift.id, {
-            paymentStatus: 'PAID',
-          });
-
-          // Store charge ID if available
-          const chargeId = paymentIntent.latest_charge;
-          if (chargeId && typeof chargeId === 'string') {
-            await shiftsRepo.updateShift(shift.id, {
-              stripeChargeId: chargeId,
-            });
+          // Use database transaction to ensure atomicity of shift and payout updates
+          const db = await import('../db/index.js').then(m => m.getDb());
+          if (!db) {
+            console.error('[WEBHOOK] Database not available for payment_intent.succeeded');
+            break;
           }
 
-          console.info(`✅ Payment completed for shift ${shift.id} (webhook fail-safe)`);
+          const chargeId = paymentIntent.latest_charge;
+          
+          try {
+            // SECURITY AUDIT: Use SERIALIZABLE isolation for payment processing to ensure financial integrity
+            const { withTransactionIsolation } = await import('../db/transactions.js');
+            await withTransactionIsolation(async (tx) => {
+              const { shifts: shiftsTable, payouts: payoutsTable } = await import('../db/schema.js');
+              const { eq } = await import('drizzle-orm');
+
+              // 1. Update shift payment status to PAID (fail-safe)
+              await tx
+                .update(shiftsTable)
+                .set({
+                  paymentStatus: 'PAID',
+                  stripeChargeId: chargeId && typeof chargeId === 'string' ? chargeId : undefined,
+                  updatedAt: new Date(),
+                })
+                .where(eq(shiftsTable.id, shift.id));
+
+              // 2. Update payout entry if it exists (atomic with shift update)
+              const existingPayout = await payoutsRepo.getPayoutByShiftId(shift.id);
+              if (existingPayout && chargeId && typeof chargeId === 'string') {
+                await tx
+                  .update(payoutsTable)
+                  .set({
+                    stripeChargeId: chargeId,
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(payoutsTable.shiftId, shift.id));
+                
+                console.info(`✅ Payout ${existingPayout.id} updated with charge ID for shift ${shift.id}`);
+              }
+
+              console.info(`✅ Payment completed for shift ${shift.id} (webhook fail-safe - atomic update)`);
+            }, 'SERIALIZABLE');
+          } catch (transactionError: any) {
+            console.error(`[WEBHOOK] Transaction failed for payment_intent.succeeded:`, transactionError);
+            // Fallback to non-transactional update if transaction fails
+            await shiftsRepo.updateShift(shift.id, {
+              paymentStatus: 'PAID',
+            });
+
+            if (chargeId && typeof chargeId === 'string') {
+              await shiftsRepo.updateShift(shift.id, {
+                stripeChargeId: chargeId,
+              });
+            }
+            throw transactionError; // Re-throw to trigger webhook error handling
+          }
         } else {
           console.warn(`⚠️  Shift not found for PaymentIntent ${paymentIntentId}`);
         }

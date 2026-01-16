@@ -128,6 +128,37 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
     pusher.connection.bind('connected', () => {
       logger.debug('PUSHER', 'Connected to Pusher');
       setIsConnected(true);
+      
+      // SECURITY AUDIT: Refetch active shift data when connection is restored
+      // This ensures users see up-to-date information after reconnection
+      if (typeof window !== 'undefined' && (window as any).queryClient) {
+        // Use React Query's refetchQueries if available
+        try {
+          const queryClient = (window as any).queryClient;
+          if (queryClient && typeof queryClient.refetchQueries === 'function') {
+            // Refetch all active shift-related queries
+            queryClient.refetchQueries({
+              predicate: (query) => {
+                const queryKey = query.queryKey;
+                if (Array.isArray(queryKey)) {
+                  // Refetch queries related to shifts
+                  return queryKey.some(key => 
+                    typeof key === 'string' && (
+                      key.includes('shift') || 
+                      key.includes('shifts') ||
+                      key.includes('active-shifts')
+                    )
+                  );
+                }
+                return false;
+              },
+            });
+            logger.debug('PUSHER', 'Refetched active shift queries after reconnection');
+          }
+        } catch (error) {
+          logger.error('PUSHER', 'Error refetching queries after reconnection:', error);
+        }
+      }
     });
 
     pusher.connection.bind('disconnected', () => {
