@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -1550,7 +1550,9 @@ function VenueDashboardContent() {
         {/* Analytics Tab */}
         {activeView === 'analytics' && (
           <div className="space-y-6">
-            <VenueAnalyticsDashboard />
+            <Suspense fallback={<DashboardStatsSkeleton />}>
+              <VenueAnalyticsDashboard />
+            </Suspense>
           </div>
         )}
       </div>

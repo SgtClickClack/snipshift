@@ -3,9 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
-import { fetchVenueAnalytics, VenueAnalytics } from "@/lib/api";
-import { Loader2, DollarSign, TrendingUp, TrendingDown, Target, Clock } from "lucide-react";
+import { fetchVenueAnalytics, VenueAnalytics, ApiError } from "@/lib/api";
+import { Loader2, DollarSign, TrendingUp, TrendingDown, Target, Clock, Search } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Lazy load the chart component to reduce initial bundle
 const SpendChart = lazy(() => import("recharts").then(module => ({
@@ -63,22 +66,55 @@ interface VenueAnalyticsDashboardProps {
 
 export function VenueAnalyticsDashboard({ className }: VenueAnalyticsDashboardProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = React.useState<DateRange>('30d');
+  const [hasShown404Toast, setHasShown404Toast] = React.useState(false);
+  const [hasShownErrorToast, setHasShownErrorToast] = React.useState(false);
 
   const { data: analytics, isLoading, error } = useQuery<VenueAnalytics>({
     queryKey: ['venue-analytics', dateRange],
     queryFn: () => fetchVenueAnalytics(dateRange),
     staleTime: 2 * 60 * 1000, // Data fresh for 2 minutes
     refetchOnWindowFocus: false,
+    enabled: !!user?.roles?.includes("venue_owner"),
+    retry: (failureCount, error: any) => {
+      // Don't retry on 404 errors (venue not found)
+      const is404 = error instanceof ApiError && error.status === 404;
+      if (is404) {
+        return false;
+      }
+      // Retry other errors up to 2 times
+      return failureCount < 2;
+    },
   });
 
-  if (error) {
-    toast({
-      title: "Error loading analytics",
-      description: error instanceof Error ? error.message : "Failed to load venue analytics",
-      variant: "destructive",
-    });
-  }
+  // Handle 404 errors - redirect to onboarding
+  React.useEffect(() => {
+    if (error) {
+      const is404 = error instanceof ApiError && error.status === 404;
+      
+      if (is404 && !hasShown404Toast) {
+        setHasShown404Toast(true);
+        toast({
+          title: "Venue not found",
+          description: "Please complete venue setup to view analytics.",
+          variant: "destructive",
+        });
+        // Redirect to Create Venue onboarding flow
+        setTimeout(() => {
+          navigate('/onboarding/hub', { replace: false });
+        }, 1500);
+      } else if (!is404 && !hasShownErrorToast) {
+        setHasShownErrorToast(true);
+        toast({
+          title: "Error loading analytics",
+          description: error instanceof Error ? error.message : "Failed to load venue analytics",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [error, hasShown404Toast, toast, navigate]);
 
   const formatChange = (change: number): { value: string; isPositive: boolean } => {
     const absValue = Math.abs(change);
@@ -107,12 +143,26 @@ export function VenueAnalyticsDashboard({ className }: VenueAnalyticsDashboardPr
     );
   }
 
-  if (!analytics) {
+  // Show EmptyState for 404 errors or when no analytics data
+  const is404 = error instanceof ApiError && error.status === 404;
+  
+  if (is404 || (!analytics && !isLoading)) {
     return (
       <div className={className}>
         <Card>
           <CardContent className="p-6">
-            <p className="text-muted-foreground text-center">No analytics data available</p>
+            <EmptyState
+              icon={Search}
+              title="No data available yet"
+              description={is404 
+                ? "Your venue profile needs to be set up before analytics can be displayed. Complete the onboarding process to get started."
+                : "No analytics data is available for your venue at this time."}
+              action={is404 ? {
+                label: "Complete Venue Setup",
+                onClick: () => navigate('/onboarding/hub'),
+                variant: "default"
+              } : undefined}
+            />
           </CardContent>
         </Card>
       </div>
