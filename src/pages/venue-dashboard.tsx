@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { isBusinessRole } from "@/lib/roles";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -489,6 +489,32 @@ function VenueDashboardContent() {
       toast({
         title: "Error",
         description: "Failed to update status.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const completeShiftMutation = useMutation({
+    mutationFn: async (shiftId: string) => {
+      const res = await apiRequest('PATCH', `/api/shifts/${shiftId}/complete`);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: 'Failed to complete shift' }));
+        throw new Error(error.message || 'Failed to complete shift');
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Shift Completed",
+        description: `Payout of $${(data.payout?.amountCents / 100).toFixed(2)} has been processed.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to complete shift.",
         variant: "destructive"
       });
     }
@@ -1116,6 +1142,39 @@ function VenueDashboardContent() {
                                   </Button>
                                 </div>
                               )}
+                              {/* Complete Shift Button - Only show for filled/confirmed shifts after end time */}
+                              {isShift && isOwner && (job.status === 'filled' || job.status === 'confirmed') && job.assigneeId && (() => {
+                                try {
+                                  const endTime = job.endTime ? new Date(job.endTime) : null;
+                                  const now = new Date();
+                                  const canComplete = endTime && now >= endTime && job.status !== 'completed';
+                                  return canComplete ? (
+                                    <div className="mt-3">
+                                      <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => completeShiftMutation.mutate(job.id)}
+                                        disabled={completeShiftMutation.isPending}
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        {completeShiftMutation.isPending ? (
+                                          <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Completing...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                            Complete Shift
+                                          </>
+                                        )}
+                                      </Button>
+                                    </div>
+                                  ) : null;
+                                } catch {
+                                  return null;
+                                }
+                              })()}
                               <p className="text-sm text-muted-foreground mb-2" data-testid={`text-job-description-${job.id}`}>
                                 {job.description}
                               </p>

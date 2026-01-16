@@ -2914,6 +2914,185 @@ router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: Aut
   }
 }));
 
+// Complete a shift (Venue owner only) - Marks shift as completed and triggers payout
+router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get shift
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Verify ownership
+  if (shift.employerId !== userId) {
+    res.status(403).json({ message: 'Forbidden: Only the venue owner can complete this shift' });
+    return;
+  }
+
+  // Verify shift has an assignee
+  if (!shift.assigneeId) {
+    res.status(400).json({ message: 'Shift has no assigned worker' });
+    return;
+  }
+
+  // Verify shift is not already completed
+  if (shift.status === 'completed') {
+    res.status(400).json({ message: 'Shift is already completed' });
+    return;
+  }
+
+  // Verify current time is past shift end time
+  const now = new Date();
+  const shiftEndTime = new Date(shift.endTime);
+  if (now < shiftEndTime) {
+    res.status(400).json({ 
+      message: 'Cannot complete shift before end time',
+      shiftEndTime: shiftEndTime.toISOString(),
+    });
+    return;
+  }
+
+  // Calculate payout
+  const hourlyRate = parseFloat(shift.hourlyRate.toString());
+  const startTime = new Date(shift.startTime);
+  const endTime = new Date(shift.endTime);
+  const hoursWorked = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+  const amountCents = Math.round(hourlyRate * hoursWorked * 100); // Convert to cents
+
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ message: 'Database not available' });
+    return;
+  }
+
+  // Import repositories
+  const payoutsRepo = await import('../repositories/payouts.repository.js');
+  const usersRepo = await import('../repositories/users.repository.js');
+
+  try {
+    // Use transaction to ensure atomicity
+    await db.transaction(async (tx) => {
+      // 1. Check if payout already exists
+      const existingPayout = await payoutsRepo.getPayoutByShiftId(id);
+      if (existingPayout) {
+        throw new Error('Payout already exists for this shift');
+      }
+
+      // 2. Capture payment if paymentIntentId exists and status is AUTHORIZED
+      let stripeChargeId: string | null = null;
+      if (shift.paymentIntentId && shift.paymentStatus === 'AUTHORIZED') {
+        try {
+          stripeChargeId = await stripeConnectService.capturePaymentIntentWithChargeId(shift.paymentIntentId);
+          if (!stripeChargeId) {
+            console.warn(`[SHIFT_COMPLETE] Failed to capture payment for shift ${id}`);
+          }
+        } catch (error: any) {
+          console.error(`[SHIFT_COMPLETE] Error capturing payment for shift ${id}:`, error);
+          // Continue with payout creation even if payment capture fails
+        }
+      }
+
+      // 3. Create payout record
+      const payout = await payoutsRepo.createPayout({
+        shiftId: id,
+        workerId: shift.assigneeId,
+        venueId: shift.employerId,
+        amountCents,
+        hourlyRate: hourlyRate.toString(),
+        hoursWorked,
+        stripeChargeId: stripeChargeId || undefined,
+        status: 'completed', // Mark as completed immediately
+      });
+
+      if (!payout) {
+        throw new Error('Failed to create payout record');
+      }
+
+      // 4. Update shift status to completed
+      await tx
+        .update(shifts)
+        .set({
+          status: 'completed',
+          attendanceStatus: 'completed',
+          paymentStatus: stripeChargeId ? 'PAID' : shift.paymentStatus,
+          stripeChargeId: stripeChargeId || shift.stripeChargeId,
+          updatedAt: new Date(),
+        })
+        .where(eq(shifts.id, id));
+
+      // 5. Update worker's total earnings
+      const { users: usersTable } = await import('../db/schema.js');
+      const worker = await usersRepo.getUserById(shift.assigneeId);
+      if (worker) {
+        const currentTotal = parseInt(worker.totalEarnedCents?.toString() || '0', 10);
+        const newTotal = currentTotal + amountCents;
+        
+        await tx
+          .update(usersTable)
+          .set({
+            totalEarnedCents: newTotal,
+            updatedAt: new Date(),
+          })
+          .where(eq(usersTable.id, shift.assigneeId));
+      }
+    });
+
+    // Fetch updated shift
+    const updatedShift = await shiftsRepo.getShiftById(id);
+    const payout = await payoutsRepo.getPayoutByShiftId(id);
+
+    // Notify worker (non-blocking)
+    try {
+      await notificationsService.notifyShiftCompleted(
+        shift.assigneeId,
+        {
+          id: shift.id,
+          title: shift.title,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+          hourlyRate: shift.hourlyRate,
+          amountCents,
+        }
+      );
+    } catch (error) {
+      console.error('[PATCH /api/shifts/:id/complete] Error sending notification:', error);
+    }
+
+    res.status(200).json({
+      message: 'Shift completed successfully',
+      shift: updatedShift,
+      payout: payout ? {
+        id: payout.id,
+        amountCents: payout.amountCents,
+        hoursWorked: parseFloat(payout.hoursWorked),
+        hourlyRate: parseFloat(payout.hourlyRate),
+        status: payout.status,
+      } : null,
+    });
+  } catch (error: any) {
+    console.error('[PATCH /api/shifts/:id/complete] Error completing shift:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+    });
+    
+    if (error.message.includes('already exists')) {
+      res.status(409).json({ message: error.message });
+      return;
+    }
+    
+    throw error;
+  }
+}));
+
 // Submit a review for a shift
 router.post('/:id/review', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;

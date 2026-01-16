@@ -80,6 +80,7 @@ export const users = pgTable('users', {
   stripeAccountId: varchar('stripe_account_id', { length: 255 }),
   stripeOnboardingComplete: boolean('stripe_onboarding_complete').notNull().default(false),
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  totalEarnedCents: integer('total_earned_cents').notNull().default(0), // Total earnings in cents
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({

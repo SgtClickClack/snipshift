@@ -7,6 +7,7 @@
 import * as notificationsRepo from '../repositories/notifications.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import { notificationBus } from '../services/notification.service.js';
+import { notifyApplicationApproved as notifyApplicationApprovedService, notifyApplicationDeclined as notifyApplicationDeclinedService } from '../services/notification.service.js';
 
 export type NotificationType = 'SHIFT_INVITE' | 'SHIFT_CONFIRMED' | 'SHIFT_CANCELLED' | 'SYSTEM' | 'STRIKE_ADDED' | 'STRIKE_REMOVED';
 
@@ -540,3 +541,91 @@ HospoGo Team
   }
 }
 
+/**
+ * Notify professional when their application is approved
+ * Re-exported from notification.service for consistency
+ */
+export async function notifyApplicationApproved(
+  professionalId: string,
+  shift: any | null,
+  job: any | null
+): Promise<void> {
+  return notifyApplicationApprovedService(professionalId, shift, job);
+}
+
+/**
+ * Notify professional when their application is declined
+ * Re-exported from notification.service for consistency
+ */
+/**
+ * Notify a worker when their shift is completed and payout is processed
+ */
+export async function notifyShiftCompleted(
+  workerId: string,
+  shiftDetails: ShiftDetails & { amountCents: number }
+): Promise<void> {
+  try {
+    const worker = await usersRepo.getUserById(workerId);
+    if (!worker) {
+      console.warn(`[notifyShiftCompleted] Worker ${workerId} not found`);
+      return;
+    }
+
+    const startDate = new Date(shiftDetails.startTime);
+    const dateStr = startDate.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+
+    const amountDollars = (shiftDetails.amountCents / 100).toFixed(2);
+    const title = 'Shift Completed';
+    const message = `Your shift "${shiftDetails.title}" on ${dateStr} has been completed. Payout: $${amountDollars}`;
+
+    await createInAppNotification(workerId, 'SYSTEM', title, message, {
+      shiftId: shiftDetails.id,
+      type: 'shift_completed',
+      amountCents: shiftDetails.amountCents,
+      link: '/professional-dashboard?view=earnings',
+    });
+
+    if (worker.email) {
+      const emailBody = `
+Hello ${worker.name || 'Worker'},
+
+Your shift has been completed and your payout has been processed.
+
+Shift Details:
+- Title: ${shiftDetails.title}
+- Date: ${dateStr}
+- Time: ${startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(shiftDetails.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+${shiftDetails.location ? `- Location: ${shiftDetails.location}` : ''}
+${shiftDetails.hourlyRate ? `- Rate: $${shiftDetails.hourlyRate}/hour` : ''}
+
+Payout Amount: $${amountDollars}
+
+The funds have been transferred to your account. Please log in to view your earnings.
+
+Best regards,
+HospoGo Team
+      `.trim();
+
+      await sendEmailMock(worker.email, title, emailBody);
+    }
+  } catch (error: any) {
+    console.error('[notifyShiftCompleted] Error:', {
+      message: error?.message,
+      workerId,
+      shiftId: shiftDetails.id,
+    });
+  }
+}
+
+export async function notifyApplicationDeclined(
+  professionalId: string,
+  shift: any | null,
+  job: any | null
+): Promise<void> {
+  return notifyApplicationDeclinedService(professionalId, shift, job);
+}

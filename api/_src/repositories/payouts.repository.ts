@@ -1,0 +1,137 @@
+/**
+ * Payouts Repository
+ * 
+ * Database operations for payouts
+ */
+
+import { eq } from 'drizzle-orm';
+import { getDb } from '../db/index.js';
+import { payouts } from '../db/schema.js';
+
+export interface CreatePayoutInput {
+  shiftId: string;
+  workerId: string;
+  venueId: string;
+  amountCents: number;
+  hourlyRate: string | number;
+  hoursWorked: number;
+  stripeTransferId?: string;
+  stripeChargeId?: string;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
+}
+
+export interface Payout {
+  id: string;
+  shiftId: string;
+  workerId: string;
+  venueId: string;
+  amountCents: number;
+  hourlyRate: string;
+  hoursWorked: string;
+  stripeTransferId: string | null;
+  stripeChargeId: string | null;
+  status: string;
+  processedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Create a new payout record
+ */
+export async function createPayout(
+  input: CreatePayoutInput
+): Promise<Payout | null> {
+  const db = getDb();
+  if (!db) {
+    console.error('[PAYOUTS REPO] Database not available');
+    return null;
+  }
+
+  try {
+    const [newPayout] = await db
+      .insert(payouts)
+      .values({
+        shiftId: input.shiftId,
+        workerId: input.workerId,
+        venueId: input.venueId,
+        amountCents: input.amountCents,
+        hourlyRate: input.hourlyRate.toString(),
+        hoursWorked: input.hoursWorked.toString(),
+        stripeTransferId: input.stripeTransferId || null,
+        stripeChargeId: input.stripeChargeId || null,
+        status: input.status || 'pending',
+      })
+      .returning();
+
+    return newPayout as Payout;
+  } catch (error) {
+    console.error('[PAYOUTS REPO] Error creating payout:', error);
+    return null;
+  }
+}
+
+/**
+ * Get payout by shift ID
+ */
+export async function getPayoutByShiftId(
+  shiftId: string
+): Promise<Payout | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  try {
+    const [payout] = await db
+      .select()
+      .from(payouts)
+      .where(eq(payouts.shiftId, shiftId))
+      .limit(1);
+
+    return payout as Payout | null;
+  } catch (error) {
+    console.error('[PAYOUTS REPO] Error getting payout by shift ID:', error);
+    return null;
+  }
+}
+
+/**
+ * Update payout status
+ */
+export async function updatePayoutStatus(
+  id: string,
+  status: 'pending' | 'processing' | 'completed' | 'failed',
+  stripeTransferId?: string
+): Promise<Payout | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  try {
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
+
+    if (status === 'completed') {
+      updateData.processedAt = new Date();
+    }
+
+    if (stripeTransferId) {
+      updateData.stripeTransferId = stripeTransferId;
+    }
+
+    const [updatedPayout] = await db
+      .update(payouts)
+      .set(updateData)
+      .where(eq(payouts.id, id))
+      .returning();
+
+    return updatedPayout as Payout | null;
+  } catch (error) {
+    console.error('[PAYOUTS REPO] Error updating payout status:', error);
+    return null;
+  }
+}
