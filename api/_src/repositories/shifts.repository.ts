@@ -160,6 +160,8 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
         autoAccept: shifts.autoAccept,
         parentShiftId: shifts.parentShiftId,
         clockInTime: shifts.clockInTime,
+        actualStartTime: shifts.actualStartTime,
+        substitutionRequestedBy: shifts.substitutionRequestedBy,
         createdAt: shifts.createdAt,
         updatedAt: shifts.updatedAt,
         // Employer (shop) fields
@@ -251,6 +253,8 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       autoAccept: shifts.autoAccept,
       parentShiftId: shifts.parentShiftId,
       clockInTime: shifts.clockInTime,
+      actualStartTime: shifts.actualStartTime,
+      substitutionRequestedBy: shifts.substitutionRequestedBy,
       createdAt: shifts.createdAt,
       updatedAt: shifts.updatedAt,
       // Employer (shop) fields
@@ -877,7 +881,7 @@ export async function updateShift(
   id: string,
   updates: {
     status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
-    attendanceStatus?: 'pending' | 'completed' | 'no_show';
+    attendanceStatus?: 'pending' | 'completed' | 'no_show' | 'checked_in';
     paymentStatus?: 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'REFUNDED' | 'PAYMENT_FAILED';
     paymentIntentId?: string | null;
     stripeChargeId?: string | null;
@@ -897,6 +901,7 @@ export async function updateShift(
     staffCancellationReason?: string | null;
     isEmergencyFill?: boolean;
     clockInTime?: Date | string | null;
+    actualStartTime?: Date | string | null;
   }
 ): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
@@ -918,6 +923,9 @@ export async function updateShift(
   }
   if (updates.clockInTime && typeof updates.clockInTime === 'string') {
     updateData.clockInTime = new Date(updates.clockInTime);
+  }
+  if (updates.actualStartTime && typeof updates.actualStartTime === 'string') {
+    updateData.actualStartTime = new Date(updates.actualStartTime);
   }
 
   const [updatedShift] = await db

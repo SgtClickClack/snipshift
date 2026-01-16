@@ -26,7 +26,8 @@ const RegisterTokenSchema = z.object({
 router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   const body = RegisterTokenSchema.parse(req.body);
@@ -39,13 +40,15 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   });
 
   if (!pushToken) {
-    return res.status(500).json({ message: 'Failed to register push token' });
+    res.status(500).json({ message: 'Failed to register push token' });
+    return;
   }
 
   res.status(200).json({
     message: 'Push token registered successfully',
     token: pushToken,
   });
+  return;
 }));
 
 /**
@@ -56,7 +59,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 router.delete('/:token', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   const token = req.params.token;
@@ -64,20 +68,24 @@ router.delete('/:token', authenticateUser, asyncHandler(async (req: Authenticate
   // Verify the token belongs to the user
   const existingToken = await pushTokensRepo.getTokenByToken(token);
   if (!existingToken) {
-    return res.status(404).json({ message: 'Token not found' });
+    res.status(404).json({ message: 'Token not found' });
+    return;
   }
 
   if (existingToken.userId !== userId) {
-    return res.status(403).json({ message: 'Forbidden' });
+    res.status(403).json({ message: 'Forbidden' });
+    return;
   }
 
   const success = await pushTokensRepo.deactivateToken(token);
   
   if (!success) {
-    return res.status(500).json({ message: 'Failed to deactivate token' });
+    res.status(500).json({ message: 'Failed to deactivate token' });
+    return;
   }
 
   res.status(200).json({ message: 'Push token deactivated successfully' });
+  return;
 }));
 
 /**
@@ -88,7 +96,8 @@ router.delete('/:token', authenticateUser, asyncHandler(async (req: Authenticate
 router.get('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   const tokens = await pushTokensRepo.getActiveTokensForUser(userId);
@@ -97,6 +106,7 @@ router.get('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest,
     tokens,
     count: tokens.length,
   });
+  return;
 }));
 
 export default router;
