@@ -158,44 +158,16 @@ export function AuthGuard({
       return <Navigate to="/onboarding" replace />;
     }
 
-    // CRITICAL: Exception for onboarding routes - allow users to complete onboarding
+    // CRITICAL: Exception for ALL onboarding routes - allow users to complete onboarding
     // even if they have a role set (prevents redirect loops during onboarding submission)
-    if (isOnboardingPage && (location.pathname === '/onboarding/professional' || location.pathname === '/onboarding/hub')) {
-      logger.debug('AuthGuard', 'User on specific onboarding route, allowing access to complete onboarding', {
+    // This includes /onboarding (main onboarding with RSA/ID uploads), /onboarding/professional, and /onboarding/hub
+    if (isOnboardingPage) {
+      logger.debug('AuthGuard', 'User on onboarding route, allowing access to complete onboarding', {
         currentRole: user.currentRole,
         isOnboarded: user.isOnboarded,
         pathname: location.pathname
       });
       return <>{children}</>;
-    }
-
-    // CRITICAL: If authenticated AND role is set AND on /onboarding -> Redirect to dashboard
-    // This prevents users with completed onboarding from accessing onboarding again
-    // EXCEPTION: Allow users to stay on /onboarding if onboarding is not complete
-    if (hasRole && location.pathname === '/onboarding') {
-      // In E2E mode, don't redirect - allow test to complete onboarding flow
-      if (isE2E) {
-        logger.debug('AuthGuard', 'E2E mode: Allowing onboarding access despite role being set', {
-          currentRole: user.currentRole,
-          isE2E
-        });
-        return <>{children}</>;
-      }
-      // Allow users to stay on /onboarding if they haven't completed onboarding
-      // Check for false, undefined, or null (not explicitly true)
-      if (!user.isOnboarded) {
-        logger.debug('AuthGuard', 'User authenticated but onboarding incomplete, allowing access to onboarding', {
-          currentRole: user.currentRole,
-          isOnboarded: user.isOnboarded
-        });
-        return <>{children}</>;
-      }
-      const userDashboard = getDashboardRoute(user.currentRole);
-      logger.debug('AuthGuard', 'User has role and on onboarding, redirecting to dashboard', {
-        currentRole: user.currentRole,
-        dashboard: userDashboard
-      });
-      return <Navigate to={userDashboard} replace />;
     }
   }
 
@@ -209,7 +181,9 @@ export function AuthGuard({
   }
 
   // If user is already onboarded but tries to access onboarding page, redirect to dashboard
-  if (isAuthenticated && user && user.isOnboarded === true && location.pathname === '/onboarding') {
+  // EXCEPTION: Allow access to onboarding if user is actively on an onboarding route
+  // This prevents redirects during RSA/Government ID upload steps
+  if (isAuthenticated && user && user.isOnboarded === true && location.pathname === '/onboarding' && !isOnboardingPage) {
     const userDashboard = user.currentRole ? getDashboardRoute(user.currentRole) : '/user-dashboard';
     return <Navigate to={userDashboard} replace />;
   }
