@@ -118,7 +118,41 @@ const PORT = process.env.PORT || 5000;
 })();
 
 // Middleware
-app.use(cors());
+// CORS configuration - allow requests from production domain and localhost
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps, Postman, or same-origin requests)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'https://hospogo.com',
+      'https://www.hospogo.com',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+    ];
+    
+    // Check if origin is allowed
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // In production, log but allow (for now) to avoid breaking existing integrations
+      // TODO: Tighten this in production after verifying all domains
+      console.warn(`[CORS] Request from unauthorized origin: ${origin}`);
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-HospoGo-CSRF'],
+};
+
+app.use(cors(corsOptions));
 
 // Stripe webhook route MUST be defined BEFORE express.json() middleware
 // to receive raw body for signature verification

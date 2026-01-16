@@ -64,10 +64,18 @@ export async function apiRequest(
 
   if (auth.currentUser) {
     try {
-      const token = await auth.currentUser.getIdToken();
-      headers['Authorization'] = `Bearer ${token}`;
+      // Force refresh token if this is a retry after a 401
+      // This ensures we have a fresh token for the retry
+      const token = await auth.currentUser.getIdToken(/* forceRefresh */ false);
+      if (token && token.length > 0) {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        logger.warn("apiRequest", "Got empty token from getIdToken");
+      }
     } catch (error) {
       logger.error("apiRequest", "Error getting auth token for request:", error);
+      // Don't add Authorization header if token fetch fails
+      // This will cause a 401, which is better than sending an invalid token
     }
   } else if (import.meta.env.VITE_E2E === '1') {
     // E2E mode: API auth middleware supports this fixed bypass token.

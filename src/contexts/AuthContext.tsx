@@ -227,6 +227,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const hasInitialized = useRef(false);
   const last401RetryTime = useRef<number>(0);
   const consecutive401Count = useRef<number>(0);
+  // CIRCUIT BREAKER: Maximum number of consecutive 401s before giving up
+  const MAX_CONSECUTIVE_401S = 5;
   const pendingRedirect = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -772,6 +774,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 const timeSinceLastRetry = now - last401RetryTime.current;
                 consecutive401Count.current += 1;
                 
+                // CIRCUIT BREAKER: Stop retrying after maximum consecutive 401s
+                if (consecutive401Count.current >= MAX_CONSECUTIVE_401S) {
+                  logger.error('AuthContext', `Circuit breaker triggered: ${MAX_CONSECUTIVE_401S} consecutive 401s. Stopping retries and logging out user.`, {
+                    uid: firebaseUser.uid,
+                    projectId: firebaseUser.auth.app.options.projectId,
+                    lastRetryTime: last401RetryTime.current,
+                  });
+                  
+                  // Log detailed error info for production debugging
+                  try {
+                    const errorText = await res.text();
+                    logger.error('AuthContext', '401 error response:', {
+                      status: res.status,
+                      statusText: res.statusText,
+                      body: errorText,
+                      headers: Object.fromEntries(res.headers.entries()),
+                    });
+                  } catch (e) {
+                    logger.error('AuthContext', 'Failed to read 401 error response', e);
+                  }
+                  
+                  // Stop retrying and log out user
+                  consecutive401Count.current = 0;
+                  last401RetryTime.current = 0;
+                  setUser(null);
+                  setToken(null);
+                  setIsRoleLoading(false);
+                  setIsRedirecting(false);
+                  pendingRedirect.current = false;
+                  setIsLoading(false);
+                  setIsAuthReady(true);
+                  
+                  // Clear safety timeout
+                  if (safetyTimeoutRef.current) {
+                    clearTimeout(safetyTimeoutRef.current);
+                    safetyTimeoutRef.current = null;
+                  }
+                  
+                  // Redirect to login with error message
+                  handleRedirect(null);
+                  return;
+                }
+                
                 // Detect E2E mode for faster cooldown during tests
                 const isE2E = 
                   import.meta.env.VITE_E2E === '1' ||
@@ -799,10 +844,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
                 
                 last401RetryTime.current = now;
-                logger.debug('AuthContext', `Received 401 from /api/me (attempt ${consecutive401Count.current}), refreshing token...`);
+                logger.warn('AuthContext', `Received 401 from /api/me (attempt ${consecutive401Count.current}/${MAX_CONSECUTIVE_401S}), refreshing token...`, {
+                  uid: firebaseUser.uid,
+                  projectId: firebaseUser.auth.app.options.projectId,
+                });
                 
                 try {
                   const refreshedToken = await firebaseUser.getIdToken(/* forceRefresh */ true);
+                  if (!refreshedToken || refreshedToken.length === 0) {
+                    logger.error('AuthContext', 'Token refresh returned empty token');
+                    consecutive401Count.current = MAX_CONSECUTIVE_401S; // Trigger circuit breaker
+                    return;
+                  }
+                  
                   setToken(refreshedToken);
                   logger.debug('AuthContext', 'Token refreshed, retrying /api/me...');
                   const retryRes = await fetch('/api/me', {
@@ -815,6 +869,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   if (retryRes.ok) {
                     // Success - reset 401 counter
                     consecutive401Count.current = 0;
+                    last401RetryTime.current = 0;
                     const apiUser = await retryRes.json();
                     const nextUser: User = normalizeUserFromApi(apiUser, firebaseUser.uid);
                     setUser(nextUser);
@@ -831,7 +886,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     }
                   } else if (retryRes.status === 404 || retryRes.status === 401) {
                     // User exists in Firebase but not in our database, or token still invalid
-                    logger.debug('AuthContext', 'Firebase user has no profile after retry, or token still invalid');
+                    logger.warn('AuthContext', `Firebase user has no profile after retry (${retryRes.status}), or token still invalid`, {
+                      attempt: consecutive401Count.current,
+                      uid: firebaseUser.uid,
+                    });
+                    
+                    // If we get another 401, increment the counter
+                    if (retryRes.status === 401) {
+                      consecutive401Count.current += 1;
+                    }
+                    
                     setUser(null);
                     setToken(refreshedToken);
                     setIsRoleLoading(false);
@@ -854,6 +918,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   } else {
                     // Other error - user is logged out
                     consecutive401Count.current = 0;
+                    last401RetryTime.current = 0;
                     setUser(null);
                     setIsRoleLoading(false);
                     handleRedirect(null);
@@ -870,19 +935,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 } catch (error) {
                   // Token refresh failed - user is logged out
                   logger.error('AuthContext', 'Token refresh failed:', error);
-                  consecutive401Count.current = 0;
-                  setUser(null);
-                  setToken(null);
-                  setIsRoleLoading(false);
-                  handleRedirect(null);
+                  consecutive401Count.current += 1; // Increment counter on token refresh failure
                   
-                  // Set loading false after handling the error
-                  setIsLoading(false);
-                  setIsAuthReady(true);
-                  // Clear safety timeout since we've resolved auth state
-                  if (safetyTimeoutRef.current) {
-                    clearTimeout(safetyTimeoutRef.current);
-                    safetyTimeoutRef.current = null;
+                  // If we've hit the limit, stop retrying
+                  if (consecutive401Count.current >= MAX_CONSECUTIVE_401S) {
+                    consecutive401Count.current = 0;
+                    last401RetryTime.current = 0;
+                    setUser(null);
+                    setToken(null);
+                    setIsRoleLoading(false);
+                    handleRedirect(null);
+                    
+                    setIsLoading(false);
+                    setIsAuthReady(true);
+                    if (safetyTimeoutRef.current) {
+                      clearTimeout(safetyTimeoutRef.current);
+                      safetyTimeoutRef.current = null;
+                    }
                   }
                 }
               } else if (res.status === 404) {

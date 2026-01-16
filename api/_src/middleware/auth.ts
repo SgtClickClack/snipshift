@@ -169,8 +169,28 @@ export function authenticateUser(
     // Wrap async logic in Promise to handle errors properly
     Promise.resolve().then(async () => {
       try {
+        // Log token verification attempt for debugging (only in production for /api/me)
+        const isMeEndpoint = req.path === '/api/me';
+        if (isMeEndpoint && process.env.NODE_ENV === 'production') {
+          console.log('[AUTH] Verifying token for /api/me', {
+            hasToken: !!token,
+            tokenLength: token?.length,
+            tokenPrefix: token ? token.substring(0, 30) + '...' : 'none',
+            projectId: process.env.FIREBASE_PROJECT_ID,
+          });
+        }
+        
         const decodedToken = await firebaseAuth.verifyIdToken(token!);
         const { uid, email } = decodedToken;
+        
+        // Log successful verification for /api/me in production
+        if (isMeEndpoint && process.env.NODE_ENV === 'production') {
+          console.log('[AUTH] Token verified successfully', {
+            uid,
+            email,
+            projectId: decodedToken.project_id || decodedToken.aud,
+          });
+        }
 
         if (!email) {
            res.status(401).json({ message: 'Unauthorized: No email in token' });
