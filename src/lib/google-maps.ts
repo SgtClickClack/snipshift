@@ -15,7 +15,7 @@ export const loadGoogleMaps = async (retries = 3): Promise<any> => {
 
   if (!apiKey) {
     logger.error('GoogleMaps', 'Google Maps API key missing. Map features will be disabled.');
-    return Promise.reject('Google Maps API key is missing');
+    return Promise.reject(new Error('Google Maps API key is missing'));
   }
 
   if (!googleMapsPromise) {
@@ -25,7 +25,26 @@ export const loadGoogleMaps = async (retries = 3): Promise<any> => {
       libraries: ['places', 'geometry', 'marker']
     });
 
-    googleMapsPromise = loader.load();
+    googleMapsPromise = loader.load().catch((error) => {
+      // Handle Referer blocking and other authorization errors
+      const errorMessage = error?.message || String(error);
+      const isRefererBlocked = 
+        errorMessage.includes('RefererNotAllowedMapError') ||
+        errorMessage.includes('Referer') ||
+        errorMessage.includes('This API key is not authorized') ||
+        errorMessage.includes('Referer restriction') ||
+        errorMessage.toLowerCase().includes('referer');
+      
+      if (isRefererBlocked) {
+        logger.error('GoogleMaps', 'Google Maps API Referer blocked. Map features will be disabled.');
+        return Promise.reject(new Error('MAP_REFERER_BLOCKED'));
+      }
+      
+      // Reset promise on error so we can retry
+      googleMapsPromise = null;
+      logger.error('GoogleMaps', 'Failed to load Google Maps:', error);
+      return Promise.reject(error);
+    });
   }
 
   return googleMapsPromise;

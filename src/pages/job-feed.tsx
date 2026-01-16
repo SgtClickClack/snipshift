@@ -20,6 +20,7 @@ import { calculateDistance, reverseGeocodeToCity, geocodeAddress } from '@/lib/g
 import { useIsStaffCompliant } from '@/hooks/useCompliance';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmptyState } from '@/components/ui/empty-state';
+import { RSARequiredModal } from '@/components/job-feed/rsa-required-modal';
 
 type SortOption = 'highest-rate' | 'closest' | 'soonest';
 type ViewMode = 'list' | 'map';
@@ -36,6 +37,10 @@ export default function JobFeedPage() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [rsaWarningDismissed, setRsaWarningDismissed] = useState(() => {
+    return sessionStorage.getItem('dismissed_rsa_warning') === 'true';
+  });
+  const [showRsaRequiredModal, setShowRsaRequiredModal] = useState(false);
   
   // Dynamic location state
   // Default to Brisbane, Australia as fallback (HospoGo is Brisbane-focused)
@@ -408,7 +413,30 @@ export default function JobFeedPage() {
     return filtered;
   }, [jobList, sortBy, searchParams, userLocation]);
 
+  // Check if RSA is expired
+  const isRsaExpired = useMemo(() => {
+    if (!user) return false;
+    const rsaExpiryRaw = user.rsaExpiry || user.profile?.rsa_expiry || user.profile?.rsaExpiry || null;
+    if (!rsaExpiryRaw) return false;
+    
+    try {
+      const expiry = new Date(rsaExpiryRaw);
+      if (isNaN(expiry.getTime())) return false;
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      return todayStart.getTime() >= expiry.getTime();
+    } catch {
+      return false;
+    }
+  }, [user]);
+
   const handleQuickApply = (job: JobCardData) => {
+    // Check RSA compliance before allowing application
+    if (!isStaffCompliant) {
+      setShowRsaRequiredModal(true);
+      return;
+    }
+    
     // Navigate to application page or show modal
     toast({
       title: 'Application Started',
@@ -416,6 +444,11 @@ export default function JobFeedPage() {
     });
     // This page is shift-based (feed comes from /api/shifts), so route to shift details.
     navigate(`/shifts/${job.id}`);
+  };
+
+  const handleDismissRsaWarning = () => {
+    sessionStorage.setItem('dismissed_rsa_warning', 'true');
+    setRsaWarningDismissed(true);
   };
 
   // Show loading state if query is loading or data is not yet available
@@ -430,9 +463,12 @@ export default function JobFeedPage() {
     );
   }
 
+  // Show RSA warning overlay only if not compliant AND not dismissed
+  const showRsaOverlay = !isStaffCompliant && !rsaWarningDismissed;
+
   return (
     <div className="min-h-screen bg-background relative">
-      <div className={!isStaffCompliant ? 'pointer-events-none select-none blur-sm' : ''}>
+      <div className={showRsaOverlay ? 'pointer-events-none select-none blur-sm' : ''}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -610,16 +646,19 @@ export default function JobFeedPage() {
         </div>
       </div>
 
-      {!isStaffCompliant ? (
+      {showRsaOverlay ? (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm p-6">
           <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg text-center">
             <h2 className="text-xl font-bold text-foreground">
               RSA Verification Required to View Shifts
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Upload your RSA certificate and ensure it’s verified and not expired before browsing shifts.
+              Upload your RSA certificate and ensure it's verified and not expired before browsing shifts.
             </p>
             <div className="mt-5 flex items-center justify-center gap-3">
+              <Button variant="outline" onClick={handleDismissRsaWarning}>
+                Maybe Later
+              </Button>
               <Button onClick={() => navigate('/settings?category=verification')}>
                 Go to Verification
               </Button>
@@ -627,6 +666,12 @@ export default function JobFeedPage() {
           </div>
         </div>
       ) : null}
+
+      <RSARequiredModal
+        isOpen={showRsaRequiredModal}
+        onClose={() => setShowRsaRequiredModal(false)}
+        isExpired={isRsaExpired}
+      />
     </div>
   );
 }

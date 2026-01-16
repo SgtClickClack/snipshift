@@ -125,9 +125,18 @@ export default function GoogleMapView({
 
         setError(null);
         setUsesFallback(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to initialize Google Maps:', err);
-        setError('Using demo map view - Google Maps API configuration needed.');
+        // Check if it's a Referer blocking error
+        const isRefererBlocked = err?.message === 'MAP_REFERER_BLOCKED' || 
+          String(err).includes('Referer') ||
+          String(err).includes('MAP_REFERER_BLOCKED');
+        
+        if (isRefererBlocked) {
+          setError('Map unavailable - Referer authorization error. Please check Google Maps API configuration.');
+        } else {
+          setError('Using demo map view - Google Maps API configuration needed.');
+        }
         setUsesFallback(true);
       } finally {
         setIsLoading(false);
@@ -354,8 +363,44 @@ export default function GoogleMapView({
   };
 
 
-  // Fallback to SVG map if Google Maps fails
+  // Fallback to placeholder if Google Maps fails (especially Referer blocking)
   if (error && usesFallback) {
+    const isRefererBlocked = error.includes('Referer') || error.includes('authorization');
+    
+    if (isRefererBlocked) {
+      return (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Job Locations</h3>
+              <p className="text-sm text-muted-foreground">
+                Showing {jobs.filter(job => {
+                  const jobLocation = getJobCoordinates(job);
+                  if (!jobLocation) return false;
+                  const distance = calculateDistance(centerLocation, jobLocation);
+                  return distance <= radius;
+                }).length} jobs within {radius}km of {searchLocation}
+              </p>
+            </div>
+          </div>
+
+          <Card className="relative">
+            <CardContent className="p-0">
+              <div className="relative bg-muted/30 rounded-lg overflow-hidden min-h-[600px] flex items-center justify-center">
+                <div className="text-center p-8">
+                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Map Unavailable</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    The map cannot be displayed due to authorization restrictions. Please check your Google Maps API configuration.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
