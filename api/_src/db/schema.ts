@@ -18,7 +18,7 @@ import { trainingModules, trainingLevelEnum } from './schema/training-modules.js
 import { trainingPurchases } from './schema/training-purchases.js';
 import { leads, leadInquiryTypeEnum, leadStatusEnum } from './schema/leads.js';
 import { waitlist, waitlistRoleEnum, waitlistApprovalStatusEnum } from './schema/waitlist.js';
-import { venues } from './schema/venues.js';
+import { venues, venueStatusEnum } from './schema/venues.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -27,6 +27,7 @@ export const paymentStatusEnum = pgEnum('payment_status', ['UNPAID', 'AUTHORIZED
 export { 
   users, userRoleEnum, hospitalityRoleEnum,
   profiles,
+  venues, venueStatusEnum,
   notifications, notificationTypeEnum, 
   shifts, shiftStatusEnum,
   venues,
