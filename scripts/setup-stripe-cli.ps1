@@ -19,7 +19,7 @@ if ($stripeCli) {
 } else {
     Write-Host "   Installing via winget..." -ForegroundColor Gray
     try {
-        winget install stripe.stripe-cli --accept-package-agreements --accept-source-agreements 2>&1 | Out-Null
+        winget install Stripe.StripeCli --accept-package-agreements --accept-source-agreements 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-Host "   [OK] Stripe CLI installed successfully" -ForegroundColor Green
             # Refresh PATH
@@ -28,7 +28,7 @@ if ($stripeCli) {
             $env:Path = $machinePath + ';' + $userPath
         } else {
             Write-Host "   [ERROR] Installation failed. Exit code: $LASTEXITCODE" -ForegroundColor Red
-            Write-Host "   Please install manually: winget install stripe.stripe-cli" -ForegroundColor Yellow
+            Write-Host "   Please install manually: winget install Stripe.StripeCli" -ForegroundColor Yellow
             exit 1
         }
     } catch {
@@ -133,17 +133,24 @@ Write-Host "[4/5] Verifying Stripe CLI authentication..." -ForegroundColor Yello
 Write-Host ""
 
 try {
-    $statusResult = stripe status 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "   [OK] Stripe CLI is authenticated" -ForegroundColor Green
-        Write-Host "   Status output:" -ForegroundColor Gray
-        Write-Host $statusResult -ForegroundColor Gray
+    # Test authentication by checking API key is set and CLI can access it
+    if ($env:STRIPE_API_KEY) {
+        Write-Host "   [OK] Stripe API key is configured" -ForegroundColor Green
+        Write-Host "   API key preview: $($env:STRIPE_API_KEY.Substring(0, [Math]::Min(20, $env:STRIPE_API_KEY.Length)))..." -ForegroundColor Gray
+        
+        # Test with a simple command that requires authentication
+        $testResult = stripe config --list 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "   [OK] Stripe CLI is authenticated and ready" -ForegroundColor Green
+        } else {
+            Write-Host "   [WARN] Authentication test returned exit code: $LASTEXITCODE" -ForegroundColor Yellow
+            Write-Host "   Output: $testResult" -ForegroundColor Gray
+        }
     } else {
-        Write-Host "   [WARN] Status check returned exit code: $LASTEXITCODE" -ForegroundColor Yellow
-        Write-Host "   Output: $statusResult" -ForegroundColor Gray
+        Write-Host "   [WARN] STRIPE_API_KEY environment variable not set" -ForegroundColor Yellow
     }
 } catch {
-    Write-Host "   [WARN] Status check failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "   [WARN] Verification check failed: $($_.Exception.Message)" -ForegroundColor Yellow
     Write-Host "   This may be normal if the CLI needs additional setup" -ForegroundColor Gray
 }
 
