@@ -2,7 +2,7 @@ import express from 'express';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { getDb } from '../db/index.js';
 import { venues, users } from '../db/schema.js';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, count } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -55,7 +55,6 @@ router.get('/venues', asyncHandler(async (req, res) => {
       .offset(offset);
 
     // Get total count for pagination (efficient count query)
-    const { sql, count } = await import('drizzle-orm');
     const countResult = await db
       .select({ count: count() })
       .from(venues)
