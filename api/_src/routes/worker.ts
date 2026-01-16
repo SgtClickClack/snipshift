@@ -18,6 +18,7 @@ import { getDb } from '../db/index.js';
 import { shifts, users } from '../db/schema.js';
 import { eq, and, ne, inArray, gte, isNotNull, sql } from 'drizzle-orm';
 import { calculateDistance } from '../utils/geofencing.js';
+import { normalizeQueryOptional, normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -130,11 +131,9 @@ router.get('/recommendations', authenticateUser, asyncHandler(async (req: Authen
   }
 
   // Get worker's location (from query params or user profile)
-  const latValue = req.query.lat;
-  const latStr = Array.isArray(latValue) ? latValue[0] : latValue;
+  const latStr = normalizeQueryOptional(req.query.lat);
   const workerLat = latStr ? parseFloat(latStr) : null;
-  const lngValue = req.query.lng;
-  const lngStr = Array.isArray(lngValue) ? lngValue[0] : lngValue;
+  const lngStr = normalizeQueryOptional(req.query.lng);
   const workerLng = lngStr ? parseFloat(lngStr) : null;
 
   // If no coordinates provided, try to get from user profile
@@ -468,7 +467,8 @@ router.get('/calendar/sync', authenticateUser, asyncHandler(async (req: Authenti
  * SECURITY: Validates token matches userId before returning any data
  */
 router.get('/calendar/feed/:userId/:token', asyncHandler(async (req, res) => {
-  const { userId, token } = req.params;
+  const userId = normalizeParam(req.params.userId);
+  const token = normalizeParam(req.params.token);
 
   // SECURITY: Validate UUID format to prevent injection
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

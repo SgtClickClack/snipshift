@@ -10,6 +10,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import { z } from 'zod';
+import { normalizeParam, normalizeQueryOptional } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -144,8 +145,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
  * Respects anonymity: only shows reviewer details for non-anonymous reviews
  */
 router.get('/users/:id', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: userId } = req.params;
-  const { includeAnonymous } = req.query;
+  const userId = normalizeParam(req.params.id);
+  const includeAnonymousStr = normalizeQueryOptional(req.query.includeAnonymous);
 
   if (!userId) {
     res.status(400).json({ message: 'User ID is required' });
@@ -154,7 +155,7 @@ router.get('/users/:id', asyncHandler(async (req: AuthenticatedRequest, res) => 
 
   // Get reviews for this user
   const reviews = await shiftReviewsRepo.getShiftReviewsForUser(userId, {
-    includeAnonymous: includeAnonymous === 'true',
+    includeAnonymous: includeAnonymousStr === 'true',
   });
 
   if (!reviews) {
@@ -172,7 +173,7 @@ router.get('/users/:id', asyncHandler(async (req: AuthenticatedRequest, res) => 
     revealedAt: review.revealedAt?.toISOString() || null,
     createdAt: review.createdAt.toISOString(),
     // Reviewer info (null if anonymous)
-    reviewer: review.isAnonymous && !includeAnonymous
+    reviewer: review.isAnonymous && includeAnonymousStr !== 'true'
       ? null
       : review.reviewer
         ? {

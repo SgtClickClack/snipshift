@@ -9,6 +9,7 @@ import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as pushTokensRepo from '../repositories/push-tokens.repository.js';
 import { z } from 'zod';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -63,7 +64,7 @@ router.delete('/:token', authenticateUser, asyncHandler(async (req: Authenticate
     return;
   }
 
-  const token = req.params.token;
+  const token = normalizeParam(req.params.token);
   
   // Verify the token belongs to the user
   const existingToken = await pushTokensRepo.getTokenByToken(token);

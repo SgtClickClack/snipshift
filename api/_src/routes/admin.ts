@@ -7,6 +7,7 @@ import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as paymentsRepo from '../repositories/payments.repository.js';
 import * as reportsRepo from '../repositories/reports.repository.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
+import { normalizeParam } from '../utils/request-params.js';
 import * as waitlistRepo from '../repositories/waitlist.repository.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
 import * as emailService from '../services/email.service.js';
@@ -44,7 +45,7 @@ const UpdateRsaVerificationSchema = z.object({
 });
 
 router.patch('/rsa/:userId/verify', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.params.userId;
+  const userId = normalizeParam(req.params.userId);
 
   const validation = UpdateRsaVerificationSchema.safeParse(req.body);
   if (!validation.success) {
@@ -164,7 +165,7 @@ router.get('/users', asyncHandler(async (req: AuthenticatedRequest, res) => {
 
 // Handler for banning a user (admin only)
 router.post('/users/:id/ban', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   // Prevent self-banning
   if (req.user?.id === id) {
@@ -189,7 +190,7 @@ router.post('/users/:id/ban', asyncHandler(async (req: AuthenticatedRequest, res
 
 // Handler for unbanning a user (admin only)
 router.post('/users/:id/unban', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   const unbannedUser = await usersRepo.unbanUser(id);
   if (unbannedUser) {
@@ -207,7 +208,7 @@ router.post('/users/:id/unban', asyncHandler(async (req: AuthenticatedRequest, r
 
 // Handler for deleting a user (admin only)
 router.delete('/users/:id', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   // Prevent self-deletion
   if (req.user?.id === id) {
@@ -268,7 +269,7 @@ router.get('/jobs', asyncHandler(async (req: AuthenticatedRequest, res) => {
 
 // Handler for updating job status (admin only)
 router.patch('/jobs/:id/status', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const { status } = req.body;
 
   // Validate status
@@ -351,7 +352,7 @@ router.get('/reports', asyncHandler(async (req: AuthenticatedRequest, res) => {
 
 // Handler for updating report status (admin only)
 router.patch('/reports/:id/status', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const { status } = req.body;
 
   // Validate status
@@ -792,7 +793,8 @@ router.patch('/waitlist/:id/status', asyncHandler(async (req: AuthenticatedReque
   }
 
   try {
-    const updatedEntry = await waitlistRepo.updateWaitlistStatus(id, status);
+    const entryId = normalizeParam(req.params.id);
+    const updatedEntry = await waitlistRepo.updateWaitlistStatus(entryId, status);
 
     if (!updatedEntry) {
       res.status(404).json({

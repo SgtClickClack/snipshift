@@ -3,6 +3,7 @@ import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as notificationsRepo from '../repositories/notifications.repository.js';
 import { notificationBus } from '../services/notification.service.js';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -99,7 +100,7 @@ router.get('/unread-count', asyncHandler(async (req: AuthenticatedRequest, res) 
  * Mark a specific notification as read
  */
 router.patch('/:id/read', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });

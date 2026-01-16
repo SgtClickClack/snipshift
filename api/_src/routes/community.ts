@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import { PostSchema } from '../validation/schemas.js';
 import * as postsRepo from '../repositories/posts.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -93,7 +94,7 @@ router.get('/feed', asyncHandler(async (req: any, res) => {
 // Toggle like on a post (authenticated)
 router.post('/:postId/like', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const { postId } = req.params;
+  const postId = normalizeParam(req.params.postId);
   
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
@@ -112,7 +113,7 @@ router.post('/:postId/like', authenticateUser, asyncHandler(async (req: Authenti
 // Create a comment on a post (authenticated)
 router.post('/:postId/comments', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const { postId } = req.params;
+  const postId = normalizeParam(req.params.postId);
   const { content } = req.body;
 
   if (!userId) {
@@ -147,7 +148,7 @@ router.post('/:postId/comments', authenticateUser, asyncHandler(async (req: Auth
 
 // Get comments for a post (public read)
 router.get('/:postId/comments', asyncHandler(async (req, res) => {
-  const { postId } = req.params;
+  const postId = normalizeParam(req.params.postId);
 
   const comments = await postsRepo.getCommentsForPost(postId);
 

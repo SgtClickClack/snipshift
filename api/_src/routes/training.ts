@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import { TrainingModuleSchema, PurchaseSchema } from '../validation/schemas.js';
 import * as trainingRepo from '../repositories/training-modules.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import { normalizeQueryOptional, normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -56,18 +57,15 @@ router.post('/content', authenticateUser, asyncHandler(async (req: Authenticated
 
 // Get training modules (public read)
 router.get('/content', asyncHandler(async (req, res) => {
-  const limitValue = req.query.limit;
-  const limit = limitValue ? parseInt(Array.isArray(limitValue) ? limitValue[0] : limitValue, 10) : 20;
-  const offsetValue = req.query.offset;
-  const offset = offsetValue ? parseInt(Array.isArray(offsetValue) ? offsetValue[0] : offsetValue, 10) : 0;
-  const trainerIdValue = req.query.trainerId;
-  const trainerId = Array.isArray(trainerIdValue) ? trainerIdValue[0] : (trainerIdValue as string | undefined);
-  const categoryValue = req.query.category;
-  const category = Array.isArray(categoryValue) ? categoryValue[0] : (categoryValue as string | undefined);
-  const levelValue = req.query.level;
-  const level = Array.isArray(levelValue) ? (levelValue[0] as 'beginner' | 'intermediate' | 'advanced') : (levelValue as 'beginner' | 'intermediate' | 'advanced' | undefined);
-  const isPaidValue = req.query.isPaid;
-  const isPaidStr = Array.isArray(isPaidValue) ? isPaidValue[0] : (isPaidValue as string | undefined);
+  const limitStr = normalizeQueryOptional(req.query.limit);
+  const limit = limitStr ? parseInt(limitStr, 10) : 20;
+  const offsetStr = normalizeQueryOptional(req.query.offset);
+  const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
+  const trainerId = normalizeQueryOptional(req.query.trainerId);
+  const category = normalizeQueryOptional(req.query.category);
+  const levelStr = normalizeQueryOptional(req.query.level);
+  const level = levelStr ? (levelStr as 'beginner' | 'intermediate' | 'advanced') : undefined;
+  const isPaidStr = normalizeQueryOptional(req.query.isPaid);
   
   let isPaid: boolean | undefined = undefined;
   if (isPaidStr === 'true') isPaid = true;
@@ -107,7 +105,7 @@ router.get('/content', asyncHandler(async (req, res) => {
 
 // Get module details (public read)
 router.get('/content/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   const module = await trainingRepo.getTrainingModuleById(id);
 

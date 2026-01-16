@@ -28,6 +28,7 @@ import { triggerShiftInvite, triggerUserEvent } from '../services/pusher.service
 import { calculateDistance, validateLocationProximity } from '../utils/geofencing.js';
 import * as shiftLogsRepo from '../repositories/shift-logs.repository.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
+import { normalizeParam, normalizeQueryOptional } from '../utils/request-params.js';
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
 import { uploadProofImage } from '../middleware/upload.js';
 import admin from 'firebase-admin';
@@ -299,8 +300,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 
 // Get shifts (public feed by default; authenticated employer view when employer_id is provided)
 router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const employerIdParamRaw = req.query.employer_id;
-  const employerIdParam = Array.isArray(employerIdParamRaw) ? employerIdParamRaw[0] : employerIdParamRaw;
+  const employerIdParam = normalizeQueryOptional(req.query.employer_id);
   if (employerIdParam) {
     type EmployerShiftStatus =
       | 'draft'
@@ -323,19 +323,19 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
       return;
     }
 
-    const startRawValue = req.query.start;
-    const startRaw = Array.isArray(startRawValue) ? startRawValue[0] : startRawValue;
-    const endRawValue = req.query.end;
-    const endRaw = Array.isArray(endRawValue) ? endRawValue[0] : endRawValue;
-    const statusValue = req.query.status;
-    const status = Array.isArray(statusValue) ? (statusValue[0] as EmployerShiftStatus) : (statusValue as EmployerShiftStatus | undefined);
+    const startRaw = normalizeQueryOptional(req.query.start);
+    const endRaw = normalizeQueryOptional(req.query.end);
+    const statusValue = normalizeQueryOptional(req.query.status);
+    const status = statusValue ? (statusValue as EmployerShiftStatus) : undefined;
     if (!startRaw || !endRaw) {
       res.status(400).json({ message: 'start and end query params are required when employer_id=me' });
       return;
     }
 
-    const start = new Date(startRaw);
-    const end = new Date(endRaw);
+    const startStr = startRaw;
+    const endStr = endRaw;
+    const start = startStr ? new Date(startStr) : new Date();
+    const end = endStr ? new Date(endStr) : new Date();
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       res.status(400).json({ message: 'Invalid start/end. Expected ISO date strings.' });
       return;
@@ -364,12 +364,12 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
     res.status(200).json(transformed);
     return;
   }
-  const limitValue = req.query.limit;
-  const limit = limitValue ? parseInt(Array.isArray(limitValue) ? limitValue[0] : limitValue, 10) : 50;
-  const offsetValue = req.query.offset;
-  const offset = offsetValue ? parseInt(Array.isArray(offsetValue) ? offsetValue[0] : offsetValue, 10) : 0;
-  const statusValue = req.query.status;
-  const status = Array.isArray(statusValue) ? (statusValue[0] as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled') : (statusValue as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | undefined);
+  const limitStr = normalizeQueryOptional(req.query.limit);
+  const limit = limitStr ? parseInt(limitStr, 10) : 50;
+  const offsetStr = normalizeQueryOptional(req.query.offset);
+  const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
+  const statusValue = normalizeQueryOptional(req.query.status);
+  const status = statusValue ? (statusValue as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled') : undefined;
 
   const filters: any = {
     status: status || 'open', // Default to open shifts only for public feed
@@ -494,7 +494,7 @@ router.get('/pending-review', authenticateUser, asyncHandler(async (req: Authent
 // Get applications for a specific shift (authenticated, employer only)
 // NOTE: This route must come BEFORE /:id to be matched correctly
 router.get('/:id/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -569,7 +569,7 @@ router.get('/:id/applications', authenticateUser, asyncHandler(async (req: Authe
 
 // Update shift (full update - for drag-and-drop rescheduling) (authenticated, employer only)
 router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
   const { title, description, startTime, endTime, hourlyRate, status, location, changeReason } = req.body as any;
 
@@ -672,7 +672,7 @@ router.put('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReque
 
 // Update shift status (authenticated, employer only)
 router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
   const { status } = req.body;
 
@@ -718,7 +718,7 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
 // Get shift messages (authenticated, only assigned worker and venue owner)
 // IMPORTANT: This route MUST come before DELETE /:id to avoid route conflicts
 router.get('/:id/messages', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -766,7 +766,7 @@ router.get('/:id/messages', authenticateUser, asyncHandler(async (req: Authentic
 // Send shift message (authenticated, only assigned worker and venue owner)
 // IMPORTANT: This route MUST come before DELETE /:id to avoid route conflicts
 router.post('/:id/messages', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
   const { content } = req.body;
 
@@ -894,7 +894,7 @@ router.delete('/clear-all', authenticateUser, asyncHandler(async (req: Authentic
 // Uses a transaction to first delete related records (shift_invitations, applications, shift_offers)
 // to avoid foreign key constraint errors
 router.delete('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -1005,7 +1005,7 @@ router.delete('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRe
 // SECURITY: Only allows users to view their own shop shifts
 // FIXED: Now also fetches legacy jobs to ensure all listings are visible
 router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { userId } = req.params;
+  const userId = normalizeParam(req.params.userId);
   const currentUserId = req.user?.id;
 
   if (!currentUserId) {
@@ -1440,7 +1440,7 @@ router.get('/invitations/pending', authenticateUser, asyncHandler(async (req: Au
 
 // Invite one or more professionals to a shift (First-to-Accept pattern)
 router.post('/:id/invite', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
   const { professionalId, professionalIds } = req.body;
 
@@ -1557,7 +1557,7 @@ router.post('/:id/invite', authenticateUser, asyncHandler(async (req: Authentica
 
 // Accept a shift offer (First-to-Accept race condition handling)
 router.post('/:id/accept', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -1871,7 +1871,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
 
 // Decline a shift offer (update invitation status to DECLINED)
 router.post('/:id/decline', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -2243,7 +2243,7 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
 
 // Smart Fill: Invite a professional to a shift
 router.post('/:id/invite', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -2714,7 +2714,7 @@ router.post('/smart-fill', authenticateUser, asyncHandler(async (req: Authentica
 
 // Accept a shift offer
 router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: offerId } = req.params;
+  const offerId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -2851,7 +2851,7 @@ router.put('/offers/:id/accept', authenticateUser, asyncHandler(async (req: Auth
 
 // Apply for a shift (authenticated, professional only)
 router.post('/:id/apply', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -3066,7 +3066,7 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
 
 // Update shift application status (accept/reject) - Venue owner only
 router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
   const { status, reason } = req.body;
 
@@ -3269,7 +3269,7 @@ router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: Aut
 
 // Complete a shift (Venue owner only) - Marks shift as completed and triggers payout
 router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -3469,7 +3469,7 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
 
 // Request substitution for an accepted shift
 router.patch('/:id/request-substitute', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -3651,7 +3651,7 @@ router.patch('/:id/request-substitute', authenticateUser, asyncHandler(async (re
 // Submit a review for a shift
 router.post('/:id/review', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const shiftId = req.params.id;
+  const shiftId = normalizeParam(req.params.id);
 
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
@@ -3851,7 +3851,7 @@ router.post('/:id/review', authenticateUser, asyncHandler(async (req: Authentica
 // Report No-Show - Venue action to report a staff member who didn't show up
 // POST /api/shifts/:id/no-show
 router.post('/:id/no-show', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.uid;
 
   if (!userId) {
@@ -3959,7 +3959,7 @@ router.post('/:id/no-show', authenticateUser, asyncHandler(async (req: Authentic
 // Clock In - Staff action to clock in for a shift with geofencing validation
 // POST /api/shifts/:id/clock-in
 router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -4255,7 +4255,7 @@ router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: Authenti
 // Check In - Staff action to check in for a shift with geofencing validation
 // PATCH /api/shifts/:id/check-in
 router.patch('/:id/check-in', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -4441,7 +4441,7 @@ router.patch('/:id/check-in', authenticateUser, asyncHandler(async (req: Authent
 // Clock Out - Staff action to clock out from a shift with proof photo upload
 // PATCH /api/shifts/:id/clock-out
 router.patch('/:id/clock-out', authenticateUser, uploadProofImage, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -4611,7 +4611,7 @@ router.patch('/:id/clock-out', authenticateUser, uploadProofImage, asyncHandler(
 // - /offers/me
 // - /pending-review
 router.get('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   // Validate UUID format to prevent route conflicts (e.g. "shop", "offers")
   if (!isValidUUID(id)) {
@@ -4679,7 +4679,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // Join waitlist for a filled shift
 // POST /api/shifts/:id/waitlist
 router.post('/:id/waitlist', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -4751,7 +4751,7 @@ router.post('/:id/waitlist', authenticateUser, asyncHandler(async (req: Authenti
 // Leave waitlist
 // DELETE /api/shifts/:id/waitlist
 router.delete('/:id/waitlist', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -4778,7 +4778,7 @@ router.delete('/:id/waitlist', authenticateUser, asyncHandler(async (req: Authen
 // Get waitlist status for a shift (for authenticated users)
 // GET /api/shifts/:id/waitlist
 router.get('/:id/waitlist', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -4805,7 +4805,7 @@ router.get('/:id/waitlist', authenticateUser, asyncHandler(async (req: Authentic
 // Report late arrival with ETA
 // POST /api/shifts/:id/late-arrival
 router.post('/:id/late-arrival', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
   const { etaMinutes } = req.body;
 
@@ -4940,7 +4940,7 @@ router.post('/:id/late-arrival', authenticateUser, asyncHandler(async (req: Auth
 // Request backup from waitlist (venue owner only)
 // POST /api/shifts/:id/request-backup
 router.post('/:id/request-backup', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -4971,7 +4971,7 @@ router.post('/:id/request-backup', authenticateUser, asyncHandler(async (req: Au
 // Accept backup shift (waitlisted worker)
 // POST /api/shifts/:id/accept-backup
 router.post('/:id/accept-backup', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: shiftId } = req.params;
+  const shiftId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {

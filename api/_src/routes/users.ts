@@ -7,6 +7,7 @@ import * as emailService from '../services/email.service.js';
 import * as proVerificationService from '../services/pro-verification.service.js';
 import { auth } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
+import { normalizeParam } from '../utils/request-params.js';
 import { z } from 'zod';
 import { uploadProfileImages } from '../middleware/upload.js';
 import admin from 'firebase-admin';
@@ -1268,12 +1269,12 @@ function maskPhone(phone: string | null | undefined): string | null {
 
 // Get public user profile by ID
 router.get('/users/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const userId = normalizeParam(req.params.id);
   
   // Get viewer ID from auth token if present (optional for public profiles)
   const viewerId = (req as any).user?.id;
   
-  const user = await usersRepo.getUserById(id);
+  const user = await usersRepo.getUserById(userId);
   
   if (!user) {
     res.status(404).json({ message: 'User not found' });

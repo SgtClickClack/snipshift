@@ -4,6 +4,7 @@ import { getDb } from '../db/index.js';
 import { venues, users, shifts } from '../db/schema.js';
 import { shiftStatusEnum } from '../db/schema/shifts.js';
 import { eq, and, desc, count, gte, sql, isNotNull } from 'drizzle-orm';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = express.Router();
 
@@ -120,7 +121,7 @@ router.get('/venues/:id', asyncHandler(async (req, res) => {
     return;
   }
 
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   try {
     // Fetch venue with user data

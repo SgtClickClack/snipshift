@@ -28,6 +28,7 @@ import * as jobsRepo from './repositories/jobs.repository.js';
 import * as applicationsRepo from './repositories/applications.repository.js';
 import * as usersRepo from './repositories/users.repository.js';
 import * as notificationsRepo from './repositories/notifications.repository.js';
+import { normalizeParam } from './utils/request-params.js';
 import * as reviewsRepo from './repositories/reviews.repository.js';
 import * as subscriptionsRepo from './repositories/subscriptions.repository.js';
 import * as paymentsRepo from './repositories/payments.repository.js';
@@ -644,7 +645,7 @@ app.get('/api/jobs', asyncHandler(async (req, res) => {
 
 // Handler for fetching a single job by ID
 app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   // Try to use database first
   const job = await jobsRepo.getJobById(id);
@@ -684,7 +685,7 @@ app.get('/api/jobs/:id', asyncHandler(async (req, res) => {
 
 // Handler for updating a job
 app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -757,7 +758,7 @@ app.put('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authenticate
 
 // Handler for deleting a job
 app.delete('/api/jobs/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -792,7 +793,7 @@ app.delete('/api/jobs/:id', authenticateUser, asyncHandler(async (req: Authentic
 
 // Handler for applying to a job
 app.post('/api/jobs/:id/apply', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: jobId } = req.params;
+  const jobId = normalizeParam(req.params.id);
   
   // Validate request body
   const validationResult = ApplicationSchema.safeParse(req.body);
@@ -1120,7 +1121,7 @@ app.get('/api/me/jobs', authenticateUser, asyncHandler(async (req: Authenticated
 
 // Handler for fetching applications for a specific job (for business dashboard)
 app.get('/api/jobs/:id/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: jobId } = req.params;
+  const jobId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -1166,7 +1167,7 @@ app.get('/api/jobs/:id/applications', authenticateUser, asyncHandler(async (req:
 
 // Handler for updating application status
 app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -1280,7 +1281,7 @@ app.put('/api/applications/:id/status', authenticateUser, asyncHandler(async (re
 
 // Handler for updating job status
 app.patch('/api/jobs/:id/status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id: jobId } = req.params;
+  const jobId = normalizeParam(req.params.id);
   const userId = req.user?.id;
 
   if (!userId) {
@@ -1442,7 +1443,7 @@ app.post('/api/reviews', authenticateUser, asyncHandler(async (req: Authenticate
 
 // Handler for fetching reviews for a user
 app.get('/api/reviews/:userId', asyncHandler(async (req, res) => {
-  const { userId } = req.params;
+  const userId = normalizeParam(req.params.userId);
 
   const reviews = await reviewsRepo.getReviewsForUser(userId);
 
@@ -1964,7 +1965,7 @@ app.get('/api/conversations', authenticateUser, asyncHandler(async (req: Authent
 // Handler for fetching a specific conversation with full message history
 app.get('/api/conversations/:id', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
@@ -2210,7 +2211,7 @@ app.post('/api/messages', authenticateUser, asyncHandler(async (req: Authenticat
 // Handler for marking messages as read
 app.patch('/api/conversations/:id/read', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = normalizeParam(req.params.id);
 
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });

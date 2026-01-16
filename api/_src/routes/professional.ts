@@ -9,6 +9,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -422,7 +423,7 @@ router.post('/applications/:id/withdraw', authenticateUser, asyncHandler(async (
   }
 
   const userId = req.user.id;
-  const { id: applicationId } = req.params;
+  const applicationId = normalizeParam(req.params.id);
 
   // Get application to verify ownership and status
   const application = await applicationsRepo.getApplicationById(applicationId);
@@ -478,7 +479,7 @@ router.get('/applications/:id/updates', authenticateUser, asyncHandler(async (re
   }
 
   const userId = req.user.id;
-  const { id: applicationId } = req.params;
+  const applicationId = normalizeParam(req.params.id);
 
   // Verify the application exists and belongs to the user
   const application = await applicationsRepo.getApplicationById(applicationId);

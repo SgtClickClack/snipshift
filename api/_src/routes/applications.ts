@@ -10,6 +10,7 @@ import * as notificationService from '../services/notification.service.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as emailService from '../services/email.service.js';
 import { applications, shifts } from '../db/schema.js';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -195,7 +196,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 
 // Decide on an application (approve or decline)
 router.post('/:id/decide', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
+  const applicationId = normalizeParam(req.params.id);
   const userId = req.user?.id;
   const { decision } = req.body;
 
@@ -210,7 +211,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
   }
 
   // Get the application
-  const application = await applicationsRepo.getApplicationById(id);
+  const application = await applicationsRepo.getApplicationById(applicationId);
   if (!application) {
     res.status(404).json({ message: 'Application not found' });
     return;
@@ -266,7 +267,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
             status: 'accepted',
             respondedAt: sql`NOW()`,
           })
-          .where(eq(applications.id, id));
+          .where(eq(applications.id, applicationId));
 
         // 2. If it's a shift, update the shift with row-level locking to prevent race conditions
         if (shiftId && application.userId) {
@@ -303,7 +304,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
             .where(and(
               eq(applications.shiftId, shiftId),
               eq(applications.status, 'pending'),
-              sql`${applications.id} != ${id}`
+              sql`${applications.id} != ${applicationId}`
             ));
 
           if (pendingApps.length > 0) {
@@ -316,7 +317,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
               .where(and(
                 eq(applications.shiftId, shiftId),
                 eq(applications.status, 'pending'),
-                sql`${applications.id} != ${id}`
+                sql`${applications.id} != ${applicationId}`
               ));
           }
         } else if (jobId) {
@@ -327,7 +328,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
       });
 
       // Fetch updated application
-      const updatedApplication = await applicationsRepo.getApplicationById(id);
+      const updatedApplication = await applicationsRepo.getApplicationById(applicationId);
 
       // Notify the barber
       if (application.userId) {
@@ -356,7 +357,7 @@ router.post('/:id/decide', authenticateUser, asyncHandler(async (req: Authentica
     }
   } else {
     // DECLINED
-    const updatedApplication = await applicationsRepo.updateApplicationStatus(id, 'rejected');
+    const updatedApplication = await applicationsRepo.updateApplicationStatus(applicationId, 'rejected');
 
     if (!updatedApplication) {
       res.status(500).json({ message: 'Failed to update application' });

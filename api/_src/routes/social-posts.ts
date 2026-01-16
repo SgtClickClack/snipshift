@@ -3,6 +3,7 @@ import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as postsRepo from '../repositories/posts.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
+import { normalizeParam, normalizeParamOptional, normalizeQueryOptional } from '../utils/request-params.js';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ const router = Router();
  */
 router.post('/:postId/like', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const { postId } = req.params;
+  const postId = normalizeParam(req.params.postId);
   const { action } = req.body; // 'like' or 'unlike'
 
   if (!userId) {
@@ -45,10 +46,9 @@ router.post('/:postId/like', authenticateUser, asyncHandler(async (req: Authenti
  * Fetches social posts, optionally filtered by userId
  */
 router.get('/:userId?', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userIdParam = req.params.userId;
-  const userIdQueryValue = req.query.userId;
-  const userIdQuery = Array.isArray(userIdQueryValue) ? userIdQueryValue[0] : userIdQueryValue;
-  const userId = userIdParam || (userIdQuery as string | undefined);
+  const userIdParam = normalizeParamOptional(req.params.userId);
+  const userIdQuery = normalizeQueryOptional(req.query.userId);
+  const userId = userIdParam || userIdQuery;
   const currentUserId = req.user?.id;
 
   if (!currentUserId) {
