@@ -72,7 +72,7 @@ export function VenueStatusCard() {
         throw err;
       }
     },
-    enabled: !!user?.id && (user.currentRole === 'hub' || user.currentRole === 'business'),
+    enabled: !!user?.id && !!user?.roles?.includes('venue_owner') && (user.currentRole === 'hub' || user.currentRole === 'business'),
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     refetchInterval: 30 * 1000, // Refetch every 30 seconds to catch status updates
     retry: (failureCount, error) => {

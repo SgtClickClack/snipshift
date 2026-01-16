@@ -299,7 +299,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 
 // Get shifts (public feed by default; authenticated employer view when employer_id is provided)
 router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const employerIdParam = req.query.employer_id as string | undefined;
+  const employerIdParamRaw = req.query.employer_id;
+  const employerIdParam = Array.isArray(employerIdParamRaw) ? employerIdParamRaw[0] : employerIdParamRaw;
   if (employerIdParam) {
     type EmployerShiftStatus =
       | 'draft'
@@ -322,9 +323,12 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
       return;
     }
 
-    const startRaw = req.query.start as string | undefined;
-    const endRaw = req.query.end as string | undefined;
-    const status = req.query.status as EmployerShiftStatus | undefined;
+    const startRawValue = req.query.start;
+    const startRaw = Array.isArray(startRawValue) ? startRawValue[0] : startRawValue;
+    const endRawValue = req.query.end;
+    const endRaw = Array.isArray(endRawValue) ? endRawValue[0] : endRawValue;
+    const statusValue = req.query.status;
+    const status = Array.isArray(statusValue) ? (statusValue[0] as EmployerShiftStatus) : (statusValue as EmployerShiftStatus | undefined);
     if (!startRaw || !endRaw) {
       res.status(400).json({ message: 'start and end query params are required when employer_id=me' });
       return;
@@ -360,9 +364,12 @@ router.get('/', authenticateIfEmployerQuery, asyncHandler(async (req: Authentica
     res.status(200).json(transformed);
     return;
   }
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
-  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-  const status = req.query.status as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | undefined;
+  const limitValue = req.query.limit;
+  const limit = limitValue ? parseInt(Array.isArray(limitValue) ? limitValue[0] : limitValue, 10) : 50;
+  const offsetValue = req.query.offset;
+  const offset = offsetValue ? parseInt(Array.isArray(offsetValue) ? offsetValue[0] : offsetValue, 10) : 0;
+  const statusValue = req.query.status;
+  const status = Array.isArray(statusValue) ? (statusValue[0] as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled') : (statusValue as 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | undefined);
 
   const filters: any = {
     status: status || 'open', // Default to open shifts only for public feed

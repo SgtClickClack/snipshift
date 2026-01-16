@@ -45,7 +45,10 @@ router.post('/:postId/like', authenticateUser, asyncHandler(async (req: Authenti
  * Fetches social posts, optionally filtered by userId
  */
 router.get('/:userId?', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const userId = req.params.userId || req.query.userId as string | undefined;
+  const userIdParam = req.params.userId;
+  const userIdQueryValue = req.query.userId;
+  const userIdQuery = Array.isArray(userIdQueryValue) ? userIdQueryValue[0] : userIdQueryValue;
+  const userId = userIdParam || (userIdQuery as string | undefined);
   const currentUserId = req.user?.id;
 
   if (!currentUserId) {

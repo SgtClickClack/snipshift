@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/useToast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, X, Calendar, DollarSign, MapPin, Users, Clock } from "lucide-react";
 
 interface JobPostingModalProps {
@@ -178,6 +178,9 @@ export default function JobPostingModal({ isOpen, onClose, hubId }: JobPostingMo
             <Plus className="h-5 w-5" />
             Post a New Job
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Create a new job posting for your venue
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

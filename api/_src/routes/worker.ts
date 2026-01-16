@@ -130,8 +130,12 @@ router.get('/recommendations', authenticateUser, asyncHandler(async (req: Authen
   }
 
   // Get worker's location (from query params or user profile)
-  const workerLat = req.query.lat ? parseFloat(req.query.lat as string) : null;
-  const workerLng = req.query.lng ? parseFloat(req.query.lng as string) : null;
+  const latValue = req.query.lat;
+  const latStr = Array.isArray(latValue) ? latValue[0] : latValue;
+  const workerLat = latStr ? parseFloat(latStr) : null;
+  const lngValue = req.query.lng;
+  const lngStr = Array.isArray(lngValue) ? lngValue[0] : lngValue;
+  const workerLng = lngStr ? parseFloat(lngStr) : null;
 
   // If no coordinates provided, try to get from user profile
   let userLat = workerLat;

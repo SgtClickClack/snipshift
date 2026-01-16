@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 /**
@@ -11,6 +11,8 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
  * This component is invisible and runs in the background.
  */
 export function PwaUpdateHandler() {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -18,7 +20,7 @@ export function PwaUpdateHandler() {
     onRegistered(r) {
       // Check for updates every 1 minute
       if (r) {
-        setInterval(() => {
+        intervalRef.current = setInterval(() => {
           r.update();
         }, 60 * 1000);
       }
@@ -34,6 +36,16 @@ export function PwaUpdateHandler() {
       updateServiceWorker(true);
     }
   }, [needRefresh, updateServiceWorker]);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   // Invisible component - no UI
   return null;

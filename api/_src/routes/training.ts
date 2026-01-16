@@ -56,12 +56,18 @@ router.post('/content', authenticateUser, asyncHandler(async (req: Authenticated
 
 // Get training modules (public read)
 router.get('/content', asyncHandler(async (req, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
-  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-  const trainerId = req.query.trainerId as string | undefined;
-  const category = req.query.category as string | undefined;
-  const level = req.query.level as 'beginner' | 'intermediate' | 'advanced' | undefined;
-  const isPaidStr = req.query.isPaid as string | undefined;
+  const limitValue = req.query.limit;
+  const limit = limitValue ? parseInt(Array.isArray(limitValue) ? limitValue[0] : limitValue, 10) : 20;
+  const offsetValue = req.query.offset;
+  const offset = offsetValue ? parseInt(Array.isArray(offsetValue) ? offsetValue[0] : offsetValue, 10) : 0;
+  const trainerIdValue = req.query.trainerId;
+  const trainerId = Array.isArray(trainerIdValue) ? trainerIdValue[0] : (trainerIdValue as string | undefined);
+  const categoryValue = req.query.category;
+  const category = Array.isArray(categoryValue) ? categoryValue[0] : (categoryValue as string | undefined);
+  const levelValue = req.query.level;
+  const level = Array.isArray(levelValue) ? (levelValue[0] as 'beginner' | 'intermediate' | 'advanced') : (levelValue as 'beginner' | 'intermediate' | 'advanced' | undefined);
+  const isPaidValue = req.query.isPaid;
+  const isPaidStr = Array.isArray(isPaidValue) ? isPaidValue[0] : (isPaidValue as string | undefined);
   
   let isPaid: boolean | undefined = undefined;
   if (isPaidStr === 'true') isPaid = true;

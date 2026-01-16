@@ -90,6 +90,11 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null
  * Get FCM token for the current device
  */
 export async function getFCMToken(): Promise<string | null> {
+  // Return null immediately if VAPID_KEY is undefined to prevent logger from firing
+  if (!VAPID_KEY) {
+    return null;
+  }
+
   try {
     // Check if push notifications are supported
     const supported = await isPushNotificationSupported();
@@ -114,12 +119,6 @@ export async function getFCMToken(): Promise<string | null> {
 
     // Initialize Firebase Messaging
     const messaging = getMessaging(app);
-
-    // Get FCM token
-    if (!VAPID_KEY) {
-      logger.warn('push-notifications', 'VAPID key not configured - push notifications will be disabled');
-      return null;
-    }
 
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
