@@ -58,6 +58,7 @@ import onboardingRouter from './routes/onboarding.js';
 import reportsRouter from './routes/reports.js';
 import pusherRouter from './routes/pusher.js';
 import venuesRouter from './routes/venues.js';
+import marketplaceRouter from './routes/marketplace.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { initializePusher } from './services/pusher.service.js';
@@ -163,6 +164,7 @@ app.use('/api/onboarding', onboardingRouter);
 app.use('/api/admin/reports', reportsRouter);
 app.use('/api/pusher', pusherRouter);
 app.use('/api/venues', venuesRouter);
+app.use('/api/marketplace', marketplaceRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
