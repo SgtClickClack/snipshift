@@ -17,7 +17,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  Building2
+  Building2,
+  RefreshCw
 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
@@ -26,6 +27,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSearchParams } from 'react-router-dom';
 import { RSALocker } from '@/components/profile/RSALocker';
 import { GovernmentIDLocker } from '@/components/profile/GovernmentIDLocker';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { mapRoleToApiRole, getDashboardRoute, AppRole } from '@/lib/roles';
 
 type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business';
 
@@ -35,6 +48,9 @@ export default function SettingsPage() {
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>('account');
   const [isSaving, setIsSaving] = useState(false);
+  const [roleChangeDialogOpen, setRoleChangeDialogOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
+  const [isChangingRole, setIsChangingRole] = useState(false);
 
   // Account form state
   const [accountData, setAccountData] = useState({
@@ -196,6 +212,36 @@ export default function SettingsPage() {
     });
   };
 
+  const getRoleLabel = (role: string) => {
+    if (role === 'hub' || role === 'business') return 'Business / Venue';
+    if (role === 'client') return 'Client';
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
+
+  const handleRoleChange = async () => {
+    if (!user || !selectedRole) return;
+
+    setIsChangingRole(true);
+    try {
+      // Map frontend role to backend API role
+      const apiRole = mapRoleToApiRole(selectedRole);
+      
+      await apiRequest("PATCH", `/api/users/${user.id}/current-role`, { role: apiRole });
+      
+      // Reload the page to reset dashboard access
+      window.location.href = getDashboardRoute(selectedRole);
+    } catch (error: any) {
+      console.error("Failed to change role", error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to change role. Please try again.",
+        variant: "destructive",
+      });
+      setIsChangingRole(false);
+      setRoleChangeDialogOpen(false);
+    }
+  };
+
   // Check if user is a hub/business owner
   const isBusinessUser = user?.currentRole === 'hub' || user?.currentRole === 'business' || 
                          (user?.roles && (user.roles.includes('hub') || user.roles.includes('business')));
@@ -299,6 +345,103 @@ export default function SettingsPage() {
                       {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
+
+                  <Separator className="my-8" />
+
+                  {/* Role Management Section */}
+                  {(() => {
+                    const availableRoles = (user?.roles || []).filter(
+                      (r) => r !== user?.currentRole && r !== 'client'
+                    );
+                    const hasMultipleRoles = availableRoles.length > 0;
+                    
+                    return (
+                      <div className="rounded-lg border border-border/50 bg-muted/30 p-6 text-steel-400">
+                        <div className="flex items-start gap-4">
+                          <div className="rounded-full bg-steel-400/10 p-2">
+                            <RefreshCw className="h-5 w-5 text-steel-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-steel-400 mb-2">
+                              Role Management
+                            </h3>
+                            <p className="text-sm text-steel-400/80 mb-4">
+                              Current role: <span className="font-medium">{user?.currentRole ? getRoleLabel(user.currentRole) : 'Not set'}</span>
+                            </p>
+                            {hasMultipleRoles ? (
+                              <>
+                                <p className="text-sm text-steel-400/70 mb-4">
+                                  If you made a mistake during onboarding, you can request a role change. 
+                                  This will reset your dashboard access and redirect you to the appropriate dashboard.
+                                </p>
+                                <AlertDialog open={roleChangeDialogOpen} onOpenChange={setRoleChangeDialogOpen}>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      className="text-steel-400 border-steel-400/30 hover:bg-steel-400/10"
+                                      onClick={() => {
+                                        setSelectedRole(null);
+                                        setRoleChangeDialogOpen(true);
+                                      }}
+                                    >
+                                      Request Role Change
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Request Role Change</AlertDialogTitle>
+                                      <AlertDialogDescription className="space-y-2">
+                                        <p>
+                                          Changing your role will reset your dashboard access and redirect you to the new dashboard.
+                                        </p>
+                                        <p className="font-medium text-foreground pt-2">
+                                          Select the role you want to switch to:
+                                        </p>
+                                        <div className="space-y-2 pt-2">
+                                          {availableRoles.map((role) => (
+                                            <button
+                                              key={role}
+                                              onClick={() => setSelectedRole(role as AppRole)}
+                                              className={`w-full text-left px-4 py-2 rounded-md border transition-colors ${
+                                                selectedRole === role
+                                                  ? 'bg-primary text-primary-foreground border-primary'
+                                                  : 'bg-background border-border hover:bg-muted'
+                                              }`}
+                                            >
+                                              {getRoleLabel(role)}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel onClick={() => {
+                                        setSelectedRole(null);
+                                        setRoleChangeDialogOpen(false);
+                                      }}>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={handleRoleChange}
+                                        disabled={!selectedRole || isChangingRole}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        {isChangingRole ? 'Changing...' : 'Confirm Role Change'}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </>
+                            ) : (
+                              <p className="text-sm text-steel-400/70">
+                                You currently have only one role. To add additional roles, complete the onboarding process for those roles.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <Separator className="my-8" />
 
