@@ -432,6 +432,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
             </Suspense>
           </ProtectedRoute>
         } />
+        
+        <Route path="/venue/applications" element={
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <VenueApplicationsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
 
         <Route path="/worker/dashboard" element={
           <ProtectedRoute requiredRole="professional">
