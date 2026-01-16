@@ -23,6 +23,7 @@ import { createBatchShifts, getShiftsByEmployerInRange, deleteDraftShiftsInRange
 import { getDb } from '../db/index.js';
 import { toISOStringSafe } from '../lib/date.js';
 import * as reputationService from '../lib/reputation-service.js';
+import * as shiftWaitlistRepo from '../repositories/shift-waitlist.repository.js';
 import { triggerShiftInvite, triggerUserEvent } from '../services/pusher.service.js';
 import { calculateDistance, validateLocationProximity } from '../utils/geofencing.js';
 import * as shiftLogsRepo from '../repositories/shift-logs.repository.js';
@@ -1735,7 +1736,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
           paymentIntentId: paymentIntentId,
           applicationFeeAmount: commissionAmount,
           transferAmount: barberAmount,
-          substitutionRequestedBy: null, // Clear substitution flag
+          substitutionRequestedBy: null as any, // Clear substitution flag
           updatedAt: new Date(),
         })
         .where(eq(shifts.id, id))
@@ -1766,6 +1767,9 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
       // Step 7: Expire all other invitations for this shift (within transaction)
       await shiftInvitationsRepo.expireAllPendingInvitationsForShift(id, userId);
       await shiftOffersRepo.declineAllPendingOffersForShift(id);
+
+      // Step 8: If worker was on waitlist, mark as converted
+      await shiftWaitlistRepo.markAsConverted(id, userId);
 
       // Transaction will commit automatically if no errors thrown
       return updated;
@@ -2881,7 +2885,7 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
     .map(app => app.shiftId);
 
   let hasOverlapWithAccepted = false;
-  let conflictingShift: typeof shifts.$inferSelect | null = null;
+  let conflictingShift: shiftsRepo.ShiftWithShop | null = null;
   
   if (acceptedShiftIds.length > 0) {
     const acceptedShifts = await Promise.all(
@@ -3129,7 +3133,7 @@ router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: Aut
           .set({
             assigneeId: application.workerId,
             status: 'filled',
-            substitutionRequestedBy: null, // Clear substitution flag
+            substitutionRequestedBy: null as any, // Clear substitution flag
             updatedAt: new Date(),
           })
           .where(eq(shifts.id, application.shiftId));
@@ -3518,7 +3522,7 @@ router.patch('/:id/request-substitute', authenticateUser, asyncHandler(async (re
         .update(shifts)
         .set({
           status: 'open',
-          substitutionRequestedBy: userId,
+          substitutionRequestedBy: userId as any,
           updatedAt: new Date(),
         })
         .where(eq(shifts.id, id));
@@ -4639,8 +4643,139 @@ router.get('/:id', asyncHandler(async (req, res) => {
     shopName: employer?.name ?? null,
     shopAvatarUrl: employer?.avatarUrl ?? null,
     actualStartTime: (shift as any).actualStartTime ? toISOStringSafe((shift as any).actualStartTime) : null,
+    proofImageUrl: (shift as any).proofImageUrl ?? null,
     createdAt: toISOStringSafe((shift as any).createdAt),
     updatedAt: toISOStringSafe((shift as any).updatedAt),
+    // Get waitlist count if shift is filled
+    waitlistCount: (shift.status === 'filled' || shift.status === 'confirmed') 
+      ? await shiftWaitlistRepo.getWaitlistCount(shift.id) 
+      : 0,
+  });
+}));
+
+// Join waitlist for a filled shift
+// POST /api/shifts/:id/waitlist
+router.post('/:id/waitlist', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Get shift
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Only allow waitlist for filled/confirmed shifts
+  if (shift.status !== 'filled' && shift.status !== 'confirmed') {
+    res.status(400).json({ message: 'Waitlist is only available for filled shifts' });
+    return;
+  }
+
+  // Check if shift is in the past
+  const now = new Date();
+  const shiftStart = new Date(shift.startTime);
+  if (shiftStart < now) {
+    res.status(400).json({ message: 'Cannot join waitlist for past shifts' });
+    return;
+  }
+
+  try {
+    const entry = await shiftWaitlistRepo.addToWaitlist({
+      shiftId,
+      workerId: userId,
+    });
+
+    if (!entry) {
+      res.status(500).json({ message: 'Failed to join waitlist' });
+      return;
+    }
+
+    res.status(201).json({
+      message: 'Successfully joined waitlist',
+      entry: {
+        id: entry.id,
+        shiftId: entry.shiftId,
+        rank: entry.rank,
+        status: entry.status,
+      },
+    });
+  } catch (error: any) {
+    if (error.message === 'Worker is already on the waitlist') {
+      res.status(409).json({ message: error.message });
+      return;
+    }
+    if (error.message === 'Waitlist is full (maximum 5 workers)') {
+      res.status(400).json({ message: error.message });
+      return;
+    }
+    console.error('[POST /api/shifts/:id/waitlist] Error:', error);
+    res.status(500).json({ message: 'Failed to join waitlist' });
+  }
+}));
+
+// Leave waitlist
+// DELETE /api/shifts/:id/waitlist
+router.delete('/:id/waitlist', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  const success = await shiftWaitlistRepo.removeFromWaitlist(shiftId, userId);
+
+  if (!success) {
+    res.status(404).json({ message: 'You are not on the waitlist for this shift' });
+    return;
+  }
+
+  res.status(200).json({ message: 'Successfully left waitlist' });
+}));
+
+// Get waitlist status for a shift (for authenticated users)
+// GET /api/shifts/:id/waitlist
+router.get('/:id/waitlist', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  const isOnWaitlist = await shiftWaitlistRepo.isWorkerOnWaitlist(shiftId, userId);
+  const waitlistCount = await shiftWaitlistRepo.getWaitlistCount(shiftId);
+
+  res.status(200).json({
+    isOnWaitlist,
+    waitlistCount,
+    maxWaitlistSize: 5,
   });
 }));
 
