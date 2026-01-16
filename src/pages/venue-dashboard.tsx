@@ -17,6 +17,7 @@ import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
 import { CompleteSetupBanner } from "@/components/onboarding/CompleteSetupBanner";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { StripeConnectBanner } from "@/components/payments/StripeConnectBanner";
+import { VenueStatusCard } from "@/components/venues/VenueStatusCard";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
@@ -748,6 +749,9 @@ function VenueDashboardContent() {
 
         {/* Stripe Connect Incomplete Banner */}
         <StripeConnectBanner />
+
+        {/* Venue Status Card */}
+        <VenueStatusCard />
 
         {/* Overview Tab */}
         {activeView === 'overview' && (
