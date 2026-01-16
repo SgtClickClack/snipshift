@@ -267,14 +267,14 @@ export default function SignupPage() {
       const userData = await response.json();
       
       // Create properly formatted user object for auth service
-      // Backend returns: id, email, name, role
+      // Backend returns: id, email, name, role (defaults to 'professional')
       // Frontend expects: id, email, roles (array), currentRole, displayName, etc.
       const newUser = {
         id: userData.id,
         email: userData.email,
         password: '', // Don't store password in frontend
-        roles: Array.isArray(userData.roles) ? userData.roles : [userData.role || 'client'],
-        currentRole: userData.currentRole || userData.role || 'client',
+        roles: Array.isArray(userData.roles) ? userData.roles : [userData.role || 'professional'],
+        currentRole: userData.currentRole || userData.role || 'professional',
         provider: 'email' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -315,6 +315,8 @@ export default function SignupPage() {
         message = "Invalid email address";
       } else if (firebaseError?.code === 'auth/network-request-failed') {
         message = "Network error. Please check your connection and try again";
+      } else if (firebaseError?.code === 'auth/operation-not-allowed') {
+        message = "Email/Password authentication is not enabled. Please check the Firebase Console > Authentication > Sign-in method and ensure Email/Password provider is enabled for project 'snipshift-75b04'.";
       }
       // Handle API errors (format: "status: message")
       else if (firebaseError?.message) {
