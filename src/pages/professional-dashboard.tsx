@@ -26,6 +26,7 @@ import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { fetchShifts } from "@/lib/api";
 import { Mail } from "lucide-react";
 import { QuickNav } from "@/components/navigation/QuickNav";
+import { VerificationPendingBanner } from "@/components/profile/VerificationPendingBanner";
 
 // Lazy load heavy view components to reduce initial bundle size
 const ProfessionalOverview = lazy(() => import("@/components/dashboard/professional-overview"));
@@ -644,6 +645,11 @@ function ProfessionalDashboardContent() {
       {/* Quick Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <QuickNav onViewChange={setActiveView} />
+      </div>
+
+      {/* Verification Pending Banner for new signups */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <VerificationPendingBanner />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

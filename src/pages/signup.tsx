@@ -240,6 +240,30 @@ export default function SignupPage() {
         password: formData.password,
         provider: "email"
       });
+      
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({} as Record<string, unknown>));
+        const errorMessage = (errorData?.message as string) || (errorData?.error as string) || `Registration failed (${response.status})`;
+        
+        // Check for common database schema errors
+        if (response.status === 500 && (errorMessage.includes("column") || errorMessage.includes("does not exist"))) {
+          throw new Error(
+            "Database schema is out of sync. Please contact support or try again after the database is updated."
+          );
+        }
+        
+        // Log full error details for debugging
+        console.error('[Signup] Registration failed:', {
+          status: response.status,
+          message: errorMessage,
+          details: errorData?.details,
+          error: errorData
+        });
+        
+        throw new Error(`${response.status}: ${errorMessage}`);
+      }
+      
       const userData = await response.json();
       
       // Create properly formatted user object for auth service
@@ -277,23 +301,24 @@ export default function SignupPage() {
 
       // Force navigation to ensure we leave the page
       window.location.href = onboardingPath;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error);
       let message = "Please check your information and try again";
       
       // Handle Firebase auth errors
-      if (error?.code === 'auth/email-already-in-use') {
+      const firebaseError = error as { code?: string; message?: string };
+      if (firebaseError?.code === 'auth/email-already-in-use') {
         message = "This email is already in use";
-      } else if (error?.code === 'auth/weak-password') {
+      } else if (firebaseError?.code === 'auth/weak-password') {
         message = "Password is too weak";
-      } else if (error?.code === 'auth/invalid-email') {
+      } else if (firebaseError?.code === 'auth/invalid-email') {
         message = "Invalid email address";
-      } else if (error?.code === 'auth/network-request-failed') {
+      } else if (firebaseError?.code === 'auth/network-request-failed') {
         message = "Network error. Please check your connection and try again";
       }
       // Handle API errors (format: "status: message")
-      else if (error?.message) {
-        const errorMsg = error.message;
+      else if (firebaseError?.message) {
+        const errorMsg = firebaseError.message;
         // Check if it's an API error (format: "status: message")
         const apiErrorMatch = errorMsg.match(/^\d+:\s*(.+)$/);
         if (apiErrorMatch) {

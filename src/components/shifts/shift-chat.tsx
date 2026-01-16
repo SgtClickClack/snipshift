@@ -81,12 +81,7 @@ export default function ShiftChat({ shiftId, shiftTitle, otherUser, onClose }: S
       return { previousMessages, tempId };
     },
     onError: (error: any, content: string, context) => {
-      // Rollback to previous state on error
-      if (context?.previousMessages) {
-        queryClient.setQueryData(queryKey, context.previousMessages);
-      }
-
-      // Mark the optimistic message as errored (if it still exists)
+      // Mark the optimistic message as errored (keep it visible for retry)
       queryClient.setQueryData<OptimisticShiftMessage[]>(queryKey, (old = []) =>
         old.map((msg) =>
           msg.tempId === context?.tempId
@@ -137,6 +132,11 @@ export default function ShiftChat({ shiftId, shiftTitle, otherUser, onClose }: S
   const handleRetryFailedMessage = (tempId: string) => {
     const failedMessage = messages.find((msg) => (msg as OptimisticShiftMessage).tempId === tempId);
     if (failedMessage && !sendMessageMutation.isPending) {
+      // Remove the failed message before retrying
+      queryClient.setQueryData<ShiftMessage[]>(queryKey, (old = []) =>
+        old.filter((msg) => (msg as OptimisticShiftMessage).tempId !== tempId)
+      );
+      // Retry sending
       sendMessageMutation.mutate(failedMessage.content);
     }
   };

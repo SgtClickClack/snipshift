@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import NotificationDropdown from "./notification-dropdown";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useTabSync } from "@/hooks/useTabSync";
 
 interface NotificationBellProps {
   className?: string;
@@ -17,6 +18,17 @@ export default function NotificationBell({
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   const { notifications, unreadCount, handleNotificationClick, handleMarkAllRead } = useNotifications();
+  
+  // Sync unread count across tabs for notification badges
+  const [syncedUnreadCount, setSyncedUnreadCount] = useTabSync('hospogo_notification_unread_count', unreadCount);
+  
+  // Update synced count when unreadCount changes
+  useEffect(() => {
+    setSyncedUnreadCount(unreadCount);
+  }, [unreadCount, setSyncedUnreadCount]);
+  
+  // Use synced count for badge display (ensures cross-tab synchronization)
+  const displayUnreadCount = syncedUnreadCount;
 
   // Handle clicking outside to close dropdown
   useEffect(() => {
@@ -40,14 +52,14 @@ export default function NotificationBell({
     };
   }, [isOpen]);
 
-  // Animate bell when new notifications arrive
+  // Animate bell when new notifications arrive (check synced count for cross-tab updates)
   useEffect(() => {
-    if (unreadCount > 0) {
+    if (displayUnreadCount > 0) {
       setHasNewNotifications(true);
       const timer = setTimeout(() => setHasNewNotifications(false), 1000);
       return () => clearTimeout(timer);
     }
-  }, [unreadCount]);
+  }, [displayUnreadCount]);
 
   const handleBellClick = () => {
     setIsOpen(!isOpen);
@@ -76,17 +88,17 @@ export default function NotificationBell({
         onClick={handleBellClick}
         className={`relative p-2 hover:bg-steel-700 ${hasNewNotifications ? 'animate-bounce' : ''}`}
         data-testid="notification-bell"
-        aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+        aria-label={`Notifications ${displayUnreadCount > 0 ? `(${displayUnreadCount} unread)` : ''}`}
       >
         <Bell className={`w-5 h-5 text-white hover:text-steel-200`} />
         
-        {/* Notification Badge */}
-        {unreadCount > 0 && (
+        {/* Notification Badge - synced across tabs */}
+        {displayUnreadCount > 0 && (
           <div 
             className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full min-w-5 h-5 flex items-center justify-center text-xs font-medium animate-pulse"
             data-testid="notification-badge"
           >
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {displayUnreadCount > 99 ? '99+' : displayUnreadCount}
           </div>
         )}
 

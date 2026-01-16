@@ -58,7 +58,30 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         );
       }
 
-      throw new Error(errorData?.message || "Failed to create user account");
+      // For 500 errors, check if it's a database schema issue
+      if (registerRes.status === 500) {
+        const errorMessage = errorData?.message || errorData?.error || "Failed to create user account";
+        const errorDetails = errorData?.details || "";
+        
+        // Check for common database schema errors
+        if (errorMessage.includes("column") && errorMessage.includes("does not exist")) {
+          throw new Error(
+            "Database schema is out of sync. Please contact support or try again after the database is updated."
+          );
+        }
+        
+        // Log full error details for debugging
+        console.error('[GoogleAuthButton] Registration failed:', {
+          status: registerRes.status,
+          message: errorMessage,
+          details: errorDetails,
+          error: errorData
+        });
+        
+        throw new Error(errorMessage);
+      }
+
+      throw new Error(errorData?.message || errorData?.error || "Failed to create user account");
     }
     
     logger.debug("GoogleAuthButton", "User ensured in database", { email });

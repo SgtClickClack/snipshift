@@ -54,9 +54,8 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
   // Mutation for sending messages with optimistic updates
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      await messagingService.sendMessage(chatId, user!.id, otherUser.id, content);
-      // Refetch messages to get the server response with proper id and timestamp
-      return messagingService.getChatMessages(chatId);
+      const newMessage = await messagingService.sendMessage(chatId, user!.id, otherUser.id, content);
+      return newMessage;
     },
     onMutate: async (content: string) => {
       // Cancel outgoing refetches to avoid overwriting optimistic update
@@ -85,12 +84,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
       return { previousMessages, tempId };
     },
     onError: (error: any, content: string, context) => {
-      // Rollback to previous state on error
-      if (context?.previousMessages) {
-        queryClient.setQueryData(queryKey, context.previousMessages);
-      }
-
-      // Mark the optimistic message as errored (if it still exists)
+      // Mark the optimistic message as errored (keep it visible for retry)
       queryClient.setQueryData<OptimisticMessage[]>(queryKey, (old = []) =>
         old.map((msg) =>
           msg.tempId === context?.tempId
@@ -106,9 +100,12 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
         variant: 'destructive',
       });
     },
-    onSuccess: (data: Message[]) => {
-      // Replace optimistic messages with server response
-      queryClient.setQueryData<Message[]>(queryKey, data);
+    onSuccess: (data: Message, content: string, context) => {
+      // Replace optimistic message with server response
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
+        const filtered = old.filter((msg) => (msg as OptimisticMessage).tempId !== context?.tempId);
+        return [...filtered, data];
+      });
     },
     onSettled: () => {
       // Refetch to ensure we have the latest data
@@ -136,6 +133,11 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
   const handleRetryFailedMessage = (tempId: string) => {
     const failedMessage = messages.find((msg) => (msg as OptimisticMessage).tempId === tempId);
     if (failedMessage && !sendMessageMutation.isPending) {
+      // Remove the failed message before retrying
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
+        old.filter((msg) => (msg as OptimisticMessage).tempId !== tempId)
+      );
+      // Retry sending
       sendMessageMutation.mutate(failedMessage.content);
     }
   };
@@ -216,6 +218,9 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
             messages.map((message, index) => {
               const showDateSeparator = shouldShowDateSeparator(message, messages[index - 1]);
               const isFromCurrentUser = message.senderId === user.id;
+              const optimisticMsg = message as OptimisticMessage;
+              const isOptimistic = optimisticMsg.isOptimistic;
+              const hasError = optimisticMsg.error;
               
               return (
                 <div key={message.id}>
@@ -241,19 +246,41 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
                     )}
                     
                     <div
-                      className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
+                      className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg relative ${
                         isFromCurrentUser
                           ? 'bg-primary text-primary-foreground ml-auto'
                           : 'bg-muted'
-                      }`}
+                      } ${isOptimistic ? 'opacity-70' : ''} ${hasError ? 'ring-2 ring-destructive' : ''}`}
                     >
-                      <div className="text-sm" data-testid={`message-content-${message.id}`}>
-                        {message.content}
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm flex-1" data-testid={`message-content-${message.id}`}>
+                          {message.content}
+                        </div>
+                        {isOptimistic && !hasError && (
+                          <Loader2 className="h-3 w-3 animate-spin opacity-60" />
+                        )}
+                        {hasError && optimisticMsg.tempId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 hover:bg-destructive/20"
+                            onClick={() => handleRetryFailedMessage(optimisticMsg.tempId)}
+                            title="Retry sending"
+                          >
+                            <AlertCircle className="h-3 w-3 text-destructive" />
+                          </Button>
+                        )}
                       </div>
-                      <div className={`text-xs mt-1 ${
+                      <div className={`text-xs mt-1 flex items-center gap-1 ${
                         isFromCurrentUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
                       }`} data-testid={`message-time-${message.id}`}>
-                        {formatMessageTime(message.timestamp)}
+                        {isOptimistic && !hasError && (
+                          <span className="text-[10px]">Sending...</span>
+                        )}
+                        {hasError && (
+                          <span className="text-[10px] text-destructive">Failed</span>
+                        )}
+                        {!isOptimistic && formatMessageTime(message.timestamp)}
                       </div>
                     </div>
                     
@@ -279,17 +306,21 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type your message..."
-              disabled={isSending}
+              disabled={sendMessageMutation.isPending}
               className="flex-1"
               data-testid="input-message"
             />
             <Button
               type="submit"
-              disabled={!newMessage.trim() || isSending}
+              disabled={!newMessage.trim() || sendMessageMutation.isPending}
               size="sm"
               data-testid="button-send-message"
             >
-              <Send className="h-4 w-4" />
+              {sendMessageMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </form>

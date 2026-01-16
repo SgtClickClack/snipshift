@@ -170,6 +170,35 @@ export default function ShopSchedulePage() {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedConfirmedShift, setSelectedConfirmedShift] = useState<ShiftDetails | null>(null);
 
+  // Handle browser back button to close modal
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (detailsModalOpen) {
+        setDetailsModalOpen(false);
+        setSelectedConfirmedShift(null);
+        // Remove shift param from URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('shift');
+        window.history.replaceState(null, '', url.toString());
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [detailsModalOpen]);
+
+  // Handle closing modal - clean up URL
+  const handleDetailsModalClose = useCallback((open: boolean) => {
+    setDetailsModalOpen(open);
+    if (!open) {
+      setSelectedConfirmedShift(null);
+      // Remove shift param from URL when closing
+      const url = new URL(window.location.href);
+      url.searchParams.delete('shift');
+      window.history.replaceState(null, '', url.toString());
+    }
+  }, []);
+
   // EditShiftModal state for editing OPEN shifts
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedOpenShift, setSelectedOpenShift] = useState<ShiftDetails | null>(null);
@@ -469,6 +498,10 @@ export default function ShopSchedulePage() {
     if (shift.status === 'confirmed') {
       setSelectedConfirmedShift(shift);
       setDetailsModalOpen(true);
+      // Update browser history for professional navigation experience
+      const url = new URL(window.location.href);
+      url.searchParams.set('shift', shift.id);
+      window.history.pushState({ shiftId: shift.id }, '', url.toString());
       return;
     }
     
@@ -874,7 +907,7 @@ export default function ShopSchedulePage() {
       </Dialog>
 
       {/* Shift Details Modal - Opens when clicking on a CONFIRMED shift */}
-      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+      <Dialog open={detailsModalOpen} onOpenChange={handleDetailsModalClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedConfirmedShift?.title || 'Shift Details'}</DialogTitle>

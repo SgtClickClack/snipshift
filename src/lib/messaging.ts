@@ -26,12 +26,22 @@ export class MessagingService {
   }
 
   // Send a message
-  async sendMessage(conversationId: string, senderId: string, receiverId: string, content: string): Promise<void> {
+  async sendMessage(conversationId: string, senderId: string, receiverId: string, content: string): Promise<Message> {
     try {
-      await apiRequest('POST', '/api/messages', {
+      const response = await apiRequest('POST', '/api/messages', {
         conversationId,
         content
       });
+      const data = await response.json();
+      // Transform API response to Message format
+      return {
+        id: data.id,
+        chatId: data.conversationId,
+        senderId: data.senderId,
+        content: data.content,
+        timestamp: data.createdAt,
+        read: false,
+      };
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
