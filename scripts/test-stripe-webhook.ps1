@@ -67,7 +67,7 @@ if ($startForwarding -eq "y" -or $startForwarding -eq "Y") {
 } else {
     Write-Host ""
     Write-Host "To start webhook forwarding manually, run:" -ForegroundColor Yellow
-    $forwardCommand = "stripe listen --forward-to localhost:5000/api/webhooks/stripe"
+    $forwardCommand = 'stripe listen --forward-to localhost:5000/api/webhooks/stripe'
     Write-Host $forwardCommand -ForegroundColor Green
     Write-Host ""
 }
