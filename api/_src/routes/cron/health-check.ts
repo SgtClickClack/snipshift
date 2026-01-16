@@ -27,10 +27,11 @@ router.get('/health-check', asyncHandler(async (req, res) => {
 
   if (!cronSecret) {
     console.error('[Cron Health Check] CRON_SECRET not configured in environment variables');
-    return res.status(500).json({ 
+    res.status(500).json({ 
       error: 'Cron secret not configured',
       message: 'CRON_SECRET environment variable is required for cron job security'
     });
+    return;
   }
 
   if (providedSecret !== cronSecret) {
@@ -39,10 +40,11 @@ router.get('/health-check', asyncHandler(async (req, res) => {
       ip: req.ip,
       userAgent: req.get('user-agent'),
     });
-    return res.status(401).json({ 
+    res.status(401).json({ 
       error: 'Unauthorized',
       message: 'Invalid or missing CRON_SECRET'
     });
+    return;
   }
 
   // Execute health monitoring
@@ -79,10 +81,11 @@ router.post('/health-check', asyncHandler(async (req, res) => {
 
   if (!cronSecret) {
     console.error('[Cron Health Check] CRON_SECRET not configured in environment variables');
-    return res.status(500).json({ 
+    res.status(500).json({ 
       error: 'Cron secret not configured',
       message: 'CRON_SECRET environment variable is required for cron job security'
     });
+    return;
   }
 
   if (providedSecret !== cronSecret) {
@@ -91,10 +94,11 @@ router.post('/health-check', asyncHandler(async (req, res) => {
       ip: req.ip,
       userAgent: req.get('user-agent'),
     });
-    return res.status(401).json({ 
+    res.status(401).json({ 
       error: 'Unauthorized',
       message: 'Invalid or missing CRON_SECRET'
     });
+    return;
   }
 
   // Execute health monitoring
