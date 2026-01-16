@@ -118,7 +118,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         <Route path="/waitlist" element={<WaitlistPage />} />
         
         {/* Public marketplace routes */}
-        <Route path="/marketplace/venue/:id" element={
+        <Route path="/marketplace/:id" element={
           <Suspense fallback={<PageLoadingFallback />}>
             <VenueProfilePage />
           </Suspense>

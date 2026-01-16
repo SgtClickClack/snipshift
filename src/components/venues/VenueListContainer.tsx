@@ -193,7 +193,7 @@ function VenueCard({ venue }: { venue: Venue }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/marketplace/venue/${venue.id}`);
+    navigate(`/marketplace/${venue.id}`);
   };
 
   return (
