@@ -68,18 +68,34 @@ Write-Host ""
 Write-Host "3️⃣  Configuring Stripe CLI with API key..." -ForegroundColor Yellow
 Write-Host ""
 
+# Stripe CLI stores config in ~/.config/stripe/config.toml
+# We'll set the API key via environment variable and config file
+$stripeConfigDir = Join-Path $env:USERPROFILE ".config\stripe"
+$stripeConfigFile = Join-Path $stripeConfigDir "config.toml"
+
 try {
-    # Set the test mode API key
-    $configResult = stripe config --set test_mode_api_key $stripeSecretKey 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "   ✅ Stripe CLI configured successfully" -ForegroundColor Green
-    } else {
-        Write-Host "   ⚠️  Configuration warning (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
-        Write-Host "   Output: $configResult" -ForegroundColor Gray
+    # Create config directory if it doesn't exist
+    if (-not (Test-Path $stripeConfigDir)) {
+        New-Item -ItemType Directory -Path $stripeConfigDir -Force | Out-Null
     }
+
+    # Write config file with API key
+    $configContent = @"
+[test_mode]
+api_key = "$stripeSecretKey"
+"@
+    
+    Set-Content -Path $stripeConfigFile -Value $configContent -Force
+    Write-Host "   ✅ Stripe CLI configured successfully" -ForegroundColor Green
+    Write-Host "   Config file: $stripeConfigFile" -ForegroundColor Gray
+    
+    # Also set as environment variable for current session
+    $env:STRIPE_API_KEY = $stripeSecretKey
+    Write-Host "   ✅ Environment variable set for current session" -ForegroundColor Green
 } catch {
     Write-Host "   ❌ Configuration error: $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
+    Write-Host "   Falling back to environment variable only" -ForegroundColor Yellow
+    $env:STRIPE_API_KEY = $stripeSecretKey
 }
 
 Write-Host ""
