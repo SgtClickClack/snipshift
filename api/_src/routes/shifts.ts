@@ -28,6 +28,8 @@ import { calculateDistance, validateLocationProximity } from '../utils/geofencin
 import * as shiftLogsRepo from '../repositories/shift-logs.repository.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
+import { uploadProofImage } from '../middleware/upload.js';
+import admin from 'firebase-admin';
 
 const router = Router();
 
@@ -1719,7 +1721,11 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
         throw new Error('Failed to create payment authorization');
       }
 
-      // Step 4: Update shift with assignee and payment info (within transaction)
+      // Step 4: Check if this is a substitution request
+      const originalWorkerId = lockedShift.substitution_requested_by;
+
+      // Step 5: Update shift with assignee and payment info (within transaction)
+      // Clear substitutionRequestedBy if it was set (substitution completed)
       const [updated] = await tx
         .update(shifts)
         .set({
@@ -1729,6 +1735,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
           paymentIntentId: paymentIntentId,
           applicationFeeAmount: commissionAmount,
           transferAmount: barberAmount,
+          substitutionRequestedBy: null, // Clear substitution flag
           updatedAt: new Date(),
         })
         .where(eq(shifts.id, id))
@@ -1738,7 +1745,25 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
         throw new Error('Failed to update shift');
       }
 
-      // Step 5: Expire all other invitations for this shift (within transaction)
+      // Step 6: If this was a substitution, release the original worker
+      if (originalWorkerId) {
+        // Reject any accepted application from the original worker
+        await tx
+          .update(shiftApplications)
+          .set({
+            status: 'rejected',
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(shiftApplications.shiftId, id),
+              eq(shiftApplications.workerId, originalWorkerId),
+              eq(shiftApplications.status, 'accepted')
+            )
+          );
+      }
+
+      // Step 7: Expire all other invitations for this shift (within transaction)
       await shiftInvitationsRepo.expireAllPendingInvitationsForShift(id, userId);
       await shiftOffersRepo.declineAllPendingOffersForShift(id);
 
@@ -1770,6 +1795,24 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
     } catch (error) {
       // Log error but don't fail the request
       console.error('[POST /api/shifts/:id/accept] Error sending notification:', error);
+    }
+
+    // Notify the original worker if this was a substitution
+    if (shift.substitutionRequestedBy) {
+      try {
+        await notificationsService.createInAppNotification(
+          shift.substitutionRequestedBy,
+          'SYSTEM',
+          'Substitution Completed',
+          `A substitute has been found for "${shift.title}". You have been released from this shift.`,
+          {
+            shiftId: shift.id,
+            type: 'substitution_completed',
+          }
+        );
+      } catch (error) {
+        console.error('[POST /api/shifts/:id/accept] Error notifying original worker:', error);
+      }
     }
 
     res.status(200).json(updatedShift);
@@ -2807,13 +2850,20 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
     return;
   }
 
-  // Double-booking protection: Check if user already has a shift at this time
-  const userShifts = await shiftsRepo.getShiftsByAssignee(userId);
+  // Conflict detection: Check for overlapping shifts
+  // All times are stored in UTC, but we compare them directly for overlap detection
   const shiftStart = new Date(shift.startTime);
   const shiftEnd = new Date(shift.endTime);
 
-  const hasOverlap = userShifts.some((userShift) => {
-    // Only check confirmed or accepted shifts
+  // Helper function to check if two time ranges overlap
+  const doShiftsOverlap = (start1: Date, end1: Date, start2: Date, end2: Date): boolean => {
+    // Shifts overlap if one starts before the other ends
+    return start1 < end2 && start2 < end1;
+  };
+
+  // 1. Check confirmed/filled shifts (already assigned)
+  const userShifts = await shiftsRepo.getShiftsByAssignee(userId);
+  const hasOverlapWithConfirmed = userShifts.some((userShift) => {
     if (userShift.status !== 'confirmed' && userShift.status !== 'filled') {
       return false;
     }
@@ -2821,16 +2871,49 @@ router.post('/:id/apply', authenticateUser, asyncHandler(async (req: Authenticat
     const userShiftStart = new Date(userShift.startTime);
     const userShiftEnd = new Date(userShift.endTime);
 
-    // Check if shifts overlap
-    return (
-      (shiftStart >= userShiftStart && shiftStart < userShiftEnd) ||
-      (shiftEnd > userShiftStart && shiftEnd <= userShiftEnd) ||
-      (shiftStart <= userShiftStart && shiftEnd >= userShiftEnd)
-    );
+    return doShiftsOverlap(shiftStart, shiftEnd, userShiftStart, userShiftEnd);
   });
 
-  if (hasOverlap) {
-    res.status(409).json({ message: 'You already have a shift scheduled during this time' });
+  // 2. Check accepted shift applications
+  const acceptedApplications = await shiftApplicationsRepo.getApplicationsByWorker(userId);
+  const acceptedShiftIds = acceptedApplications
+    .filter(app => app.status === 'accepted')
+    .map(app => app.shiftId);
+
+  let hasOverlapWithAccepted = false;
+  let conflictingShift: typeof shifts.$inferSelect | null = null;
+  
+  if (acceptedShiftIds.length > 0) {
+    const acceptedShifts = await Promise.all(
+      acceptedShiftIds.map(id => shiftsRepo.getShiftById(id))
+    );
+    
+    for (const acceptedShift of acceptedShifts) {
+      if (!acceptedShift) continue;
+      
+      const acceptedStart = new Date(acceptedShift.startTime);
+      const acceptedEnd = new Date(acceptedShift.endTime);
+
+      if (doShiftsOverlap(shiftStart, shiftEnd, acceptedStart, acceptedEnd)) {
+        hasOverlapWithAccepted = true;
+        conflictingShift = acceptedShift;
+        break;
+      }
+    }
+  }
+
+  if (hasOverlapWithConfirmed || hasOverlapWithAccepted) {
+    res.status(400).json({ 
+      message: 'This shift conflicts with an existing accepted shift',
+      code: 'SHIFT_CONFLICT',
+      conflictType: hasOverlapWithConfirmed ? 'confirmed' : 'accepted',
+      conflictingShift: conflictingShift ? {
+        id: conflictingShift.id,
+        title: conflictingShift.title,
+        startTime: conflictingShift.startTime.toISOString(),
+        endTime: conflictingShift.endTime.toISOString(),
+      } : null
+    });
     return;
   }
 
@@ -3036,17 +3119,40 @@ router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: Aut
           })
           .where(eq(shiftApplications.id, id));
 
-        // 3. Update shift with assignee and mark as filled
+        // 3. Check if this is a substitution request
+        const originalWorkerId = lockedShift.substitution_requested_by;
+        
+        // 4. Update shift with assignee and mark as filled
+        // Clear substitutionRequestedBy if it was set (substitution completed)
         await tx
           .update(shifts)
           .set({
             assigneeId: application.workerId,
             status: 'filled',
+            substitutionRequestedBy: null, // Clear substitution flag
             updatedAt: new Date(),
           })
           .where(eq(shifts.id, application.shiftId));
 
-        // 4. Auto-reject other pending applications for this shift
+        // 5. If this was a substitution, release the original worker
+        if (originalWorkerId) {
+          // Reject any accepted application from the original worker
+          await tx
+            .update(shiftApplications)
+            .set({
+              status: 'rejected',
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(shiftApplications.shiftId, application.shiftId),
+                eq(shiftApplications.workerId, originalWorkerId),
+                eq(shiftApplications.status, 'accepted')
+              )
+            );
+        }
+
+        // 6. Auto-reject other pending applications for this shift
         await tx
           .update(shiftApplications)
           .set({
@@ -3062,18 +3168,37 @@ router.patch('/applications/:id', authenticateUser, asyncHandler(async (req: Aut
           );
       });
 
-      // Fetch updated application
+      // Fetch updated application and shift
       const updatedApplication = await shiftApplicationsRepo.getShiftApplicationById(id);
+      const updatedShift = await shiftsRepo.getShiftById(application.shiftId);
 
-      // Notify the worker
+      // Notify the new worker
       try {
         await notificationsService.notifyApplicationApproved(
           application.workerId,
-          shift,
+          updatedShift,
           null
         );
       } catch (error) {
         console.error('[PATCH /api/shifts/applications/:id] Error sending approval notification:', error);
+      }
+
+      // Notify the original worker if this was a substitution
+      if (shift.substitutionRequestedBy) {
+        try {
+          await notificationsService.createInAppNotification(
+            shift.substitutionRequestedBy,
+            'SYSTEM',
+            'Substitution Completed',
+            `A substitute has been found for "${shift.title}". You have been released from this shift.`,
+            {
+              shiftId: shift.id,
+              type: 'substitution_completed',
+            }
+          );
+        } catch (error) {
+          console.error('[PATCH /api/shifts/applications/:id] Error notifying original worker:', error);
+        }
       }
 
       res.status(200).json({
@@ -3153,6 +3278,24 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
   // Verify shift is not already completed
   if (shift.status === 'completed') {
     res.status(400).json({ message: 'Shift is already completed' });
+    return;
+  }
+
+  // Verify shift has proof photo (required for completion)
+  if (!shift.proofImageUrl) {
+    res.status(400).json({ 
+      message: 'Cannot complete shift: Worker has not uploaded proof photo. Please wait for the worker to clock out with proof photo.',
+      error: 'PROOF_PHOTO_REQUIRED'
+    });
+    return;
+  }
+
+  // Verify shift is in pending_completion status (worker has clocked out)
+  if (shift.status !== 'pending_completion') {
+    res.status(400).json({ 
+      message: 'Shift must be clocked out by worker before completion. Current status: ' + shift.status,
+      error: 'INVALID_STATUS'
+    });
     return;
   }
 
@@ -3299,6 +3442,187 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
       return;
     }
     
+    throw error;
+  }
+}));
+
+// Request substitution for an accepted shift
+router.patch('/:id/request-substitute', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Get shift to verify it exists and is assigned to the worker
+  const shift = await shiftsRepo.getShiftById(id);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Check if shift is assigned to this worker
+  const isAssignedToWorker = shift.assigneeId === userId;
+  if (!isAssignedToWorker) {
+    // Also check if worker has an accepted application for this shift
+    const applications = await shiftApplicationsRepo.getApplicationsByWorker(userId);
+    const hasAcceptedApplication = applications.some(
+      app => app.shiftId === id && app.status === 'accepted'
+    );
+
+    if (!hasAcceptedApplication) {
+      res.status(403).json({ message: 'You can only request substitution for shifts assigned to you' });
+      return;
+    }
+  }
+
+  // Check if shift is in confirmed/filled status or has accepted application
+  const isConfirmed = shift.status === 'confirmed' || shift.status === 'filled';
+  const applications = await shiftApplicationsRepo.getApplicationsByWorker(userId);
+  const hasAcceptedApplication = applications.some(
+    app => app.shiftId === id && app.status === 'accepted'
+  );
+
+  if (!isConfirmed && !hasAcceptedApplication) {
+    res.status(400).json({ message: 'Shift must be confirmed or have an accepted application to request substitution' });
+    return;
+  }
+
+  // Check if request is made at least 24 hours before shift start
+  const shiftStart = new Date(shift.startTime);
+  const now = new Date();
+  const hoursUntilStart = (shiftStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  if (hoursUntilStart < 24) {
+    res.status(400).json({ 
+      message: 'Substitution requests must be made at least 24 hours before the shift start time',
+      error: 'TOO_LATE_FOR_SUBSTITUTION'
+    });
+    return;
+  }
+
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ message: 'Database not available' });
+    return;
+  }
+
+  try {
+    // Use transaction to ensure atomicity
+    await db.transaction(async (tx) => {
+      // 1. Update shift: set status to 'open', keep assigneeId for now (will be cleared when substitute accepts)
+      // Set substitutionRequestedBy to track the original worker
+      await tx
+        .update(shifts)
+        .set({
+          status: 'open',
+          substitutionRequestedBy: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(shifts.id, id));
+
+      // 2. If there's an accepted application, we'll keep it but the shift is now open for others
+      // The original worker will be released when a new worker accepts
+    });
+
+    // 3. Find recommended workers for this shift
+    // Get professionals who match the shift criteria
+    const shiftLat = shift.lat ? parseFloat(shift.lat.toString()) : null;
+    const shiftLng = shift.lng ? parseFloat(shift.lng.toString()) : null;
+
+    // Get all active professionals (excluding the requesting worker)
+    const allProfessionals = await usersRepo.listProfessionals({
+      search: '',
+      limit: 100,
+      offset: 0,
+    });
+
+    // Filter professionals who:
+    // - Are not the requesting worker
+    // - Match the shift role (if specified)
+    // - Are within reasonable distance (if location available)
+    // - Haven't already applied to this shift
+    const existingApplications = await shiftApplicationsRepo.getApplicationsForShift(id);
+    const existingWorkerIds = new Set(existingApplications.map(app => app.workerId));
+    existingWorkerIds.add(userId); // Exclude the requesting worker
+
+    const recommendedWorkers = allProfessionals
+      .filter(prof => {
+        // Exclude the requesting worker and those who already applied
+        if (existingWorkerIds.has(prof.id)) {
+          return false;
+        }
+        // Additional filtering can be added here (role matching, distance, etc.)
+        return true;
+      })
+      .slice(0, 20); // Limit to top 20 recommended workers
+
+    // 4. Send notifications to recommended workers
+    const venue = await usersRepo.getUserById(shift.employerId);
+    const venueName = venue?.name || 'Venue';
+
+    for (const worker of recommendedWorkers) {
+      try {
+        await notificationsService.notifyProfessionalOfInvite(worker.id, {
+          id: shift.id,
+          title: `${shift.title} (Substitution Requested)`,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+          location: shift.location,
+          hourlyRate: shift.hourlyRate,
+          employerId: shift.employerId,
+        });
+
+        // Trigger Pusher real-time event
+        if (venue) {
+          await triggerShiftInvite(worker.id, {
+            shiftId: shift.id,
+            shiftTitle: `${shift.title} (Substitution Requested)`,
+            venueName: venueName,
+            venueId: shift.employerId,
+          });
+        }
+      } catch (error) {
+        console.error('[PATCH /api/shifts/:id/request-substitute] Error sending notification to', worker.id, ':', error);
+      }
+    }
+
+    // 5. Notify the venue owner about the substitution request
+    try {
+      const requestingWorker = await usersRepo.getUserById(userId);
+      const workerName = requestingWorker?.name || 'Worker';
+      
+      await notificationsService.createInAppNotification(
+        shift.employerId,
+        'SYSTEM',
+        'Substitution Requested',
+        `${workerName} has requested a substitute for "${shift.title}"`,
+        {
+          shiftId: shift.id,
+          type: 'substitution_requested',
+          requestingWorkerId: userId,
+        }
+      );
+    } catch (error) {
+      console.error('[PATCH /api/shifts/:id/request-substitute] Error notifying venue owner:', error);
+    }
+
+    // Fetch updated shift
+    const updatedShift = await shiftsRepo.getShiftById(id);
+
+    res.status(200).json({
+      message: 'Substitution request submitted successfully',
+      shift: updatedShift,
+      notifiedWorkers: recommendedWorkers.length,
+    });
+  } catch (error: any) {
+    console.error('[PATCH /api/shifts/:id/request-substitute] Error:', {
+      message: error?.message,
+      shiftId: id,
+      userId,
+    });
     throw error;
   }
 }));
@@ -3907,6 +4231,359 @@ router.post('/:id/clock-in', authenticateUser, asyncHandler(async (req: Authenti
   });
 }));
 
+// Check In - Staff action to check in for a shift with geofencing validation
+// PATCH /api/shifts/:id/check-in
+router.patch('/:id/check-in', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Validate request body - expect latitude and longitude
+  const { latitude, longitude } = req.body;
+
+  if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+    res.status(400).json({ 
+      message: 'Invalid coordinates. latitude and longitude are required and must be numbers.',
+      error: 'INVALID_COORDINATES'
+    });
+    return;
+  }
+
+  // Validate coordinate ranges
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    res.status(400).json({ 
+      message: 'Invalid coordinate values. Latitude must be between -90 and 90, longitude between -180 and 180.',
+      error: 'INVALID_COORDINATE_RANGE'
+    });
+    return;
+  }
+
+  // Get the shift
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Verify the user is the assigned staff member for this shift
+  if (shift.assigneeId !== userId) {
+    res.status(403).json({ 
+      message: 'Only the assigned staff member can check in for this shift',
+      error: 'UNAUTHORIZED'
+    });
+    return;
+  }
+
+  // Check if shift is already checked in
+  if (shift.attendanceStatus === 'checked_in') {
+    res.status(400).json({ 
+      message: 'Shift has already been checked in',
+      error: 'ALREADY_CHECKED_IN',
+      actualStartTime: (shift as any).actualStartTime
+    });
+    return;
+  }
+
+  // Get venue coordinates
+  let venueLat: number | null = null;
+  let venueLng: number | null = null;
+
+  const shiftLatRaw = (shift as any).lat;
+  const shiftLngRaw = (shift as any).lng;
+  
+  if (shiftLatRaw !== null && shiftLatRaw !== undefined && shiftLngRaw !== null && shiftLngRaw !== undefined) {
+    const shiftLatParsed = typeof shiftLatRaw === 'number' ? shiftLatRaw : typeof shiftLatRaw === 'string' ? parseFloat(shiftLatRaw) : NaN;
+    const shiftLngParsed = typeof shiftLngRaw === 'number' ? shiftLngRaw : typeof shiftLngRaw === 'string' ? parseFloat(shiftLngRaw) : NaN;
+    
+    if (Number.isFinite(shiftLatParsed) && Number.isFinite(shiftLngParsed)) {
+      venueLat = shiftLatParsed;
+      venueLng = shiftLngParsed;
+    }
+  }
+
+  // If shift doesn't have coordinates, try to get them from the venue
+  if (venueLat === null || venueLng === null) {
+    const venue = await venuesRepo.getVenueByUserId(shift.employerId);
+    if (venue && venue.address?.lat && venue.address?.lng) {
+      const latValue = venue.address.lat;
+      const lngValue = venue.address.lng;
+      venueLat = typeof latValue === 'number' ? latValue : parseFloat(String(latValue));
+      venueLng = typeof lngValue === 'number' ? lngValue : parseFloat(String(lngValue));
+    }
+  }
+
+  // If still no coordinates, reject the request
+  if (venueLat === null || venueLng === null) {
+    res.status(400).json({ 
+      message: 'Venue location coordinates are not available. Cannot validate geofencing.',
+      error: 'VENUE_COORDINATES_MISSING'
+    });
+    return;
+  }
+
+  // Calculate distance using Haversine formula (200m radius requirement)
+  const maxRadiusMeters = 200;
+  const proximityCheck = validateLocationProximity(
+    latitude,
+    longitude,
+    venueLat,
+    venueLng,
+    maxRadiusMeters
+  );
+
+  // Reject if too far from venue
+  if (!proximityCheck.isValid) {
+    // Log the failed attempt for audit
+    await shiftLogsRepo.createShiftLog({
+      shiftId,
+      staffId: userId,
+      eventType: 'CHECK_IN_ATTEMPT_FAILED',
+      latitude,
+      longitude,
+      venueLatitude: venueLat,
+      venueLongitude: venueLng,
+      distanceMeters: proximityCheck.distance,
+      accuracy: null,
+      metadata: JSON.stringify({ reason: 'TOO_FAR_FROM_VENUE', maxRadiusMeters, distance: proximityCheck.distance })
+    });
+
+    res.status(403).json({
+      success: false,
+      error: 'TOO_FAR_FROM_VENUE',
+      message: 'You must be at the venue to check in',
+      distance: proximityCheck.distance,
+      maxDistance: maxRadiusMeters
+    });
+    return;
+  }
+
+  // All validations passed - proceed with check-in
+  const actualStartTime = new Date();
+
+  // Update shift status and actual start time
+  const updatedShift = await shiftsRepo.updateShift(shiftId, {
+    attendanceStatus: 'checked_in',
+    actualStartTime: actualStartTime,
+  });
+
+  if (!updatedShift) {
+    res.status(500).json({ 
+      message: 'Failed to update shift status',
+      error: 'UPDATE_FAILED'
+    });
+    return;
+  }
+
+  // Log the successful check-in event with precise distance for audit
+  await shiftLogsRepo.createShiftLog({
+    shiftId,
+    staffId: userId,
+    eventType: 'CHECK_IN',
+    latitude,
+    longitude,
+    venueLatitude: venueLat,
+    venueLongitude: venueLng,
+    distanceMeters: proximityCheck.distance, // Precise distance logged for audit
+    accuracy: null,
+    metadata: JSON.stringify({ 
+      actualStartTime: actualStartTime.toISOString(),
+      distance: proximityCheck.distance,
+      maxRadiusMeters
+    })
+  });
+
+  res.status(200).json({
+    success: true,
+    actualStartTime: actualStartTime.toISOString(),
+    message: 'Checked in successfully',
+    distance: proximityCheck.distance, // Return distance for client display
+    maxDistance: maxRadiusMeters,
+    shift: {
+      id: shift.id,
+      title: shift.title,
+      attendanceStatus: 'checked_in',
+      actualStartTime: actualStartTime.toISOString()
+    }
+  });
+}));
+
+// Clock Out - Staff action to clock out from a shift with proof photo upload
+// PATCH /api/shifts/:id/clock-out
+router.patch('/:id/clock-out', authenticateUser, uploadProofImage, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const { id: shiftId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(shiftId)) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Get the shift
+  const shift = await shiftsRepo.getShiftById(shiftId);
+  if (!shift) {
+    res.status(404).json({ message: 'Shift not found' });
+    return;
+  }
+
+  // Verify the user is the assigned staff member for this shift
+  if (shift.assigneeId !== userId) {
+    res.status(403).json({ 
+      message: 'Only the assigned staff member can clock out from this shift',
+      error: 'UNAUTHORIZED'
+    });
+    return;
+  }
+
+  // Check if shift has been clocked in
+  if (!shift.clockInTime && (shift as any).attendanceStatus !== 'checked_in') {
+    res.status(400).json({ 
+      message: 'You must clock in before clocking out',
+      error: 'NOT_CLOCKED_IN'
+    });
+    return;
+  }
+
+  // Verify proof image is provided
+  const file = (req as any).file;
+  if (!file) {
+    res.status(400).json({ 
+      message: 'Proof photo is required. Please capture a photo to complete your shift.',
+      error: 'PROOF_IMAGE_REQUIRED'
+    });
+    return;
+  }
+
+  // Verify it's an image
+  if (!file.mimetype.startsWith('image/')) {
+    res.status(400).json({ 
+      message: 'Proof must be an image file',
+      error: 'INVALID_FILE_TYPE'
+    });
+    return;
+  }
+
+  // Upload proof image to Firebase Storage
+  let proofImageUrl: string;
+  try {
+    const firebaseAdmin = (admin as any).default || admin;
+    const appName = process.env.FIREBASE_ADMIN_APP_NAME || 'hospogo-worker-v2';
+    let app: admin.app.App;
+    try {
+      app = firebaseAdmin.app(appName);
+    } catch (e) {
+      throw new Error('Firebase app not initialized');
+    }
+    const bucket = firebaseAdmin.storage(app).bucket();
+
+    const timestamp = Date.now();
+    const fileExtension = file.originalname.split('.').pop() || 'jpg';
+    const fileName = `shifts/${shiftId}/proof-${timestamp}.${fileExtension}`;
+    const firebaseFile = bucket.file(fileName);
+
+    await firebaseFile.save(file.buffer, {
+      metadata: {
+        contentType: file.mimetype,
+        metadata: {
+          uploadedBy: userId,
+          shiftId: shiftId,
+          uploadedAt: new Date().toISOString(),
+          type: 'shift_completion_proof',
+        },
+      },
+    });
+
+    // Make file accessible
+    await firebaseFile.makePublic();
+    proofImageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
+    console.log(`[CLOCK_OUT] Proof image uploaded for shift ${shiftId}: ${proofImageUrl.substring(0, 50)}...`);
+  } catch (error: any) {
+    console.error('[CLOCK_OUT] Failed to upload proof image:', error);
+    res.status(500).json({ 
+      message: 'Failed to upload proof photo: ' + (error.message || 'Unknown error'),
+      error: 'UPLOAD_FAILED'
+    });
+    return;
+  }
+
+  // Update shift with proof image URL and mark as pending completion
+  // Status should be 'pending_completion' so venue owner can review the photo before approving
+  const updatedShift = await shiftsRepo.updateShift(shiftId, {
+    proofImageUrl: proofImageUrl,
+    status: 'pending_completion', // Venue owner must review photo before completing
+  });
+
+  if (!updatedShift) {
+    res.status(500).json({ 
+      message: 'Failed to update shift',
+      error: 'UPDATE_FAILED'
+    });
+    return;
+  }
+
+  // Log the clock-out event
+  await shiftLogsRepo.createShiftLog({
+    shiftId,
+    staffId: userId,
+    eventType: 'CLOCK_OUT',
+    latitude: null,
+    longitude: null,
+    venueLatitude: null,
+    venueLongitude: null,
+    distanceMeters: null,
+    accuracy: null,
+    metadata: JSON.stringify({ 
+      clockOutTime: new Date().toISOString(),
+      proofImageUrl: proofImageUrl,
+    })
+  });
+
+  // Notify venue owner that shift is ready for review
+  try {
+    await notificationsService.createInAppNotification(
+      shift.employerId,
+      'SYSTEM',
+      'Shift Ready for Review',
+      `Worker has clocked out from "${shift.title}". Please review the proof photo and complete the shift.`,
+      {
+        shiftId: shift.id,
+        type: 'shift_pending_completion',
+        proofImageUrl: proofImageUrl,
+      }
+    );
+  } catch (error) {
+    console.error('[CLOCK_OUT] Error sending notification:', error);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Clocked out successfully. Your shift is pending venue owner review.',
+    proofImageUrl: proofImageUrl,
+    shift: {
+      id: shift.id,
+      title: shift.title,
+      status: 'pending_completion',
+      proofImageUrl: proofImageUrl,
+    }
+  });
+}));
+
 // Get a single shift by ID (public read)
 // NOTE: Keep this near the end of the file to avoid shadowing more specific routes like:
 // - /shop/:userId
@@ -3956,10 +4633,12 @@ router.get('/:id', asyncHandler(async (req, res) => {
     rsaRequired: (shift as any).rsaRequired ?? false,
     expectedPax: (shift as any).expectedPax ?? null,
     status: shift.status,
+    attendanceStatus: shift.attendanceStatus ?? null,
     employerId: shift.employerId,
     assigneeId: shift.assigneeId ?? null,
     shopName: employer?.name ?? null,
     shopAvatarUrl: employer?.avatarUrl ?? null,
+    actualStartTime: (shift as any).actualStartTime ? toISOStringSafe((shift as any).actualStartTime) : null,
     createdAt: toISOStringSafe((shift as any).createdAt),
     updatedAt: toISOStringSafe((shift as any).updatedAt),
   });

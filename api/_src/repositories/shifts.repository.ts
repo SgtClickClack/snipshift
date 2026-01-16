@@ -162,6 +162,7 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
         clockInTime: shifts.clockInTime,
         actualStartTime: shifts.actualStartTime,
         substitutionRequestedBy: shifts.substitutionRequestedBy,
+        proofImageUrl: shifts.proofImageUrl,
         createdAt: shifts.createdAt,
         updatedAt: shifts.updatedAt,
         // Employer (shop) fields
@@ -255,6 +256,7 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       clockInTime: shifts.clockInTime,
       actualStartTime: shifts.actualStartTime,
       substitutionRequestedBy: shifts.substitutionRequestedBy,
+      proofImageUrl: shifts.proofImageUrl,
       createdAt: shifts.createdAt,
       updatedAt: shifts.updatedAt,
       // Employer (shop) fields
@@ -902,6 +904,8 @@ export async function updateShift(
     isEmergencyFill?: boolean;
     clockInTime?: Date | string | null;
     actualStartTime?: Date | string | null;
+    substitutionRequestedBy?: string | null;
+    proofImageUrl?: string | null;
   }
 ): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
