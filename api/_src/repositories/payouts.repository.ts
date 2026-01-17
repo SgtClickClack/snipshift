@@ -36,13 +36,21 @@ export interface Payout {
   updatedAt: Date;
 }
 
+type DbLike = any;
+
+function getDbOr(dbOverride?: DbLike): DbLike | null {
+  if (dbOverride) return dbOverride;
+  return getDb();
+}
+
 /**
  * Create a new payout record
  */
 export async function createPayout(
-  input: CreatePayoutInput
+  input: CreatePayoutInput,
+  dbOverride?: DbLike
 ): Promise<Payout | null> {
-  const db = getDb();
+  const db = getDbOr(dbOverride);
   if (!db) {
     console.error('[PAYOUTS REPO] Database not available');
     return null;
@@ -75,9 +83,10 @@ export async function createPayout(
  * Get payout by shift ID
  */
 export async function getPayoutByShiftId(
-  shiftId: string
+  shiftId: string,
+  dbOverride?: DbLike
 ): Promise<Payout | null> {
-  const db = getDb();
+  const db = getDbOr(dbOverride);
   if (!db) {
     return null;
   }
@@ -110,7 +119,7 @@ export async function getPayoutsForWorker(
   shift: typeof shifts.$inferSelect | null;
   venue: typeof users.$inferSelect | null;
 }>> {
-  const db = getDb();
+  const db = getDbOr();
   if (!db) {
     return [];
   }
@@ -144,7 +153,11 @@ export async function getPayoutsForWorker(
       .where(whereClause)
       .orderBy(desc(payouts.createdAt));
 
-    return result.map((row) => ({
+    return (result as Array<{
+      payout: typeof payouts.$inferSelect;
+      shift: typeof shifts.$inferSelect | null;
+      venue: typeof users.$inferSelect | null;
+    }>).map((row) => ({
       ...row.payout,
       shift: row.shift,
       venue: row.venue,
@@ -171,7 +184,7 @@ export async function getPayoutsForVenue(
 ): Promise<Array<Payout & {
   shift: typeof shifts.$inferSelect | null;
 }>> {
-  const db = getDb();
+  const db = getDbOr();
   if (!db) {
     return [];
   }
@@ -203,7 +216,10 @@ export async function getPayoutsForVenue(
       .where(whereClause)
       .orderBy(desc(payouts.createdAt));
 
-    return result.map((row) => ({
+    return (result as Array<{
+      payout: typeof payouts.$inferSelect;
+      shift: typeof shifts.$inferSelect | null;
+    }>).map((row) => ({
       ...row.payout,
       shift: row.shift,
     })) as Array<Payout & {
@@ -221,9 +237,10 @@ export async function getPayoutsForVenue(
 export async function updatePayoutStatus(
   id: string,
   status: 'pending' | 'processing' | 'completed' | 'failed',
-  stripeTransferId?: string
+  opts?: { stripeTransferId?: string; stripeChargeId?: string },
+  dbOverride?: DbLike
 ): Promise<Payout | null> {
-  const db = getDb();
+  const db = getDbOr(dbOverride);
   if (!db) {
     return null;
   }
@@ -238,8 +255,12 @@ export async function updatePayoutStatus(
       updateData.processedAt = new Date();
     }
 
-    if (stripeTransferId) {
-      updateData.stripeTransferId = stripeTransferId;
+    if (opts?.stripeTransferId) {
+      updateData.stripeTransferId = opts.stripeTransferId;
+    }
+
+    if (opts?.stripeChargeId) {
+      updateData.stripeChargeId = opts.stripeChargeId;
     }
 
     const [updatedPayout] = await db

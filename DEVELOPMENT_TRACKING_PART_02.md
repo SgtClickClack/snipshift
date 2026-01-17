@@ -1,3 +1,61 @@
+#### 2026-01-18: Marketplace Guardrails (AuthZ Hardening + Payout Atomicity + Financial Ledger + Realtime Sync)
+
+**Core Components**
+- Authorization helpers (`api/_src/middleware/authorization.ts`)
+- Optional auth for public endpoints (`api/_src/middleware/auth.ts`)
+- Community feed personalization hardening (`api/_src/routes/community.ts`)
+- Self-only payments + chats enforcement (`api/_src/routes/payments.ts`, `api/_src/routes/chats.ts`)
+- Idempotent shift completion + payout reconciliation (`api/_src/routes/shifts.ts`, `api/_src/repositories/payouts.repository.ts`)
+- Weekly Pulse correctness (completed payouts only) (`api/_src/services/reporting.service.ts`)
+- Worker earnings totals based on completed payouts (`api/_src/routes/worker.ts`)
+- React Query ↔ Pusher correctness fix (`src/contexts/PusherContext.tsx`)
+- Immutable financial ledger (`api/_src/db/schema/financial-ledger.ts`, `api/_src/repositories/financial-ledger.repository.ts`)
+- Financial reconciliation cron (`api/_src/services/financial-reconciliation.service.ts`, `api/_src/routes/cron/financial-reconcile.ts`)
+
+**Key Features**
+- Prevented cross-user preference leakage by disallowing unauthenticated/foreign `userId` like-state enrichment on the public community feed.
+- Standardized “self-only” route enforcement via a shared middleware (`requireSelfParam`) to reduce future drift.
+- Refactored shift completion to be idempotent and concurrency-safe: payout is created as `processing`, then atomically transitioned to `completed`/`failed` based on Stripe capture outcome.
+- Ensured lifetime earnings and Weekly Pulse transaction volume are computed from **completed** payouts only (protects against inflated metrics under partial failures).
+- Fixed a realtime correctness gap: Pusher no longer relies on a non-existent `window.queryClient` and uses `useQueryClient()` directly with throttled reconnection refetch and stale-event dropping.
+- Added an append-only financial ledger + a secured cron reconciliation endpoint to support $100M-grade payment auditing and self-healing.
+
+**Integration Points**
+- Cron reconciliation endpoint: `GET/POST /api/cron/financial-reconcile` (requires `CRON_SECRET`)
+- Shift completion: `PATCH /api/shifts/:id/complete` now writes ledger entries and only counts earnings after payout completion.
+- Weekly Pulse: `getWeeklyMetrics()` now counts only `payouts.status='completed'` for transaction volume.
+- Realtime: `SHIFT_STATUS_UPDATE` invalidates `['shift', shiftId]` and drops out-of-order events by timestamp.
+
+**File Paths**
+- `api/_src/middleware/authorization.ts`
+- `api/_src/middleware/auth.ts`
+- `api/_src/routes/community.ts`
+- `api/_src/routes/payments.ts`
+- `api/_src/routes/chats.ts`
+- `api/_src/routes/shifts.ts`
+- `api/_src/repositories/payouts.repository.ts`
+- `api/_src/services/reporting.service.ts`
+- `api/_src/routes/worker.ts`
+- `api/_src/db/schema/financial-ledger.ts`
+- `api/_src/db/schema.ts`
+- `api/_src/db/migrations/0032_add_financial_ledger_entries.sql`
+- `api/_src/repositories/financial-ledger.repository.ts`
+- `api/_src/services/financial-reconciliation.service.ts`
+- `api/_src/routes/cron/financial-reconcile.ts`
+- `api/_src/index.ts`
+- `src/contexts/PusherContext.tsx`
+- `api/_src/tests/routes/community.feed-auth.test.ts`
+- `api/_src/tests/routes/payments.require-self.test.ts`
+- `api/_src/tests/routes/shifts.complete.payout.test.ts`
+- `api/_src/tests/repositories/financial-ledger.repository.test.ts`
+
+**Next Priority Task**
+- Configure a daily schedule (Vercel Cron) to call `/api/cron/financial-reconcile` with `CRON_SECRET`.
+
+**Code Organization & Quality**
+- Authorization logic centralized to reduce duplication and audit surface area.
+- Financial workflows are now explicitly modeled as state transitions with an append-only audit trail.
+
 #### 2026-01-16: Geofenced Check-in Verification
 
 **Core Components**

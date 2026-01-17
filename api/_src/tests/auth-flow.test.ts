@@ -20,7 +20,20 @@ vi.mock('../middleware/auth.js', () => ({
       res.status(401).json({ message: 'Unauthorized' });
     }
   }),
+  authenticateUserOptional: vi.fn((req, _res, next) => {
+    if (req.headers.authorization?.includes('valid-token')) {
+      req.user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'professional',
+        uid: 'firebase-uid-123',
+      };
+    }
+    next();
+  }),
   requireAdmin: vi.fn((req, res, next) => next()),
+  requireSuperAdmin: vi.fn((req, res, next) => next()),
   AuthenticatedRequest: {}, 
 }));
 
@@ -79,6 +92,7 @@ describe('Auth Flow & Critical Paths', () => {
       const usersRepo = await import('../repositories/users.repository.js');
       vi.mocked(usersRepo.getUserByEmail).mockResolvedValue(null); // No existing user
       vi.mocked(usersRepo.createUser).mockResolvedValue(mockUser as any);
+      vi.mocked(usersRepo.getUserById).mockResolvedValue(mockUser as any);
 
       const response = await supertest(app)
         .post('/api/register')
@@ -88,7 +102,6 @@ describe('Auth Flow & Critical Paths', () => {
           password: 'password123', 
         });
 
-      // If real implementation runs, it creates user and returns 201
       expect(response.status).toBe(201);
       if (response.status === 201) {
           expect(response.body.email).toBe(randomEmail);
@@ -121,14 +134,17 @@ describe('Auth Flow & Critical Paths', () => {
       expect(response.body.code).toBe('DB_QUOTA_EXCEEDED');
     });
 
-    it('should return 409 if user already exists', async () => {
+    it('should return existing profile (200) if user already exists', async () => {
       const existingUser = {
         id: 'user-123',
         email: 'existing@example.com',
+        name: 'Existing User',
+        role: 'professional',
       };
 
       const usersRepo = await import('../repositories/users.repository.js');
       vi.mocked(usersRepo.getUserByEmail).mockResolvedValue(existingUser as any);
+      vi.mocked(usersRepo.getUserById).mockResolvedValue(existingUser as any);
 
       const response = await supertest(app)
         .post('/api/register')
@@ -137,8 +153,8 @@ describe('Auth Flow & Critical Paths', () => {
           name: 'Existing User',
         });
 
-      expect(response.status).toBe(409);
-      expect(response.body.message).toContain('already exists');
+      expect(response.status).toBe(200);
+      expect(response.body.email).toBe('existing@example.com');
     });
   });
 

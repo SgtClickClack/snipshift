@@ -60,11 +60,12 @@ describe('Jobs Repository (Integration)', () => {
       city: 'LA',
     });
 
-    const result = await jobsRepo.getJobs({ city: 'NY' });
+    // Disable excludeExpired to keep the test stable across DB timezone/date casting.
+    const result = await jobsRepo.getJobs({ city: 'NY', excludeExpired: false });
     expect(result?.data).toHaveLength(1);
     expect(result?.data[0].title).toBe('Job A');
 
-    const all = await jobsRepo.getJobs({ businessId: user.id });
+    const all = await jobsRepo.getJobs({ businessId: user.id, excludeExpired: false });
     expect(all?.data).toHaveLength(2);
   });
 

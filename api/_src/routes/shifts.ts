@@ -3446,76 +3446,161 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
 
   // Import repositories
   const payoutsRepo = await import('../repositories/payouts.repository.js');
-  const usersRepo = await import('../repositories/users.repository.js');
+  const ledgerRepo = await import('../repositories/financial-ledger.repository.js');
 
   try {
-    // Use transaction to ensure atomicity
+    // STEP 1: Atomically mark shift completed (only from pending_completion) and create payout record.
+    // NOTE: Stripe capture is an external side effect and cannot be part of a DB transaction.
+    let payoutId: string | null = null;
     await db.transaction(async (tx) => {
-      // 1. Check if payout already exists
-      const existingPayout = await payoutsRepo.getPayoutByShiftId(id);
+      // Ensure shift is still completable (protects against concurrent completions).
+      const updated = await tx
+        .update(shifts)
+        .set({
+          status: 'completed',
+          attendanceStatus: 'completed',
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(shifts.id, id),
+            eq(shifts.employerId, userId),
+            eq(shifts.status, 'pending_completion')
+          )
+        )
+        .returning({ id: shifts.id });
+
+      if (!updated || updated.length === 0) {
+        throw new Error('Shift is not in a completable state (already completed or status changed)');
+      }
+
+      // Prevent duplicate payouts for the same shift (unique constraint exists, but we fail fast).
+      const existingPayout = await payoutsRepo.getPayoutByShiftId(id, tx);
       if (existingPayout) {
         throw new Error('Payout already exists for this shift');
       }
 
-      // 2. Capture payment if paymentIntentId exists and status is AUTHORIZED
-      let stripeChargeId: string | null = null;
-      if (shift.paymentIntentId && shift.paymentStatus === 'AUTHORIZED') {
-        try {
-          stripeChargeId = await stripeConnectService.capturePaymentIntentWithChargeId(shift.paymentIntentId);
-          if (!stripeChargeId) {
-            console.warn(`[SHIFT_COMPLETE] Failed to capture payment for shift ${id}`);
-          }
-        } catch (error: any) {
-          console.error(`[SHIFT_COMPLETE] Error capturing payment for shift ${id}:`, error);
-          // Continue with payout creation even if payment capture fails
-        }
-      }
-
-      // 3. Create payout record (only if assigneeId exists)
       if (!shift.assigneeId) {
         throw new Error('Cannot create payout: shift has no assigned worker');
       }
 
-      const payout = await payoutsRepo.createPayout({
-        shiftId: id,
-        workerId: shift.assigneeId,
-        venueId: shift.employerId,
-        amountCents,
-        hourlyRate: hourlyRate.toString(),
-        hoursWorked,
-        stripeChargeId: stripeChargeId || undefined,
-        status: 'completed', // Mark as completed immediately
-      });
+      const payout = await payoutsRepo.createPayout(
+        {
+          shiftId: id,
+          workerId: shift.assigneeId,
+          venueId: shift.employerId,
+          amountCents,
+          hourlyRate: hourlyRate.toString(),
+          hoursWorked,
+          status: 'processing', // Only mark completed after Stripe capture succeeds
+        },
+        tx
+      );
 
       if (!payout) {
         throw new Error('Failed to create payout record');
       }
 
-      // 4. Update shift status to completed
-      await tx
-        .update(shifts)
-        .set({
-          status: 'completed',
-          attendanceStatus: 'completed',
-          paymentStatus: stripeChargeId ? 'PAID' : shift.paymentStatus,
-          stripeChargeId: stripeChargeId || shift.stripeChargeId,
-          updatedAt: new Date(),
-        })
-        .where(eq(shifts.id, id));
+      payoutId = payout.id;
+    });
 
-      // 5. Update worker's total earnings
-      const worker = await usersRepo.getUserById(shift.assigneeId);
-      if (worker) {
-        const currentTotal = parseInt(worker.totalEarnedCents?.toString() || '0', 10);
-        const newTotal = currentTotal + amountCents;
-        
+    // STEP 2: Capture payment (if applicable), then atomically reconcile DB state.
+    const captureNeeded = !!shift.paymentIntentId && shift.paymentStatus === 'AUTHORIZED';
+    let stripeChargeId: string | null = null;
+    let captureSucceeded = false;
+    if (captureNeeded) {
+      try {
+        stripeChargeId = await stripeConnectService.capturePaymentIntentWithChargeId(shift.paymentIntentId!);
+        captureSucceeded = !!stripeChargeId;
+        if (!stripeChargeId) {
+          console.warn(`[SHIFT_COMPLETE] PaymentIntent capture returned no chargeId for shift ${id}`);
+        }
+      } catch (error: any) {
+        console.error(`[SHIFT_COMPLETE] Error capturing payment for shift ${id}:`, error);
+      }
+    }
+
+    // If no capture is needed (already PAID, or no PaymentIntent), treat it as succeeded.
+    if (!captureNeeded) {
+      captureSucceeded = true;
+    }
+
+    if (!payoutId) {
+      throw new Error('Payout creation failed: missing payoutId');
+    }
+
+    await db.transaction(async (tx) => {
+      if (captureSucceeded) {
+        // Mark payout as completed and persist Stripe charge linkage (if available)
+        await payoutsRepo.updatePayoutStatus(
+          payoutId!,
+          'completed',
+          stripeChargeId ? { stripeChargeId } : undefined,
+          tx
+        );
+
+        // Append immutable ledger entry (guardrail for audits + reconciliation)
+        await ledgerRepo.createLedgerEntry(
+          {
+            entryType: 'SHIFT_PAYOUT_COMPLETED',
+            amountCents,
+            currency: 'aud',
+            shiftId: id,
+            payoutId: payoutId!,
+            workerId: shift.assigneeId ?? null,
+            venueId: shift.employerId,
+            stripePaymentIntentId: shift.paymentIntentId ?? null,
+            stripeChargeId: stripeChargeId ?? null,
+          },
+          tx
+        );
+
+        // Update shift payment status if a capture occurred
+        if (stripeChargeId) {
+          await tx
+            .update(shifts)
+            .set({
+              paymentStatus: 'PAID',
+              stripeChargeId,
+              updatedAt: new Date(),
+            })
+            .where(eq(shifts.id, id));
+        }
+
+        // Atomic earnings increment (prevents lost updates under concurrency)
+        if (shift.assigneeId) {
+          await tx
+            .update(users)
+            .set({
+              totalEarnedCents: sql`${users.totalEarnedCents} + ${amountCents}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(users.id, shift.assigneeId));
+        }
+      } else {
+        // Capture failed: mark payout as failed and reflect payment failure for follow-up/retry.
+        await payoutsRepo.updatePayoutStatus(payoutId!, 'failed', undefined, tx);
+        await ledgerRepo.createLedgerEntry(
+          {
+            entryType: 'SHIFT_PAYOUT_FAILED',
+            amountCents,
+            currency: 'aud',
+            shiftId: id,
+            payoutId: payoutId!,
+            workerId: shift.assigneeId ?? null,
+            venueId: shift.employerId,
+            stripePaymentIntentId: shift.paymentIntentId ?? null,
+            stripeChargeId: stripeChargeId ?? null,
+          },
+          tx
+        );
         await tx
-          .update(users)
+          .update(shifts)
           .set({
-            totalEarnedCents: newTotal,
+            paymentStatus: captureNeeded ? 'PAYMENT_FAILED' : shift.paymentStatus,
             updatedAt: new Date(),
           })
-          .where(eq(users.id, shift.assigneeId));
+          .where(eq(shifts.id, id));
       }
     });
 
@@ -3558,7 +3643,11 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
       detail: error?.detail,
     });
     
-    if (error.message.includes('already exists')) {
+    if (error.message.includes('already exists') || error.message.includes('Payout already exists')) {
+      res.status(409).json({ message: error.message });
+      return;
+    }
+    if (error.message.includes('not in a completable state')) {
       res.status(409).json({ message: error.message });
       return;
     }

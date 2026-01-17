@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { requireSelfParam } from '../middleware/authorization.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as stripeConnectService from '../services/stripe-connect.service.js';
 import * as usersRepo from '../repositories/users.repository.js';
@@ -14,19 +15,13 @@ import { eq, and, or, desc } from 'drizzle-orm';
 import { shifts } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 import { toISOStringSafe } from '../lib/date.js';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
 // Get balance for current user
-router.get('/balance/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { userId } = req.params;
-  const authenticatedUserId = req.user?.id;
-
-  // Security: Users can only view their own balance
-  if (userId !== authenticatedUserId) {
-    res.status(403).json({ message: 'Forbidden: You can only view your own balance' });
-    return;
-  }
+router.get('/balance/:userId', authenticateUser, requireSelfParam('userId'), asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = normalizeParam(req.params.userId);
 
   const user = await usersRepo.getUserById(userId);
   if (!user) {
@@ -62,15 +57,8 @@ router.get('/balance/:userId', authenticateUser, asyncHandler(async (req: Authen
 }));
 
 // Get payment history for current user
-router.get('/history/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { userId } = req.params;
-  const authenticatedUserId = req.user?.id;
-
-  // Security: Users can only view their own history
-  if (userId !== authenticatedUserId) {
-    res.status(403).json({ message: 'Forbidden: You can only view your own payment history' });
-    return;
-  }
+router.get('/history/:userId', authenticateUser, requireSelfParam('userId'), asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = normalizeParam(req.params.userId);
 
   const user = await usersRepo.getUserById(userId);
   if (!user) {

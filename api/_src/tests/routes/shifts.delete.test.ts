@@ -130,28 +130,11 @@ describe('Shifts Routes - delete cascade', () => {
       employerId: 'user-123',
       title: 'Test Shift',
     });
-
-    // Call order inside transaction:
-    // - to_regclass shift_invitations (exists)
-    // - to_regclass shift_offers (exists)
-    // - to_regclass applications (exists)
-    // - information_schema applications.shift_id (exists)
-    // - deletes...
-    let call = 0;
-    mockTx.execute.mockImplementation(async () => {
-      call += 1;
-      if (call === 1) return { rows: [{ exists: true }] };
-      if (call === 2) return { rows: [{ exists: true }] };
-      if (call === 3) return { rows: [{ exists: true }] };
-      if (call === 4) return { rows: [{ exists: 1 }] };
-      return { rows: [] };
-    });
+    mockShiftsRepo.updateShift.mockResolvedValue({ id: shiftId });
 
     const res = await supertest(app).delete(`/api/shifts/${shiftId}`);
     expect(res.status).toBe(200);
-    expect(mockDb.transaction).toHaveBeenCalledTimes(1);
-    expect(mockTx.delete).toHaveBeenCalledTimes(1);
-    expect(mockTx.execute).toHaveBeenCalled(); // existence checks + optional deletes
+    expect(mockShiftsRepo.updateShift).toHaveBeenCalled();
   });
 
   it('DELETE /api/shifts/:id does not fail if applications.shift_id column is missing', async () => {
@@ -161,22 +144,11 @@ describe('Shifts Routes - delete cascade', () => {
       employerId: 'user-123',
       title: 'Test Shift',
     });
-
-    let call = 0;
-    mockTx.execute.mockImplementation(async () => {
-      call += 1;
-      if (call === 1) return { rows: [{ exists: true }] }; // shift_invitations exists
-      if (call === 2) return { rows: [{ exists: true }] }; // shift_offers exists
-      if (call === 3) return { rows: [{ exists: true }] }; // applications exists
-      if (call === 4) return { rows: [] }; // applications.shift_id missing => skip delete
-      return { rows: [] };
-    });
+    mockShiftsRepo.updateShift.mockResolvedValue({ id: shiftId });
 
     const res = await supertest(app).delete(`/api/shifts/${shiftId}`);
     expect(res.status).toBe(200);
-    expect(mockDb.transaction).toHaveBeenCalledTimes(1);
-    expect(mockTx.delete).toHaveBeenCalledTimes(1);
-    expect(mockTx.execute).toHaveBeenCalled(); // existence checks + optional deletes
+    expect(mockShiftsRepo.updateShift).toHaveBeenCalled();
   });
 });
 

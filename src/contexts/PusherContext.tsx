@@ -7,6 +7,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import Pusher from 'pusher-js';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { logger } from '@/lib/logger';
 
@@ -54,6 +55,7 @@ const PusherContext = createContext<PusherContextType | undefined>(undefined);
 
 export function PusherProvider({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuth();
+  const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const pusherRef = useRef<Pusher | null>(null);
   const userChannelRef = useRef<Pusher.Channel | null>(null);
@@ -62,6 +64,8 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
   const shiftStatusCallbacksRef = useRef<Set<(update: ShiftStatusUpdate) => void>>(new Set());
   const shiftInviteCallbacksRef = useRef<Set<(invite: ShiftInvite) => void>>(new Set());
   const errorCallbacksRef = useRef<Set<(error: { message: string }) => void>>(new Set());
+  const lastShiftUpdateTsRef = useRef<Map<string, number>>(new Map());
+  const lastReconnectRefetchAtRef = useRef<number>(0);
 
   useEffect(() => {
     if (!user || !token) {
@@ -131,33 +135,26 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
       
       // SECURITY AUDIT: Refetch active shift data when connection is restored
       // This ensures users see up-to-date information after reconnection
-      if (typeof window !== 'undefined' && (window as any).queryClient) {
-        // Use React Query's refetchQueries if available
-        try {
-          const queryClient = (window as any).queryClient;
-          if (queryClient && typeof queryClient.refetchQueries === 'function') {
-            // Refetch all active shift-related queries
-            queryClient.refetchQueries({
-              predicate: (query) => {
-                const queryKey = query.queryKey;
-                if (Array.isArray(queryKey)) {
-                  // Refetch queries related to shifts
-                  return queryKey.some(key => 
-                    typeof key === 'string' && (
-                      key.includes('shift') || 
-                      key.includes('shifts') ||
-                      key.includes('active-shifts')
-                    )
-                  );
-                }
-                return false;
-              },
-            });
-            logger.debug('PUSHER', 'Refetched active shift queries after reconnection');
-          }
-        } catch (error) {
-          logger.error('PUSHER', 'Error refetching queries after reconnection:', error);
-        }
+      // Throttle reconnect refetch to avoid stampedes (especially on spotty mobile networks).
+      const now = Date.now();
+      if (now - lastReconnectRefetchAtRef.current < 10_000) return;
+      lastReconnectRefetchAtRef.current = now;
+
+      try {
+        queryClient.refetchQueries({
+          predicate: (query) => {
+            const queryKey = query.queryKey;
+            if (!Array.isArray(queryKey)) return false;
+            return queryKey.some(
+              (key) =>
+                typeof key === 'string' &&
+                (key.includes('shift') || key.includes('shifts') || key.includes('active-shifts'))
+            );
+          },
+        });
+        logger.debug('PUSHER', 'Refetched shift-related queries after reconnection');
+      } catch (error) {
+        logger.error('PUSHER', 'Error refetching queries after reconnection:', error);
       }
     });
 
@@ -199,20 +196,18 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
     userChannel.bind('SHIFT_STATUS_UPDATE', (data: ShiftStatusUpdate) => {
       logger.debug('PUSHER', 'Shift status update received:', data);
       
-      // Check if this shift is currently being viewed and force refresh
-      if (typeof window !== 'undefined' && (window as any).queryClient) {
-        try {
-          const queryClient = (window as any).queryClient;
-          if (queryClient && typeof queryClient.invalidateQueries === 'function') {
-            // Invalidate the specific shift query to force refresh
-            queryClient.invalidateQueries({
-              queryKey: ['shift', data.shiftId],
-            });
-            logger.debug('PUSHER', `Invalidated shift query for shift ${data.shiftId} due to status update`);
-          }
-        } catch (error) {
-          logger.error('PUSHER', 'Error invalidating shift query after status update:', error);
-        }
+      // Drop stale/out-of-order events (best-effort).
+      const eventTs = data?.timestamp ? Date.parse(data.timestamp) : NaN;
+      const nextTs = Number.isFinite(eventTs) ? eventTs : Date.now();
+      const lastTs = lastShiftUpdateTsRef.current.get(data.shiftId) ?? 0;
+      if (nextTs <= lastTs) return;
+      lastShiftUpdateTsRef.current.set(data.shiftId, nextTs);
+
+      try {
+        queryClient.invalidateQueries({ queryKey: ['shift', data.shiftId] });
+        logger.debug('PUSHER', `Invalidated shift query for shift ${data.shiftId} due to status update`);
+      } catch (error) {
+        logger.error('PUSHER', 'Error invalidating shift query after status update:', error);
       }
       
       shiftStatusCallbacksRef.current.forEach((callback) => {
@@ -257,10 +252,11 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
       
       // Clear conversation channels
       channelsRef.current.clear();
+      lastShiftUpdateTsRef.current.clear();
       setIsConnected(false);
     };
    
-  }, [user, token]);
+  }, [user, token, queryClient]);
 
   const joinConversation = useCallback((conversationId: string) => {
     if (!pusherRef.current || !isConnected) {

@@ -1,26 +1,15 @@
 import { Router } from 'express';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { requireSelfParam } from '../middleware/authorization.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as conversationsRepo from '../repositories/conversations.repository.js';
+import { normalizeParam } from '../utils/request-params.js';
 
 const router = Router();
 
 // Get chats for a specific user
-router.get('/user/:userId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const { userId } = req.params;
-  // Do NOT compare req.user.uid (Firebase UID) directly to req.params.userId (Postgres UUID)
-  // Instead, verify via the attached user object from the database
-  
-  if (!req.user || !req.user.id) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  // req.user.id is the Postgres ID found via email lookup in middleware
-  if (req.user.id !== userId) {
-    res.status(403).json({ message: 'Forbidden: You can only access your own chats' });
-    return;
-  }
+router.get('/user/:userId', authenticateUser, requireSelfParam('userId'), asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = normalizeParam(req.params.userId);
 
   const currentUser = req.user;
   

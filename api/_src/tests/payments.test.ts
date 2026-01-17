@@ -18,7 +18,20 @@ vi.mock('../middleware/auth.js', () => ({
       res.status(401).json({ message: 'Unauthorized' });
     }
   }),
+  authenticateUserOptional: vi.fn((req, _res, next) => {
+    if (req.headers.authorization?.includes('valid-token')) {
+      req.user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'professional',
+        uid: 'firebase-uid-123',
+      };
+    }
+    next();
+  }),
   requireAdmin: vi.fn((req, res, next) => next()),
+  requireSuperAdmin: vi.fn((req, res, next) => next()),
   AuthenticatedRequest: {},
 }));
 

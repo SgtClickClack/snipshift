@@ -8,6 +8,23 @@
 
 ---
 
+### Update: 2026-01-18 - Marketplace Guardrails (Financial Ledger + Payout Reconciliation + Realtime Sync)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added an immutable financial ledger and a secured reconciliation cron endpoint to support auditability and self-healing payout state.
+- Refactored shift completion to be idempotent and to only count earnings/volume from completed payouts.
+- Fixed Pusher ↔ React Query synchronization to avoid relying on a non-existent global query client and to refetch/invalidate safely on reconnect/events.
+- Hardened public community feed personalization to prevent cross-user like-state leakage.
+
+**Impact:**
+- Production-grade financial audit trail + a path to automated reconciliation at scale.
+- Reduced payout race-condition risk during high-volume shift completion.
+- More reliable realtime UI state across reconnects for 1,000+ concurrent users.
+
+---
+
 ### Update: 2026-01-16 - Venue Dashboard Migration (Hub → Venue URL)
 
 **Status:** ✅ **UPDATED**

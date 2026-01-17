@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { authenticateUser, authenticateUserOptional, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { PostSchema } from '../validation/schemas.js';
 import * as postsRepo from '../repositories/posts.repository.js';
@@ -52,11 +52,12 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
 }));
 
 // Get community feed (public read)
-router.get('/feed', asyncHandler(async (req: any, res) => {
+router.get('/feed', authenticateUserOptional, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
   const type = req.query.type as 'community' | 'brand' | undefined;
   const userId = req.query.userId as string | undefined; // For checking "isLiked" status
+  const authenticatedUserId = req.user?.id;
 
   const result = await postsRepo.getPosts({
     type,
@@ -72,7 +73,16 @@ router.get('/feed', asyncHandler(async (req: any, res) => {
   // Get liked posts for current user if provided
   let likedPostIds = new Set<string>();
   if (userId) {
-    likedPostIds = await postsRepo.getUserLikedPosts(userId);
+    // SECURITY: Only allow a user to request their own like-state enrichment.
+    // If no auth is present, we treat the endpoint as fully public and do not enrich.
+    if (!authenticatedUserId) {
+      likedPostIds = new Set();
+    } else if (userId !== authenticatedUserId) {
+      res.status(403).json({ message: 'Forbidden: You can only request your own like state' });
+      return;
+    } else {
+      likedPostIds = await postsRepo.getUserLikedPosts(authenticatedUserId);
+    }
   }
 
   // Enrich posts with author info

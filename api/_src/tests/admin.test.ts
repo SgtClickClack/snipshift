@@ -25,7 +25,9 @@ const mockRequireAdmin = vi.fn((req, res, next) => {
 
 const mockAuthMiddleware = {
   authenticateUser: mockAuthUser,
+  authenticateUserOptional: mockAuthUser,
   requireAdmin: mockRequireAdmin,
+  requireSuperAdmin: mockRequireAdmin,
   AuthenticatedRequest: {},
 };
 

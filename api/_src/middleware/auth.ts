@@ -304,3 +304,30 @@ export function authenticateUser(
     });
   }
 }
+
+/**
+ * Optional authentication middleware.
+ *
+ * If no bearer token (or token query param) is provided, it simply calls `next()`
+ * and does NOT set `req.user`. If a token is provided, it delegates to
+ * `authenticateUser` and will return 401 on invalid tokens.
+ *
+ * Use this for public endpoints that can optionally enrich responses when a user
+ * is authenticated (e.g., personalization like `isLiked`).
+ */
+export function authenticateUserOptional(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  const authHeader = req.headers.authorization;
+  const hasBearerHeader = typeof authHeader === 'string' && authHeader.startsWith('Bearer ');
+  const hasQueryToken = typeof req.query?.token === 'string' && req.query.token.length > 0;
+
+  if (!hasBearerHeader && !hasQueryToken) {
+    next();
+    return;
+  }
+
+  authenticateUser(req, res, next);
+}

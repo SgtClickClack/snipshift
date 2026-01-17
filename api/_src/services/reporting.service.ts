@@ -42,6 +42,7 @@ export async function getWeeklyMetrics(): Promise<WeeklyMetrics> {
 
   // 1. Total Transaction Volume: Sum of all payout amounts in AUD
   // Payouts are stored in cents, so we divide by 100 to get AUD
+  // SECURITY/FINANCE: Count only completed payouts to avoid inflating volume with pending/failed records.
   const [transactionVolumeResult] = await db
     .select({ 
       total: sql<number>`COALESCE(SUM(${payouts.amountCents}::numeric), 0)` 
@@ -49,6 +50,7 @@ export async function getWeeklyMetrics(): Promise<WeeklyMetrics> {
     .from(payouts)
     .where(
       and(
+        eq(payouts.status, 'completed'),
         gte(payouts.createdAt, startDate),
         lte(payouts.createdAt, endDate)
       )

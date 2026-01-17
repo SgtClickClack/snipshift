@@ -13,8 +13,10 @@ vi.mock('../../repositories/profiles.repository.js', () => ({
 }));
 
 const mockBanUser = vi.fn();
+const mockGetUserById = vi.fn();
 vi.mock('../../repositories/users.repository.js', () => ({
   banUser: mockBanUser,
+  getUserById: mockGetUserById,
 }));
 
 const mockCreateInAppNotification = vi.fn();
@@ -42,14 +44,26 @@ describe('cancellationService.handleStaffCancellation', () => {
       cancellationWindowHours: 24,
     });
     mockUpdateShift.mockResolvedValue({ id: 'shift-1' });
-    mockIncrementReliabilityStrikes.mockResolvedValue(1);
+    mockGetUserById.mockResolvedValue({ id: 'venue-1', name: 'Test Venue', role: 'business' });
+
+    // Inject triggerPenalty to avoid hitting the DB-backed reputation service in unit tests.
+    const triggerPenalty = vi.fn(async (staffId: string, meta: { shiftId: string; timeUntilShiftHours: number }) => {
+      await mockCreateInAppNotification(staffId, 'SYSTEM', 'Reliability Strike Issued', 'Strike recorded.', {
+        type: 'reliability_strike',
+        strikes: 1,
+        suspended: false,
+        shiftId: meta.shiftId,
+        timeUntilShiftHours: meta.timeUntilShiftHours,
+      });
+    });
 
     const result = await service.handleStaffCancellation(
-      { shiftId: 'shift-1', staffId: 'staff-1', reason: 'Sick', now: new Date('2026-01-10T10:00:00.000Z') }
+      { shiftId: 'shift-1', staffId: 'staff-1', reason: 'Sick', now: new Date('2026-01-10T10:00:00.000Z') },
+      { triggerPenalty }
     );
 
     expect(result).toEqual({ ok: true, branch: 'late', updatedShiftId: 'shift-1' });
-    expect(mockIncrementReliabilityStrikes).toHaveBeenCalledWith('staff-1');
+    expect(triggerPenalty).toHaveBeenCalledWith('staff-1', expect.objectContaining({ shiftId: 'shift-1' }));
     expect(mockBanUser).not.toHaveBeenCalled();
     expect(mockCreateInAppNotification).toHaveBeenCalledWith(
       'venue-1',

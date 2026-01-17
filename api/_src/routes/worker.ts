@@ -94,14 +94,19 @@ router.get('/earnings', authenticateUser, asyncHandler(async (req: Authenticated
     } : null,
   }));
 
-  // Calculate filtered total if date range is applied
-  const filteredTotalCents = payoutHistory.reduce((sum, payout) => sum + payout.amountCents, 0);
+  // Calculate filtered totals
+  // IMPORTANT: Only completed payouts count toward "earned" totals (pending/failed are not settled).
+  const completedPayoutsTotalCents = payoutHistory
+    .filter((payout) => payout.status === 'completed')
+    .reduce((sum, payout) => sum + payout.amountCents, 0);
 
   res.status(200).json({
     totalEarnedCents,
     totalEarnedDollars: (totalEarnedCents / 100).toFixed(2),
-    filteredTotalCents: period ? filteredTotalCents : totalEarnedCents,
-    filteredTotalDollars: period ? (filteredTotalCents / 100).toFixed(2) : (totalEarnedCents / 100).toFixed(2),
+    filteredTotalCents: period ? completedPayoutsTotalCents : totalEarnedCents,
+    filteredTotalDollars: period
+      ? (completedPayoutsTotalCents / 100).toFixed(2)
+      : (totalEarnedCents / 100).toFixed(2),
     period: period || 'all_time',
     payoutHistory,
     payoutCount: payoutHistory.length,
