@@ -82,7 +82,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
       const bannerUrl = user.bannerUrl || '';
       
       // Parse location if it's a string
-      let homeLocation = { city: '', state: '', country: 'United States' };
+      const homeLocation = { city: '', state: '', country: 'United States' };
       if (user.location) {
         if (typeof user.location === 'string') {
           const parts = user.location?.split(',').map(s => s.trim()) || [];

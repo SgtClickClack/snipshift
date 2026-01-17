@@ -137,8 +137,8 @@ router.get('/recommendations', authenticateUser, asyncHandler(async (req: Authen
   const workerLng = lngStr ? parseFloat(lngStr) : null;
 
   // If no coordinates provided, try to get from user profile
-  let userLat = workerLat;
-  let userLng = workerLng;
+  const userLat = workerLat;
+  const userLng = workerLng;
   
   if (!userLat || !userLng) {
     const user = await usersRepo.getUserById(userId);

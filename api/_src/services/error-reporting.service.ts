@@ -29,6 +29,7 @@ export interface ErrorReport {
  * Error Reporting Service Interface
  * Implement this interface for your chosen error reporting service
  */
+// eslint-disable-next-line no-useless-escape
 export interface ErrorReportingService {
   captureError(report: ErrorReport): Promise<void>;
   captureMessage(message: string, severity: ErrorSeverity, context?: ErrorContext): Promise<void>;

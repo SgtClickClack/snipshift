@@ -108,7 +108,7 @@ async function seedPlans() {
     }
 
     let createdCount = 0;
-    let skippedCount = 0;
+    const skippedCount = 0;
     let updatedCount = 0;
 
     for (const planDef of PLAN_DEFINITIONS) {

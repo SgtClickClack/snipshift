@@ -18,7 +18,7 @@ import { ChevronLeft, ChevronRight, SkipForward, AlertCircle, Building2, User, L
 import { RSALocker } from '@/components/profile/RSALocker';
 import { GovernmentIDLocker } from '@/components/profile/GovernmentIDLocker';
 import PayoutSettings from '@/components/payments/payout-settings';
-import { HOSPITALITY_ROLES } from '@/utils/hospitality';
+import { HOSPITALITY_ROLES, type HospitalityRole } from '@/utils/hospitality';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { VenueProfileForm } from '@/components/onboarding/VenueProfileForm';
 import { ConfettiAnimation } from '@/components/onboarding/ConfettiAnimation';
@@ -410,7 +410,7 @@ export default function Onboarding() {
     phone: user?.phone || '',
     location: user?.location || '',
     avatarUrl: user?.avatarUrl || user?.profileImage || '',
-    hospitalityRole: (user?.hospitalityRole as any) || '',
+    hospitalityRole: (user?.hospitalityRole as HospitalityRole | '' | undefined) || '',
     hourlyRatePreference: user?.hourlyRatePreference != null ? String(user.hourlyRatePreference) : '',
     bio: user?.bio || '',
   }));
@@ -436,8 +436,8 @@ export default function Onboarding() {
   // Expose user state and isPolling on window for E2E testing
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).user = user;
-      (window as any).isPolling = isPolling;
+      window.user = user;
+      window.isPolling = isPolling;
     }
   }, [user, isPolling]);
 
@@ -486,7 +486,7 @@ export default function Onboarding() {
     // If user already has a role assigned, skip step 0 (role selection)
     if (user?.currentRole && user.currentRole !== 'professional' && machineContext.stepIndex === 0) {
       // User has a role (venue/business), skip to step 1 or navigate to hub
-      if (user.currentRole === 'business' || user.roles?.includes('venue' as any) || user.roles?.includes('business')) {
+      if (user.currentRole === 'business' || user.roles?.includes('venue' as 'business') || user.roles?.includes('business')) {
         navigate('/onboarding/hub', { replace: true });
         return;
       }
@@ -540,11 +540,12 @@ export default function Onboarding() {
         
         // Navigate to hub onboarding
         navigate('/onboarding/hub', { replace: true });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[Onboarding] Error saving venue role:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Please try again.';
         toast({
           title: 'Could not save role',
-          description: error?.message || 'Please try again.',
+          description: errorMessage,
           variant: 'destructive'
         });
       }
@@ -642,7 +643,7 @@ export default function Onboarding() {
       phone: user.phone || prev.phone,
       location: user.location || prev.location,
       avatarUrl: user.avatarUrl || user.profileImage || prev.avatarUrl,
-      hospitalityRole: (user.hospitalityRole as any) || prev.hospitalityRole,
+      hospitalityRole: (user.hospitalityRole as HospitalityRole | '' | undefined) || prev.hospitalityRole,
       hourlyRatePreference: user.hourlyRatePreference != null ? String(user.hourlyRatePreference) : prev.hourlyRatePreference,
       bio: user.bio || prev.bio,
     }));
@@ -651,8 +652,8 @@ export default function Onboarding() {
   // Expose user state and isPolling on window for E2E testing
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).user = user;
-      (window as any).isPolling = isPolling;
+      window.user = user;
+      window.isPolling = isPolling;
     }
   }, [user, isPolling]);
 
@@ -772,13 +773,16 @@ export default function Onboarding() {
         });
         await refreshUser();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStatus = (error as { status?: number })?.status;
+      const errorResponse = (error as { response?: unknown })?.response;
       console.error('[Onboarding] Error saving step data:', {
-        error: error?.message || error,
+        error: errorMessage,
         currentStep: machineContext.stepIndex,
         userId: user?.id,
-        status: error?.status,
-        response: error?.response
+        status: errorStatus,
+        response: errorResponse
       });
       throw error; // Re-throw so handleNext can catch it
     }
@@ -854,11 +858,12 @@ export default function Onboarding() {
       if (machineContext.state !== 'VENUE_DETAILS') {
         dispatch({ type: 'NEXT' });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
       console.error('[Onboarding] Error saving step data:', error);
       toast({ 
         title: 'Could not save', 
-        description: error?.message || 'Please try again.', 
+        description: errorMessage, 
         variant: 'destructive' 
       });
     } finally {
@@ -918,9 +923,10 @@ export default function Onboarding() {
       
       // Transition to COMPLETED state (shows success screen)
       dispatch({ type: 'COMPLETE' });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to complete onboarding. Please try again.';
       console.error('Onboarding completion error:', error);
-      toast({ title: 'Setup Failed', description: error?.message || 'Failed to complete onboarding. Please try again.', variant: 'destructive' });
+      toast({ title: 'Setup Failed', description: errorMessage, variant: 'destructive' });
       setIsSubmitting(false);
     }
   };
@@ -1066,7 +1072,7 @@ export default function Onboarding() {
           <div className="space-y-6 pb-12 md:pb-0">
             <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Role & Experience</h2><p className="text-gray-300">Tell venues what kind of shifts you're looking for.</p></div>
             <div className="space-y-4">
-              <div className="space-y-2"><Label className="text-gray-300">Primary Role *</Label><Select value={formData.hospitalityRole} onValueChange={(value) => updateFormData({ hospitalityRole: value as any })}><SelectTrigger aria-label="Primary Role" data-testid="onboarding-role"><SelectValue placeholder="Select a role" /></SelectTrigger><SelectContent>{HOSPITALITY_ROLES.map((role) => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select></div>
+              <div className="space-y-2"><Label className="text-gray-300">Primary Role *</Label><Select value={formData.hospitalityRole} onValueChange={(value) => updateFormData({ hospitalityRole: value as HospitalityRole | '' })}><SelectTrigger aria-label="Primary Role" data-testid="onboarding-role"><SelectValue placeholder="Select a role" /></SelectTrigger><SelectContent>{HOSPITALITY_ROLES.map((role) => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select></div>
               <div className="space-y-2"><Label htmlFor="hourlyRatePreference" className="text-gray-300">Hourly Rate Preference (optional)</Label><Input id="hourlyRatePreference" inputMode="decimal" value={formData.hourlyRatePreference} onChange={(e) => updateFormData({ hourlyRatePreference: e.target.value })} placeholder="e.g. 38" data-testid="onboarding-rate" /></div>
               <div className="space-y-2"><Label htmlFor="bio" className="text-gray-300">Experience Summary *</Label><Textarea id="bio" value={formData.bio} onChange={(e) => updateFormData({ bio: e.target.value })} placeholder="Tell us about your hospitality experience (roles, venues, strengths)..." rows={5} data-testid="onboarding-bio" /></div>
             </div>
@@ -1225,7 +1231,7 @@ export default function Onboarding() {
               <span className="text-sm font-medium text-gray-300">{machineContext.stepIndex === 0 ? 'Getting Started' : `Step ${machineContext.stepIndex} of ${TOTAL_STEPS - 1}`}</span>
               <span className="text-sm text-gray-400">{progressPct}% Complete</span>
             </div>
-            <div className="w-full bg-zinc-800 rounded-full h-2"><div className="bg-brand-neon h-2 rounded-full transition-all duration-300" style={{ width: `${progressPct}%` }} /></div>
+            <div className="w-full bg-zinc-800 rounded-full h-2"><div className="bg-brand-neon h-2 rounded-full transition-all duration-300" style={{ width: `${progressPct}%` } as React.CSSProperties} /></div>
           </div>
           <Card className="card-chrome bg-zinc-900 border border-zinc-800">
             <CardHeader><CardTitle className="text-center text-brand-neon animate-steady-hum">Welcome to HospoGo</CardTitle></CardHeader>

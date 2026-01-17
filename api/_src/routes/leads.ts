@@ -76,7 +76,7 @@ router.post('/enterprise', asyncHandler(async (req, res) => {
 
     // Track email delivery status for user feedback
     let confirmationEmailSent = false;
-    let emailServiceAvailable = isEmailServiceAvailable() && resend;
+    const emailServiceAvailable = isEmailServiceAvailable() && resend;
 
     // 2. Send internal notification email to admin
     if (emailServiceAvailable && resend) {
@@ -191,7 +191,7 @@ router.post('/general', asyncHandler(async (req, res) => {
 
     // Track email delivery status for user feedback
     let confirmationEmailSent = false;
-    let emailServiceAvailable = isEmailServiceAvailable() && resend;
+    const emailServiceAvailable = isEmailServiceAvailable() && resend;
 
     // Send notification email to admin
     if (emailServiceAvailable && resend) {

@@ -124,6 +124,7 @@ export const errorHandler = async (
     errorLog.databaseError = dbDetails;
     
     // Log the full error object structure for debugging
+    // eslint-disable-next-line no-case-declarations
     const errorAny = err as any;
     errorLog.rawError = {
       code: errorAny?.code,

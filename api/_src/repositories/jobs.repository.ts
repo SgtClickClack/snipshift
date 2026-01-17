@@ -400,7 +400,7 @@ export async function getJobsWithApplicationCounts(
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   // Use leftJoin and count aggregation
-  let query = db
+  const query = db
     .select({
       ...getTableColumns(jobs),
       applicationCount: sql<number>`count(${applications.id})`.mapWith(Number),

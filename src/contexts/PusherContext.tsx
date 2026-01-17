@@ -259,7 +259,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
       channelsRef.current.clear();
       setIsConnected(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [user, token]);
 
   const joinConversation = useCallback((conversationId: string) => {
