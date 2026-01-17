@@ -68,13 +68,19 @@ export default function LandingPage() {
             <img
               src={encodeURI("/hospogonewhero.png")}
               alt=""
-              className="w-full max-w-full h-full object-cover object-[center_55%]"
+              className="w-full max-w-full h-[60vh] md:h-full object-cover object-[center_55%]"
               loading="eager"
               fetchPriority="high"
               decoding="async"
               aria-hidden="true"
             />
           </div>
+
+          {/* Enhanced gradient overlay - stronger on mobile for text readability */}
+          <div
+            className="absolute inset-0 z-[1] pointer-events-none bg-gradient-to-r from-black/70 via-black/40 md:from-black/50 md:via-black/25 to-transparent"
+            aria-hidden="true"
+          />
 
 
           {/* Landing Header - Absolute positioned over hero */}
@@ -138,8 +144,8 @@ export default function LandingPage() {
 
                 {/* Subheadline */}
                 <p 
-                  className="text-lg md:text-xl text-gray-300 max-w-lg mb-10 leading-relaxed"
-                  style={{ textShadow: '1px 1px 5px rgba(0,0,0,0.5)' }}
+                  className="text-lg md:text-xl text-white max-w-lg mb-10 leading-relaxed font-medium"
+                  style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.8)' }}
                 >
                   Instant coverage for venues. Instant work for staff. The marketplace that keeps your business moving.
                 </p>
