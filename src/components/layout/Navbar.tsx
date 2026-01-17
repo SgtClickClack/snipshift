@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import { 
