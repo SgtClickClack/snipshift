@@ -316,6 +316,7 @@ export const payments = pgTable('payments', {
   stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).unique(),
   stripeChargeId: varchar('stripe_charge_id', { length: 255 }),
   description: text('description'),
+  deletedAt: timestamp('deleted_at'), // Soft delete timestamp - NULL means not deleted
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
@@ -323,6 +324,7 @@ export const payments = pgTable('payments', {
   subscriptionIdIdx: index('payments_subscription_id_idx').on(table.subscriptionId),
   stripePaymentIntentIdIdx: index('payments_stripe_payment_intent_id_idx').on(table.stripePaymentIntentId),
   userIdCreatedAtIdx: index('payments_user_id_created_at_idx').on(table.userId, table.createdAt),
+  deletedAtIdx: index('payments_deleted_at_idx').on(table.deletedAt),
 }));
 
 export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({

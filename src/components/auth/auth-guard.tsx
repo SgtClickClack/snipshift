@@ -25,6 +25,13 @@ export function AuthGuard({
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
+  // Check for onboarding_in_progress flag in localStorage
+  // If set, allow access to onboarding routes without redirecting
+  const isOnboardingInProgress = typeof window !== 'undefined' && 
+    localStorage.getItem('onboarding_in_progress') === 'true';
+  const onboardingCurrentRole = typeof window !== 'undefined' && 
+    localStorage.getItem('currentRole');
+
   // Show loading spinner while checking authentication or waiting for auth to be ready
   // CRITICAL: This check must happen FIRST, before any redirect logic
   if (isLoading || !isAuthReady) {
@@ -134,12 +141,15 @@ export function AuthGuard({
   
   // CRITICAL: Exception - If current path starts with /onboarding, do not redirect to role selector
   // This prevents redirect loops during onboarding flow, especially on new devices
+  // ALSO: If onboarding_in_progress flag is set, allow access regardless of user state
   const isOnboardingPage = location.pathname.startsWith('/onboarding');
-  if (isAuthenticated && user && isOnboardingPage) {
+  if (isOnboardingPage && (isOnboardingInProgress || (isAuthenticated && user))) {
     logger.debug('AuthGuard', 'User on onboarding path, allowing access without role check', {
       pathname: location.pathname,
-      currentRole: user.currentRole,
-      isOnboarded: user.isOnboarded,
+      currentRole: user?.currentRole,
+      isOnboarded: user?.isOnboarded,
+      isOnboardingInProgress,
+      onboardingCurrentRole,
     });
     return <>{children}</>;
   }

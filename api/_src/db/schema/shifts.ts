@@ -61,6 +61,7 @@ export const shifts = pgTable('shifts', {
   backupRequestedAt: timestamp('backup_requested_at'), // When venue owner requested backup from waitlist
   backupWorkerId: uuid('backup_worker_id').references(() => users.id, { onDelete: 'set null' }), // Worker who accepted backup (if any)
   originalWorkerId: uuid('original_worker_id').references(() => users.id, { onDelete: 'set null' }), // Original worker who was replaced
+  deletedAt: timestamp('deleted_at'), // Soft delete timestamp - NULL means not deleted
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
@@ -74,6 +75,7 @@ export const shifts = pgTable('shifts', {
   paymentStatusIdx: index('shifts_payment_status_idx').on(table.paymentStatus),
   paymentIntentIdIdx: index('shifts_payment_intent_id_idx').on(table.paymentIntentId),
   latLngIdx: index('shifts_lat_lng_idx').on(table.lat, table.lng),
+  deletedAtIdx: index('shifts_deleted_at_idx').on(table.deletedAt),
 }));
 
 /**

@@ -24,6 +24,7 @@ export const shiftApplications = pgTable('shift_applications', {
   venueId: uuid('venue_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   status: shiftApplicationStatusEnum('status').notNull().default('pending'),
   message: text('message'),
+  deletedAt: timestamp('deleted_at'), // Soft delete timestamp - NULL means not deleted
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
@@ -32,6 +33,7 @@ export const shiftApplications = pgTable('shift_applications', {
   venueIdIdx: index('shift_applications_venue_id_idx').on(table.venueId),
   statusIdx: index('shift_applications_status_idx').on(table.status),
   shiftStatusIdx: index('shift_applications_shift_status_idx').on(table.shiftId, table.status),
+  deletedAtIdx: index('shift_applications_deleted_at_idx').on(table.deletedAt),
   // Unique constraint to prevent duplicate applications
   shiftWorkerUnique: unique('shift_applications_shift_worker_unique').on(table.shiftId, table.workerId),
 }));

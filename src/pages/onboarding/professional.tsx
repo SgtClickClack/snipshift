@@ -27,6 +27,21 @@ export default function ProfessionalOnboardingPage() {
     state: '',
   });
 
+  // Set onboarding state lock when entering professional onboarding flow
+  React.useEffect(() => {
+    // Set currentRole and onboarding_in_progress flag in localStorage
+    localStorage.setItem('currentRole', 'professional');
+    localStorage.setItem('onboarding_in_progress', 'true');
+    
+    // Cleanup: remove flag when component unmounts (onboarding completed or cancelled)
+    return () => {
+      // Only clear if we're navigating away (not during submission)
+      if (!isSubmitting) {
+        localStorage.removeItem('onboarding_in_progress');
+      }
+    };
+  }, [isSubmitting]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -106,6 +121,11 @@ export default function ProfessionalOnboardingPage() {
       // CRITICAL: Wait for state to propagate and verify it's set correctly
       // We need to ensure React has processed the state update before navigation
       await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Clear onboarding_in_progress flag now that onboarding is complete
+      localStorage.removeItem('onboarding_in_progress');
+      // Keep currentRole in localStorage for AuthGuard reference
+      localStorage.setItem('currentRole', 'professional');
 
       // DO NOT call refreshUser() here - it triggers handleRedirect with force:true
       // which bypasses onboarding protection and causes redirect loops

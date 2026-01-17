@@ -922,6 +922,7 @@ export async function updateShift(
     actualStartTime?: Date | string | null;
     substitutionRequestedBy?: string | null;
     proofImageUrl?: string | null;
+    deletedAt?: Date | string | null;
   }
 ): Promise<typeof shifts.$inferSelect | null> {
   const db = getDb();
@@ -946,6 +947,9 @@ export async function updateShift(
   }
   if (updates.actualStartTime && typeof updates.actualStartTime === 'string') {
     updateData.actualStartTime = new Date(updates.actualStartTime);
+  }
+  if (updates.deletedAt && typeof updates.deletedAt === 'string') {
+    updateData.deletedAt = new Date(updates.deletedAt);
   }
 
   const [updatedShift] = await db
