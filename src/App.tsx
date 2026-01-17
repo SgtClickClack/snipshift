@@ -276,7 +276,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/jobs" element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="professional">
             <Suspense fallback={<PageLoadingFallback />}>
               <JobFeedPage />
             </Suspense>
@@ -284,7 +284,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/browse-shifts" element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="professional">
             <Suspense fallback={<PageLoadingFallback />}>
               <BrowseShiftsPage />
             </Suspense>
@@ -292,7 +292,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/jobs/:id" element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="professional">
             <Suspense fallback={<PageLoadingFallback />}>
               <JobDetailsPage />
             </Suspense>

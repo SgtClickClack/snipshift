@@ -24,7 +24,7 @@ import {
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
-import { AppRole } from "@/lib/roles";
+import { AppRole, isBusinessRole } from "@/lib/roles";
 import { InstallButton } from "@/components/pwa/install-button";
 const logoUrl = '/hospogo-navbar-banner.png';
 
@@ -120,10 +120,12 @@ export default function Navbar() {
               <>
                 {/* Desktop Menu Items */}
                 <div className="hidden md:flex items-center space-x-4">
-                  {/* Find Shifts Link */}
-                  <Link to="/jobs">
-                    <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10" data-testid="link-find-shifts-desktop">Find Shifts</Button>
-                  </Link>
+                  {/* Find Shifts Link - Only visible for Professional users */}
+                  {user.currentRole === 'professional' || (user.roles && user.roles.includes('professional')) ? (
+                    <Link to="/jobs">
+                      <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10" data-testid="link-find-shifts-desktop">Find Shifts</Button>
+                    </Link>
+                  ) : null}
                 </div>
 
                 {/* Common Items (Visible on Mobile & Desktop) */}
@@ -243,13 +245,16 @@ export default function Navbar() {
                            </div>
                         </div>
 
-                        <SheetClose asChild>
-                          <Link to="/jobs">
-                            <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800" data-testid="link-find-shifts-mobile">
-                              Find Shifts
-                            </Button>
-                          </Link>
-                        </SheetClose>
+                        {/* Find Shifts Link - Only visible for Professional users */}
+                        {(user.currentRole === 'professional' || (user.roles && user.roles.includes('professional'))) && (
+                          <SheetClose asChild>
+                            <Link to="/jobs">
+                              <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800" data-testid="link-find-shifts-mobile">
+                                Find Shifts
+                              </Button>
+                            </Link>
+                          </SheetClose>
+                        )}
 
                          {(() => {
                            // Filter out roles the user already has from the potential missing roles
