@@ -4,7 +4,7 @@
  * Encapsulates database queries for shifts with pagination and filtering
  */
 
-import { eq, and, desc, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, sql, gte, lte, isNull } from 'drizzle-orm';
 import { shifts } from '../db/schema/shifts.js';
 import { users } from '../db/schema/users.js';
 import { getDb } from '../db/index.js';
@@ -173,6 +173,7 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
         backupRequestedAt: shifts.backupRequestedAt,
         backupWorkerId: shifts.backupWorkerId,
         originalWorkerId: shifts.originalWorkerId,
+        deletedAt: shifts.deletedAt,
         createdAt: shifts.createdAt,
         updatedAt: shifts.updatedAt,
         // Employer (shop) fields
@@ -190,7 +191,7 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
       .offset(offset);
 
     return {
-      data,
+      data: data as ShiftWithShop[],
       total,
       limit,
       offset,
@@ -273,6 +274,7 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       backupRequestedAt: shifts.backupRequestedAt,
       backupWorkerId: shifts.backupWorkerId,
       originalWorkerId: shifts.originalWorkerId,
+      deletedAt: shifts.deletedAt,
       createdAt: shifts.createdAt,
       updatedAt: shifts.updatedAt,
       // Employer (shop) fields
@@ -281,10 +283,10 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
     })
     .from(shifts)
     .leftJoin(users, eq(shifts.employerId, users.id))
-    .where(eq(shifts.id, id))
+    .where(and(eq(shifts.id, id), isNull(shifts.deletedAt)))
     .limit(1);
 
-  return shift || null;
+  return (shift as ShiftWithShop) || null;
 }
 
 /**
@@ -845,6 +847,7 @@ export async function getShiftsByEmployerInRange(
       .where(
         and(
           eq(shifts.employerId, employerId),
+          isNull(shifts.deletedAt),
           gte(shifts.startTime, startDate),
           lte(shifts.startTime, endDate),
           lte(shifts.endTime, endDate)
@@ -875,6 +878,7 @@ export async function getShiftsByEmployerInRange(
           updated_at AS "updatedAt"
         FROM shifts
         WHERE employer_id = ${employerId}
+          AND (deleted_at IS NULL)
           AND start_time >= ${startDate}
           AND start_time <= ${endDate}
           AND end_time <= ${endDate}
@@ -987,7 +991,7 @@ export async function getShiftsByEmployer(employerId: string, status?: 'draft' |
   }
 
   try {
-    const conditions = [eq(shifts.employerId, employerId)];
+    const conditions = [eq(shifts.employerId, employerId), isNull(shifts.deletedAt)];
     if (status) {
       conditions.push(eq(shifts.status, status));
     }
@@ -1027,7 +1031,7 @@ export async function getShiftsByEmployer(employerId: string, status?: 'draft' |
         created_at AS "createdAt",
         updated_at AS "updatedAt"
       FROM shifts
-      WHERE employer_id = ${employerId}${statusClause}
+      WHERE employer_id = ${employerId} AND (deleted_at IS NULL)${statusClause}
       ORDER BY created_at DESC
     `);
 
