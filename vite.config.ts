@@ -113,6 +113,7 @@ export default defineConfig(({ mode }) => ({
   // See src/config/env.ts for centralized access to these variables
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'react/jsx-runtime', 'use-places-autocomplete', 'lucide-react'],
+    exclude: ['moment', 'moment-timezone'], // Exclude moment from bundling since we use date-fns
     force: true, // Force dependency pre-bundling
   },
   server: {
