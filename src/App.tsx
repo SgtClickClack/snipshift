@@ -44,7 +44,7 @@ const ProfessionalOnboardingPage = lazy(() => import('@/pages/onboarding/profess
 
 // Legal & Company pages - lazy load (less critical)
 const TermsPage = lazy(() => import('@/pages/legal/terms'));
-const PrivacyPage = lazy(() => import('@/pages/legal/privacy'));
+const PrivacyPage = lazy(() => import('@/pages/privacy'));
 const RefundPolicyPage = lazy(() => import('@/pages/legal/refunds'));
 const SitemapPage = lazy(() => import('@/pages/legal/sitemap'));
 const AboutPage = lazy(() => import('@/pages/company/about'));
@@ -115,7 +115,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   }
   
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground flex flex-col w-full max-w-full overflow-x-hidden">
       {!hideNavbar && <Navbar />}
       <div className="flex-grow w-full max-w-full overflow-x-hidden">
         <Routes>
@@ -607,36 +607,36 @@ function App() {
   }, []);
 
   return (
-    <div className="relative w-full overflow-x-hidden min-h-screen">
-      <HelmetProvider>
-        <ErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="dark" storageKey="hospogo-ui-theme">
-          <TooltipProvider>
-            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <AuthProvider>
-                <PusherProvider>
-                  <NotificationProvider>
-                    <RouteProgressBar />
-                    <Toaster />
-                    <NotificationToast />
-                    <AppRoutes splashHandled={splashHandled} />
-                    <TutorialOverlay />
-                    <FeedbackWidget />
-                    <InstallPrompt />
-                    <PwaUpdateHandler />
-                    <Analytics />
-                    <SpeedInsights />
-                  </NotificationProvider>
-                </PusherProvider>
-              </AuthProvider>
-            </Router>
-          </TooltipProvider>
-          </ThemeProvider>
-          </QueryClientProvider>
-        </ErrorBoundary>
-      </HelmetProvider>
-    </div>
+    <ThemeProvider defaultTheme="dark" storageKey="hospogo-ui-theme">
+      <div className="relative w-full overflow-x-hidden min-h-screen">
+        <HelmetProvider>
+          <ErrorBoundary>
+            <QueryClientProvider client={queryClient}>
+              <TooltipProvider>
+                <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <AuthProvider>
+                    <PusherProvider>
+                      <NotificationProvider>
+                        <RouteProgressBar />
+                        <Toaster />
+                        <NotificationToast />
+                        <AppRoutes splashHandled={splashHandled} />
+                        <TutorialOverlay />
+                        <FeedbackWidget />
+                        <InstallPrompt />
+                        <PwaUpdateHandler />
+                        <Analytics />
+                        <SpeedInsights />
+                      </NotificationProvider>
+                    </PusherProvider>
+                  </AuthProvider>
+                </Router>
+              </TooltipProvider>
+            </QueryClientProvider>
+          </ErrorBoundary>
+        </HelmetProvider>
+      </div>
+    </ThemeProvider>
   );
 }
 

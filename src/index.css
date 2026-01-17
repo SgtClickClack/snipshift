@@ -91,6 +91,7 @@
   /* The Nuclear Option for Mobile Browsers - Force off-white in light mode */
   /* Samsung Internet Dark Mode Override Prevention */
   html {
+    @apply bg-background text-foreground;
     /* Tell browser to stop auto-adjusting colors */
     forced-color-adjust: none !important;
     -webkit-print-color-adjust: exact !important;

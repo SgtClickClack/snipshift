@@ -450,7 +450,7 @@ export default function HubOnboardingPage() {
           description="Register your venue on HospoGo."
           url="/onboarding/hub"
         />
-        <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <div className="text-center space-y-6">
             <div className="relative">
               <Loader2 className="h-12 w-12 animate-spin text-brand-neon mx-auto" />
@@ -488,7 +488,7 @@ export default function HubOnboardingPage() {
         description="Register your venue on HospoGo."
         url="/onboarding/hub"
       />
-      <div className="min-h-screen bg-gradient-to-br from-steel-50 to-steel-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-xl">
           {/* Plan Badge */}
           {selectedPlan && (
