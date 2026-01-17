@@ -411,7 +411,9 @@ export default function EarningsPage() {
             <CardDescription>All your financial movements and transactions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto relative">
+              {/* Swipe indicator for mobile */}
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none sm:hidden z-10" aria-hidden="true" />
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -468,6 +470,10 @@ export default function EarningsPage() {
                   )}
                 </TableBody>
               </Table>
+              {/* Swipe hint text for mobile */}
+              <div className="sm:hidden text-xs text-muted-foreground text-center mt-2" aria-hidden="true">
+                ← Swipe to see more →
+              </div>
             </div>
           </CardContent>
         </Card>

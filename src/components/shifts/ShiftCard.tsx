@@ -89,14 +89,14 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
           <p className="text-neutral-700 mb-4">{shift.requirements}</p>
           
           {showApplyButton && (
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
               <div className="flex items-center">
                 <span className="text-xl font-bold text-neutral-900">${shift.pay}</span>
                 <span className="text-neutral-600 ml-2">/hour</span>
               </div>
               <Button 
                 onClick={handleApplyClick} 
-                className="bg-primary hover:bg-blue-700"
+                className="w-full sm:w-auto bg-primary hover:bg-blue-700 min-h-[44px]"
                 disabled={isApplied}
               >
                 {isApplied ? "Applied" : "I'm Interested"}

@@ -94,7 +94,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, distance }: O
             {shift.description}
           </p>
         )}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
           <div className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-green-600" />
             <span className="text-lg font-semibold">${hourlyRate.toFixed(2)}/hr</span>
@@ -108,7 +108,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, distance }: O
             onClick={() => onApply(shift.id)}
             disabled={isApplying || hasApplied}
             variant={hasApplied ? 'outline' : 'default'}
-            className="min-w-32"
+            className="w-full sm:w-auto min-w-32 min-h-[44px]"
           >
             {isApplying ? (
               <>

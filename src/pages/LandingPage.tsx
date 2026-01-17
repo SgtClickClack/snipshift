@@ -62,17 +62,19 @@ export default function LandingPage() {
       <h1 className="sr-only">HospoGo: Hospitality Shifts for Staff and Venues</h1>
       <div className="min-h-screen">
         {/* Hero Section - Grid Split Layout */}
-        <section className="relative isolate w-full min-h-[100vh] text-foreground overflow-hidden bg-[#0A0A0A]">
-          {/* Hero image - full bleed background */}
-          <img
-            src={encodeURI("/hospogonewhero.png")}
-            alt=""
-            className="absolute inset-0 z-0 h-full w-full object-cover object-[center_55%]"
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            aria-hidden="true"
-          />
+        <section className="relative isolate w-full max-w-[100vw] min-h-[100vh] text-foreground overflow-hidden bg-[#0A0A0A]">
+          {/* Hero image container - prevents horizontal overflow */}
+          <div className="absolute inset-0 z-0 w-full max-w-[100vw] h-full overflow-hidden">
+            <img
+              src={encodeURI("/hospogonewhero.png")}
+              alt=""
+              className="w-full max-w-full h-full object-cover object-[center_55%]"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              aria-hidden="true"
+            />
+          </div>
 
 
           {/* Landing Header - Absolute positioned over hero */}
@@ -144,20 +146,20 @@ export default function LandingPage() {
 
                 {/* Action Buttons */}
                 {!isAuthenticated && (
-                  <div className="flex gap-4 mt-10">
-                    <Link to="/signup?role=hub">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
+                    <Link to="/signup?role=hub" className="w-full sm:w-auto">
                       <Button
-                        className="bg-[#BFFF00] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300"
+                        className="w-full sm:w-auto bg-[#BFFF00] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300 min-h-[44px]"
                         data-testid="button-find-staff"
                       >
                         FIND STAFF
                       </Button>
                     </Link>
 
-                    <Link to="/signup?role=professional">
+                    <Link to="/signup?role=professional" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="border-2 border-white text-white font-bold px-12 py-5 rounded-full hover:bg-white/5 transition-all duration-300"
+                        className="w-full sm:w-auto border-2 border-white text-white font-bold px-12 py-5 rounded-full hover:bg-white/5 transition-all duration-300 min-h-[44px]"
                         data-testid="button-find-shifts"
                       >
                         Find Shifts
@@ -167,10 +169,10 @@ export default function LandingPage() {
                 )}
 
                 {isAuthenticated && user && (
-                  <div className="flex gap-4 mt-10">
-                    <Link to={getDashboardRoute(user.currentRole)}>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
+                    <Link to={getDashboardRoute(user.currentRole)} className="w-full sm:w-auto">
                       <Button
-                        className="bg-[#BFFF00] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300"
+                        className="w-full sm:w-auto bg-[#BFFF00] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300 min-h-[44px]"
                         data-testid="button-go-to-dashboard"
                       >
                         Go to Dashboard
@@ -376,21 +378,21 @@ export default function LandingPage() {
                 Join the marketplace that's reshaping how venues and staff connect
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/signup?role=hub">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-4">
+                <Link to="/signup?role=hub" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="h-auto bg-[#BFFF00] text-black px-10 py-4 rounded-full font-black text-lg hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300"
+                    className="w-full sm:w-auto h-auto bg-[#BFFF00] text-black px-10 py-4 rounded-full font-black text-lg hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300 min-h-[44px]"
                     data-testid="button-join-venue"
                   >
                     Venue Sign Up
                   </Button>
                 </Link>
-                <Link to="/signup?role=professional">
+                <Link to="/signup?role=professional" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="h-auto bg-transparent border-2 border-white text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white/5 transition-all duration-300"
+                    className="w-full sm:w-auto h-auto bg-transparent border-2 border-white text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white/5 transition-all duration-300 min-h-[44px]"
                     data-testid="button-join-staff"
                   >
                     Staff Sign Up

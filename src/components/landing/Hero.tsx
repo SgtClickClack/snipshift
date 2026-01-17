@@ -16,17 +16,19 @@ export default function Hero() {
   };
   
   return (
-    <section className="relative isolate w-full min-h-[100vh] text-foreground overflow-hidden bg-black">
-      {/* Hero image - full bleed background */}
-      <img
-        src={heroImageUrl}
-        alt=""
-        className="absolute inset-0 z-0 h-full w-full object-cover object-[center_55%]"
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        aria-hidden="true"
-      />
+    <section className="relative isolate w-full max-w-[100vw] min-h-[100vh] text-foreground overflow-hidden bg-black">
+      {/* Hero image container - prevents horizontal overflow */}
+      <div className="absolute inset-0 z-0 w-full max-w-[100vw] h-full overflow-hidden">
+        <img
+          src={heroImageUrl}
+          alt=""
+          className="w-full max-w-full h-full object-cover object-[center_55%]"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          aria-hidden="true"
+        />
+      </div>
 
       {/* Subtle gradient overlay - left edge only for text readability */}
       <div
@@ -103,20 +105,20 @@ export default function Hero() {
 
             {/* Action Buttons */}
             {!isAuthenticated ? (
-              <div className="flex gap-4 items-center">
-                <Link to="/signup?role=hub">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-stretch sm:items-center">
+                <Link to="/signup?role=hub" className="w-full sm:w-auto">
                   <Button
-                    className="bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all"
+                    className="w-full sm:w-auto bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
                     data-testid="button-find-staff"
                   >
                     FIND STAFF
                   </Button>
                 </Link>
 
-                <Link to="/signup?role=professional">
+                <Link to="/signup?role=professional" className="w-full sm:w-auto">
                   <Button
                     variant="ghost"
-                    className="border-2 border-white text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-all"
+                    className="w-full sm:w-auto border-2 border-white text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-all min-h-[44px]"
                     data-testid="button-find-shifts"
                   >
                     Find Shifts
@@ -124,9 +126,9 @@ export default function Hero() {
                 </Link>
               </div>
             ) : (
-              <Link to={getDashboardLink()}>
+              <Link to={getDashboardLink()} className="w-full sm:w-auto">
                 <Button
-                  className="bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all"
+                  className="w-full sm:w-auto bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
                   data-testid="button-go-to-dashboard"
                 >
                   Go to Dashboard
