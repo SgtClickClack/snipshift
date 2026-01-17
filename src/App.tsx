@@ -450,14 +450,6 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </ProtectedRoute>
         } />
         
-        <Route path="/worker/earnings" element={
-          <ProtectedRoute requiredRole="professional">
-            <Suspense fallback={<PageLoadingFallback />}>
-              <WorkerEarningsView />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-
         {/* Protected feature routes - Disabled for stability */}
         <Route path="/community" element={
           <ProtectedRoute>
@@ -535,14 +527,6 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </ProtectedRoute>
         } />
 
-        <Route path="/earnings" element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <EarningsPage />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-
         {/* Persistent Layout Routes - These share the same layout and won't re-mount */}
         <Route element={<PersistentLayout />}>
           <Route path="/messages" element={
@@ -557,6 +541,22 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
             <ProtectedRoute>
               <Suspense fallback={<PageLoadingFallback />}>
                 <UserDashboard />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/earnings" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <EarningsPage />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/worker/earnings" element={
+            <ProtectedRoute requiredRole="professional">
+              <Suspense fallback={<PageLoadingFallback />}>
+                <WorkerEarningsView />
               </Suspense>
             </ProtectedRoute>
           } />

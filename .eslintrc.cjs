@@ -17,5 +17,11 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
   },
+  overrides: [
+    {
+      files: ['api/**/*', 'start-servers.js'],
+      env: { node: true, es2020: true },
+    },
+  ],
 }
 

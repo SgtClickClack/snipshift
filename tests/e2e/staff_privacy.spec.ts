@@ -813,7 +813,7 @@ test.describe('Staff Privacy & Contact Masking E2E Tests', () => {
       // ===============================================
       // PRE-HIRE ASSERTION: Contact details should be masked
       // ===============================================
-      let pageContentBefore = await page.content();
+      const pageContentBefore = await page.content();
       expect(pageContentBefore).not.toContain(STAFF_APPLICANT_UNHIRED.realEmail);
 
       // ===============================================

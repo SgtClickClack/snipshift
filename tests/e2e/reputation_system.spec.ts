@@ -104,7 +104,7 @@ async function setupReputationMocks(page: Page, options: {
   const pastShift = createPastShift();
   
   // Track no-show state
-  let noShowState = {
+  const noShowState = {
     reported: noShowReported,
     staffStrikes: noShowReported ? 2 : 0,
     staffSuspended: staffSuspended,

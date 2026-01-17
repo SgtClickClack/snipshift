@@ -728,7 +728,7 @@ test.describe('Professional Calendar E2E Tests', () => {
       
       // Check for elements that could be the time indicator:
       // 1. Element with current time text (e.g., "2:30 PM")
-      const currentTimeText = page.locator('text=/^\d{1,2}:\d{2}\s*(AM|PM)$/i');
+      const currentTimeText = page.locator(`text=/^\\d{1,2}:\\d{2}\\s*(AM|PM)$/i`);
       const timeTextCount = await currentTimeText.count();
       
       // 2. Look for a horizontal line element (could be a div with border or background)

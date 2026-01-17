@@ -24,17 +24,6 @@ export function ReviewForm({ jobId, jobTitle, revieweeId, revieweeName, onSucces
   const [rating, setRating] = useState<number>(0);
   const [comment, setComment] = useState('');
 
-  // Frontend guard: prevent self-review
-  if (user && user.id === revieweeId) {
-    return (
-      <Card className="card-chrome">
-        <CardContent className="p-8 text-center">
-          <p className="text-steel-600">You cannot review yourself.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const createReviewMutation = useMutation({
     mutationFn: (data: CreateReviewData) => createReview(data),
     onSuccess: () => {

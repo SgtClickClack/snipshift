@@ -122,11 +122,12 @@ router.get('/me/analytics', authenticateUser, asyncHandler(async (req: Authentic
       startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
       previousStartDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
       break;
-    case 'ytd':
+    case 'ytd': {
       startDate = new Date(now.getFullYear(), 0, 1);
       const previousYear = now.getFullYear() - 1;
       previousStartDate = new Date(previousYear, 0, 1);
       break;
+    }
     case '30d':
     default:
       startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);

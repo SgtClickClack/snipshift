@@ -28,9 +28,9 @@ export interface OCRExtractionResult {
  */
 const DATE_PATTERNS = [
   // DD/MM/YYYY or DD-MM-YYYY
-  /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/,
+  /(\d{1,2})[/-](\d{1,2})[/-](\d{4})/,
   // YYYY-MM-DD (ISO format)
-  /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,
+  /(\d{4})[/-](\d{1,2})[/-](\d{1,2})/,
   // Month DD, YYYY
   /(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})/i,
   // DD Month YYYY
@@ -72,7 +72,7 @@ function parseDate(dateMatch: RegExpMatchArray): string | null {
     const [fullMatch, first, second, third] = dateMatch;
     
     // DD/MM/YYYY or DD-MM-YYYY pattern
-    if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(fullMatch)) {
+    if (/^\d{1,2}[/-]\d{1,2}[/-]\d{4}$/.test(fullMatch)) {
       const day = parseInt(first, 10);
       const month = parseInt(second, 10) - 1; // 0-indexed
       const year = parseInt(third, 10);
@@ -81,7 +81,7 @@ function parseDate(dateMatch: RegExpMatchArray): string | null {
     }
     
     // YYYY-MM-DD pattern
-    if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(fullMatch)) {
+    if (/^\d{4}[/-]\d{1,2}[/-]\d{1,2}$/.test(fullMatch)) {
       const year = parseInt(first, 10);
       const month = parseInt(second, 10) - 1;
       const day = parseInt(third, 10);

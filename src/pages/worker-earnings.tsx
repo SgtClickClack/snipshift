@@ -5,7 +5,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { EarningsDashboardSkeleton } from '@/components/ui/skeletons';
 import {
   Table,
   TableBody,
@@ -128,19 +128,10 @@ export default function WorkerEarningsView() {
     document.body.removeChild(link);
   };
 
-  if (isLoading) {
-    return (
-      <>
-        <SEO title="Earnings | Worker Dashboard" />
-        <div className="min-h-screen bg-background">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Skeleton className="h-8 w-64 mb-6" />
-            <Skeleton className="h-32 w-full mb-6" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </div>
-      </>
-    );
+  // Instant-load pattern: Return skeleton immediately if loading or no user
+  // This ensures the App Shell (sidebar/header) is never blocked by data fetching
+  if (isLoading || !user?.id) {
+    return <EarningsDashboardSkeleton />;
   }
 
   if (!earningsData) {

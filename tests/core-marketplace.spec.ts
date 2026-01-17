@@ -631,7 +631,7 @@ test('Venue Manager Journey: Post shift, receive application, approve, and compl
   await page.waitForTimeout(1000); // Give time for auth state to update
   
   // Check current URL - signup should navigate to /onboarding, but AuthGuard might redirect to /login first
-  let currentUrl = page.url();
+  const currentUrl = page.url();
   console.log(`After signup, current URL: ${currentUrl}`);
   
   // If we're on login, wait for AuthGuard to redirect to onboarding once user state is set

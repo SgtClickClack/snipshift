@@ -22,9 +22,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { EarningsDashboardSkeleton } from '@/components/ui/skeletons';
 import { 
   Wallet, 
   DollarSign, 
@@ -162,6 +162,12 @@ export default function EarningsPage() {
     }).format(amount);
   };
 
+  // Instant-load pattern: Return skeleton immediately if loading or no user
+  // This ensures the App Shell (sidebar/header) is never blocked by data fetching
+  if (isLoading || !user?.id) {
+    return <EarningsDashboardSkeleton />;
+  }
+
   if (!user || user.currentRole !== 'professional') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -176,10 +182,6 @@ export default function EarningsPage() {
         </Card>
       </div>
     );
-  }
-
-  if (isLoading) {
-    return <PageLoadingFallback />;
   }
 
   const data = walletData || {

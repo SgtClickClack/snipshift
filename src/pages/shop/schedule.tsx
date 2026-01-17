@@ -22,6 +22,7 @@ import { apiRequest } from '@/lib/queryClient';
 import type { ShiftDetails } from '@/lib/api';
 import { AssignStaffModal, Professional } from '@/components/calendar/assign-staff-modal';
 import { NoShowAction, canReportNoShow } from '@/components/shifts/no-show-action';
+import { ScheduleCalendarSkeleton } from '@/components/ui/skeletons';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
@@ -600,6 +601,12 @@ export default function ShopSchedulePage() {
     setCreateOpen(true);
   }, []);
 
+  // Instant-load pattern: Return skeleton immediately if loading or no user
+  // This ensures the calendar framework appears instantly while shifts are loading
+  if (isLoading || !user?.id) {
+    return <ScheduleCalendarSkeleton />;
+  }
+
   if (!user || (user.currentRole !== 'hub' && user.currentRole !== 'business')) {
     return <div className="p-6">Access denied</div>;
   }
@@ -719,7 +726,6 @@ export default function ShopSchedulePage() {
                 />
               </div>
             </div>
-            {isLoading ? <div className="mt-3 text-sm text-muted-foreground">Loading shifts…</div> : null}
           </CardContent>
         </Card>
       </div>

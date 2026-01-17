@@ -155,18 +155,9 @@ export default function ShiftStructurePreview({
     return segments;
   }, [dayHours, shiftSplitType, customShiftLength]);
 
-  if (!dayHours || !dayHours.enabled || !dayHours.open || !dayHours.close) {
-    return (
-      <div className="p-4 border rounded-lg bg-muted/50">
-        <p className="text-sm text-muted-foreground text-center">
-          Select a day with opening hours to see preview
-        </p>
-      </div>
-    );
-  }
-
-  const [openHour, openMin] = dayHours.open.split(':').map(Number);
-  const [closeHour, closeMin] = dayHours.close.split(':').map(Number);
+  // Calculate time values for validation (needed before early return for useMemo)
+  const [openHour, openMin] = dayHours?.open?.split(':').map(Number) || [0, 0];
+  const [closeHour, closeMin] = dayHours?.close?.split(':').map(Number) || [0, 0];
   const openTime = new Date(2000, 0, 1, openHour, openMin);
   const closeTime = new Date(2000, 0, 1, closeHour, closeMin);
   const totalMinutes = (closeTime.getTime() - openTime.getTime()) / (1000 * 60);
@@ -189,6 +180,16 @@ export default function ShiftStructurePreview({
     }
     return true;
   }, [shiftSplitType, totalMinutes, customShiftLength]);
+
+  if (!dayHours || !dayHours.enabled || !dayHours.open || !dayHours.close) {
+    return (
+      <div className="p-4 border rounded-lg bg-muted/50">
+        <p className="text-sm text-muted-foreground text-center">
+          Select a day with opening hours to see preview
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 border rounded-lg bg-background">
