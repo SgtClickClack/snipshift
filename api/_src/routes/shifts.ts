@@ -977,16 +977,32 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
   try {
     // Fetch both shifts and legacy jobs for this user
     // Note: We pass excludeExpired: false to include past jobs for calendar/history display
-    const [shifts, jobsResult] = await Promise.all([
-      shiftsRepo.getShiftsByEmployer(userId),
-      jobsRepo.getJobs({ businessId: userId, excludeExpired: false })
-    ]);
+    let shifts: Awaited<ReturnType<typeof shiftsRepo.getShiftsByEmployer>> = [];
+    let jobs: any[] = [];
 
-    const jobs = jobsResult?.data || [];
+    try {
+      const [shiftsResult, jobsResult] = await Promise.all([
+        shiftsRepo.getShiftsByEmployer(userId),
+        jobsRepo.getJobs({ businessId: userId, excludeExpired: false })
+      ]);
+      
+      shifts = shiftsResult || [];
+      jobs = jobsResult?.data || [];
+    } catch (fetchError: any) {
+      console.error('[GET /api/shifts/shop/:userId] Error fetching shifts/jobs:', {
+        userId,
+        error: fetchError?.message,
+        code: fetchError?.code,
+        stack: fetchError?.stack,
+      });
+      // Continue with empty arrays to avoid complete failure
+      shifts = [];
+      jobs = [];
+    }
 
   // OPTIMIZED: Batch fetch all application counts in a single query (N+1 prevention)
-  const shiftIds = shifts.map(s => s.id);
-  const jobIds = jobs.map(j => j.id);
+  const shiftIds = (shifts || []).map(s => s?.id).filter(Boolean) as string[];
+  const jobIds = (jobs || []).map(j => j?.id).filter(Boolean) as string[];
   
   let applicationCountMap: Map<string, number> = new Map();
   try {
@@ -1015,46 +1031,66 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
   }
 
   // Normalize shifts to unified format
-  const normalizedShifts = shifts.map((shift) => {
-    // Get application count from batch-fetched map
-    const applicationCount = applicationCountMap.get(`shift:${shift.id}`) || 0;
+  const normalizedShifts = (shifts || []).map((shift) => {
+    try {
+      if (!shift || !shift.id) {
+        console.warn('[GET /api/shifts/shop/:userId] Skipping invalid shift:', shift);
+        return null;
+      }
 
-    // Build location string
-    const location = shift.location || null;
+      // Get application count from batch-fetched map
+      const applicationCount = applicationCountMap.get(`shift:${shift.id}`) || 0;
 
-    // Convert startTime to date string for compatibility
-    const startTimeISO = toISOStringSafe(shift.startTime);
-    const endTimeISO = toISOStringSafe(shift.endTime);
-    const createdAtISO = toISOStringSafe(shift.createdAt);
-    const dateStr = startTimeISO.split('T')[0];
+      // Build location string
+      const location = shift.location || null;
 
-    return {
-      id: shift.id,
-      role: (shift as any).role ?? null,
-      title: shift.title,
-      payRate: shift.hourlyRate,
-      date: dateStr,
-      startTime: startTimeISO,
-      endTime: endTimeISO,
-      shiftLengthHours: computeShiftLengthHours(shift.startTime, shift.endTime),
-      status: shift.status,
-      location,
-      applicationCount,
-      createdAt: createdAtISO,
-      employerId: shift.employerId,
-      uniformRequirements: (shift as any).uniformRequirements ?? null,
-      rsaRequired: (shift as any).rsaRequired ?? false,
-      expectedPax: (shift as any).expectedPax ?? null,
-      isEmergencyFill: (shift as any).isEmergencyFill ?? false,
-      // Add type indicator for debugging (optional)
-      _type: 'shift'
-    };
-  });
+      // Convert startTime to date string for compatibility
+      const startTimeISO = toISOStringSafe(shift.startTime);
+      const endTimeISO = toISOStringSafe(shift.endTime);
+      const createdAtISO = toISOStringSafe(shift.createdAt);
+      const dateStr = startTimeISO.split('T')[0];
+
+      return {
+        id: shift.id,
+        role: (shift as any).role ?? null,
+        title: shift.title || 'Untitled Shift',
+        payRate: shift.hourlyRate,
+        date: dateStr,
+        startTime: startTimeISO,
+        endTime: endTimeISO,
+        shiftLengthHours: computeShiftLengthHours(shift.startTime, shift.endTime),
+        status: shift.status || 'draft',
+        location,
+        applicationCount,
+        createdAt: createdAtISO,
+        employerId: shift.employerId,
+        uniformRequirements: (shift as any).uniformRequirements ?? null,
+        rsaRequired: (shift as any).rsaRequired ?? false,
+        expectedPax: (shift as any).expectedPax ?? null,
+        isEmergencyFill: (shift as any).isEmergencyFill ?? false,
+        // Add type indicator for debugging (optional)
+        _type: 'shift'
+      };
+    } catch (shiftError: any) {
+      console.error('[GET /api/shifts/shop/:userId] Error normalizing shift:', {
+        shiftId: shift?.id,
+        error: shiftError?.message,
+        stack: shiftError?.stack,
+      });
+      return null;
+    }
+  }).filter(Boolean) as any[];
 
   // Normalize jobs to unified format
-  const normalizedJobs = jobs.map((job) => {
-    // Get application count from batch-fetched map
-    const applicationCount = applicationCountMap.get(`job:${job.id}`) || 0;
+  const normalizedJobs = (jobs || []).map((job) => {
+    try {
+      if (!job || !job.id) {
+        console.warn('[GET /api/shifts/shop/:userId] Skipping invalid job:', job);
+        return null;
+      }
+
+      // Get application count from batch-fetched map
+      const applicationCount = applicationCountMap.get(`job:${job.id}`) || 0;
 
       // Build location string
       const locationParts = [job.address, job.city, job.state].filter(Boolean);
@@ -1068,18 +1104,21 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
       } else if (job.date && typeof job.date === 'object' && 'toISOString' in job.date) {
         // Handle Date object or Date-like object
         dateStr = (job.date as Date).toISOString().split('T')[0];
-      } else {
+      } else if (job.date) {
         // Fallback: convert to string and extract date portion
         dateStr = String(job.date).split('T')[0];
+      } else {
+        // If date is missing, use today as fallback
+        dateStr = new Date().toISOString().split('T')[0];
       }
       
       // Extract time portion (time type returns as "HH:MM:SS" string)
-      const startTimeStr = typeof job.startTime === 'string' 
-        ? job.startTime 
-        : String(job.startTime);
-      const endTimeStr = typeof job.endTime === 'string' 
-        ? job.endTime 
-        : String(job.endTime);
+      const startTimeStr = job.startTime 
+        ? (typeof job.startTime === 'string' ? job.startTime : String(job.startTime))
+        : '00:00:00';
+      const endTimeStr = job.endTime 
+        ? (typeof job.endTime === 'string' ? job.endTime : String(job.endTime))
+        : '23:59:59';
       
       // Create full datetime strings (combining date with time)
       // Handle both "HH:MM:SS" and "HH:MM:SS.mmm" formats
@@ -1096,23 +1135,23 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
           startDateTime = new Date(`${dateStr}T00:00:00`);
           endDateTime = new Date(`${dateStr}T23:59:59`);
         }
-      } catch (error) {
+      } catch (dateError) {
         // Fallback: use date with default times if parsing fails
         startDateTime = new Date(`${dateStr}T00:00:00`);
         endDateTime = new Date(`${dateStr}T23:59:59`);
       }
 
       // Map job status to shift status format (closed -> completed)
-      let status = job.status;
+      let status = job.status || 'open';
       if (status === 'closed') {
         status = 'completed';
       }
 
       return {
         id: job.id,
-        title: job.title,
+        title: job.title || 'Untitled Job',
         shopName: job.shopName || undefined,
-        payRate: job.payRate,
+        payRate: job.payRate || null,
         date: dateStr,
         startTime: startDateTime.toISOString(),
         endTime: endDateTime.toISOString(),
@@ -1131,24 +1170,59 @@ router.get('/shop/:userId', authenticateUser, asyncHandler(async (req: Authentic
         // Add type indicator for debugging (optional)
         _type: 'job'
       };
-    });
+    } catch (jobError: any) {
+      console.error('[GET /api/shifts/shop/:userId] Error normalizing job:', {
+        jobId: job?.id,
+        error: jobError?.message,
+        stack: jobError?.stack,
+      });
+      return null;
+    }
+  }).filter(Boolean) as any[];
 
     // Combine and sort by createdAt (newest first)
     const allListings = [...normalizedShifts, ...normalizedJobs].sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA; // Descending order
+      try {
+        if (!a?.createdAt || !b?.createdAt) {
+          // If either is missing createdAt, put missing ones at the end
+          if (!a?.createdAt && !b?.createdAt) return 0;
+          if (!a?.createdAt) return 1;
+          if (!b?.createdAt) return -1;
+        }
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        // Handle invalid dates
+        if (isNaN(dateA) || isNaN(dateB)) {
+          if (isNaN(dateA) && isNaN(dateB)) return 0;
+          if (isNaN(dateA)) return 1;
+          if (isNaN(dateB)) return -1;
+        }
+        return dateB - dateA; // Descending order
+      } catch (sortError) {
+        // If sorting fails, maintain original order
+        return 0;
+      }
     });
 
     res.status(200).json(allListings);
   } catch (error: any) {
-    console.error('[GET /api/shifts/shop/:userId] Error:', error);
-    console.error('[GET /api/shifts/shop/:userId] Stack:', error?.stack);
-    res.status(500).json({ 
-      message: 'Failed to fetch shop shifts',
-      error: error?.message || 'Unknown error',
-      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    console.error('[GET /api/shifts/shop/:userId] Error:', {
+      userId,
+      currentUserId,
+      error: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      stack: error?.stack,
     });
+    
+    // Try to send error response, but don't throw if response already sent
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        message: 'Failed to fetch shop shifts',
+        error: error?.message || 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      });
+    }
   }
 }));
 
