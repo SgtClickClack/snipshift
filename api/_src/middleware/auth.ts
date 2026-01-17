@@ -112,8 +112,8 @@ export function authenticateUser(
 
     // Bypass for E2E Testing - Only allow in test environment for security
     // This prevents production exploitation while maintaining E2E test reliability
-    // Accept both 'mock-test-id-token' and 'mock-test-token' for test flexibility
-    if ((token === 'mock-test-id-token' || token === 'mock-test-token') && process.env.NODE_ENV === 'test') {
+    // Accept any token starting with 'mock-test-' to bypass Firebase verification
+    if (token && token.startsWith('mock-test-') && process.env.NODE_ENV === 'test') {
       // Return specific mock user object for E2E tests
       // This bypasses Firebase token verification
       req.user = {
