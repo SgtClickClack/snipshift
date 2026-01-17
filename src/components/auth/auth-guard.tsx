@@ -139,6 +139,10 @@ export function AuthGuard({
 
   const publicRoutes = ['/onboarding', '/onboarding/hub', '/onboarding/professional', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
   
+  // Routes that are accessible to all authenticated users regardless of role
+  // These routes don't require a specific role and should be accessible once user is authenticated
+  const roleAgnosticRoutes = ['/messages', '/profile', '/settings', '/notifications', '/wallet', '/earnings'];
+  
   // CRITICAL: Exception - If current path starts with /onboarding, do not redirect to role selector
   // This prevents redirect loops during onboarding flow, especially on new devices
   // ALSO: If onboarding_in_progress flag is set, allow access regardless of user state
@@ -200,9 +204,18 @@ export function AuthGuard({
 
   // If user is authenticated but doesn't have a current role, redirect to role selection
   // But only if they're already onboarded (onboarding sets the role)
-  // Exception: Allow public routes to be viewed
+  // Exception: Allow public routes and role-agnostic routes to be viewed
   if (isAuthenticated && user && user.isOnboarded !== false && (!user.currentRole || user.currentRole === 'client')) {
-    // Avoid redirect loop when already on a public route
+    // CRITICAL: Allow access to role-agnostic routes (messages, profile, etc.) even without a role
+    // These routes are accessible to all authenticated users
+    if (roleAgnosticRoutes.includes(location.pathname)) {
+      logger.debug('AuthGuard', 'User accessing role-agnostic route, allowing access without role check', {
+        pathname: location.pathname,
+        currentRole: user.currentRole,
+      });
+      return <>{children}</>;
+    }
+    // Avoid redirect loop when already on a public route or role-selection
     if (!publicRoutes.includes(location.pathname) && location.pathname !== '/role-selection') {
       return <Navigate to="/role-selection" replace />;
     }
