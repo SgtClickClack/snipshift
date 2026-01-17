@@ -341,6 +341,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return publicPaths.includes(pathname);
   };
 
+  // Paths that should NEVER be auto-redirected away from during auth state changes
+  // These are authenticated pages that users should be able to access without being kicked out
+  const isProtectedAuthPath = (pathname: string): boolean => {
+    const protectedAuthPaths = [
+      '/messages',      // Messages page - role-agnostic, should not redirect
+      '/profile',       // Profile page
+      '/settings',      // Settings page
+      '/notifications', // Notifications page
+      '/wallet',        // Wallet page
+      '/earnings',      // Earnings page
+    ];
+    return protectedAuthPaths.includes(pathname);
+  };
+
   const handleRedirect = (u: User | null, opts?: { force?: boolean }) => {
     const pathname = locationRef.current.pathname;
     const force = opts?.force === true;
@@ -348,6 +362,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // NEVER redirect away from protected public paths (landing, legal pages, etc.)
     // unless user explicitly triggered it (force=true from triggerPostAuthRedirect)
     if (!force && isProtectedPublicPath(pathname)) {
+      return;
+    }
+
+    // CRITICAL: Never redirect away from protected authenticated paths (messages, profile, etc.)
+    // These are role-agnostic pages that should remain accessible during auth state changes
+    // This check must happen even when force=true to prevent redirects during user state updates
+    if (isProtectedAuthPath(pathname)) {
+      logger.debug('AuthContext', 'handleRedirect: User on protected auth path, skipping redirect', {
+        pathname,
+        currentRole: u?.currentRole,
+        isOnboarded: u?.isOnboarded,
+        force
+      });
+      pendingRedirect.current = false;
+      setIsRedirecting(false);
       return;
     }
 
@@ -1003,6 +1032,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
               } else if (res.status === 404) {
                 // User exists in Firebase but not in our database
                 logger.debug('AuthContext', 'Firebase user has no profile (404)');
+                
+                // CRITICAL: If we're on the signup page, don't redirect to signup
+                // This prevents redirect loops during signup flow where user is being created
+                // The signup page will handle navigation to onboarding after user creation
+                const isOnSignupPage = locationRef.current.pathname === '/signup';
+                if (isOnSignupPage) {
+                  logger.debug('AuthContext', 'On signup page, skipping redirect to prevent loop');
+                  setUser(null);
+                  setIsRoleLoading(false);
+                  setIsRedirecting(false);
+                  pendingRedirect.current = false;
+                  setIsLoading(false);
+                  setIsAuthReady(true);
+                  // Clear safety timeout since we've resolved auth state
+                  if (safetyTimeoutRef.current) {
+                    clearTimeout(safetyTimeoutRef.current);
+                    safetyTimeoutRef.current = null;
+                  }
+                  return; // Don't redirect, let signup page handle it
+                }
+                
                 setUser(null);
                 setIsRoleLoading(false);
                 
@@ -1175,6 +1225,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      // RELIABILITY: Broadcast logout event to other tabs before clearing state
+      if (typeof window !== 'undefined') {
+        // Use BroadcastChannel for cross-tab communication (modern browsers)
+        try {
+          const logoutChannel = new BroadcastChannel('hospogo_auth_logout');
+          logoutChannel.postMessage({ type: 'LOGOUT', timestamp: Date.now() });
+          logoutChannel.close();
+        } catch (bcError) {
+          logger.debug('AuthContext', 'BroadcastChannel not available, using localStorage fallback', bcError);
+        }
+
+        // Fallback: Use localStorage event for cross-tab sync (works in all browsers)
+        localStorage.setItem('hospogo_logout_event', JSON.stringify({ 
+          type: 'LOGOUT', 
+          timestamp: Date.now() 
+        }));
+        // Remove immediately to trigger storage event
+        localStorage.removeItem('hospogo_logout_event');
+      }
+
       // Clear any user-related localStorage items
       // Note: We don't clear theme or PWA install status as those are user preferences
       // But we clear any potential auth-related data
@@ -1320,7 +1390,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return refreshUser(1); // Retry once
         }
         
-        logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404), redirecting to signup');
+        logger.debug('AuthContext', 'refreshUser: Firebase user has no profile (404)');
+        
+        // CRITICAL: If we're on the signup page, don't redirect to signup
+        // This prevents redirect loops during signup flow where user is being created
+        const isOnSignupPage = locationRef.current.pathname === '/signup';
+        if (isOnSignupPage) {
+          logger.debug('AuthContext', 'refreshUser: On signup page, skipping redirect to prevent loop');
+          setUser(null);
+          setIsRoleLoading(false);
+          setIsRedirecting(false);
+          pendingRedirect.current = false;
+          return; // Don't redirect, let signup page handle it
+        }
+        
+        logger.debug('AuthContext', 'refreshUser: Redirecting to signup');
         setUser(null);
         setIsRoleLoading(false);
         
@@ -1372,7 +1456,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } else if (retryRes.status === 404 || retryRes.status === 401) {
             // User exists in Firebase but not in our database - redirect to signup for fresh start
             // Also handle 401 as "no profile" since user just signed in with Firebase
-            logger.debug('AuthContext', 'refreshUser: Firebase user has no profile, redirecting to signup');
+            logger.debug('AuthContext', 'refreshUser: Firebase user has no profile');
+            
+            // CRITICAL: If we're on the signup page, don't redirect to signup
+            const isOnSignupPage = locationRef.current.pathname === '/signup';
+            if (isOnSignupPage) {
+              logger.debug('AuthContext', 'refreshUser: On signup page, skipping redirect to prevent loop');
+              setUser(null);
+              setIsRoleLoading(false);
+              setIsRedirecting(false);
+              pendingRedirect.current = false;
+              return; // Don't redirect, let signup page handle it
+            }
+            
+            logger.debug('AuthContext', 'refreshUser: Redirecting to signup');
             setUser(null);
             setIsRoleLoading(false);
             
@@ -1396,7 +1493,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
             pendingRedirect.current = false;
           } else {
             // Other error - still redirect to signup since user has valid Firebase session but no profile
-            logger.debug('AuthContext', 'refreshUser: API error but Firebase user exists, redirecting to signup');
+            logger.debug('AuthContext', 'refreshUser: API error but Firebase user exists');
+            
+            // CRITICAL: If we're on the signup page, don't redirect to signup
+            const isOnSignupPage = locationRef.current.pathname === '/signup';
+            if (isOnSignupPage) {
+              logger.debug('AuthContext', 'refreshUser: On signup page, skipping redirect to prevent loop');
+              setUser(null);
+              setIsRoleLoading(false);
+              setIsRedirecting(false);
+              pendingRedirect.current = false;
+              return; // Don't redirect, let signup page handle it
+            }
+            
+            logger.debug('AuthContext', 'refreshUser: Redirecting to signup');
             setUser(null);
             setIsRoleLoading(false);
             
@@ -1421,7 +1531,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         } catch {
           // Token refresh failed but Firebase user exists - redirect to signup for fresh start
-          logger.debug('AuthContext', 'refreshUser: Token refresh failed, redirecting to signup');
+          logger.debug('AuthContext', 'refreshUser: Token refresh failed');
+          
+          // CRITICAL: If we're on the signup page, don't redirect to signup
+          const isOnSignupPage = locationRef.current.pathname === '/signup';
+          if (isOnSignupPage) {
+            logger.debug('AuthContext', 'refreshUser: On signup page, skipping redirect to prevent loop');
+            setUser(null);
+            setToken(null);
+            setIsRoleLoading(false);
+            setIsRedirecting(false);
+            pendingRedirect.current = false;
+            return; // Don't redirect, let signup page handle it
+          }
+          
+          logger.debug('AuthContext', 'refreshUser: Redirecting to signup');
           setUser(null);
           setToken(null);
           setIsRoleLoading(false);
@@ -1551,7 +1675,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) return;
+      if (!firebaseUser) {
+        // Token was revoked or user signed out - force state refresh
+        logger.debug('AuthContext', 'onIdTokenChanged: Token revoked, forcing state refresh');
+        setUser(null);
+        setToken(null);
+        setIsLoading(false);
+        setIsAuthReady(true);
+        return;
+      }
+      
       hasResolvedAuthState.current = true;
 
       // CRITICAL: kill loading spinner the moment a token-backed user appears.
@@ -1559,9 +1692,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsAuthReady(true);
       forceAuthNavigation(firebaseUser, userRef.current);
 
-      if (!userRef.current || isLoadingRef.current) {
-        await attemptHardSync('idTokenChanged');
-      }
+      // RELIABILITY: Always force a global state refresh on token change
+      // This ensures all tabs stay in sync when tokens refresh
+      logger.debug('AuthContext', 'onIdTokenChanged: Token changed, forcing global state refresh');
+      await refreshUserRef.current();
     });
 
     return () => unsubscribe();
@@ -1744,6 +1878,68 @@ export function AuthProvider({ children }: AuthProviderProps) {
     window.addEventListener('storage', handleStorage);
     return () => {
       window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  // RELIABILITY: Multi-tab logout sync - Listen for logout events from other tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // BroadcastChannel listener (modern browsers)
+    let logoutChannel: BroadcastChannel | null = null;
+    try {
+      logoutChannel = new BroadcastChannel('hospogo_auth_logout');
+      logoutChannel.onmessage = (event) => {
+        if (event.data?.type === 'LOGOUT') {
+          logger.debug('AuthContext', 'Logout event received via BroadcastChannel from another tab');
+          // Clear state and redirect to login
+          setUser(null);
+          setToken(null);
+          setIsRoleLoading(false);
+          setIsLoading(false);
+          setIsAuthReady(true);
+          currentAuthUid.current = null;
+          last401RetryTime.current = 0;
+          consecutive401Count.current = 0;
+          navigateRef.current('/login', { replace: true });
+        }
+      };
+    } catch (error) {
+      logger.debug('AuthContext', 'BroadcastChannel not available for logout sync', error);
+    }
+
+    // localStorage fallback listener (all browsers)
+    const handleLogoutStorage = (event: StorageEvent) => {
+      // Only process events from other tabs (not the current tab)
+      if (event.key === 'hospogo_logout_event' && event.newValue) {
+        try {
+          const data = JSON.parse(event.newValue);
+          if (data.type === 'LOGOUT') {
+            logger.debug('AuthContext', 'Logout event received via localStorage from another tab');
+            // Clear state and redirect to login
+            setUser(null);
+            setToken(null);
+            setIsRoleLoading(false);
+            setIsLoading(false);
+            setIsAuthReady(true);
+            currentAuthUid.current = null;
+            last401RetryTime.current = 0;
+            consecutive401Count.current = 0;
+            navigateRef.current('/login', { replace: true });
+          }
+        } catch (parseError) {
+          logger.debug('AuthContext', 'Failed to parse logout event from storage', parseError);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleLogoutStorage);
+
+    return () => {
+      if (logoutChannel) {
+        logoutChannel.close();
+      }
+      window.removeEventListener('storage', handleLogoutStorage);
     };
   }, []);
 

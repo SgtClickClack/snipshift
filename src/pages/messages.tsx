@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePusher } from '@/contexts/PusherContext';
 import { useToast } from '@/hooks/useToast';
+import { logger } from '@/lib/logger';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -122,6 +123,19 @@ export default function MessagesPage() {
   const [messageContent, setMessageContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { isConnected, joinConversation, leaveConversation, sendMessage: pusherSendMessage, onMessage, onError } = usePusher();
+
+  // DEBUG: Log auth state on mount and state changes
+  useEffect(() => {
+    const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
+    if (shouldDebug) {
+      console.log('DEBUG: MessagesPage Auth State', {
+        user: user ? { id: user.id, currentRole: user.currentRole, isOnboarded: user.isOnboarded } : null,
+        isAuthLoading,
+        isAuthReady,
+        path: window.location.pathname
+      });
+    }
+  }, [user, isAuthLoading, isAuthReady]);
 
   // Fetch conversations list (no polling - real-time updates via socket)
   const { data: conversations = [], isLoading: isLoadingConversations } = useQuery<Conversation[]>({

@@ -25,6 +25,18 @@ export function AuthGuard({
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
+  // DEBUG: Log auth state for messages page debugging
+  if (location.pathname === '/messages' && shouldDebug) {
+    logger.debug('AuthGuard', 'DEBUG: Auth State for /messages', {
+      user: user ? { id: user.id, currentRole: user.currentRole, isOnboarded: user.isOnboarded } : null,
+      isLoading,
+      isAuthenticated,
+      isAuthReady,
+      isRoleLoading,
+      pathname: location.pathname
+    });
+  }
+
   // Check for onboarding_in_progress flag in localStorage
   // If set, allow access to onboarding routes without redirecting
   const isOnboardingInProgress = typeof window !== 'undefined' && 
