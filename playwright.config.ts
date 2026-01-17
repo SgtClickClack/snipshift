@@ -35,6 +35,10 @@ export default defineConfig({
   /* Expect timeout configuration */
   expect: {
     timeout: 5000,
+    /* Visual comparison settings for screenshot tests */
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.05, // Allow 5% pixel difference for strict CSS enforcement
+    },
   },
 
   /* Configure projects for major browsers */

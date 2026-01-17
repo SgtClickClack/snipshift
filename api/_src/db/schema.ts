@@ -25,6 +25,7 @@ import { priorityBoostTokens } from './schema/priority-boost-tokens.js';
 import { payouts } from './schema/payouts.js';
 import { userPushTokens } from './schema/push-tokens.js';
 import { userCalendarTokens } from './schema/calendar-tokens.js';
+import { failedEmails } from './schema/failed-emails.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -53,7 +54,8 @@ export {
   priorityBoostTokens,
   payouts,
     userPushTokens,
-    userCalendarTokens
+    userCalendarTokens,
+  failedEmails
 };
 
 /**

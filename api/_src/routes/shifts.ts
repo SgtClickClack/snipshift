@@ -705,7 +705,59 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
     return;
   }
 
-  const updatedShift = await shiftsRepo.updateShift(id, { status });
+  // ELITE AUDIT SPRINT PART 5 - TASK 1: Financial State Consistency
+  // If shift status is changing to 'cancelled', cancel any active payment intent
+  let paymentIntentCancelled = false;
+  if (status === 'cancelled' && existingShift.paymentIntentId && existingShift.paymentStatus === 'AUTHORIZED') {
+    try {
+      const stripeConnectService = await import('../services/stripe-connect.service.js');
+      const cancelled = await stripeConnectService.cancelPaymentIntent(existingShift.paymentIntentId);
+      if (cancelled) {
+        paymentIntentCancelled = true;
+        console.info(`[SHIFT_CANCELLATION] PaymentIntent ${existingShift.paymentIntentId} cancelled for shift ${id}`);
+      } else {
+        console.warn(`[SHIFT_CANCELLATION] Failed to cancel PaymentIntent ${existingShift.paymentIntentId} for shift ${id} - flagging for manual review`);
+        // Flag for manual review by logging the issue
+        const { errorReporting } = await import('../services/error-reporting.service.js');
+        await errorReporting.captureCritical(
+          `PaymentIntent cancellation failed for cancelled shift`,
+          undefined,
+          {
+            correlationId: req.correlationId,
+            shiftId: id,
+            paymentIntentId: existingShift.paymentIntentId,
+            tags: {
+              eventType: 'payment_intent_cancellation_failed',
+              requiresManualReview: 'true',
+            },
+          }
+        );
+      }
+    } catch (error: any) {
+      console.error(`[SHIFT_CANCELLATION] Error cancelling PaymentIntent for shift ${id}:`, error);
+      // Flag for manual review
+      const { errorReporting } = await import('../services/error-reporting.service.js');
+      await errorReporting.captureCritical(
+        `PaymentIntent cancellation error for cancelled shift`,
+        error instanceof Error ? error : new Error(error?.message || 'Unknown error'),
+        {
+          correlationId: req.correlationId,
+          shiftId: id,
+          paymentIntentId: existingShift.paymentIntentId,
+          tags: {
+            eventType: 'payment_intent_cancellation_error',
+            requiresManualReview: 'true',
+          },
+        }
+      );
+    }
+  }
+
+  const updatedShift = await shiftsRepo.updateShift(id, { 
+    status,
+    // Clear payment intent if it was cancelled
+    ...(paymentIntentCancelled ? { paymentIntentId: null, paymentStatus: 'UNPAID' as const } : {})
+  });
 
   if (!updatedShift) {
     res.status(500).json({ message: 'Failed to update shift' });
@@ -1691,13 +1743,21 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   const paymentMethodId = paymentMethods[0].id; // Use first payment method
 
   // Calculate shift amount and commission
+  // ELITE AUDIT SPRINT PART 5 - TASK 1: Financial State Consistency
+  // Strict rounding policy: 2 decimal places for AUD to prevent floating-point errors
   const hourlyRate = parseFloat(shift.hourlyRate.toString());
   const startTime = new Date(shift.startTime);
   const endTime = new Date(shift.endTime);
   const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-  const shiftAmount = Math.round(hourlyRate * hours * 100); // Convert to cents
+  // Round hours to 2 decimal places to prevent floating-point errors
+  const hoursRounded = Math.round(hours * 100) / 100;
+  // Calculate shift amount in dollars, round to 2 decimal places, then convert to cents
+  const shiftAmountDollars = Math.round((hourlyRate * hoursRounded) * 100) / 100;
+  const shiftAmount = Math.round(shiftAmountDollars * 100); // Convert to cents
   const commissionRate = parseFloat(process.env.HOSPOGO_COMMISSION_RATE || '0.10'); // 10% default
-  const commissionAmount = Math.round(shiftAmount * commissionRate);
+  // Round commission to 2 decimal places in dollars, then convert to cents
+  const commissionAmountDollars = Math.round((shiftAmountDollars * commissionRate) * 100) / 100;
+  const commissionAmount = Math.round(commissionAmountDollars * 100);
   const barberAmount = shiftAmount - commissionAmount;
 
   // ATOMIC TRANSACTION: Lock shift, verify availability, create payment, update shift
@@ -2082,11 +2142,17 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
       const paymentMethodId = paymentMethods[0].id;
 
       // Calculate amounts
+      // ELITE AUDIT SPRINT PART 5 - TASK 1: Financial State Consistency
+      // Strict rounding policy: 2 decimal places for AUD to prevent floating-point errors
       const hourlyRate = parseFloat(shift.hourlyRate.toString());
       const startTime = new Date(shift.startTime);
       const endTime = new Date(shift.endTime);
       const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-      const shiftAmount = Math.round(hourlyRate * hours * 100);
+      // Round hours to 2 decimal places to prevent floating-point errors
+      const hoursRounded = Math.round(hours * 100) / 100;
+      // Calculate shift amount in dollars, round to 2 decimal places, then convert to cents
+      const shiftAmountDollars = Math.round((hourlyRate * hoursRounded) * 100) / 100;
+      const shiftAmount = Math.round(shiftAmountDollars * 100);
       
       // Check if employer has an active Business subscription (booking fee waiver)
       const employerSubscription = await subscriptionsRepo.getCurrentSubscription(shift.employerId);

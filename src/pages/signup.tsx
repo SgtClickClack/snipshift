@@ -160,7 +160,7 @@ export default function SignupPage() {
       }
       return;
     }
-  }, [navigate, toast]);
+  }, [navigate, toast, login]);
 
   useEffect(() => {
     if (isLoading && !hasShownConnectingToast.current) {
@@ -286,6 +286,12 @@ export default function SignupPage() {
       
       // Removed test bypass - E2E tests need to use proper authentication
       
+      // Verify Firebase user was created successfully
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        throw new Error('Firebase user was not created');
+      }
+
       login(newUser);
       
       // Track signup event (non-blocking - doesn't delay redirect)
@@ -304,9 +310,17 @@ export default function SignupPage() {
       // Clear the preference after using it
       sessionStorage.removeItem('signupRolePreference');
 
-      // Force navigation to ensure we leave the page
-      // NOTE: Navigation happens immediately, not waiting for analytics
-      window.location.href = onboardingPath;
+      // Wait for AuthContext's onAuthStateChange listener to process
+      // The listener will call /api/me to fetch the user profile
+      // We wait a bit to let this async operation start, but don't wait for it to complete
+      // because it might take time and we want to navigate immediately
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Use React Router navigation to preserve auth state
+      // This ensures the user object set by login() is preserved during navigation
+      // and prevents AuthContext from re-initializing and potentially redirecting
+      // Use replace: true to prevent back button issues
+      navigate(onboardingPath, { replace: true });
     } catch (error: unknown) {
       console.error("Signup error:", error);
       let message = "Please check your information and try again";
@@ -380,13 +394,13 @@ export default function SignupPage() {
     <div className="min-h-screen bg-background py-6 md:py-12">
       <div className="max-w-md mx-auto px-4">
         <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm">
-          <CardHeader className="text-center bg-gradient-to-b from-muted/50 to-card rounded-t-lg border-b border-border/50">
+          <CardHeader className="text-center bg-gradient-to-b from-muted/50 to-card rounded-t-lg border-b border-border/50" data-testid="heading-signup">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-brand-neon rounded-full shadow-neon-realistic">
                 <FastForward className="h-8 w-8 text-brand-dark" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-card-foreground" data-testid="heading-signup">Join HospoGo</CardTitle>
+            <CardTitle className="text-2xl font-bold text-card-foreground">Join HospoGo</CardTitle>
             <p className="text-muted-foreground font-medium">Connect with the industry network</p>
           </CardHeader>
           <CardContent>
@@ -495,7 +509,7 @@ export default function SignupPage() {
                 variant="accent"
                 className="w-full font-medium shadow-neon-realistic"
                 disabled={isLoading || !agreedToTerms}
-                data-testid="button-signup"
+                data-testid="button-signup-submit"
               >
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>

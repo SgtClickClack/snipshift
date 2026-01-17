@@ -2,6 +2,7 @@
  * Email Service
  * 
  * Handles sending transactional emails using Resend and React Email templates
+ * RELIABILITY: Implements dead-letter office for failed email delivery
  */
 
 import { render } from '@react-email/render';
@@ -14,9 +15,47 @@ import SuspensionAlertEmail from '../emails/SuspensionAlertEmail.js';
 import StrikeWarningEmail from '../emails/StrikeWarningEmail.js';
 import AccountRestoredEmail from '../emails/AccountRestoredEmail.js';
 import * as emailTemplates from './email-templates.js';
+import { getDb } from '../db/index.js';
+import { failedEmails } from '../db/schema/failed-emails.js';
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'HospoGo <noreply@hospogo.com>';
 const FROM_NAME = 'HospoGo';
+
+/**
+ * RELIABILITY: Log failed email to dead-letter office for manual recovery
+ */
+async function logFailedEmail(
+  to: string,
+  subject: string,
+  html: string,
+  from: string,
+  error: any
+): Promise<void> {
+  try {
+    const db = getDb();
+    if (!db) {
+      console.error('[EMAIL] Database not available, cannot log failed email');
+      return;
+    }
+
+    const errorMessage = error?.message || String(error) || 'Unknown error';
+    const errorCode = error?.code || error?.name || null;
+
+    await db.insert(failedEmails).values({
+      to,
+      subject,
+      html,
+      from,
+      errorMessage,
+      errorCode,
+    });
+
+    console.log(`[EMAIL] Failed email logged to dead-letter office: ${to} - ${subject}`);
+  } catch (logError) {
+    // Don't throw - logging failure shouldn't break the app
+    console.error('[EMAIL] Failed to log failed email to database:', logError);
+  }
+}
 
 /**
  * Generic email sending function
@@ -45,12 +84,16 @@ export async function sendEmail(
 
     if (error) {
       console.error('Failed to send email:', error);
+      // RELIABILITY: Log failed email to dead-letter office
+      await logFailedEmail(to, subject, html, FROM_EMAIL, error);
       return false;
     }
 
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
+    // RELIABILITY: Log failed email to dead-letter office
+    await logFailedEmail(to, subject, html, FROM_EMAIL, error);
     return false;
   }
 }
@@ -67,8 +110,9 @@ export async function sendWelcomeEmail(
     return false;
   }
 
+  let emailHtml: string = '';
   try {
-    const emailHtml = await render(WelcomeEmail({ userName, userEmail }));
+    emailHtml = await render(WelcomeEmail({ userName, userEmail }));
     
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -79,12 +123,15 @@ export async function sendWelcomeEmail(
 
     if (error) {
       console.error('Failed to send welcome email:', error);
+      await logFailedEmail(userEmail, `Welcome to ${FROM_NAME}!`, emailHtml, FROM_EMAIL, error);
       return false;
     }
 
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
+    // emailHtml may not be defined if render() failed, use empty string as fallback
+    await logFailedEmail(userEmail, `Welcome to ${FROM_NAME}!`, emailHtml, FROM_EMAIL, error);
     return false;
   }
 }
@@ -105,8 +152,12 @@ export async function sendApplicationStatusEmail(
     return false;
   }
 
+  let emailHtml: string = '';
+  const subject = status === 'accepted' 
+    ? `🎉 Your application for ${jobTitle} was accepted!`
+    : `Application update for ${jobTitle}`;
   try {
-    const emailHtml = await render(
+    emailHtml = await render(
       ApplicationStatusEmail({
         userName,
         jobTitle,
@@ -115,10 +166,6 @@ export async function sendApplicationStatusEmail(
         applicationDate,
       })
     );
-
-    const subject = status === 'accepted' 
-      ? `🎉 Your application for ${jobTitle} was accepted!`
-      : `Application update for ${jobTitle}`;
 
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -129,12 +176,14 @@ export async function sendApplicationStatusEmail(
 
     if (error) {
       console.error('Failed to send application status email:', error);
+      await logFailedEmail(userEmail, subject, emailHtml, FROM_EMAIL, error);
       return false;
     }
 
     return true;
   } catch (error) {
     console.error('Error sending application status email:', error);
+    await logFailedEmail(userEmail, subject, emailHtml, FROM_EMAIL, error);
     return false;
   }
 }
@@ -154,13 +203,14 @@ export async function sendNewMessageEmail(
     return false;
   }
 
+  let emailHtml: string = '';
   try {
     // Truncate message preview if too long
     const truncatedPreview = messagePreview.length > 150 
       ? messagePreview.substring(0, 150) + '...'
       : messagePreview;
 
-    const emailHtml = await render(
+    emailHtml = await render(
       NewMessageEmail({
         recipientName,
         senderName,
@@ -178,12 +228,14 @@ export async function sendNewMessageEmail(
 
     if (error) {
       console.error('Failed to send new message email:', error);
+      await logFailedEmail(recipientEmail, `New message from ${senderName}`, emailHtml, FROM_EMAIL, error);
       return false;
     }
 
     return true;
   } catch (error) {
     console.error('Error sending new message email:', error);
+    await logFailedEmail(recipientEmail, `New message from ${senderName}`, emailHtml, FROM_EMAIL, error);
     return false;
   }
 }
@@ -206,8 +258,9 @@ export async function sendJobAlertEmail(
     return false;
   }
 
+  let emailHtml: string = '';
   try {
-    const emailHtml = await render(
+    emailHtml = await render(
       JobAlertEmail({
         userName,
         jobTitle,
@@ -228,12 +281,14 @@ export async function sendJobAlertEmail(
 
     if (error) {
       console.error('Failed to send job alert email:', error);
+      await logFailedEmail(userEmail, `New shift posted: ${jobTitle}`, emailHtml, FROM_EMAIL, error);
       return false;
     }
 
     return true;
   } catch (error) {
     console.error('Error sending job alert email:', error);
+    await logFailedEmail(userEmail, `New shift posted: ${jobTitle}`, emailHtml, FROM_EMAIL, error);
     return false;
   }
 }
@@ -271,8 +326,9 @@ export async function sendSuspensionAlertEmail(
     return false;
   }
 
+  let emailHtml: string = '';
   try {
-    const emailHtml = await render(
+    emailHtml = await render(
       SuspensionAlertEmail({
         userName,
         strikesAdded,
@@ -300,6 +356,7 @@ export async function sendSuspensionAlertEmail(
 
     if (error) {
       console.error('[EMAIL] Failed to send suspension alert email:', error);
+      await logFailedEmail(userEmail, '⚠️ Account Suspended - No Show Violation', emailHtml, FROM_EMAIL, error);
       return false;
     }
 
@@ -307,6 +364,7 @@ export async function sendSuspensionAlertEmail(
     return true;
   } catch (error) {
     console.error('[EMAIL] Error sending suspension alert email:', error);
+    await logFailedEmail(userEmail, '⚠️ Account Suspended - No Show Violation', emailHtml, FROM_EMAIL, error);
     return false;
   }
 }
@@ -330,8 +388,10 @@ export async function sendStrikeWarningEmail(
     return false;
   }
 
+  let emailHtml: string = '';
+  let subject: string = '';
   try {
-    const emailHtml = await render(
+    emailHtml = await render(
       StrikeWarningEmail({
         userName,
         strikesAdded,
@@ -343,7 +403,7 @@ export async function sendStrikeWarningEmail(
       })
     );
 
-    const subject = totalStrikes >= 2
+    subject = totalStrikes >= 2
       ? '⚡ Strike Warning - Account At Risk'
       : '⚡ Strike Warning - Late Cancellation';
 
@@ -356,6 +416,7 @@ export async function sendStrikeWarningEmail(
 
     if (error) {
       console.error('[EMAIL] Failed to send strike warning email:', error);
+      await logFailedEmail(userEmail, subject, emailHtml, FROM_EMAIL, error);
       return false;
     }
 
@@ -363,6 +424,10 @@ export async function sendStrikeWarningEmail(
     return true;
   } catch (error) {
     console.error('[EMAIL] Error sending strike warning email:', error);
+    const fallbackSubject = totalStrikes >= 2
+      ? '⚡ Strike Warning - Account At Risk'
+      : '⚡ Strike Warning - Late Cancellation';
+    await logFailedEmail(userEmail, fallbackSubject, emailHtml, FROM_EMAIL, error);
     return false;
   }
 }
@@ -382,8 +447,9 @@ export async function sendAccountRestoredEmail(
     return false;
   }
 
+  let emailHtml: string = '';
   try {
-    const emailHtml = await render(
+    emailHtml = await render(
       AccountRestoredEmail({
         userName,
         currentStrikes,
@@ -400,6 +466,7 @@ export async function sendAccountRestoredEmail(
 
     if (error) {
       console.error('[EMAIL] Failed to send account restored email:', error);
+      await logFailedEmail(userEmail, '✅ Your HospoGo Account Has Been Restored', emailHtml, FROM_EMAIL, error);
       return false;
     }
 
@@ -407,6 +474,7 @@ export async function sendAccountRestoredEmail(
     return true;
   } catch (error) {
     console.error('[EMAIL] Error sending account restored email:', error);
+    await logFailedEmail(userEmail, '✅ Your HospoGo Account Has Been Restored', emailHtml, FROM_EMAIL, error);
     return false;
   }
 }

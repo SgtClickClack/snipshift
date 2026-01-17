@@ -72,21 +72,32 @@ if (app.options.projectId !== REQUIRED_PROJECT_ID) {
 export { app };
 export const auth = getAuth(app);
 
-// Connect to Firebase Auth Emulator in E2E mode if available
-// This allows tests to use the emulator instead of hitting production Firebase
-if (import.meta.env.VITE_E2E === "1" && typeof window !== 'undefined') {
+// Connect to Firebase Auth Emulator in E2E mode if explicitly enabled and available
+// Only connect if VITE_USE_FIREBASE_EMULATOR is set to "1" to avoid connection errors
+// when the emulator is not running. Tests can use real Firebase by default.
+if (
+  import.meta.env.VITE_E2E === "1" && 
+  import.meta.env.VITE_USE_FIREBASE_EMULATOR === "1" &&
+  typeof window !== 'undefined'
+) {
+  // Check if emulator is available before connecting
+  const emulatorUrl = "http://localhost:9099";
   try {
-    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    // Try to connect to emulator
+    connectAuthEmulator(auth, emulatorUrl, { disableWarnings: true });
     console.log('[Firebase] Connected to Auth Emulator for E2E tests');
   } catch (error: any) {
     // If emulator connection fails (e.g., emulator not running or already connected), continue without it
-    // The test will use API mocking instead (see tests/core-marketplace.spec.ts)
+    // The test will use real Firebase instead
     if (error?.message?.includes('already') || error?.code === 'auth/emulator-config-failed') {
       console.log('[Firebase] Auth Emulator already connected');
     } else {
-      console.log('[Firebase] Auth Emulator not available, will use API mocking in tests');
+      console.warn('[Firebase] Auth Emulator not available, falling back to real Firebase');
+      console.warn('[Firebase] To use emulator, start it with: firebase emulators:start --only auth');
     }
   }
+} else if (import.meta.env.VITE_E2E === "1" && typeof window !== 'undefined') {
+  console.log('[Firebase] E2E mode: Using real Firebase (set VITE_USE_FIREBASE_EMULATOR=1 to use emulator)');
 }
 
 export const googleProvider = new GoogleAuthProvider();

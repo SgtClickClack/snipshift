@@ -7,6 +7,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePusher } from '@/contexts/PusherContext';
 import { MapPin, Clock, DollarSign, ArrowLeft, CheckCircle2, Heart, Building2, Users, FileText, Navigation, UserX, LogOut, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -27,6 +28,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { calculateDistance } from '@/lib/google-maps';
 import { SEO } from "@/components/seo/SEO";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { logger } from '@/lib/logger';
 
 export default function ShiftDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -196,6 +198,17 @@ export default function ShiftDetailsPage() {
       return;
     }
 
+    // RELIABILITY: Check for offline status before attempting check-in
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      toast({
+        title: 'No Internet Connection',
+        description: 'Please check your internet connection and try again.',
+        variant: 'destructive',
+      });
+      setCheckInError('No Internet Connection. Please check your connection and try again.');
+      return;
+    }
+
     // Check if user is assigned to this shift
     if (shift.assigneeId !== user.id) {
       toast({
@@ -298,6 +311,24 @@ export default function ShiftDetailsPage() {
     enabled: !!id,
     retry: false // Don't retry on 404s
   });
+
+  // ELITE AUDIT SPRINT PART 5 - TASK 2: Real-Time State Reconciliation
+  // Listen for Pusher shift status updates and force refresh if shift is currently viewed
+  const { onShiftStatusUpdate } = usePusher();
+  useEffect(() => {
+    if (!id) return;
+    
+    const unsubscribe = onShiftStatusUpdate((update) => {
+      // If this update is for the shift we're currently viewing, force a refresh
+      if (update.shiftId === id) {
+        logger.debug('SHIFT_DETAILS', `Received Pusher update for current shift ${id}, forcing refresh`);
+        // Force stale-while-revalidate refresh
+        queryClient.invalidateQueries({ queryKey: ['shift', id] });
+      }
+    });
+
+    return unsubscribe;
+  }, [id, onShiftStatusUpdate, queryClient]);
 
   // Check if user has already applied to this shift
   const { data: myApplications } = useQuery({
@@ -912,9 +943,10 @@ export default function ShiftDetailsPage() {
                       <Button
                         onClick={handleCheckIn}
                         disabled={isCheckingIn}
-                        className="w-full text-lg py-6"
+                        className="w-full text-lg py-6 min-h-[44px] min-w-[44px] touch-manipulation"
                         size="lg"
                         data-testid="button-check-in"
+                        style={{ minHeight: '44px', minWidth: '44px' }}
                       >
                         {isCheckingIn ? (
                           <>

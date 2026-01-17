@@ -7,7 +7,6 @@ import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { trackSignup, trackLogin } from "@/lib/analytics";
-import { trackSignup, trackLogin } from "@/lib/analytics";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";

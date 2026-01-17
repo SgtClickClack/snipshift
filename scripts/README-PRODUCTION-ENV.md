@@ -69,8 +69,10 @@ This will set:
 ### Google Maps
 - `GOOGLE_MAPS_API_KEY` - Maps API key
 
-### Cron
-- `CRON_SECRET` - Secure token for cron authentication
+### Cron & Health Monitoring
+- `CRON_SECRET` - Secure token for cron authentication (required for `/api/cron/health-check` endpoint)
+- `RESEND_API_KEY` - Resend API key for email service (required for health monitor alerts and failed email logging)
+- `RESEND_FROM_EMAIL` - Email address for sending notifications (e.g., `HospoGo <noreply@hospogo.com>`)
 
 ## Manual Setup
 
