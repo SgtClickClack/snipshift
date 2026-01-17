@@ -113,7 +113,7 @@ function formatMessageTime(dateString: string): string {
 }
 
 export default function MessagesPage() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading, isAuthReady } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -127,25 +127,25 @@ export default function MessagesPage() {
   const { data: conversations = [], isLoading: isLoadingConversations } = useQuery<Conversation[]>({
     queryKey: ['/api/conversations'],
     queryFn: fetchConversations,
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   // Fetch selected conversation detail (no polling - real-time updates via socket)
   const { data: conversationDetail, isLoading: isLoadingDetail } = useQuery<ConversationDetail>({
     queryKey: ['/api/conversations', selectedConversationId],
     queryFn: () => fetchConversationDetail(selectedConversationId!),
-    enabled: !!selectedConversationId && !!user,
+    enabled: !!selectedConversationId && !!user?.id,
   });
 
   // Join conversation room when selected
   useEffect(() => {
-    if (selectedConversationId && isConnected) {
+    if (selectedConversationId && isConnected && user?.id) {
       joinConversation(selectedConversationId);
       return () => {
         leaveConversation(selectedConversationId);
       };
     }
-  }, [selectedConversationId, isConnected, joinConversation, leaveConversation]);
+  }, [selectedConversationId, isConnected, user?.id, joinConversation, leaveConversation]);
 
   // Mark messages as read when conversation is opened
   useEffect(() => {
@@ -163,6 +163,8 @@ export default function MessagesPage() {
 
   // Listen for real-time messages via Pusher
   useEffect(() => {
+    if (!user?.id) return;
+    
     const unsubscribe = onMessage((message: Message) => {
       // Update conversation detail if this message belongs to the current conversation
       if (message.conversationId === selectedConversationId) {
@@ -171,11 +173,11 @@ export default function MessagesPage() {
           (oldData) => {
             if (!oldData) return oldData;
             // Check if message already exists (avoid duplicates)
-            const messageExists = oldData.messages.some((m) => m.id === message.id);
+            const messageExists = oldData.messages?.some((m) => m.id === message.id) ?? false;
             if (messageExists) return oldData;
             return {
               ...oldData,
-              messages: [...oldData.messages, message],
+              messages: [...(oldData.messages || []), message],
             };
           }
         );
@@ -185,7 +187,7 @@ export default function MessagesPage() {
     });
 
     return unsubscribe;
-  }, [selectedConversationId, onMessage, queryClient]);
+  }, [selectedConversationId, user?.id, onMessage, queryClient]);
 
   // Listen for socket errors
   useEffect(() => {
@@ -202,11 +204,13 @@ export default function MessagesPage() {
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (conversationDetail?.messages && conversationDetail.messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [conversationDetail?.messages]);
 
   const handleSendMessage = () => {
-    if (!selectedConversationId || !messageContent.trim() || !isConnected) {
+    if (!selectedConversationId || !messageContent.trim() || !isConnected || !user?.id) {
       if (!isConnected) {
         toast({
           title: 'Connection Error',
@@ -236,6 +240,12 @@ export default function MessagesPage() {
     setSearchParams({ conversation: conversationId });
   };
 
+  // Show loading state while auth is initializing or user is not ready
+  if (isAuthLoading || !isAuthReady || !user?.id) {
+    return <PageLoadingFallback />;
+  }
+
+  // Show loading state while conversations are loading
   if (isLoadingConversations) {
     return <PageLoadingFallback />;
   }
@@ -274,8 +284,10 @@ export default function MessagesPage() {
                 ) : (
                   <div className="divide-y divide-border">
                     {(conversations || []).map((conv) => {
-                      const isSelected = conv.id === selectedConversationId;
+                      const isSelected = conv?.id === selectedConversationId;
                       const unreadCount = 0; // Could be calculated from latestMessage
+
+                      if (!conv?.id) return null;
 
                       return (
                         <button
@@ -288,9 +300,10 @@ export default function MessagesPage() {
                           <div className="flex items-start gap-3">
                             <Avatar className="h-12 w-12 flex-shrink-0">
                               <AvatarFallback className="bg-primary text-primary-foreground">
-                                {conv.otherParticipant?.name
+                                {conv?.otherParticipant?.name
                                   ?.split(' ')
-                                  .map((n) => n[0])
+                                  .map((n) => n?.[0])
+                                  .filter(Boolean)
                                   .join('')
                                   .toUpperCase() || 'U'}
                               </AvatarFallback>
@@ -298,15 +311,15 @@ export default function MessagesPage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between mb-1">
                                 <p className="font-semibold truncate">
-                                  {conv.otherParticipant?.name || 'Unknown User'}
+                                  {conv?.otherParticipant?.name || 'Unknown User'}
                                 </p>
-                                {conv.latestMessage && (
+                                {conv?.latestMessage?.createdAt && (
                                   <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                                     {formatMessageTime(conv.latestMessage.createdAt)}
                                   </span>
                                 )}
                               </div>
-                              {conv.job && (
+                              {conv?.job?.title && (
                                 <div className="flex items-center gap-1 mb-1">
                                   <Briefcase className="h-3 w-3 text-muted-foreground" />
                                   <p className="text-xs text-muted-foreground truncate">
@@ -314,7 +327,7 @@ export default function MessagesPage() {
                                   </p>
                                 </div>
                               )}
-                              {conv.latestMessage && (
+                              {conv?.latestMessage?.content && (
                                 <p className="text-sm text-muted-foreground truncate">
                                   {conv.latestMessage.content}
                                 </p>
@@ -357,25 +370,26 @@ export default function MessagesPage() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-primary text-primary-foreground">
-                        {conversationDetail.otherParticipant?.name
+                        {conversationDetail?.otherParticipant?.name
                           ?.split(' ')
-                          .map((n) => n[0])
+                          .map((n) => n?.[0])
+                          .filter(Boolean)
                           .join('')
                           .toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <p className="font-semibold">
-                        {conversationDetail.otherParticipant?.name || 'Unknown User'}
+                        {conversationDetail?.otherParticipant?.name || 'Unknown User'}
                       </p>
-                      {conversationDetail.job && (
+                      {conversationDetail?.job?.title && (
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Briefcase className="h-3 w-3" />
                           {conversationDetail.job.title}
                         </p>
                       )}
                     </div>
-                    {conversationDetail.otherParticipant && (
+                    {conversationDetail?.otherParticipant?.id && (
                       <ReportButton
                         reportedId={conversationDetail.otherParticipant.id}
                         variant="outline"
@@ -391,14 +405,15 @@ export default function MessagesPage() {
 
                 {/* Messages List */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {conversationDetail.messages.length === 0 ? (
+                  {!conversationDetail?.messages || conversationDetail.messages.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
                       <p>No messages yet</p>
                       <p className="text-sm mt-2">Start the conversation!</p>
                     </div>
                   ) : (
                     (conversationDetail?.messages || []).map((message) => {
-                      const isMe = message.senderId === user?.id;
+                      if (!message?.id) return null;
+                      const isMe = message?.senderId === user?.id;
                       return (
                         <div
                           key={message.id}
@@ -411,21 +426,23 @@ export default function MessagesPage() {
                                 : 'bg-muted text-foreground'
                             }`}
                           >
-                            {!isMe && (
+                            {!isMe && message?.sender?.name && (
                               <p className="text-xs font-semibold mb-1 opacity-80">
                                 {message.sender.name}
                               </p>
                             )}
                             <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.content}
+                              {message?.content || ''}
                             </p>
-                            <p
-                              className={`text-xs mt-1 ${
-                                isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                              }`}
-                            >
-                              {formatMessageTime(message.createdAt)}
-                            </p>
+                            {message?.createdAt && (
+                              <p
+                                className={`text-xs mt-1 ${
+                                  isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                                }`}
+                              >
+                                {formatMessageTime(message.createdAt)}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );

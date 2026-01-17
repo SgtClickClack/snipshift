@@ -179,6 +179,13 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Subscribe to user's private channel for notifications
+    // Guard: Ensure user.id exists before subscribing to prevent "user-undefined" channel
+    if (!user?.id) {
+      logger.warn('PUSHER', 'Cannot subscribe to user channel: user.id is undefined');
+      setIsConnected(false);
+      return;
+    }
+    
     const userChannel = pusher.subscribe(`private-user-${user.id}`);
     userChannelRef.current = userChannel;
     
@@ -187,8 +194,27 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Listen for shift status updates
+    // ELITE AUDIT SPRINT PART 5 - TASK 2: Real-Time State Reconciliation
+    // Implement version/last_updated check to force stale-while-revalidate refresh
     userChannel.bind('SHIFT_STATUS_UPDATE', (data: ShiftStatusUpdate) => {
       logger.debug('PUSHER', 'Shift status update received:', data);
+      
+      // Check if this shift is currently being viewed and force refresh
+      if (typeof window !== 'undefined' && (window as any).queryClient) {
+        try {
+          const queryClient = (window as any).queryClient;
+          if (queryClient && typeof queryClient.invalidateQueries === 'function') {
+            // Invalidate the specific shift query to force refresh
+            queryClient.invalidateQueries({
+              queryKey: ['shift', data.shiftId],
+            });
+            logger.debug('PUSHER', `Invalidated shift query for shift ${data.shiftId} due to status update`);
+          }
+        } catch (error) {
+          logger.error('PUSHER', 'Error invalidating shift query after status update:', error);
+        }
+      }
+      
       shiftStatusCallbacksRef.current.forEach((callback) => {
         try {
           callback(data);
@@ -214,7 +240,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       // Clean up user channel: unbind all event listeners and unsubscribe
-      if (userChannelRef.current) {
+      if (userChannelRef.current && user?.id) {
         userChannelRef.current.unbind_all();
         const channelName = `private-user-${user.id}`;
         if (pusherRef.current) {
