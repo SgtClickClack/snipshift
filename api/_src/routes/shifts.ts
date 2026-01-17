@@ -32,6 +32,7 @@ import { normalizeParam, normalizeQueryOptional } from '../utils/request-params.
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
 import { uploadProofImage } from '../middleware/upload.js';
 import admin from 'firebase-admin';
+import type { ErrorContext } from '../services/error-reporting.service.js';
 
 const router = Router();
 
@@ -724,13 +725,15 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
           undefined,
           {
             correlationId: req.correlationId,
-            shiftId: id,
-            paymentIntentId: existingShift.paymentIntentId,
+            metadata: {
+              shiftId: id,
+              paymentIntentId: existingShift.paymentIntentId,
+            },
             tags: {
               eventType: 'payment_intent_cancellation_failed',
               requiresManualReview: 'true',
             },
-          }
+          } as ErrorContext
         );
       }
     } catch (error: any) {
@@ -742,13 +745,15 @@ router.patch('/:id', authenticateUser, asyncHandler(async (req: AuthenticatedReq
         error instanceof Error ? error : new Error(error?.message || 'Unknown error'),
         {
           correlationId: req.correlationId,
-          shiftId: id,
-          paymentIntentId: existingShift.paymentIntentId,
+          metadata: {
+            shiftId: id,
+            paymentIntentId: existingShift.paymentIntentId,
+          },
           tags: {
             eventType: 'payment_intent_cancellation_error',
             requiresManualReview: 'true',
           },
-        }
+        } as ErrorContext
       );
     }
   }
