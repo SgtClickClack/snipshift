@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardRoute, isBusinessRole } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { NonBlockingAuthWrapper } from '@/components/ui/auth-loading-overlay';
 import { logger } from '@/lib/logger';
 import { auth } from '@/lib/firebase';
 
@@ -44,18 +45,6 @@ export function AuthGuard({
   const onboardingCurrentRole = typeof window !== 'undefined' && 
     localStorage.getItem('currentRole');
 
-  // Show loading spinner while checking authentication or waiting for auth to be ready
-  // CRITICAL: This check must happen FIRST, before any redirect logic
-  if (isLoading || !isAuthReady) {
-    return <LoadingScreen />;
-  }
-
-  // Show loading spinner while role is being loaded from Postgres
-  // This prevents race conditions where role check happens before role is mapped
-  if (isRoleLoading) {
-    return <LoadingScreen />;
-  }
-
   // Check if there's a Firebase session (user might have signed in but profile not yet created)
   const hasFirebaseSession = !!auth.currentUser || !!token;
   
@@ -69,16 +58,33 @@ export function AuthGuard({
       localStorage.getItem('E2E_MODE') === 'true'
     ));
   
-  // NEW: If we have a Firebase session but user isn't authenticated yet, 
-  // we're still loading - don't redirect
-  // This prevents race conditions where Firebase auth exists but profile hasn't loaded yet
-  if (hasFirebaseSession && !isAuthenticated && !isE2E) {
-    logger.debug('AuthGuard', 'Firebase session exists but user not authenticated yet, showing loading', {
-      hasFirebaseSession,
-      isAuthenticated,
-      pathname: location.pathname
-    });
+  // Determine if we're in a loading state that should block (for redirects) vs non-blocking (for layout)
+  const isAuthLoading = isLoading || !isAuthReady || isRoleLoading;
+  const isWaitingForProfile = hasFirebaseSession && !isAuthenticated && !isE2E;
+  
+  // For critical redirects, we still need to block to prevent flicker
+  // But for most cases, we can render with an overlay
+  const needsBlockingRedirect = requireAuth && !isAuthenticated && !hasFirebaseSession && !isE2E;
+  
+  // Show full loading screen only for critical blocking cases
+  if (needsBlockingRedirect && isAuthLoading) {
     return <LoadingScreen />;
+  }
+  
+  // For non-blocking cases, render children with overlay
+  if (isAuthLoading || isWaitingForProfile) {
+    if (isWaitingForProfile) {
+      logger.debug('AuthGuard', 'Firebase session exists but user not authenticated yet, showing non-blocking overlay', {
+        hasFirebaseSession,
+        isAuthenticated,
+        pathname: location.pathname
+      });
+    }
+    return (
+      <NonBlockingAuthWrapper isLoading={true}>
+        {children}
+      </NonBlockingAuthWrapper>
+    );
   }
   const hasE2EAuthState = isE2E && typeof window !== 'undefined' && 
     sessionStorage.getItem('hospogo_auth_state') === 'authenticated';

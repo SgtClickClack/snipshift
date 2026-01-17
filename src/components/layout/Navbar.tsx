@@ -33,9 +33,15 @@ async function fetchUnreadCount(): Promise<{ unreadCount: number }> {
   return res.json();
 }
 
+async function prefetchConversations(): Promise<unknown> {
+  const res = await apiRequest('GET', '/api/conversations');
+  return res.json();
+}
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const verification = useVerificationStatus({ enableRedirect: false, protectedPaths: [] });
   
   // Fetch unread message count
@@ -47,6 +53,18 @@ export default function Navbar() {
   });
 
   const unreadCount = unreadData?.unreadCount || 0;
+
+  // Prefetch conversations on hover over Messages button
+  const handleMessagesHover = () => {
+    if (user?.id) {
+      // Prefetch conversations in the background before user clicks
+      queryClient.prefetchQuery({
+        queryKey: ['/api/conversations'],
+        queryFn: prefetchConversations,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+      });
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -115,7 +133,11 @@ export default function Navbar() {
                 </div>
                 
                 {/* Messages - New In-App Messaging */}
-                <Link to="/messages" className="flex-shrink-0">
+                <Link 
+                  to="/messages" 
+                  className="flex-shrink-0"
+                  onMouseEnter={handleMessagesHover}
+                >
                   <Button 
                     variant="ghost" 
                     size="sm"

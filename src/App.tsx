@@ -23,6 +23,7 @@ import { PwaUpdateHandler } from '@/components/pwa/pwa-update-handler';
 import { RouteProgressBar } from '@/components/ui/route-progress-bar';
 import Navbar from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { PersistentLayout } from '@/components/layout/PersistentLayout';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 // Core pages - load immediately for fast initial render (critical for FCP/LCP)
@@ -265,13 +266,6 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </AuthGuard>
         } />
 
-        <Route path="/user-dashboard" element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <UserDashboard />
-            </Suspense>
-          </ProtectedRoute>
-        } />
 
         <Route path="/profile/edit" element={
           <ProtectedRoute>
@@ -549,13 +543,24 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </ProtectedRoute>
         } />
 
-        <Route path="/messages" element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <MessagesPage />
-            </Suspense>
-          </ProtectedRoute>
-        } />
+        {/* Persistent Layout Routes - These share the same layout and won't re-mount */}
+        <Route element={<PersistentLayout />}>
+          <Route path="/messages" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <MessagesPage />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/user-dashboard" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <UserDashboard />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+        </Route>
 
         <Route path="/settings" element={
           <ProtectedRoute>

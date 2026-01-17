@@ -17,6 +17,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ReportButton } from '@/components/report/report-button';
 import { SEO } from '@/components/seo/SEO';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ConversationListSkeleton, MessageBubblesSkeleton, ChatHeaderSkeleton } from '@/components/ui/skeletons';
 
 interface Conversation {
   id: string;
@@ -254,15 +255,9 @@ export default function MessagesPage() {
     setSearchParams({ conversation: conversationId });
   };
 
-  // Show loading state while auth is initializing or user is not ready
-  if (isAuthLoading || !isAuthReady || !user?.id) {
-    return <PageLoadingFallback />;
-  }
-
-  // Show loading state while conversations are loading
-  if (isLoadingConversations) {
-    return <PageLoadingFallback />;
-  }
+  // Render app shell immediately - don't block on auth or data
+  // Show skeletons for data-dependent parts
+  const showSkeletons = isAuthLoading || !isAuthReady || !user?.id || isLoadingConversations;
 
   return (
     <div className="min-h-screen bg-background">
@@ -287,7 +282,9 @@ export default function MessagesPage() {
                 <h2 className="font-semibold text-lg">Conversations</h2>
               </div>
               <div className="flex-1 overflow-y-auto">
-                {conversations.length === 0 ? (
+                {showSkeletons ? (
+                  <ConversationListSkeleton count={5} />
+                ) : conversations.length === 0 ? (
                   <div className="p-8">
                     <EmptyState
                       icon={MessageSquare}
@@ -367,10 +364,19 @@ export default function MessagesPage() {
                   <p className="text-sm">Choose a conversation from the sidebar to start messaging</p>
                 </div>
               </CardContent>
-            ) : isLoadingDetail ? (
-              <CardContent className="flex-1 flex items-center justify-center">
-                <PageLoadingFallback />
-              </CardContent>
+            ) : isLoadingDetail || showSkeletons ? (
+              <>
+                <ChatHeaderSkeleton />
+                <div className="flex-1 overflow-y-auto">
+                  <MessageBubblesSkeleton count={6} />
+                </div>
+                <div className="p-4 border-t border-border">
+                  <div className="flex gap-2">
+                    <div className="flex-1 h-10 bg-muted rounded-md animate-pulse" />
+                    <div className="h-10 w-10 bg-muted rounded-md animate-pulse" />
+                  </div>
+                </div>
+              </>
             ) : !conversationDetail ? (
               <CardContent className="flex-1 flex items-center justify-center p-8">
                 <div className="text-center text-muted-foreground">
@@ -473,12 +479,12 @@ export default function MessagesPage() {
                       onChange={(e) => setMessageContent(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type a message..."
-                      disabled={!isConnected}
+                      disabled={!isConnected || !user?.id}
                       className="flex-1"
                     />
                     <Button
                       onClick={handleSendMessage}
-                      disabled={!messageContent.trim() || !isConnected}
+                      disabled={!messageContent.trim() || !isConnected || !user?.id}
                       size="icon"
                       aria-label="Send message"
                     >
