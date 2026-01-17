@@ -223,7 +223,7 @@ export default function JobBoard() {
     return filteredShifts.map((shift) => {
       // Try to extract coordinates from location or use a default
       // In a real implementation, you'd geocode the location
-      let distance: number | undefined = undefined;
+      const distance: number | undefined = undefined;
       
       // For now, we'll skip distance calculation if location format is unclear
       // You could enhance this with geocoding

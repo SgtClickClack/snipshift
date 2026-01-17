@@ -10,8 +10,9 @@ import { Request, Response, NextFunction } from 'express';
 /**
  * Extend Express Request to include correlationId
  */
-// eslint-disable-next-line @typescript-eslint/no-namespace
+ 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       correlationId?: string;
