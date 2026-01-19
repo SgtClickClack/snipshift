@@ -91,28 +91,59 @@ export default function LoginPage() {
       // The useEffect above will handle the role-based redirection
       setPendingRedirect(true);
     } catch (error: unknown) {
-      console.error("Login error:", error);
-      
-      let errorTitle = "Login failed";
-      let errorDescription = "Invalid email or password";
-      
-      // Handle Firebase auth errors
+      // CRITICAL: Always log the error code for debugging
       const code =
         typeof error === 'object' && error && 'code' in error
           ? String((error as { code: unknown }).code)
           : '';
-
+      
+      const errorMessage =
+        typeof error === 'object' && error && 'message' in error
+          ? String((error as { message: unknown }).message || '')
+          : '';
+      
+      // Log full error details including code for debugging
+      console.error("[Login] Sign-in error:", {
+        code,
+        message: errorMessage,
+        error,
+        timestamp: new Date().toISOString(),
+      });
+      
+      let errorTitle = "Login failed";
+      let errorDescription = "Invalid email or password";
+      
+      // Handle Firebase auth errors with specific error codes
       if (code) {
         switch (code) {
+          case 'auth/operation-not-allowed':
+            // Email/Password provider is disabled in Firebase Console
+            console.error('[Login] Email/Password authentication is not enabled in Firebase Console');
+            console.error('[Login] To fix: Go to Firebase Console > Authentication > Sign-in method > Enable "Email/Password"');
+            errorTitle = "Authentication method disabled";
+            errorDescription = "Email/Password sign-in is not enabled. Please contact support or try signing in with Google.";
+            break;
+          case 'auth/invalid-credential':
+            // Invalid email or password (Firebase 9+ uses this instead of wrong-password/user-not-found)
+            console.error('[Login] Invalid credentials provided');
+            errorTitle = "Invalid credentials";
+            errorDescription = "The email or password you entered is incorrect. Please try again.";
+            break;
+          case 'auth/wrong-password':
+            errorTitle = "Incorrect password";
+            errorDescription = "The password you entered is incorrect. Please try again.";
+            break;
+          case 'auth/user-not-found':
+            errorTitle = "Account not found";
+            errorDescription = "No account found with this email address. Please check your email or sign up.";
+            break;
+          case 'auth/user-disabled':
+            errorTitle = "Account disabled";
+            errorDescription = "This account has been disabled. Please contact support.";
+            break;
           case 'auth/network-request-failed':
             errorTitle = "Network error";
             errorDescription = "Please check your connection and try again";
-            break;
-          case 'auth/invalid-credential':
-          case 'auth/wrong-password':
-          case 'auth/user-not-found':
-          case 'auth/user-disabled':
-            // Authentication failures - keep default message
             break;
           case 'auth/too-many-requests':
             errorTitle = "Too many attempts";
@@ -127,7 +158,8 @@ export default function LoginPage() {
             errorDescription = "Please check your email address";
             break;
           default:
-            // For unknown Firebase errors, show generic message
+            // For unknown Firebase errors, log the code and show generic message
+            console.warn('[Login] Unhandled Firebase error code:', code);
             errorDescription = "Something went wrong. Please try again";
         }
       } else if (!code && typeof error === 'object' && error && 'message' in error) {

@@ -336,7 +336,9 @@ export default function SignupPage() {
       } else if (firebaseError?.code === 'auth/network-request-failed') {
         message = "Network error. Please check your connection and try again";
       } else if (firebaseError?.code === 'auth/operation-not-allowed') {
-        message = "Email/Password authentication is not enabled. Please check the Firebase Console > Authentication > Sign-in method and ensure Email/Password provider is enabled for project 'snipshift-75b04'.";
+        console.error('[Signup] Email/Password authentication is not enabled in Firebase Console');
+        console.error('[Signup] To fix: Go to Firebase Console > Authentication > Sign-in method > Enable "Email/Password"');
+        message = "Email/Password authentication is not enabled. Go to Firebase Console, navigate to Authentication > Sign-in method, enable 'Email/Password' provider, and click Save. Then try signing up again.";
       }
       // Handle API errors (format: "status: message")
       else if (firebaseError?.message) {

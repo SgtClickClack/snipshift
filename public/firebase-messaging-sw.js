@@ -13,10 +13,14 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 
 // Firebase configuration - these values are injected at build time
 // In production, these should match your Firebase project settings
+// NOTE: projectId and storageBucket use the Firebase project identifier (snipshift-75b04)
+// which is a technical identifier and cannot be changed without migrating to a new Firebase project.
+// The authDomain can be configured via VITE_FIREBASE_AUTH_DOMAIN to show hospogo.com in auth popups.
 const firebaseConfig = {
   apiKey: 'AIzaSyAeEQ0qFLP_w_8wpD3I9x7SEK5qhxeu0_I',
+  // authDomain should match VITE_FIREBASE_AUTH_DOMAIN from main config (defaults to Firebase project domain)
   authDomain: 'snipshift-75b04.firebaseapp.com',
-  projectId: 'snipshift-75b04',
+  projectId: 'snipshift-75b04', // Firebase project identifier (technical, not user-facing)
   storageBucket: 'snipshift-75b04.firebasestorage.app',
   messagingSenderId: '769818802438',
   appId: '1:769818802438:web:37254646426bd6aaf3c687',

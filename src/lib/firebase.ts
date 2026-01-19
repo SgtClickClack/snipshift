@@ -42,12 +42,18 @@ const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string
 // SECURITY: Strict project ID enforcement - only allow 'snipshift-75b04'
 const REQUIRED_PROJECT_ID = 'snipshift-75b04';
 
-// CRITICAL: Force legacy Firebase auth domain for SDK init to bypass storage partitioning.
-const authDomain = 'snipshift-75b04.firebaseapp.com';
+// CRITICAL: Use environment variable for auth domain to support rebranding.
+// Falls back to legacy Firebase domain if not set (for backwards compatibility).
+// Supports both VITE_FIREBASE_AUTH_DOMAIN and VITE_AUTH_DOMAIN (alias).
+const authDomain = sanitizeEnv(
+  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_AUTH_DOMAIN,
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'snipshift-75b04.firebaseapp.com' // Fallback to legacy domain for storage partitioning bypass
+);
 
 const firebaseConfig = {
   apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY'),
-  // ESSENTIAL: Forces the rebrand domain for auth handshakes.
+  // ESSENTIAL: Uses rebranded domain (hospogo.com) when configured via environment variable.
   authDomain,
   projectId: sanitizeEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'VITE_FIREBASE_PROJECT_ID'),
   storageBucket: sanitizeEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'VITE_FIREBASE_STORAGE_BUCKET'),

@@ -1709,6 +1709,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       window.location.origin,
       'https://hospogo.com',
       'https://www.hospogo.com',
+      // Legacy Firebase domain for auth handler compatibility
       'https://snipshift-75b04.firebaseapp.com',
     ]);
 
