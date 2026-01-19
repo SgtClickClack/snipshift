@@ -51,7 +51,7 @@ export default function PrivacyPage() {
                   Under APP 12, you have a right to access the personal information we hold about you.
                 </p>
                 <ul className="list-disc list-inside text-steel-700 mb-4 space-y-2 ml-4">
-                  <li><strong>Data Export:</strong> You may request a structured export of your digital footprint. Our system generates a comprehensive report including your profile, shift history, application status, and communication logs.</li>
+                  <li><strong>Data Export:</strong> You may request a structured export of your digital footprint. Our system generates a report with your profile, shift history, application status, and communication logs.</li>
                   <li><strong>Requests:</strong> Please contact <a href="mailto:info@hospogo.com" className="text-brand-neon hover:underline">info@hospogo.com</a> to initiate a data export.</li>
                 </ul>
               </section>

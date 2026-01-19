@@ -33,8 +33,7 @@ export default function AboutPage() {
                   <h2 className="text-2xl font-bold text-steel-900 mb-3">Our Mission</h2>
                   <p className="text-steel-700 text-lg leading-relaxed">
                     HospoGo bridges the gap between hospitality venues that need flexible staffing, 
-                    and talented professionals seeking work opportunities. We believe in empowering the gig economy within 
-                    the hospitality industry, making it easier for businesses to find qualified talent and for professionals 
+                    and talented professionals seeking work opportunities. We're making it easier for businesses to find qualified talent and for professionals 
                     to build their careers on their own terms.
                   </p>
                 </div>
@@ -54,14 +53,14 @@ export default function AboutPage() {
                 </p>
                 <p>
                   HospoGo was born from the recognition that the traditional job board model doesn't work for the 
-                  industry. We're not just matching resumes to job descriptions—we're building a community where professionals 
+                  industry. We're not just matching resumes to job descriptions. We're building a community where professionals 
                   can showcase their skills, businesses can find trusted talent, and everyone benefits from the flexibility 
                   that makes the industry thrive.
                 </p>
                 <p>
                   Whether you're a hospitality professional looking for weekend shifts, a venue owner needing coverage during peak seasons, 
                   or a brand looking to connect with professionals, HospoGo provides the tools and platform to 
-                  make those connections seamless.
+                  make those connections happen.
                 </p>
               </div>
             </CardContent>
@@ -88,7 +87,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-xl font-semibold text-steel-900 mb-2">Community First</h3>
                 <p className="text-steel-600 text-sm">
-                  We're building more than a platform—we're fostering a community of professionals.
+                  We're building more than a platform. We're fostering a community of professionals.
                 </p>
               </CardContent>
             </Card>

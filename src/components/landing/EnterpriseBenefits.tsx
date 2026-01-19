@@ -50,7 +50,7 @@ export default function EnterpriseBenefits() {
           Scalable Talent for Hospitality Groups
         </h2>
         <p className="text-zinc-400 text-sm leading-relaxed">
-          From single venues to national chains, HospoGo Enterprise gives your operations team the tools to scale staffing without the admin headache.
+          From single venues to national chains, HospoGo Enterprise gives your operations team the tools to scale staffing. No admin headache.
         </p>
       </div>
 

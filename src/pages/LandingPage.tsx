@@ -256,8 +256,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">Work Together</h3>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Complete the opportunity, build your network, and grow your reputation within the
-                    industry community.
+                    Complete the opportunity. Build your network. Grow your reputation in the industry.
                   </p>
                 </CardContent>
               </Card>

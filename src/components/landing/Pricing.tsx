@@ -76,12 +76,12 @@ export default function Pricing() {
           </h2>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
             Choose the plan that fits your venue. No hidden fees, just verified
-            professionals and seamless connections.
+            professionals ready to work.
           </p>
           <p className="text-sm text-zinc-500 mt-2">
             Pricing below is for venues. Looking for work?{" "}
             <Link to="/signup?role=professional" className="text-[#BFFF00] hover:underline font-medium">
-              Join as a Professional — it's free
+              Join as a Professional. It's free.
             </Link>
           </p>
         </div>
@@ -185,7 +185,7 @@ export default function Pricing() {
               Looking for Hospitality Work?
             </h3>
             <p className="text-zinc-400 mb-6">
-              Join HospoGo as a professional — it's <span className="text-[#BFFF00] font-semibold">100% free</span>.
+              Join HospoGo as a professional. It's completely free for workers.
               Get access to shifts from top venues, keep all your earnings, and build your reputation.
             </p>
             <Link to="/signup?role=professional">
