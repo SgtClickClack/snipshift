@@ -66,6 +66,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
   const errorCallbacksRef = useRef<Set<(error: { message: string }) => void>>(new Set());
   const lastShiftUpdateTsRef = useRef<Map<string, number>>(new Map());
   const lastReconnectRefetchAtRef = useRef<number>(0);
+  const invalidateQueriesThrottleRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!user || !token) {
@@ -203,6 +204,27 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
       if (nextTs <= lastTs) return;
       lastShiftUpdateTsRef.current.set(data.shiftId, nextTs);
 
+      // PERFORMANCE: Throttle invalidateQueries calls to prevent excessive refetches
+      // This prevents page reloads when multiple Pusher events arrive in quick succession
+      const now = Date.now();
+      const lastInvalidateTime = invalidateQueriesThrottleRef.current.get(data.shiftId) ?? 0;
+      const THROTTLE_MS = 500; // 500ms throttle window
+      
+      if (now - lastInvalidateTime < THROTTLE_MS) {
+        logger.debug('PUSHER', `Throttled invalidateQueries for shift ${data.shiftId} (last invalidate: ${now - lastInvalidateTime}ms ago)`);
+        // Still call callbacks immediately, but defer query invalidation
+        shiftStatusCallbacksRef.current.forEach((callback) => {
+          try {
+            callback(data);
+          } catch (error) {
+            logger.error('PUSHER', 'Error in shift status update callback:', error);
+          }
+        });
+        return;
+      }
+      
+      invalidateQueriesThrottleRef.current.set(data.shiftId, now);
+
       try {
         queryClient.invalidateQueries({ queryKey: ['shift', data.shiftId] });
         logger.debug('PUSHER', `Invalidated shift query for shift ${data.shiftId} due to status update`);
@@ -253,6 +275,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
       // Clear conversation channels
       channelsRef.current.clear();
       lastShiftUpdateTsRef.current.clear();
+      invalidateQueriesThrottleRef.current.clear();
       setIsConnected(false);
     };
    

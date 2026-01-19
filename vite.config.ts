@@ -112,7 +112,41 @@ export default defineConfig(({ mode }) => ({
   // VITE_* environment variables are automatically exposed via import.meta.env
   // See src/config/env.ts for centralized access to these variables
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'react/jsx-runtime', 'use-places-autocomplete', 'lucide-react'],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'react/jsx-runtime',
+      'use-places-autocomplete',
+      'lucide-react',
+      // Common UI libraries that may be discovered at runtime
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-progress',
+      '@radix-ui/react-slider',
+      '@radix-ui/react-slot',
+      '@radix-ui/react-toast',
+      '@radix-ui/react-tooltip',
+      // Calendar and date picker libraries
+      'react-day-picker',
+      'react-big-calendar',
+      'date-fns',
+      // Image and media libraries
+      'react-easy-crop',
+      // Maps integration
+      '@googlemaps/js-api-loader',
+      // Form libraries
+      'react-hook-form',
+      'zod',
+      // Query and state management
+      '@tanstack/react-query',
+      // Other common dependencies
+      'framer-motion',
+      'recharts',
+      'vaul',
+    ],
     exclude: ['moment', 'moment-timezone'], // Exclude moment from bundling since we use date-fns
     force: true, // Force dependency pre-bundling
   },
