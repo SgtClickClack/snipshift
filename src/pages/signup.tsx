@@ -11,7 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { FastForward, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/auth/google-auth-button";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, type ActionCodeSettings } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { trackSignup } from "@/lib/analytics";
 
@@ -233,7 +233,39 @@ export default function SignupPage() {
 
     try {
       // 1. Create user in Firebase to establish auth session
-      await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const firebaseUser = userCredential.user;
+
+      // 1a. Send email verification with proper ActionCodeSettings
+      try {
+        // Use environment variable for auth domain
+        const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_AUTH_DOMAIN;
+        // Always use https://hospogo.com/verify-email for the continue URL
+        // The authDomain might be the Firebase project domain (e.g., snipshift-75b04.firebaseapp.com),
+        // but we want the actual app domain (hospogo.com) for the verification link
+        const continueUrl = 'https://hospogo.com/verify-email';
+        
+        const actionCodeSettings: ActionCodeSettings = {
+          url: continueUrl,
+          handleCodeInApp: false, // Open in browser, not in-app
+        };
+        
+        await sendEmailVerification(firebaseUser, actionCodeSettings);
+        console.log('[Signup] Email verification sent successfully', { 
+          email: formData.email,
+          continueUrl,
+          authDomain 
+        });
+      } catch (verificationError: unknown) {
+        // Log verification error but don't fail signup
+        const firebaseError = verificationError as { code?: string; message?: string };
+        console.error('[Signup] Failed to send email verification:', {
+          code: firebaseError?.code,
+          message: firebaseError?.message,
+          error: verificationError,
+        });
+        // Continue with signup even if verification email fails
+      }
 
       // 2. Create user in Backend DB
       const response = await apiRequest("POST", "/api/register", {
@@ -286,8 +318,7 @@ export default function SignupPage() {
       
       // Removed test bypass - E2E tests need to use proper authentication
       
-      // Verify Firebase user was created successfully
-      const firebaseUser = auth.currentUser;
+      // Verify Firebase user was created successfully (already have it from userCredential above)
       if (!firebaseUser) {
         throw new Error('Firebase user was not created');
       }
@@ -322,22 +353,35 @@ export default function SignupPage() {
       // Use replace: true to prevent back button issues
       navigate(onboardingPath, { replace: true });
     } catch (error: unknown) {
-      console.error("Signup error:", error);
+      // CRITICAL: Log full Firebase error object for debugging
+      const firebaseError = error as { code?: string; message?: string; [key: string]: unknown };
+      console.error("[Signup] Signup error - full error object:", {
+        code: firebaseError?.code,
+        message: firebaseError?.message,
+        error: error,
+        errorObject: firebaseError,
+        timestamp: new Date().toISOString(),
+      });
+      
       let message = "Please check your information and try again";
       
-      // Handle Firebase auth errors
-      const firebaseError = error as { code?: string; message?: string };
+      // Handle Firebase auth errors with specific error codes
       if (firebaseError?.code === 'auth/email-already-in-use') {
+        console.error('[Signup] Email already in use:', formData.email);
         message = "This email is already in use";
       } else if (firebaseError?.code === 'auth/weak-password') {
+        console.error('[Signup] Password too weak');
         message = "Password is too weak";
       } else if (firebaseError?.code === 'auth/invalid-email') {
+        console.error('[Signup] Invalid email address:', formData.email);
         message = "Invalid email address";
       } else if (firebaseError?.code === 'auth/network-request-failed') {
+        console.error('[Signup] Network request failed');
         message = "Network error. Please check your connection and try again";
       } else if (firebaseError?.code === 'auth/operation-not-allowed') {
         console.error('[Signup] Email/Password authentication is not enabled in Firebase Console');
         console.error('[Signup] To fix: Go to Firebase Console > Authentication > Sign-in method > Enable "Email/Password"');
+        console.error('[Signup] Full error details:', firebaseError);
         message = "Email/Password authentication is not enabled. Go to Firebase Console, navigate to Authentication > Sign-in method, enable 'Email/Password' provider, and click Save. Then try signing up again.";
       }
       // Handle API errors (format: "status: message")
