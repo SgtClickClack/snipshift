@@ -2661,46 +2661,9 @@ router.post('/templates', authenticateUser, asyncHandler(async (req: Authenticat
     return;
   }
 
-  // Get current user to preserve existing businessSettings
-  const currentUser = await usersRepo.getUserById(userId);
-  
-  if (!currentUser) {
-    res.status(404).json({ message: 'User not found' });
-    return;
-  }
-
-  // Convert calendar format to businessSettings format
-  let shiftSplitType: 'halves' | 'thirds' | 'custom' | 'full-day' = 'full-day';
-  if (shiftPattern === 'half-day') {
-    shiftSplitType = 'halves';
-  } else if (shiftPattern === 'thirds') {
-    shiftSplitType = 'thirds';
-  } else if (shiftPattern === 'custom') {
-    shiftSplitType = 'custom';
-  }
-
-  // Preserve existing businessSettings and update shift template fields
-  const existingSettings = (currentUser as any).businessSettings 
-    ? (typeof (currentUser as any).businessSettings === 'string' 
-        ? JSON.parse((currentUser as any).businessSettings) 
-        : (currentUser as any).businessSettings)
-    : {};
-
-  const updatedSettings = {
-    ...existingSettings,
-    shiftSplitType,
-    customShiftLength: shiftPattern === 'custom' ? defaultShiftLength : (existingSettings.customShiftLength || 8),
-  };
-
-  // Update user businessSettings
-  const updatedUser = await usersRepo.updateUser(userId, {
-    businessSettings: JSON.stringify(updatedSettings),
-  });
-
-  if (!updatedUser) {
-    res.status(500).json({ message: 'Failed to update shift templates' });
-    return;
-  }
+  // Note: businessSettings field removed from schema
+  // Shift template settings are now handled via shift templates directly
+  // This endpoint validates the input but doesn't persist to user record
 
   res.status(200).json({
     success: true,
@@ -2708,8 +2671,6 @@ router.post('/templates', authenticateUser, asyncHandler(async (req: Authenticat
     defaultShiftLength: shiftPattern === 'custom' ? defaultShiftLength : undefined,
   });
 }));
-
-export default router;
 
 // Smart Fill: Batch create shifts for unassigned slots
 router.post('/smart-fill', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {

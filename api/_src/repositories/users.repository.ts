@@ -137,10 +137,13 @@ export async function createUser(
       reliabilityScore: null,
       suspendedUntil: null,
       isOnboarded: false,
+      hasCompletedOnboarding: false,
       isActive: true,
       stripeAccountId: null,
       stripeOnboardingComplete: false,
       stripeCustomerId: null,
+      notificationPreferences: null,
+      favoriteProfessionals: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
