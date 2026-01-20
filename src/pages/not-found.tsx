@@ -1,5 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function NotFound() {
   return (
@@ -11,9 +13,16 @@ export default function NotFound() {
             <h1 className="text-2xl font-bold text-steel-900">404 Page Not Found</h1>
           </div>
 
-          <p className="mt-4 text-sm text-steel-600">
-            Did you forget to add the page to the router?
+          <p className="mt-4 text-sm text-steel-600 mb-6">
+            Oops! We can't find that page. Head back to the home page to get started.
           </p>
+
+          <Link to="/">
+            <Button className="w-full bg-steel-600 hover:bg-steel-700 text-white">
+              <Home className="h-4 w-4 mr-2" />
+              Go to Home Page
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>

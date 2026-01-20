@@ -260,11 +260,9 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/venue-guide" element={
-          <AuthGuard>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <VenueGuidePage />
-            </Suspense>
-          </AuthGuard>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <VenueGuidePage />
+          </Suspense>
         } />
 
         {/* Protected dashboard routes */}
