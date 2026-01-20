@@ -50,6 +50,7 @@ const RefundPolicyPage = lazy(() => import('@/pages/legal/refunds'));
 const SitemapPage = lazy(() => import('@/pages/legal/sitemap'));
 const AboutPage = lazy(() => import('@/pages/company/about'));
 const ContactPage = lazy(() => import('@/pages/company/contact'));
+const VenueGuidePage = lazy(() => import('@/pages/venue-guide'));
 
 // Utility pages - lazy load
 const DashboardRedirect = lazy(() => import('@/pages/dashboard-redirect'));
@@ -254,6 +255,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           <AuthGuard>
             <Suspense fallback={<PageLoadingFallback />}>
               <ContactPage />
+            </Suspense>
+          </AuthGuard>
+        } />
+
+        <Route path="/venue-guide" element={
+          <AuthGuard>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <VenueGuidePage />
             </Suspense>
           </AuthGuard>
         } />

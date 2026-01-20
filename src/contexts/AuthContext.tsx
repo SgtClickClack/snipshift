@@ -66,6 +66,14 @@ export interface User {
     shiftSplitType: 'halves' | 'thirds' | 'custom' | 'full-day';
     customShiftLength?: number;
   };
+  notificationPreferences?: {
+    newJobAlertsEmail?: boolean;
+    newJobAlertsSMS?: boolean;
+    shiftRemindersEmail?: boolean;
+    shiftRemindersSMS?: boolean;
+    marketingUpdatesEmail?: boolean;
+  };
+  favoriteProfessionals?: string[];
 }
 
 interface AuthContextType {
@@ -202,6 +210,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isOnboarded: apiUser?.isOnboarded ?? false,
       // Ensure hasCompletedOnboarding is boolean
       hasCompletedOnboarding: apiUser?.hasCompletedOnboarding ?? false,
+      // User preferences
+      notificationPreferences: apiUser?.notificationPreferences || undefined,
+      favoriteProfessionals: apiUser?.favoriteProfessionals || [],
     };
   };
 

@@ -4,7 +4,8 @@ import { eq, and, sql } from 'drizzle-orm';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { ShiftSchema, ShiftInviteSchema, ShiftReviewSchema, BulkAcceptSchema } from '../validation/schemas.js';
-import { shiftOffers, shifts, shiftApplications, users } from '../db/schema.js';
+import { shiftOffers, shifts, shiftApplications, users, shiftDrafts } from '../db/schema.js';
+import type { ShiftDraftData } from '../db/schema/shifts.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as shiftOffersRepo from '../repositories/shift-offers.repository.js';
 import * as shiftInvitationsRepo from '../repositories/shift-invitations.repository.js';
@@ -5281,6 +5282,167 @@ router.post('/:id/accept-backup', authenticateUser, asyncHandler(async (req: Aut
     message: result.message,
     shift: result.shift,
   });
+}));
+
+// Shift Drafts endpoints
+// GET /api/shifts/drafts - Get draft for current venue
+router.get('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    // Get venue for this user
+    const venue = await venuesRepo.getVenueByUserId(userId);
+    if (!venue) {
+      res.status(404).json({ message: 'Venue not found' });
+      return;
+    }
+
+    const db = getDb();
+    if (!db) {
+      res.status(500).json({ message: 'Database not available' });
+      return;
+    }
+
+    // Get the most recent draft for this venue
+    const [draft] = await db
+      .select()
+      .from(shiftDrafts)
+      .where(eq(shiftDrafts.venueId, venue.id))
+      .orderBy(sql`${shiftDrafts.updatedAt} DESC`)
+      .limit(1);
+
+    if (!draft) {
+      res.status(200).json({ draft: null });
+      return;
+    }
+
+    res.status(200).json({
+      draft: {
+        id: draft.id,
+        draftData: draft.draftData,
+        updatedAt: draft.updatedAt.toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error('[GET /api/shifts/drafts] Error:', error);
+    res.status(500).json({ message: 'Failed to fetch draft' });
+  }
+}));
+
+// POST /api/shifts/drafts - Save or update draft
+router.post('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { draftData } = req.body;
+
+  if (!draftData || typeof draftData !== 'object') {
+    res.status(400).json({ message: 'Invalid draft data' });
+    return;
+  }
+
+  try {
+    // Get venue for this user
+    const venue = await venuesRepo.getVenueByUserId(userId);
+    if (!venue) {
+      res.status(404).json({ message: 'Venue not found' });
+      return;
+    }
+
+    const db = getDb();
+    if (!db) {
+      res.status(500).json({ message: 'Database not available' });
+      return;
+    }
+
+    // Check if draft exists
+    const [existingDraft] = await db
+      .select()
+      .from(shiftDrafts)
+      .where(eq(shiftDrafts.venueId, venue.id))
+      .limit(1);
+
+    if (existingDraft) {
+      // Update existing draft
+      const [updated] = await db
+        .update(shiftDrafts)
+        .set({
+          draftData: draftData as ShiftDraftData,
+          updatedAt: new Date(),
+        })
+        .where(eq(shiftDrafts.id, existingDraft.id))
+        .returning();
+
+      res.status(200).json({
+        draft: {
+          id: updated.id,
+          draftData: updated.draftData,
+          updatedAt: updated.updatedAt.toISOString(),
+        },
+      });
+    } else {
+      // Create new draft
+      const [newDraft] = await db
+        .insert(shiftDrafts)
+        .values({
+          venueId: venue.id,
+          draftData: draftData as ShiftDraftData,
+        })
+        .returning();
+
+      res.status(201).json({
+        draft: {
+          id: newDraft.id,
+          draftData: newDraft.draftData,
+          updatedAt: newDraft.updatedAt.toISOString(),
+        },
+      });
+    }
+  } catch (error) {
+    console.error('[POST /api/shifts/drafts] Error:', error);
+    res.status(500).json({ message: 'Failed to save draft' });
+  }
+}));
+
+// DELETE /api/shifts/drafts - Delete draft
+router.delete('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    // Get venue for this user
+    const venue = await venuesRepo.getVenueByUserId(userId);
+    if (!venue) {
+      res.status(404).json({ message: 'Venue not found' });
+      return;
+    }
+
+    const db = getDb();
+    if (!db) {
+      res.status(500).json({ message: 'Database not available' });
+      return;
+    }
+
+    // Delete draft for this venue
+    await db
+      .delete(shiftDrafts)
+      .where(eq(shiftDrafts.venueId, venue.id));
+
+    res.status(200).json({ message: 'Draft deleted successfully' });
+  } catch (error) {
+    console.error('[DELETE /api/shifts/drafts] Error:', error);
+    res.status(500).json({ message: 'Failed to delete draft' });
+  }
 }));
 
 export default router;

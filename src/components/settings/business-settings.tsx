@@ -74,20 +74,6 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
       setOpeningHours(settings.openingHours || DEFAULT_OPENING_HOURS);
       setShiftSplitType(settings.shiftSplitType || 'full-day');
       setCustomShiftLength(settings.customShiftLength || 8);
-    } else if (typeof window !== 'undefined') {
-      // Try to load from localStorage as fallback
-      try {
-        const key = `business-settings-${user?.id || 'default'}`;
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setOpeningHours(parsed.openingHours || DEFAULT_OPENING_HOURS);
-          setShiftSplitType(parsed.shiftSplitType || 'full-day');
-          setCustomShiftLength(parsed.customShiftLength || 8);
-        }
-      } catch (error) {
-        console.error('Failed to load business settings:', error);
-      }
     }
   }, [initialData, user?.id, user?.businessSettings]);
 
@@ -205,12 +191,8 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
         businessSettings: settingsData,
       });
 
-      // Also save to localStorage as backup
+      // Dispatch a custom event to notify the calendar component of settings update
       if (typeof window !== 'undefined') {
-        const businessKey = `business-settings-${user?.id || 'default'}`;
-        localStorage.setItem(businessKey, JSON.stringify(settingsData));
-        
-        // Also save to calendar-settings localStorage key for calendar component
         // Convert business settings format to calendar settings format
         let shiftPattern: 'full-day' | 'half-day' | 'thirds' | 'custom' = 'full-day';
         if (settingsData.shiftSplitType === 'halves') {
@@ -226,10 +208,6 @@ export default function BusinessSettings({ initialData, onSave }: BusinessSettin
           shiftPattern,
           defaultShiftLength: settingsData.customShiftLength,
         };
-        
-        const calendarKey = `calendar-settings-${user?.id || 'default'}`;
-        localStorage.setItem(calendarKey, JSON.stringify(calendarSettings));
-        logger.debug("BusinessSettings", "Saved to business-settings and calendar-settings localStorage");
         
         // Dispatch a custom event to notify the calendar component
         window.dispatchEvent(new CustomEvent('calendarSettingsUpdated', {

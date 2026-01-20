@@ -648,54 +648,42 @@ function ProfessionalCalendarContent({
   const [showInviteSearch, setShowInviteSearch] = useState(false);
   const [inviteSearchQuery, setInviteSearchQuery] = useState("");
   
-  // Favorites management - stored in localStorage keyed by user ID
-  const getFavoritesKey = useCallback(() => {
-    return `favorite-professionals-${user?.id || 'default'}`;
-  }, [user?.id]);
-  
+  // Favorites management - stored in database
   const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const key = `favorite-professionals-${user?.id || 'default'}`;
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
+    return user?.favoriteProfessionals || [];
   });
   
-  // Save favorites to localStorage whenever they change
+  // Load favorites from user data when user changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const key = getFavoritesKey();
-        localStorage.setItem(key, JSON.stringify(favoriteIds));
-      } catch (error) {
-        console.error('Failed to save favorites:', error);
-      }
+    if (user?.favoriteProfessionals) {
+      setFavoriteIds(user.favoriteProfessionals);
+    } else {
+      setFavoriteIds([]);
     }
-    // getFavoritesKey is stable (only changes when user?.id changes), so we don't need it in deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [favoriteIds]);
+  }, [user?.favoriteProfessionals]);
   
-  // Reload favorites when user changes
+  // Save favorites to database whenever they change
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const key = getFavoritesKey();
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          setFavoriteIds(JSON.parse(stored));
-        } else {
-          setFavoriteIds([]);
-        }
-      } catch {
-        setFavoriteIds([]);
-      }
+    if (!user?.id || favoriteIds.length === 0 && (!user?.favoriteProfessionals || user.favoriteProfessionals.length === 0)) {
+      // Don't save if no user or if both are empty (initial state)
+      return;
     }
-    // Only depend on user?.id - getFavoritesKey is already memoized and will update when user?.id changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+    
+    const saveFavorites = async () => {
+      try {
+        await apiRequest('PATCH', '/api/users/settings', {
+          favoriteProfessionals: favoriteIds,
+        });
+        console.log('[CALENDAR] Favorites saved to database');
+      } catch (error) {
+        console.error('[CALENDAR] Failed to save favorites:', error);
+      }
+    };
+    
+    // Debounce saves to avoid excessive API calls
+    const timeoutId = setTimeout(saveFavorites, 500);
+    return () => clearTimeout(timeoutId);
+  }, [favoriteIds, user?.id, user?.favoriteProfessionals]);
   
   const toggleFavorite = (professionalId: string) => {
     setFavoriteIds(prev => {
@@ -1408,12 +1396,8 @@ function ProfessionalCalendarContent({
 
     setIsCalculatingMatches(true);
     try {
-      // Get favorite professional IDs from localStorage
-      const favoritesKey = `favorite-professionals-${user.id}`;
-      const storedFavorites = typeof window !== 'undefined' 
-        ? localStorage.getItem(favoritesKey) 
-        : null;
-      const favoriteIds: string[] = storedFavorites ? JSON.parse(storedFavorites) : [];
+      // Get favorite professional IDs from user preferences
+      const favoriteIds: string[] = user?.favoriteProfessionals || [];
 
       // Call the smart-fill endpoint
       const response = await apiRequest("POST", "/api/shifts/smart-fill", {

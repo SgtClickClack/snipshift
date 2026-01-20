@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { CalendarIcon, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +25,8 @@ import { generateRecurringShifts, RecurringShiftConfig } from "@/utils/recurring
 import { useToast } from "@/hooks/useToast";
 import { HOSPITALITY_ROLES } from "@/utils/hospitality";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 interface CreateShiftModalProps {
   isOpen: boolean;
@@ -62,6 +74,137 @@ export default function CreateShiftModal({
   const [numberOfOccurrences, setNumberOfOccurrences] = useState<number>(4);
   const [useEndDate, setUseEndDate] = useState(true);
   const [assigneeOption, setAssigneeOption] = useState<'keep' | 'open-slot'>('keep');
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
+  const [hasRecoveredDraft, setHasRecoveredDraft] = useState(false);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch draft on modal open
+  const { data: draftData } = useQuery({
+    queryKey: ['shift-draft'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/shifts/drafts');
+      const data = await response.json();
+      return data.draft;
+    },
+    enabled: isOpen && !hasRecoveredDraft,
+  });
+
+  // Auto-save mutation
+  const saveDraftMutation = useMutation({
+    mutationFn: async (draft: any) => {
+      await apiRequest('POST', '/api/shifts/drafts', { draftData: draft });
+    },
+  });
+
+  // Delete draft mutation
+  const deleteDraftMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('DELETE', '/api/shifts/drafts');
+    },
+  });
+
+  // Debounced auto-save function
+  const autoSaveDraft = useCallback((data: typeof formData) => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      const draftPayload = {
+        role: data.role,
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        hourlyRate: data.hourlyRate,
+        location: data.location,
+        uniformRequirements: data.uniformRequirements,
+        rsaRequired: data.rsaRequired,
+        expectedPax: data.expectedPax,
+        repeatWeekly,
+        endDate: endDate ? format(endDate, 'yyyy-MM-dd') : undefined,
+        numberOfOccurrences,
+        useEndDate,
+        assigneeOption,
+      };
+
+      saveDraftMutation.mutate(draftPayload);
+    }, 2000); // 2 second debounce
+  }, [repeatWeekly, endDate, numberOfOccurrences, useEndDate, assigneeOption, saveDraftMutation]);
+
+  // Auto-save when form data changes
+  useEffect(() => {
+    if (isOpen && hasRecoveredDraft) {
+      autoSaveDraft(formData);
+    }
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [formData, isOpen, hasRecoveredDraft, autoSaveDraft]);
+
+  // Auto-save when recurring options change
+  useEffect(() => {
+    if (isOpen && hasRecoveredDraft) {
+      autoSaveDraft(formData);
+    }
+  }, [repeatWeekly, endDate, numberOfOccurrences, useEndDate, assigneeOption, isOpen, hasRecoveredDraft, autoSaveDraft, formData]);
+
+  // Show recovery dialog when draft is found
+  useEffect(() => {
+    if (isOpen && draftData && !hasRecoveredDraft) {
+      setShowRecoveryDialog(true);
+    }
+  }, [isOpen, draftData, hasRecoveredDraft]);
+
+  // Handle draft recovery
+  const handleRecoverDraft = () => {
+    if (!draftData?.draftData) return;
+
+    const draft = draftData.draftData;
+    setFormData({
+      role: draft.role || "",
+      title: draft.title || "",
+      description: draft.description || "",
+      date: draft.date || "",
+      startTime: draft.startTime || "09:00",
+      endTime: draft.endTime || "17:00",
+      hourlyRate: draft.hourlyRate || "45",
+      location: draft.location || "",
+      uniformRequirements: draft.uniformRequirements || "",
+      rsaRequired: draft.rsaRequired || false,
+      expectedPax: draft.expectedPax || "",
+    });
+
+    if (draft.repeatWeekly) {
+      setRepeatWeekly(true);
+      if (draft.endDate) {
+        setEndDate(new Date(draft.endDate));
+      }
+      if (draft.numberOfOccurrences) {
+        setNumberOfOccurrences(draft.numberOfOccurrences);
+      }
+      if (draft.useEndDate !== undefined) {
+        setUseEndDate(draft.useEndDate);
+      }
+      if (draft.assigneeOption) {
+        setAssigneeOption(draft.assigneeOption);
+      }
+    }
+
+    setHasRecoveredDraft(true);
+    setShowRecoveryDialog(false);
+  };
+
+  // Handle discard draft
+  const handleDiscardDraft = () => {
+    deleteDraftMutation.mutate();
+    setHasRecoveredDraft(true);
+    setShowRecoveryDialog(false);
+  };
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -100,6 +243,11 @@ export default function CreateShiftModal({
       setNumberOfOccurrences(4);
       setUseEndDate(true);
       setAssigneeOption('keep');
+      setHasRecoveredDraft(false);
+      // Clear auto-save timeout
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
     }
   }, [isOpen, initialDate, initialStartTime, initialEndTime]);
 
@@ -224,11 +372,30 @@ export default function CreateShiftModal({
       // Single shift
       onSubmit(baseShiftData);
     }
+
+    // Delete draft after successful submission
+    deleteDraftMutation.mutate();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="create-shift-modal">
+    <>
+      <AlertDialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resume your shift draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              We found a shift you were working on earlier. Want to pick up where you left off?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDiscardDraft}>Start fresh</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRecoverDraft}>Resume draft</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="create-shift-modal">
         <DialogHeader>
           <DialogTitle>Create New Shift</DialogTitle>
           <DialogDescription>
@@ -508,6 +675,7 @@ export default function CreateShiftModal({
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 

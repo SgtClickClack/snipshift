@@ -48,6 +48,14 @@ const UpdateProfileSchema = z.object({
     shiftSplitType: z.enum(['halves', 'thirds', 'custom', 'full-day']),
     customShiftLength: z.number().optional(),
   }).passthrough().optional(), // Use passthrough to allow extra fields
+  notificationPreferences: z.object({
+    newJobAlertsEmail: z.boolean().optional(),
+    newJobAlertsSMS: z.boolean().optional(),
+    shiftRemindersEmail: z.boolean().optional(),
+    shiftRemindersSMS: z.boolean().optional(),
+    marketingUpdatesEmail: z.boolean().optional(),
+  }).optional(),
+  favoriteProfessionals: z.array(z.string().uuid()).optional(),
 });
 
 // Validation schema for onboarding completion
@@ -342,6 +350,8 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
       isOnboarded: user.isOnboarded ?? false,
       hasCompletedOnboarding: (user as any).hasCompletedOnboarding ?? false,
+      notificationPreferences: (user as any).notificationPreferences || null,
+      favoriteProfessionals: (user as any).favoriteProfessionals || [],
     });
   } catch (error: any) {
     console.error('[ME ERROR]', error);
@@ -667,6 +677,8 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     hourlyRatePreference,
     businessSettings,
     hasCompletedOnboarding,
+    notificationPreferences,
+    favoriteProfessionals,
   } = validationResult.data;
 
   // Prepare update object
@@ -687,6 +699,12 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     // Note: This assumes the database column exists or can be added
     // For now, we'll store it as a JSON string in a text field or JSON column
     updates.businessSettings = JSON.stringify(businessSettings);
+  }
+  if (notificationPreferences !== undefined) {
+    updates.notificationPreferences = notificationPreferences;
+  }
+  if (favoriteProfessionals !== undefined) {
+    updates.favoriteProfessionals = favoriteProfessionals;
   }
   
   // Helper to validate URL is non-empty and looks like a valid URL
@@ -861,6 +879,66 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     businessSettings: businessSettingsParsed,
     isOnboarded: updatedUser.isOnboarded ?? false,
     hasCompletedOnboarding: (updatedUser as any).hasCompletedOnboarding ?? false,
+    notificationPreferences: (updatedUser as any).notificationPreferences || null,
+    favoriteProfessionals: (updatedUser as any).favoriteProfessionals || [],
+  });
+}));
+
+// Update user settings (notification preferences, favorites, etc.)
+router.patch('/settings', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body
+  const SettingsSchema = z.object({
+    notificationPreferences: z.object({
+      newJobAlertsEmail: z.boolean().optional(),
+      newJobAlertsSMS: z.boolean().optional(),
+      shiftRemindersEmail: z.boolean().optional(),
+      shiftRemindersSMS: z.boolean().optional(),
+      marketingUpdatesEmail: z.boolean().optional(),
+    }).optional(),
+    favoriteProfessionals: z.array(z.string().uuid()).optional(),
+  });
+
+  const validationResult = SettingsSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+    });
+    return;
+  }
+
+  const { notificationPreferences, favoriteProfessionals } = validationResult.data;
+
+  // Prepare update object
+  const updates: any = {};
+  if (notificationPreferences !== undefined) {
+    updates.notificationPreferences = notificationPreferences;
+  }
+  if (favoriteProfessionals !== undefined) {
+    updates.favoriteProfessionals = favoriteProfessionals;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ message: 'No valid settings provided' });
+    return;
+  }
+
+  // Update user in database
+  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+
+  if (!updatedUser) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    notificationPreferences: (updatedUser as any).notificationPreferences || null,
+    favoriteProfessionals: (updatedUser as any).favoriteProfessionals || [],
   });
 }));
 

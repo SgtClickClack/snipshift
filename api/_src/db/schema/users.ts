@@ -93,6 +93,15 @@ export const users = pgTable('users', {
   stripeOnboardingComplete: boolean('stripe_onboarding_complete').notNull().default(false),
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }), // [PII] [SENSITIVE] Financial customer identifier
   totalEarnedCents: integer('total_earned_cents').notNull().default(0), // Total earnings in cents
+  // User preferences (JSONB for flexibility)
+  notificationPreferences: jsonb('notification_preferences').$type<{
+    newJobAlertsEmail?: boolean;
+    newJobAlertsSMS?: boolean;
+    shiftRemindersEmail?: boolean;
+    shiftRemindersSMS?: boolean;
+    marketingUpdatesEmail?: boolean;
+  }>(),
+  favoriteProfessionals: text('favorite_professionals').array().default(sql`ARRAY[]::text[]`), // Array of professional user IDs
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({

@@ -75,7 +75,7 @@ export default function SettingsPage() {
   });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-  // Notifications state
+  // Notifications state - load from user preferences
   const [notifications, setNotifications] = useState({
     newJobAlertsEmail: true,
     newJobAlertsSMS: false,
@@ -83,6 +83,16 @@ export default function SettingsPage() {
     shiftRemindersSMS: true,
     marketingUpdatesEmail: false,
   });
+
+  // Load notification preferences from user on mount
+  useEffect(() => {
+    if (user?.notificationPreferences) {
+      setNotifications((prev) => ({
+        ...prev,
+        ...user.notificationPreferences,
+      }));
+    }
+  }, [user?.notificationPreferences]);
 
   useEffect(() => {
     const category = searchParams.get('category');
@@ -195,13 +205,24 @@ export default function SettingsPage() {
 
   const handleNotificationsSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    toast({
-      title: 'Settings saved',
-      description: 'Your notification preferences have been updated.',
-    });
+    try {
+      await apiRequest('PATCH', '/api/users/settings', {
+        notificationPreferences: notifications,
+      });
+      toast({
+        title: 'Settings saved',
+        description: 'Your notification preferences have been updated.',
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save settings';
+      toast({
+        title: 'Failed to save',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteAccount = async () => {

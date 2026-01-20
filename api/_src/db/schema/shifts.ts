@@ -1,5 +1,6 @@
-import { pgTable, uuid, varchar, text, decimal, timestamp, pgEnum, index, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, decimal, timestamp, pgEnum, index, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
+import { venues } from './venues.js';
 
 /**
  * Shift status enum
@@ -193,4 +194,38 @@ export const shiftMessages = pgTable('shift_messages', {
   recipientIdIdx: index('shift_messages_recipient_id_idx').on(table.recipientId),
   shiftCreatedAtIdx: index('shift_messages_shift_created_at_idx').on(table.shiftId, table.createdAt),
   readAtIdx: index('shift_messages_read_at_idx').on(table.readAt),
+}));
+
+/**
+ * Shift Drafts table
+ * Stores partial shift form data for auto-save and cross-device recovery
+ */
+export interface ShiftDraftData {
+  role?: string;
+  title?: string;
+  description?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  hourlyRate?: string;
+  location?: string;
+  uniformRequirements?: string;
+  rsaRequired?: boolean;
+  expectedPax?: string;
+  repeatWeekly?: boolean;
+  endDate?: string;
+  numberOfOccurrences?: number;
+  useEndDate?: boolean;
+  assigneeOption?: 'keep' | 'open-slot';
+}
+
+export const shiftDrafts = pgTable('shift_drafts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  venueId: uuid('venue_id').notNull().references(() => venues.id, { onDelete: 'cascade' }),
+  draftData: jsonb('draft_data').notNull().$type<ShiftDraftData>(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  venueIdIdx: index('shift_drafts_venue_id_idx').on(table.venueId),
+  updatedAtIdx: index('shift_drafts_updated_at_idx').on(table.updatedAt),
 }));

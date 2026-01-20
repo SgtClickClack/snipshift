@@ -9,7 +9,7 @@ import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, i
 import { relations } from 'drizzle-orm';
 import { users, userRoleEnum, hospitalityRoleEnum } from './schema/users.js';
 import { notifications, notificationTypeEnum } from './schema/notifications.js';
-import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations, shiftLogs } from './schema/shifts.js';
+import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations, shiftLogs, shiftDrafts } from './schema/shifts.js';
 import { profiles } from './schema/profiles.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
@@ -43,6 +43,7 @@ export {
   attendanceStatusEnum,
   shiftReviews, shiftReviewTypeEnum,
   shiftLogs,
+  shiftDrafts,
   posts, postTypeEnum,
   postLikes,
   comments,
