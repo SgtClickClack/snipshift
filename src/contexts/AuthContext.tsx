@@ -32,6 +32,7 @@ export interface User {
   uid?: string;
   name?: string;
   isOnboarded?: boolean;
+  hasCompletedOnboarding?: boolean;
   averageRating?: number | null;
   reviewCount?: number;
   // Brand/Business profile fields
@@ -199,6 +200,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       updatedAt: apiUser?.updatedAt ? new Date(apiUser.updatedAt) : new Date(),
       // Ensure isOnboarded is boolean (do NOT confuse this with compliance profile presence)
       isOnboarded: apiUser?.isOnboarded ?? false,
+      // Ensure hasCompletedOnboarding is boolean
+      hasCompletedOnboarding: apiUser?.hasCompletedOnboarding ?? false,
     };
   };
 
@@ -237,7 +240,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // No app user => send to login (onboarding is auth-protected, so redirecting there can cause
     // confusing bounces like "/" -> "/onboarding" -> "/login" on hard refresh when /api/me fails).
     if (!u) return '/login';
-    if (u.isOnboarded === false) return '/onboarding';
+    if (u.hasCompletedOnboarding === false) return '/onboarding';
 
     // CRITICAL: If user is authenticated but has NO role assigned yet, redirect to onboarding
     // This ensures new signups complete onboarding before accessing dashboards
@@ -293,7 +296,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (pathname !== '/login' && pathname !== '/signup') return;
 
     const target =
-      nextUser?.isOnboarded === false
+      nextUser?.hasCompletedOnboarding === false
         ? '/onboarding'
         : '/dashboard';
 

@@ -259,4 +259,63 @@ router.get('/me/analytics', authenticateUser, asyncHandler(async (req: Authentic
   });
 }));
 
+// Save venue operating hours
+router.post('/settings/hours', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body - expect openingHours in calendar format
+  const { openingHours } = req.body;
+  
+  if (!openingHours || typeof openingHours !== 'object') {
+    res.status(400).json({ message: 'Opening hours are required' });
+    return;
+  }
+
+  // Get venue for this user
+  const venue = await venuesRepo.getVenueByUserId(userId);
+  
+  if (!venue) {
+    res.status(404).json({ message: 'Venue not found' });
+    return;
+  }
+
+  // Convert calendar format (with 'enabled' field) to venue format (with 'closed' field)
+  const venueOperatingHours: any = {};
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  
+  for (const day of days) {
+    const hours = openingHours[day];
+    if (hours) {
+      if (hours.enabled === false) {
+        venueOperatingHours[day] = { closed: true };
+      } else {
+        venueOperatingHours[day] = {
+          open: hours.open || '09:00',
+          close: hours.close || '18:00',
+        };
+      }
+    }
+  }
+
+  // Update venue operating hours
+  const updatedVenue = await venuesRepo.updateVenue(venue.id, {
+    operatingHours: venueOperatingHours,
+  });
+
+  if (!updatedVenue) {
+    res.status(500).json({ message: 'Failed to update venue hours' });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    operatingHours: updatedVenue.operatingHours,
+  });
+}));
+
 export default router;

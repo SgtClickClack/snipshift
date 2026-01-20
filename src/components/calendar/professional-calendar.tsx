@@ -363,24 +363,8 @@ function ProfessionalCalendarContent({
     };
   }, []);
   
-  const [calendarSettings, setCalendarSettings] = useState<CalendarSettings | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      // First try to load from user.businessSettings
-      if (user?.businessSettings) {
-        const converted = convertBusinessSettingsToCalendarSettings(user.businessSettings);
-        if (converted) {
-          return converted;
-        }
-      }
-      // Fallback to localStorage
-      const key = `calendar-settings-${user?.id || 'default'}`;
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [calendarSettings, setCalendarSettings] = useState<CalendarSettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const normalizeCalendarSettingsForCompare = useCallback((settings: CalendarSettings | null) => {
     if (!settings) return null;
@@ -416,8 +400,8 @@ function ProfessionalCalendarContent({
     [normalizeCalendarSettingsForCompare]
   );
   
-  // Save settings to localStorage
-  const handleSaveSettings = useCallback((settings: CalendarSettings) => {
+  // Save settings to database via API
+  const handleSaveSettings = useCallback(async (settings: CalendarSettings) => {
     console.log('[CALENDAR] Saving settings:', settings);
     // Ensure all days are present in openingHours
     const completeSettings: CalendarSettings = {
@@ -433,50 +417,149 @@ function ProfessionalCalendarContent({
       },
     };
     setCalendarSettings(completeSettings);
-    if (typeof window !== 'undefined') {
-      try {
-        const key = getSettingsKey();
-        localStorage.setItem(key, JSON.stringify(completeSettings));
-        console.log('[CALENDAR] Settings saved to localStorage:', completeSettings);
-      } catch (error) {
-        console.error('Failed to save calendar settings:', error);
+    
+    try {
+      // Save opening hours to venue
+      if (isBusinessRole(user?.currentRole || '')) {
+        await apiRequest('POST', '/api/venues/settings/hours', {
+          openingHours: completeSettings.openingHours,
+        });
       }
+      
+      // Save shift templates to user businessSettings
+      await apiRequest('POST', '/api/shifts/templates', {
+        shiftPattern: completeSettings.shiftPattern,
+        defaultShiftLength: completeSettings.defaultShiftLength,
+      });
+      
+      console.log('[CALENDAR] Settings saved to database');
+      toast({
+        title: 'Schedule saved',
+        description: 'Your opening hours and shift templates have been saved.',
+      });
+    } catch (error) {
+      console.error('[CALENDAR] Failed to save settings to database:', error);
+      toast({
+        title: 'Failed to save',
+        description: 'Could not save your settings. Please try again.',
+        variant: 'destructive',
+      });
     }
-  }, [getSettingsKey]);
+  }, [getSettingsKey, user?.currentRole, toast]);
   
-  // Reload settings when user changes or businessSettings updates
+  // Initial load: Fetch settings from database on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (!user?.id || !isBusinessRole(user?.currentRole || '')) {
+      setIsLoadingSettings(false);
+      return;
+    }
+
+    const loadSettings = async () => {
+      setIsLoadingSettings(true);
       try {
-        // Priority 1: Load from user.businessSettings (from database)
+        // Fetch venue operating hours
+        let venueHours = null;
+        try {
+          const venueRes = await apiRequest('GET', '/api/venues/me');
+          if (venueRes.ok) {
+            const venueData = await venueRes.json();
+            venueHours = venueData.operatingHours;
+          }
+        } catch (error) {
+          console.error('[CALENDAR] Failed to fetch venue hours:', error);
+        }
+
+        // Load from user.businessSettings (shift templates)
+        let settings: CalendarSettings | null = null;
         if (user?.businessSettings) {
           const converted = convertBusinessSettingsToCalendarSettings(user.businessSettings);
           if (converted) {
-            setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, converted) ? prev : converted));
-            // Also save to localStorage for consistency
-            const key = getSettingsKey();
-            localStorage.setItem(key, JSON.stringify(converted));
-            console.log('[CALENDAR] Settings loaded from user.businessSettings:', converted);
-            return;
+            settings = converted;
           }
         }
-        
-        // Priority 2: Load from localStorage
-        const key = getSettingsKey();
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
-          console.log('[CALENDAR] Settings loaded from localStorage:', parsed);
+
+        // Merge venue hours with business settings
+        if (venueHours && settings) {
+          // Convert venue format (closed: true) to calendar format (enabled: false)
+          const convertedHours: any = {};
+          const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+          for (const day of days) {
+            const hours = venueHours[day];
+            if (hours) {
+              if (hours.closed === true) {
+                convertedHours[day] = { ...settings.openingHours[day], enabled: false };
+              } else {
+                convertedHours[day] = {
+                  open: hours.open || settings.openingHours[day]?.open || '09:00',
+                  close: hours.close || settings.openingHours[day]?.close || '18:00',
+                  enabled: settings.openingHours[day]?.enabled !== false,
+                };
+              }
+            } else {
+              convertedHours[day] = settings.openingHours[day] || { open: '09:00', close: '18:00', enabled: false };
+            }
+          }
+          settings = { ...settings, openingHours: convertedHours };
+        } else if (venueHours) {
+          // Only venue hours available, create settings from them
+          const convertedHours: any = {};
+          const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+          for (const day of days) {
+            const hours = venueHours[day];
+            if (hours) {
+              if (hours.closed === true) {
+                convertedHours[day] = { open: '09:00', close: '18:00', enabled: false };
+              } else {
+                convertedHours[day] = {
+                  open: hours.open || '09:00',
+                  close: hours.close || '18:00',
+                  enabled: true,
+                };
+              }
+            } else {
+              convertedHours[day] = { open: '09:00', close: '18:00', enabled: false };
+            }
+          }
+          settings = {
+            openingHours: convertedHours,
+            shiftPattern: 'full-day',
+            defaultShiftLength: 8,
+          };
+        }
+
+        if (settings) {
+          setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, settings) ? prev : settings));
+          console.log('[CALENDAR] Settings loaded from database:', settings);
         } else {
-          setCalendarSettings((prev) => (prev === null ? prev : null));
+          // Fallback to localStorage if no database settings
+          const key = getSettingsKey();
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
+            console.log('[CALENDAR] Settings loaded from localStorage fallback:', parsed);
+          }
         }
       } catch (error) {
         console.error('[CALENDAR] Error loading settings:', error);
-        setCalendarSettings((prev) => (prev === null ? prev : null));
+        // Fallback to localStorage on error
+        try {
+          const key = getSettingsKey();
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
+          }
+        } catch (localError) {
+          console.error('[CALENDAR] Failed to load from localStorage:', localError);
+        }
+      } finally {
+        setIsLoadingSettings(false);
       }
-    }
-  }, [user?.id, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings, areCalendarSettingsEqual]);
+    };
+
+    loadSettings();
+  }, [user?.id, user?.currentRole, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings, areCalendarSettingsEqual]);
   
   // Listen for storage events and custom events to sync settings when they're updated from other components
   useEffect(() => {
@@ -2263,6 +2346,20 @@ function ProfessionalCalendarContent({
       professional: selectedProfessional,
     });
   };
+
+  // Show loading skeleton while settings are being fetched
+  if (isLoadingSettings && isBusinessRole(user?.currentRole || '')) {
+    return (
+      <div className="w-full h-full">
+        <Card className="p-6">
+          <div className="space-y-4">
+            <div className="h-8 bg-zinc-800 rounded animate-pulse" />
+            <div className="h-[600px] bg-zinc-800 rounded animate-pulse" />
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full">

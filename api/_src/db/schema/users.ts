@@ -87,6 +87,7 @@ export const users = pgTable('users', {
   recoveryProgress: integer('recovery_progress').notNull().default(0), // Shifts with 4.5+ rating toward strike removal (0-5)
   suspendedUntil: timestamp('suspended_until'), // 48h suspension period after no-show
   isOnboarded: boolean('is_onboarded').notNull().default(false),
+  hasCompletedOnboarding: boolean('has_completed_onboarding').notNull().default(false),
   isActive: boolean('is_active').notNull().default(true),
   stripeAccountId: varchar('stripe_account_id', { length: 255 }), // [PII] [SENSITIVE] Financial account identifier
   stripeOnboardingComplete: boolean('stripe_onboarding_complete').notNull().default(false),

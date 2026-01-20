@@ -884,33 +884,14 @@ export default function Onboarding() {
       await saveStepData();
       if (auth.currentUser) await auth.currentUser.getIdToken(true);
       
-      // Handle venue vs professional completion
-      if (machineContext.selectedRole === 'venue') {
-        // Venue onboarding completion - venue profile already saved in VENUE_DETAILS step
-        // Just mark as onboarded
-        await apiRequest('POST', '/api/onboarding/complete', { 
-          role: 'venue',
-          displayName: formData.displayName, 
-          phone: formData.phone, 
-          bio: formData.bio || undefined, 
-          location: formData.location, 
-          avatarUrl: formData.avatarUrl || undefined 
-        });
-      } else {
-        // Professional onboarding completion
-        await apiRequest('POST', '/api/onboarding/complete', { 
-          role: 'professional', 
-          displayName: formData.displayName, 
-          phone: formData.phone, 
-          bio: formData.bio || undefined, 
-          location: formData.location, 
-          avatarUrl: formData.avatarUrl || undefined 
-        });
-      }
+      // Mark onboarding as completed in the database
+      await apiRequest('PUT', '/api/me', { 
+        hasCompletedOnboarding: true
+      });
       
       // Force refresh token to get updated claims
       if (auth.currentUser) await auth.currentUser.getIdToken(true);
-      // Refresh user data to get updated isOnboarded status
+      // Refresh user data to get updated hasCompletedOnboarding status
       await refreshUser();
       
       // Clear onboarding-related sessionStorage keys
@@ -1025,7 +1006,7 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Document Verification</h2><p className="text-gray-300">To accept shifts, you'll need to verify your identity and credentials.</p></div>
             {!machineContext.documentsSkipped && (<div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"><div className="flex items-start gap-3"><div className="rounded-full bg-brand-neon/20 p-2 mt-0.5"><SkipForward className="h-4 w-4 text-brand-neon" /></div><div className="flex-1"><h3 className="font-medium text-white mb-1">Want to explore first?</h3><p className="text-sm text-gray-400 mb-3">Skip this step and upload your documents later from your profile settings.</p><Button type="button" variant="outline" onClick={() => dispatch({ type: 'SKIP_DOCUMENTS' })} className="border-zinc-600 hover:bg-zinc-700"><SkipForward className="h-4 w-4 mr-2" />Skip for now</Button></div></div></div>)}
-            {machineContext.documentsSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can upload your documents anytime from <span className="font-semibold">Settings → Verification</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => dispatch({ type: 'UNSKIP_DOCUMENTS' })} className="w-full text-gray-400 hover:text-white">Changed your mind? Upload documents now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">— or upload now —</p></div><RSALocker /><GovernmentIDLocker /></div>)}
+            {machineContext.documentsSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can upload your documents anytime from <span className="font-semibold">Settings → Verification</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => dispatch({ type: 'UNSKIP_DOCUMENTS' })} className="w-full text-gray-400 hover:text-white">Changed your mind? Upload documents now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">Or upload your documents now</p></div><RSALocker /><GovernmentIDLocker /></div>)}
           </div>
         );
       case 'ROLE_EXPERIENCE':
@@ -1083,7 +1064,7 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Stripe Payout Setup</h2><p className="text-gray-300">Set up your payout account so you can get paid automatically.</p></div>
             {!machineContext.payoutSkipped && (<div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"><div className="flex items-start gap-3"><div className="rounded-full bg-brand-neon/20 p-2 mt-0.5"><SkipForward className="h-4 w-4 text-brand-neon" /></div><div className="flex-1"><h3 className="font-medium text-white mb-1">Set up payouts later?</h3><p className="text-sm text-gray-400 mb-3">Skip this step and set up your bank account later from your profile settings.</p><Button type="button" variant="outline" onClick={() => dispatch({ type: 'SKIP_PAYOUT' })} className="border-zinc-600 hover:bg-zinc-700"><SkipForward className="h-4 w-4 mr-2" />Skip for now</Button></div></div></div>)}
-            {machineContext.payoutSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can set up your payout account anytime from <span className="font-semibold">Settings → Payments</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => dispatch({ type: 'UNSKIP_PAYOUT' })} className="w-full text-gray-400 hover:text-white">Changed your mind? Set up payouts now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">— or set up now —</p></div><div className="bg-white rounded-lg p-4"><PayoutSettings /></div></div>)}
+            {machineContext.payoutSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can set up your payout account anytime from <span className="font-semibold">Settings → Payments</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => dispatch({ type: 'UNSKIP_PAYOUT' })} className="w-full text-gray-400 hover:text-white">Changed your mind? Set up payouts now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">Or set up your payout account now</p></div><div className="bg-white rounded-lg p-4"><PayoutSettings /></div></div>)}
           </div>
         );
       case 'COMPLETED':
@@ -1213,8 +1194,8 @@ export default function Onboarding() {
         <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin text-brand-neon mx-auto" />
-            <h2 className="text-xl font-semibold text-white">Preparing your HospoGo Workspace...</h2>
-            <p className="text-gray-400">Setting up your account, just a moment</p>
+            <h2 className="text-xl font-semibold text-white">Preparing your HospoGo workspace</h2>
+            <p className="text-gray-400">Setting up your account, this will just take a moment</p>
           </div>
         </div>
       </>

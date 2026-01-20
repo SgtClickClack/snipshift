@@ -38,6 +38,7 @@ const UpdateProfileSchema = z.object({
       return !isNaN(num) && num >= 0;
     }, 'hourlyRatePreference must be a non-negative number'),
   ]).optional(),
+  hasCompletedOnboarding: z.boolean().optional(),
   businessSettings: z.object({
     openingHours: z.record(z.string(), z.object({
       open: z.string(),
@@ -340,6 +341,7 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
       averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
       reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
       isOnboarded: user.isOnboarded ?? false,
+      hasCompletedOnboarding: (user as any).hasCompletedOnboarding ?? false,
     });
   } catch (error: any) {
     console.error('[ME ERROR]', error);
@@ -664,6 +666,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     hospitalityRole,
     hourlyRatePreference,
     businessSettings,
+    hasCompletedOnboarding,
   } = validationResult.data;
 
   // Prepare update object
@@ -678,6 +681,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   if (rsaNotRequired !== undefined) updates.rsaNotRequired = rsaNotRequired;
   if (hospitalityRole !== undefined) updates.hospitalityRole = hospitalityRole;
   if (hourlyRatePreference !== undefined) updates.hourlyRatePreference = String(hourlyRatePreference);
+  if (hasCompletedOnboarding !== undefined) updates.hasCompletedOnboarding = hasCompletedOnboarding;
   if (businessSettings !== undefined) {
     // Store businessSettings as JSON in the database
     // Note: This assumes the database column exists or can be added
@@ -855,6 +859,8 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
     currentRole: updatedUser.role,
     uid: req.user.uid,
     businessSettings: businessSettingsParsed,
+    isOnboarded: updatedUser.isOnboarded ?? false,
+    hasCompletedOnboarding: (updatedUser as any).hasCompletedOnboarding ?? false,
   });
 }));
 

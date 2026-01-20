@@ -2638,6 +2638,78 @@ router.post('/generate-roster', authenticateUser, asyncHandler(async (req: Authe
   }
 }));
 
+// Save shift templates (calendar settings)
+router.post('/templates', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate request body - expect shiftPattern and defaultShiftLength
+  const { shiftPattern, defaultShiftLength } = req.body;
+  
+  if (!shiftPattern || !['full-day', 'half-day', 'thirds', 'custom'].includes(shiftPattern)) {
+    res.status(400).json({ message: 'Valid shiftPattern is required (full-day, half-day, thirds, or custom)' });
+    return;
+  }
+
+  if (shiftPattern === 'custom' && (!defaultShiftLength || defaultShiftLength < 1)) {
+    res.status(400).json({ message: 'defaultShiftLength is required when shiftPattern is custom' });
+    return;
+  }
+
+  // Get current user to preserve existing businessSettings
+  const currentUser = await usersRepo.getUserById(userId);
+  
+  if (!currentUser) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Convert calendar format to businessSettings format
+  let shiftSplitType: 'halves' | 'thirds' | 'custom' | 'full-day' = 'full-day';
+  if (shiftPattern === 'half-day') {
+    shiftSplitType = 'halves';
+  } else if (shiftPattern === 'thirds') {
+    shiftSplitType = 'thirds';
+  } else if (shiftPattern === 'custom') {
+    shiftSplitType = 'custom';
+  }
+
+  // Preserve existing businessSettings and update shift template fields
+  const existingSettings = (currentUser as any).businessSettings 
+    ? (typeof (currentUser as any).businessSettings === 'string' 
+        ? JSON.parse((currentUser as any).businessSettings) 
+        : (currentUser as any).businessSettings)
+    : {};
+
+  const updatedSettings = {
+    ...existingSettings,
+    shiftSplitType,
+    customShiftLength: shiftPattern === 'custom' ? defaultShiftLength : (existingSettings.customShiftLength || 8),
+  };
+
+  // Update user businessSettings
+  const updatedUser = await usersRepo.updateUser(userId, {
+    businessSettings: JSON.stringify(updatedSettings),
+  });
+
+  if (!updatedUser) {
+    res.status(500).json({ message: 'Failed to update shift templates' });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    shiftPattern,
+    defaultShiftLength: shiftPattern === 'custom' ? defaultShiftLength : undefined,
+  });
+}));
+
+export default router;
+
 // Smart Fill: Batch create shifts for unassigned slots
 router.post('/smart-fill', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
