@@ -109,13 +109,13 @@ export default function VenueGuide() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-white mb-2 print:text-black">Post and wait</h3>
                     <p className="text-gray-300 print:text-gray-700">
-                      Hit "Create Shift" and your shift goes live. Qualified staff will see it immediately and can apply or accept.
+                      Hit "Create Shift" and your shift goes live. Experienced professionals will see it immediately and can apply or accept.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-steel-900/50 rounded-lg border border-steel-700 print:bg-gray-100 print:border-gray-300">
+              <div className="mt-6 p-4 bg-steel-900/50 rounded-lg border-2 border-steel-600/60 print:bg-gray-100 print:border-gray-400 print:border-2">
                 <p className="text-sm text-gray-300 print:text-gray-700">
                   <strong className="text-white print:text-black">Pro tip:</strong> Set up recurring shifts for the same time each week. Saves you hours every month.
                 </p>
@@ -172,7 +172,7 @@ export default function VenueGuide() {
                     You're not hiring blind. Every person on HospoGo has a track record you can see. Check their profile before you invite them.
                   </p>
                   <p className="text-gray-300 mt-2 print:text-gray-700">
-                    Bad apples get filtered out automatically. Good staff rise to the top. Your floor stays covered.
+                    We filter out the time-wasters so you don't have to. Good staff rise to the top. Your floor stays covered.
                   </p>
                 </div>
               </div>
@@ -221,7 +221,7 @@ export default function VenueGuide() {
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-steel-900/50 rounded-lg border border-steel-700 print:bg-gray-100 print:border-gray-300">
+                <div className="mt-4 p-4 bg-steel-900/50 rounded-lg border-2 border-steel-600/60 print:bg-gray-100 print:border-gray-400 print:border-2">
                   <p className="text-sm text-gray-300 print:text-gray-700">
                     <strong className="text-white print:text-black">First time setup:</strong> You'll need to connect your Stripe account once. Takes about 2 minutes. After that, it's automatic.
                   </p>
@@ -245,12 +245,15 @@ export default function VenueGuide() {
           </Card>
 
           {/* Footer */}
-          <div className="text-center mt-8 print:mt-4 print:border-t print:border-gray-300 print:pt-4">
+          <div className="text-center mt-8 print:mt-4 print:border-t print:border-gray-300 print:pt-4 print:hidden">
             <p className="text-sm text-gray-400 print:text-gray-600">
-              Questions? Hit us up at support@hospogo.com.au
+              Questions? Hit us up at info@hospogo.com
             </p>
             <p className="text-xs text-gray-500 mt-2 print:text-gray-500">
               Built in Brisbane, for Brisbane venues.
+            </p>
+            <p className="text-xs text-gray-500 mt-1 print:text-gray-500">
+              Last Updated: Jan 2026
             </p>
           </div>
         </div>
@@ -266,6 +269,16 @@ export default function VenueGuide() {
           body {
             background: white;
             color: black;
+          }
+
+          /* Hide navbar and navigation elements */
+          nav,
+          header,
+          [role="navigation"],
+          .navbar,
+          nav[class*="navbar"],
+          header[class*="navbar"] {
+            display: none !important;
           }
 
           .print\\:hidden {
