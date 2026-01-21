@@ -16,6 +16,7 @@ import * as usersRepo from '../repositories/users.repository.js';
 import * as notificationsService from '../lib/notifications-service.js';
 import * as shiftReviewsRepo from '../repositories/shift-reviews.repository.js';
 import * as stripeConnectService from '../services/stripe-connect.service.js';
+import { syncShiftToGoogle } from '../services/google-calendar.js';
 import * as subscriptionsRepo from '../repositories/subscriptions.repository.js';
 import * as proVerificationService from '../services/pro-verification.service.js';
 import { SmartFillSchema, GenerateRosterSchema } from '../validation/schemas.js';
@@ -36,6 +37,18 @@ import admin from 'firebase-admin';
 import type { ErrorContext } from '../services/error-reporting.service.js';
 
 const router = Router();
+
+function enqueueCalendarSync(shiftIds: string[]): void {
+  if (shiftIds.length === 0) {
+    return;
+  }
+
+  setImmediate(() => {
+    shiftIds.forEach((shiftId) => {
+      void syncShiftToGoogle(shiftId);
+    });
+  });
+}
 
 function computeShiftLengthHours(startTime: unknown, endTime: unknown): number | null {
   const start = startTime ? new Date(startTime as any) : null;
@@ -182,6 +195,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
         return;
       }
 
+      enqueueCalendarSync(createdShifts.map((shift) => shift.id));
+
       res.status(201).json({
         parent: createdShifts[0],
         children: createdShifts.slice(1),
@@ -284,6 +299,8 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
         console.error('[POST /api/shifts] Failed to notify invited professional:', error);
       }
     }
+
+    enqueueCalendarSync([newShift.id]);
 
     res.status(201).json(newShift);
   } catch (error: any) {
