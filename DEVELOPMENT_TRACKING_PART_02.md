@@ -1,3 +1,33 @@
+#### 2026-01-21: Emergency Demo Auth Bypass
+
+**Core Components**
+- Route gating (`src/components/auth/protected-route.tsx`)
+- User sync 401 handling (`src/hooks/useUserSync.ts`)
+- Auth loading state (`src/contexts/AuthContext.tsx`)
+
+**Key Features**
+- Forced protected routes to render children without auth checks for the demo.
+- Ensured `/api/me` 401 responses never trigger redirect behavior in user sync.
+- Disabled global auth loading gate so the UI renders immediately.
+
+**Integration Points**
+- Auth routing: `ProtectedRoute` wrapper
+- API: `GET /api/me` polling behavior
+- App shell: `AuthProvider` loading gate
+
+**File Paths**
+- `src/components/auth/protected-route.tsx`
+- `src/hooks/useUserSync.ts`
+- `src/contexts/AuthContext.tsx`
+
+**Next Priority Task**
+- Restore auth guards and loading gates after the demo and verify login flows.
+
+**Code Organization & Quality**
+- Kept changes localized to auth gating and loading flags without altering app routes.
+
+---
+
 #### 2026-01-21: Auth Transition Gate + Pending State Handler
 
 **Core Components**

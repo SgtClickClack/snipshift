@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-21 - Emergency Demo Auth Bypass
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Disabled protected-route gating to render demo screens without auth checks.
+- Ensured `/api/me` 401 responses never trigger login redirects in user sync.
+- Forced auth loading flags off so the UI renders immediately.
+
+**Impact:**
+- Demo experience is unblocked even if auth services are unstable.
+
+---
+
 ### Update: 2026-01-21 - Demo Auth Sync Silence Guard
 
 **Status:** ✅ **UPDATED**

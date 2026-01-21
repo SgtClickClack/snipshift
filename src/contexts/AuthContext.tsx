@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/useToast';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
+const DEMO_AUTH_BYPASS_LOADING = true;
 
 export interface User {
   id: string;
@@ -108,9 +109,9 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [initializing, setInitializing] = useState(true);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const [initializing, setInitializing] = useState(!DEMO_AUTH_BYPASS_LOADING);
+  const [isInitialLoading, setIsInitialLoading] = useState(!DEMO_AUTH_BYPASS_LOADING);
+  const [isLoading, setIsLoading] = useState(!DEMO_AUTH_BYPASS_LOADING);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isRoleLoading, setIsRoleLoading] = useState(false);
