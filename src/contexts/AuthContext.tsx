@@ -767,6 +767,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           clearTimeout(redirectFallbackTimeout.current);
           redirectFallbackTimeout.current = null;
         }
+        // FORCE NAVIGATION ON LOGIN: If user signed in and is on /login, send to /onboarding immediately.
+        // Backend sync can be slow; avoids bounce-back during demo.
+        if (firebaseUser && typeof window !== 'undefined' && window.location.pathname === '/login') {
+          navigateRef.current('/onboarding');
+        }
         // GATEKEEPER: Prevent concurrent profile fetches for the same user
         const newUid = firebaseUser?.uid || null;
         const previousUid = currentAuthUid.current;

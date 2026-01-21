@@ -26,6 +26,12 @@ export function AuthGuard({
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
+  // DEMO: Disable bounce-back during onboarding — if user is on /onboarding, never redirect to /login.
+  // Backend sync can be slow; allow profile setup to complete without being kicked out.
+  if (typeof window !== 'undefined' && (window.location.pathname === '/onboarding' || window.location.pathname.startsWith('/onboarding/'))) {
+    return <>{children}</>;
+  }
+
   // DEBUG: Log auth state for messages page debugging
   if (location.pathname === '/messages' && shouldDebug) {
     logger.debug('AuthGuard', 'DEBUG: Auth State for /messages', {

@@ -164,6 +164,8 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
           return true;
         }
       } else if (res.status === 401) {
+        // LOCKDOWN: Never call logout() or navigate on 401. Log and stay quiet to avoid 401 loop.
+        logger.debug('useUserSync', 'Received 401 from /api/me, staying quiet (no logout, no redirect)', { isVerificationSync });
         return null;
       } else if (res.status === 404) {
         // User doesn't exist yet - this is expected during onboarding

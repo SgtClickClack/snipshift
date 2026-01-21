@@ -8,6 +8,10 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole, allowedRoles }: ProtectedRouteProps) {
+  // DEMO: Disable bounce-back during onboarding — never redirect to /login when on /onboarding.
+  if (typeof window !== 'undefined' && (window.location.pathname === '/onboarding' || window.location.pathname.startsWith('/onboarding/'))) {
+    return <>{children}</>;
+  }
   return (
     <AuthGuard requireAuth={true} requiredRole={requiredRole} allowedRoles={allowedRoles}>
       {children}
