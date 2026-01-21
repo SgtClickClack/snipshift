@@ -1,3 +1,66 @@
+#### 2026-01-21: Demo Migration Push + Register Fallback Guard
+
+**Core Components**
+- Drizzle config (`api/drizzle.config.ts`)
+- Registration route (`api/_src/routes/users.ts`)
+- User sync polling guard (`src/hooks/useUserSync.ts`)
+
+**Key Features**
+- Pointed Drizzle migrations output to `api/_src/db/migrations` and pushed schema directly to Neon for the demo.
+- Added `/api/register` fallback that ignores missing `firebase_uid` column by matching users via email only.
+- Ensured user sync is silent on `/onboarding` to stop polling loops during the demo.
+
+**Integration Points**
+- Drizzle CLI: `npx drizzle-kit push`
+- API: `POST /api/register`, `GET /api/me`
+
+**File Paths**
+- `api/drizzle.config.ts`
+- `api/_src/routes/users.ts`
+- `src/hooks/useUserSync.ts`
+
+**Next Priority Task**
+- Verify demo signup flow succeeds against the Neon DB without auth loops.
+
+**Code Organization & Quality**
+- Kept fallback logic localized to register flow and preserved existing auth guards.
+
+---
+
+#### 2026-01-21: Google Signup Upsert + Pending Onboarding Role
+
+**Core Components**
+- Registration route (`api/_src/routes/users.ts`)
+- Users repository (`api/_src/repositories/users.repository.ts`)
+- Users schema + migration (`api/_src/db/schema/users.ts`, `api/_src/db/migrations/0034_add_firebase_uid_last_login.sql`)
+- Auth middleware role handling (`api/_src/middleware/auth.ts`)
+- User sync polling guard (`src/hooks/useUserSync.ts`)
+
+**Key Features**
+- Added Firebase UID upsert path for `/api/register`, updating `last_login` and returning existing users safely.
+- Introduced `pending_onboarding` role defaults plus Firebase UID/last login tracking fields.
+- Silenced `/api/me` polling on `/signup` and `/onboarding` to avoid loop noise during auth transitions.
+
+**Integration Points**
+- API: `POST /api/register`, `GET /api/me`
+- DB: `users.firebase_uid`, `users.last_login`, `user_role` enum default
+
+**File Paths**
+- `api/_src/routes/users.ts`
+- `api/_src/repositories/users.repository.ts`
+- `api/_src/db/schema/users.ts`
+- `api/_src/db/migrations/0034_add_firebase_uid_last_login.sql`
+- `api/_src/middleware/auth.ts`
+- `src/hooks/useUserSync.ts`
+
+**Next Priority Task**
+- Run the new migration on the beta database and verify Google signup creates `pending_onboarding` users.
+
+**Code Organization & Quality**
+- Kept auth changes isolated to registration/upsert logic and avoided touching unrelated routes.
+
+---
+
 #### 2026-01-21: COOP Redirect Auth + Register Idempotency Guard
 
 **Core Components**

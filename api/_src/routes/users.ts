@@ -83,8 +83,16 @@ const RegisterSchema = z.object({
     z.string().min(8),
     z.literal(''),
   ]).optional(),
-  role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand']).optional(),
+  role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand', 'pending_onboarding']).optional(),
 });
+
+const isMissingFirebaseUidColumn = (error: any): boolean => {
+  const message = typeof error?.message === 'string' ? error.message : '';
+  return (
+    error?.code === '42703' ||
+    (message.includes('firebase_uid') && message.includes('does not exist'))
+  );
+};
 
     // Register new user (creates user and sends welcome email)
 router.post('/register', asyncHandler(async (req, res) => {
@@ -101,6 +109,7 @@ router.post('/register', asyncHandler(async (req, res) => {
 
     const { email, password, role } = validationResult.data;
     let { name } = validationResult.data;
+    let firebaseUid: string | null = null;
 
     // E2E Test Hook - If running in E2E mode, check for special test emails
     // This allows tests to "register" without needing a real backend cleanup
@@ -125,30 +134,66 @@ router.post('/register', asyncHandler(async (req, res) => {
     }
 
     // If name is not provided, try to extract it from Firebase token (OAuth flow)
-    if (!name) {
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.split('Bearer ')[1];
-          if (auth) {
-            const decodedToken = await auth.verifyIdToken(token);
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split('Bearer ')[1];
+        if (auth) {
+          const decodedToken = await auth.verifyIdToken(token);
+          firebaseUid = decodedToken.uid || null;
+          if (!name) {
             // Extract name from token (displayName or name field)
             // Handle both displayName and photoURL from Google provider
-            name = decodedToken.name || decodedToken.display_name || decodedToken.picture ? decodedToken.email?.split('@')[0] : decodedToken.email?.split('@')[0] || 'User';
+            name = decodedToken.name || decodedToken.display_name || decodedToken.picture
+              ? decodedToken.email?.split('@')[0]
+              : decodedToken.email?.split('@')[0] || 'User';
           }
-        } catch (tokenError: any) {
-          // If token verification fails, we'll use email as fallback
-          console.warn('[REGISTER] Token verification failed, using email as name:', tokenError?.message);
-          name = email.split('@')[0];
         }
-      } else {
-        // No token and no name provided - use email prefix as fallback
+      } catch (tokenError: any) {
+        // If token verification fails, we'll use email as fallback
+        console.warn('[REGISTER] Token verification failed, using email as name:', tokenError?.message);
         name = email.split('@')[0];
       }
+    } else if (!name) {
+      // No token and no name provided - use email prefix as fallback
+      name = email.split('@')[0];
     }
 
     // Ensure name is always a string (fallback to email prefix if somehow still undefined)
     const finalName = name || email.split('@')[0];
+
+    const requestedRole = role || 'pending_onboarding';
+    const dbRole = requestedRole === 'brand' ? 'business' : requestedRole;
+
+    if (firebaseUid) {
+      let upsertedUser;
+      try {
+        upsertedUser = await usersRepo.upsertUserByFirebaseUid({
+          firebaseUid,
+          email,
+          name: finalName,
+          role: dbRole as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding',
+        });
+      } catch (dbError: any) {
+        if (isMissingFirebaseUidColumn(dbError)) {
+          console.warn('[REGISTER] firebase_uid column missing, falling back to email-only match');
+          firebaseUid = null;
+        } else {
+          throw dbError;
+        }
+      }
+
+      if (upsertedUser) {
+        res.status(200).json({
+          id: upsertedUser.id,
+          email: upsertedUser.email,
+          name: upsertedUser.name,
+          role: upsertedUser.role,
+          isOnboarded: upsertedUser.isOnboarded ?? false,
+        });
+        return;
+      }
+    }
 
     // Check if user already exists - if so, treat as login and return existing profile
     // This prevents 409 Conflict errors from breaking frontend redirect flow (OAuth flows)
@@ -177,9 +222,6 @@ router.post('/register', asyncHandler(async (req, res) => {
     }
 
     // Create user
-    // Map frontend role 'brand' to database role 'business' if needed
-    const dbRole = role === 'brand' ? 'business' : (role || 'professional');
-    
     let newUser;
     try {
       newUser = await usersRepo.createUser({

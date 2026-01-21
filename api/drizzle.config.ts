@@ -24,7 +24,7 @@ console.log('📋 Using DATABASE_URL:', databaseUrl.substring(0, 30) + '...');
 
 export default {
   schema: './_src/db/schema.ts',
-  out: './drizzle',
+  out: './_src/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
     url: databaseUrl,

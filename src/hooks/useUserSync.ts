@@ -94,6 +94,10 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
   }, []);
 
   const pollUserProfile = async (): Promise<boolean> => {
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (currentPath.startsWith('/onboarding')) {
+      return false;
+    }
     const firebaseUser = auth.currentUser;
     if (!isAuthReady || initializing) {
       return false;
@@ -105,9 +109,8 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
     try {
       syncingRef.current = true;
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
       const isLandingPage = currentPath === '/';
-      if (!firebaseUser || !token || currentPath === '/login' || currentPath === '/signup' || isLandingPage) {
+      if (!firebaseUser || !token || currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding') || isLandingPage) {
         return false;
       }
       const res = await fetch('/api/me', {
@@ -170,6 +173,15 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
   const startPolling = () => {
     if (!enabled || !isAuthReady || initializing) {
+      return;
+    }
+
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (currentPath.startsWith('/onboarding')) {
+      return;
+    }
+    if (currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding')) {
+      setIsPolling(false);
       return;
     }
 
@@ -248,6 +260,21 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
   useEffect(() => {
     if (!enabled) {
+      return;
+    }
+
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (currentPath.startsWith('/onboarding')) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      setIsPolling(false);
+      return;
+    }
+    if (currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding')) {
+      setIsSynced(false);
+      setIsNewUser(false);
+      setIsPolling(false);
       return;
     }
 

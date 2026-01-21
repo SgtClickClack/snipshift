@@ -8,6 +8,36 @@
 
 ---
 
+### Update: 2026-01-21 - Demo Migration Push + Register Fallback Guard
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Pointed Drizzle migrations output to `api/_src/db/migrations` and pushed schema to Neon for the demo run.
+- Added a `/api/register` fallback to match by email if `firebase_uid` is missing.
+- Kept `/api/me` polling fully silent on `/onboarding` to stop auth loops.
+
+**Impact:**
+- Migration output now targets the correct folder and schema is synced for the demo.
+- Registration remains stable on legacy schemas without `firebase_uid`.
+- Onboarding stays quiet and avoids 401 loop churn.
+
+---
+
+### Update: 2026-01-21 - Google Signup Upsert + Pending Onboarding Role
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added Firebase UID upsert logic for `/api/register`, updating `last_login` on existing users.
+- Introduced `pending_onboarding` role defaults and tracking fields for Firebase UID + last login.
+- Silenced `/api/me` polling while transitioning from signup to onboarding.
+
+**Impact:**
+- Eliminates duplicate-registration 500s during Google signup and keeps auth transitions quiet.
+
+---
+
 ### Update: 2026-01-21 - COOP Redirect Auth + Register Idempotency
 
 **Status:** ✅ **UPDATED**
