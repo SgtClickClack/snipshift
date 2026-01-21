@@ -1,3 +1,86 @@
+#### 2026-01-21: Google & Email Auth Redirect Loop Fix (Finalized)
+
+**Core Components**
+- Firebase config (`src/lib/firebase.ts`): authDomain env var support, browserLocalPersistence
+- Auth context (`src/contexts/AuthContext.tsx`): Auth gate logic, redirect processing state, demo mode env var
+- Auth guard (`src/components/auth/auth-guard.tsx`): Auth gate awareness
+- Login page (`src/pages/login.tsx`): Auth gate loading state
+- Signup page (`src/pages/signup.tsx`): Auth gate loading state
+
+**Key Features**
+- **LOGIC GATE**: Implemented a robust auth gate that blocks ALL routing until BOTH conditions are met:
+  1. `getRedirectResult()` has resolved (success, error, or timeout)
+  2. `onAuthStateChanged` has fired at least once
+  - New state: `isAuthGateOpen` (false until both conditions met)
+  - New refs: `hasRedirectResultResolved`, `hasOnAuthStateChangedFired`
+  - Helper: `checkAndOpenAuthGate()` called after each condition is met
+- **Environment Config**: Added `VITE_FIREBASE_AUTH_DOMAIN` to `.env.example` for custom domain (hospogo.com) support. CRITICAL for production OAuth.
+- **Demo Mode Control**: Changed `DEMO_AUTH_BYPASS_LOADING` from hardcoded `true` to environment-controlled via `VITE_DEMO_MODE`.
+- **Splash Screen**: Dedicated auth processing splash screen shown when auth gate is closed, preventing AuthGuard from seeing null user.
+- **Persistence**: `browserLocalPersistence` is set BEFORE both `signInWithRedirect` AND `getRedirectResult` to ensure session survives page reloads.
+- **AuthGuard Enhancement**: Now checks `isAuthGateOpen` in addition to other loading states.
+
+**Integration Points**
+- Firebase Console: Must add authorized domains: localhost, hospogo.com, www.hospogo.com, snipshift-75b04.firebaseapp.com
+- Environment: `VITE_FIREBASE_AUTH_DOMAIN=hospogo.com` for production
+- Environment: `VITE_DEMO_MODE=1` only for demo builds (defaults to 0)
+
+**File Paths**
+- `.env.example`: Added VITE_FIREBASE_AUTH_DOMAIN and VITE_DEMO_MODE
+- `src/lib/firebase.ts`: authDomain from env, browserLocalPersistence
+- `src/contexts/AuthContext.tsx`: isAuthGateOpen, hasRedirectResultResolved, hasOnAuthStateChangedFired, checkAndOpenAuthGate()
+- `src/components/auth/auth-guard.tsx`: isAuthGateOpen in loading check
+- `src/pages/login.tsx`: isAuthGateOpen loading UI
+- `src/pages/signup.tsx`: isAuthGateOpen loading UI
+
+**Next Priority Task**
+- Verify Firebase Console has all authorized domains
+- Test Google and Email auth flows in production environment
+- Monitor for any remaining redirect loop edge cases
+
+**Code Organization & Quality**
+- Logic gate pattern ensures deterministic auth state before any routing decisions
+- Splash screen provides user feedback during auth processing
+- Backward compatible: E2E mode and demo mode both properly open the auth gate
+
+---
+
+#### 2026-01-21: Calendar Capacity Refactor (Staff Required, Assignments, Demo)
+
+**Core Components**
+- Shift schema (`api/_src/db/schema/shifts.ts`): `capacity` (int, default 1), `shift_assignments` table
+- Create-shift modal (`src/components/calendar/create-shift-modal.tsx`): Staff Required input (default 1)
+- ShiftBlock (`src/components/calendar/shift-block.tsx`): avatars, X/Y Filled, Add Worker placeholder
+- Demo data (`src/lib/demo-data.ts`): capacity + multiple `assignedStaff` for 3 demo shifts
+
+**Key Features**
+- **Schema**: `shifts.capacity` (int, default 1); `shift_assignments` (shift_id, user_id) for one-to-many; `assigneeId` kept for backward compat. Migration backfills existing assignees into `shift_assignments`.
+- **UI**: "Staff Required" numeric input in create-shift modal (min 1, draft/recovery supported). Recurring and venue-dashboard payloads include `capacity`.
+- **Calendar**: ShiftBlock normalizes `assignedStaff`/`assignments` to array; shows up to 3 avatars, "X/Y Filled" when capacity>1, "Add Worker" placeholder when `capacity > filled`.
+- **Demo**: DEMO_JOBS has `capacity` and `assignedStaff` arrays with multiple mock workers for the 3 shifts.
+
+**Integration Points**
+- API: `POST /api/shifts` accepts `capacity`; `ShiftSchema` validates it; `createShift` inserts into `shift_assignments` when `assigneeId` set.
+- Repo: `getShifts`, `getShiftById`, `getShiftsByEmployer`, `getShiftsByAssignee` select `capacity`; `createShift` accepts `capacity` and inserts `shift_assignments`.
+- Venue-dashboard: `createShiftMutation` single and recurring payloads include `capacity`.
+
+**File Paths**
+- `api/_src/db/migrations/0035_add_shift_capacity_and_assignments.sql`
+- `api/_src/db/schema/shifts.ts`, `api/_src/db/schema.ts`
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/routes/shifts.ts`, `api/_src/validation/schemas.ts`
+- `src/components/calendar/create-shift-modal.tsx`, `src/components/calendar/shift-block.tsx`
+- `src/utils/recurring-shifts.ts`, `src/shared/types.ts`
+- `src/lib/demo-data.ts`, `src/pages/venue-dashboard.tsx`
+
+**Next Priority Task**
+- Run migration: `api/_src/db/migrations/0035_add_shift_capacity_and_assignments.sql` (via project’s DB migrate or `psql $DATABASE_URL -f api/_src/db/migrations/0035_add_shift_capacity_and_assignments.sql`). Optionally enrich API responses with `assignedStaff` array from `shift_assignments` for list/detail.
+
+**Code Organization & Quality**
+- `toAssignedList()` in shift-block supports legacy single `assignedStaff`/`professional`. `Shift` type documents `assignedStaff` as array or single for compat.
+
+---
+
 #### 2026-01-21: Emergency Demo Auth Bypass
 
 **Core Components**

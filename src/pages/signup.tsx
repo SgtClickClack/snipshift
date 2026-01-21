@@ -20,7 +20,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated, isAuthReady, user } = useAuth();
+  const { login, isAuthenticated, isAuthReady, user, isProcessingRedirect, isAuthGateOpen } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -418,8 +418,9 @@ export default function SignupPage() {
 
 
 
-  // Show "Finalizing..." spinner if bridge detected
-  if (isFinalizing) {
+  // Show loading state while processing OAuth redirect or auth gate is closed
+  // This prevents the signup form from flashing while the redirect result is being processed
+  if (isProcessingRedirect || !isAuthGateOpen || isFinalizing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm max-w-md mx-4">
@@ -429,8 +430,12 @@ export default function SignupPage() {
                 <FastForward className="h-8 w-8 text-brand-dark" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-card-foreground mb-2">Finalizing...</CardTitle>
-            <p className="text-muted-foreground">Completing your sign-up</p>
+            <CardTitle className="text-2xl font-bold text-card-foreground mb-2">
+              {isProcessingRedirect ? 'Completing sign-in...' : 'Finalizing...'}
+            </CardTitle>
+            <p className="text-muted-foreground">
+              {isProcessingRedirect ? 'Please wait while we verify your account' : 'Completing your sign-up'}
+            </p>
           </CardContent>
         </Card>
       </div>

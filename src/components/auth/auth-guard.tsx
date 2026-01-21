@@ -22,7 +22,7 @@ export function AuthGuard({
   allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
-  const { user, isLoading, isAuthenticated, isAuthReady, isRoleLoading, token } = useAuth();
+  const { user, isLoading, isAuthenticated, isAuthReady, isRoleLoading, isProcessingRedirect, isAuthGateOpen, token } = useAuth();
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
 
@@ -65,7 +65,9 @@ export function AuthGuard({
     ));
   
   // Determine if we're in a loading state that should block (for redirects) vs non-blocking (for layout)
-  const isAuthLoading = isLoading || !isAuthReady || isRoleLoading;
+  // CRITICAL: Include isProcessingRedirect and check isAuthGateOpen to prevent premature redirects during OAuth flow
+  // The auth gate must be open before we make any routing decisions
+  const isAuthLoading = isLoading || !isAuthReady || isRoleLoading || isProcessingRedirect || !isAuthGateOpen;
   const isWaitingForProfile = hasFirebaseSession && !isAuthenticated && !isE2E;
   
   // For critical redirects, we still need to block to prevent flicker

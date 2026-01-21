@@ -10,8 +10,12 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { isDemoMode, DEMO_USER } from '@/lib/demo-data';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
-/** When true: skip auth loading gate, and do not redirect to /login or /signup on 404/401. */
-export const DEMO_AUTH_BYPASS_LOADING = true;
+/** 
+ * When true: skip auth loading gate, and do not redirect to /login or /signup on 404/401.
+ * CRITICAL: This should only be true for demo mode, NOT production.
+ * Controlled via VITE_DEMO_MODE environment variable.
+ */
+export const DEMO_AUTH_BYPASS_LOADING = import.meta.env.VITE_DEMO_MODE === '1' || import.meta.env.VITE_DEMO_MODE === 'true';
 
 export interface User {
   id: string;
@@ -90,6 +94,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAuthReady: boolean;
   isRedirecting: boolean;
+  /** True when actively processing an OAuth redirect result */
+  isProcessingRedirect: boolean;
+  /** True when both getRedirectResult() AND onAuthStateChanged have resolved */
+  isAuthGateOpen: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
   clearUserState: (reason?: string) => void;
@@ -111,12 +119,55 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [initializing, setInitializing] = useState(!DEMO_AUTH_BYPASS_LOADING);
-  const [isInitialLoading, setIsInitialLoading] = useState(!DEMO_AUTH_BYPASS_LOADING);
-  const [isLoading, setIsLoading] = useState(!DEMO_AUTH_BYPASS_LOADING);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  
+  // CRITICAL: Detect if we're returning from an OAuth redirect
+  // This must be checked BEFORE setting initial loading states
+  const isReturningFromRedirect = typeof window !== 'undefined' && (
+    window.location.pathname.includes('/__/auth/handler') ||
+    window.location.search.includes('auth/handler') ||
+    window.location.hash.includes('auth/handler') ||
+    // Also check for OAuth state parameters that indicate a redirect return
+    window.location.search.includes('state=') ||
+    window.location.hash.includes('state=')
+  );
+  
+  // If returning from redirect, ALWAYS start in loading state regardless of demo mode
+  // This prevents the race condition where the app sees null user before redirect completes
+  const shouldStartLoading = !DEMO_AUTH_BYPASS_LOADING || isReturningFromRedirect;
+  
+  const [initializing, setInitializing] = useState(shouldStartLoading);
+  const [isInitialLoading, setIsInitialLoading] = useState(shouldStartLoading);
+  const [isLoading, setIsLoading] = useState(shouldStartLoading);
+  const [isAuthReady, setIsAuthReady] = useState(!shouldStartLoading);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isRoleLoading, setIsRoleLoading] = useState(false);
+  
+  // Track if we're actively processing a redirect result
+  const [isProcessingRedirect, setIsProcessingRedirect] = useState(isReturningFromRedirect);
+  
+  // LOGIC GATE: Track both conditions that must be met before auth is ready
+  // 1. getRedirectResult() has resolved (success or error)
+  // 2. onAuthStateChanged has fired at least once
+  const hasRedirectResultResolved = useRef(false);
+  const hasOnAuthStateChangedFired = useRef(false);
+  
+  // Combined state: auth gate is only open when BOTH conditions are met
+  const [isAuthGateOpen, setIsAuthGateOpen] = useState(DEMO_AUTH_BYPASS_LOADING && !isReturningFromRedirect);
+  
+  // Helper to check and open the auth gate when both conditions are met
+  const checkAndOpenAuthGate = () => {
+    if (hasRedirectResultResolved.current && hasOnAuthStateChangedFired.current && !isAuthGateOpen) {
+      logger.debug('AuthContext', 'AUTH GATE: Both conditions met, opening auth gate', {
+        hasRedirectResultResolved: hasRedirectResultResolved.current,
+        hasOnAuthStateChangedFired: hasOnAuthStateChangedFired.current,
+      });
+      setIsAuthGateOpen(true);
+      setIsProcessingRedirect(false);
+      setIsLoading(false);
+      setIsAuthReady(true);
+    }
+  };
+  
   const { toast } = useToast();
   const hasResolvedAuthState = useRef(false);
   const hasInitialAuthResponse = useRef(false);
@@ -541,6 +592,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         hasResolvedAuthState.current = true;
         hasInitialAuthResponse.current = true;
+        // LOGIC GATE: In E2E mode, both conditions are immediately satisfied
+        hasRedirectResultResolved.current = true;
+        hasOnAuthStateChangedFired.current = true;
+        setIsAuthGateOpen(true);
         setInitializing(false);
         setIsInitialLoading(false);
         setIsLoading(false);
@@ -590,10 +645,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const getRedirectResultTimeout = setTimeout(() => {
         if (!hasResolvedAuthState.current) {
           logger.debug('AuthContext', 'getRedirectResult safety timeout: Clearing loading state after 5 seconds');
+          // LOGIC GATE: Mark redirect result as resolved (via timeout)
+          hasRedirectResultResolved.current = true;
+          setIsProcessingRedirect(false);
           setIsLoading(false);
           setIsAuthReady(true);
           setIsRedirecting(false);
           pendingRedirect.current = false;
+          checkAndOpenAuthGate();
         }
       }, 5000);
 
@@ -611,8 +670,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const urlHasAuthHandler = typeof window !== 'undefined' && (
         window.location.pathname.includes('/__/auth/handler') ||
         window.location.search.includes('auth/handler') ||
-        window.location.hash.includes('auth/handler')
+        window.location.hash.includes('auth/handler') ||
+        // Also check for OAuth state parameters
+        window.location.search.includes('state=') ||
+        window.location.hash.includes('state=')
       );
+      
+      // CRITICAL: If returning from redirect, ensure loading state is active
+      if (urlHasAuthHandler) {
+        logger.debug('AuthContext', 'Detected return from OAuth redirect, ensuring loading state is active');
+        setIsProcessingRedirect(true);
+        setIsLoading(true);
+        setIsAuthReady(false);
+        setIsAuthGateOpen(false);
+      } else {
+        // If NOT returning from redirect, we can immediately mark redirect result as resolved
+        // since there's nothing to wait for from getRedirectResult
+        logger.debug('AuthContext', 'Not returning from redirect, marking redirect result as resolved');
+        hasRedirectResultResolved.current = true;
+      }
 
       let redirectUser: FirebaseUser | null = null;
 
@@ -665,6 +741,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         if (redirectUser) {
           logger.debug('AuthContext', 'Processed Google redirect result for user:', redirectUser.uid);
+          // LOGIC GATE: Mark redirect result as resolved (success with user)
+          hasRedirectResultResolved.current = true;
+          // Clear redirect processing state since we have a valid user
+          setIsProcessingRedirect(false);
           
           // IMPORTANT: Ensure user exists in database BEFORE onAuthStateChange tries to fetch profile
           // This prevents race conditions where /api/me fails because user doesn't exist yet
@@ -705,6 +785,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         } else {
           logger.debug('AuthContext', 'No redirect result - user did not return from Google sign-in');
+          // LOGIC GATE: Mark redirect result as resolved (no user from redirect)
+          hasRedirectResultResolved.current = true;
         }
       } catch (error) {
         // CATCH-ALL: Log FULL error object with console.dir to catch cross-origin blocks
@@ -758,6 +840,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         
         clearTimeout(getRedirectResultTimeout);
+        // LOGIC GATE: Mark redirect result as resolved (error)
+        hasRedirectResultResolved.current = true;
+        // Clear redirect processing state on error
+        setIsProcessingRedirect(false);
         // Don't clear loading here - let the fallback timeout handle it
         // This ensures we always clear after 3 seconds even if there's an error
       }
@@ -766,6 +852,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // This prevents the race condition where onAuthStateChange sees null user before redirect is processed
       return onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
         hasResolvedAuthState.current = true;
+        
+        // LOGIC GATE: Mark onAuthStateChanged as fired (first time only matters)
+        if (!hasOnAuthStateChangedFired.current) {
+          hasOnAuthStateChangedFired.current = true;
+          logger.debug('AuthContext', 'AUTH GATE: onAuthStateChanged fired for first time', {
+            hasUser: !!firebaseUser,
+            uid: firebaseUser?.uid,
+          });
+          // Check if we can open the gate now
+          checkAndOpenAuthGate();
+        }
+        
         if (isInitialLoading) {
           setIsInitialLoading(false);
         }
@@ -2269,6 +2367,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: !!user,
     isAuthReady,
     isRedirecting,
+    isProcessingRedirect,
+    isAuthGateOpen,
     isRoleLoading,
     login,
     logout,
@@ -2282,8 +2382,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     startManualAuthPolling,
   };
 
-  if (initializing || isInitialLoading) {
-    return <LoadingScreen />;
+  // LOGIC GATE: Block all routing until auth gate is open
+  // This prevents the AuthGuard from seeing a null user and triggering redirect loops
+  if (!isAuthGateOpen || initializing || isInitialLoading) {
+    // Show a dedicated auth processing splash screen
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            {isProcessingRedirect ? 'Completing sign-in...' : 'Loading...'}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {isProcessingRedirect 
+              ? 'Please wait while we verify your account' 
+              : 'Preparing your experience'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -2305,6 +2422,8 @@ export function useAuth() {
       isAuthReady: true,
       isRoleLoading: false,
       isAuthenticated: true,
+      isProcessingRedirect: false,
+      isAuthGateOpen: true,
     };
   }
   

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
-  const { user, isAuthReady, isAuthenticated } = useAuth();
+  const { user, isAuthReady, isAuthenticated, isProcessingRedirect, isAuthGateOpen } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -183,6 +183,19 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while processing OAuth redirect or auth gate is closed
+  // This prevents the login form from flashing while the redirect result is being processed
+  if (isProcessingRedirect || !isAuthGateOpen) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <FastForward className="text-primary text-4xl mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Completing sign-in...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-6 md:py-12">
