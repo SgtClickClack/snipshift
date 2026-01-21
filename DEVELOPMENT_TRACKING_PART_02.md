@@ -1,3 +1,119 @@
+#### 2026-01-21: COOP Redirect Auth + Register Idempotency Guard
+
+**Core Components**
+- Firebase auth entrypoints (`src/lib/auth.ts`, `src/lib/firebase.ts`)
+- User sync polling guard (`src/hooks/useUserSync.ts`)
+- Registration route (`api/_src/routes/users.ts`)
+
+**Key Features**
+- Switched production Google auth to redirect flow while keeping localhost popup support to avoid COOP popup blocks.
+- Added a strict `/login` + `/signup` guard to silence `/api/me` polling during auth pages.
+- Returned 200 with existing user data when `/api/register` hits a unique constraint to avoid 500s on duplicate registration.
+- Updated the profile sync timeout message to a more human, demo-safe prompt.
+
+**Integration Points**
+- Firebase auth: `signInWithRedirect`
+- API: `POST /api/register`, `GET /api/me`
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/lib/auth.ts`
+- `src/hooks/useUserSync.ts`
+- `api/_src/routes/users.ts`
+
+**Next Priority Task**
+- Verify Google sign-in redirect flow on production demo host (no COOP popup blocks).
+
+**Code Organization & Quality**
+- Kept changes localized to auth and registration flows without introducing new patterns.
+
+---
+
+#### 2026-01-21: Demo Lockdown Auth Guards
+
+**Core Components**
+- User sync polling (`src/hooks/useUserSync.ts`)
+- Auth 401 handling (`src/contexts/AuthContext.tsx`)
+- Stripe bootstrap (`src/lib/stripe.ts`)
+
+**Key Features**
+- Added a landing-page hard guard to block `/api/me` polling without a Firebase user or token.
+- Restricted 401 redirects to `/login` only when the user is on dashboard/profile paths.
+- Verified Stripe initialization remains lazy and does not trigger auth-bound network calls on landing.
+
+**Integration Points**
+- Auth polling: `GET /api/me`
+- Auth redirect handling: `/dashboard`, `/profile`, `/onboarding`, `/signup`
+
+**File Paths**
+- `src/hooks/useUserSync.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/lib/stripe.ts`
+
+**Next Priority Task**
+- Validate the demo flow end-to-end: landing → login → onboarding without 401 loops.
+
+**Code Organization & Quality**
+- Kept guards localized to existing auth flows to minimize behavior drift.
+
+---
+
+#### 2026-01-21: Production Auth E2E Setup + Lockdown Coverage
+
+**Core Components**
+- Playwright configuration (`playwright.config.ts`)
+- Production auth setup (`tests/auth.prod.setup.ts`)
+- Auth integrity coverage (`tests/e2e/auth-integrity.spec.ts`)
+
+**Key Features**
+- Added a production-auth Playwright setup project that saves authenticated storage state for reuse across browser projects.
+- Introduced auth integrity E2E checks for public path access and draft recovery prompts without redirect loops.
+- Kept the existing local E2E auth bypass intact behind a production auth toggle.
+
+**Integration Points**
+- Playwright setup project (auth dependency)
+- `E2E_AUTH_MODE=production` for production auth runs
+- `/api/shifts/drafts` for draft recovery verification
+
+**File Paths**
+- `playwright.config.ts`
+- `tests/auth.prod.setup.ts`
+- `tests/e2e/auth-integrity.spec.ts`
+
+**Next Priority Task**
+- Run the production auth E2E suite against `https://hospogo.com` and confirm Google login + draft recovery flow.
+
+**Code Organization & Quality**
+- Isolated production auth flow to a dedicated setup file and kept config toggles minimal and explicit.
+
+---
+
+#### 2026-01-21: Absolute Silence Guard for /api/me
+
+**Core Components**
+- Auth context initialization gate (`src/contexts/AuthContext.tsx`)
+- User sync polling guard (`src/hooks/useUserSync.ts`)
+
+**Key Features**
+- Added a hard guard to skip `/api/me` polling when Firebase user or token is missing.
+- Aligned auth initialization state with the first auth response to block app render until `onAuthStateChanged` fires.
+
+**Integration Points**
+- Firebase auth: `onAuthStateChanged`
+- API endpoint: `GET /api/me`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/hooks/useUserSync.ts`
+
+**Next Priority Task**
+- Re-test Google signup loop to confirm 401 silence.
+
+**Code Organization & Quality**
+- Kept changes scoped to auth sync and provider gating logic.
+
+---
+
 #### 2026-01-21: Google Signup 401 Loop Sync Guard
 
 **Core Components**

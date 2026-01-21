@@ -195,6 +195,20 @@ router.post('/register', asyncHandler(async (req, res) => {
         });
         return;
       }
+
+      if (dbError?.code === '23505' || dbError?.message?.includes('unique constraint')) {
+        const existingUserOnConflict = await usersRepo.getUserByEmail(email);
+        if (existingUserOnConflict) {
+          res.status(200).json({
+            id: existingUserOnConflict.id,
+            email: existingUserOnConflict.email,
+            name: existingUserOnConflict.name,
+            role: existingUserOnConflict.role,
+            isOnboarded: existingUserOnConflict.isOnboarded ?? false,
+          });
+          return;
+        }
+      }
       
       // Log exact error to error reporting service
       const errorToReport = dbError instanceof Error ? dbError : new Error(String(dbError?.message || 'Database operation failed'));

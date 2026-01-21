@@ -134,15 +134,23 @@ export async function signInWithGoogleLocalDevPopup() {
 
 /**
  * Environment-aware Google sign-in:
- * - Use popup flow everywhere.
- * - On success, the popup redirects to /auth/bridge to set a same-origin cookie
- *   that the main window can detect without relying on storage APIs.
+ * - Use popup flow on localhost for dev convenience.
+ * - Use redirect flow elsewhere to avoid COOP popup blocks.
  */
 export async function signInWithGoogleDevAware() {
   await maybeResetFirebaseSession();
 
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
   try {
-    return await signInWithGoogleLocalDevPopup();
+    if (isLocalhost) {
+      return await signInWithGoogleLocalDevPopup();
+    }
+
+    const { signInWithGoogle } = await import('./firebase');
+    return await signInWithGoogle();
   } catch (error) {
     if (isHttp400StyleAuthFailure(error)) {
       shouldResetFirebaseSessionBeforeNextAttempt = true;

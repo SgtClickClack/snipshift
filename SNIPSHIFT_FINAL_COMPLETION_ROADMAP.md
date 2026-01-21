@@ -8,6 +8,63 @@
 
 ---
 
+### Update: 2026-01-21 - COOP Redirect Auth + Register Idempotency
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Forced production Google auth to use redirect flow (kept localhost popup for dev) to avoid COOP popup blocks.
+- Added a hard guard to skip `/api/me` polling while on `/login` or `/signup`.
+- Returned 200 with existing user data when `/api/register` encounters a unique constraint collision.
+- Updated the user sync timeout message to a more human demo-safe prompt.
+
+**Impact:**
+- Eliminates COOP popup failures in production and prevents duplicate-register 500s during Google sign-in.
+- Silences `/api/me` calls on auth pages to avoid 401 loops during the demo.
+
+---
+
+### Update: 2026-01-21 - Demo Lockdown Auth Guards
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a landing-page hard guard to skip `/api/me` when no Firebase user or token exists.
+- Limited 401 → `/login` redirects to dashboard/profile paths only, preventing onboarding/signup loops.
+- Confirmed Stripe client bootstrap stays lazy and does not preflight auth-bound network calls on landing.
+
+**Impact:**
+- Greatly reduces 401 loop risk during the live demo without altering normal auth flows.
+
+---
+
+### Update: 2026-01-21 - Production Auth E2E Coverage (Playwright)
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added a production-auth Playwright setup project that logs in once and reuses the storage state across browser projects.
+- Added auth integrity E2E checks for public path access and shift draft recovery to guard against redirect loops.
+- Preserved the existing local E2E auth bypass behind an explicit production auth toggle.
+
+**Impact:**
+- Production auth regressions (lockdown + redirect loop) are now covered by deterministic E2E tests.
+
+---
+
+### Update: 2026-01-21 - Absolute Silence Guard for /api/me
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a hard guard in user sync to skip `/api/me` polling when Firebase user or token is missing.
+- Ensured the app stays blocked behind the auth initializing state until the first `onAuthStateChanged` result is received.
+
+**Impact:**
+- Removes noisy `/api/me` calls during unstable auth states and prevents early app render before auth is initialized.
+
+---
+
 ### Update: 2026-01-21 - Google Signup 401 Loop Sync Guard
 
 **Status:** ✅ **UPDATED**

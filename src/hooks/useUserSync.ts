@@ -95,7 +95,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
   const pollUserProfile = async (): Promise<boolean> => {
     const firebaseUser = auth.currentUser;
-    if (!isAuthReady || !firebaseUser || initializing) {
+    if (!isAuthReady || initializing) {
       return false;
     }
 
@@ -105,8 +105,9 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
     try {
       syncingRef.current = true;
-      const token = await firebaseUser.getIdToken();
-      if (!token || initializing) {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isLandingPage = currentPath === '/';
+      if (!firebaseUser || !token || currentPath === '/login' || currentPath === '/signup' || isLandingPage) {
         return false;
       }
       const res = await fetch('/api/me', {
@@ -219,7 +220,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
         if (isMountedRef.current) {
           setIsPolling(false);
           setIsSynced(false);
-          setError('User profile sync timeout. Please refresh the page.');
+          setError("We couldn't get you in right now. Please try a quick page refresh.");
         }
         return;
       }
