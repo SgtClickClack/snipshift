@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-21 - Google Signup 401 Loop Sync Guard
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a sync-in-progress guard to prevent concurrent `/api/me` calls during signup/onboarding.
+- Preserved Firebase sessions on `/signup` + `/onboarding` when `/api/me` returns 401 and flagged the user as new instead of redirecting to login.
+- Removed forced ID token refreshes from useEffect-driven auth bridge/sync flows to reduce auth listener churn.
+- Updated the onboarding-facing profile setup message to a more human tone.
+
+**Impact:**
+- Prevents 401 render loops during Google signup while allowing the onboarding form to render reliably.
+
+---
+
 ### Update: 2026-01-21 - Auth Initialization Guard for Google Signup 401 Loop
 
 **Status:** ✅ **UPDATED**

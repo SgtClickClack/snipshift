@@ -28,6 +28,10 @@ interface UseUserSyncResult {
    */
   isSynced: boolean;
   /**
+   * Whether the user is new and needs onboarding
+   */
+  isNewUser: boolean;
+  /**
    * Whether polling is currently in progress
    */
   isPolling: boolean;
@@ -68,6 +72,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
   const { user, token, isAuthReady, clearUserState, initializing } = useAuth();
   const [isSynced, setIsSynced] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -76,6 +81,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
   const attemptCountRef = useRef(0);
   const timeoutRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
+  const syncingRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -93,8 +99,13 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return false;
     }
 
+    if (syncingRef.current) {
+      return false;
+    }
+
     try {
-      const token = await firebaseUser.getIdToken(true);
+      syncingRef.current = true;
+      const token = await firebaseUser.getIdToken();
       if (!token || initializing) {
         return false;
       }
@@ -113,22 +124,31 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
           logger.debug('useUserSync', 'User profile synced successfully', { userId: apiUser.id });
           if (isMountedRef.current) {
             setIsSynced(true);
+            setIsNewUser(false);
             setIsPolling(false);
             setError(null);
           }
           return true;
         }
       } else if (res.status === 401) {
-        logger.warn('useUserSync', 'Received 401 while syncing user profile, clearing local state');
+        const isSignupOrOnboarding =
+          location.pathname === '/signup' || location.pathname.startsWith('/onboarding');
+        logger.warn('useUserSync', 'Received 401 while syncing user profile', {
+          path: location.pathname,
+          isSignupOrOnboarding,
+        });
         if (isMountedRef.current) {
           setIsSynced(false);
+          setIsNewUser(isSignupOrOnboarding);
           setIsPolling(false);
-          setError('Your session took a break. Please log back in to continue.');
+          setError("We're just setting up your profile. Won't be a moment.");
         }
-        clearUserState('useUserSync:401');
-        const publicPaths = ['/', '/venue-guide'];
-        if (!publicPaths.includes(location.pathname)) {
-          navigate('/login', { replace: true });
+        if (!isSignupOrOnboarding) {
+          clearUserState('useUserSync:401');
+          const publicPaths = ['/', '/venue-guide'];
+          if (!publicPaths.includes(location.pathname)) {
+            navigate('/login', { replace: true });
+          }
         }
         return true;
       } else if (res.status === 404) {
@@ -142,6 +162,8 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     } catch (err) {
       logger.error('useUserSync', 'Error polling user profile:', err);
       return false;
+    } finally {
+      syncingRef.current = false;
     }
   };
 
@@ -176,6 +198,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     setIsPolling(true);
     attemptCountRef.current = 0;
     setError(null);
+    setIsNewUser(false);
 
     const poll = async () => {
       if (!isMountedRef.current) {
@@ -217,6 +240,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     }
     attemptCountRef.current = 0;
     setIsSynced(false);
+    setIsNewUser(false);
     setError(null);
     startPolling();
   };
@@ -233,6 +257,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     // Reset state when auth state changes
     if (!isAuthReady || !hasFirebaseSession || !hasActiveToken || initializing) {
       setIsSynced(false);
+      setIsNewUser(false);
       setIsPolling(false);
       return;
     }
@@ -240,6 +265,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     // If we have a user with ID, we're synced
     if (user?.id) {
       setIsSynced(true);
+      setIsNewUser(false);
       setIsPolling(false);
       return;
     }
@@ -257,6 +283,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
   return {
     isSynced,
+    isNewUser,
     isPolling,
     error,
     retry,

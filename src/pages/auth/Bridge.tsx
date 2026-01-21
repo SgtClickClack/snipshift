@@ -32,7 +32,7 @@ export default function AuthBridgePage() {
           const currentUser = auth.currentUser;
           if (currentUser && currentUser.uid === uid) {
             // Get fresh token from Firebase
-            const token = await currentUser.getIdToken(true);
+            const token = await currentUser.getIdToken();
             const tokenPayload = JSON.stringify({ token, uid, ts: Date.now() });
             localStorage.setItem(AUTH_BRIDGE_TOKEN_KEY, tokenPayload);
             logger.debug('Bridge', '[Bridge] Token written to localStorage as fallback');

@@ -389,7 +389,7 @@ export default function Onboarding() {
   const { user, refreshUser, isAuthenticated, isAuthReady, isLoading, token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isSynced, isPolling } = useUserSync({ enabled: true });
+  const { isSynced, isPolling, isNewUser } = useUserSync({ enabled: true });
   const userId = user?.id ?? null;
   const userCurrentRole = user?.currentRole ?? null;
   const userRolesKey = Array.isArray(user?.roles) ? user.roles.join('|') : '';
@@ -463,11 +463,11 @@ export default function Onboarding() {
     
     refreshSessionIfNeeded();
     
-    // If auth is ready but no user, redirect to login (unless in waitlist-only flow)
-    if (!user && !isLoading && !machineContext.isWaitlistOnly) {
+    // If auth is ready but no user, redirect to login (unless in waitlist-only flow or new user)
+    if (!user && !isLoading && !machineContext.isWaitlistOnly && !isNewUser) {
       // Give a small grace period for the user profile to load
       const timeout = setTimeout(() => {
-        if (!user) {
+        if (!user && !isNewUser) {
           navigate('/login', { replace: true });
         }
       }, 2000);
@@ -477,11 +477,22 @@ export default function Onboarding() {
     // User is verified, allow onboarding to proceed
     if (user && user.id) {
       setIsVerifyingUser(false);
+    } else if (isNewUser) {
+      setIsVerifyingUser(false);
     } else if (machineContext.isWaitlistOnly) {
       // In waitlist-only flow, allow proceeding without user.id
       setIsVerifyingUser(false);
     }
-  }, [isAuthReady, isLoading, isAuthenticated, userId, navigate, refreshUser, machineContext.isWaitlistOnly]);
+  }, [
+    isAuthReady,
+    isLoading,
+    isAuthenticated,
+    userId,
+    isNewUser,
+    navigate,
+    refreshUser,
+    machineContext.isWaitlistOnly,
+  ]);
 
   // Initialize from sessionStorage (waitlist flow)
   useEffect(() => {

@@ -1,3 +1,36 @@
+#### 2026-01-21: Google Signup 401 Loop Sync Guard
+
+**Core Components**
+- Auth context initialization (`src/contexts/AuthContext.tsx`)
+- User sync polling (`src/hooks/useUserSync.ts`)
+- Auth bridge token flow (`src/pages/auth/Bridge.tsx`)
+- Staff onboarding gate (`src/pages/Onboarding.tsx`)
+
+**Key Features**
+- Added an `isSyncing` guard to prevent concurrent `/api/me` polling during signup/onboarding.
+- Preserved Firebase sessions on `/signup` + `/onboarding` when `/api/me` returns 401 and flagged the user as new instead of redirecting to login.
+- Removed forced ID token refreshes from useEffect-driven auth bridge/sync flows to reduce listener churn.
+- Updated onboarding-facing sync error copy to a Brisbane-friendly profile setup message.
+
+**Integration Points**
+- Firebase auth: `getIdToken()` (non-forced refresh)
+- API endpoint: `GET /api/me`
+- Router paths: `/signup`, `/onboarding`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/hooks/useUserSync.ts`
+- `src/pages/auth/Bridge.tsx`
+- `src/pages/Onboarding.tsx`
+
+**Next Priority Task**
+- Re-test Google signup on `/signup` → `/onboarding` to confirm no 401 render loop.
+
+**Code Organization & Quality**
+- Kept auth sync changes localized to AuthContext/useUserSync and avoided new auth patterns.
+
+---
+
 #### 2026-01-21: Auth Initialization Guard + 401 Loop Hardening
 
 **Core Components**

@@ -655,10 +655,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // IMPORTANT: Ensure user exists in database BEFORE onAuthStateChange tries to fetch profile
           // This prevents race conditions where /api/me fails because user doesn't exist yet
           try {
-            // CRITICAL: Force token refresh to ensure it's persisted and ready for backend
-            // Even though handleGoogleRedirectResult already refreshes, we do it again here
-            // to ensure we have the absolute latest token with all claims
-            const token = await redirectUser.getIdToken(true);
+            // Avoid forced refresh here to prevent auth listener churn.
+            const token = await redirectUser.getIdToken();
             const registerRes = await fetch("/api/register", {
               method: "POST",
               headers: {
@@ -1719,7 +1717,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      await firebaseUser.getIdToken(true);
+      await firebaseUser.getIdToken();
       await refreshUserRef.current();
     } catch (error) {
       logger.debug('AuthContext', 'Hard sync failed', { source, error });
