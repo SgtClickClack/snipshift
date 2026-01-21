@@ -19,7 +19,9 @@ export function LoadingScreen() {
         />
       </div>
       <div className="w-10 h-10 border-4 border-border dark:border-white/10 border-t-primary dark:border-t-blue-500 rounded-full animate-spin"></div>
-      <div className="mt-4 text-sm text-muted-foreground dark:text-white/80 tracking-wide font-sans">Loading...</div>
+      <div className="mt-4 text-sm text-muted-foreground dark:text-white/80 tracking-wide font-sans">
+        Just getting things ready for you...
+      </div>
     </div>
   );
 }

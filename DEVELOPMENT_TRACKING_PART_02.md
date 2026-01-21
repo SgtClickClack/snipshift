@@ -1,3 +1,61 @@
+#### 2026-01-21: Auth Initialization Guard + 401 Loop Hardening
+
+**Core Components**
+- Auth context initialization state (`src/contexts/AuthContext.tsx`)
+- User sync polling (`src/hooks/useUserSync.ts`)
+- Loading screen copy (`src/components/ui/loading-screen.tsx`)
+
+**Key Features**
+- Added an explicit initializing state to hold rendering until the first Firebase auth response is received.
+- Forced `/api/me` polling to refresh a token before each fetch and to skip requests while initializing.
+- Redirects on `/api/me` 401 now respect public paths and use history replace to avoid loops.
+- Updated the loading screen message to a more human tone.
+
+**Integration Points**
+- Firebase auth listener: `onAuthStateChange`
+- API endpoint: `GET /api/me`
+- Router navigation: `useNavigate` with `replace: true`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/hooks/useUserSync.ts`
+- `src/components/ui/loading-screen.tsx`
+
+**Next Priority Task**
+- Re-test Google signup from `/` and `/venue-guide` to confirm the 401 loop is gone.
+
+**Code Organization & Quality**
+- Kept auth gating localized to AuthContext/useUserSync without introducing new auth patterns.
+
+---
+
+#### 2026-01-21: Google Calendar Mirror Sync Service
+
+**Core Components**
+- Google Calendar sync service (`api/_src/services/google-calendar.ts`)
+- Shift creation route (`api/_src/routes/shifts.ts`)
+
+**Key Features**
+- Added a calendar mirror service that maps shifts into Google Calendar events with role-based summaries and direct HospoGo links.
+- Applied production lockdown guards so sync only attempts when a valid `google_calendar_token` exists (safe no-op if missing).
+- Triggered fire-and-forget sync for single and split-day/recurring shift creation to avoid blocking the Create Shift UI.
+
+**Integration Points**
+- Google Calendar API: `POST https://www.googleapis.com/calendar/v3/calendars/primary/events`
+- API endpoint: `POST /api/shifts`
+
+**File Paths**
+- `api/_src/services/google-calendar.ts`
+- `api/_src/routes/shifts.ts`
+
+**Next Priority Task**
+- Add refresh-token handling to keep Google Calendar sync stable when access tokens expire.
+
+**Code Organization & Quality**
+- Centralized calendar mapping and guard logic in a dedicated service to keep routes lean and consistent.
+
+---
+
 #### 2026-01-21: Zero-Failure Demo Audit Guardrails
 
 **Core Components**

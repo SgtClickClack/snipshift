@@ -8,6 +8,36 @@
 
 ---
 
+### Update: 2026-01-21 - Auth Initialization Guard for Google Signup 401 Loop
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added an explicit auth initialization gate so the app waits for the first Firebase auth response before rendering.
+- Forced `/api/me` polling to refresh a token before each call and skip while initializing.
+- Redirects on `/api/me` 401 now respect public paths and use history replace to avoid loop churn.
+- Updated the loading screen copy to a more human message.
+
+**Impact:**
+- Prevents early API calls during auth boot and reduces Google signup redirect loops on public pages.
+
+---
+
+### Update: 2026-01-21 - Google Calendar Mirror Sync Service
+
+**Status:** ✅ **IMPLEMENTED**
+
+**Action Taken:**
+- Added a Google Calendar mirror service that maps shifts into calendar events with role-based summaries and direct HospoGo links.
+- Applied production lockdown guards so sync only attempts when a valid `google_calendar_token` exists (safe no-op if missing).
+- Triggered asynchronous sync for single and split-day/recurring shift creation to avoid blocking the Create Shift UI.
+
+**Impact:**
+- Shifts now mirror into Google Calendar without slowing shift creation.
+- Split-day schedules reliably create distinct calendar events.
+
+---
+
 ### Update: 2026-01-21 - Zero-Failure Demo Audit (Auth Guard + Draft Safety + Stripe Live Key)
 
 **Status:** ✅ **UPDATED**

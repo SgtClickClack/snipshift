@@ -6,6 +6,7 @@ import { User as FirebaseUser, onIdTokenChanged } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { getDashboardRoute, normalizeVenueToBusiness, isBusinessRole } from '@/lib/roles';
 import { useToast } from '@/hooks/useToast';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
 
@@ -77,6 +78,7 @@ export interface User {
 }
 
 interface AuthContextType {
+  initializing: boolean;
   isRoleLoading: boolean;
   user: User | null;
   token: string | null;
@@ -105,12 +107,14 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [initializing, setInitializing] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isRoleLoading, setIsRoleLoading] = useState(false);
   const { toast } = useToast();
   const hasResolvedAuthState = useRef(false);
+  const hasInitialAuthResponse = useRef(false);
   const redirectFallbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hardSyncInProgress = useRef(false);
   const hardSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -524,6 +528,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setToken(null);
       } finally {
         hasResolvedAuthState.current = true;
+        setInitializing(false);
         setIsLoading(false);
         setIsAuthReady(true);
         // Clear safety timeout since E2E mode resolved auth state
@@ -749,6 +754,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // This prevents the race condition where onAuthStateChange sees null user before redirect is processed
       return onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
         hasResolvedAuthState.current = true;
+        if (!hasInitialAuthResponse.current) {
+          hasInitialAuthResponse.current = true;
+          setInitializing(false);
+        }
         if (redirectFallbackTimeout.current) {
           clearTimeout(redirectFallbackTimeout.current);
           redirectFallbackTimeout.current = null;
@@ -2097,6 +2106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const value = {
+    initializing,
     user,
     token,
     isLoading,
@@ -2115,6 +2125,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     triggerPostAuthRedirect,
     startManualAuthPolling,
   };
+
+  if (initializing) {
+    return <LoadingScreen />;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

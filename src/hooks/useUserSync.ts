@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger } from '@/lib/logger';
 import { auth } from '@/lib/firebase';
@@ -65,10 +66,12 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     enabled = true,
   } = options;
 
-  const { user, token, isAuthReady, clearUserState } = useAuth();
+  const { user, token, isAuthReady, clearUserState, initializing } = useAuth();
   const [isSynced, setIsSynced] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const attemptCountRef = useRef(0);
   const timeoutRef = useRef<number | null>(null);
@@ -85,11 +88,16 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
   }, []);
 
   const pollUserProfile = async (): Promise<boolean> => {
-    if (!token || !isAuthReady || !auth.currentUser) {
+    const firebaseUser = auth.currentUser;
+    if (!isAuthReady || !firebaseUser || initializing) {
       return false;
     }
 
     try {
+      const token = await firebaseUser.getIdToken(true);
+      if (!token || initializing) {
+        return false;
+      }
       const res = await fetch('/api/me', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -118,6 +126,10 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
           setError('Your session took a break. Please log back in to continue.');
         }
         clearUserState('useUserSync:401');
+        const publicPaths = ['/', '/venue-guide'];
+        if (!publicPaths.includes(location.pathname)) {
+          navigate('/login', { replace: true });
+        }
         return true;
       } else if (res.status === 404) {
         // User doesn't exist yet - this is expected during onboarding
@@ -134,7 +146,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
   };
 
   const startPolling = () => {
-    if (!enabled || !isAuthReady) {
+    if (!enabled || !isAuthReady || initializing) {
       return;
     }
 
@@ -219,7 +231,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     const hasActiveToken = !!token && !!auth.currentUser;
 
     // Reset state when auth state changes
-    if (!isAuthReady || !hasFirebaseSession || !hasActiveToken) {
+    if (!isAuthReady || !hasFirebaseSession || !hasActiveToken || initializing) {
       setIsSynced(false);
       setIsPolling(false);
       return;
@@ -241,7 +253,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthReady, token, user?.id, enabled]);
+  }, [isAuthReady, token, user?.id, enabled, initializing]);
 
   return {
     isSynced,
