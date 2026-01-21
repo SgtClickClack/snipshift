@@ -102,15 +102,18 @@ export function AuthGuard({
 
   // If authentication is required but user is not authenticated
   // EXCEPTION: Allow /onboarding if there's a Firebase session OR E2E mock token (user just signed in but no profile yet)
+  // This is the "PENDING STATE" - Firebase user exists but no Postgres record yet (new Google signup)
   if (requireAuth && !isAuthenticated) {
-    // Allow onboarding page if there's a Firebase session or E2E mock token - user needs to complete profile
-    if (location.pathname === '/onboarding' && (hasFirebaseSession || hasE2ESession)) {
-      logger.debug('AuthGuard', 'Allowing onboarding access with Firebase session/E2E token but no profile', {
+    // PENDING STATE HANDLER: Allow ALL onboarding routes if there's a Firebase session
+    // This covers: /onboarding, /onboarding/professional, /onboarding/hub, etc.
+    // New Google users have Firebase auth but no Postgres record until onboarding completes
+    const isOnboardingRoute = location.pathname.startsWith('/onboarding');
+    if (isOnboardingRoute && (hasFirebaseSession || hasE2ESession)) {
+      logger.debug('AuthGuard', 'PENDING STATE: Allowing onboarding access with Firebase session but no Postgres profile', {
         hasFirebaseSession,
-        hasE2EAuthState,
-        hasE2EToken,
         hasE2ESession,
-        isE2E
+        pathname: location.pathname,
+        firebaseUid: auth.currentUser?.uid,
       });
       return <>{children}</>;
     }
@@ -122,6 +125,15 @@ export function AuthGuard({
         pathname: location.pathname
       });
       return <>{children}</>;
+    }
+    // PENDING STATE REDIRECT: If user has Firebase session but no profile and NOT on onboarding,
+    // redirect to onboarding instead of login (they need to complete signup)
+    if (hasFirebaseSession && !isOnboardingRoute) {
+      logger.debug('AuthGuard', 'PENDING STATE: Firebase session exists but no profile, redirecting to onboarding', {
+        firebaseUid: auth.currentUser?.uid,
+        pathname: location.pathname,
+      });
+      return <Navigate to="/onboarding" replace />;
     }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

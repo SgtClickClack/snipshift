@@ -4,6 +4,8 @@ import { logger } from '@/lib/logger';
 import { auth } from '@/lib/firebase';
 
 let isSyncing = false;
+// Global flag to track if we've done the initial verification sync for authenticated users
+let hasInitialVerificationSync = false;
 
 interface UseUserSyncOptions {
   /**
@@ -95,11 +97,13 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     };
   }, []);
 
-  const pollUserProfile = async (): Promise<boolean | null> => {
-    if (isPublicPath) {
+  const pollUserProfile = async (isVerificationSync = false): Promise<boolean | null> => {
+    // PARTIAL SILENCE BREAK: Allow ONE-TIME verification sync on public paths
+    // when Firebase user is present, to check if user exists in database
+    if (isPublicPath && !isVerificationSync) {
       return false;
     }
-    if (currentPath.startsWith('/onboarding')) {
+    if (currentPath.startsWith('/onboarding') && !isVerificationSync) {
       return false;
     }
     const firebaseUser = auth.currentUser;
@@ -108,7 +112,8 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     }
 
     const now = Date.now();
-    if (now - lastSyncAtRef.current < 5000) {
+    // Skip rate limiting for verification syncs
+    if (!isVerificationSync && now - lastSyncAtRef.current < 5000) {
       return false;
     }
 
@@ -118,10 +123,20 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
     isSyncing = true;
     try {
-      const isLandingPage = currentPath === '/';
-      if (!firebaseUser || !token || currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding') || isLandingPage) {
+      // For verification sync, only require firebaseUser and token
+      // For normal sync, also check we're not on excluded paths
+      if (!firebaseUser || !token) {
         return false;
       }
+      
+      // Normal sync rules: skip on certain paths
+      if (!isVerificationSync) {
+        const isLandingPage = currentPath === '/';
+        if (currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding') || isLandingPage) {
+          return false;
+        }
+      }
+      
       lastSyncAtRef.current = now;
       const res = await fetch('/api/me', {
         headers: {
@@ -135,7 +150,11 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
         const apiUser = await res.json();
         // Check if user has required fields (id is the minimum)
         if (apiUser?.id) {
-          logger.debug('useUserSync', 'User profile synced successfully', { userId: apiUser.id });
+          logger.debug('useUserSync', 'User profile synced successfully', { 
+            userId: apiUser.id, 
+            isVerificationSync,
+            hasCompletedOnboarding: apiUser.hasCompletedOnboarding 
+          });
           if (isMountedRef.current) {
             setIsSynced(true);
             setIsNewUser(false);
@@ -148,7 +167,15 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
         return null;
       } else if (res.status === 404) {
         // User doesn't exist yet - this is expected during onboarding
-        logger.debug('useUserSync', 'User profile not found (404), will retry');
+        // Mark as new user for verification syncs
+        logger.debug('useUserSync', 'User profile not found (404)', { 
+          isVerificationSync,
+          willRetry: !isVerificationSync 
+        });
+        if (isVerificationSync && isMountedRef.current) {
+          setIsNewUser(true);
+          setIsSynced(false);
+        }
         return false;
       } else {
         logger.warn('useUserSync', 'Failed to fetch user profile', { status: res.status });
@@ -258,6 +285,47 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     startPolling();
   };
 
+  // PARTIAL SILENCE BREAK: One-time verification sync when Firebase user is present
+  // This allows us to verify the user's database record even on public paths,
+  // enabling proper redirect decisions in the Transition Gate
+  useEffect(() => {
+    if (!enabled || !isAuthReady || initializing || isInitialLoading) {
+      return;
+    }
+    
+    const firebaseUser = auth.currentUser;
+    
+    // Only trigger verification sync if:
+    // 1. Firebase user exists
+    // 2. We haven't done the initial verification sync yet
+    // 3. We're on a public path or auth page
+    if (firebaseUser && token && !hasInitialVerificationSync && (isPublicPath || currentPath === '/login' || currentPath === '/signup')) {
+      hasInitialVerificationSync = true;
+      
+      logger.debug('useUserSync', 'Triggering one-time verification sync on public path', {
+        currentPath,
+        uid: firebaseUser.uid,
+      });
+      
+      // Run verification sync in background (don't block UI)
+      pollUserProfile(true).then((result) => {
+        logger.debug('useUserSync', 'Verification sync completed', { 
+          result,
+          currentPath,
+          isSynced: result === true,
+          isNewUser: result === false
+        });
+      }).catch((err) => {
+        logger.debug('useUserSync', 'Verification sync error (non-blocking)', err);
+      });
+    }
+    
+    // Reset verification flag when user signs out
+    if (!firebaseUser && hasInitialVerificationSync) {
+      hasInitialVerificationSync = false;
+    }
+  }, [isAuthReady, token, enabled, initializing, isInitialLoading, currentPath, isPublicPath]);
+
   useEffect(() => {
     if (!enabled) {
       return;
@@ -268,8 +336,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
         clearTimeout(timeoutRef.current);
       }
       setIsPolling(false);
-      setIsSynced(false);
-      setIsNewUser(false);
+      // Don't reset isSynced/isNewUser on public paths - preserve verification sync result
       setError(null);
       return;
     }
@@ -281,8 +348,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return;
     }
     if (currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding')) {
-      setIsSynced(false);
-      setIsNewUser(false);
+      // Don't reset isSynced/isNewUser - preserve verification sync result
       setIsPolling(false);
       return;
     }

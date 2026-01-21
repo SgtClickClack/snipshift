@@ -1,3 +1,35 @@
+#### 2026-01-21: Auth Transition Gate + Pending State Handler
+
+**Core Components**
+- Auth context transition gate (`src/contexts/AuthContext.tsx`)
+- User sync partial silence break (`src/hooks/useUserSync.ts`)
+- Auth guard pending state handler (`src/components/auth/auth-guard.tsx`)
+
+**Key Features**
+- **Task 1 - Transition Gate**: Added `useEffect` in AuthContext that monitors `auth.currentUser` and immediately redirects authenticated users from `/login` and `/signup` to `/onboarding` (new users) or their dashboard (existing users). This runs BEFORE `useUserSync` fires, eliminating the stuck navigation issue.
+- **Task 2 - Partial Silence Break**: Modified `useUserSync` to allow a ONE-TIME verification sync on public paths when `firebaseUser` is present. This enables proper redirect decisions without constant polling.
+- **Task 3 - Pending State Handler**: Updated `AuthGuard` to handle new Google users (Firebase auth exists, no Postgres record). Users in this "pending" state are allowed on all `/onboarding/*` routes and redirected there from other protected routes.
+
+**Integration Points**
+- Firebase Auth: `auth.currentUser` monitoring in transition gate
+- API: `GET /api/me` verification sync
+- Router: `useNavigate` for immediate redirects
+
+**File Paths**
+- `src/contexts/AuthContext.tsx` (Transition Gate effect + ref)
+- `src/hooks/useUserSync.ts` (verification sync + global flag)
+- `src/components/auth/auth-guard.tsx` (pending state logic)
+
+**Next Priority Task**
+- Test the complete auth flow with Google Sign-In to verify users are no longer stuck on login/signup pages.
+
+**Code Organization & Quality**
+- Used refs to prevent duplicate transitions in React Strict Mode
+- Added comprehensive logging for debugging auth flow issues
+- Maintained backward compatibility with existing auth logic
+
+---
+
 #### 2026-01-21: Demo Auth Sync Silence Guard
 
 **Core Components**

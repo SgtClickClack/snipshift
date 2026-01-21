@@ -2126,6 +2126,69 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
+  // TRANSITION GATE: Redirect authenticated users away from login/signup pages
+  // This runs BEFORE useUserSync fires, ensuring immediate navigation after Firebase auth completes
+  // Priority: If firebaseUser exists on /login or /signup, move them immediately
+  const transitionGateProcessed = useRef(false);
+  useEffect(() => {
+    // Only run once per auth state change to prevent loops
+    if (transitionGateProcessed.current) return;
+    
+    const currentPath = locationRef.current.pathname;
+    const isAuthPage = currentPath === '/login' || currentPath === '/signup';
+    
+    // Only activate on auth pages
+    if (!isAuthPage) {
+      transitionGateProcessed.current = false; // Reset for next visit
+      return;
+    }
+    
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) return;
+    
+    // Mark as processed to prevent re-firing
+    transitionGateProcessed.current = true;
+    
+    logger.debug('AuthContext', 'TRANSITION GATE: Firebase user detected on auth page, redirecting', {
+      uid: firebaseUser.uid,
+      currentPath,
+      hasAppUser: !!userRef.current,
+      hasCompletedOnboarding: userRef.current?.hasCompletedOnboarding,
+    });
+    
+    // Determine target based on user state
+    // If we have an app user with completed onboarding, go to dashboard
+    // Otherwise, go to onboarding (covers new users and incomplete onboarding)
+    const appUser = userRef.current;
+    let target: string;
+    
+    if (appUser && appUser.hasCompletedOnboarding === true && appUser.currentRole) {
+      // Existing user with completed onboarding - go to their dashboard
+      target = deriveRoleHome(appUser, currentPath);
+    } else {
+      // New user OR incomplete onboarding - always go to onboarding
+      target = '/onboarding';
+    }
+    
+    // Prevent redundant navigation
+    if (currentPath === target) return;
+    
+    // Force immediate navigation
+    setIsLoading(false);
+    setIsAuthReady(true);
+    setIsRedirecting(false);
+    pendingRedirect.current = false;
+    navigateRef.current(target, { replace: true });
+  }, [location.pathname, user, isAuthReady]);
+  
+  // Reset transition gate when navigating away from auth pages
+  useEffect(() => {
+    const currentPath = locationRef.current.pathname;
+    if (currentPath !== '/login' && currentPath !== '/signup') {
+      transitionGateProcessed.current = false;
+    }
+  }, [location.pathname]);
+
   const triggerPostAuthRedirect = () => {
     pendingRedirect.current = true;
     setIsRedirecting(true);
