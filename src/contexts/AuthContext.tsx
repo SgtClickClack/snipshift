@@ -667,6 +667,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Check if URL contains auth/handler parameters (indicates we're returning from redirect)
+      // NOTE: This check is NOT reliable! Firebase often redirects to a clean URL after processing.
+      // We MUST always call getRedirectResult() and wait for it to complete.
       const urlHasAuthHandler = typeof window !== 'undefined' && (
         window.location.pathname.includes('/__/auth/handler') ||
         window.location.search.includes('auth/handler') ||
@@ -678,17 +680,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // CRITICAL: If returning from redirect, ensure loading state is active
       if (urlHasAuthHandler) {
-        logger.debug('AuthContext', 'Detected return from OAuth redirect, ensuring loading state is active');
+        logger.debug('AuthContext', 'Detected return from OAuth redirect via URL, ensuring loading state is active');
         setIsProcessingRedirect(true);
         setIsLoading(true);
         setIsAuthReady(false);
         setIsAuthGateOpen(false);
-      } else {
-        // If NOT returning from redirect, we can immediately mark redirect result as resolved
-        // since there's nothing to wait for from getRedirectResult
-        logger.debug('AuthContext', 'Not returning from redirect, marking redirect result as resolved');
-        hasRedirectResultResolved.current = true;
       }
+      
+      // IMPORTANT: Do NOT set hasRedirectResultResolved here!
+      // We MUST wait for getRedirectResult() to actually complete, because:
+      // 1. Firebase redirects to a CLEAN URL after Google auth (no auth/handler in URL)
+      // 2. getRedirectResult() is the ONLY reliable way to get the credential
+      // 3. Setting this flag prematurely opens the auth gate before the user is authenticated
 
       let redirectUser: FirebaseUser | null = null;
 
@@ -732,10 +735,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           redirectFallbackTimeout.current = setTimeout(() => {
             if (!hasResolvedAuthState.current) {
               logger.debug('AuthContext', 'No auth state change after redirect result; clearing loading state');
+              // LOGIC GATE: Mark redirect result as resolved (via fallback timeout)
+              hasRedirectResultResolved.current = true;
               setIsLoading(false);
               setIsAuthReady(true);
               setIsRedirecting(false);
               pendingRedirect.current = false;
+              checkAndOpenAuthGate();
             }
           }, 3000);
         }
@@ -743,6 +749,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           logger.debug('AuthContext', 'Processed Google redirect result for user:', redirectUser.uid);
           // LOGIC GATE: Mark redirect result as resolved (success with user)
           hasRedirectResultResolved.current = true;
+          // Check if we can open the gate now (in case onAuthStateChanged already fired)
+          checkAndOpenAuthGate();
           // Clear redirect processing state since we have a valid user
           setIsProcessingRedirect(false);
           
@@ -787,6 +795,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           logger.debug('AuthContext', 'No redirect result - user did not return from Google sign-in');
           // LOGIC GATE: Mark redirect result as resolved (no user from redirect)
           hasRedirectResultResolved.current = true;
+          // Check if we can open the gate now (in case onAuthStateChanged already fired)
+          checkAndOpenAuthGate();
         }
       } catch (error) {
         // CATCH-ALL: Log FULL error object with console.dir to catch cross-origin blocks
@@ -842,6 +852,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         clearTimeout(getRedirectResultTimeout);
         // LOGIC GATE: Mark redirect result as resolved (error)
         hasRedirectResultResolved.current = true;
+        // Check if we can open the gate now (in case onAuthStateChanged already fired)
+        checkAndOpenAuthGate();
         // Clear redirect processing state on error
         setIsProcessingRedirect(false);
         // Don't clear loading here - let the fallback timeout handle it
