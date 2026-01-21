@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger } from '@/lib/logger';
 import { auth } from '@/lib/firebase';
+
+let isSyncing = false;
 
 interface UseUserSyncOptions {
   /**
@@ -70,19 +71,19 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     enabled = true,
   } = options;
 
-  const { user, token, isAuthReady, clearUserState, initializing, isInitialLoading } = useAuth();
+  const { user, token, isAuthReady, initializing, isInitialLoading } = useAuth();
   const [isSynced, setIsSynced] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
   
   const attemptCountRef = useRef(0);
   const timeoutRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
-  const syncingRef = useRef(false);
   const lastSyncAtRef = useRef(0);
+  const publicPaths = ['/', '/signup', '/login', '/venue-guide'];
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isPublicPath = publicPaths.includes(currentPath);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -94,8 +95,10 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     };
   }, []);
 
-  const pollUserProfile = async (): Promise<boolean> => {
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const pollUserProfile = async (): Promise<boolean | null> => {
+    if (isPublicPath) {
+      return false;
+    }
     if (currentPath.startsWith('/onboarding')) {
       return false;
     }
@@ -104,17 +107,17 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return false;
     }
 
-    if (syncingRef.current) {
-      return false;
-    }
-
     const now = Date.now();
     if (now - lastSyncAtRef.current < 5000) {
       return false;
     }
 
+    if (isSyncing) {
+      return false;
+    }
+
+    isSyncing = true;
     try {
-      syncingRef.current = true;
       const isLandingPage = currentPath === '/';
       if (!firebaseUser || !token || currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding') || isLandingPage) {
         return false;
@@ -142,30 +145,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
           return true;
         }
       } else if (res.status === 401) {
-        const isSignupOrOnboarding =
-          location.pathname === '/signup' || location.pathname.startsWith('/onboarding');
-        logger.warn('useUserSync', 'Received 401 while syncing user profile', {
-          path: location.pathname,
-          isSignupOrOnboarding,
-        });
-        if (isMountedRef.current) {
-          setIsSynced(false);
-          setIsNewUser(isSignupOrOnboarding);
-          setIsPolling(false);
-          setError("We're just setting up your profile. Won't be a moment.");
-        }
-        const isLandingOrSignupFlow =
-          location.pathname === '/' ||
-          location.pathname === '/signup' ||
-          location.pathname.startsWith('/onboarding');
-        if (!isSignupOrOnboarding && !isLandingOrSignupFlow) {
-          clearUserState('useUserSync:401');
-          const publicPaths = ['/', '/venue-guide'];
-          if (!publicPaths.includes(location.pathname)) {
-            navigate('/login', { replace: true });
-          }
-        }
-        return true;
+        return null;
       } else if (res.status === 404) {
         // User doesn't exist yet - this is expected during onboarding
         logger.debug('useUserSync', 'User profile not found (404), will retry');
@@ -178,7 +158,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       logger.error('useUserSync', 'Error polling user profile:', err);
       return false;
     } finally {
-      syncingRef.current = false;
+      isSyncing = false;
     }
   };
 
@@ -187,7 +167,10 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return;
     }
 
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (isPublicPath) {
+      setIsPolling(false);
+      return;
+    }
     if (currentPath.startsWith('/onboarding')) {
       return;
     }
@@ -232,8 +215,14 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       attemptCountRef.current += 1;
       const success = await pollUserProfile();
 
-      if (success) {
+      if (success === true) {
         // Success - already handled in pollUserProfile
+        return;
+      }
+      if (success === null) {
+        if (isMountedRef.current) {
+          setIsPolling(false);
+        }
         return;
       }
 
@@ -274,7 +263,16 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return;
     }
 
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (isPublicPath) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      setIsPolling(false);
+      setIsSynced(false);
+      setIsNewUser(false);
+      setError(null);
+      return;
+    }
     if (currentPath.startsWith('/onboarding')) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

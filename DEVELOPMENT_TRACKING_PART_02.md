@@ -1,3 +1,28 @@
+#### 2026-01-21: Demo Auth Sync Silence Guard
+
+**Core Components**
+- User sync hook (`src/hooks/useUserSync.ts`)
+
+**Key Features**
+- Added a public-path guard for `/`, `/login`, `/signup`, and `/venue-guide` to keep `/api/me` polling fully silent on demo-facing pages.
+- Introduced a global sync lock to prevent concurrent `/api/me` calls across hook instances.
+- Returned `null` on 401 responses to stop polling without resetting auth state or triggering redirects.
+
+**Integration Points**
+- API: `GET /api/me`
+- Auth lifecycle: Firebase `auth.currentUser` + token presence
+
+**File Paths**
+- `src/hooks/useUserSync.ts`
+
+**Next Priority Task**
+- Re-run the demo auth flow to confirm the 401 loop is gone on public routes.
+
+**Code Organization & Quality**
+- Kept logic centralized in the existing sync hook without introducing new patterns.
+
+---
+
 #### 2026-01-21: Auth Circuit Breaker + Sync Throttle
 
 **Core Components**

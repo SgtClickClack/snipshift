@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-21 - Demo Auth Sync Silence Guard
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a public-path guard to stop `/api/me` polling on `/`, `/login`, `/signup`, and `/venue-guide`.
+- Added a global sync lock to prevent concurrent user sync requests across hook instances.
+- Returned `null` on `/api/me` 401 responses to avoid state resets or redirects during the demo.
+
+**Impact:**
+- Public pages stay perfectly static and free of auth loop churn during live demos.
+- Prevents multi-call bursts that amplify 401 loops under auth instability.
+
+---
+
 ### Update: 2026-01-21 - Zero-Failure Demo Audit (Auth Guard + Draft Safety + Stripe Live Key)
 
 **Status:** ✅ **UPDATED**
