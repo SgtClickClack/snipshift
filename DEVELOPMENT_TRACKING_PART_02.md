@@ -1,3 +1,33 @@
+#### 2026-01-21: Auth Circuit Breaker + Sync Throttle
+
+**Core Components**
+- Auth context (`src/contexts/AuthContext.tsx`)
+- User sync polling (`src/hooks/useUserSync.ts`)
+- Stripe client config (`src/lib/stripe.ts`)
+
+**Key Features**
+- Added `isInitialLoading` gate so the app and `/api/me` waits for initial Firebase auth resolution.
+- Throttled `/api/me` sync calls to at most one every 5 seconds and avoided sign-out redirects on landing/signup flows.
+- Confirmed `hospogo.com` uses `VITE_STRIPE_PUBLISHABLE_KEY_LIVE` when available.
+
+**Integration Points**
+- Auth listener: `onAuthStateChange`
+- API: `GET /api/me`
+- Stripe: `VITE_STRIPE_PUBLISHABLE_KEY_LIVE`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/hooks/useUserSync.ts`
+- `src/lib/stripe.ts`
+
+**Next Priority Task**
+- Re-run the demo auth flow to confirm no 401 loops.
+
+**Code Organization & Quality**
+- Kept auth guards isolated to the auth context and user sync hook.
+
+---
+
 #### 2026-01-21: Register Upsert Repo Export + Schema Sync
 
 **Core Components**

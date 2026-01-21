@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-21 - Auth Circuit Breaker + Sync Throttle
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added an initial auth loading gate so `/api/me` waits for Firebase to confirm the first auth state.
+- Throttled user sync to avoid repeated `/api/me` calls and avoided redirects on landing/signup flows.
+- Verified `hospogo.com` uses `VITE_STRIPE_PUBLISHABLE_KEY_LIVE` in the Stripe loader.
+
+**Impact:**
+- Stops 401 loops during demo auth transitions.
+- Reduces unnecessary `/api/me` pressure during auth churn.
+
+---
+
 ### Update: 2026-01-21 - Register Upsert Repo Export + Schema Sync
 
 **Status:** ✅ **UPDATED**

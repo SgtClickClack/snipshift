@@ -79,6 +79,7 @@ export interface User {
 
 interface AuthContextType {
   initializing: boolean;
+  isInitialLoading: boolean;
   isRoleLoading: boolean;
   user: User | null;
   token: string | null;
@@ -108,6 +109,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -530,6 +532,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasResolvedAuthState.current = true;
         hasInitialAuthResponse.current = true;
         setInitializing(false);
+        setIsInitialLoading(false);
         setIsLoading(false);
         setIsAuthReady(true);
         // Clear safety timeout since E2E mode resolved auth state
@@ -753,6 +756,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // This prevents the race condition where onAuthStateChange sees null user before redirect is processed
       return onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
         hasResolvedAuthState.current = true;
+        if (isInitialLoading) {
+          setIsInitialLoading(false);
+        }
         if (!hasInitialAuthResponse.current) {
           hasInitialAuthResponse.current = true;
           setInitializing(false);
@@ -1395,6 +1401,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshUser = async (retryCount = 0) => {
     logger.debug('AuthContext', 'refreshUser called', { retryCount });
     const firebaseUser = auth.currentUser;
+    if (!hasResolvedAuthState.current) {
+      logger.debug('AuthContext', 'refreshUser: Skipping until initial auth state resolves');
+      return;
+    }
     if (!firebaseUser) {
       logger.debug('AuthContext', 'refreshUser: No Firebase user, clearing state');
       setUser(null);
@@ -1670,6 +1680,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const hardSyncWithToken = async (tokenValue: string, source: string) => {
     if (!auth.currentUser) {
       logger.debug('AuthContext', 'Hard sync skipped - no Firebase user', { source });
+      return;
+    }
+    if (!hasResolvedAuthState.current) {
+      logger.debug('AuthContext', 'Hard sync skipped - initial auth state not resolved', { source });
       return;
     }
     logger.debug('AuthContext', 'Hard sync token received, fetching profile', { source });
@@ -2124,6 +2138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value = {
     initializing,
+    isInitialLoading,
     user,
     token,
     isLoading,
@@ -2143,7 +2158,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     startManualAuthPolling,
   };
 
-  if (initializing) {
+  if (initializing || isInitialLoading) {
     return <LoadingScreen />;
   }
 

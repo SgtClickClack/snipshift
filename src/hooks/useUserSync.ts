@@ -70,7 +70,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     enabled = true,
   } = options;
 
-  const { user, token, isAuthReady, clearUserState, initializing } = useAuth();
+  const { user, token, isAuthReady, clearUserState, initializing, isInitialLoading } = useAuth();
   const [isSynced, setIsSynced] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
@@ -82,6 +82,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
   const timeoutRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
   const syncingRef = useRef(false);
+  const lastSyncAtRef = useRef(0);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -99,11 +100,16 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       return false;
     }
     const firebaseUser = auth.currentUser;
-    if (!isAuthReady || initializing) {
+    if (!isAuthReady || initializing || isInitialLoading) {
       return false;
     }
 
     if (syncingRef.current) {
+      return false;
+    }
+
+    const now = Date.now();
+    if (now - lastSyncAtRef.current < 5000) {
       return false;
     }
 
@@ -113,6 +119,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
       if (!firebaseUser || !token || currentPath === '/login' || currentPath === '/signup' || currentPath.startsWith('/onboarding') || isLandingPage) {
         return false;
       }
+      lastSyncAtRef.current = now;
       const res = await fetch('/api/me', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -147,7 +154,11 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
           setIsPolling(false);
           setError("We're just setting up your profile. Won't be a moment.");
         }
-        if (!isSignupOrOnboarding) {
+        const isLandingOrSignupFlow =
+          location.pathname === '/' ||
+          location.pathname === '/signup' ||
+          location.pathname.startsWith('/onboarding');
+        if (!isSignupOrOnboarding && !isLandingOrSignupFlow) {
           clearUserState('useUserSync:401');
           const publicPaths = ['/', '/venue-guide'];
           if (!publicPaths.includes(location.pathname)) {
@@ -172,7 +183,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
   };
 
   const startPolling = () => {
-    if (!enabled || !isAuthReady || initializing) {
+    if (!enabled || !isAuthReady || initializing || isInitialLoading) {
       return;
     }
 
@@ -283,7 +294,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     const hasActiveToken = !!token && !!auth.currentUser;
 
     // Reset state when auth state changes
-    if (!isAuthReady || !hasFirebaseSession || !hasActiveToken || initializing) {
+    if (!isAuthReady || !hasFirebaseSession || !hasActiveToken || initializing || isInitialLoading) {
       setIsSynced(false);
       setIsNewUser(false);
       setIsPolling(false);
