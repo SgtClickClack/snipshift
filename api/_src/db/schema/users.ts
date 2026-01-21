@@ -1,10 +1,17 @@
-import { pgTable, uuid, varchar, text, decimal, boolean, timestamp, pgEnum, index, date, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, decimal, boolean, timestamp, pgEnum, index, uniqueIndex, date, integer, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 /**
  * User roles enum
  */
-export const userRoleEnum = pgEnum('user_role', ['professional', 'business', 'admin', 'trainer', 'hub']);
+export const userRoleEnum = pgEnum('user_role', [
+  'professional',
+  'business',
+  'admin',
+  'trainer',
+  'hub',
+  'pending_onboarding',
+]);
 
 /**
  * Pro verification status enum (HospoGo) - DEPRECATED
@@ -49,8 +56,10 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(), // [PII] [SENSITIVE] Primary identifier - consider encryption
   passwordHash: varchar('password_hash', { length: 255 }), // [SENSITIVE] Authentication credential (already hashed) - Nullable for now, will be required when auth is implemented
   name: varchar('name', { length: 255 }).notNull(), // [PII] Personally identifiable
-  role: userRoleEnum('role').notNull().default('professional'),
-  roles: text('roles').array().notNull().default(sql`ARRAY['professional']::text[]`),
+  role: userRoleEnum('role').notNull().default('pending_onboarding'),
+  roles: text('roles').array().notNull().default(sql`ARRAY['pending_onboarding']::text[]`),
+  firebaseUid: varchar('firebase_uid', { length: 128 }),
+  lastLogin: timestamp('last_login'),
   bio: text('bio'),
   phone: varchar('phone', { length: 50 }), // [PII] [SENSITIVE] Contact information - consider encryption
   location: varchar('location', { length: 255 }), // [PII] Geographic location data
@@ -106,6 +115,7 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   emailIdx: index('users_email_idx').on(table.email),
+  firebaseUidIdx: uniqueIndex('users_firebase_uid_idx').on(table.firebaseUid),
   roleIdx: index('users_role_idx').on(table.role),
   stripeAccountIdIdx: index('users_stripe_account_id_idx').on(table.stripeAccountId),
   stripeCustomerIdIdx: index('users_stripe_customer_id_idx').on(table.stripeCustomerId),

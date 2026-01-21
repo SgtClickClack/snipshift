@@ -17,7 +17,7 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     email: string;
     name: string;
-    role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue';
+    role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding';
     uid: string; // Firebase UID
   };
 }
@@ -225,9 +225,9 @@ export function authenticateUser(
             user = await usersRepo.createUser({
               email,
               name: displayName,
-              role: 'professional', // Auto-created users start with 'professional' role; security enforced via isOnboarded: false
+              role: 'pending_onboarding',
             });
-            console.log('[AUTH] Auto-created user with professional role (isOnboarded: false):', user?.id);
+            console.log('[AUTH] Auto-created user with pending_onboarding role (isOnboarded: false):', user?.id);
           } catch (createError: any) {
             // If creation fails due to race condition (user was just created), try to fetch again
             if (createError?.code === '23505') { // Postgres unique violation
@@ -251,7 +251,7 @@ export function authenticateUser(
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue',
+          role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding',
           uid: uid
         };
 

@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-21 - Register Upsert Repo Export + Schema Sync
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Committed the Firebase UID upsert repository export needed by `/api/register`.
+- Synced user schema defaults for `pending_onboarding` and added Firebase UID + last login fields.
+- Allowed `pending_onboarding` role in auth typing to keep demo signup stable.
+
+**Impact:**
+- Vercel build no longer fails on missing `upsertUserByFirebaseUid`.
+- Demo signup path stays consistent across schema versions.
+
+---
+
 ### Update: 2026-01-21 - Demo Migration Push + Register Fallback Guard
 
 **Status:** ✅ **UPDATED**

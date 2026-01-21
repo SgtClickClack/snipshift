@@ -1,3 +1,33 @@
+#### 2026-01-21: Register Upsert Repo Export + Schema Sync
+
+**Core Components**
+- Users repository (`api/_src/repositories/users.repository.ts`)
+- Users schema + migration (`api/_src/db/schema/users.ts`, `api/_src/db/migrations/0034_add_firebase_uid_last_login.sql`)
+- Auth middleware role handling (`api/_src/middleware/auth.ts`)
+
+**Key Features**
+- Ensured Firebase UID upsert repository export is available for `/api/register` builds.
+- Added Firebase UID + last login fields and role defaults to keep schema aligned.
+- Updated auth typing to allow `pending_onboarding` role during demo signup.
+
+**Integration Points**
+- API: `POST /api/register`, `GET /api/me`
+- DB: `users.firebase_uid`, `users.last_login`, `user_role` enum default
+
+**File Paths**
+- `api/_src/repositories/users.repository.ts`
+- `api/_src/db/schema/users.ts`
+- `api/_src/db/migrations/0034_add_firebase_uid_last_login.sql`
+- `api/_src/middleware/auth.ts`
+
+**Next Priority Task**
+- Confirm Vercel build passes and demo signup completes without 500s.
+
+**Code Organization & Quality**
+- Kept schema and repo updates scoped to user creation/upsert logic.
+
+---
+
 #### 2026-01-21: Demo Migration Push + Register Fallback Guard
 
 **Core Components**

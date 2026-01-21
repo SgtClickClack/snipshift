@@ -9,25 +9,29 @@ export let mockUsers: typeof users.$inferSelect[] = [];
  * Normalize role values: 'venue' maps to 'business' internally for permissions.
  * This ensures consistent role handling across the system.
  */
-function normalizeRole(role: string | null | undefined): 'professional' | 'business' | 'admin' | 'trainer' | 'hub' {
-  if (!role) return 'professional';
+function normalizeRole(
+  role: string | null | undefined
+): 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding' {
+  if (!role) return 'pending_onboarding';
   const normalized = role.toLowerCase();
   // Map 'venue' to 'business' for internal consistency
   if (normalized === 'venue') return 'business';
   // Return valid roles as-is, default to 'professional' for unknown values
-  if (['professional', 'business', 'admin', 'trainer', 'hub'].includes(normalized)) {
-    return normalized as 'professional' | 'business' | 'admin' | 'trainer' | 'hub';
+  if (['professional', 'business', 'admin', 'trainer', 'hub', 'pending_onboarding'].includes(normalized)) {
+    return normalized as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding';
   }
-  return 'professional';
+  return 'pending_onboarding';
 }
 
 /**
  * Normalize roles array: applies normalizeRole to each role and removes duplicates.
  */
-function normalizeRolesArray(roles: string[] | null | undefined): Array<'professional' | 'business' | 'admin' | 'trainer' | 'hub'> {
+function normalizeRolesArray(
+  roles: string[] | null | undefined
+): Array<'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding'> {
   if (!Array.isArray(roles) || roles.length === 0) return [];
   const normalized = roles.map(r => normalizeRole(r));
-  return Array.from(new Set(normalized)) as Array<'professional' | 'business' | 'admin' | 'trainer' | 'hub'>;
+  return Array.from(new Set(normalized)) as Array<'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding'>;
 }
 
 /**
@@ -93,7 +97,9 @@ export async function createUser(
     email: string;
     name: string;
     passwordHash?: string;
-    role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub';
+    role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding';
+    firebaseUid?: string;
+    lastLogin?: Date;
   }
 ): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
@@ -103,8 +109,10 @@ export async function createUser(
       id: `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       email: userData.email,
       name: userData.name,
-      role: normalizeRole(userData.role),
-      roles: [normalizeRole(userData.role)],
+        role: normalizeRole(userData.role),
+        roles: [normalizeRole(userData.role)],
+        firebaseUid: userData.firebaseUid || null,
+        lastLogin: userData.lastLogin || null,
       passwordHash: userData.passwordHash || null,
       bio: null,
       phone: null,
@@ -168,6 +176,8 @@ export async function createUser(
         passwordHash: userData.passwordHash || null,
         role: normalizedRole,
         roles: [normalizedRole],
+        firebaseUid: userData.firebaseUid || null,
+        lastLogin: userData.lastLogin || null,
         isActive: true, // Explicitly set isActive to ensure it's always provided
         stripeOnboardingComplete: false, // Explicitly set to ensure it's always provided
       })
@@ -194,6 +204,80 @@ export async function createUser(
       return legacyUser ? normalizeUserRoles(legacyUser) : null;
     }
 
+    throw error;
+  }
+}
+
+export async function upsertUserByFirebaseUid(userData: {
+  firebaseUid: string;
+  email: string;
+  name: string;
+  role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding';
+}): Promise<typeof users.$inferSelect | null> {
+  const db = getDb();
+  if (!db) {
+    const existing = mockUsers.find((u) => u.firebaseUid === userData.firebaseUid);
+    if (existing) {
+      existing.lastLogin = new Date();
+      existing.updatedAt = new Date();
+      return normalizeUserRoles(existing);
+    }
+    return createUser({
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
+      firebaseUid: userData.firebaseUid,
+      lastLogin: new Date(),
+    });
+  }
+
+  const normalizedRole = normalizeRole(userData.role);
+  const isUndefinedColumnError = (error: any): boolean => {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    return error?.code === '42703' || (message.includes('column') && message.includes('does not exist'));
+  };
+
+  try {
+    const [upsertedUser] = await db
+      .insert(users)
+      .values({
+        email: userData.email,
+        name: userData.name,
+        role: normalizedRole,
+        roles: [normalizedRole],
+        firebaseUid: userData.firebaseUid,
+        lastLogin: new Date(),
+        isActive: true,
+        stripeOnboardingComplete: false,
+      })
+      .onConflictDoUpdate({
+        target: users.firebaseUid,
+        set: {
+          email: userData.email,
+          name: userData.name,
+          lastLogin: new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return upsertedUser ? normalizeUserRoles(upsertedUser) : null;
+  } catch (error: any) {
+    if (isUndefinedColumnError(error)) {
+      console.warn('[upsertUserByFirebaseUid] Missing columns, falling back to email lookup', {
+        message: error?.message,
+        code: error?.code,
+      });
+      const existing = await getUserByEmail(userData.email);
+      if (existing) {
+        return existing;
+      }
+      return createUser({
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+      });
+    }
     throw error;
   }
 }
@@ -335,7 +419,9 @@ export async function deleteUser(id: string): Promise<boolean> {
 /**
  * Get user count by role
  */
-export async function getUserCountByRole(role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub'): Promise<number> {
+export async function getUserCountByRole(
+  role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding'
+): Promise<number> {
   const db = getDb();
   if (!db) {
     return mockUsers.filter(u => u.role === role).length;
@@ -352,7 +438,9 @@ export async function getUserCountByRole(role: 'professional' | 'business' | 'ad
 /**
  * Get active user count by role
  */
-export async function getActiveUserCountByRole(role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub'): Promise<number> {
+export async function getActiveUserCountByRole(
+  role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding'
+): Promise<number> {
   const db = getDb();
   if (!db) {
     return mockUsers.filter(u => u.role === role && (u.isActive !== false)).length;
