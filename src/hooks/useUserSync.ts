@@ -65,7 +65,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     enabled = true,
   } = options;
 
-  const { user, token, isAuthenticated, isAuthReady } = useAuth();
+  const { user, token, isAuthReady, clearUserState } = useAuth();
   const [isSynced, setIsSynced] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
   }, []);
 
   const pollUserProfile = async (): Promise<boolean> => {
-    if (!token || !isAuthReady) {
+    if (!token || !isAuthReady || !auth.currentUser) {
       return false;
     }
 
@@ -110,6 +110,15 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
           }
           return true;
         }
+      } else if (res.status === 401) {
+        logger.warn('useUserSync', 'Received 401 while syncing user profile, clearing local state');
+        if (isMountedRef.current) {
+          setIsSynced(false);
+          setIsPolling(false);
+          setError('Your session took a break. Please log back in to continue.');
+        }
+        clearUserState('useUserSync:401');
+        return true;
       } else if (res.status === 404) {
         // User doesn't exist yet - this is expected during onboarding
         logger.debug('useUserSync', 'User profile not found (404), will retry');
@@ -126,6 +135,12 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
   const startPolling = () => {
     if (!enabled || !isAuthReady) {
+      return;
+    }
+
+    if (!token || !auth.currentUser) {
+      setIsSynced(false);
+      setIsPolling(false);
       return;
     }
 
@@ -201,9 +216,10 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
     // Check if there's a Firebase session (user might have signed in but profile not yet created)
     const hasFirebaseSession = !!auth.currentUser || !!token;
+    const hasActiveToken = !!token && !!auth.currentUser;
 
     // Reset state when auth state changes
-    if (!isAuthReady || !hasFirebaseSession) {
+    if (!isAuthReady || !hasFirebaseSession || !hasActiveToken) {
       setIsSynced(false);
       setIsPolling(false);
       return;

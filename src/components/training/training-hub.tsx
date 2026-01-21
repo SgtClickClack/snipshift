@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -173,8 +173,8 @@ export default function TrainingHub() {
   const handlePurchase = (content: TrainingModule) => {
     if (!user) {
       toast({
-        title: "Please log in",
-        description: "You need to be logged in to purchase content.",
+        title: "Your session took a break.",
+        description: "Please log back in to continue.",
         variant: "destructive",
       });
       return;

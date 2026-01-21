@@ -154,21 +154,48 @@ export async function createUser(
   // Try to insert user, handle duplicate email gracefully if needed (though caller should handle unique constraint violation)
   // Normalize role before inserting
   const normalizedRole = normalizeRole(userData.role);
-  
-  const [newUser] = await db
-    .insert(users)
-    .values({
-      email: userData.email,
-      name: userData.name,
-      passwordHash: userData.passwordHash || null,
-      role: normalizedRole,
-      roles: [normalizedRole],
-      isActive: true, // Explicitly set isActive to ensure it's always provided
-      stripeOnboardingComplete: false, // Explicitly set to ensure it's always provided
-    })
-    .returning();
+  const isUndefinedColumnError = (error: any): boolean => {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    return error?.code === '42703' || (message.includes('column') && message.includes('does not exist'));
+  };
 
-  return newUser ? normalizeUserRoles(newUser) : null;
+  try {
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email: userData.email,
+        name: userData.name,
+        passwordHash: userData.passwordHash || null,
+        role: normalizedRole,
+        roles: [normalizedRole],
+        isActive: true, // Explicitly set isActive to ensure it's always provided
+        stripeOnboardingComplete: false, // Explicitly set to ensure it's always provided
+      })
+      .returning();
+
+    return newUser ? normalizeUserRoles(newUser) : null;
+  } catch (error: any) {
+    if (isUndefinedColumnError(error)) {
+      console.warn('[createUser] Falling back to legacy insert (missing columns)', {
+        message: error?.message,
+        code: error?.code,
+      });
+
+      const [legacyUser] = await db
+        .insert(users)
+        .values({
+          email: userData.email,
+          name: userData.name,
+          passwordHash: userData.passwordHash || null,
+          role: normalizedRole,
+        })
+        .returning();
+
+      return legacyUser ? normalizeUserRoles(legacyUser) : null;
+    }
+
+    throw error;
+  }
 }
 
 export async function getUserByEmail(email: string): Promise<typeof users.$inferSelect | null> {

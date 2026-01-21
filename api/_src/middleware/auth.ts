@@ -6,7 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import * as usersRepo from '../repositories/users.repository.js';
-import { auth } from '../config/firebase.js';
+import { getAuth, getFirebaseInitError } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 
 /**
@@ -88,14 +88,17 @@ export function authenticateUser(
 
   try {
     // Check if auth service is available
-    const firebaseAuth = auth;
+    const firebaseAuth = getAuth();
     if (!firebaseAuth) {
-      console.error('[AUTH] Firebase auth service is not initialized');
+      const initError = getFirebaseInitError();
+      console.error('[AUTH] Firebase auth service is not initialized', {
+        message: initError?.message,
+      });
       console.error('[AUTH] Check environment variables: FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
-      res.status(500).json({ 
-        message: 'Internal Server Error: Auth service unavailable',
+      res.status(503).json({ 
+        message: 'Authentication service unavailable',
         error: 'Firebase Admin not initialized',
-        details: 'The server failed to initialize the authentication service. Please check server logs for configuration errors.'
+        code: 'auth/init-failed',
       });
       return;
     }

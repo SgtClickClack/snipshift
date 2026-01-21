@@ -390,6 +390,9 @@ export default function Onboarding() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isSynced, isPolling } = useUserSync({ enabled: true });
+  const userId = user?.id ?? null;
+  const userCurrentRole = user?.currentRole ?? null;
+  const userRolesKey = Array.isArray(user?.roles) ? user.roles.join('|') : '';
 
   // Initialize state machine
   const [machineContext, dispatch] = useReducer(onboardingReducer, {
@@ -478,7 +481,7 @@ export default function Onboarding() {
       // In waitlist-only flow, allow proceeding without user.id
       setIsVerifyingUser(false);
     }
-  }, [isAuthReady, isLoading, isAuthenticated, user, navigate, refreshUser, machineContext.isWaitlistOnly]);
+  }, [isAuthReady, isLoading, isAuthenticated, userId, navigate, refreshUser, machineContext.isWaitlistOnly]);
 
   // Initialize from sessionStorage (waitlist flow)
   useEffect(() => {
@@ -504,7 +507,7 @@ export default function Onboarding() {
       sessionStorage.removeItem('signupRolePreference');
       dispatch({ type: 'INITIALIZE_FROM_SESSION', role: 'professional' });
     }
-  }, [navigate, isVerifyingUser, user, machineContext.stepIndex, dispatch]);
+  }, [navigate, isVerifyingUser, userCurrentRole, userRolesKey, machineContext.stepIndex, dispatch]);
 
   // Save role to database when venue is selected
   useEffect(() => {
@@ -648,7 +651,7 @@ export default function Onboarding() {
       hourlyRatePreference: user.hourlyRatePreference != null ? String(user.hourlyRatePreference) : prev.hourlyRatePreference,
       bio: user.bio || prev.bio,
     }));
-  }, [user]);
+  }, [userId]);
 
   // Expose user state and isPolling on window for E2E testing
   useEffect(() => {
@@ -656,7 +659,7 @@ export default function Onboarding() {
       window.user = user;
       window.isPolling = isPolling;
     }
-  }, [user, isPolling]);
+  }, [userId, isPolling]);
 
   const rsaUploaded = Boolean(user?.profile?.rsa_cert_url || user?.rsaCertificateUrl);
   const idUploaded = Boolean(user?.profile?.id_document_url);
@@ -797,27 +800,27 @@ export default function Onboarding() {
     if (!machineContext.isWaitlistOnly && machineContext.state !== 'ROLE_SELECTION' && !user?.id) {
       console.error('[Onboarding] User ID not found, attempting to refresh session...');
       toast({ 
-        title: 'Session expired', 
-        description: 'Please wait while we refresh your session...', 
-        variant: 'destructive' 
+        title: 'Your session took a break.',
+        description: 'Please log back in to continue.',
+        variant: 'destructive'
       });
       try {
         await refreshUser();
         // If still no user after refresh, show error
         if (!user?.id) {
           toast({ 
-            title: 'Authentication required', 
-            description: 'Please sign in again to continue.', 
-            variant: 'destructive' 
+            title: 'Your session took a break.',
+            description: 'Please log back in to continue.',
+            variant: 'destructive'
           });
           navigate('/login', { replace: true });
         }
       } catch (refreshError) {
         console.error('[Onboarding] Failed to refresh user:', refreshError);
         toast({ 
-          title: 'Session error', 
-          description: 'Please sign in again to continue.', 
-          variant: 'destructive' 
+          title: 'Your session took a break.',
+          description: 'Please log back in to continue.',
+          variant: 'destructive'
         });
         navigate('/login', { replace: true });
       }
