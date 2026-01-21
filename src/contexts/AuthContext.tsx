@@ -528,6 +528,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setToken(null);
       } finally {
         hasResolvedAuthState.current = true;
+        hasInitialAuthResponse.current = true;
         setInitializing(false);
         setIsLoading(false);
         setIsAuthReady(true);
@@ -919,8 +920,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     safetyTimeoutRef.current = null;
                   }
                   
-                  // Redirect to login with error message
-                  handleRedirect(null);
+                  const pathname = locationRef.current.pathname;
+                  const isOnboardingOrSignup =
+                    pathname === '/signup' || pathname.startsWith('/onboarding');
+                  const shouldRedirectToLogin =
+                    pathname.includes('/dashboard') || pathname.startsWith('/profile');
+
+                  if (isOnboardingOrSignup) {
+                    logger.warn('AuthContext', '401 on onboarding/signup - staying on page', {
+                      pathname,
+                    });
+                    return;
+                  }
+
+                  if (shouldRedirectToLogin) {
+                    navigateRef.current('/login', { replace: true });
+                  } else {
+                    logger.warn('AuthContext', '401 received outside dashboard/profile, staying put', {
+                      pathname,
+                    });
+                  }
                   return;
                 }
                 
