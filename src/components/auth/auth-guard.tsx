@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, DEMO_AUTH_BYPASS_LOADING } from '@/contexts/AuthContext';
 import { getDashboardRoute, isBusinessRole } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { NonBlockingAuthWrapper } from '@/components/ui/auth-loading-overlay';
@@ -110,6 +110,8 @@ export function AuthGuard({
   // EXCEPTION: Allow /onboarding if there's a Firebase session OR E2E mock token (user just signed in but no profile yet)
   // This is the "PENDING STATE" - Firebase user exists but no Postgres record yet (new Google signup)
   if (requireAuth && !isAuthenticated) {
+    // DEMO: Bypass auth requirement so /dashboard and other requireAuth routes render (e.g. /dashboard -> DashboardRedirect)
+    if (DEMO_AUTH_BYPASS_LOADING) return <>{children}</>;
     // PENDING STATE HANDLER: Allow ALL onboarding routes if there's a Firebase session
     // This covers: /onboarding, /onboarding/professional, /onboarding/hub, etc.
     // New Google users have Firebase auth but no Postgres record until onboarding completes

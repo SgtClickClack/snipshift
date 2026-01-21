@@ -9,7 +9,8 @@ import { useToast } from '@/hooks/useToast';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
-const DEMO_AUTH_BYPASS_LOADING = true;
+/** When true: skip auth loading gate, and do not redirect to /login or /signup on 404/401. */
+export const DEMO_AUTH_BYPASS_LOADING = true;
 
 export interface User {
   id: string;
@@ -436,6 +437,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     const target = deriveRoleHome(u, pathname);
+
+    // DEMO: Do not redirect to /login when user is null
+    if (!u && DEMO_AUTH_BYPASS_LOADING) {
+      pendingRedirect.current = false;
+      setIsRedirecting(false);
+      return;
+    }
 
     // Avoid redirect loops / churn.
     if (pathname === target) {
@@ -944,6 +952,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     });
                     return;
                   }
+                  // DEMO: Do not redirect to /login on 401 circuit breaker
+                  if (DEMO_AUTH_BYPASS_LOADING) return;
 
                   if (shouldRedirectToLogin) {
                     navigateRef.current('/login', { replace: true });
@@ -1039,12 +1049,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     setIsRoleLoading(false);
                     // ONLY redirect to onboarding if NOT on a protected public path
                     // The landing page should always be viewable
+                    // DEMO: Skip redirect to /onboarding on 401 retry 404/401
+                    if (DEMO_AUTH_BYPASS_LOADING) {
+                      setIsRedirecting(false);
+                      pendingRedirect.current = false;
+                      setIsLoading(false);
+                      setIsAuthReady(true);
+                      if (safetyTimeoutRef.current) {
+                        clearTimeout(safetyTimeoutRef.current);
+                        safetyTimeoutRef.current = null;
+                      }
+                      return;
+                    }
                     if (!isProtectedPublicPath(locationRef.current.pathname)) {
                       navigateRef.current('/onboarding', { replace: true });
                     }
                     setIsRedirecting(false);
                     pendingRedirect.current = false;
-                    
+
                     // Set loading false after handling the error
                     setIsLoading(false);
                     setIsAuthReady(true);
@@ -1137,12 +1159,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // Redirect to /signup for fresh start (user will choose role there)
                 // ONLY redirect if NOT on a protected public path
                 // The landing page should always be viewable
+                // DEMO: Skip redirect to /signup on 404 so /dashboard is not bounced to signup
+                if (DEMO_AUTH_BYPASS_LOADING) {
+                  setIsRedirecting(false);
+                  pendingRedirect.current = false;
+                  setIsLoading(false);
+                  setIsAuthReady(true);
+                  if (safetyTimeoutRef.current) {
+                    clearTimeout(safetyTimeoutRef.current);
+                    safetyTimeoutRef.current = null;
+                  }
+                  return;
+                }
                 if (!isProtectedPublicPath(locationRef.current.pathname)) {
                   navigateRef.current('/signup', { replace: true });
                 }
                 setIsRedirecting(false);
                 pendingRedirect.current = false;
-                
+
                 // Set loading false after handling the error
                 setIsLoading(false);
                 setIsAuthReady(true);
@@ -1476,7 +1510,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         logger.debug('AuthContext', 'refreshUser: Redirecting to signup');
         setUser(null);
         setIsRoleLoading(false);
-        
+
         // Clear any local onboarding flags and state
         try {
           localStorage.removeItem('onboarding_step');
@@ -1491,7 +1525,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Ignore storage errors (e.g., private browsing mode)
           logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
         }
-        
+        // DEMO: Skip redirect to /signup on 404
+        if (DEMO_AUTH_BYPASS_LOADING) {
+          setIsRedirecting(false);
+          pendingRedirect.current = false;
+          return;
+        }
         navigateRef.current('/signup', { replace: true });
         setIsRedirecting(false);
         pendingRedirect.current = false;
@@ -1541,7 +1580,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             logger.debug('AuthContext', 'refreshUser: Redirecting to signup');
             setUser(null);
             setIsRoleLoading(false);
-            
+
             // Clear any local onboarding flags and state
             try {
               localStorage.removeItem('onboarding_step');
@@ -1556,7 +1595,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Ignore storage errors (e.g., private browsing mode)
               logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
             }
-            
+            // DEMO: Skip redirect to /signup on 401 retry 404/401
+            if (DEMO_AUTH_BYPASS_LOADING) {
+              setIsRedirecting(false);
+              pendingRedirect.current = false;
+              return;
+            }
             navigateRef.current('/signup', { replace: true });
             setIsRedirecting(false);
             pendingRedirect.current = false;
@@ -1578,7 +1622,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             logger.debug('AuthContext', 'refreshUser: Redirecting to signup');
             setUser(null);
             setIsRoleLoading(false);
-            
+
             // Clear any local onboarding flags and state
             try {
               localStorage.removeItem('onboarding_step');
@@ -1593,7 +1637,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Ignore storage errors (e.g., private browsing mode)
               logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
             }
-            
+            // DEMO: Skip redirect to /signup on 401 retry else
+            if (DEMO_AUTH_BYPASS_LOADING) {
+              setIsRedirecting(false);
+              pendingRedirect.current = false;
+              return;
+            }
             navigateRef.current('/signup', { replace: true });
             setIsRedirecting(false);
             pendingRedirect.current = false;
@@ -1618,7 +1667,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(null);
           setToken(null);
           setIsRoleLoading(false);
-          
+
           // Clear any local onboarding flags and state
           try {
             localStorage.removeItem('onboarding_step');
@@ -1633,7 +1682,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Ignore storage errors (e.g., private browsing mode)
             logger.debug('AuthContext', 'Failed to clear storage flags', storageError);
           }
-          
+          // DEMO: Skip redirect to /signup on 401 token refresh failure
+          if (DEMO_AUTH_BYPASS_LOADING) {
+            setIsRedirecting(false);
+            pendingRedirect.current = false;
+            return;
+          }
           navigateRef.current('/signup', { replace: true });
           setIsRedirecting(false);
           pendingRedirect.current = false;
