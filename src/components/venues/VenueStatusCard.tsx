@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, AlertTriangle, Loader2, ExternalLink, CreditCard } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { isDemoMode, DEMO_VENUE } from '@/lib/demo-data';
 
 interface VenueData {
   id: string;
@@ -22,12 +23,18 @@ interface VenueData {
 /**
  * VenueStatusCard - Displays venue activation status and onboarding CTA
  * Shows "Verified" badge when active, "Action Required" when pending
+ * 
+ * DEMO MODE: When isDemoMode() returns true, returns hardcoded DEMO_VENUE
+ * data immediately without making API calls.
  */
 export function VenueStatusCard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  
+  // DEMO MODE: Return demo venue data immediately
+  const demoMode = isDemoMode();
 
   // Check for onboarding completion callback
   React.useEffect(() => {
@@ -56,10 +63,15 @@ export function VenueStatusCard() {
     }
   }, [searchParams, toast, queryClient, user?.id, setSearchParams]);
 
-  // Fetch venue status
+  // Fetch venue status (DEMO MODE: return hardcoded data immediately)
   const { data: venue, isLoading, error } = useQuery<VenueData | null>({
     queryKey: ['venue-status', user?.id],
     queryFn: async () => {
+      // DEMO MODE BYPASS: Return demo venue data immediately
+      if (demoMode) {
+        return DEMO_VENUE as VenueData;
+      }
+      
       try {
         const res = await apiRequest('GET', '/api/venues/me');
         return res.json();
@@ -72,11 +84,12 @@ export function VenueStatusCard() {
         throw err;
       }
     },
-    enabled: !!user?.id && !!user?.roles?.includes('venue_owner') && (user.currentRole === 'hub' || user.currentRole === 'business'),
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds to catch status updates
+    enabled: demoMode || (!!user?.id && !!user?.roles?.includes('venue_owner') && (user.currentRole === 'hub' || user.currentRole === 'business')),
+    staleTime: demoMode ? Infinity : 2 * 60 * 1000, // Demo mode: never refetch
+    refetchInterval: demoMode ? false : 30 * 1000, // Demo mode: no refetch
     retry: (failureCount, error) => {
-      // Don't retry on 404 errors (user doesn't have a venue)
+      // Don't retry in demo mode or on 404 errors
+      if (demoMode) return false;
       if (error instanceof Error && error.message.includes('404:')) {
         return false;
       }

@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { getDashboardRoute, normalizeVenueToBusiness, isBusinessRole } from '@/lib/roles';
 import { useToast } from '@/hooks/useToast';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { isDemoMode, DEMO_USER } from '@/lib/demo-data';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
 /** When true: skip auth loading gate, and do not redirect to /login or /signup on 404/401. */
@@ -2293,5 +2294,19 @@ export function useAuth() {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
+  // DEMO MODE: Override user with demo user data to bypass auth checks
+  // This allows the dashboard to render even without a real authenticated user
+  if (isDemoMode() && !context.user) {
+    return {
+      ...context,
+      user: DEMO_USER as User,
+      isLoading: false,
+      isAuthReady: true,
+      isRoleLoading: false,
+      isAuthenticated: true,
+    };
+  }
+  
   return context;
 }

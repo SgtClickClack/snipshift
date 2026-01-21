@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isDemoMode, DEMO_USER, DEMO_JOBS, DEMO_APPLICATIONS, DEMO_STATS, DEMO_SHIFT_APPLICATIONS } from "@/lib/demo-data";
 import {
   Dialog,
   DialogContent,
@@ -96,17 +97,26 @@ export default function VenueDashboard() {
   // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
   // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
   const hasValidRole = isBusinessRole(user?.currentRole);
+  
+  // DEMO MODE: Bypass all loading states and render dashboard immediately with mock data
+  const demoMode = isDemoMode();
+  if (demoMode) {
+    return <VenueDashboardContent demoMode={true} />;
+  }
 
   if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
     return <VenueDashboardSkeleton />;
   }
 
-  return <VenueDashboardContent />;
+  return <VenueDashboardContent demoMode={false} />;
 }
 
-function VenueDashboardContent() {
-  const { user, refreshUser } = useAuth();
+function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
+  const { user: authUser, refreshUser } = useAuth();
   const { toast } = useToast();
+  
+  // DEMO MODE: Use demo user data when real user is not available
+  const user = demoMode ? (DEMO_USER as any) : authUser;
   
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -225,10 +235,15 @@ function VenueDashboardContent() {
   const { data: applications = [], isLoading: isLoadingApplications, refetch: refetchApplications } = useQuery({
     queryKey: ['/api/applications'],
     queryFn: async () => {
+      // DEMO MODE: Return demo applications immediately
+      if (demoMode) {
+        return DEMO_APPLICATIONS;
+      }
       const res = await apiRequest("GET", "/api/applications");
       return res.json();
     },
-    enabled: activeView === 'applications'
+    enabled: demoMode || activeView === 'applications',
+    staleTime: demoMode ? Infinity : undefined,
   });
 
   // Filter to show only pending applications by default
@@ -278,8 +293,16 @@ function VenueDashboardContent() {
 
   const { data: jobs = [], isLoading } = useQuery<any[]>({
     queryKey: ['shop-shifts', user?.id],
-    queryFn: () => fetchShopShifts(user!.id),
-    enabled: !!user?.id,
+    queryFn: () => {
+      // DEMO MODE: Return demo jobs immediately
+      if (demoMode) {
+        return Promise.resolve(DEMO_JOBS);
+      }
+      return fetchShopShifts(user!.id);
+    },
+    enabled: demoMode || !!user?.id,
+    staleTime: demoMode ? Infinity : undefined,
+    refetchInterval: demoMode ? false : undefined,
   });
 
   // Memoize bookings transformation to prevent unnecessary Calendar re-renders
@@ -650,21 +673,31 @@ function VenueDashboardContent() {
   const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
+      // DEMO MODE: Return demo stats immediately
+      if (demoMode) {
+        return DEMO_STATS;
+      }
       const res = await apiRequest("GET", "/api/analytics/dashboard");
       return res.json();
     },
-    enabled: !!user,
+    enabled: demoMode || !!user,
+    staleTime: demoMode ? Infinity : undefined,
   });
 
   // Fetch shift message unread count
   const { data: shiftMessageUnreadData } = useQuery({
     queryKey: ['shift-messages-unread-count'],
     queryFn: async () => {
+      // DEMO MODE: Return demo unread count immediately
+      if (demoMode) {
+        return { unreadCount: 3 };
+      }
       const res = await apiRequest("GET", "/api/shifts/messages/unread-count");
       return res.json();
     },
-    enabled: !!user,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: demoMode || !!user,
+    refetchInterval: demoMode ? false : 30000, // Don't refetch in demo mode
+    staleTime: demoMode ? Infinity : undefined,
   });
 
   // Use API data for stats, but prefer local jobs calculation for consistency with the list view
@@ -678,7 +711,8 @@ function VenueDashboardContent() {
     monthlyHires: dashboardStats?.summary?.monthlyHires ?? 0
   };
 
-  if (!user || !isBusinessRole(user.currentRole)) {
+  // DEMO MODE: Skip role check
+  if (!demoMode && (!user || !isBusinessRole(user.currentRole))) {
     return <div>Access denied</div>;
   }
 
@@ -1669,11 +1703,19 @@ function CandidatesDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const demoMode = isDemoMode();
 
   const { data: applications, isLoading } = useQuery({
     queryKey: ['shift-applications', shiftId],
-    queryFn: () => getShiftApplications(shiftId!),
-    enabled: !!shiftId && isOpen,
+    queryFn: () => {
+      // DEMO MODE: Return demo shift applications
+      if (demoMode) {
+        return Promise.resolve(DEMO_SHIFT_APPLICATIONS.filter(app => app.shiftId === shiftId));
+      }
+      return getShiftApplications(shiftId!);
+    },
+    enabled: (demoMode || !!shiftId) && isOpen,
+    staleTime: demoMode ? Infinity : undefined,
   });
 
   const updateStatusMutation = useMutation({
