@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { VenueProfileForm } from '@/components/onboarding/VenueProfileForm';
 import { ConfettiAnimation } from '@/components/onboarding/ConfettiAnimation';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { logger } from '@/lib/logger';
 
 const TOTAL_STEPS = 5;
 
@@ -168,7 +169,7 @@ function onboardingReducer(
           return context;
         }
         // Valid transition: professional role selected -> move to PERSONAL_DETAILS
-        console.log('[Onboarding FSM] Transitioning ROLE_SELECTION -> PERSONAL_DETAILS', {
+        logger.debug('Onboarding', '[Onboarding FSM] Transitioning ROLE_SELECTION -> PERSONAL_DETAILS', {
           selectedRole: context.selectedRole,
           newStepIndex: 1
         });
@@ -182,7 +183,7 @@ function onboardingReducer(
       // Transition from PERSONAL_DETAILS: venues go to VENUE_DETAILS, professionals go to DOCUMENT_VERIFICATION
       if (context.state === 'PERSONAL_DETAILS') {
         if (context.selectedRole === 'venue') {
-          console.log('[Onboarding FSM] Transitioning PERSONAL_DETAILS -> VENUE_DETAILS', {
+          logger.debug('Onboarding', '[Onboarding FSM] Transitioning PERSONAL_DETAILS -> VENUE_DETAILS', {
             selectedRole: context.selectedRole,
             newStepIndex: 2
           });
@@ -357,7 +358,7 @@ const loadFromStorage = (): OnboardingStoragePayload | null => {
     const now = Date.now();
     const age = now - payload.timestamp;
     if (age > STORAGE_TTL_MS) {
-      console.log('[Onboarding] Storage data expired, clearing...');
+      logger.debug('Onboarding', '[Onboarding] Storage data expired, clearing...');
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }
@@ -448,7 +449,7 @@ export default function Onboarding() {
     // Force session refresh if user is stale or missing
     const refreshSessionIfNeeded = async () => {
       if (!user && !isLoading && isAuthenticated) {
-        console.log('[Onboarding] User object is null but authenticated, refreshing session...');
+        logger.debug('Onboarding', '[Onboarding] User object is null but authenticated, refreshing session...');
         try {
           await refreshUser();
         } catch (error) {
@@ -516,7 +517,7 @@ export default function Onboarding() {
     
     const saveVenueRole = async () => {
       try {
-        console.log('[Onboarding] Saving venue role to database...');
+        logger.debug('Onboarding', '[Onboarding] Saving venue role to database...');
         const response = await apiRequest('POST', '/api/users/role', {
           role: 'venue' as 'business',
         });
@@ -595,7 +596,7 @@ export default function Onboarding() {
           variant: 'default',
         });
         
-        console.log('[Onboarding] Hydrated from storage:', {
+        logger.debug('Onboarding', '[Onboarding] Hydrated from storage:', {
           state: stored.state,
           selectedRole: stored.selectedRole,
         });
@@ -628,7 +629,7 @@ export default function Onboarding() {
   useEffect(() => {
     if (machineContext.state === 'COMPLETED') {
       clearStorage();
-      console.log('[Onboarding] Cleared storage on completion');
+      logger.debug('Onboarding', '[Onboarding] Cleared storage on completion');
     }
   }, [machineContext.state]);
 
@@ -825,7 +826,7 @@ export default function Onboarding() {
     
     // Handle role selection transition
     if (machineContext.state === 'ROLE_SELECTION') {
-      console.log('[Onboarding] Transitioning to Step 1', { 
+      logger.debug('Onboarding', '[Onboarding] Transitioning to Step 1', { 
         selectedRole: machineContext.selectedRole,
         canProceed,
         stepIndex: machineContext.stepIndex,
@@ -841,7 +842,7 @@ export default function Onboarding() {
       // This transition ONLY checks for selectedRole, not user.id or isVerifyingUser
       dispatch({ type: 'NEXT' });
       
-      console.log('[Onboarding] Step 1 transition dispatched', {
+      logger.debug('Onboarding', '[Onboarding] Step 1 transition dispatched', {
         newState: 'PERSONAL_DETAILS',
         newStepIndex: 1
       });
@@ -938,13 +939,13 @@ export default function Onboarding() {
                     });
                     return;
                   }
-                  console.log('[Onboarding] Role selected: professional', {
+                  logger.debug('Onboarding', '[Onboarding] Role selected: professional', {
                     currentState: machineContext.state,
                     currentStepIndex: machineContext.stepIndex,
                     selectedRole: machineContext.selectedRole
                   });
                   dispatch({ type: 'SELECT_ROLE', role: 'professional' });
-                  console.log('[Onboarding] Role selection dispatched');
+                  logger.debug('Onboarding', '[Onboarding] Role selection dispatched');
                 }}
                 disabled={!machineContext.isWaitlistOnly && (!user || !user.id || isPolling)}
                 className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(!machineContext.isWaitlistOnly && (!user || !user.id || isPolling)) ? 'opacity-50 cursor-not-allowed' : ''}`}

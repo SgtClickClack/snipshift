@@ -12,9 +12,13 @@ let stripePromise: Promise<Stripe | null> | null = null;
 export const getStripe = () => {
   if (!stripePromise) {
     const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    const isProduction = import.meta.env.PROD;
     
     if (!publishableKey) {
       logger.error('Stripe', 'VITE_STRIPE_PUBLISHABLE_KEY is not set. Stripe functionality will be disabled.');
+      stripePromise = Promise.resolve(null);
+    } else if (isProduction && publishableKey.startsWith('pk_test')) {
+      logger.error('Stripe', 'Production build detected with a test publishable key. Stripe is disabled.');
       stripePromise = Promise.resolve(null);
     } else {
       stripePromise = loadStripe(publishableKey);

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
+import { logger } from '@/lib/logger';
 
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
 const AUTH_BRIDGE_TOKEN_KEY = 'hospogo_bridge_token';
@@ -34,12 +35,12 @@ export default function AuthBridgePage() {
             const token = await currentUser.getIdToken(true);
             const tokenPayload = JSON.stringify({ token, uid, ts: Date.now() });
             localStorage.setItem(AUTH_BRIDGE_TOKEN_KEY, tokenPayload);
-            console.log('[Bridge] Token written to localStorage as fallback');
+            logger.debug('Bridge', '[Bridge] Token written to localStorage as fallback');
           } else {
             // Fallback: store uid only if we can't get token
             const fallbackPayload = JSON.stringify({ uid, ts: Date.now() });
             localStorage.setItem(AUTH_BRIDGE_TOKEN_KEY, fallbackPayload);
-            console.log('[Bridge] UID written to localStorage (token unavailable)');
+            logger.debug('Bridge', '[Bridge] UID written to localStorage (token unavailable)');
           }
         } catch (error) {
           console.warn('[Bridge] Failed to get token, storing uid only', error);

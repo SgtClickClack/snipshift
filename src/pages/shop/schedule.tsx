@@ -327,7 +327,7 @@ export default function ShopSchedulePage() {
     onError: (error: any) => {
       toast({
         title: 'Create failed',
-        description: error?.message || 'Unable to create shift',
+        description: 'Something went wrong. Give it another shot or reach out to us at info@hospogo.com.',
         variant: 'destructive',
       });
     },

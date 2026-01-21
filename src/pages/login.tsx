@@ -17,6 +17,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
   const { user, isAuthReady, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
@@ -110,8 +111,8 @@ export default function LoginPage() {
         timestamp: new Date().toISOString(),
       });
       
-      let errorTitle = "Login failed";
-      let errorDescription = "Invalid email or password";
+      let errorTitle = "Something went wrong";
+      let errorDescription = supportMessage;
       
       // Handle Firebase auth errors with specific error codes
       if (code) {
@@ -150,8 +151,8 @@ export default function LoginPage() {
             errorDescription = "Please try again later";
             break;
           case 'auth/internal-error':
-            errorTitle = "Server error";
-            errorDescription = "Something went wrong. Please try again";
+            errorTitle = "Something went wrong";
+            errorDescription = supportMessage;
             break;
           case 'auth/invalid-email':
             errorTitle = "Invalid email";
@@ -160,7 +161,7 @@ export default function LoginPage() {
           default:
             // For unknown Firebase errors, log the code and show generic message
             console.warn('[Login] Unhandled Firebase error code:', code);
-            errorDescription = "Something went wrong. Please try again";
+            errorDescription = supportMessage;
         }
       } else if (!code && typeof error === 'object' && error && 'message' in error) {
         const message = String((error as { message: unknown }).message || '');
@@ -169,7 +170,7 @@ export default function LoginPage() {
           errorTitle = "Network error";
           errorDescription = "Please check your connection and try again";
         } else {
-          errorDescription = "Something went wrong. Please try again";
+          errorDescription = supportMessage;
         }
       }
       

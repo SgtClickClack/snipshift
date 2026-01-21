@@ -105,7 +105,9 @@ export default function ContactSalesForm() {
     } catch (error) {
       console.error('Form submission error:', error);
       setErrors({
-        general: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+        general: error instanceof Error
+          ? error.message
+          : 'Something went wrong. Give it another shot or reach out to us at info@hospogo.com.',
       });
     } finally {
       setIsSubmitting(false);

@@ -15,6 +15,7 @@ import {
 } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
+import { logger } from "@/lib/logger";
 
 // Helper to sanitize env vars and handle common issues like accidental whitespace
 const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string): string => {
@@ -91,19 +92,19 @@ if (
   try {
     // Try to connect to emulator
     connectAuthEmulator(auth, emulatorUrl, { disableWarnings: true });
-    console.log('[Firebase] Connected to Auth Emulator for E2E tests');
+    logger.debug('Firebase', '[Firebase] Connected to Auth Emulator for E2E tests');
   } catch (error: any) {
     // If emulator connection fails (e.g., emulator not running or already connected), continue without it
     // The test will use real Firebase instead
     if (error?.message?.includes('already') || error?.code === 'auth/emulator-config-failed') {
-      console.log('[Firebase] Auth Emulator already connected');
+      logger.debug('Firebase', '[Firebase] Auth Emulator already connected');
     } else {
       console.warn('[Firebase] Auth Emulator not available, falling back to real Firebase');
       console.warn('[Firebase] To use emulator, start it with: firebase emulators:start --only auth');
     }
   }
 } else if (import.meta.env.VITE_E2E === "1" && typeof window !== 'undefined') {
-  console.log('[Firebase] E2E mode: Using real Firebase (set VITE_USE_FIREBASE_EMULATOR=1 to use emulator)');
+  logger.debug('Firebase', '[Firebase] E2E mode: Using real Firebase (set VITE_USE_FIREBASE_EMULATOR=1 to use emulator)');
 }
 
 export const googleProvider = new GoogleAuthProvider();
@@ -133,7 +134,7 @@ export const signInWithGoogle = async () => {
     await setPersistence(auth, browserLocalPersistence);
     
     // Use redirect flow - 100% reliable against COOP blocking
-    console.log('[Firebase] Initiating Google sign-in with redirect flow');
+    logger.debug('Firebase', '[Firebase] Initiating Google sign-in with redirect flow');
     await signInWithRedirect(auth, googleProvider);
     
     // Return null - the redirect will happen and handleGoogleRedirectResult() will process it
@@ -220,16 +221,16 @@ export const sendPasswordReset = async (email: string) => {
 
   // E2E mode: avoid hitting Firebase network in automation.
   if (import.meta.env.VITE_E2E === "1") {
-    console.log('[Password Reset] E2E mode - skipping Firebase call');
+    logger.debug('Firebase', '[Password Reset] E2E mode - skipping Firebase call');
     return;
   }
 
-  console.log('[Password Reset] Attempting to send reset email to:', cleanEmail);
-  console.log('[Password Reset] Firebase project:', auth.app.options.projectId);
+  logger.debug('Firebase', '[Password Reset] Attempting to send reset email to:', cleanEmail);
+  logger.debug('Firebase', '[Password Reset] Firebase project:', auth.app.options.projectId);
   
   try {
     await sendPasswordResetEmail(auth, cleanEmail);
-    console.log('[Password Reset] Firebase accepted the request successfully');
+    logger.debug('Firebase', '[Password Reset] Firebase accepted the request successfully');
   } catch (error) {
     console.error('[Password Reset] Firebase rejected the request:', error);
     throw error;

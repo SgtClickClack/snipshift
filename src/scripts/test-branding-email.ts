@@ -17,6 +17,10 @@ import { fileURLToPath } from 'url';
 import { initializeApp } from 'firebase/app';
 import { getAuth, sendPasswordResetEmail, type ActionCodeSettings } from 'firebase/auth';
 
+const log = (message: string) => {
+  process.stdout.write(`${message}\n`);
+};
+
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +29,7 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, '../../.env');
 if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
-  console.log('📝 Loaded .env configuration');
+  log('📝 Loaded .env configuration');
 } else {
   console.warn('⚠️  .env file not found. Make sure Firebase environment variables are set.');
 }
@@ -71,14 +75,14 @@ async function testPasswordResetBranding() {
   const testEmail = 'julian.g.roberts@gmail.com';
   const continueUrl = 'https://hospogo.com/login';
 
-  console.log('='.repeat(60));
-  console.log('Firebase Password Reset Email Branding Test');
-  console.log('='.repeat(60));
-  console.log(`Target Email: ${testEmail}`);
-  console.log(`Continue URL: ${continueUrl}`);
-  console.log(`Firebase Project: ${auth.app.options.projectId}`);
-  console.log(`Auth Domain: ${auth.app.options.authDomain}`);
-  console.log('-'.repeat(60));
+  log('='.repeat(60));
+  log('Firebase Password Reset Email Branding Test');
+  log('='.repeat(60));
+  log(`Target Email: ${testEmail}`);
+  log(`Continue URL: ${continueUrl}`);
+  log(`Firebase Project: ${auth.app.options.projectId}`);
+  log(`Auth Domain: ${auth.app.options.authDomain}`);
+  log('-'.repeat(60));
 
   const actionCodeSettings: ActionCodeSettings = {
     url: continueUrl,
@@ -86,14 +90,14 @@ async function testPasswordResetBranding() {
   };
 
   try {
-    console.log('Sending password reset email...');
+    log('Sending password reset email...');
     await sendPasswordResetEmail(auth, testEmail, actionCodeSettings);
     
-    console.log('✅ SUCCESS: Password reset email request sent to Firebase');
-    console.log('   Firebase accepted the request successfully.');
-    console.log('   Please check the inbox for:', testEmail);
-    console.log('   The reset link should redirect to:', continueUrl);
-    console.log('='.repeat(60));
+    log('✅ SUCCESS: Password reset email request sent to Firebase');
+    log('   Firebase accepted the request successfully.');
+    log(`   Please check the inbox for: ${testEmail}`);
+    log(`   The reset link should redirect to: ${continueUrl}`);
+    log('='.repeat(60));
   } catch (error: unknown) {
     const code =
       typeof error === 'object' && error && 'code' in error
@@ -127,7 +131,7 @@ async function testPasswordResetBranding() {
 (async () => {
   try {
     await testPasswordResetBranding();
-    console.log('Test completed successfully.');
+    log('Test completed successfully.');
     process.exit(0);
   } catch (error) {
     console.error('Test failed with error:', error);

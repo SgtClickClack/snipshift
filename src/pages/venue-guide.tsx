@@ -223,7 +223,7 @@ export default function VenueGuide() {
 
                 <div className="mt-4 p-4 bg-steel-900/50 rounded-lg border-2 border-steel-600/60 print:bg-gray-100 print:border-gray-400 print:border-2">
                   <p className="text-sm text-gray-300 print:text-gray-700">
-                    <strong className="text-white print:text-black">First time setup:</strong> You'll need to connect your Stripe account once. Takes about 2 minutes. After that, it's automatic.
+                    <strong className="text-white print:text-black">First time setup:</strong> You'll add a payment method once (secure Stripe card setup). Takes about 2 minutes. After that, it's automatic.
                   </p>
                 </div>
               </div>

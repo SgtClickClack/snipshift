@@ -169,7 +169,7 @@
 **Status:** ✅ **COMPLETE**
 
 **Action Taken:**
-- Completed a final pass to remove remaining “Snipshift” user-facing branding across legal pages, docs/scripts, and API email signatures.
+- Completed a final pass to remove remaining “HospoGo” user-facing branding across legal pages, docs/scripts, and API email signatures.
 - Aligned E2E/session hydration naming to `hospogo_test_user` for HospoGo-branded test fixtures.
 
 **Impact:**
@@ -1210,9 +1210,9 @@ For ongoing development and feature requests, please refer to the project's issu
 **Status:** ✅ **VERIFIED + HARDENED**
 
 **Action Taken:**
-- Verified Firebase client initialization does **not** hardcode legacy Snipshift domains and now supports `VITE_AUTH_DOMAIN` as a backwards-compatible alias for `VITE_FIREBASE_AUTH_DOMAIN`.
+- Verified Firebase client initialization does **not** hardcode legacy HospoGo domains and now supports `VITE_AUTH_DOMAIN` as a backwards-compatible alias for `VITE_FIREBASE_AUTH_DOMAIN`.
 - Removed insecure “manual Google OAuth code callback” behavior and routed `/oauth/callback` and Firebase’s `/__/auth/handler` to safely complete sign-in via the standard Firebase redirect result flow.
-- Added clear documentation on Firebase Console **Authorized domains** (ensure `hospogo.com` + `www.hospogo.com`, remove any Snipshift domains).
+- Added clear documentation on Firebase Console **Authorized domains** (ensure `hospogo.com` + `www.hospogo.com`, remove any HospoGo domains).
 
 **Impact:**
 - Reduces risk of `auth/unauthorized-domain` errors and prevents accidental auth flows pointing at legacy domains or unsafe callback handlers.

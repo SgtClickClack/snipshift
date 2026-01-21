@@ -474,7 +474,7 @@ function VenueDashboardContent() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to create shift(s). Please try again.",
+        description: "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.",
         variant: "destructive"
       });
     }

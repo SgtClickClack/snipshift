@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      let message = 'Something went wrong. Please try again.';
+      let message = 'Something went wrong. Give it another shot or reach out to us at info@hospogo.com.';
 
       if (code === 'auth/invalid-email') {
         message = 'Please enter a valid email address.';

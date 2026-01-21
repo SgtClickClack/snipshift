@@ -70,6 +70,7 @@ import { fetchProfessionals, ProfessionalListItem } from "@/lib/api";
 import { ShiftAssignmentModal } from "./shift-assignment-modal";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { isBusinessRole } from "@/lib/roles";
+import { logger } from "@/lib/logger";
 
 // Import react-big-calendar CSS
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -88,7 +89,7 @@ try {
     getDay,
     locales,
   });
-  console.log('[CALENDAR INIT] Localizer initialized successfully');
+  logger.debug('Calendar', '[CALENDAR INIT] Localizer initialized successfully');
 } catch (error) {
   console.error('[CALENDAR INIT] Failed to initialize localizer:', error);
 }
@@ -251,15 +252,15 @@ function ProfessionalCalendarContent({
   // Note: onCreateShift is available via _onCreateShift if needed
   // Log component mount/unmount for debugging reloads
   useEffect(() => {
-    console.log('[CALENDAR COMPONENT] ProfessionalCalendar component mounted');
-    console.log('[CALENDAR COMPONENT] Props:', { 
+    logger.debug('Calendar', '[CALENDAR COMPONENT] ProfessionalCalendar component mounted');
+    logger.debug('Calendar', '[CALENDAR COMPONENT] Props:', { 
       bookingsCount: Array.isArray(bookings) ? bookings.length : 'not array',
       isLoading,
       hasOnDateSelect: !!onDateSelect
     });
     
     return () => {
-      console.log('[CALENDAR COMPONENT] ProfessionalCalendar component unmounting');
+      logger.debug('Calendar', '[CALENDAR COMPONENT] ProfessionalCalendar component unmounting');
     };
   }, []); // Only log on mount/unmount
   
@@ -402,7 +403,7 @@ function ProfessionalCalendarContent({
   
   // Save settings to database via API
   const handleSaveSettings = useCallback(async (settings: CalendarSettings) => {
-    console.log('[CALENDAR] Saving settings:', settings);
+    logger.debug('Calendar', '[CALENDAR] Saving settings:', settings);
     // Ensure all days are present in openingHours
     const completeSettings: CalendarSettings = {
       ...settings,
@@ -432,7 +433,7 @@ function ProfessionalCalendarContent({
         defaultShiftLength: completeSettings.defaultShiftLength,
       });
       
-      console.log('[CALENDAR] Settings saved to database');
+      logger.debug('Calendar', '[CALENDAR] Settings saved to database');
       toast({
         title: 'Schedule saved',
         description: 'Your opening hours and shift templates have been saved.',
@@ -529,7 +530,7 @@ function ProfessionalCalendarContent({
 
         if (settings) {
           setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, settings) ? prev : settings));
-          console.log('[CALENDAR] Settings loaded from database:', settings);
+          logger.debug('Calendar', '[CALENDAR] Settings loaded from database:', settings);
         } else {
           // Fallback to localStorage if no database settings
           const key = getSettingsKey();
@@ -537,7 +538,7 @@ function ProfessionalCalendarContent({
           if (stored) {
             const parsed = JSON.parse(stored);
             setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
-            console.log('[CALENDAR] Settings loaded from localStorage fallback:', parsed);
+            logger.debug('Calendar', '[CALENDAR] Settings loaded from localStorage fallback:', parsed);
           }
         }
       } catch (error) {
@@ -570,7 +571,7 @@ function ProfessionalCalendarContent({
         try {
           const parsed = JSON.parse(e.newValue);
           setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
-          console.log('[CALENDAR] Settings synced from storage event:', parsed);
+          logger.debug('Calendar', '[CALENDAR] Settings synced from storage event:', parsed);
         } catch (error) {
           console.error('[CALENDAR] Failed to parse settings from storage event:', error);
         }
@@ -581,7 +582,7 @@ function ProfessionalCalendarContent({
       if (e.detail?.settings) {
         const nextSettings = e.detail.settings as CalendarSettings;
         setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, nextSettings) ? prev : nextSettings));
-        console.log('[CALENDAR] Settings synced from custom event:', e.detail.settings);
+        logger.debug('Calendar', '[CALENDAR] Settings synced from custom event:', e.detail.settings);
       }
     };
     
@@ -596,7 +597,7 @@ function ProfessionalCalendarContent({
   // Log when calendarSettings changes to verify re-renders
   useEffect(() => {
     if (calendarSettings) {
-      console.log('[CALENDAR] Settings updated, will regenerate events:', {
+      logger.debug('Calendar', '[CALENDAR] Settings updated, will regenerate events:', {
         hasOpeningHours: !!calendarSettings.openingHours,
         enabledDays: Object.entries(calendarSettings.openingHours || {})
           .filter(([_, hours]) => hours?.enabled)
@@ -674,7 +675,7 @@ function ProfessionalCalendarContent({
         await apiRequest('PATCH', '/api/users/settings', {
           favoriteProfessionals: favoriteIds,
         });
-        console.log('[CALENDAR] Favorites saved to database');
+        logger.debug('Calendar', '[CALENDAR] Favorites saved to database');
       } catch (error) {
         console.error('[CALENDAR] Failed to save favorites:', error);
       }
@@ -968,7 +969,7 @@ function ProfessionalCalendarContent({
         
         // Generate slots for the range
         const generatedSlots = generateShiftSlotsForRange(rangeStart, rangeEnd, calendarSettings);
-        console.log('[CALENDAR] Generated slots:', {
+        logger.debug('Calendar', '[CALENDAR] Generated slots:', {
           count: generatedSlots.length,
           range: { start: rangeStart, end: rangeEnd },
           settings: calendarSettings,
@@ -978,7 +979,7 @@ function ProfessionalCalendarContent({
         // Filter out slots that overlap with existing shifts
         const existingShifts = allRealEvents.map(e => ({ start: e.start, end: e.end }));
         const availableSlots = filterOverlappingSlots(generatedSlots, existingShifts);
-        console.log('[CALENDAR] Available slots after filtering:', {
+        logger.debug('Calendar', '[CALENDAR] Available slots after filtering:', {
           total: generatedSlots.length,
           available: availableSlots.length,
           filtered: generatedSlots.length - availableSlots.length,
@@ -1822,7 +1823,7 @@ function ProfessionalCalendarContent({
     } catch (error: any) {
       toast({
         title: "Failed to create shift",
-        description: error?.message || "Please try again later",
+        description: "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.",
         variant: "destructive",
       });
     }

@@ -15,6 +15,7 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
@@ -74,14 +75,14 @@ export default function GoogleAuthUnified({ mode }: GoogleAuthUnifiedProps) {
           
           navigate(getDashboardRoute((user as any).role));
         } else {
-          throw new Error("Login failed");
+          throw new Error("Authentication failed");
         }
       }
     } catch (error) {
       console.error("Google auth error:", error);
       toast({
         title: `${mode === "signin" ? "Sign-in" : "Sign-up"} failed`,
-        description: "Demo Google authentication. In production, configure Google OAuth Client ID.",
+        description: supportMessage,
         variant: "destructive",
       });
     } finally {

@@ -6,6 +6,7 @@ import "./index.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { StartupErrorBoundary } from "@/components/error/StartupErrorBoundary";
 import { initializeGTM } from "@/lib/analytics";
+import { logger } from "@/lib/logger";
 
 // Global GTM Guard: Define dummy gtag function if blocked by ad-blockers/privacy extensions
 // This prevents 'undefined' errors throughout the app when tracking scripts are blocked
@@ -32,7 +33,7 @@ try {
 // Note: We can't place this *before* imports in an ES module; this is the earliest safe spot.
 try {
   if (window.location.hostname === "localhost") {
-    console.log("Clearing legacy session ghosts...");
+    logger.debug("Main", "Clearing legacy session ghosts...");
     localStorage.removeItem("firebase:previous_external_idp_params");
     
     // Hard-reset legacy session data that may cause 401s
@@ -41,7 +42,7 @@ try {
       localStorage.clear();
       sessionStorage.clear();
       localStorage.setItem("hospogo_auth_reset", Date.now().toString());
-      console.log("Local storage purged to resolve auth conflicts.");
+      logger.debug("Main", "Local storage purged to resolve auth conflicts.");
     }
   }
 } catch {

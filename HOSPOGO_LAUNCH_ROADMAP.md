@@ -8,6 +8,60 @@
 
 ---
 
+### Update: 2026-01-21 - Beta QA Prep (Draft Persistence + Stripe Guide Copy + Error Messaging)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a `shift_drafts` migration to guarantee draft autosave persistence across environments.
+- Updated the Venue Guide “First time setup” copy to match the Stripe payment method flow used in onboarding.
+- Humanized common login and shift creation error messaging with a clear support path.
+
+**Impact:**
+- Draft shift posts persist across devices during beta.
+- Venue onboarding guidance now matches the real Stripe setup flow.
+- Users see more empathetic, actionable error messages.
+
+---
+
+### Update: 2026-01-21 - Stripe Live Key Sync (Beta Env)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Swapped Stripe publishable + secret keys to live for beta readiness.
+- Re-ran preflight to confirm test-key warnings cleared.
+
+**Impact:**
+- Stripe Connect and payment flows now point at live keys for the beta.
+
+---
+
+### Update: 2026-01-21 - Stripe Webhook Secret Sync (Beta Env)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Updated Stripe webhook signing secret for the live webhook endpoint.
+- Re-ran preflight to confirm Stripe env hygiene.
+
+**Impact:**
+- Webhook verification now matches the live Stripe endpoint for beta.
+
+---
+
+### Update: 2026-01-21 - Preflight Console Log Cleanup (Frontend)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Replaced frontend `console.log` usage with centralized logger/debug output and script stdout helpers.
+
+**Impact:**
+- Preflight console-log warning is cleared while keeping debug context available in dev.
+
+---
+
 ### Update: 2026-01-18 - Marketplace Guardrails (Financial Ledger + Payout Reconciliation + Realtime Sync)
 
 **Status:** ✅ **IMPLEMENTED**
@@ -265,7 +319,7 @@
 - Added a temporary “clean break” that clears `localStorage` when legacy `snipshift` keys are detected.
 
 **Impact:**
-- Reduces “instant redirect / stuck auth” edge cases when old Snipshift client state is present and makes Google sign-in more deterministic for users with multiple accounts.
+- Reduces “instant redirect / stuck auth” edge cases when old HospoGo client state is present and makes Google sign-in more deterministic for users with multiple accounts.
 
 ---
 

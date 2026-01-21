@@ -14,6 +14,7 @@ import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { createUserWithEmailAndPassword, sendEmailVerification, type ActionCodeSettings } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { trackSignup } from "@/lib/analytics";
+import { logger } from "@/lib/logger";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function SignupPage() {
     // If user is authenticated in Firebase (has token) but no user object (404 from backend),
     // redirect to onboarding to complete profile setup
     if (isAuthenticated && !user && auth.currentUser) {
-      console.log('[Signup] User authenticated in Firebase but no database record, redirecting to onboarding');
+      logger.debug('Signup', 'User authenticated in Firebase but no database record, redirecting to onboarding');
       navigate('/onboarding', { replace: true });
       return;
     }
@@ -68,7 +69,7 @@ export default function SignupPage() {
       }
 
       // Bridge is fresh - popup just completed auth
-      console.log('[Signup] localStorage bridge detected, finalizing auth...', { uid: parsed.uid, age });
+      logger.debug('Signup', 'localStorage bridge detected, finalizing auth...', { uid: parsed.uid, age });
       setIsFinalizing(true);
       
       // Show "Finalizing..." state and redirect immediately
@@ -251,7 +252,7 @@ export default function SignupPage() {
         };
         
         await sendEmailVerification(firebaseUser, actionCodeSettings);
-        console.log('[Signup] Email verification sent successfully', { 
+        logger.debug('Signup', 'Email verification sent successfully', { 
           email: formData.email,
           continueUrl,
           authDomain 

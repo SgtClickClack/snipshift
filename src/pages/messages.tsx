@@ -129,7 +129,7 @@ export default function MessagesPage() {
   useEffect(() => {
     const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
     if (shouldDebug) {
-      console.log('DEBUG: MessagesPage Auth State', {
+      logger.debug('Messages', 'Auth state', {
         user: user ? { id: user.id, currentRole: user.currentRole, isOnboarded: user.isOnboarded } : null,
         isAuthLoading,
         isAuthReady,

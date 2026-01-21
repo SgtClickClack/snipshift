@@ -1,3 +1,130 @@
+#### 2026-01-21: Preflight Console Log Cleanup (Frontend)
+
+**Core Components**
+- Frontend debug logging (`src/pages/Onboarding.tsx`, `src/pages/signup.tsx`, `src/pages/messages.tsx`, `src/pages/auth/Bridge.tsx`)
+- Firebase logging (`src/lib/firebase.ts`)
+- Calendar/debug tooling (`src/components/calendar/professional-calendar.tsx`)
+- Business settings automation (`src/components/settings/business-settings.tsx`)
+- One-off branding test script (`src/scripts/test-branding-email.ts`)
+- App boot logs (`src/main.tsx`)
+
+**Key Features**
+- Replaced `console.log` usage with structured debug logging or stdout helpers to satisfy preflight hygiene.
+- Kept existing debug context while routing through the centralized logger where applicable.
+
+**Integration Points**
+- Preflight: `npm run preflight`
+
+**File Paths**
+- `src/pages/Onboarding.tsx`
+- `src/pages/signup.tsx`
+- `src/pages/messages.tsx`
+- `src/pages/auth/Bridge.tsx`
+- `src/lib/firebase.ts`
+- `src/components/calendar/professional-calendar.tsx`
+- `src/components/settings/business-settings.tsx`
+- `src/scripts/test-branding-email.ts`
+- `src/main.tsx`
+
+**Next Priority Task**
+- Re-run preflight and confirm console-log warning is cleared.
+
+**Code Organization & Quality**
+- Logging is now centralized; no runtime flow changes.
+
+---
+
+#### 2026-01-21: Beta QA Prep (Draft Persistence + Stripe Guide Copy + Error Messaging)
+
+**Core Components**
+- Shift draft persistence (`api/_src/db/migrations/0033_add_shift_drafts.sql`, `api/_src/routes/shifts.ts`, `src/components/calendar/create-shift-modal.tsx`)
+- Venue Guide Stripe setup copy (`src/pages/venue-guide.tsx`)
+- Auth + shift creation error messaging (`src/pages/login.tsx`, `src/components/auth/google-auth-unified.tsx`, `src/components/calendar/professional-calendar.tsx`, `src/pages/shop/schedule.tsx`, `src/pages/venue-dashboard.tsx`)
+- Doc/roadmap brand string cleanup (`HOSPOGO_LAUNCH_ROADMAP.md`, `SNIPSHIFT_FINAL_COMPLETION_ROADMAP.md`, `docs/GOOGLE_AUTH_TROUBLESHOOTING.md`)
+
+**Key Features**
+- Added a `shift_drafts` migration to guarantee autosave storage exists across environments, with venue-scoped indexes for fast recovery.
+- Aligned Venue Guide “First time setup” copy to the actual Stripe payment method setup flow used in venue onboarding.
+- Humanized common auth and shift creation errors with a clear recovery path + support email.
+- Completed a final legacy brand-string sweep in docs/roadmaps for HospoGo consistency.
+
+**Integration Points**
+- Draft persistence: `GET/POST/DELETE /api/shifts/drafts`
+- Venue onboarding billing: `POST /api/stripe-connect/setup-intent`
+- Create Shift modal autosave + recovery dialog
+
+**File Paths**
+- `api/_src/db/migrations/0033_add_shift_drafts.sql`
+- `HOSPOGO_LAUNCH_ROADMAP.md`
+- `DEVELOPMENT_TRACKING_PART_02.md`
+- `SNIPSHIFT_FINAL_COMPLETION_ROADMAP.md`
+- `docs/GOOGLE_AUTH_TROUBLESHOOTING.md`
+- `src/pages/venue-guide.tsx`
+- `src/pages/login.tsx`
+- `src/components/auth/google-auth-unified.tsx`
+- `src/components/calendar/professional-calendar.tsx`
+- `src/pages/shop/schedule.tsx`
+- `src/pages/venue-dashboard.tsx`
+- `src/components/landing/ContactSalesForm.tsx`
+- `src/pages/forgot-password.tsx`
+
+**Next Priority Task**
+- Swap Stripe publishable/secret keys to live in beta envs and re-run preflight.
+
+**Code Organization & Quality**
+- Kept changes scoped to migrations, copy updates, and toast messaging without altering core flow logic.
+
+---
+
+#### 2026-01-21: Stripe Live Key Sync (Beta Env)
+
+**Core Components**
+- Root env config (`.env`)
+- API env config (`api/.env`)
+
+**Key Features**
+- Swapped Stripe publishable/secret keys to live for beta readiness.
+- Re-ran preflight to confirm test-key warnings cleared.
+
+**Integration Points**
+- Preflight: `npm run preflight`
+
+**File Paths**
+- `.env`
+- `api/.env`
+
+**Next Priority Task**
+- Set live `STRIPE_WEBHOOK_SECRET` in production API env.
+
+**Code Organization & Quality**
+- Env-only update; no code changes.
+
+---
+
+#### 2026-01-21: Stripe Webhook Secret Sync (Beta Env)
+
+**Core Components**
+- API env config (`api/.env`)
+
+**Key Features**
+- Updated Stripe webhook signing secret for the production webhook endpoint.
+- Re-ran preflight to confirm Stripe env hygiene.
+
+**Integration Points**
+- Webhooks: `/api/webhooks/stripe`
+- Preflight: `npm run preflight`
+
+**File Paths**
+- `api/.env`
+
+**Next Priority Task**
+- Remove or gate frontend `console.log` entries flagged by preflight.
+
+**Code Organization & Quality**
+- Env-only update; no runtime code changes.
+
+---
+
 #### 2026-01-18: Marketplace Guardrails (AuthZ Hardening + Payout Atomicity + Financial Ledger + Realtime Sync)
 
 **Core Components**
@@ -1240,7 +1367,7 @@
 
 **Key Features**
 - **Firebase Auth domain hardening**: Verified there are **no hardcoded** `snipshift.com.au` domains in client Firebase init; `authDomain` is now sourced from `VITE_FIREBASE_AUTH_DOMAIN` with a backwards-compatible alias `VITE_AUTH_DOMAIN`.
-- **Authorized domains guidance**: Documented that Firebase Authorized Domains are configured in the Firebase Console (expected `hospogo.com` / `www.hospogo.com`) and legacy Snipshift domains should be removed.
+- **Authorized domains guidance**: Documented that Firebase Authorized Domains are configured in the Firebase Console (expected `hospogo.com` / `www.hospogo.com`) and legacy HospoGo domains should be removed.
 - **Redirect safety**: Removed/disabled the insecure “manual Google OAuth code callback” flows and ensured `/oauth/callback` + Firebase’s `/__/auth/handler` route simply returns the user to `/login` so Firebase `getRedirectResult()` can complete the redirect sign-in safely.
 - **Domain pivot cleanup in fixtures**: Replaced `@snipshift.com` emails in tests/fixtures/docs with `@hospogo.com` to prevent brand leakage and confusion.
 - **Test infra fix (enum export)**: Fixed `drizzle-kit push` schema sync in tests by exporting `payoutStatusEnum` from the schema barrel so `payout_status` is created before being referenced.
@@ -1266,7 +1393,7 @@
 - `api/_src/middleware/auth.js`
 
 **Next Priority Task**
-- Verify in Firebase Console that **Authorized domains** includes `hospogo.com` + `www.hospogo.com` and remove any legacy Snipshift domains; then confirm Google sign-in redirect works on production with popup-blocked fallback.
+- Verify in Firebase Console that **Authorized domains** includes `hospogo.com` + `www.hospogo.com` and remove any legacy HospoGo domains; then confirm Google sign-in redirect works on production with popup-blocked fallback.
 
 **Code Organization & Quality**
 - Kept changes scoped to auth/config/test fixtures; avoided introducing new auth patterns beyond existing Firebase + backend session handshake.
@@ -1632,8 +1759,8 @@
 
 **Key Features**
 - **Vercel env audit complete**: Linked the repo to `dojo-pool-team/hospogo-web`, pulled Production env vars for review, and inspected the latest Production deployment aliases (`hospogo.com`, `www.hospogo.com`).
-- **No legacy app URL vars found**: Confirmed Production env does **not** include `VITE_APP_URL` or `NEXT_PUBLIC_APP_URL` (so they cannot be pointing at a Snipshift domain in Vercel).
-- **Brand string sweep (targeted)**: Removed remaining `Snipshift/snipshift/SNIPSHIFT` occurrences from `src/` and `index.html`.
+- **No legacy app URL vars found**: Confirmed Production env does **not** include `VITE_APP_URL` or `NEXT_PUBLIC_APP_URL` (so they cannot be pointing at a HospoGo domain in Vercel).
+- **Brand string sweep (targeted)**: Removed remaining `HospoGo/hospogo/HOSPOGO` occurrences from `src/` and `index.html`.
 - **Firebase config hardening**: Removed the committed Firebase fallback config and now fail-fast if required `VITE_FIREBASE_*` env vars are missing (prevents accidental initialization against the wrong project).
 - **Docs compliance**: Updated support email references to `info@hospogo.com` and refreshed production env examples to use `hospogo.com`/`hospogo.com/api`.
 
@@ -1694,7 +1821,7 @@
 - Test fixtures/docs references (`tests/*`, `e2e/*`, tracking/docs markdown)
 
 **Key Features**
-- **HospoGo branding consistency**: Removed remaining user-facing “Snipshift” strings (legal copy, sitemap social links, email signatures, docs/scripts).
+- **HospoGo branding consistency**: Removed remaining user-facing “HospoGo” strings (legal copy, sitemap social links, email signatures, docs/scripts).
 - **Auth/test alignment**: Standardized Playwright/session hydration key to `hospogo_test_user` and updated fixtures/docs accordingly.
 - **Password reset copy**: Removed the hard-coded Firebase sender domain from the “check your email” guidance to avoid brand mismatch/confusion.
 
@@ -1718,7 +1845,7 @@
 - `tests/**`
 
 **Next Priority Task**
-- Verify the deployed UI on `hospogo.com` has no remaining “Snipshift” user-facing branding (including transactional emails + legal pages).
+- Verify the deployed UI on `hospogo.com` has no remaining “HospoGo” user-facing branding (including transactional emails + legal pages).
 
 ---
 
@@ -1996,7 +2123,7 @@
 
 ---
 
-#### 2026-01-10: Asset Cleanup (Remove Snipshift-Era Hero Asset)
+#### 2026-01-10: Asset Cleanup (Remove HospoGo-Era Hero Asset)
 
 **Core Components**
 - Public static assets (`public/`)
@@ -2020,7 +2147,7 @@
 - `src/components/seo/SEO.tsx`
 
 **Next Priority Task**
-- Remove/rename remaining legacy “Snipshift” references in docs/scripts that are no longer relevant to HospoGo (copy-only cleanup; no behavior changes).
+- Remove/rename remaining legacy “HospoGo” references in docs/scripts that are no longer relevant to HospoGo (copy-only cleanup; no behavior changes).
 
 **Code Organization & Quality**
 - Kept the cleanup strictly scoped to static assets + SEO defaults (no app logic touched).

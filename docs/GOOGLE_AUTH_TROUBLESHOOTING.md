@@ -132,7 +132,7 @@ window.DEBUG_ONBOARDING()
 
 #### Issue: Browser Cache
 
-**Symptoms:** Old "Snipshift" session data causing conflicts
+**Symptoms:** Old "HospoGo" session data causing conflicts
 
 **Solution:**
 - Hard refresh: `Ctrl + Shift + R` (Windows/Linux) or `Cmd + Shift + R` (Mac)
