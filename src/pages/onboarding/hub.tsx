@@ -12,11 +12,11 @@ import { useToast } from '@/hooks/useToast';
 import { apiRequest } from '@/lib/queryClient';
 import { SEO } from '@/components/seo/SEO';
 import { Building2, CreditCard, CheckCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import getStripe from '@/lib/stripe';
 
 // Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+const stripePromise = getStripe();
 
 interface PlanInfo {
   id: string;

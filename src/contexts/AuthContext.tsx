@@ -86,6 +86,7 @@ interface AuthContextType {
   isRedirecting: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
+  clearUserState: (reason?: string) => void;
   setCurrentRole: (role: NonNullable<User['currentRole']>) => void;
   hasRole: (role: NonNullable<User['currentRole']>) => boolean;
   updateRoles: (roles: User['roles']) => void;
@@ -339,19 +340,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Paths that should NEVER be auto-redirected away from (even for auth failures)
   // These are public pages that users should always be able to view
+  const publicPaths = [
+    '/',           // Landing page
+    '/venue-guide',
+    '/login',      // Login page
+    '/signup',     // Signup page  
+    '/terms',      // Legal pages
+    '/privacy',
+    '/about',
+    '/contact',
+    '/refunds',
+    '/forgot-password',
+    '/status',     // Status page
+  ];
+
   const isProtectedPublicPath = (pathname: string): boolean => {
-    const publicPaths = [
-      '/',           // Landing page
-      '/login',      // Login page
-      '/signup',     // Signup page  
-      '/terms',      // Legal pages
-      '/privacy',
-      '/about',
-      '/contact',
-      '/refunds',
-      '/forgot-password',
-      '/status',     // Status page
-    ];
     return publicPaths.includes(pathname);
   };
 
@@ -485,7 +488,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           // CRITICAL: In E2E mode, trigger /api/me to sync profile and wake up the UI
           // This ensures the app doesn't wait indefinitely for a Firebase token refresh that won't happen
-          if (e2eUser.uid || e2eUser.id) {
+          if (auth.currentUser && (e2eUser.uid || e2eUser.id)) {
             logger.debug('AuthContext', 'E2E mode: Triggering /api/me to sync profile', { uid: e2eUser.uid || e2eUser.id });
             fetch('/api/me', {
               headers: {
@@ -508,6 +511,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .catch(error => {
                 logger.debug('AuthContext', 'E2E mode: /api/me fetch error (non-critical)', error);
               });
+          } else {
+            logger.debug('AuthContext', 'E2E mode: Skipping /api/me sync (no Firebase user)');
           }
         } else {
           setUser(null);
@@ -785,6 +790,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         currentAuthUid.current = newUid;
         
         try {
+          const currentPath =
+            typeof window !== 'undefined'
+              ? window.location.pathname
+              : locationRef.current.pathname;
+          const shouldRedirectOnNullUser = !publicPaths.includes(currentPath);
+
           if (firebaseUser) {
             // Forced cleanup + push: kill spinner and move immediately on login/signup.
             setIsLoading(false);
@@ -1137,7 +1148,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(null);
             setToken(null);
             // If we've explicitly triggered a redirect but auth resolves to null user, send to onboarding.
-            handleRedirect(null);
+            if (!firebaseUser && shouldRedirectOnNullUser) {
+              handleRedirect(null);
+            }
             
             // Set loading false after state is cleared
             setIsLoading(false);
@@ -1629,6 +1642,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const hardSyncWithToken = async (tokenValue: string, source: string) => {
+    if (!auth.currentUser) {
+      logger.debug('AuthContext', 'Hard sync skipped - no Firebase user', { source });
+      return;
+    }
     logger.debug('AuthContext', 'Hard sync token received, fetching profile', { source });
     const res = await fetch('/api/me', {
       cache: 'no-store',
@@ -1660,6 +1677,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     pendingRedirect.current = false;
     hasResolvedAuthState.current = true;
     handleRedirect(nextUser);
+  };
+
+  const clearUserState = (reason?: string) => {
+    logger.debug('AuthContext', 'Clearing local user state', { reason });
+    setUser(null);
+    setToken(null);
+    setIsRoleLoading(false);
+    setIsRedirecting(false);
+    pendingRedirect.current = false;
+    currentAuthUid.current = null;
+    last401RetryTime.current = 0;
+    consecutive401Count.current = 0;
+    setIsLoading(false);
+    setIsAuthReady(true);
+    hasResolvedAuthState.current = true;
   };
 
   const attemptHardSync = async (source: string, tokenValue?: string) => {
@@ -2074,6 +2106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isRoleLoading,
     login,
     logout,
+    clearUserState,
     setCurrentRole,
     hasRole,
     updateRoles,

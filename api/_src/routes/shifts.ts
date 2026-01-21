@@ -5245,6 +5245,27 @@ router.post('/:id/accept-backup', authenticateUser, asyncHandler(async (req: Aut
   });
 }));
 
+const normalizeDraftData = (input: unknown): ShiftDraftData | null => {
+  if (!input || typeof input !== 'object') return null;
+
+  const draft = { ...(input as Record<string, unknown>) };
+  const recurringOptions = draft.recurringOptions;
+
+  if (recurringOptions === null || recurringOptions === undefined) {
+    delete draft.recurringOptions;
+  } else if (typeof recurringOptions === 'string') {
+    try {
+      draft.recurringOptions = JSON.parse(recurringOptions);
+    } catch {
+      delete draft.recurringOptions;
+    }
+  } else if (typeof recurringOptions !== 'object') {
+    delete draft.recurringOptions;
+  }
+
+  return draft as ShiftDraftData;
+};
+
 // Shift Drafts endpoints
 // GET /api/shifts/drafts - Get draft for current venue
 router.get('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
@@ -5284,8 +5305,8 @@ router.get('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     res.status(200).json({
       draft: {
         id: draft.id,
-        draftData: draft.draftData,
-        updatedAt: draft.updatedAt.toISOString(),
+        draftData: (draft.draftData ?? {}) as ShiftDraftData,
+        updatedAt: draft.updatedAt ? draft.updatedAt.toISOString() : null,
       },
     });
   } catch (error) {
@@ -5304,7 +5325,9 @@ router.post('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedR
 
   const { draftData } = req.body;
 
-  if (!draftData || typeof draftData !== 'object') {
+  const normalizedDraftData = normalizeDraftData(draftData);
+
+  if (!normalizedDraftData) {
     res.status(400).json({ message: 'Invalid draft data' });
     return;
   }
@@ -5335,7 +5358,7 @@ router.post('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedR
       const [updated] = await db
         .update(shiftDrafts)
         .set({
-          draftData: draftData as ShiftDraftData,
+          draftData: normalizedDraftData,
           updatedAt: new Date(),
         })
         .where(eq(shiftDrafts.id, existingDraft.id))
@@ -5344,8 +5367,8 @@ router.post('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedR
       res.status(200).json({
         draft: {
           id: updated.id,
-          draftData: updated.draftData,
-          updatedAt: updated.updatedAt.toISOString(),
+          draftData: (updated.draftData ?? {}) as ShiftDraftData,
+          updatedAt: updated.updatedAt ? updated.updatedAt.toISOString() : null,
         },
       });
     } else {
@@ -5354,15 +5377,15 @@ router.post('/drafts', authenticateUser, asyncHandler(async (req: AuthenticatedR
         .insert(shiftDrafts)
         .values({
           venueId: venue.id,
-          draftData: draftData as ShiftDraftData,
+          draftData: normalizedDraftData,
         })
         .returning();
 
       res.status(201).json({
         draft: {
           id: newDraft.id,
-          draftData: newDraft.draftData,
-          updatedAt: newDraft.updatedAt.toISOString(),
+          draftData: (newDraft.draftData ?? {}) as ShiftDraftData,
+          updatedAt: newDraft.updatedAt ? newDraft.updatedAt.toISOString() : null,
         },
       });
     }

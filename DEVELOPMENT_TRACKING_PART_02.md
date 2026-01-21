@@ -1,3 +1,115 @@
+#### 2026-01-21: Zero-Failure Demo Audit Guardrails
+
+**Core Components**
+- Auth context (`src/contexts/AuthContext.tsx`)
+- Stripe initialization (`src/lib/stripe.ts`)
+- Stripe onboarding + billing (`src/pages/onboarding/hub.tsx`, `src/components/payments/billing-settings.tsx`)
+- Shift drafts API + schema (`api/_src/routes/shifts.ts`, `api/_src/db/schema/shifts.ts`)
+
+**Key Features**
+- Added explicit public-path guard when Firebase user is null to prevent `/api/me`-adjacent redirects on landing paths.
+- Normalized shift draft JSONB payloads (safe `recurringOptions` parsing + null-safe timestamps) to avoid crashy draft saves.
+- Centralized Stripe key selection so `hospogo.com` resolves to the live publishable key.
+
+**Integration Points**
+- `GET /api/me`
+- `GET /api/shifts/drafts`
+- `POST /api/shifts/drafts`
+- Stripe Elements (Hub onboarding + Billing settings)
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/lib/stripe.ts`
+- `src/pages/onboarding/hub.tsx`
+- `src/components/payments/billing-settings.tsx`
+- `api/_src/routes/shifts.ts`
+- `api/_src/db/schema/shifts.ts`
+
+**Next Priority Task**
+- Smoke test Google auth, draft resume, and Stripe Elements on the demo build.
+
+**Code Organization & Quality**
+- Centralized Stripe key routing and draft normalization to reduce duplication and edge-case failures.
+
+---
+
+#### 2026-01-21: Auth 401 Loop and User Sync Guardrails
+
+**Core Components**
+- Auth context (`src/contexts/AuthContext.tsx`)
+- User sync hook (`src/hooks/useUserSync.ts`)
+- Onboarding session messaging (`src/pages/Onboarding.tsx`)
+
+**Key Features**
+- Gated `/api/me` fetches on active Firebase users and kept `/` + `/venue-guide` public during 401s.
+- Skipped user sync without an active token and stopped polling on 401 with local state cleared.
+- Humanized session-break messaging and reduced user-dependent effect churn.
+
+**Integration Points**
+- `GET /api/me`
+- Auth/session sync (`useUserSync`, `AuthContext`)
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/hooks/useUserSync.ts`
+- `src/pages/Onboarding.tsx`
+
+**Next Priority Task**
+- Verify `/` and `/venue-guide` no longer redirect on 401 and onboarding sync stabilizes.
+
+**Code Organization & Quality**
+- Reduced auth-side effects by gating sync and narrowing dependencies.
+
+---
+
+#### 2026-01-21: Auth Init Guard for /api/me 401 Loops
+
+**Core Components**
+- Auth middleware (`api/_src/middleware/auth.ts`)
+
+**Key Features**
+- Switched to lazy Firebase Admin access and returned `503` when auth initialization fails.
+- Prevents invalid-token 401 loops when backend auth config is missing or misconfigured.
+
+**Integration Points**
+- `GET /api/me`
+- `POST /api/register`
+
+**File Paths**
+- `api/_src/middleware/auth.ts`
+
+**Next Priority Task**
+- Confirm production Firebase Admin env configuration so `/api/me` returns 200 after login.
+
+**Code Organization & Quality**
+- Centralized auth init failure handling to avoid misleading 401s.
+
+---
+
+#### 2026-01-21: Registration Fallback for Legacy DB Schema
+
+**Core Components**
+- User creation repository (`api/_src/repositories/users.repository.ts`)
+
+**Key Features**
+- Added a legacy insert fallback when newer user columns are missing to prevent 500s on `/api/register`.
+- Ensures `/api/me` auto-create flow can succeed even if schema is behind in some environments.
+
+**Integration Points**
+- `POST /api/register`
+- `GET /api/me` (auto-create path in auth middleware)
+
+**File Paths**
+- `api/_src/repositories/users.repository.ts`
+
+**Next Priority Task**
+- Verify Google sign-in registration succeeds in production and `/api/register` no longer returns 500.
+
+**Code Organization & Quality**
+- Added a narrowly-scoped fallback path for schema drift without changing core behavior.
+
+---
+
 #### 2026-01-21: Preflight Console Log Cleanup (Frontend)
 
 **Core Components**

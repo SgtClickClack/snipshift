@@ -8,6 +8,62 @@
 
 ---
 
+### Update: 2026-01-21 - Zero-Failure Demo Audit (Auth Guard + Draft Safety + Stripe Live Key)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added explicit public-path guard when Firebase user is null to prevent `/api/me` redirect churn on landing pages.
+- Normalized shift draft JSONB payloads with safe `recurringOptions` parsing and null-safe timestamps.
+- Centralized Stripe publishable key selection to enforce `pk_live` on `hospogo.com`.
+
+**Impact:**
+- Lower redirect-loop risk during auth edge cases on public routes.
+- Draft autosave is resilient to null/undefined payloads.
+- Stripe Elements consistently uses live keys on production host.
+
+---
+
+### Update: 2026-01-21 - Auth Init Guard for /api/me 401 Loops
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Returned `503` when Firebase Admin fails to initialize instead of emitting invalid-token 401s.
+- Added clearer backend logging to surface missing/misconfigured auth envs.
+
+**Impact:**
+- Avoids infinite 401 loops and highlights auth configuration issues during login.
+
+---
+
+### Update: 2026-01-21 - Auth 401 Loop + User Sync Guardrails
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Gated `/api/me` fetches behind active Firebase users and kept `/` + `/venue-guide` public during 401s.
+- Hardened `useUserSync` to skip without an active token and stop cleanly on 401 without navigation.
+- Humanized session-break messaging in onboarding.
+
+**Impact:**
+- Prevents landing redirect loops and reduces re-render churn during auth failures.
+
+---
+
+### Update: 2026-01-21 - Legacy DB Registration Fallback
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a legacy insert fallback for user creation when newer columns are missing in older DB schemas.
+- Ensured `/api/register` and `/api/me` auto-create paths no longer hard-fail under schema drift.
+
+**Impact:**
+- Google sign-in registration no longer 500s when production DBs lag behind migrations.
+
+---
+
 ### Update: 2026-01-21 - Beta QA Prep (Draft Persistence + Stripe Guide Copy + Error Messaging)
 
 **Status:** ✅ **UPDATED**

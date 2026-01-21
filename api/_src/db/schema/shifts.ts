@@ -212,6 +212,13 @@ export interface ShiftDraftData {
   uniformRequirements?: string;
   rsaRequired?: boolean;
   expectedPax?: string;
+  recurringOptions?: {
+    repeatWeekly?: boolean;
+    endDate?: string;
+    numberOfOccurrences?: number;
+    useEndDate?: boolean;
+    assigneeOption?: 'keep' | 'open-slot';
+  };
   repeatWeekly?: boolean;
   endDate?: string;
   numberOfOccurrences?: number;
