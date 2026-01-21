@@ -36,19 +36,38 @@ export default function SignupPage() {
   const [showManualDashboardLink, setShowManualDashboardLink] = useState(false);
   const [showConnectionDelayedButton, setShowConnectionDelayedButton] = useState(false);
 
-  // REDIRECT: If user is authenticated in Firebase but has no database record (404 case),
-  // redirect them to onboarding to complete their profile and choose their role
+  // REDIRECT: If user is authenticated in Firebase, redirect them away from signup
+  // This handles both cases:
+  // 1. User has a database record (user object exists) - redirect to their dashboard
+  // 2. User has NO database record (404 from backend) - redirect to onboarding
   useEffect(() => {
-    if (!isAuthReady) return;
+    if (!isAuthReady || !isAuthGateOpen) return;
     
-    // If user is authenticated in Firebase (has token) but no user object (404 from backend),
-    // redirect to onboarding to complete profile setup
-    if (isAuthenticated && !user && auth.currentUser) {
-      logger.debug('Signup', 'User authenticated in Firebase but no database record, redirecting to onboarding');
+    // Case 1: User is fully authenticated with database record
+    if (user) {
+      logger.debug('Signup', 'User fully authenticated, redirecting based on onboarding status', {
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
+        currentRole: user.currentRole,
+      });
+      if (user.hasCompletedOnboarding && user.currentRole) {
+        navigate('/venue/dashboard', { replace: true });
+      } else {
+        navigate('/onboarding', { replace: true });
+      }
+      return;
+    }
+    
+    // Case 2: Firebase user exists but no database record yet (just completed Google signup)
+    // Note: isAuthenticated is !!user, so we check auth.currentUser directly
+    if (auth.currentUser && !user) {
+      logger.debug('Signup', 'Firebase user exists but no database record, redirecting to onboarding', {
+        uid: auth.currentUser.uid,
+        email: auth.currentUser.email,
+      });
       navigate('/onboarding', { replace: true });
       return;
     }
-  }, [isAuthReady, isAuthenticated, user, navigate]);
+  }, [isAuthReady, isAuthGateOpen, user, navigate]);
 
   // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount
   // If popup just completed auth, immediately redirect without showing signup UI

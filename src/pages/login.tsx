@@ -9,6 +9,7 @@ import { FastForward, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { logger } from "@/lib/logger";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
@@ -28,7 +29,10 @@ export default function LoginPage() {
 
   // Fix 2: Bounce Back - Redirect if already logged in
   useEffect(() => {
-    if (isAuthReady && isAuthenticated && user) {
+    if (!isAuthReady || !isAuthGateOpen) return;
+    
+    // Case 1: User is fully authenticated with database record
+    if (user) {
       // User is already logged in, redirect to appropriate dashboard
       if (user.isOnboarded === false) {
         navigate("/onboarding", { replace: true });
@@ -42,8 +46,19 @@ export default function LoginPage() {
       }
       
       navigate("/dashboard", { replace: true });
+      return;
     }
-  }, [isAuthReady, isAuthenticated, user, navigate]);
+    
+    // Case 2: Firebase user exists but no database record yet (just completed Google signin)
+    if (auth.currentUser && !user) {
+      logger.debug('Login', 'Firebase user exists but no database record, redirecting to onboarding', {
+        uid: auth.currentUser.uid,
+        email: auth.currentUser.email,
+      });
+      navigate('/onboarding', { replace: true });
+      return;
+    }
+  }, [isAuthReady, isAuthGateOpen, user, navigate]);
 
   // Handle post-login redirection based on user role
   useEffect(() => {
