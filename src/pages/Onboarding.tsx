@@ -454,8 +454,9 @@ export default function Onboarding() {
     
     // If we have Firebase auth (token exists), allow onboarding to proceed
     // The DB profile will be created when the user submits the form
+    // CRITICAL: Do NOT call fetchUser or refreshUser here to prevent 401/404 loops
     if (token || isAuthenticated) {
-      console.log('[Onboarding] Onboarding mode active - suppressing profile fetch');
+      console.log('[Onboarding] Firebase auth confirmed, allowing onboarding - DB profile will be created on form submit');
       setIsVerifyingUser(false);
       return;
     }
@@ -704,23 +705,39 @@ export default function Onboarding() {
     
     // Force refresh token to ensure it's valid
     let idToken = token;
-    if (auth.currentUser) {
-      idToken = await auth.currentUser.getIdToken(true);
+    const firebaseUser = auth.currentUser;
+    if (firebaseUser) {
+      idToken = await firebaseUser.getIdToken(true);
     }
     
     if (!idToken) {
       throw new Error('Authentication token not available. Please sign in again.');
     }
     
+    // Ensure we have Firebase UID for profile creation
+    const firebaseUid = firebaseUser?.uid;
+    if (!firebaseUid) {
+      throw new Error('Firebase UID not available. Please sign in again.');
+    }
+    
     try {
       if (machineContext.state === 'PERSONAL_DETAILS') {
         // Create/update user profile - middleware will auto-create if user doesn't exist
-        await apiRequest('PUT', '/api/me', { 
+        // The Firebase UID is included in the Authorization token, but we ensure it's available
+        const response = await apiRequest('PUT', '/api/me', { 
           displayName: formData.displayName, 
           phone: formData.phone, 
           location: formData.location, 
-          avatarUrl: formData.avatarUrl || undefined 
+          avatarUrl: formData.avatarUrl || undefined,
+          // Firebase UID is available via token, but explicit for clarity
+          uid: firebaseUid
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to create profile' }));
+          throw new Error(errorData.message || 'Failed to create profile');
+        }
+        
         // Refresh user data to get the newly created user profile
         await refreshUser();
       }
@@ -902,8 +919,8 @@ export default function Onboarding() {
       // Clear persistence storage
       clearStorage();
       
-      // Transition to COMPLETED state (shows success screen)
-      dispatch({ type: 'COMPLETE' });
+      // Navigate to dashboard after successful profile creation and refresh
+      navigate('/dashboard', { replace: true });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to complete onboarding. Please try again.';
       console.error('Onboarding completion error:', error);

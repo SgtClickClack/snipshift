@@ -98,14 +98,15 @@ export function AuthGuard({
   
   // PRIORITY CHECK: Always allow onboarding if we're on the onboarding path
   // This prevents blocking when DB profile doesn't exist yet
+  // CRITICAL: Never show pending/loading state on /onboarding when DB profile is missing
   if (location.pathname.startsWith('/onboarding')) {
-    // If we have Firebase auth (token or currentUser), allow passage
-    // The onboarding page will handle creating the DB profile
+    // If we have Firebase auth (token or currentUser), allow passage immediately
+    // Do NOT wait for DB profile - it will be created during onboarding
     if (hasFirebaseUser || token) {
-      console.log('[AuthGuard] On onboarding path with Firebase auth, allowing passage');
+      console.log('[AuthGuard] On onboarding path with Firebase auth, allowing passage (DB profile will be created)');
       return <>{children}</>;
     }
-    // If no Firebase auth but still loading, show loading screen
+    // If no Firebase auth but still loading, show loading screen (only for initial auth check)
     if (isLoading) {
       return <LoadingScreen />;
     }
@@ -116,6 +117,7 @@ export function AuthGuard({
 
   // PRIORITY CHECK: If Firebase user exists and not loading, check if we need to redirect
   // If DB profile exists, allow passage; otherwise, the useEffect above will handle redirect
+  // NOTE: This check does NOT apply to /onboarding (handled above)
   if (hasFirebaseUser && !isLoading) {
     // If we have a DB user, allow passage immediately
     if (user) {
