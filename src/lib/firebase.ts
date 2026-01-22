@@ -74,6 +74,7 @@ export { app };
 
 // Initialize Auth and Export it as a constant
 // CRITICAL: This must be a direct constant export - no lazy initialization
+// MODULAR SDK: getAuth(app) returns the auth instance - this is the ONLY way to get auth
 export const auth = getAuth(app);
 
 // Runtime validation: Ensure auth is never undefined
@@ -214,13 +215,9 @@ export const signOutUser = async () => {
   await signOut(auth);
 };
 
-// Auth state listener
-export const onAuthStateChange = (callback: (user: FirebaseAuthUser | null) => void) => {
-  return firebaseOnAuthStateChanged(auth, callback);
-};
-
 // Export the raw Firebase function for direct use
-export const onAuthStateChanged = firebaseOnAuthStateChanged;
+// MODULAR SYNTAX: Always use onAuthStateChanged(auth, callback) - never auth.onAuthStateChanged()
+export { firebaseOnAuthStateChanged as onAuthStateChanged };
 
 /**
  * Send a password reset email via Firebase Auth.

@@ -1,9 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { onAuthStateChanged, signOutUser, auth } from '../lib/firebase';
-import { User as FirebaseUser } from 'firebase/auth';
-import { setPersistence, browserLocalPersistence, getRedirectResult } from 'firebase/auth';
+import { auth, signOutUser } from '../lib/firebase';
+import { 
+  User as FirebaseUser,
+  onAuthStateChanged,
+  setPersistence, 
+  browserLocalPersistence, 
+  getRedirectResult 
+} from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { getDashboardRoute, normalizeVenueToBusiness, isBusinessRole } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -214,6 +219,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // STANDARD FIREBASE PATTERN: Single useEffect on mount
+  // MODULAR SYNTAX ENFORCEMENT: All Firebase calls use functional syntax
+  // ❌ NEVER: auth.onAuthStateChanged() or auth.setPersistence()
+  // ✅ ALWAYS: onAuthStateChanged(auth, ...) or setPersistence(auth, ...)
   useEffect(() => {
     // CRITICAL: Validate auth is initialized before proceeding
     if (!auth) {
@@ -246,6 +254,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Step 3: Listen for auth state changes (synchronous - returns unsubscribe immediately)
       // MODULAR SYNTAX: onAuthStateChanged(auth, ...) NOT auth.onAuthStateChanged(...)
+      // This is the ONLY correct way to listen to auth state in Firebase v9+
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
           logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);
