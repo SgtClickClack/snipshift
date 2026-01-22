@@ -151,16 +151,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('[AuthContext] Handshake is Complete');
         setIsLoading(false);
         
-        // STEP 4: Automatic navigation trigger - IMMEDIATELY after handshake completes
-        // This ensures the UI doesn't get stuck on the loading screen
-        const firebaseUser = firebaseUserRef.current;
-        if (firebaseUser) {
-          console.log('[Auth] User verified, triggering auto-navigation');
-          // Use a small timeout to ensure state has propagated, then navigate
-          setTimeout(() => {
-            navigate('/dashboard', { replace: true });
-          }, 50);
-        }
+        // NOTE: Auto-navigation removed to prevent race conditions.
+        // Each page (signup, login, etc.) handles its own redirect logic based on:
+        // - Whether user has a database profile
+        // - Whether user has completed onboarding
+        // - The current route
+        // This prevents the "stuck on splash screen" issue for new Google signups.
       } catch (error) {
         logger.error('AuthContext', 'Auth initialization failed', error);
         setUser(null);
@@ -184,8 +180,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const currentPath = window.location.pathname;
       // Redirect authenticated users away from public-only routes
       if (currentPath === '/login' || currentPath === '/signup') {
-        console.log('[Auth] User authenticated, redirecting from', currentPath, 'to /dashboard');
-        navigate('/dashboard', { replace: true });
+        // Check if user has completed onboarding before redirecting to dashboard
+        const hasCompletedOnboarding = user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
+        if (hasCompletedOnboarding) {
+          console.log('[Auth] User authenticated + onboarded, redirecting from', currentPath, 'to /dashboard');
+          navigate('/dashboard', { replace: true });
+        } else {
+          console.log('[Auth] User authenticated but not onboarded, redirecting from', currentPath, 'to /onboarding');
+          navigate('/onboarding', { replace: true });
+        }
       }
     }
   }, [user, isLoading, navigate]);
