@@ -1,3 +1,35 @@
+#### 2026-01-22: Token Verification Hardening + Error Logging
+
+**Core Components**
+- Auth middleware (`api/_src/middleware/auth.ts`)
+- Users API route (`api/_src/routes/users.ts`)
+
+**Key Features**
+- Added token start logging (`[AUTH] Received Token Start:`) for debugging token format issues.
+- Enhanced token verification error handling with specific error codes (expired, revoked, project mismatch).
+- Added detailed logging for `/api/users` endpoint to track profile creation flow.
+- Verified POST `/api/users` correctly uses `req.user.uid` from verified token for UID validation.
+- Confirmed database schema allows nulls for `phone`, `location`, `avatarUrl` fields (safe for partial updates).
+
+**Integration Points**
+- Firebase Admin SDK token verification (`admin.auth().verifyIdToken()`)
+- Project ID validation (`FIREBASE_PROJECT_ID` must match `snipshift-75b04`)
+- API endpoint: `POST /api/users`
+
+**File Paths**
+- `api/_src/middleware/auth.ts`
+- `api/_src/routes/users.ts`
+
+**Next Priority Task**
+- **VERCEL ENV CHECK**: Verify Vercel Dashboard → Settings → Environment Variables:
+  - `FIREBASE_SERVICE_ACCOUNT_KEY` is present and matches `snipshift-75b04` project
+  - OR `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` are set correctly
+  - Check Vercel logs for `[AUTH ERROR]` messages to diagnose token verification failures
+
+**Code Organization & Quality**
+- Token verification errors now log specific failure reasons (expiry, project mismatch, revocation) to Vercel logs for faster diagnosis.
+
+---
 #### 2026-01-22: Auth Guard Unification + Firebase UID Mapping
 
 **Core Components**

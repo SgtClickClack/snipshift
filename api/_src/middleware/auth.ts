@@ -197,16 +197,21 @@ export function authenticateUser(
       return;
     }
 
+    // Log token start for debugging
+    console.log('[AUTH] Received Token Start:', token?.substring(0, 10));
+
     // Wrap async logic in Promise to handle errors properly
     Promise.resolve().then(async () => {
       try {
         // Log token verification attempt for debugging (always for /api/me)
         const isMeEndpoint = req.path === '/api/me';
-        if (isMeEndpoint) {
-          console.log('[AUTH] Verifying token for /api/me', {
+        const isUsersEndpoint = req.path === '/api/users';
+        if (isMeEndpoint || isUsersEndpoint) {
+          console.log(`[AUTH] Verifying token for ${req.path}`, {
             hasToken: !!token,
             tokenLength: token?.length,
             tokenPrefix: token ? token.substring(0, 30) + '...' : 'none',
+            tokenStart: token?.substring(0, 10),
             projectId: process.env.FIREBASE_PROJECT_ID,
             firebaseAuthInitialized: !!firebaseAuth,
           });
@@ -225,13 +230,55 @@ export function authenticateUser(
           return;
         }
         
-        const decodedToken = await firebaseAuth.verifyIdToken(token);
+        // Verify token with explicit project ID check
+        let decodedToken;
+        try {
+          decodedToken = await firebaseAuth.verifyIdToken(token);
+        } catch (verifyError: any) {
+          // Enhanced error logging for token verification failures
+          const errorCode = verifyError?.code || 'unknown';
+          const errorMessage = verifyError?.message || 'Token verification failed';
+          
+          console.error('[AUTH ERROR] Token verification failed with specific error:', {
+            code: errorCode,
+            message: errorMessage,
+            path: req.path,
+            tokenStart: token?.substring(0, 10),
+            tokenLength: token?.length,
+            envProjectId: process.env.FIREBASE_PROJECT_ID,
+            firebaseAuthInitialized: !!firebaseAuth,
+            // Common error reasons:
+            isExpired: errorCode === 'auth/id-token-expired' || errorMessage.includes('expired'),
+            isInvalidFormat: errorCode === 'auth/argument-error' || errorMessage.includes('Decoding'),
+            isProjectMismatch: errorMessage.includes('project') || errorMessage.includes('audience'),
+            isRevoked: errorCode === 'auth/id-token-revoked',
+            errorStack: process.env.NODE_ENV === 'development' ? verifyError?.stack : undefined,
+          });
+          
+          // Provide specific error messages based on error type
+          let userFriendlyMessage = 'Unauthorized: Invalid token';
+          if (errorCode === 'auth/id-token-expired') {
+            userFriendlyMessage = 'Unauthorized: Token expired. Please sign in again.';
+          } else if (errorCode === 'auth/id-token-revoked') {
+            userFriendlyMessage = 'Unauthorized: Token revoked. Please sign in again.';
+          } else if (errorMessage.includes('project') || errorMessage.includes('audience')) {
+            userFriendlyMessage = 'Unauthorized: Token project mismatch. Check FIREBASE_PROJECT_ID environment variable.';
+            console.error('[AUTH ERROR] Project ID mismatch detected. Expected:', process.env.FIREBASE_PROJECT_ID);
+          }
+          
+          res.status(401).json({ 
+            message: userFriendlyMessage,
+            error: errorMessage,
+            code: errorCode
+          });
+          return;
+        }
         const firebaseUid = decodedToken.sub || decodedToken.uid;
         const { email } = decodedToken;
         
-        // Log successful verification for /api/me (always log for debugging)
-        if (isMeEndpoint) {
-          console.log('[AUTH] Token verified successfully', {
+        // Log successful verification for /api/me and /api/users (always log for debugging)
+        if (isMeEndpoint || isUsersEndpoint) {
+          console.log(`[AUTH] Token verified successfully for ${req.path}`, {
             uid: firebaseUid,
             email,
             tokenProjectId: decodedToken.project_id || decodedToken.aud,
@@ -333,21 +380,23 @@ export function authenticateUser(
                                 errorCode === 'auth/argument-error' ||
                                 errorMessage.includes('Decoding Firebase ID token failed');
         
-        // Always log token verification failures for /api/me to help diagnose issues
+        // Always log token verification failures for /api/me and /api/users to help diagnose issues
         // but use different log levels based on whether it's expected
-        if (isMeEndpoint) {
+        const isUsersEndpoint = req.path === '/api/users';
+        if (isMeEndpoint || isUsersEndpoint) {
           if (isExpectedError) {
-            console.log('[AUTH] Token verification failed for /api/me (expected):', {
+            console.log(`[AUTH] Token verification failed for ${req.path} (expected):`, {
               code: errorCode,
               message: errorMessage.substring(0, 100),
             });
           } else {
-            console.error('[AUTH ERROR] Token verification failed for /api/me:', {
+            console.error(`[AUTH ERROR] Token verification failed for ${req.path}:`, {
               code: errorCode,
               message: errorMessage,
               hasToken: !!token,
               tokenLength: token?.length,
               tokenPrefix: token ? token.substring(0, 30) + '...' : 'none',
+              tokenStart: token?.substring(0, 10),
               firebaseInitialized: !!firebaseAuth,
               envProjectId: process.env.FIREBASE_PROJECT_ID,
               errorStack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,

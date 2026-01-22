@@ -635,8 +635,16 @@ router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     return;
   }
 
+  console.log('[POST /api/users] Profile creation request:', {
+    userId: req.user.id,
+    firebaseUid: req.user.uid,
+    email: req.user.email,
+    hasBody: !!req.body,
+  });
+
   const validationResult = CreateProfileSchema.safeParse(req.body);
   if (!validationResult.success) {
+    console.error('[POST /api/users] Validation failed:', validationResult.error.errors);
     res.status(400).json({ 
       message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
     });
@@ -644,10 +652,26 @@ router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   }
 
   const { firebase_uid, displayName, phone, location, avatarUrl } = validationResult.data;
+  
+  // Verify the firebase_uid from request matches the verified token UID
   if (firebase_uid !== req.user.uid) {
+    console.error('[POST /api/users] UID mismatch:', {
+      requestUid: firebase_uid,
+      verifiedUid: req.user.uid,
+      userId: req.user.id,
+    });
     res.status(403).json({ message: 'Forbidden: Firebase UID mismatch' });
     return;
   }
+
+  console.log('[POST /api/users] Updating profile for verified user:', {
+    userId: req.user.id,
+    firebaseUid: req.user.uid,
+    displayName,
+    hasPhone: !!phone,
+    hasLocation: !!location,
+    hasAvatarUrl: !!avatarUrl,
+  });
 
   const updates: Record<string, unknown> = {};
   if (displayName !== undefined) updates.name = displayName;
@@ -655,11 +679,20 @@ router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   if (location !== undefined) updates.location = location;
   if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
 
+  // Note: req.user.id comes from the database (created by auth middleware if needed)
+  // All fields (phone, location, avatarUrl) are nullable in the schema, so partial updates are safe
   const updatedUser = await usersRepo.updateUser(req.user.id, updates);
   if (!updatedUser) {
+    console.error('[POST /api/users] Failed to update user:', req.user.id);
     res.status(500).json({ message: 'Failed to create profile' });
     return;
   }
+
+  console.log('[POST /api/users] Profile updated successfully:', {
+    userId: updatedUser.id,
+    email: updatedUser.email,
+    displayName: updatedUser.name,
+  });
 
   res.status(201).json({
     id: updatedUser.id,

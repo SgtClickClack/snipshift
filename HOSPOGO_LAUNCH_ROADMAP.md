@@ -23,6 +23,25 @@
 
 ---
 
+### Update: 2026-01-22 - Token Verification Hardening + Error Logging
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added token start logging and enhanced error handling in auth middleware to diagnose 401 "Invalid token" failures.
+- Improved error messages for token expiry, revocation, and project ID mismatches.
+- Added detailed logging for `/api/users` endpoint to track profile creation flow.
+- Verified POST `/api/users` correctly uses verified UID from token for security.
+
+**Impact:**
+- Faster diagnosis of token verification failures via Vercel logs with specific error codes.
+- Clearer error messages help identify if issue is expired token, project mismatch, or revoked token.
+
+**Vercel Environment Variables Check Required:**
+- Verify `FIREBASE_SERVICE_ACCOUNT_KEY` (or `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`) in Vercel Dashboard → Settings → Environment Variables
+- Ensure service account matches `snipshift-75b04` project
+
+---
 ### Update: 2026-01-22 - Auth Guard Unification + Firebase UID Mapping
 
 **Status:** ✅ **UPDATED**
