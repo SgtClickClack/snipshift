@@ -13,7 +13,7 @@ const getEnv = (key: keyof ImportMetaEnv) => {
 const firebaseConfig = {
   apiKey: getEnv('VITE_FIREBASE_API_KEY'),
   // Hardcoded per project requirement.
-  authDomain: 'hospogo.com',
+  authDomain: 'snipshift-75b04.firebaseapp.com',
   projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
   storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
   messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
