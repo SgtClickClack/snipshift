@@ -12,10 +12,9 @@ const getEnv = (key: keyof ImportMetaEnv) => {
 
 const firebaseConfig = {
   apiKey: getEnv('VITE_FIREBASE_API_KEY'),
-  // Use custom domain (hospogo.com) for auth to prevent Chrome bounce tracking
-  // from stripping apiKey params during redirect from firebaseapp.com
-  // This ensures the browser never leaves our primary domain during the handshake
-  authDomain: 'hospogo.com',
+  // Revert to default Firebase authDomain to ensure popup hits dedicated
+  // Firebase auth handler instead of being intercepted by SPA rewrites
+  authDomain: 'snipshift-75b04.firebaseapp.com',
   projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
   storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
   messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
