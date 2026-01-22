@@ -105,55 +105,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logger.error('AuthContext', 'Failed to set Firebase persistence', error);
     });
 
-    // Process redirect result BEFORE setting up onAuthStateChanged
-    // This ensures that if the app loads with auth params in the URL (e.g., after Google redirect),
-    // they are processed before the Guard decides to redirect to the landing page.
-    // isLoading stays TRUE until both getRedirectResult and the initial onAuthStateChanged complete.
-    const processRedirectResult = async () => {
+    // Primary async function to handle the complete auth handshake
+    const initializeAuth = async () => {
       try {
+        // STEP 1: Await getRedirectResult as the VERY FIRST action
+        // This processes any Google OAuth redirect tokens before anything else
         const redirectResult = await getRedirectResult(auth);
         if (redirectResult?.user) {
           // Redirect result found - hydrate the user
           firebaseUserRef.current = redirectResult.user;
           await hydrateFromFirebaseUser(redirectResult.user);
         }
+
+        // STEP 2: Wrap onAuthStateChanged in a Promise that resolves after the first callback
+        // This ensures we wait for the initial auth state before proceeding
+        await new Promise<void>((resolve) => {
+          unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+            firebaseUserRef.current = firebaseUser;
+
+            try {
+              if (!firebaseUser) {
+                setUser(null);
+                setToken(null);
+              } else {
+                await hydrateFromFirebaseUser(firebaseUser);
+              }
+            } catch (error) {
+              logger.error('AuthContext', 'Auth hydration failed', error);
+              setUser(null);
+              setToken(null);
+            }
+
+            // Resolve the Promise after the first callback (initial auth check)
+            if (isInitialAuthCheck) {
+              isInitialAuthCheck = false;
+              resolve();
+            }
+          });
+        });
+
+        // STEP 3: Both getRedirectResult and initial onAuthStateChanged have completed
+        // Now we can safely set isLoading to false
+        console.log('[AuthContext] Handshake is Complete');
+        setIsLoading(false);
       } catch (error) {
-        logger.error('AuthContext', 'Failed to process redirect result', error);
+        logger.error('AuthContext', 'Auth initialization failed', error);
+        setUser(null);
+        setToken(null);
+        setIsLoading(false);
       }
     };
 
-    // Process redirect result first, then set up auth state listener
-    processRedirectResult().finally(() => {
-      // Set up auth state listener after redirect result is processed
-      unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-        firebaseUserRef.current = firebaseUser;
-
-        try {
-          if (!firebaseUser) {
-            setUser(null);
-            setToken(null);
-            // Only set loading to false on the initial auth check
-            if (isInitialAuthCheck) {
-              setIsLoading(false);
-              isInitialAuthCheck = false;
-            }
-            return;
-          }
-
-          await hydrateFromFirebaseUser(firebaseUser);
-        } catch (error) {
-          logger.error('AuthContext', 'Auth hydration failed', error);
-          setUser(null);
-          setToken(null);
-        } finally {
-          // Only set loading to false on the initial auth check
-          if (isInitialAuthCheck) {
-            setIsLoading(false);
-            isInitialAuthCheck = false;
-          }
-        }
-      });
-    });
+    // Execute the async initialization
+    initializeAuth();
 
     return () => {
       if (unsub) unsub();

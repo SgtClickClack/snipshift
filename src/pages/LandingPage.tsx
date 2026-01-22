@@ -20,14 +20,16 @@ import { getDashboardRoute } from "@/lib/roles";
 import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
-  const { user, isAuthenticated, isAuthReady } = useAuth();
+  const { user, isAuthenticated, isAuthReady, isLoading } = useAuth();
   const hasCleanedUp = useRef(false);
 
   // Clear stale auth-related localStorage/sessionStorage data on landing page load
   // This prevents race conditions from old redirects or onboarding states
   useEffect(() => {
     // Only run once and only for unauthenticated users
+    // Wait for auth state to settle (isLoading must be false)
     if (hasCleanedUp.current) return;
+    if (isLoading) return; // Wait for auth handshake to complete
     if (!isAuthReady) return;
 
     if (!isAuthenticated) {
@@ -45,7 +47,13 @@ export default function LandingPage() {
         // Ignore storage errors (e.g., private browsing mode)
       }
     }
-  }, [isAuthenticated, isAuthReady]);
+  }, [isAuthenticated, isAuthReady, isLoading]);
+
+  // Show nothing or splash screen while auth state is loading
+  // This ensures we wait for the auth handshake to complete before rendering
+  if (isLoading) {
+    return null; // Or return a splash screen component if preferred
+  }
 
   // NOTE: Removed auto-redirect for authenticated users.
   // The landing page should always be viewable - authenticated users see

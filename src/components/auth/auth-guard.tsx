@@ -18,10 +18,14 @@ export function AuthGuard({
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
+  // STRICT RULE: MUST return loading screen if isLoading is TRUE
+  // This prevents any navigation decisions while auth handshake is in progress
   if (isLoading) {
     return <LoadingScreen />;
   }
 
+  // STRICT RULE: Can ONLY navigate to /login if isLoading is FALSE AND user is NULL
+  // This ensures we never redirect during the auth handshake
   if (requireAuth && !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
