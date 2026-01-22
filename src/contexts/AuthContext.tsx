@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
 import { browserLocalPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
@@ -34,7 +34,12 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-async function fetchAppUser(idToken: string): Promise<User | null> {
+async function fetchAppUser(idToken: string, isOnboardingMode: boolean = false): Promise<User | null> {
+  // Skip fetch entirely if in onboarding mode
+  if (isOnboardingMode) {
+    return null;
+  }
+
   const res = await fetch('/api/me', {
     headers: {
       Authorization: `Bearer ${idToken}`,
@@ -51,6 +56,11 @@ async function fetchAppUser(idToken: string): Promise<User | null> {
   // 404 is expected for brand new Firebase users that haven't been created in our DB yet.
   if (res.status === 404) return null;
 
+  // 401 during onboarding is expected - suppress warning to reduce console noise
+  if (res.status === 401 && isOnboardingMode) {
+    return null;
+  }
+
   // Anything else: keep the app stable and treat as "no profile".
   logger.warn('AuthContext', 'Failed to fetch /api/me', { status: res.status });
   return null;
@@ -61,9 +71,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Keep the current Firebase user without ever touching auth.currentUser.
   const firebaseUserRef = useRef<FirebaseUser | null>(null);
+  // Track if we're in onboarding mode to prevent profile fetches
+  const isOnboardingModeRef = useRef<boolean>(false);
 
   const login = useCallback((newUser: User) => {
     setUser(newUser);
@@ -87,13 +100,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // CRITICAL: Skip profile fetch on onboarding route to prevent 401/404 polling loop
     // The onboarding page is responsible for creating the profile, not verifying it
-    if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-      console.log('[AuthContext] Onboarding mode active - suppressing profile fetch');
+    // Use startsWith to catch all onboarding sub-routes
+    const isOnboarding = typeof window !== 'undefined' && 
+      (window.location.pathname.startsWith('/onboarding') || isOnboardingModeRef.current);
+    
+    if (isOnboarding) {
+      isOnboardingModeRef.current = true;
+      console.log('[AuthContext] Onboarding mode active - suppressing profile fetch', {
+        pathname: window.location.pathname
+      });
       setUser(null); // Keep user as null since profile doesn't exist yet
       return;
     }
 
-    const apiUser = await fetchAppUser(idToken);
+    // Clear onboarding mode flag if we're not on onboarding route
+    isOnboardingModeRef.current = false;
+
+    const apiUser = await fetchAppUser(idToken, isOnboardingModeRef.current);
     if (apiUser) {
       console.log('[AuthContext] User profile fetched successfully', { 
         id: apiUser.id, 
@@ -126,10 +149,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!firebaseUser) return;
     
     // CRITICAL: Skip refresh on onboarding route to prevent 401/404 polling loop
-    if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
+    const isOnboarding = typeof window !== 'undefined' && 
+      (window.location.pathname.startsWith('/onboarding') || isOnboardingModeRef.current);
+    
+    if (isOnboarding) {
+      isOnboardingModeRef.current = true;
       console.log('[AuthContext] Onboarding mode active - suppressing profile refresh');
       return;
     }
+    
+    // Clear onboarding mode flag if we're not on onboarding route
+    isOnboardingModeRef.current = false;
     
     try {
       await hydrateFromFirebaseUser(firebaseUser);
@@ -137,6 +167,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logger.error('AuthContext', 'refreshUser failed', error);
     }
   }, [hydrateFromFirebaseUser]);
+
+  // Track pathname changes to keep onboarding mode flag in sync
+  // This ensures we suppress fetches even if onAuthStateChanged fires before navigation completes
+  useEffect(() => {
+    const isOnboarding = location.pathname.startsWith('/onboarding');
+    isOnboardingModeRef.current = isOnboarding;
+  }, [location.pathname]);
 
   useEffect(() => {
     let unsub: (() => void) | undefined;

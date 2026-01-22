@@ -663,20 +663,35 @@ export default function Onboarding() {
 
   // Check if there's a Firebase session (user might have signed in but profile not yet created)
   // This is used to enable form interaction once Firebase auth is confirmed
-  const hasFirebaseSession = !!auth.currentUser || !!token;
+  // CRITICAL: Check auth.currentUser directly - it's the most reliable indicator
+  // Token might not be set immediately, but auth.currentUser is set synchronously
+  const hasFirebaseSession = !!auth.currentUser || !!token || isAuthenticated;
   
   // Debug log to confirm Firebase session status
   useEffect(() => {
     if (machineContext.state === 'ROLE_SELECTION') {
+      const firebaseUserExists = !!auth.currentUser;
+      const tokenExists = !!token;
+      const isAuth = isAuthenticated;
+      const buttonsShouldBeEnabled = hasFirebaseSession || machineContext.isWaitlistOnly;
+      
       console.log('[Onboarding] Role selection buttons status:', {
         hasFirebaseSession,
-        authCurrentUser: !!auth.currentUser,
-        token: !!token,
+        authCurrentUser: firebaseUserExists,
+        authCurrentUserUid: auth.currentUser?.uid,
+        token: tokenExists,
+        isAuthenticated: isAuth,
         isWaitlistOnly: machineContext.isWaitlistOnly,
-        buttonsEnabled: hasFirebaseSession || machineContext.isWaitlistOnly
+        buttonsEnabled: buttonsShouldBeEnabled,
+        isLoading
       });
+      
+      // Force enable if Firebase user exists, regardless of other states
+      if (firebaseUserExists && !buttonsShouldBeEnabled) {
+        console.warn('[Onboarding] Firebase user exists but buttons are disabled - this should not happen!');
+      }
     }
-  }, [hasFirebaseSession, machineContext.state, machineContext.isWaitlistOnly]);
+  }, [hasFirebaseSession, machineContext.state, machineContext.isWaitlistOnly, token, isAuthenticated, isLoading]);
 
   const progressPct = useMemo(() => {
     if (machineContext.stepIndex === 0) return 0;
@@ -983,8 +998,12 @@ export default function Onboarding() {
                   logger.debug('Onboarding', '[Onboarding] Role selection dispatched');
                 }}
                 disabled={!hasFirebaseSession && !machineContext.isWaitlistOnly}
-                style={{ cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none' }}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? '' : 'opacity-50'}`}
+                style={{ 
+                  cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', 
+                  pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none',
+                  opacity: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 1 : 0.5
+                }}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'professional' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><User className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'professional' ? 'text-brand-neon' : 'text-white'}`}>I'm looking for shifts</h3>
@@ -1009,8 +1028,12 @@ export default function Onboarding() {
                   navigate('/onboarding/hub', { replace: true });
                 }}
                 disabled={!hasFirebaseSession && !machineContext.isWaitlistOnly}
-                style={{ cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none' }}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? '' : 'opacity-50'}`}
+                style={{ 
+                  cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', 
+                  pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none',
+                  opacity: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 1 : 0.5
+                }}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'venue' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><Building2 className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'venue' ? 'text-brand-neon' : 'text-white'}`}>I need to fill shifts</h3>
@@ -1212,10 +1235,10 @@ export default function Onboarding() {
   // Don't show loader for COMPLETED state - show success screen instead
   // CRITICAL: Once Firebase user is confirmed (hasFirebaseSession), hide loader immediately
   // This ensures form is interactive as soon as Firebase auth is ready
+  // For ROLE_SELECTION, only wait for isLoading to be false - don't wait for user.id
   const shouldShowLoader = (machineContext.state as OnboardingState) === 'COMPLETED' ? false : (
     isLoading || 
-    (!hasFirebaseSession && machineContext.state !== 'ROLE_SELECTION') ||
-    (machineContext.state !== 'ROLE_SELECTION' && !hasFirebaseSession)
+    (machineContext.state === 'ROLE_SELECTION' ? false : !hasFirebaseSession)
   );
 
   if (shouldShowLoader) {
