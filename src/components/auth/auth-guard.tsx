@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { auth } from '@/lib/firebase';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -44,10 +45,19 @@ export function AuthGuard({
     return <LoadingScreen />;
   }
 
-  // STRICT RULE: Can ONLY navigate to /login if isLoading is FALSE AND user is NULL
-  // This ensures we never redirect during the auth handshake
-  if (requireAuth && !user) {
+  // CRITICAL: Check auth.currentUser directly for popup flow
+  // If popup auth succeeded but context hasn't updated yet, allow passage
+  // This prevents "pending" state when popup completes before context hydration
+  const hasFirebaseUser = auth.currentUser !== null;
+  if (requireAuth && !user && !hasFirebaseUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If Firebase user exists but context user is null, allow passage
+  // The context will hydrate shortly via onAuthStateChanged
+  if (requireAuth && !user && hasFirebaseUser) {
+    // Allow passage - context will update via onAuthStateChanged
+    return <>{children}</>;
   }
 
   if (redirectTo) {

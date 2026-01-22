@@ -30,17 +30,21 @@ export default function LoginPage() {
   useEffect(() => {
     if (authLoading) return;
 
+    // Clear pending state immediately when valid user is detected
     if (user) {
+      setPendingRedirect(false);
       navigate("/dashboard", { replace: true });
     }
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (pendingRedirect && !authLoading && user) {
+    // Also check auth.currentUser directly for popup flow
+    // This ensures we clear pending state even if context hasn't updated yet
+    if (!authLoading && !user && auth.currentUser) {
       setPendingRedirect(false);
-      navigate("/dashboard", { replace: true });
+      // Context will update via onAuthStateChanged, navigation will happen automatically
     }
-  }, [pendingRedirect, authLoading, user, navigate]);
+  }, [authLoading, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
