@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
-import { browserLocalPersistence, getRedirectResult, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
+import { browserLocalPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 
 export interface User {
@@ -53,57 +53,6 @@ async function fetchAppUser(idToken: string): Promise<User | null> {
   // Anything else: keep the app stable and treat as "no profile".
   logger.warn('AuthContext', 'Failed to fetch /api/me', { status: res.status });
   return null;
-}
-
-/**
- * Create a new user in our database for OAuth providers (Google).
- * This is called when we detect a Firebase user from redirect result that doesn't exist in our DB.
- * Returns the created user or null if creation failed.
- */
-async function createOAuthUserInDatabase(firebaseUser: FirebaseUser, idToken: string): Promise<User | null> {
-  console.log('[AuthContext] Creating OAuth user in database', { 
-    uid: firebaseUser.uid, 
-    email: firebaseUser.email 
-  });
-  
-  try {
-    const registerRes = await fetch('/api/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({
-        email: firebaseUser.email,
-        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-        password: '', // Passwordless/OAuth
-        provider: 'google',
-      }),
-    });
-
-    // 201 = created, 409 = already exists - both are acceptable
-    if (registerRes.ok || registerRes.status === 409) {
-      console.log('[AuthContext] OAuth user created/exists in database', { 
-        status: registerRes.status,
-        email: firebaseUser.email 
-      });
-      
-      // Now fetch the user profile
-      const userProfile = await fetchAppUser(idToken);
-      return userProfile;
-    }
-
-    // Log error but don't throw - let the app continue
-    const errorData = await registerRes.json().catch(() => ({}));
-    console.error('[AuthContext] Failed to create OAuth user in database', {
-      status: registerRes.status,
-      error: errorData,
-    });
-    return null;
-  } catch (error) {
-    console.error('[AuthContext] Error creating OAuth user in database', error);
-    return null;
-  }
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
@@ -172,101 +121,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Primary async function to handle the complete auth handshake
     const initializeAuth = async () => {
       try {
-        // STEP 1: Check if popup flow was used (auth.currentUser exists)
-        // If popup flow was used, bypass redirect result processing entirely
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          console.log('[AuthContext] Bypassing redirect check for popup session', {
-            uid: currentUser.uid,
-            email: currentUser.email
-          });
-          firebaseUserRef.current = currentUser;
-          // Skip redirect processing - onAuthStateChanged will handle popup results
-        } else {
-          // STEP 2: Try to process redirect result (wrapped in try/catch to silently fail)
-          // This only applies to legacy redirect flows or fallback scenarios
-          try {
-            console.log('[AuthContext] Processing redirect result...');
-            const redirectResult = await getRedirectResult(auth);
-            if (redirectResult?.user) {
-              // Redirect result found - this is from Google OAuth redirect
-              console.log('[AuthContext] Redirect result found', { 
-                uid: redirectResult.user.uid,
-                email: redirectResult.user.email,
-                provider: redirectResult.providerId 
-              });
-              firebaseUserRef.current = redirectResult.user;
-              
-              // Get ID token for API calls
-              const idToken = await redirectResult.user.getIdToken();
-              setToken(idToken);
-              
-              // Try to fetch existing user profile
-              let apiUser = await fetchAppUser(idToken);
-              
-              // CRITICAL FIX: If user doesn't exist in our DB (404), create them
-              // This handles the case where Google redirect completed but user wasn't created
-              if (!apiUser) {
-                console.log('[AuthContext] New Google user detected (redirect flow) - creating in database');
-                apiUser = await createOAuthUserInDatabase(redirectResult.user, idToken);
-              }
-              
-              if (apiUser) {
-                console.log('[AuthContext] User profile loaded', { 
-                  id: apiUser.id, 
-                  email: apiUser.email,
-                  isOnboarded: apiUser.isOnboarded 
-                });
-                setUser({ ...apiUser, uid: redirectResult.user.uid });
-              } else {
-                // Even if we couldn't create/fetch the user, set user to null
-                // The signup page will handle redirecting to onboarding
-                console.log('[AuthContext] Could not load/create user profile, proceeding with null user');
-                setUser(null);
-              }
-            } else {
-              console.log('[AuthContext] No redirect result found');
-              
-              // FALLBACK: Check window.location.search manually if getRedirectResult returns null
-              // Chrome's bounce tracking may strip apiKey params during redirect from firebaseapp.com
-              // to hospogo.com, causing getRedirectResult to return null even when auth succeeded
-              const urlParams = new URLSearchParams(window.location.search);
-              const apiKey = urlParams.get('apiKey');
-              
-              if (apiKey) {
-                console.log('[AuthContext] apiKey found in URL params - Chrome bounce tracking may have interfered');
-                console.log('[AuthContext] Forcing re-initialization of Firebase Auth state...');
-                
-                // Force a re-initialization by checking auth.currentUser
-                // If the user is authenticated but getRedirectResult failed, we need to hydrate manually
-                const fallbackUser = auth.currentUser;
-                if (fallbackUser) {
-                  console.log('[AuthContext] Found authenticated user via auth.currentUser fallback', {
-                    uid: fallbackUser.uid,
-                    email: fallbackUser.email
-                  });
-                  firebaseUserRef.current = fallbackUser;
-                  await hydrateFromFirebaseUser(fallbackUser);
-                } else {
-                  console.log('[AuthContext] No authenticated user found despite apiKey in URL - may need to retry auth flow');
-                }
-                
-                // Clean up the URL params to prevent re-processing
-                const cleanUrl = window.location.pathname;
-                window.history.replaceState({}, '', cleanUrl);
-              }
-            }
-          } catch (redirectError) {
-            // Silently fail redirect result processing - this is expected for popup flow
-            // onAuthStateChanged will handle popup results instead
-            console.log('[AuthContext] Redirect result processing failed (expected for popup flow)', redirectError);
-          }
-        }
+        // POPUP-ONLY FLOW: Bypass redirect check entirely
+        // onAuthStateChanged is now the ONLY authority for initial user hydration
+        console.log('[AuthContext] Bypassing redirect check - relying on popup state.');
 
-        // STEP 2: Wrap onAuthStateChanged in a Promise that resolves after the first callback
-        // This ensures we wait for the initial auth state before proceeding
-        // onAuthStateChanged is the primary listener for popup results - it fires immediately
-        // when signInWithPopup completes, providing a direct identity signal
+        // onAuthStateChanged is the sole listener for auth state
+        // It fires immediately when signInWithPopup completes, providing a direct identity signal
         await new Promise<void>((resolve) => {
           unsub = onAuthStateChanged(auth, async (firebaseUser) => {
             firebaseUserRef.current = firebaseUser;
@@ -304,24 +164,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         });
 
-        // STEP 3: Both getRedirectResult and initial onAuthStateChanged have completed
-        // Now we can safely set isLoading to false
-        console.log('[AuthContext] Handshake is Complete');
+        // onAuthStateChanged has completed - safe to set isLoading to false
+        console.log('[AuthContext] Handshake is Complete (popup-only flow)');
         
-        // DEBUG: Check if Chrome bounce tracking stripped the cookie
+        // DEBUG: Log current Firebase state
         console.log('[Auth] Current Firebase User:', auth.currentUser);
-        if (!auth.currentUser && !firebaseUserRef.current) {
-          console.warn('[Auth] WARNING: auth.currentUser is null after handshake - browser may have stripped the cookie due to bounce tracking mitigations');
-        }
         
         setIsLoading(false);
-        
-        // NOTE: Auto-navigation removed to prevent race conditions.
-        // Each page (signup, login, etc.) handles its own redirect logic based on:
-        // - Whether user has a database profile
-        // - Whether user has completed onboarding
-        // - The current route
-        // This prevents the "stuck on splash screen" issue for new Google signups.
       } catch (error) {
         logger.error('AuthContext', 'Auth initialization failed', error);
         setUser(null);

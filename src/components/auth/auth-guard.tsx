@@ -39,25 +39,27 @@ export function AuthGuard({
     }
   }, [user, isLoading, location.pathname, navigate]);
 
-  // STRICT RULE: MUST return loading screen if isLoading is TRUE
-  // This prevents any navigation decisions while auth handshake is in progress
+  // CRITICAL: Check auth.currentUser directly for popup flow
+  // If popup auth succeeded but context hasn't updated yet, allow immediate passage
+  // This bypasses "Authentication pending" state when popup completes before context hydration
+  const hasFirebaseUser = auth.currentUser !== null;
+  
+  // PRIORITY CHECK: If Firebase user exists and not loading, immediately clear pending state
+  // and allow passage to dashboard
+  if (hasFirebaseUser && !isLoading) {
+    // User is authenticated via popup - allow passage immediately
+    console.log('[AuthGuard] Firebase user exists, bypassing pending state');
+    return <>{children}</>;
+  }
+
+  // Show loading screen only if auth handshake is still in progress
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  // CRITICAL: Check auth.currentUser directly for popup flow
-  // If popup auth succeeded but context hasn't updated yet, allow passage
-  // This prevents "pending" state when popup completes before context hydration
-  const hasFirebaseUser = auth.currentUser !== null;
+  // No Firebase user and requireAuth - redirect to login
   if (requireAuth && !user && !hasFirebaseUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // If Firebase user exists but context user is null, allow passage
-  // The context will hydrate shortly via onAuthStateChanged
-  if (requireAuth && !user && hasFirebaseUser) {
-    // Allow passage - context will update via onAuthStateChanged
-    return <>{children}</>;
   }
 
   if (redirectTo) {

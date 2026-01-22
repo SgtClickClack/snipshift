@@ -153,7 +153,23 @@ export async function signInWithGoogleDevAware() {
   // Always use popup flow to bypass Chrome bounce tracking mitigations
   // This eliminates cross-domain redirects that Chrome may block
   try {
-    return await signInWithGoogleLocalDevPopup();
+    const user = await signInWithGoogleLocalDevPopup();
+    
+    // FAILSAFE: Immediately navigate to dashboard after popup resolves
+    // This ensures navigation happens even if React state updates are intercepted
+    if (user && typeof window !== 'undefined') {
+      console.log('[Auth] Popup auth complete, triggering failsafe navigation to /dashboard');
+      // Use setTimeout to allow React state to propagate first
+      // If React navigation fails, this hard redirect will ensure the user reaches dashboard
+      setTimeout(() => {
+        if (window.location.pathname === '/login' || window.location.pathname === '/signup') {
+          console.log('[Auth] Failsafe: Hard redirect to /dashboard');
+          window.location.href = '/dashboard';
+        }
+      }, 500);
+    }
+    
+    return user;
   } catch (error) {
     if (isHttp400StyleAuthFailure(error)) {
       shouldResetFirebaseSessionBeforeNextAttempt = true;
