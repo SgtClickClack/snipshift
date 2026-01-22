@@ -5,7 +5,7 @@
  * These endpoints are designed for enterprise integrations.
  */
 
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import * as payoutsRepo from '../repositories/payouts.repository.js';
@@ -31,7 +31,7 @@ const router = Router();
  * 
  * Auth: Requires authenticated venue owner
  */
-router.get('/export', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+router.get('/export', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
@@ -50,7 +50,7 @@ router.get('/export', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     .where(eq(users.id, req.user.id))
     .limit(1);
 
-  if (!user || user.role !== 'BUSINESS') {
+  if (!user || user.role !== 'business') {
     res.status(403).json({ message: 'Only venue owners can export settlements' });
     return;
   }
@@ -150,21 +150,22 @@ router.get('/export', authenticateUser, asyncHandler(async (req: AuthenticatedRe
  * Get details for a specific settlement by Settlement ID.
  * Includes associated ledger entries for full audit trail.
  */
-router.get('/:settlementId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+router.get('/:settlementId', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
   const { settlementId } = req.params;
+  const settlementIdStr = Array.isArray(settlementId) ? settlementId[0] : settlementId;
 
-  if (!settlementId || !settlementId.startsWith('STL-')) {
+  if (!settlementIdStr || !settlementIdStr.startsWith('STL-')) {
     res.status(400).json({ message: 'Invalid settlement ID format' });
     return;
   }
 
   // Get payout by settlement ID
-  const payout = await payoutsRepo.getPayoutBySettlementId(settlementId);
+  const payout = await payoutsRepo.getPayoutBySettlementId(settlementIdStr);
 
   if (!payout) {
     res.status(404).json({ message: 'Settlement not found' });
@@ -178,7 +179,7 @@ router.get('/:settlementId', authenticateUser, asyncHandler(async (req: Authenti
   }
 
   // Get associated ledger entries
-  const ledgerEntries = await ledgerRepo.getLedgerEntriesBySettlementId(settlementId);
+  const ledgerEntries = await ledgerRepo.getLedgerEntriesBySettlementId(settlementIdStr);
 
   res.status(200).json({
     settlement: {
@@ -197,7 +198,7 @@ router.get('/:settlementId', authenticateUser, asyncHandler(async (req: Authenti
       processedAt: payout.processedAt,
       createdAt: payout.createdAt,
     },
-    auditTrail: ledgerEntries.map(entry => ({
+    auditTrail: ledgerEntries.map((entry: any) => ({
       id: entry.id,
       entryType: entry.entryType,
       amountCents: entry.amountCents,
@@ -221,7 +222,7 @@ router.get('/:settlementId', authenticateUser, asyncHandler(async (req: Authenti
  * - endDate: ISO date string (required)
  * - entryType: specific entry type to filter (optional)
  */
-router.get('/ledger/export', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+router.get('/ledger/export', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
@@ -240,7 +241,7 @@ router.get('/ledger/export', authenticateUser, asyncHandler(async (req: Authenti
     .where(eq(users.id, req.user.id))
     .limit(1);
 
-  if (!user || user.role !== 'BUSINESS') {
+  if (!user || user.role !== 'business') {
     res.status(403).json({ message: 'Only venue owners can export ledger entries' });
     return;
   }
@@ -267,7 +268,7 @@ router.get('/ledger/export', authenticateUser, asyncHandler(async (req: Authenti
   });
 
   // Filter to only show entries for this venue
-  const venueEntries = entries.filter(e => e.venueId === req.user!.id);
+  const venueEntries = entries.filter((e: any) => e.venueId === req.user!.id);
 
   res.status(200).json({
     exportedAt: new Date().toISOString(),

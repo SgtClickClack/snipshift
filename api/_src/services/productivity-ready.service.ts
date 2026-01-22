@@ -158,12 +158,17 @@ export async function completeVevoVerification(
     const willBeProductivityReady = idVerified && !vevoExpired;
 
     // Update profile with VEVO verification
+    // Convert Date to ISO string for date column (Drizzle expects string for date columns)
+    const vevoExpiryDateStr = input.vevoExpiryDate 
+      ? input.vevoExpiryDate.toISOString().split('T')[0] 
+      : null;
+    
     await db
       .update(profiles)
       .set({
         vevoVerified: true,
         vevoVerifiedAt: now,
-        vevoExpiryDate: input.vevoExpiryDate || null,
+        vevoExpiryDate: vevoExpiryDateStr,
         vevoReferenceNumber: input.vevoReferenceNumber,
         vevoCheckType: input.vevoCheckType,
         productivityReady: willBeProductivityReady,
