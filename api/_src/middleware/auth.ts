@@ -226,12 +226,13 @@ export function authenticateUser(
         }
         
         const decodedToken = await firebaseAuth.verifyIdToken(token);
-        const { uid, email } = decodedToken;
+        const firebaseUid = decodedToken.sub || decodedToken.uid;
+        const { email } = decodedToken;
         
         // Log successful verification for /api/me (always log for debugging)
         if (isMeEndpoint) {
           console.log('[AUTH] Token verified successfully', {
-            uid,
+            uid: firebaseUid,
             email,
             tokenProjectId: decodedToken.project_id || decodedToken.aud,
             envProjectId: process.env.FIREBASE_PROJECT_ID,
@@ -242,6 +243,11 @@ export function authenticateUser(
         if (!email) {
            res.status(401).json({ message: 'Unauthorized: No email in token' });
            return;
+        }
+
+        if (!firebaseUid) {
+          res.status(401).json({ message: 'Unauthorized: No UID in token' });
+          return;
         }
 
         // Find user in our DB to get role
@@ -270,6 +276,7 @@ export function authenticateUser(
               email,
               name: displayName,
               role: 'pending_onboarding',
+              firebaseUid,
             });
             console.log('[AUTH] Auto-created user with pending_onboarding role (isOnboarded: false):', user?.id);
           } catch (createError: any) {
@@ -288,6 +295,21 @@ export function authenticateUser(
             res.status(401).json({ message: 'Unauthorized: User not found in database' });
             return;
           }
+
+        if (!user.firebaseUid || user.firebaseUid !== firebaseUid) {
+          try {
+            const updatedUser = await usersRepo.updateUser(user.id, { firebaseUid });
+            if (updatedUser) {
+              user = updatedUser;
+            }
+          } catch (updateError: any) {
+            console.warn('[AUTH] Failed to sync firebase UID to user record', {
+              userId: user.id,
+              firebaseUid,
+              error: updateError?.message || updateError,
+            });
+          }
+        }
         }
 
         // Attach user to request object
@@ -296,7 +318,7 @@ export function authenticateUser(
           email: user.email,
           name: user.name,
           role: user.role as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding',
-          uid: uid
+          uid: firebaseUid
         };
 
         next();

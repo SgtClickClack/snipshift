@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-22 - Auth Guard Unification + Firebase UID Mapping
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Simplified the AuthGuard redirect logic to funnel Firebase-only users into onboarding and keep profile users off `/onboarding` with a spinner fallback.
+- Standardized frontend auth naming (`hasUser`, `hasFirebaseUser`) to prevent `isAuthenticated` mismatches across entrypoints.
+- Mapped Firebase `sub` claim to `firebaseUid` during API auth to keep DB user records aligned with Firebase identity.
+
+**Impact:**
+- Removes the primary onboarding loop risk when the DB profile is missing or stale.
+- Ensures backend UID mappings stay consistent for auth-protected API calls.
+
+---
+
 ### Update: 2026-01-22 - Onboarding Role Card Unlock (Firebase-Only)
 
 **Status:** ✅ **UPDATED**

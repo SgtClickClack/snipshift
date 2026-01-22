@@ -21,7 +21,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated, user, isLoading } = useAuth();
+  const { login, hasUser, user, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -41,7 +41,7 @@ export default function SignupPage() {
   useEffect(() => {
     console.log('[Signup] Auth state check', { 
       isLoading, 
-      hasUser: !!user, 
+      hasUser, 
       hasFirebaseUser: !!auth.currentUser,
       userId: user?.id,
       firebaseUid: auth.currentUser?.uid 

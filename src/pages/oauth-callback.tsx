@@ -20,7 +20,7 @@ import { Loader2 } from 'lucide-react';
 export function OAuthCallback() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { hasUser, hasFirebaseUser, isLoading } = useAuth();
   const [statusMessage, setStatusMessage] = useState('Completing sign-in…');
 
   // Prevent double execution in React Strict Mode
@@ -59,18 +59,18 @@ export function OAuthCallback() {
   useEffect(() => {
     if (isLoading) {
       setStatusMessage('Completing sign-in…');
-    } else if (isAuthenticated && !user) {
+    } else if (hasFirebaseUser && !hasUser) {
       setStatusMessage('Verifying your account…');
-    } else if (isAuthenticated && user) {
+    } else if (hasUser) {
       setStatusMessage('Redirecting to your dashboard…');
     }
-  }, [isLoading, isAuthenticated, user]);
+  }, [isLoading, hasFirebaseUser, hasUser]);
 
   useEffect(() => {
     if (isLoading) return; // Wait for loading to complete
     if (hasRedirected.current) return;
 
-    if (isAuthenticated && user) {
+    if (hasUser) {
       // User is authenticated AND we have their profile data
       // Safe to redirect now
       hasRedirected.current = true;
@@ -84,7 +84,7 @@ export function OAuthCallback() {
     // If auth is ready but no user after loading completes, 
     // the user might need to complete onboarding
     // AuthContext will handle the redirect to /onboarding if needed
-  }, [isAuthenticated, user, isLoading, navigate]);
+  }, [hasUser, isLoading, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -101,8 +101,8 @@ export function OAuthCallback() {
         {/* Progress indicator */}
         <div className="flex justify-center gap-1.5 pt-2">
           <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${!isLoading ? 'bg-primary' : 'bg-muted'}`} />
-          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${isAuthenticated ? 'bg-primary' : 'bg-muted'}`} />
-          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${user ? 'bg-primary' : 'bg-muted'}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${hasFirebaseUser ? 'bg-primary' : 'bg-muted'}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${hasUser ? 'bg-primary' : 'bg-muted'}`} />
         </div>
       </div>
     </div>

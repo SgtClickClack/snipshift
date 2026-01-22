@@ -386,7 +386,7 @@ const clearStorage = () => {
 };
 
 export default function Onboarding() {
-  const { user, refreshUser, isAuthenticated, isLoading, token } = useAuth();
+  const { user, refreshUser, hasUser, hasFirebaseUser, isLoading, token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   // Disable polling on onboarding page to prevent 401/404 loop
@@ -455,7 +455,7 @@ export default function Onboarding() {
     // If we have Firebase auth (token exists), allow onboarding to proceed
     // The DB profile will be created when the user submits the form
     // CRITICAL: Do NOT call fetchUser or refreshUser here to prevent 401/404 loops
-    if (token || isAuthenticated) {
+    if (hasFirebaseUser) {
       console.log('[Onboarding] Firebase auth confirmed, allowing onboarding - DB profile will be created on form submit');
       console.log('[Onboarding] Onboarding mode active - form is now interactive');
       setIsVerifyingUser(false);
@@ -474,7 +474,7 @@ export default function Onboarding() {
     }
   }, [
     isLoading,
-    isAuthenticated,
+    hasFirebaseUser,
     token,
     navigate,
     machineContext.isWaitlistOnly,
@@ -665,22 +665,20 @@ export default function Onboarding() {
   // This is used to enable form interaction once Firebase auth is confirmed
   // CRITICAL: Check auth.currentUser directly - it's the most reliable indicator
   // Token might not be set immediately, but auth.currentUser is set synchronously
-  const hasFirebaseSession = !!auth.currentUser || !!token || isAuthenticated;
-  
   // Debug log to confirm Firebase session status
   useEffect(() => {
     if (machineContext.state === 'ROLE_SELECTION') {
       const firebaseUserExists = !!auth.currentUser;
       const tokenExists = !!token;
-      const isAuth = isAuthenticated;
-      const buttonsShouldBeEnabled = hasFirebaseSession || machineContext.isWaitlistOnly;
+      const isAuth = hasUser;
+      const buttonsShouldBeEnabled = hasFirebaseUser || machineContext.isWaitlistOnly;
       
       console.log('[Onboarding] Role selection buttons status:', {
-        hasFirebaseSession,
+        hasFirebaseUser,
         authCurrentUser: firebaseUserExists,
         authCurrentUserUid: auth.currentUser?.uid,
         token: tokenExists,
-        isAuthenticated: isAuth,
+        hasUser: isAuth,
         isWaitlistOnly: machineContext.isWaitlistOnly,
         buttonsEnabled: buttonsShouldBeEnabled,
         isLoading
@@ -691,7 +689,7 @@ export default function Onboarding() {
         console.warn('[Onboarding] Firebase user exists but buttons are disabled - this should not happen!');
       }
     }
-  }, [hasFirebaseSession, machineContext.state, machineContext.isWaitlistOnly, token, isAuthenticated, isLoading]);
+  }, [hasFirebaseUser, machineContext.state, machineContext.isWaitlistOnly, token, isLoading]);
 
   const progressPct = useMemo(() => {
     if (machineContext.stepIndex === 0) return 0;
@@ -932,9 +930,14 @@ export default function Onboarding() {
       
       // Mark onboarding as completed in the database
       // The authenticateUser middleware ensures the user exists
-      await apiRequest('PUT', '/api/me', { 
+      const completionResponse = await apiRequest('PUT', '/api/me', { 
         hasCompletedOnboarding: true
       });
+      
+      if (!completionResponse.ok) {
+        const errorData = await completionResponse.json().catch(() => ({ message: 'Failed to complete onboarding' }));
+        throw new Error(errorData.message || 'Failed to complete onboarding');
+      }
       
       // Force refresh token to get updated claims
       if (auth.currentUser) {
@@ -953,7 +956,9 @@ export default function Onboarding() {
       clearStorage();
       
       // Navigate to dashboard after successful profile creation and refresh
-      navigate('/dashboard', { replace: true });
+      if (completionResponse.status === 201 || completionResponse.status === 200) {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to complete onboarding. Please try again.';
       console.error('Onboarding completion error:', error);
@@ -979,9 +984,9 @@ export default function Onboarding() {
               <button 
                 type="button" 
                 onClick={() => {
-                  // Allow role selection if Firebase user is confirmed (hasFirebaseSession)
+                  // Allow role selection if Firebase user is confirmed (hasFirebaseUser)
                   // Don't require user.id since profile will be created during onboarding
-                  if (!machineContext.isWaitlistOnly && !hasFirebaseSession) {
+                  if (!machineContext.isWaitlistOnly && !hasFirebaseUser) {
                     toast({ 
                       title: 'Please wait', 
                       description: 'Your authentication is still loading. Please try again in a moment.', 
@@ -997,8 +1002,7 @@ export default function Onboarding() {
                   dispatch({ type: 'SELECT_ROLE', role: 'professional' });
                   logger.debug('Onboarding', '[Onboarding] Role selection dispatched');
                 }}
-                disabled={false}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseUser || machineContext.isWaitlistOnly) ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'professional' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><User className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'professional' ? 'text-brand-neon' : 'text-white'}`}>I'm looking for shifts</h3>
@@ -1007,9 +1011,9 @@ export default function Onboarding() {
               <button 
                 type="button" 
                 onClick={() => {
-                  // Allow role selection if Firebase user is confirmed (hasFirebaseSession)
+                  // Allow role selection if Firebase user is confirmed (hasFirebaseUser)
                   // Don't require user.id since profile will be created during onboarding
-                  if (!machineContext.isWaitlistOnly && !hasFirebaseSession) {
+                  if (!machineContext.isWaitlistOnly && !hasFirebaseUser) {
                     toast({ 
                       title: 'Please wait', 
                       description: 'Your authentication is still loading. Please try again in a moment.', 
@@ -1022,8 +1026,7 @@ export default function Onboarding() {
                   // Automatically navigate to venue onboarding hub
                   navigate('/onboarding/hub', { replace: true });
                 }}
-                disabled={false}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseUser || machineContext.isWaitlistOnly) ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'venue' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><Building2 className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'venue' ? 'text-brand-neon' : 'text-white'}`}>I need to fill shifts</h3>
@@ -1220,15 +1223,15 @@ export default function Onboarding() {
 
   // Show loader until:
   // 1. Auth is ready (isLoading is false)
-  // 2. For ROLE_SELECTION: Show immediately once Firebase user is confirmed (hasFirebaseSession)
-  // 3. For other steps: Need Firebase session (hasFirebaseSession) - don't require user.id since it will be created
+  // 2. For ROLE_SELECTION: Show immediately once Firebase user is confirmed (hasFirebaseUser)
+  // 3. For other steps: Need Firebase session (hasFirebaseUser) - don't require user.id since it will be created
   // Don't show loader for COMPLETED state - show success screen instead
-  // CRITICAL: Once Firebase user is confirmed (hasFirebaseSession), hide loader immediately
+  // CRITICAL: Once Firebase user is confirmed (hasFirebaseUser), hide loader immediately
   // This ensures form is interactive as soon as Firebase auth is ready
   // For ROLE_SELECTION, only wait for isLoading to be false - don't wait for user.id
   const shouldShowLoader = (machineContext.state as OnboardingState) === 'COMPLETED' ? false : (
     isLoading || 
-    (machineContext.state === 'ROLE_SELECTION' ? false : !hasFirebaseSession)
+    (machineContext.state === 'ROLE_SELECTION' ? false : !hasFirebaseUser)
   );
 
   if (shouldShowLoader) {
@@ -1289,7 +1292,7 @@ export default function Onboarding() {
                   <Button 
                     type="button" 
                     onClick={handleNext} 
-                    disabled={!canProceed || isSavingStep || (machineContext.state !== 'ROLE_SELECTION' && !hasFirebaseSession)} 
+                    disabled={!canProceed || isSavingStep || (machineContext.state !== 'ROLE_SELECTION' && !hasFirebaseUser)} 
                     variant="accent" 
                     className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" 
                     data-testid="onboarding-next"

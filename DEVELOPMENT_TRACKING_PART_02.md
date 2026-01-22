@@ -1,3 +1,36 @@
+#### 2026-01-22: Auth Guard Unification + Firebase UID Mapping
+
+**Core Components**
+- Auth context + auth guard (`src/contexts/AuthContext.tsx`, `src/components/auth/auth-guard.tsx`)
+- Onboarding flow (`src/pages/Onboarding.tsx`, `src/pages/signup.tsx`, `src/pages/oauth-callback.tsx`)
+- API auth middleware (`api/_src/middleware/auth.ts`)
+
+**Key Features**
+- Replaced `isAuthenticated` usage with `hasUser`/`hasFirebaseUser` so DB profile and Firebase session are clearly separated.
+- Simplified `AuthGuard` to route Firebase-only users to `/onboarding` and profile users away from `/onboarding`, using a spinner during transitions.
+- Standardized onboarding UI interactivity to rely on `hasFirebaseUser` and added explicit completion response handling.
+- Mapped Firebase `sub` claim to `firebaseUid` and backfilled missing UID mappings during auth middleware.
+
+**Integration Points**
+- Firebase Auth session detection (`onAuthStateChanged`, `auth.currentUser`)
+- API auth handshake (`/api/me`, middleware auth)
+- Routing: `/onboarding`, `/dashboard`
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/components/auth/auth-guard.tsx`
+- `src/pages/Onboarding.tsx`
+- `src/pages/signup.tsx`
+- `src/pages/oauth-callback.tsx`
+- `api/_src/middleware/auth.ts`
+
+**Next Priority Task**
+- Verify onboarding redirects for new Firebase users across signup → onboarding → dashboard.
+
+**Code Organization & Quality**
+- Reduced auth-guard branching and kept Firebase/DB signals explicit for clearer control flow.
+
+---
 #### 2026-01-22: Modular Auth Context Rebuild (Firebase v10)
 
 **Core Components**

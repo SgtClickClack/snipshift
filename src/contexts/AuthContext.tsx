@@ -21,8 +21,8 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthReady: boolean; // Alias for !isLoading, used by some components
-  isAuthenticated: boolean;
   hasUser: boolean; // Standardized: true when user object exists (DB profile loaded)
+  hasFirebaseUser: boolean; // True when Firebase session exists
   login: (user: User) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -133,6 +133,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -148,6 +149,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     await signOut(auth);
     firebaseUserRef.current = null;
+    setFirebaseUser(null);
     setUser(null);
     setToken(null);
   }, []);
@@ -276,6 +278,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await new Promise<void>((resolve) => {
           unsub = onAuthStateChanged(auth, async (firebaseUser) => {
             firebaseUserRef.current = firebaseUser;
+            setFirebaseUser(firebaseUser);
 
             try {
               if (!firebaseUser) {
@@ -352,11 +355,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasFirebaseUser: !!firebaseUserRef.current
       });
       
-      // Check if user is authenticated (via token or Firebase user)
-      const firebaseUser = firebaseUserRef.current || auth.currentUser;
-      const isAuthenticated = !!(token || firebaseUser);
+      // Check if Firebase user exists for auth completion
+      const currentFirebaseUser = firebaseUserRef.current || auth.currentUser;
+      const hasFirebaseUser = !!currentFirebaseUser;
       
-      if (isAuthenticated) {
+      if (hasFirebaseUser) {
         // User is authenticated - force navigation to dashboard
         const hasCompletedOnboarding = user?.hasCompletedOnboarding !== false && user?.isOnboarded !== false;
         const targetPath = hasCompletedOnboarding ? '/dashboard' : '/onboarding';
@@ -432,15 +435,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       token,
       isLoading,
       isAuthReady: !isLoading, // Alias for !isLoading, used by some components
-      // Consider the user authenticated if Firebase session exists (token set), even if /api/me is still 404.
-      isAuthenticated: !!token,
       // Standardized: true when user object exists (DB profile loaded)
       hasUser: !!user,
+      hasFirebaseUser: !!firebaseUser,
       login,
       logout,
       refreshUser,
     }),
-    [user, token, isLoading, login, logout, refreshUser]
+    [user, token, isLoading, firebaseUser, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
