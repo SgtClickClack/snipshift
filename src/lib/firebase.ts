@@ -201,6 +201,9 @@ export const onAuthStateChange = (callback: (user: FirebaseAuthUser | null) => v
   return onAuthStateChanged(auth, callback);
 };
 
+// Export the raw Firebase function for direct use
+export { onAuthStateChanged };
+
 /**
  * Send a password reset email via Firebase Auth.
  *
