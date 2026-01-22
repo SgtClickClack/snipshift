@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
-  const { user, isAuthReady, isAuthenticated, isProcessingRedirect, isAuthGateOpen } = useAuth();
+  const { user, isAuthReady, isAuthenticated, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -27,9 +27,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
 
-  // Fix 2: Bounce Back - Redirect if already logged in
+  // Redirect if already logged in
   useEffect(() => {
-    if (!isAuthReady || !isAuthGateOpen) return;
+    if (!isAuthReady) return;
     
     // Case 1: User is fully authenticated with database record
     if (user) {
@@ -58,7 +58,7 @@ export default function LoginPage() {
       navigate('/onboarding', { replace: true });
       return;
     }
-  }, [isAuthReady, isAuthGateOpen, user, navigate]);
+  }, [isAuthReady, user, navigate]);
 
   // Handle post-login redirection based on user role
   useEffect(() => {
@@ -199,14 +199,13 @@ export default function LoginPage() {
     }
   };
 
-  // Show loading state while processing OAuth redirect or auth gate is closed
-  // This prevents the login form from flashing while the redirect result is being processed
-  if (isProcessingRedirect || !isAuthGateOpen) {
+  // Show loading state while auth is initializing
+  if (authLoading || !isAuthReady) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <FastForward className="text-primary text-4xl mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">Completing sign-in...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );

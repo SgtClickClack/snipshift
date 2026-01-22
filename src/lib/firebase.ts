@@ -42,14 +42,20 @@ const sanitizeEnv = (val: string | undefined, keyName: string, fallback?: string
 // SECURITY: Strict project ID enforcement - only allow 'snipshift-75b04'
 const REQUIRED_PROJECT_ID = 'snipshift-75b04';
 
-// CRITICAL: Use environment variable for auth domain to support rebranding.
-// Falls back to legacy Firebase domain if not set (for backwards compatibility).
-// Supports both VITE_FIREBASE_AUTH_DOMAIN and VITE_AUTH_DOMAIN (alias).
+// CRITICAL: Auth domain configuration for Firebase Authentication.
+// For production with custom domain (e.g., hospogo.com), set VITE_FIREBASE_AUTH_DOMAIN.
+// Falls back to Firebase project domain if not set.
+const rawAuthDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_AUTH_DOMAIN;
 const authDomain = sanitizeEnv(
-  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_AUTH_DOMAIN,
+  rawAuthDomain,
   'VITE_FIREBASE_AUTH_DOMAIN',
-  'snipshift-75b04.firebaseapp.com' // Fallback to legacy domain for storage partitioning bypass
+  'snipshift-75b04.firebaseapp.com'
 );
+
+// Log warning if using fallback domain in production
+if (import.meta.env.PROD && !rawAuthDomain) {
+  console.warn('[Firebase] WARNING: Using fallback authDomain. Set VITE_FIREBASE_AUTH_DOMAIN to your production domain (e.g., hospogo.com) to avoid COOP/cookie issues.');
+}
 
 const firebaseConfig = {
   apiKey: sanitizeEnv(import.meta.env.VITE_FIREBASE_API_KEY, 'VITE_FIREBASE_API_KEY'),

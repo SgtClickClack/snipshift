@@ -21,7 +21,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated, isAuthReady, user, isProcessingRedirect, isAuthGateOpen } = useAuth();
+  const { login, isAuthenticated, isAuthReady, user, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -37,13 +37,9 @@ export default function SignupPage() {
   const [showManualDashboardLink, setShowManualDashboardLink] = useState(false);
   const [showConnectionDelayedButton, setShowConnectionDelayedButton] = useState(false);
 
-  // REDIRECT: If user is authenticated in Firebase, redirect them away from signup
-  // This handles both cases:
-  // 1. User has a database record (user object exists) - redirect to their dashboard
-  // 2. User has NO database record (404 from backend) - redirect to onboarding
-  // CRITICAL: Role check happens BEFORE dashboard redirect to ensure proper routing
+  // REDIRECT: If user is authenticated, redirect them away from signup
   useEffect(() => {
-    if (!isAuthReady || !isAuthGateOpen) return;
+    if (!isAuthReady) return;
     
     // Case 1: User is fully authenticated with database record
     if (user) {
@@ -77,7 +73,6 @@ export default function SignupPage() {
     }
     
     // Case 2: Firebase user exists but no database record yet (just completed Google signup)
-    // Note: isAuthenticated is !!user, so we check auth.currentUser directly
     if (auth.currentUser && !user) {
       logger.debug('Signup', 'Firebase user exists but no database record, redirecting to onboarding', {
         uid: auth.currentUser.uid,
@@ -86,7 +81,7 @@ export default function SignupPage() {
       navigate('/onboarding', { replace: true });
       return;
     }
-  }, [isAuthReady, isAuthGateOpen, user, navigate]);
+  }, [isAuthReady, user, navigate]);
 
   // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount
   // If popup just completed auth, immediately redirect without showing signup UI
@@ -456,9 +451,8 @@ export default function SignupPage() {
 
 
 
-  // Show loading state while processing OAuth redirect or auth gate is closed
-  // This prevents the signup form from flashing while the redirect result is being processed
-  if (isProcessingRedirect || !isAuthGateOpen || isFinalizing) {
+  // Show loading state while auth is initializing or finalizing
+  if (isLoading || !isAuthReady || isFinalizing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm max-w-md mx-4">
@@ -469,10 +463,10 @@ export default function SignupPage() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-card-foreground mb-2">
-              {isProcessingRedirect ? 'Completing sign-in...' : 'Finalizing...'}
+              {isFinalizing ? 'Finalizing...' : 'Loading...'}
             </CardTitle>
             <p className="text-muted-foreground">
-              {isProcessingRedirect ? 'Please wait while we verify your account' : 'Completing your sign-up'}
+              {isFinalizing ? 'Completing your sign-up' : 'Please wait while we verify your account'}
             </p>
           </CardContent>
         </Card>

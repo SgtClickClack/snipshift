@@ -1,9 +1,8 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth, DEMO_AUTH_BYPASS_LOADING } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardRoute, isBusinessRole } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { NonBlockingAuthWrapper } from '@/components/ui/auth-loading-overlay';
 import { logger } from '@/lib/logger';
 import { auth } from '@/lib/firebase';
 
@@ -22,134 +21,50 @@ export function AuthGuard({
   allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
-  const { user, isLoading, isAuthenticated, isAuthReady, isRoleLoading, isProcessingRedirect, isAuthGateOpen, token } = useAuth();
+  const { user, isLoading, isAuthenticated, isAuthReady, isRoleLoading } = useAuth();
   const location = useLocation();
-  const shouldDebug = import.meta.env.DEV || import.meta.env.VITE_E2E === '1';
-
-  // DEMO: Disable bounce-back during onboarding — if user is on /onboarding, never redirect to /login.
-  // Backend sync can be slow; allow profile setup to complete without being kicked out.
-  if (typeof window !== 'undefined' && (window.location.pathname === '/onboarding' || window.location.pathname.startsWith('/onboarding/'))) {
-    return <>{children}</>;
-  }
-
-  // DEBUG: Log auth state for messages page debugging
-  if (location.pathname === '/messages' && shouldDebug) {
-    logger.debug('AuthGuard', 'DEBUG: Auth State for /messages', {
-      user: user ? { id: user.id, currentRole: user.currentRole, isOnboarded: user.isOnboarded } : null,
-      isLoading,
-      isAuthenticated,
-      isAuthReady,
-      isRoleLoading,
-      pathname: location.pathname
-    });
-  }
+  const shouldDebug = import.meta.env.DEV;
 
   // Check for onboarding_in_progress flag in localStorage
-  // If set, allow access to onboarding routes without redirecting
   const isOnboardingInProgress = typeof window !== 'undefined' && 
     localStorage.getItem('onboarding_in_progress') === 'true';
-  const onboardingCurrentRole = typeof window !== 'undefined' && 
-    localStorage.getItem('currentRole');
 
   // Check if there's a Firebase session (user might have signed in but profile not yet created)
-  const hasFirebaseSession = !!auth.currentUser || !!token;
-  
-  // E2E mode: Check for mock token in storage (tests inject this after registration)
-  // Use comprehensive E2E detection like TutorialOverlay
-  const isE2E = 
-    import.meta.env.VITE_E2E === '1' ||
-    import.meta.env.MODE === 'test' ||
-    (typeof window !== 'undefined' && (
-      new URLSearchParams(window.location.search).get('e2e') === 'true' ||
-      localStorage.getItem('E2E_MODE') === 'true'
-    ));
-  
-  // Determine if we're in a loading state that should block (for redirects) vs non-blocking (for layout)
-  // CRITICAL: Include isProcessingRedirect and check isAuthGateOpen to prevent premature redirects during OAuth flow
-  // The auth gate must be open before we make any routing decisions
-  const isAuthLoading = isLoading || !isAuthReady || isRoleLoading || isProcessingRedirect || !isAuthGateOpen;
-  const isWaitingForProfile = hasFirebaseSession && !isAuthenticated && !isE2E;
-  
-  // For critical redirects, we still need to block to prevent flicker
-  // But for most cases, we can render with an overlay
-  const needsBlockingRedirect = requireAuth && !isAuthenticated && !hasFirebaseSession && !isE2E;
-  
-  // Show full loading screen only for critical blocking cases
-  if (needsBlockingRedirect && isAuthLoading) {
+  const hasFirebaseSession = !!auth.currentUser;
+
+  // Show loading screen while auth is initializing
+  if (isLoading || !isAuthReady || isRoleLoading) {
     return <LoadingScreen />;
   }
-  
-  // For non-blocking cases, render children with overlay
-  if (isAuthLoading || isWaitingForProfile) {
-    if (isWaitingForProfile) {
-      logger.debug('AuthGuard', 'Firebase session exists but user not authenticated yet, showing non-blocking overlay', {
-        hasFirebaseSession,
-        isAuthenticated,
-        pathname: location.pathname
-      });
-    }
-    return (
-      <NonBlockingAuthWrapper isLoading={true}>
-        {children}
-      </NonBlockingAuthWrapper>
-    );
-  }
-  const hasE2EAuthState = isE2E && typeof window !== 'undefined' && 
-    sessionStorage.getItem('hospogo_auth_state') === 'authenticated';
-  const hasE2EToken = isE2E && (
-    token === 'mock-test-id-token' || 
-    token === 'mock-test-token' ||
-    (typeof window !== 'undefined' && (
-      localStorage.getItem('token') === 'mock-test-id-token' ||
-      localStorage.getItem('authToken') === 'mock-test-id-token' ||
-      sessionStorage.getItem('hospogo_test_user') !== null ||
-      localStorage.getItem('hospogo_test_user') !== null
-    ))
-  );
-  const hasE2ESession = hasE2EAuthState || hasE2EToken;
 
-  // If authentication is required but user is not authenticated
-  // EXCEPTION: Allow /onboarding if there's a Firebase session OR E2E mock token (user just signed in but no profile yet)
-  // This is the "PENDING STATE" - Firebase user exists but no Postgres record yet (new Google signup)
+  // PUBLIC ROUTES: Allow access to onboarding pages during onboarding flow
+  const isOnboardingRoute = location.pathname.startsWith('/onboarding');
+  if (isOnboardingRoute) {
+    // Allow access if onboarding is in progress or user has Firebase session
+    if (isOnboardingInProgress || hasFirebaseSession || isAuthenticated) {
+      return <>{children}</>;
+    }
+  }
+
+  // REQUIRE AUTH: User must be authenticated
   if (requireAuth && !isAuthenticated) {
-    // DEMO: Bypass auth requirement so /dashboard and other requireAuth routes render (e.g. /dashboard -> DashboardRedirect)
-    if (DEMO_AUTH_BYPASS_LOADING) return <>{children}</>;
-    // PENDING STATE HANDLER: Allow ALL onboarding routes if there's a Firebase session
-    // This covers: /onboarding, /onboarding/professional, /onboarding/hub, etc.
-    // New Google users have Firebase auth but no Postgres record until onboarding completes
-    const isOnboardingRoute = location.pathname.startsWith('/onboarding');
-    if (isOnboardingRoute && (hasFirebaseSession || hasE2ESession)) {
-      logger.debug('AuthGuard', 'PENDING STATE: Allowing onboarding access with Firebase session but no Postgres profile', {
-        hasFirebaseSession,
-        hasE2ESession,
-        pathname: location.pathname,
-        firebaseUid: auth.currentUser?.uid,
-      });
+    // Allow onboarding routes if there's a Firebase session (new signup)
+    if (isOnboardingRoute && hasFirebaseSession) {
+      logger.debug('AuthGuard', 'Firebase session exists, allowing onboarding access');
       return <>{children}</>;
     }
-    // In E2E mode, if we have auth state but user is not authenticated, don't redirect to login
-    if (isE2E && hasE2ESession) {
-      logger.debug('AuthGuard', 'E2E mode: Has auth state, allowing access', {
-        hasE2EAuthState,
-        hasE2EToken,
-        pathname: location.pathname
-      });
-      return <>{children}</>;
-    }
-    // PENDING STATE REDIRECT: If user has Firebase session but no profile and NOT on onboarding,
-    // redirect to onboarding instead of login (they need to complete signup)
+    
+    // User has Firebase session but no profile - redirect to onboarding
     if (hasFirebaseSession && !isOnboardingRoute) {
-      logger.debug('AuthGuard', 'PENDING STATE: Firebase session exists but no profile, redirecting to onboarding', {
-        firebaseUid: auth.currentUser?.uid,
-        pathname: location.pathname,
-      });
+      logger.debug('AuthGuard', 'Firebase session exists but no profile, redirecting to onboarding');
       return <Navigate to="/onboarding" replace />;
     }
+    
+    // No authentication - redirect to login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // PRIORITY 1: If user is authenticated and on login/signup, redirect them immediately
-  // This prevents the "flicker" where users see login/signup page after Google auth
+  // AUTHENTICATED USER ON AUTH PAGES: Redirect away from login/signup
   const authPages = ['/login', '/signup'];
   if (isAuthenticated && user && authPages.includes(location.pathname)) {
     logger.debug('AuthGuard', 'Authenticated user on auth page, redirecting', {
@@ -157,16 +72,6 @@ export function AuthGuard({
       currentRole: user.currentRole,
     });
     
-    // CRITICAL: Exception - If current path starts with /onboarding, do not redirect
-    // This prevents redirect loops during onboarding flow
-    if (location.pathname.startsWith('/onboarding')) {
-      logger.debug('AuthGuard', 'User on onboarding path, allowing access', {
-        pathname: location.pathname,
-      });
-      return <>{children}</>;
-    }
-    
-    // Redirect based on onboarding/role status
     if (user.isOnboarded === false) {
       return <Navigate to="/onboarding" replace />;
     }
@@ -177,217 +82,92 @@ export function AuthGuard({
     return <Navigate to={userDashboard} replace />;
   }
 
-  const publicRoutes = ['/onboarding', '/onboarding/hub', '/onboarding/professional', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
-  
-  // Routes that are accessible to all authenticated users regardless of role
-  // These routes don't require a specific role and should be accessible once user is authenticated
-  const roleAgnosticRoutes = ['/messages', '/profile', '/settings', '/notifications', '/wallet', '/earnings'];
-  
-  // CRITICAL: Exception - If current path starts with /onboarding, do not redirect to role selector
-  // This prevents redirect loops during onboarding flow, especially on new devices
-  // ALSO: If onboarding_in_progress flag is set, allow access regardless of user state
-  const isOnboardingPage = location.pathname.startsWith('/onboarding');
-  if (isOnboardingPage && (isOnboardingInProgress || (isAuthenticated && user))) {
-    logger.debug('AuthGuard', 'User on onboarding path, allowing access without role check', {
-      pathname: location.pathname,
-      currentRole: user?.currentRole,
-      isOnboarded: user?.isOnboarded,
-      isOnboardingInProgress,
-      onboardingCurrentRole,
-    });
-    return <>{children}</>;
-  }
-  
-  if (isAuthenticated && user) {
-    const hasRole = user.currentRole && user.currentRole !== 'client';
-    const isRoleMissing = user.currentRole == null;
-
-    // CRITICAL: If authenticated AND role is null AND not on /onboarding -> Redirect to /onboarding
-    if (isRoleMissing && !isOnboardingPage) {
-      logger.debug('AuthGuard', 'User authenticated but role is null - redirecting to onboarding', {
-        currentRole: user.currentRole,
-        isOnboarded: user.isOnboarded,
-        pathname: location.pathname
-      });
-      return <Navigate to="/onboarding" replace />;
-    }
-
-    // CRITICAL: Exception for ALL onboarding routes - allow users to complete onboarding
-    // even if they have a role set (prevents redirect loops during onboarding submission)
-    // This includes /onboarding (main onboarding with RSA/ID uploads), /onboarding/professional, and /onboarding/hub
-    if (isOnboardingPage) {
-      logger.debug('AuthGuard', 'User on onboarding route, allowing access to complete onboarding', {
-        currentRole: user.currentRole,
-        isOnboarded: user.isOnboarded,
-        pathname: location.pathname
-      });
-      return <>{children}</>;
-    }
-  }
-
-  // Legacy: If user is authenticated but not onboarded, redirect to onboarding
-  // Exception: Allow access to onboarding page itself, landing page, legal pages, and other public routes
+  // ONBOARDING CHECK: User not onboarded should go to onboarding
+  const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
   if (isAuthenticated && user && user.isOnboarded === false) {
-    // Avoid redirect loop when already on a public route
-    if (!publicRoutes.includes(location.pathname)) {
+    if (!publicRoutes.includes(location.pathname) && !isOnboardingRoute) {
       return <Navigate to="/onboarding" replace />;
     }
   }
 
-  // If user is already onboarded but tries to access onboarding page, redirect to dashboard
-  // EXCEPTION: Allow access to onboarding if user is actively on an onboarding route
-  // This prevents redirects during RSA/Government ID upload steps
-  if (isAuthenticated && user && user.isOnboarded === true && location.pathname === '/onboarding' && !isOnboardingPage) {
-    const userDashboard = user.currentRole ? getDashboardRoute(user.currentRole) : '/user-dashboard';
-    return <Navigate to={userDashboard} replace />;
-  }
-
-  // If user is authenticated but doesn't have a current role, redirect to role selection
-  // But only if they're already onboarded (onboarding sets the role)
-  // Exception: Allow public routes and role-agnostic routes to be viewed
+  // ROLE CHECK: If no role, redirect to onboarding or role selection
+  const roleAgnosticRoutes = ['/messages', '/profile', '/settings', '/notifications', '/wallet', '/earnings'];
   if (isAuthenticated && user && user.isOnboarded !== false && (!user.currentRole || user.currentRole === 'client')) {
-    // CRITICAL: Allow access to role-agnostic routes (messages, profile, etc.) even without a role
-    // These routes are accessible to all authenticated users
     if (roleAgnosticRoutes.includes(location.pathname)) {
-      logger.debug('AuthGuard', 'User accessing role-agnostic route, allowing access without role check', {
-        pathname: location.pathname,
-        currentRole: user.currentRole,
-      });
       return <>{children}</>;
     }
-    // Avoid redirect loop when already on a public route or role-selection
     if (!publicRoutes.includes(location.pathname) && location.pathname !== '/role-selection') {
       return <Navigate to="/role-selection" replace />;
     }
   }
 
-  // If specific role is required but user's currentRole doesn't match
-  // Also check roles array and handle venue->business mapping using centralized helper
-  // CRITICAL: If requiredRole is 'business', also allow 'venue' and 'hub' to prevent lockouts
+  // REQUIRED ROLE CHECK
   if (requiredRole && user) {
-    // Check if user has the required role (using centralized mapping)
     const hasDirectMatch = 
       user.currentRole === requiredRole ||
       (user.roles && user.roles.includes(requiredRole as any));
     
-    // Special case: allow business-related roles to access business routes
-    // If requiredRole is 'business', also accept 'venue' and 'hub'
+    // Business role equivalence
     const hasBusinessRoleMatch = 
-      requiredRole === 'business' && (
-        isBusinessRole(user.currentRole || '') ||
-        (user.roles && user.roles.some(r => isBusinessRole(r)))
-      );
+      requiredRole === 'business' && isBusinessRole(user.currentRole || '');
     
-    // Special case: If requiredRole is 'venue' or 'hub', also accept 'business' (and vice versa)
-    // Use isBusinessRole helper for consistency
     const hasVenueHubMatch = 
-      (requiredRole === 'venue' || requiredRole === 'hub') && (
-        isBusinessRole(user.currentRole || '') ||
-        (user.roles && user.roles.some(r => isBusinessRole(r)))
-      );
+      (requiredRole === 'venue' || requiredRole === 'hub') && isBusinessRole(user.currentRole || '');
     
     const hasRequiredRole = hasDirectMatch || hasBusinessRoleMatch || hasVenueHubMatch;
     
-    const hasAnyRole = 
-      (user.currentRole && user.currentRole !== 'client') ||
-      (user.roles && user.roles.some(r => r && r !== 'client'));
-
     if (!hasRequiredRole) {
-      // If user has no role, always route them to onboarding instead of Access Denied
+      const hasAnyRole = user.currentRole && user.currentRole !== 'client';
+      
       if (!hasAnyRole) {
         if (shouldDebug) {
-          logger.debug('AuthGuard', 'User authenticated but no role - redirecting to onboarding:', {
-            userCurrentRole: user.currentRole,
-            userRoles: user.roles,
-            attemptedPath: location.pathname
-          });
+          logger.debug('AuthGuard', 'User has no role, redirecting to onboarding');
         }
         return <Navigate to="/onboarding" replace />;
       }
       
-      // User has a role but not the required one - show unauthorized
-      // Debug logging for E2E tests
       if (shouldDebug) {
-        logger.debug('AuthGuard', 'Role mismatch - redirecting to unauthorized:', {
+        logger.debug('AuthGuard', 'Role mismatch, redirecting to unauthorized', {
           requiredRole,
           userCurrentRole: user.currentRole,
-          userRoles: user.roles,
-          attemptedPath: location.pathname
         });
       }
-      // Redirect to unauthorized page instead of silently redirecting to dashboard
-      // This makes it clear to users they don't have access
       return <Navigate to="/unauthorized" state={{ from: location, requiredRole }} replace />;
     }
   }
-  
-  // Debug: Log successful role check
-  if (requiredRole && shouldDebug) {
-    logger.debug('AuthGuard', 'Role check passed:', {
-      requiredRole,
-      userCurrentRole: user?.currentRole,
-      userRoles: user?.roles
-    });
-  }
 
-  // If multiple roles are allowed, check if user's role is in the allowed list
-  // Check both currentRole and roles array (for venue/business compatibility)
-  // CRITICAL: If a route allows ANY business-related role ('business', 'venue', 'hub'), 
-  // it must allow ALL business-related roles to prevent lockouts
+  // ALLOWED ROLES CHECK
   if (allowedRoles && user) {
-    // Check if route allows any business-related roles
-    const allowsBusiness = allowedRoles.includes('business');
-    const allowsVenue = allowedRoles.includes('venue' as any);
-    const allowsHub = allowedRoles.includes('hub');
-    const allowsAnyBusinessRole = allowsBusiness || allowsVenue || allowsHub;
-    
-    // Normalize user roles to check against allowed roles
-    const userCurrentRole = user.currentRole;
-    const userRoles = user.roles || [];
-    
-    // Check if user has any of the allowed roles directly
-    const hasDirectMatch = 
-      (userCurrentRole && allowedRoles.includes(userCurrentRole as typeof allowedRoles[number])) ||
-      userRoles.some(role => allowedRoles.includes(role as typeof allowedRoles[number]));
-    
-    // CRITICAL: If route allows ANY business-related role, allow users with ANY business-related role
-    // This ensures business/venue/hub users can access all venue routes
-    const hasBusinessRoleMatch = allowsAnyBusinessRole && (
-      isBusinessRole(userCurrentRole || '') ||
-      userRoles.some(r => isBusinessRole(r))
+    const allowsAnyBusinessRole = allowedRoles.some(r => 
+      r === 'business' || r === 'venue' || r === 'hub'
     );
+    
+    const hasDirectMatch = 
+      (user.currentRole && allowedRoles.includes(user.currentRole as typeof allowedRoles[number])) ||
+      (user.roles && user.roles.some(role => allowedRoles.includes(role as typeof allowedRoles[number])));
+    
+    const hasBusinessRoleMatch = allowsAnyBusinessRole && isBusinessRole(user.currentRole || '');
     
     const hasAllowedRole = hasDirectMatch || hasBusinessRoleMatch;
     
     if (!hasAllowedRole) {
-      const hasAnyRole = 
-        (user.currentRole && user.currentRole !== 'client') ||
-        (user.roles && user.roles.some(role => role && role !== 'client'));
-
+      const hasAnyRole = user.currentRole && user.currentRole !== 'client';
+      
       if (!hasAnyRole) {
-        if (shouldDebug) {
-          logger.debug('AuthGuard', 'User authenticated but no role - redirecting to onboarding:', {
-            userCurrentRole: user.currentRole,
-            userRoles: user.roles,
-            attemptedPath: location.pathname
-          });
-        }
         return <Navigate to="/onboarding" replace />;
       }
-      // Debug logging
+      
       if (shouldDebug) {
-        logger.debug('AuthGuard', 'Role not in allowed list - redirecting to unauthorized:', {
+        logger.debug('AuthGuard', 'Role not in allowed list', {
           allowedRoles,
           userCurrentRole: user.currentRole,
-          userRoles: user.roles,
-          attemptedPath: location.pathname
         });
       }
       return <Navigate to="/unauthorized" state={{ from: location, allowedRoles }} replace />;
     }
   }
 
-  // If custom redirect is specified
+  // CUSTOM REDIRECT
   if (redirectTo) {
     return <Navigate to={redirectTo} replace />;
   }
