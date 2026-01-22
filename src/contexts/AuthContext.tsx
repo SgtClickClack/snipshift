@@ -85,6 +85,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const idToken = await firebaseUser.getIdToken();
     setToken(idToken);
 
+    // CRITICAL: Skip profile fetch on onboarding route to prevent 401/404 polling loop
+    // The onboarding page is responsible for creating the profile, not verifying it
+    if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
+      console.log('[AuthContext] Onboarding mode active - suppressing profile fetch');
+      setUser(null); // Keep user as null since profile doesn't exist yet
+      return;
+    }
+
     const apiUser = await fetchAppUser(idToken);
     if (apiUser) {
       console.log('[AuthContext] User profile fetched successfully', { 
@@ -116,6 +124,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshUser = useCallback(async () => {
     const firebaseUser = firebaseUserRef.current;
     if (!firebaseUser) return;
+    
+    // CRITICAL: Skip refresh on onboarding route to prevent 401/404 polling loop
+    if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
+      console.log('[AuthContext] Onboarding mode active - suppressing profile refresh');
+      return;
+    }
+    
     try {
       await hydrateFromFirebaseUser(firebaseUser);
     } catch (error) {
