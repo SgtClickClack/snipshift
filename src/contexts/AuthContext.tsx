@@ -187,6 +187,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [hydrateFromFirebaseUser, navigate]);
 
+  // Detect Firebase auth params in URL (apiKey, mode=signIn, etc.)
+  // These indicate the user just completed popup auth and landed on home page
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isLoading) return; // Wait for auth to settle
+    
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasApiKey = searchParams.has('apiKey');
+    const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
+    
+    if (hasApiKey || hasAuthMode) {
+      console.log('[AuthContext] Detected Firebase auth params in URL', { 
+        hasApiKey, 
+        hasAuthMode,
+        search: window.location.search,
+        hasToken: !!token,
+        hasFirebaseUser: !!firebaseUserRef.current
+      });
+      
+      // Check if user is authenticated (via token or Firebase user)
+      const firebaseUser = firebaseUserRef.current || auth.currentUser;
+      const isAuthenticated = !!(token || firebaseUser);
+      
+      if (isAuthenticated) {
+        // User is authenticated - force navigation to dashboard
+        const hasCompletedOnboarding = user?.hasCompletedOnboarding !== false && user?.isOnboarded !== false;
+        const targetPath = hasCompletedOnboarding ? '/dashboard' : '/onboarding';
+        
+        console.log('[AuthContext] Auth params detected + user authenticated, forcing navigation to', targetPath);
+        
+        // Clean URL parameters before navigating
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+        
+        // Navigate immediately
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [isLoading, token, user, navigate]);
+
   // Additional useEffect to handle navigation after auth state changes
   // This provides a secondary navigation trigger when user state updates
   useEffect(() => {

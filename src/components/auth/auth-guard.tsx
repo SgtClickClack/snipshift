@@ -20,6 +20,36 @@ export function AuthGuard({
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Detect Firebase auth params in URL and force navigation to dashboard
+  // This catches cases where popup auth completes and user lands on home page (/) with ?apiKey params
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const searchParams = new URLSearchParams(location.search);
+    const hasApiKey = searchParams.has('apiKey');
+    const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
+    
+    if (hasApiKey || hasAuthMode) {
+      // Check if Firebase user exists (even if context hasn't updated yet)
+      const hasFirebaseUser = auth.currentUser !== null;
+      
+      if (hasFirebaseUser && !isLoading) {
+        // User is authenticated - force immediate navigation to dashboard
+        const hasCompletedOnboarding = user?.hasCompletedOnboarding !== false && user?.isOnboarded !== false;
+        const targetPath = hasCompletedOnboarding ? '/dashboard' : '/onboarding';
+        
+        console.log('[AuthGuard] Auth params detected + Firebase user exists, forcing navigation to', targetPath);
+        
+        // Clean URL parameters before navigating
+        const cleanUrl = location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+        
+        // Navigate immediately
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [location.search, location.pathname, user, isLoading, navigate]);
+
   // Automatic redirect: If user is authenticated and on a public-only route like /login, redirect to dashboard
   // This useEffect must be called unconditionally (React hooks rule)
   // The effect body handles the loading check internally
