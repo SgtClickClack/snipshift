@@ -58,6 +58,10 @@ const UpdateProfileSchema = z.object({
   favoriteProfessionals: z.array(z.string().uuid()).optional(),
 });
 
+const CreateProfileSchema = UpdateProfileSchema.extend({
+  firebase_uid: z.string().min(1),
+});
+
 // Validation schema for onboarding completion
 // Accepts both canonical roles and clean-break aliases:
 // - 'staff' / 'worker' → maps to 'professional'
@@ -622,6 +626,48 @@ router.get('/professionals', authenticateUser, asyncHandler(async (req: Authenti
   );
 
   res.status(200).json(maskedData);
+}));
+
+// Create user profile (explicit onboarding handshake)
+router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const validationResult = CreateProfileSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ 
+      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') 
+    });
+    return;
+  }
+
+  const { firebase_uid, displayName, phone, location, avatarUrl } = validationResult.data;
+  if (firebase_uid !== req.user.uid) {
+    res.status(403).json({ message: 'Forbidden: Firebase UID mismatch' });
+    return;
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (displayName !== undefined) updates.name = displayName;
+  if (phone !== undefined) updates.phone = phone;
+  if (location !== undefined) updates.location = location;
+  if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
+
+  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  if (!updatedUser) {
+    res.status(500).json({ message: 'Failed to create profile' });
+    return;
+  }
+
+  res.status(201).json({
+    id: updatedUser.id,
+    email: updatedUser.email,
+    displayName: updatedUser.name,
+    role: updatedUser.role,
+    isOnboarded: updatedUser.isOnboarded ?? false,
+  });
 }));
 
 // Update current user profile

@@ -31,6 +31,32 @@
 - Reduced auth-guard branching and kept Firebase/DB signals explicit for clearer control flow.
 
 ---
+#### 2026-01-22: Onboarding Interactivity + Profile Create Sync
+
+**Core Components**
+- Onboarding flow (`src/pages/Onboarding.tsx`)
+- Users API (`api/_src/routes/users.ts`)
+
+**Key Features**
+- Forced onboarding UI to unlock when `hasFirebaseUser` is present, avoiding loader locks tied to profile state.
+- Added explicit profile creation POST to `/api/users` with `firebase_uid` + log for the active Firebase UID.
+- Triggered immediate `refreshUser()` and dashboard navigation on 201 profile creation responses.
+
+**Integration Points**
+- API endpoint: `POST /api/users`
+- Routing: `/dashboard`
+
+**File Paths**
+- `src/pages/Onboarding.tsx`
+- `api/_src/routes/users.ts`
+
+**Next Priority Task**
+- Validate onboarding now creates DB profiles and lands on `/dashboard` for new Firebase users.
+
+**Code Organization & Quality**
+- Kept onboarding submission logic centralized in `saveStepData` and reused existing auth tokens.
+
+---
 #### 2026-01-22: Modular Auth Context Rebuild (Firebase v10)
 
 **Core Components**

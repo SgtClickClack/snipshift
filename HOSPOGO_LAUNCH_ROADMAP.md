@@ -8,6 +8,21 @@
 
 ---
 
+### Update: 2026-01-22 - Onboarding Interactivity + Profile Create Sync
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Unlocked onboarding UI when Firebase session is present, preventing loader-based lockouts.
+- Added an explicit profile creation POST to `/api/users` with `firebase_uid` and a UID log.
+- On 201 profile creation, refreshed user state and navigated straight to `/dashboard`.
+
+**Impact:**
+- New Firebase users can complete onboarding without UI lock or profile sync loops.
+- DB profile creation is immediately recognized by the app shell.
+
+---
+
 ### Update: 2026-01-22 - Auth Guard Unification + Firebase UID Mapping
 
 **Status:** ✅ **UPDATED**

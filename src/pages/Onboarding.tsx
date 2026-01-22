@@ -753,15 +753,15 @@ export default function Onboarding() {
     
     try {
       if (machineContext.state === 'PERSONAL_DETAILS') {
-        // Create/update user profile - middleware will auto-create if user doesn't exist
-        // The Firebase UID is included in the Authorization token, but we ensure it's available
-        const response = await apiRequest('PUT', '/api/me', { 
+        console.log(`[Onboarding] Submitting profile for Firebase UID: ${firebaseUid}`);
+
+        // Create/update user profile with explicit Firebase UID
+        const response = await apiRequest('POST', '/api/users', { 
           displayName: formData.displayName, 
           phone: formData.phone, 
           location: formData.location, 
           avatarUrl: formData.avatarUrl || undefined,
-          // Firebase UID is available via token, but explicit for clarity
-          uid: firebaseUid
+          firebase_uid: firebaseUid
         });
         
         if (!response.ok) {
@@ -769,7 +769,12 @@ export default function Onboarding() {
           throw new Error(errorData.message || 'Failed to create profile');
         }
         
-        // Refresh user data to get the newly created user profile
+        if (response.status === 201) {
+          await refreshUser();
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+
         await refreshUser();
       }
       if (machineContext.state === 'VENUE_DETAILS') {
@@ -1230,8 +1235,7 @@ export default function Onboarding() {
   // This ensures form is interactive as soon as Firebase auth is ready
   // For ROLE_SELECTION, only wait for isLoading to be false - don't wait for user.id
   const shouldShowLoader = (machineContext.state as OnboardingState) === 'COMPLETED' ? false : (
-    isLoading || 
-    (machineContext.state === 'ROLE_SELECTION' ? false : !hasFirebaseUser)
+    !hasFirebaseUser && (isLoading || (machineContext.state !== 'ROLE_SELECTION'))
   );
 
   if (shouldShowLoader) {
