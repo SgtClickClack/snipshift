@@ -54,23 +54,38 @@ function initializeFirebase(): admin.auth.Auth | null {
       if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
         try {
           const projectId = process.env.FIREBASE_PROJECT_ID.trim();
+          
+          // SECURITY: Explicitly enforce project ID matches 'snipshift-75b04'
+          if (projectId !== REQUIRED_PROJECT_ID) {
+            throw new Error(`Unauthorized Project ID: Expected '${REQUIRED_PROJECT_ID}', got '${projectId}'`);
+          }
+          
+          // Ensure client email matches the required project
+          const clientEmail = process.env.FIREBASE_CLIENT_EMAIL.trim();
+          if (!clientEmail.includes(REQUIRED_PROJECT_ID)) {
+            console.warn(`[FIREBASE] Client email '${clientEmail.substring(0, 30)}...' may not match project '${REQUIRED_PROJECT_ID}'`);
+          }
+          
           app = firebaseAdmin.initializeApp({
               credential: firebaseAdmin.credential.cert({
-              projectId: projectId,
-              clientEmail: process.env.FIREBASE_CLIENT_EMAIL.trim(),
+              projectId: REQUIRED_PROJECT_ID, // Explicitly use required project ID
+              clientEmail: clientEmail,
               privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
               }),
-              projectId: projectId,
+              projectId: REQUIRED_PROJECT_ID, // Explicitly enforce project ID
           }, appName);
           console.log('[FIREBASE] Admin initialized successfully via individual env vars', {
-            projectId: projectId,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL?.substring(0, 20) + '...',
+            projectId: REQUIRED_PROJECT_ID,
+            clientEmail: clientEmail.substring(0, 20) + '...',
             hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
             privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
+            enforcedProjectId: REQUIRED_PROJECT_ID,
           });
+          console.log('[AUTH DEBUG] Backend Project ID:', REQUIRED_PROJECT_ID);
         } catch (e: any) {
             console.error('[FIREBASE] Init Failed (individual vars):', e?.message || e);
             console.error('[FIREBASE] Stack:', e?.stack);
+            console.error('[AUTH DEBUG] Backend Project ID (failed):', process.env.FIREBASE_PROJECT_ID);
             initError = e;
         }
       } 
@@ -112,18 +127,22 @@ function initializeFirebase(): admin.auth.Auth | null {
             throw new Error(`Unauthorized Project ID: Final project_id '${finalProjectId}' does not match required '${REQUIRED_PROJECT_ID}'`);
           }
           
+          // SECURITY: Explicitly enforce project ID to match 'snipshift-75b04'
+          const enforcedProjectId = REQUIRED_PROJECT_ID;
           app = firebaseAdmin.initializeApp(
             {
               credential: firebaseAdmin.credential.cert(serviceAccount),
-              ...(targetProjectId ? { projectId: targetProjectId } : {}),
+              projectId: enforcedProjectId, // Explicitly enforce required project ID
             },
             appName
           );
           console.log('[FIREBASE] Admin initialized successfully via FIREBASE_SERVICE_ACCOUNT', {
-            projectId: finalProjectId || serviceAccount?.project_id,
+            projectId: enforcedProjectId,
             serviceAccountProjectId: serviceAccount?.project_id,
             envProjectId: process.env.FIREBASE_PROJECT_ID,
+            enforcedProjectId: enforcedProjectId,
           });
+          console.log('[AUTH DEBUG] Backend Project ID:', enforcedProjectId);
         } catch (e: any) {
           console.error('[FIREBASE] Init Failed (FIREBASE_SERVICE_ACCOUNT):', e?.message || e);
           console.error('[FIREBASE] Stack:', e?.stack);
@@ -154,17 +173,26 @@ function initializeFirebase(): admin.auth.Auth | null {
           console.error('[FIREBASE] - FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
         }
         try {
+          // SECURITY: Explicitly enforce project ID even for application default credentials
+          const enforcedProjectId = targetProjectId && targetProjectId === REQUIRED_PROJECT_ID 
+            ? REQUIRED_PROJECT_ID 
+            : REQUIRED_PROJECT_ID;
+          
           app = firebaseAdmin.initializeApp(
             {
               credential: firebaseAdmin.credential.applicationDefault(),
-              ...(targetProjectId ? { projectId: targetProjectId } : {}),
+              projectId: enforcedProjectId, // Explicitly enforce required project ID
             },
             appName
           );
-          console.log('[FIREBASE] Admin initialized successfully (application default)');
+          console.log('[FIREBASE] Admin initialized successfully (application default)', {
+            enforcedProjectId: enforcedProjectId,
+          });
+          console.log('[AUTH DEBUG] Backend Project ID:', enforcedProjectId);
         } catch (e: any) {
           console.error('[FIREBASE] Init Failed (application default):', e?.message || e);
           console.error('[FIREBASE] Stack:', e?.stack);
+          console.error('[AUTH DEBUG] Backend Project ID (failed):', process.env.FIREBASE_PROJECT_ID);
           console.warn('[FIREBASE] Auth features will be disabled. Check environment variables:');
           console.warn('[FIREBASE] - FIREBASE_SERVICE_ACCOUNT (JSON string)');
           console.warn('[FIREBASE] - OR FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');

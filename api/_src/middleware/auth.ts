@@ -96,6 +96,7 @@ export function authenticateUser(
       });
       console.error('[AUTH] Check environment variables: FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
       console.error('[AUTH DEBUG] Project ID from env:', process.env.FIREBASE_PROJECT_ID);
+      console.log('[AUTH DEBUG] Backend Project ID:', process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID);
       res.status(503).json({ 
         message: 'Authentication service unavailable',
         error: 'Firebase Admin not initialized',
@@ -111,28 +112,33 @@ export function authenticateUser(
         projectId: process.env.FIREBASE_PROJECT_ID,
         hasAuthInstance: !!firebaseAuth,
       });
+      console.log('[AUTH DEBUG] Backend Project ID:', process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID);
     }
 
     let token: string | undefined;
     const authHeader = req.headers.authorization;
 
-    // Harden token extraction with validation
+    // Harden token extraction with validation - ensure no trailing spaces
     if (authHeader && typeof authHeader === 'string') {
-      if (authHeader.startsWith('Bearer ')) {
-        const extractedToken = authHeader.substring(7); // More reliable than split
-        if (extractedToken && extractedToken.trim().length > 0) {
-          token = extractedToken.trim();
+      // Trim the entire header first to remove any leading/trailing whitespace
+      const trimmedHeader = authHeader.trim();
+      if (trimmedHeader.startsWith('Bearer ')) {
+        const extractedToken = trimmedHeader.substring(7).trim(); // Extract and trim token
+        if (extractedToken && extractedToken.length > 0) {
+          token = extractedToken;
         } else {
           console.warn('[AUTH] Bearer token is empty after extraction', {
             path: req.path,
             headerLength: authHeader.length,
+            trimmedLength: trimmedHeader.length,
           });
         }
       } else {
         // Log if Authorization header exists but doesn't start with Bearer
         if (isMeEndpoint) {
           console.warn('[AUTH] Authorization header missing Bearer prefix', {
-            prefix: authHeader.substring(0, 20),
+            prefix: trimmedHeader.substring(0, 20),
+            originalPrefix: authHeader.substring(0, 20),
           });
         }
       }

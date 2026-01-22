@@ -1,0 +1,20 @@
+{
+  "projects": {
+    "default": "snipshift-75b04"
+  },
+  "targets": {
+    "snipshift-75b04": {
+      "hosting": {
+        "default": [
+          "snipshift-75b04"
+        ]
+      },
+      "storage": {
+        "default": [
+          "snipshift-75b04.firebasestorage.app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
