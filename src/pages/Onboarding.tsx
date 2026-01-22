@@ -452,6 +452,13 @@ export default function Onboarding() {
   useEffect(() => {
     if (isLoading) return;
     
+    // Check for E2E mode test user in sessionStorage (for Playwright tests)
+    const isE2EMode = typeof window !== 'undefined' && 
+      (localStorage.getItem('E2E_MODE') === 'true' || import.meta.env.VITE_E2E === '1');
+    const testUser = isE2EMode && typeof window !== 'undefined' 
+      ? sessionStorage.getItem('hospogo_test_user') 
+      : null;
+    
     // If we have Firebase auth (token exists), allow onboarding to proceed
     // The DB profile will be created when the user submits the form
     // CRITICAL: Do NOT call fetchUser or refreshUser here to prevent 401/404 loops
@@ -460,6 +467,20 @@ export default function Onboarding() {
       console.log('[Onboarding] Onboarding mode active - form is now interactive');
       setIsVerifyingUser(false);
       return;
+    }
+    
+    // E2E mode: Allow onboarding if test user exists in sessionStorage
+    if (isE2EMode && testUser) {
+      try {
+        const userData = JSON.parse(testUser);
+        if (userData.id && userData.isOnboarded === false) {
+          console.log('[Onboarding] E2E mode test user detected, allowing onboarding', { userId: userData.id });
+          setIsVerifyingUser(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('[Onboarding] Failed to parse E2E test user data', e);
+      }
     }
     
     // If no Firebase auth, redirect to login (unless in waitlist-only flow)

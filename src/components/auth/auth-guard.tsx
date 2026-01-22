@@ -21,6 +21,13 @@ export function AuthGuard({
 
   const isOnboardingPath = location.pathname === '/onboarding' || location.pathname.startsWith('/onboarding/');
 
+  // Check for E2E mode test user (for Playwright tests)
+  const isE2EMode = typeof window !== 'undefined' && 
+    (localStorage.getItem('E2E_MODE') === 'true' || import.meta.env.VITE_E2E === '1');
+  const hasE2ETestUser = isE2EMode && typeof window !== 'undefined' && 
+    !!sessionStorage.getItem('hospogo_test_user');
+  const hasAuth = hasFirebaseUser || hasE2ETestUser;
+
   useEffect(() => {
     if (isLoading) return;
 
@@ -46,7 +53,7 @@ export function AuthGuard({
     return <LoadingSpinner />;
   }
 
-  if (requireAuth && !hasFirebaseUser) {
+  if (requireAuth && !hasAuth) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
