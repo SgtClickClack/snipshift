@@ -3489,12 +3489,23 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
     return;
   }
 
-  // Calculate payout
+  // Calculate payout using HIGA Award Engine
   const hourlyRate = parseFloat(shift.hourlyRate.toString());
   const startTime = new Date(shift.startTime);
   const endTime = new Date(shift.endTime);
-  const hoursWorked = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-  const amountCents = Math.round(hourlyRate * hoursWorked * 100); // Convert to cents
+  
+  // Import award engine service
+  const { calculateAwardPay } = await import('../services/award-engine.service.js');
+  
+  // Calculate gross pay with award interpretation (Sunday penalty, late night loading)
+  const awardCalculation = calculateAwardPay({
+    baseRate: hourlyRate,
+    startTime,
+    endTime,
+  });
+  
+  const amountCents = awardCalculation.grossPayCents;
+  const hoursWorked = awardCalculation.hoursWorked;
 
   const db = getDb();
   if (!db) {
@@ -3621,7 +3632,7 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
         );
 
         // Append immutable ledger entry with Settlement ID for D365/Workday reconciliation
-        await ledgerRepo.createLedgerEntry(
+        const ledgerEntry = await ledgerRepo.createLedgerEntry(
           {
             entryType: 'IMMEDIATE_SETTLEMENT_COMPLETED',
             amountCents,
@@ -3637,6 +3648,16 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
           },
           tx
         );
+
+        // Create ledger line items for award breakdown (Base Pay, Sunday Penalty, Late Night Loading)
+        if (ledgerEntry?.id && awardCalculation.lineItems.length > 0) {
+          await ledgerRepo.createLedgerLineItemsFromAwardCalculation(
+            ledgerEntry.id,
+            settlementId || null,
+            awardCalculation.lineItems,
+            tx
+          );
+        }
 
         // Update shift payment status if a capture occurred
         if (stripeChargeId) {

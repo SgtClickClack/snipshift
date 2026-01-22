@@ -10,7 +10,8 @@
 
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
-import { financialLedgerEntries } from '../db/schema.js';
+import { financialLedgerEntries, financialLedgerLineItems } from '../db/schema.js';
+import type { AwardLineItem } from '../services/award-engine.service.js';
 
 type DbLike = any;
 
@@ -166,6 +167,137 @@ export async function exportLedgerEntriesForReconciliation(
     return rows;
   } catch (error) {
     console.error('[LEDGER REPO] Error exporting ledger entries:', error);
+    return [];
+  }
+}
+
+/**
+ * Create ledger line items for award breakdown
+ * Links line items to a ledger entry and Settlement ID
+ */
+export interface CreateLedgerLineItemInput {
+  ledgerEntryId: string;
+  settlementId?: string | null;
+  lineItemType: 'BASE_PAY' | 'SUNDAY_PENALTY' | 'LATE_NIGHT_LOADING';
+  description: string;
+  hours: number; // Hours as decimal (e.g., 2.5)
+  rateCents: number; // Rate per hour in cents
+  amountCents: number; // Line item amount in cents
+}
+
+export async function createLedgerLineItem(
+  input: CreateLedgerLineItemInput,
+  dbOverride?: DbLike
+) {
+  const db = getDbOr(dbOverride);
+  if (!db) return null;
+
+  try {
+    // Convert hours to hundredths (e.g., 2.5 hours = 250)
+    const hoursInHundredths = Math.round(input.hours * 100);
+
+    const [row] = await db
+      .insert(financialLedgerLineItems)
+      .values({
+        ledgerEntryId: input.ledgerEntryId,
+        settlementId: input.settlementId ?? null,
+        lineItemType: input.lineItemType,
+        description: input.description,
+        hours: hoursInHundredths,
+        rateCents: input.rateCents,
+        amountCents: input.amountCents,
+      })
+      .returning();
+
+    return row ?? null;
+  } catch (error) {
+    console.error('[LEDGER REPO] Error creating ledger line item:', error);
+    return null;
+  }
+}
+
+/**
+ * Create multiple ledger line items from award calculation result
+ */
+export async function createLedgerLineItemsFromAwardCalculation(
+  ledgerEntryId: string,
+  settlementId: string | null,
+  lineItems: AwardLineItem[],
+  dbOverride?: DbLike
+) {
+  const db = getDbOr(dbOverride);
+  if (!db) return [];
+
+  try {
+    const createdItems = await Promise.all(
+      lineItems.map((item) =>
+        createLedgerLineItem(
+          {
+            ledgerEntryId,
+            settlementId,
+            lineItemType: item.type,
+            description: item.description,
+            hours: item.hours,
+            rateCents: Math.round(item.rate * 100), // Convert rate to cents
+            amountCents: item.amountCents,
+          },
+          db
+        )
+      )
+    );
+
+    return createdItems.filter((item): item is NonNullable<typeof item> => item !== null);
+  } catch (error) {
+    console.error('[LEDGER REPO] Error creating ledger line items from award calculation:', error);
+    return [];
+  }
+}
+
+/**
+ * Get ledger line items by Settlement ID
+ * Used for D365/Workday reconciliation exports showing award breakdown
+ */
+export async function getLedgerLineItemsBySettlementId(
+  settlementId: string,
+  dbOverride?: DbLike
+) {
+  const db = getDbOr(dbOverride);
+  if (!db) return [];
+
+  try {
+    const rows = await db
+      .select()
+      .from(financialLedgerLineItems)
+      .where(eq(financialLedgerLineItems.settlementId, settlementId))
+      .orderBy(financialLedgerLineItems.createdAt);
+
+    return rows;
+  } catch (error) {
+    console.error('[LEDGER REPO] Error fetching ledger line items by settlement id:', error);
+    return [];
+  }
+}
+
+/**
+ * Get ledger line items by ledger entry ID
+ */
+export async function getLedgerLineItemsByEntryId(
+  ledgerEntryId: string,
+  dbOverride?: DbLike
+) {
+  const db = getDbOr(dbOverride);
+  if (!db) return [];
+
+  try {
+    const rows = await db
+      .select()
+      .from(financialLedgerLineItems)
+      .where(eq(financialLedgerLineItems.ledgerEntryId, ledgerEntryId))
+      .orderBy(financialLedgerLineItems.createdAt);
+
+    return rows;
+  } catch (error) {
+    console.error('[LEDGER REPO] Error fetching ledger line items by entry id:', error);
     return [];
   }
 }

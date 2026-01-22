@@ -23,7 +23,7 @@ import { shiftApplications, shiftApplicationStatusEnum } from './schema/shift-ap
 import { shiftWaitlist, waitlistStatusEnum } from './schema/shift-waitlist.js';
 import { priorityBoostTokens } from './schema/priority-boost-tokens.js';
 import { payouts, generateSettlementId } from './schema/payouts.js';
-import { financialLedgerEntries, ledgerEntryTypeEnum } from './schema/financial-ledger.js';
+import { financialLedgerEntries, financialLedgerLineItems, ledgerEntryTypeEnum, ledgerLineItemTypeEnum } from './schema/financial-ledger.js';
 import { userPushTokens } from './schema/push-tokens.js';
 import { userCalendarTokens } from './schema/calendar-tokens.js';
 import { failedEmails } from './schema/failed-emails.js';
@@ -58,7 +58,9 @@ export {
   payouts,
   generateSettlementId,
   financialLedgerEntries,
+  financialLedgerLineItems,
   ledgerEntryTypeEnum,
+  ledgerLineItemTypeEnum,
   userPushTokens,
   userCalendarTokens,
   failedEmails

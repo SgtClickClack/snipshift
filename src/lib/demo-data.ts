@@ -190,6 +190,84 @@ export const DEMO_JOBS = [
     businessId: 'demo-user-001',
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
   },
+  // Sunday Shift with 1.5x Penalty - HIGA Award Engine Demo
+  {
+    id: 'job-005',
+    _type: 'shift',
+    title: 'Sunday Bartender',
+    description: 'Sunday service with premium penalty rates. HIGA Award: 1.5x Sunday penalty applies.',
+    status: 'completed',
+    payRate: 30,
+    hourlyRate: 30, // Base rate
+    capacity: 1,
+    // Calculate next Sunday
+    date: (() => {
+      const nextSunday = new Date();
+      const daysUntilSunday = (7 - nextSunday.getDay()) % 7 || 7;
+      nextSunday.setDate(nextSunday.getDate() + daysUntilSunday);
+      return nextSunday.toISOString().split('T')[0];
+    })(),
+    startTime: (() => {
+      const nextSunday = new Date();
+      const daysUntilSunday = (7 - nextSunday.getDay()) % 7 || 7;
+      nextSunday.setDate(nextSunday.getDate() + daysUntilSunday);
+      nextSunday.setHours(12, 0, 0, 0); // 12pm start
+      return nextSunday.toISOString();
+    })(),
+    endTime: (() => {
+      const nextSunday = new Date();
+      const daysUntilSunday = (7 - nextSunday.getDay()) % 7 || 7;
+      nextSunday.setDate(nextSunday.getDate() + daysUntilSunday);
+      nextSunday.setHours(20, 0, 0, 0); // 8pm end (8 hours)
+      return nextSunday.toISOString();
+    })(),
+    location: { address: '123 Demo Street', city: 'Sydney', state: 'NSW' },
+    skillsRequired: ['Bartending', 'RSA', 'Sunday Service'],
+    applicationCount: 1,
+    applicants: [{ id: '1' }],
+    assigneeId: 'worker-johnny',
+    assignedStaff: [
+      { id: 'worker-johnny', name: 'Johnny', displayName: 'Johnny', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
+    ],
+    employerId: 'demo-user-001',
+    businessId: 'demo-user-001',
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    // ATOMIC SETTLEMENT DATA with HIGA Award Breakdown
+    paymentStatus: 'PAID',
+    payout: {
+      id: 'payout-demo-sunday-001',
+      settlementId: generateDemoSettlementId(-7 * 24 * 60 * 60 * 1000),
+      // Sunday Penalty: 8 hours × $30 × 1.5 = $360 (36000 cents)
+      amountCents: 36000, // Gross pay with Sunday penalty
+      hoursWorked: 8,
+      hourlyRate: 30, // Base rate (displayed)
+      status: 'completed',
+      settlementType: 'immediate',
+      stripeChargeId: 'ch_demo_SUNDAY_001',
+      stripeTransferId: 'tr_demo_SUNDAY_001',
+      processedAt: (() => {
+        const nextSunday = new Date();
+        const daysUntilSunday = (7 - nextSunday.getDay()) % 7 || 7;
+        nextSunday.setDate(nextSunday.getDate() + daysUntilSunday);
+        nextSunday.setHours(20, 30, 0, 0); // 30 min after shift end
+        return nextSunday.toISOString();
+      })(),
+      // HIGA Award Breakdown - Line Items
+      awardBreakdown: {
+        basePayCents: 0, // Sunday: all pay is penalty
+        penaltyPayCents: 36000, // Sunday penalty (1.5x)
+        lineItems: [
+          {
+            type: 'SUNDAY_PENALTY',
+            description: 'Sunday Penalty (1.5x) - 8.00 hours',
+            hours: 8,
+            rate: 45, // $30 × 1.5 = $45/hour
+            amountCents: 36000,
+          },
+        ],
+      },
+    },
+  },
 ];
 
 // Demo Applications Data

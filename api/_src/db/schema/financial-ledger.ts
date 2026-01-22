@@ -64,3 +64,36 @@ export const financialLedgerEntries = pgTable(
   })
 );
 
+/**
+ * Ledger Line Items
+ * 
+ * Stores detailed breakdown of award calculations (Base Pay, Sunday Penalty, Late Night Loading)
+ * linked to Settlement IDs for D365/Workday reconciliation.
+ */
+export const ledgerLineItemTypeEnum = pgEnum('ledger_line_item_type', [
+  'BASE_PAY',
+  'SUNDAY_PENALTY',
+  'LATE_NIGHT_LOADING',
+]);
+
+export const financialLedgerLineItems = pgTable(
+  'financial_ledger_line_items',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    ledgerEntryId: uuid('ledger_entry_id').notNull().references(() => financialLedgerEntries.id, { onDelete: 'cascade' }),
+    settlementId: varchar('settlement_id', { length: 32 }), // Denormalized for quick lookups
+    
+    lineItemType: ledgerLineItemTypeEnum('line_item_type').notNull(),
+    description: varchar('description', { length: 255 }).notNull(),
+    hours: integer('hours'), // Hours in hundredths (e.g., 250 = 2.5 hours)
+    rateCents: integer('rate_cents'), // Rate per hour in cents
+    amountCents: integer('amount_cents').notNull(), // Line item amount in cents
+    
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    ledgerEntryIdIdx: index('financial_ledger_line_items_ledger_entry_id_idx').on(table.ledgerEntryId),
+    settlementIdIdx: index('financial_ledger_line_items_settlement_id_idx').on(table.settlementId),
+  })
+);
+
