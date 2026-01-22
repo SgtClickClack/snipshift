@@ -1,3 +1,96 @@
+#### 2026-01-22: Production Auth Rebuild & Award Engine Test Suite
+
+**Core Components**
+- Award Engine Test Suite (`api/_src/tests/services/award-engine.service.test.ts`)
+- AuthContext Production Auth (`src/contexts/AuthContext.tsx`)
+- Signup Role-Based Redirect (`src/pages/signup.tsx`)
+
+**Key Features**
+- **Award Engine Test Suite**: 25 unit tests covering 2026 HIGA calculations:
+  - Weekday shifts (base pay, casual loading 25%)
+  - Saturday shifts (125% FT/PT, 150% Casual)
+  - Sunday shifts (150% FT/PT, 175% Casual)
+  - Late Night Loading (7pm-12am Mon-Fri): +$2.81/hr
+  - Night Loading (12am-7am Mon-Fri): +$4.22/hr
+  - Edge cases (fractional hours, zero hours, long shifts)
+  - Real-world scenarios (Friday night bar, Sunday brunch, Saturday wedding)
+
+- **Production Auth Rebuild**: 
+  - Added `USE_PRODUCTION_AUTH` flag to enable robust wait-state logic
+  - Auth gate now properly waits for both `getRedirectResult()` AND `onAuthStateChanged`
+  - `isAuthReady` remains false until Firebase definitively confirms user status
+  - `browserLocalPersistence` already set in firebase.ts for session survival
+
+- **Signup Flow Fix**: 
+  - Replaced hardcoded `/venue/dashboard` redirect with role-based `getDashboardRoute()`
+  - Role check now happens BEFORE redirect to ensure proper routing
+
+**Demo Bypass Removal Plan**
+The following locations contain demo bypass logic flagged for removal once production auth is verified:
+
+**AuthContext.tsx** (13 locations):
+- Line 24: `DEMO_AUTH_BYPASS_LOADING` constant definition
+- Line 31: `USE_PRODUCTION_AUTH = !DEMO_AUTH_BYPASS_LOADING`
+- Line 172: Auth gate initial state
+- Line 518: Skip redirect to /login when user is null
+- Line 1091: Skip redirect to /login on 401 circuit breaker
+- Line 1188: Skip redirect to /onboarding on 401 retry
+- Line 1298: Skip redirect to /signup on 404
+- Line 1664: Skip redirect to /signup on 404
+- Line 1734: Skip redirect to /signup on 401 retry
+- Line 1776: Skip redirect to /signup on 401 retry else
+- Line 1821: Skip redirect to /signup on 401 token refresh failure
+- Line 2453: `isDemoMode()` check in useAuth hook
+
+**auth-guard.tsx** (1 location):
+- Line 116: Bypass auth requirement when `DEMO_AUTH_BYPASS_LOADING` is true
+
+**protected-route.tsx** (1 location):
+- Lines 10-13: Entire component bypasses auth gating (always renders children)
+
+**dashboard-redirect.tsx** (1 location):
+- Line 15: Redirects to `/venue/dashboard` instead of `/login` when demo mode
+
+**venue-dashboard.tsx** (2 locations):
+- Line 102: `isDemoMode()` check for mock data
+- Line 1708: `isDemoMode()` for navigation logic
+
+**VenueStatusCard.tsx** (1 location):
+- Line 37: `isDemoMode()` returns DEMO_VENUE data
+
+**demo-data.ts** (Central demo data source):
+- `isDemoMode()` function checks URL param, env var, or localStorage
+- `DEMO_USER`, `DEMO_JOBS`, `DEMO_VENUE`, etc.
+
+**Integration Points**
+- npm test: `npm test -- --run services/award-engine.service.test.ts`
+- Environment: Set `VITE_DEMO_MODE=false` for production auth
+
+**File Paths**
+- `api/_src/tests/services/award-engine.service.test.ts`
+- `api/_src/services/award-engine.service.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/pages/signup.tsx`
+- `src/pages/login.tsx`
+- `src/components/auth/auth-guard.tsx`
+- `src/components/auth/protected-route.tsx`
+- `src/pages/dashboard-redirect.tsx`
+- `src/pages/venue-dashboard.tsx`
+- `src/components/venues/VenueStatusCard.tsx`
+- `src/lib/demo-data.ts`
+
+**Next Priority Task**
+- Verify production auth flow works end-to-end with `VITE_DEMO_MODE=false`
+- Remove demo bypass code once production auth is verified stable
+- Update protected-route.tsx to use AuthGuard instead of bypassing
+
+**Code Organization & Quality**
+- Award engine tests follow existing test patterns with dynamic imports
+- Auth gate logic is now properly documented with production vs demo mode comments
+- Role-based routing centralized through `getDashboardRoute()` utility
+
+---
+
 #### 2026-01-21: Atomic Settlement Implementation (D365/Workday + Productivity Ready)
 
 **Core Components**

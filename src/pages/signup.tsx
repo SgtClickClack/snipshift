@@ -15,6 +15,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification, type ActionCodeS
 import { auth } from "@/lib/firebase";
 import { trackSignup } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
+import { getDashboardRoute } from "@/lib/roles";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -40,20 +41,38 @@ export default function SignupPage() {
   // This handles both cases:
   // 1. User has a database record (user object exists) - redirect to their dashboard
   // 2. User has NO database record (404 from backend) - redirect to onboarding
+  // CRITICAL: Role check happens BEFORE dashboard redirect to ensure proper routing
   useEffect(() => {
     if (!isAuthReady || !isAuthGateOpen) return;
     
     // Case 1: User is fully authenticated with database record
     if (user) {
-      logger.debug('Signup', 'User fully authenticated, redirecting based on onboarding status', {
+      logger.debug('Signup', 'User fully authenticated, checking role before redirect', {
         hasCompletedOnboarding: user.hasCompletedOnboarding,
         currentRole: user.currentRole,
+        isOnboarded: user.isOnboarded,
       });
-      if (user.hasCompletedOnboarding && user.currentRole) {
-        navigate('/venue/dashboard', { replace: true });
-      } else {
+      
+      // PRIORITY 1: If not onboarded, go to onboarding
+      if (user.isOnboarded === false || user.hasCompletedOnboarding === false) {
         navigate('/onboarding', { replace: true });
+        return;
       }
+      
+      // PRIORITY 2: If has a valid role, go to role-specific dashboard
+      if (user.currentRole && user.currentRole !== 'client') {
+        const dashboardRoute = getDashboardRoute(user.currentRole);
+        logger.debug('Signup', 'Redirecting to role-specific dashboard', {
+          role: user.currentRole,
+          dashboardRoute,
+        });
+        navigate(dashboardRoute, { replace: true });
+        return;
+      }
+      
+      // PRIORITY 3: No role - go to role selection or onboarding
+      logger.debug('Signup', 'User has no role, redirecting to role selection');
+      navigate('/role-selection', { replace: true });
       return;
     }
     

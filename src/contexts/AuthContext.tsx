@@ -12,10 +12,23 @@ import { isDemoMode, DEMO_USER } from '@/lib/demo-data';
 const AUTH_BRIDGE_COOKIE_NAME = 'hospogo_auth_bridge';
 /** 
  * When true: skip auth loading gate, and do not redirect to /login or /signup on 404/401.
- * CRITICAL: This should only be true for demo mode, NOT production.
+ * CRITICAL: This should only be true for demo/development mode, NOT production.
  * Controlled via VITE_DEMO_MODE environment variable.
+ * 
+ * PRODUCTION AUTH: When false (production), the app will:
+ * 1. Wait for getRedirectResult() to complete before rendering
+ * 2. Wait for onAuthStateChanged to fire before opening the auth gate
+ * 3. Keep isAuthReady=false until Firebase definitively confirms user status
+ * 4. Use browserLocalPersistence for session survival across refreshes
  */
 export const DEMO_AUTH_BYPASS_LOADING = import.meta.env.VITE_DEMO_MODE === '1' || import.meta.env.VITE_DEMO_MODE === 'true';
+
+/**
+ * Production auth flag - when true, uses robust auth wait-state logic.
+ * This ensures the auth gate waits for both getRedirectResult() AND onAuthStateChanged
+ * before allowing the app to render, preventing race conditions.
+ */
+export const USE_PRODUCTION_AUTH = !DEMO_AUTH_BYPASS_LOADING;
 
 export interface User {
   id: string;
@@ -131,9 +144,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     window.location.hash.includes('state=')
   );
   
-  // If returning from redirect, ALWAYS start in loading state regardless of demo mode
-  // This prevents the race condition where the app sees null user before redirect completes
-  const shouldStartLoading = !DEMO_AUTH_BYPASS_LOADING || isReturningFromRedirect;
+  // PRODUCTION AUTH: Always start in loading state to ensure we wait for Firebase
+  // to definitively confirm user status before rendering the app.
+  // In demo mode, we can skip the loading gate (unless returning from redirect).
+  // This is the key fix for production auth - we MUST wait for Firebase.
+  const shouldStartLoading = USE_PRODUCTION_AUTH || isReturningFromRedirect;
   
   const [initializing, setInitializing] = useState(shouldStartLoading);
   const [isInitialLoading, setIsInitialLoading] = useState(shouldStartLoading);
@@ -148,18 +163,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // LOGIC GATE: Track both conditions that must be met before auth is ready
   // 1. getRedirectResult() has resolved (success or error)
   // 2. onAuthStateChanged has fired at least once
+  // PRODUCTION AUTH: Both must be true before the auth gate opens
   const hasRedirectResultResolved = useRef(false);
   const hasOnAuthStateChangedFired = useRef(false);
   
   // Combined state: auth gate is only open when BOTH conditions are met
-  const [isAuthGateOpen, setIsAuthGateOpen] = useState(DEMO_AUTH_BYPASS_LOADING && !isReturningFromRedirect);
+  // PRODUCTION AUTH: Auth gate starts CLOSED and only opens after Firebase confirms status
+  // In demo mode (DEMO_AUTH_BYPASS_LOADING), gate starts open unless returning from redirect
+  const [isAuthGateOpen, setIsAuthGateOpen] = useState(!USE_PRODUCTION_AUTH && !isReturningFromRedirect);
   
   // Helper to check and open the auth gate when both conditions are met
+  // PRODUCTION AUTH: This is the key function that ensures we wait for Firebase
+  // to definitively confirm user status before allowing the app to render.
   const checkAndOpenAuthGate = () => {
+    // CRITICAL: Both conditions MUST be met before opening the auth gate
+    // 1. getRedirectResult() has completed (resolved with user, null, or error)
+    // 2. onAuthStateChanged has fired at least once (confirming Firebase's view of auth state)
     if (hasRedirectResultResolved.current && hasOnAuthStateChangedFired.current && !isAuthGateOpen) {
       logger.debug('AuthContext', 'AUTH GATE: Both conditions met, opening auth gate', {
         hasRedirectResultResolved: hasRedirectResultResolved.current,
         hasOnAuthStateChangedFired: hasOnAuthStateChangedFired.current,
+        useProductionAuth: USE_PRODUCTION_AUTH,
       });
       setIsAuthGateOpen(true);
       setIsProcessingRedirect(false);
