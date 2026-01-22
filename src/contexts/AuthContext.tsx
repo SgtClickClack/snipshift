@@ -246,14 +246,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!isLoading && user) {
       const currentPath = window.location.pathname;
       
-      // Clear any remaining auth-related URL parameters
+      // Clear any remaining auth-related URL parameters (failsafe)
       if (typeof window !== 'undefined') {
         const searchParams = new URLSearchParams(window.location.search);
         const hasApiKey = searchParams.has('apiKey');
         const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
         
         if (hasApiKey || hasAuthMode) {
-          console.log('[AuthContext] Clearing remaining auth URL parameters');
+          console.log('[AuthContext] Clearing remaining auth URL parameters (failsafe)');
           const cleanUrl = window.location.pathname;
           window.history.replaceState({}, '', cleanUrl);
         }
@@ -273,6 +273,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }
   }, [user, isLoading, navigate]);
+
+  // Failsafe: Clean URL parameters when user successfully lands on dashboard
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isLoading) return;
+    if (!user) return;
+    
+    const currentPath = window.location.pathname;
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasApiKey = searchParams.has('apiKey');
+    const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
+    
+    // If user is on dashboard and URL has auth parameters, clean them
+    if ((currentPath === '/dashboard' || currentPath.startsWith('/dashboard/')) && (hasApiKey || hasAuthMode)) {
+      console.log('[AuthContext] Failsafe: Cleaning auth URL parameters on dashboard');
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, [user, isLoading]);
 
   const value = useMemo<AuthContextType>(
     () => ({

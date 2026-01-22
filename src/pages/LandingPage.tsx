@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,23 +20,25 @@ import { getDashboardRoute } from "@/lib/roles";
 import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
-  const { user, isAuthenticated, isAuthReady, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const hasCleanedUp = useRef(false);
 
-  // Force redirect to dashboard if user is authenticated
+  // Force redirect to dashboard if user is present
   useEffect(() => {
+    // Only redirect if we're on the landing page
+    if (location.pathname !== '/') return;
+    
     // Wait for auth state to settle before checking
     if (isLoading) return;
-    if (!isAuthReady) return;
     
-    // If user exists and is authenticated, immediately redirect to dashboard
-    if (user && isAuthenticated) {
-      const dashboardRoute = getDashboardRoute(user.currentRole);
-      console.log('[LandingPage] User authenticated, redirecting to dashboard:', dashboardRoute);
-      navigate(dashboardRoute, { replace: true });
+    // If user exists, immediately redirect to dashboard
+    if (user) {
+      console.log('[LandingPage] User present, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
     }
-  }, [user, isAuthenticated, isLoading, isAuthReady, navigate]);
+  }, [user, isLoading, navigate, location.pathname]);
 
   // Clear stale auth-related localStorage/sessionStorage data on landing page load
   // This prevents race conditions from old redirects or onboarding states

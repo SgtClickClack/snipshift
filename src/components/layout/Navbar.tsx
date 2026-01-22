@@ -100,7 +100,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-20 min-w-0">
           <Link
-            to={!user || !isAuthenticated ? "/" : "/dashboard"}
+            to={!user ? "/" : "/dashboard"}
             className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 min-w-0 bg-transparent"
           >
             <div className="bg-transparent">
@@ -116,7 +116,7 @@ export default function Navbar() {
           </Link>
           
           <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 flex-shrink-0 min-w-0">
-            {user && isAuthenticated ? (
+            {user ? (
               <>
                 {/* Desktop Menu Items */}
                 <div className="hidden md:flex items-center space-x-4">
