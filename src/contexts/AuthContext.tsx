@@ -55,6 +55,57 @@ async function fetchAppUser(idToken: string): Promise<User | null> {
   return null;
 }
 
+/**
+ * Create a new user in our database for OAuth providers (Google).
+ * This is called when we detect a Firebase user from redirect result that doesn't exist in our DB.
+ * Returns the created user or null if creation failed.
+ */
+async function createOAuthUserInDatabase(firebaseUser: FirebaseUser, idToken: string): Promise<User | null> {
+  console.log('[AuthContext] Creating OAuth user in database', { 
+    uid: firebaseUser.uid, 
+    email: firebaseUser.email 
+  });
+  
+  try {
+    const registerRes = await fetch('/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        email: firebaseUser.email,
+        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+        password: '', // Passwordless/OAuth
+        provider: 'google',
+      }),
+    });
+
+    // 201 = created, 409 = already exists - both are acceptable
+    if (registerRes.ok || registerRes.status === 409) {
+      console.log('[AuthContext] OAuth user created/exists in database', { 
+        status: registerRes.status,
+        email: firebaseUser.email 
+      });
+      
+      // Now fetch the user profile
+      const userProfile = await fetchAppUser(idToken);
+      return userProfile;
+    }
+
+    // Log error but don't throw - let the app continue
+    const errorData = await registerRes.json().catch(() => ({}));
+    console.error('[AuthContext] Failed to create OAuth user in database', {
+      status: registerRes.status,
+      error: errorData,
+    });
+    return null;
+  } catch (error) {
+    console.error('[AuthContext] Error creating OAuth user in database', error);
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -76,14 +127,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const hydrateFromFirebaseUser = useCallback(async (firebaseUser: FirebaseUser) => {
+    console.log('[AuthContext] Hydrating user from Firebase', { 
+      uid: firebaseUser.uid, 
+      email: firebaseUser.email 
+    });
+    
     const idToken = await firebaseUser.getIdToken();
     setToken(idToken);
 
     const apiUser = await fetchAppUser(idToken);
     if (apiUser) {
+      console.log('[AuthContext] User profile fetched successfully', { 
+        id: apiUser.id, 
+        isOnboarded: apiUser.isOnboarded,
+        hasCompletedOnboarding: apiUser.hasCompletedOnboarding 
+      });
       setUser({ ...apiUser, uid: firebaseUser.uid });
     } else {
       // Firebase session exists, but no DB profile yet (new user / still registering).
+      console.log('[AuthContext] No user profile in DB (404) - user may need to complete registration');
       setUser(null);
     }
   }, []);
@@ -112,11 +174,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // STEP 1: Await getRedirectResult as the VERY FIRST action
         // This processes any Google OAuth redirect tokens before anything else
+        console.log('[AuthContext] Processing redirect result...');
         const redirectResult = await getRedirectResult(auth);
         if (redirectResult?.user) {
-          // Redirect result found - hydrate the user
+          // Redirect result found - this is from Google OAuth redirect
+          console.log('[AuthContext] Redirect result found', { 
+            uid: redirectResult.user.uid,
+            email: redirectResult.user.email,
+            provider: redirectResult.providerId 
+          });
           firebaseUserRef.current = redirectResult.user;
-          await hydrateFromFirebaseUser(redirectResult.user);
+          
+          // Get ID token for API calls
+          const idToken = await redirectResult.user.getIdToken();
+          setToken(idToken);
+          
+          // Try to fetch existing user profile
+          let apiUser = await fetchAppUser(idToken);
+          
+          // CRITICAL FIX: If user doesn't exist in our DB (404), create them
+          // This handles the case where Google redirect completed but user wasn't created
+          if (!apiUser) {
+            console.log('[AuthContext] New Google user detected (redirect flow) - creating in database');
+            apiUser = await createOAuthUserInDatabase(redirectResult.user, idToken);
+          }
+          
+          if (apiUser) {
+            console.log('[AuthContext] User profile loaded', { 
+              id: apiUser.id, 
+              email: apiUser.email,
+              isOnboarded: apiUser.isOnboarded 
+            });
+            setUser({ ...apiUser, uid: redirectResult.user.uid });
+          } else {
+            // Even if we couldn't create/fetch the user, set user to null
+            // The signup page will handle redirecting to onboarding
+            console.log('[AuthContext] Could not load/create user profile, proceeding with null user');
+            setUser(null);
+          }
+        } else {
+          console.log('[AuthContext] No redirect result found');
         }
 
         // STEP 2: Wrap onAuthStateChanged in a Promise that resolves after the first callback

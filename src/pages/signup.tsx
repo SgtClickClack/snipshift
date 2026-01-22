@@ -39,11 +39,22 @@ export default function SignupPage() {
 
   // REDIRECT: If user is authenticated, redirect them away from signup
   useEffect(() => {
-    if (isLoading) return;
+    console.log('[Signup] Auth state check', { 
+      isLoading, 
+      hasUser: !!user, 
+      hasFirebaseUser: !!auth.currentUser,
+      userId: user?.id,
+      firebaseUid: auth.currentUser?.uid 
+    });
+    
+    if (isLoading) {
+      console.log('[Signup] Still loading, waiting...');
+      return;
+    }
     
     // Case 1: User is fully authenticated with database record
     if (user) {
-      logger.debug('Signup', 'User fully authenticated, checking role before redirect', {
+      console.log('[Signup] User fully authenticated, checking role before redirect', {
         hasCompletedOnboarding: user.hasCompletedOnboarding,
         currentRole: user.currentRole,
         isOnboarded: user.isOnboarded,
@@ -51,6 +62,7 @@ export default function SignupPage() {
       
       // PRIORITY 1: If not onboarded, go to onboarding
       if (user.isOnboarded === false || user.hasCompletedOnboarding === false) {
+        console.log('[Signup] Navigation triggered to /onboarding (not onboarded)');
         navigate('/onboarding', { replace: true });
         return;
       }
@@ -58,29 +70,29 @@ export default function SignupPage() {
       // PRIORITY 2: If has a valid role, go to role-specific dashboard
       if (user.currentRole && user.currentRole !== 'client') {
         const dashboardRoute = getDashboardRoute(user.currentRole);
-        logger.debug('Signup', 'Redirecting to role-specific dashboard', {
-          role: user.currentRole,
-          dashboardRoute,
-        });
+        console.log('[Signup] Navigation triggered to', dashboardRoute, '(has role)');
         navigate(dashboardRoute, { replace: true });
         return;
       }
       
       // PRIORITY 3: No role - go to role selection or onboarding
-      logger.debug('Signup', 'User has no role, redirecting to role selection');
+      console.log('[Signup] Navigation triggered to /role-selection (no role)');
       navigate('/role-selection', { replace: true });
       return;
     }
     
     // Case 2: Firebase user exists but no database record yet (just completed Google signup)
     if (auth.currentUser && !user) {
-      logger.debug('Signup', 'Firebase user exists but no database record, redirecting to onboarding', {
+      console.log('[Signup] Firebase user exists but no database record - NEW GOOGLE USER DETECTED', {
         uid: auth.currentUser.uid,
         email: auth.currentUser.email,
       });
+      console.log('[Signup] Navigation triggered to /onboarding (new Google user)');
       navigate('/onboarding', { replace: true });
       return;
     }
+    
+    console.log('[Signup] No redirect needed - showing signup form');
   }, [isLoading, user, navigate]);
 
   // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount
