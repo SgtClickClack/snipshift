@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { onAuthStateChange, signOutUser, auth, handleGoogleRedirectResult } from '../lib/firebase';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { onAuthStateChanged, signOutUser, auth } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { logger } from '@/lib/logger';
@@ -77,8 +77,6 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  isAuthReady: boolean;
-  isRoleLoading: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
   clearUserState: (reason?: string) => void;
@@ -99,21 +97,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthReady, setIsAuthReady] = useState(false);
-  const [isRoleLoading, setIsRoleLoading] = useState(false);
   
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Refs for preventing race conditions
-  const hasInitialized = useRef(false);
-  const currentAuthUid = useRef<string | null>(null);
-  const navigateRef = useRef(navigate);
-  const locationRef = useRef(location);
-  
-  // Keep refs updated
-  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
-  useEffect(() => { locationRef.current = location; }, [location]);
 
   /**
    * Normalize backend role values into the app's canonical roles.
@@ -178,28 +163,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   };
 
-  const deriveRoleHome = (u: User | null): string => {
-    if (!u) return '/login';
-    if (u.hasCompletedOnboarding === false || !u.isOnboarded) return '/onboarding';
-    if (!u.currentRole || u.currentRole === 'client') {
-      const hasAnyRole = u.roles && u.roles.length > 0 && u.roles.some(r => r !== 'client');
-      if (!hasAnyRole) return '/onboarding';
-      return '/role-selection';
-    }
-    
-    // Role-specific dashboards
-    if (u.currentRole === 'professional') return '/worker/dashboard';
-    if (isBusinessRole(u.currentRole)) return '/venue/dashboard';
-    
-    return getDashboardRoute(u.currentRole);
-  };
-
   const fetchUserProfile = async (firebaseUser: FirebaseUser): Promise<User | null> => {
     try {
       const idToken = await firebaseUser.getIdToken(true);
       setToken(idToken);
       
-      setIsRoleLoading(true);
       const res = await fetch('/api/me', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -242,139 +210,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       logger.error('AuthContext', 'Error fetching user profile:', error);
       return null;
-    } finally {
-      setIsRoleLoading(false);
     }
   };
 
-  // STANDARD FIREBASE PATTERN: Initialize auth
+  // STANDARD FIREBASE PATTERN: Single useEffect on mount
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    let unsubscribe: (() => void) | null = null;
 
-    const initAuth = async () => {
-      // E2E mode: hydrate from storage
-      const isE2E = import.meta.env.VITE_E2E === '1' ||
-        (typeof window !== 'undefined' && localStorage.getItem('E2E_MODE') === 'true');
-      
-      if (isE2E && typeof window !== 'undefined') {
-        const raw = sessionStorage.getItem('hospogo_test_user') ?? localStorage.getItem('hospogo_test_user');
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw) as Partial<User>;
-            const roles = Array.isArray(parsed.roles) ? parsed.roles : (parsed.currentRole ? [parsed.currentRole] : []);
-            const currentRole = (parsed.currentRole || roles[0] || null) as User['currentRole'];
-            setUser({
-              ...(parsed as User),
-              roles: roles as User['roles'],
-              currentRole,
-              isOnboarded: parsed.isOnboarded ?? true,
-              createdAt: parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
-              updatedAt: parsed.updatedAt ? new Date(parsed.updatedAt) : new Date(),
-            });
-            setToken('mock-test-token');
-          } catch (e) {
-            logger.error('AuthContext', 'Failed to parse E2E user:', e);
-          }
-        }
-        setIsLoading(false);
-        setIsAuthReady(true);
-        return;
-      }
-
-      try {
-        // Step 1: Set persistence to LOCAL (survives page refresh)
-        await setPersistence(auth, browserLocalPersistence);
+    // Step 1: Set persistence to LOCAL (survives page refresh)
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
         logger.debug('AuthContext', 'Persistence set to browserLocalPersistence');
-      } catch (error) {
+      })
+      .catch((error) => {
         logger.error('AuthContext', 'Failed to set persistence:', error);
-      }
-
-      try {
-        // Step 2: Check for redirect result (user returning from Google sign-in)
-        const redirectUser = await handleGoogleRedirectResult();
-        
-        if (redirectUser) {
-          logger.debug('AuthContext', 'Got user from redirect result:', redirectUser.uid);
-          
-          // Register/verify user in database
-          try {
-            const idToken = await redirectUser.getIdToken();
-            await fetch('/api/register', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${idToken}`,
-              },
-              body: JSON.stringify({
-                email: redirectUser.email,
-                name: redirectUser.displayName || redirectUser.email?.split('@')[0] || 'User',
-                password: '',
-              }),
-            });
-            // Small delay to allow database replication
-            await new Promise(resolve => setTimeout(resolve, 300));
-          } catch (regError) {
-            logger.error('AuthContext', 'Error registering redirect user:', regError);
-          }
-        }
-      } catch (error) {
-        logger.error('AuthContext', 'Error processing redirect result:', error);
-      }
-
-      // Step 3: Listen for auth state changes
-      const unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
-        const newUid = firebaseUser?.uid || null;
-        
-        // Skip if same user
-        if (currentAuthUid.current === newUid && newUid !== null) {
-          return;
-        }
-        currentAuthUid.current = newUid;
-
-        if (firebaseUser) {
-          logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);
-          
-          const appUser = await fetchUserProfile(firebaseUser);
-          setUser(appUser);
-          
-          // Auto-redirect from login/signup pages
-          const currentPath = locationRef.current.pathname;
-          if (['/login', '/signup'].includes(currentPath) && appUser) {
-            const target = deriveRoleHome(appUser);
-            if (target !== currentPath) {
-              navigateRef.current(target, { replace: true });
-            }
-          }
-        } else {
-          logger.debug('AuthContext', 'No Firebase user');
-          setUser(null);
-          setToken(null);
-        }
-
-        setIsLoading(false);
-        setIsAuthReady(true);
       });
 
-      return unsubscribe;
-    };
-
-    // Safety timeout - ensure loading clears after 8 seconds max
-    const safetyTimeout = setTimeout(() => {
-      if (!isAuthReady) {
-        logger.warn('AuthContext', 'Safety timeout triggered - clearing loading state');
-        setIsLoading(false);
-        setIsAuthReady(true);
+    // Step 2: Listen for auth state changes (synchronous - returns unsubscribe immediately)
+    unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);
+        
+        // Fetch profile from /api/me
+        const appUser = await fetchUserProfile(firebaseUser);
+        setUser(appUser);
+        
+        // Auto-redirect from login/signup pages
+        const currentPath = window.location.pathname;
+        if (['/login', '/signup'].includes(currentPath) && appUser) {
+          const target = appUser.hasCompletedOnboarding === false || !appUser.isOnboarded
+            ? '/onboarding'
+            : appUser.currentRole && appUser.currentRole !== 'client'
+              ? getDashboardRoute(appUser.currentRole)
+              : '/role-selection';
+          if (target !== currentPath) {
+            navigate(target, { replace: true });
+          }
+        }
+      } else {
+        logger.debug('AuthContext', 'No Firebase user');
+        setUser(null);
+        setToken(null);
       }
-    }, 8000);
 
-    initAuth().then(unsubscribe => {
-      return () => {
-        clearTimeout(safetyTimeout);
-        if (unsubscribe) unsubscribe();
-      };
+      // CRITICAL: Only set isLoading(false) AFTER profile fetch completes or firebaseUser is confirmed null
+      setIsLoading(false);
     });
-  }, []);
+    
+    // Cleanup function
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [navigate]);
 
   const login = useCallback((newUser: User) => {
     setUser(newUser);
@@ -386,13 +275,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await signOutUser();
       setUser(null);
       setToken(null);
-      navigateRef.current('/login', { replace: true });
+      navigate('/login', { replace: true });
       logger.debug('AuthContext', 'User logged out');
     } catch (error) {
       logger.error('AuthContext', 'Logout error:', error);
       throw error;
     }
-  }, []);
+  }, [navigate]);
 
   const clearUserState = useCallback((reason?: string) => {
     logger.debug('AuthContext', 'Clearing user state:', reason);
@@ -453,8 +342,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     token,
     isLoading,
     isAuthenticated: !!user,
-    isAuthReady,
-    isRoleLoading,
     login,
     logout,
     clearUserState,
@@ -466,7 +353,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Show loading screen while initializing
-  if (isLoading && !isAuthReady) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 

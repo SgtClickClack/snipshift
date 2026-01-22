@@ -21,27 +21,23 @@ export function AuthGuard({
   allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
-  const { user, isLoading, isAuthenticated, isAuthReady, isRoleLoading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV;
-
-  // Check for onboarding_in_progress flag in localStorage
-  const isOnboardingInProgress = typeof window !== 'undefined' && 
-    localStorage.getItem('onboarding_in_progress') === 'true';
 
   // Check if there's a Firebase session (user might have signed in but profile not yet created)
   const hasFirebaseSession = !!auth.currentUser;
 
   // Show loading screen while auth is initializing
-  if (isLoading || !isAuthReady || isRoleLoading) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 
   // PUBLIC ROUTES: Allow access to onboarding pages during onboarding flow
   const isOnboardingRoute = location.pathname.startsWith('/onboarding');
   if (isOnboardingRoute) {
-    // Allow access if onboarding is in progress or user has Firebase session
-    if (isOnboardingInProgress || hasFirebaseSession || isAuthenticated) {
+    // Allow access if user has Firebase session or is authenticated
+    if (hasFirebaseSession || isAuthenticated) {
       return <>{children}</>;
     }
   }

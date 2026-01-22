@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
-  const { user, isAuthReady, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,7 +29,7 @@ export default function LoginPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!isAuthReady) return;
+    if (authLoading) return;
     
     // Case 1: User is fully authenticated with database record
     if (user) {
@@ -58,11 +58,11 @@ export default function LoginPage() {
       navigate('/onboarding', { replace: true });
       return;
     }
-  }, [isAuthReady, user, navigate]);
+  }, [authLoading, user, navigate]);
 
   // Handle post-login redirection based on user role
   useEffect(() => {
-    if (pendingRedirect && isAuthReady && user) {
+    if (pendingRedirect && !authLoading && user) {
       setPendingRedirect(false);
       
       // Check if user has a role and is onboarded
@@ -82,7 +82,7 @@ export default function LoginPage() {
       // User is onboarded but has no role or is a client - go to role selection
       navigate("/role-selection", { replace: true });
     }
-  }, [pendingRedirect, isAuthReady, user, navigate]);
+  }, [pendingRedirect, authLoading, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +200,7 @@ export default function LoginPage() {
   };
 
   // Show loading state while auth is initializing
-  if (authLoading || !isAuthReady) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">

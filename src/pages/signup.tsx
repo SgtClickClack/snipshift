@@ -21,7 +21,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated, isAuthReady, user, isLoading } = useAuth();
+  const { login, isAuthenticated, user, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -39,7 +39,7 @@ export default function SignupPage() {
 
   // REDIRECT: If user is authenticated, redirect them away from signup
   useEffect(() => {
-    if (!isAuthReady) return;
+    if (isLoading) return;
     
     // Case 1: User is fully authenticated with database record
     if (user) {
@@ -81,7 +81,7 @@ export default function SignupPage() {
       navigate('/onboarding', { replace: true });
       return;
     }
-  }, [isAuthReady, user, navigate]);
+  }, [isLoading, user, navigate]);
 
   // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount
   // If popup just completed auth, immediately redirect without showing signup UI
@@ -452,7 +452,7 @@ export default function SignupPage() {
 
 
   // Show loading state while auth is initializing or finalizing
-  if (isLoading || !isAuthReady || isFinalizing) {
+  if (isLoading || isFinalizing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="shadow-xl border-2 border-border/50 bg-card/95 backdrop-blur-sm max-w-md mx-4">
