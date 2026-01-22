@@ -411,7 +411,7 @@ export async function exportSettlementsForReconciliation(
       .where(whereClause)
       .orderBy(desc(payouts.createdAt));
 
-    return result.map(row => ({
+    return result.map((row: any) => ({
       ...row,
       currency: 'aud',
     })) as SettlementExportRecord[];
