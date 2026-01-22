@@ -1,6 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
+ * Playwright Configuration for HospoGo E2E Tests
+ * 
+ * Configured for Vercel/Firebase dev environments:
+ * - Dev mode: Uses localhost:3000 with Firebase emulator/auth
+ * - Production mode: Uses https://hospogo.com (set E2E_AUTH_MODE=production)
+ * 
  * See https://playwright.dev/docs/test-configuration.
  */
 const useProductionAuth = process.env.E2E_AUTH_MODE === 'production';
