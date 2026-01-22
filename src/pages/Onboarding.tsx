@@ -664,6 +664,19 @@ export default function Onboarding() {
   // Check if there's a Firebase session (user might have signed in but profile not yet created)
   // This is used to enable form interaction once Firebase auth is confirmed
   const hasFirebaseSession = !!auth.currentUser || !!token;
+  
+  // Debug log to confirm Firebase session status
+  useEffect(() => {
+    if (machineContext.state === 'ROLE_SELECTION') {
+      console.log('[Onboarding] Role selection buttons status:', {
+        hasFirebaseSession,
+        authCurrentUser: !!auth.currentUser,
+        token: !!token,
+        isWaitlistOnly: machineContext.isWaitlistOnly,
+        buttonsEnabled: hasFirebaseSession || machineContext.isWaitlistOnly
+      });
+    }
+  }, [hasFirebaseSession, machineContext.state, machineContext.isWaitlistOnly]);
 
   const progressPct = useMemo(() => {
     if (machineContext.stepIndex === 0) return 0;
@@ -969,8 +982,9 @@ export default function Onboarding() {
                   dispatch({ type: 'SELECT_ROLE', role: 'professional' });
                   logger.debug('Onboarding', '[Onboarding] Role selection dispatched');
                 }}
-                disabled={!machineContext.isWaitlistOnly && !hasFirebaseSession}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(!machineContext.isWaitlistOnly && !hasFirebaseSession) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!hasFirebaseSession && !machineContext.isWaitlistOnly}
+                style={{ cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none' }}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? '' : 'opacity-50'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'professional' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><User className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'professional' ? 'text-brand-neon' : 'text-white'}`}>I'm looking for shifts</h3>
@@ -994,8 +1008,9 @@ export default function Onboarding() {
                   // Automatically navigate to venue onboarding hub
                   navigate('/onboarding/hub', { replace: true });
                 }}
-                disabled={!machineContext.isWaitlistOnly && !hasFirebaseSession}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(!machineContext.isWaitlistOnly && !hasFirebaseSession) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!hasFirebaseSession && !machineContext.isWaitlistOnly}
+                style={{ cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none' }}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? '' : 'opacity-50'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'venue' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><Building2 className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'venue' ? 'text-brand-neon' : 'text-white'}`}>I need to fill shifts</h3>
@@ -1261,7 +1276,7 @@ export default function Onboarding() {
                   <Button 
                     type="button" 
                     onClick={handleNext} 
-                    disabled={!canProceed || isSavingStep || (machineContext.state !== 'ROLE_SELECTION' && !token && !auth.currentUser)} 
+                    disabled={!canProceed || isSavingStep || (machineContext.state !== 'ROLE_SELECTION' && !hasFirebaseSession)} 
                     variant="accent" 
                     className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" 
                     data-testid="onboarding-next"
