@@ -113,10 +113,10 @@ function calculateHoursInPeriod(
 }
 
 /**
- * Calculate award-based gross pay for a shift
+ * Calculate award-based gross pay for a shift (2026 HIGA Rates)
  */
-export function calculateAwardPay(input: AwardCalculationInput): AwardCalculationResult {
-  const { baseRate, startTime, endTime } = input;
+export function calculateGrossPay(input: AwardCalculationInput): AwardCalculationResult {
+  const { baseRate, startTime, endTime, userType = 'casual' } = input;
   
   // Convert to Date objects if needed
   const start = new Date(startTime);
@@ -130,27 +130,75 @@ export function calculateAwardPay(input: AwardCalculationInput): AwardCalculatio
   let basePayCents = 0;
   let penaltyPayCents = 0;
   
-  // Check if shift is on Sunday
+  // Determine if shift spans multiple days
   const isSundayShift = isSunday(start);
+  const isSaturdayShift = isSaturday(start);
+  const isWeekdayShift = isWeekday(start);
   
+  // 2026 HIGA Rates
+  const CASUAL_LOADING_PERCENT = 0.25; // 25%
+  const SUNDAY_PENALTY_FT_PT = 1.5; // 150%
+  const SUNDAY_PENALTY_CASUAL = 1.75; // 175%
+  const SATURDAY_PENALTY_FT_PT = 1.25; // 125%
+  const SATURDAY_PENALTY_CASUAL = 1.5; // 150%
+  const LATE_NIGHT_LOADING = 2.81; // $2.81/hr (7pm-12am Mon-Fri)
+  const NIGHT_LOADING = 4.22; // $4.22/hr (12am-7am Mon-Fri)
+  
+  // Calculate effective base rate (with casual loading if applicable)
+  let effectiveBaseRate = baseRate;
+  if (userType === 'casual') {
+    effectiveBaseRate = baseRate * (1 + CASUAL_LOADING_PERCENT);
+    // Add casual loading as a separate line item
+    const casualLoadingCents = Math.round(hoursWorked * baseRate * CASUAL_LOADING_PERCENT * 100);
+    lineItems.push({
+      type: 'CASUAL_LOADING',
+      description: `Casual Loading (25%) - ${hoursWorked.toFixed(2)} hours`,
+      hours: hoursWorked,
+      rate: baseRate * CASUAL_LOADING_PERCENT,
+      amountCents: casualLoadingCents,
+    });
+    penaltyPayCents += casualLoadingCents;
+  }
+  
+  // Calculate pay based on day of week
   if (isSundayShift) {
-    // Sunday: All hours get 1.5x penalty
-    const sundayHours = hoursWorked;
-    const sundayRate = baseRate * 1.5;
-    const sundayAmountCents = Math.round(sundayHours * sundayRate * 100);
+    // Sunday: Apply penalty rate to all hours
+    const penaltyMultiplier = userType === 'casual' ? SUNDAY_PENALTY_CASUAL : SUNDAY_PENALTY_FT_PT;
+    const sundayRate = baseRate * penaltyMultiplier;
+    const sundayAmountCents = Math.round(hoursWorked * sundayRate * 100);
     
     lineItems.push({
       type: 'SUNDAY_PENALTY',
-      description: `Sunday Penalty (1.5x) - ${sundayHours.toFixed(2)} hours`,
-      hours: sundayHours,
+      description: `Sunday Penalty (${(penaltyMultiplier * 100).toFixed(0)}%) - ${hoursWorked.toFixed(2)} hours`,
+      hours: hoursWorked,
       rate: sundayRate,
       amountCents: sundayAmountCents,
     });
     
     penaltyPayCents += sundayAmountCents;
-  } else {
-    // Regular day: Calculate base pay and late night loading separately
-    // Base pay for all hours
+    
+    // Base pay is 0 on Sunday (all pay is penalty)
+    basePayCents = 0;
+  } else if (isSaturdayShift) {
+    // Saturday: Apply penalty rate to all hours
+    const penaltyMultiplier = userType === 'casual' ? SATURDAY_PENALTY_CASUAL : SATURDAY_PENALTY_FT_PT;
+    const saturdayRate = baseRate * penaltyMultiplier;
+    const saturdayAmountCents = Math.round(hoursWorked * saturdayRate * 100);
+    
+    lineItems.push({
+      type: 'SATURDAY_PENALTY',
+      description: `Saturday Penalty (${(penaltyMultiplier * 100).toFixed(0)}%) - ${hoursWorked.toFixed(2)} hours`,
+      hours: hoursWorked,
+      rate: saturdayRate,
+      amountCents: saturdayAmountCents,
+    });
+    
+    penaltyPayCents += saturdayAmountCents;
+    
+    // Base pay is 0 on Saturday (all pay is penalty)
+    basePayCents = 0;
+  } else if (isWeekdayShift) {
+    // Weekday: Base pay + time-based loadings
     basePayCents = Math.round(hoursWorked * baseRate * 100);
     
     lineItems.push({
@@ -161,41 +209,72 @@ export function calculateAwardPay(input: AwardCalculationInput): AwardCalculatio
       amountCents: basePayCents,
     });
     
-    // Calculate late night hours (10pm-6am)
+    // Calculate late night hours (7pm-12am Mon-Fri)
     const lateNightHours = calculateHoursInPeriod(
       start,
       end,
-      (date) => isLateNightHour(date.getHours())
+      (date) => isLateNightHour(date)
     );
     
     if (lateNightHours > 0) {
-      // Late night loading: Additional 10% on top of base rate
-      const lateNightRate = baseRate * 0.1; // 10% loading
-      const lateNightAmountCents = Math.round(lateNightHours * lateNightRate * 100);
-      
+      const lateNightAmountCents = Math.round(lateNightHours * LATE_NIGHT_LOADING * 100);
       lineItems.push({
         type: 'LATE_NIGHT_LOADING',
-        description: `Late Night Loading (10pm-6am) - ${lateNightHours.toFixed(2)} hours @ 10%`,
+        description: `Late Night Loading (7pm-12am) - ${lateNightHours.toFixed(2)} hours @ $${LATE_NIGHT_LOADING.toFixed(2)}/hr`,
         hours: lateNightHours,
-        rate: lateNightRate,
+        rate: LATE_NIGHT_LOADING,
         amountCents: lateNightAmountCents,
       });
-      
       penaltyPayCents += lateNightAmountCents;
     }
+    
+    // Calculate night hours (12am-7am Mon-Fri)
+    const nightHours = calculateHoursInPeriod(
+      start,
+      end,
+      (date) => isNightHour(date)
+    );
+    
+    if (nightHours > 0) {
+      const nightAmountCents = Math.round(nightHours * NIGHT_LOADING * 100);
+      lineItems.push({
+        type: 'NIGHT_LOADING',
+        description: `Night Loading (12am-7am) - ${nightHours.toFixed(2)} hours @ $${NIGHT_LOADING.toFixed(2)}/hr`,
+        hours: nightHours,
+        rate: NIGHT_LOADING,
+        amountCents: nightAmountCents,
+      });
+      penaltyPayCents += nightAmountCents;
+    }
+  } else {
+    // Other days (shouldn't happen, but fallback to base pay)
+    basePayCents = Math.round(hoursWorked * baseRate * 100);
+    lineItems.push({
+      type: 'BASE_PAY',
+      description: `Base Pay - ${hoursWorked.toFixed(2)} hours`,
+      hours: hoursWorked,
+      rate: baseRate,
+      amountCents: basePayCents,
+    });
   }
   
-  // If Sunday shift, base pay is 0 (all pay is penalty)
-  // Otherwise, base pay is already calculated above
   const grossPayCents = basePayCents + penaltyPayCents;
   
   return {
     grossPayCents,
-    basePayCents: isSundayShift ? 0 : basePayCents,
+    basePayCents,
     penaltyPayCents,
     lineItems,
     hoursWorked,
   };
+}
+
+/**
+ * Legacy function name for backward compatibility
+ * @deprecated Use calculateGrossPay instead
+ */
+export function calculateAwardPay(input: AwardCalculationInput): AwardCalculationResult {
+  return calculateGrossPay(input);
 }
 
 /**

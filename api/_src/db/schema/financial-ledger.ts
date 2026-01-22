@@ -72,8 +72,11 @@ export const financialLedgerEntries = pgTable(
  */
 export const ledgerLineItemTypeEnum = pgEnum('ledger_line_item_type', [
   'BASE_PAY',
+  'CASUAL_LOADING',
   'SUNDAY_PENALTY',
+  'SATURDAY_PENALTY',
   'LATE_NIGHT_LOADING',
+  'NIGHT_LOADING',
 ]);
 
 export const financialLedgerLineItems = pgTable(

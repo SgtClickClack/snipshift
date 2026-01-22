@@ -3489,19 +3489,24 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
     return;
   }
 
-  // Calculate payout using HIGA Award Engine
+  // Calculate payout using HIGA Award Engine (2026 Rates)
   const hourlyRate = parseFloat(shift.hourlyRate.toString());
   const startTime = new Date(shift.startTime);
   const endTime = new Date(shift.endTime);
   
   // Import award engine service
-  const { calculateAwardPay } = await import('../services/award-engine.service.js');
+  const { calculateGrossPay } = await import('../services/award-engine.service.js');
   
-  // Calculate gross pay with award interpretation (Sunday penalty, late night loading)
-  const awardCalculation = calculateAwardPay({
+  // Get worker's employment type (default to 'casual' for hospitality workers)
+  // TODO: Add userType field to user profile schema if needed
+  const userType: 'casual' | 'fulltime' | 'parttime' = 'casual'; // Default to casual
+  
+  // Calculate gross pay with award interpretation (2026 HIGA rates)
+  const awardCalculation = calculateGrossPay({
     baseRate: hourlyRate,
     startTime,
     endTime,
+    userType,
   });
   
   const amountCents = awardCalculation.grossPayCents;

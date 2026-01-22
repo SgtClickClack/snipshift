@@ -190,12 +190,20 @@ export const DEMO_JOBS = [
     businessId: 'demo-user-001',
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
   },
-  // Sunday Shift with 1.5x Penalty - HIGA Award Engine Demo
+  // Sunday Evening Shift with 2026 HIGA Rates - Casual Worker
+  // Shift: Sunday 7pm-12am (5 hours)
+  // Base rate: $30/hr
+  // Calculation:
+  // - Casual Loading (25%): $30 × 0.25 × 5 = $37.50
+  // - Sunday Penalty (175% for casual): $30 × 1.75 × 5 = $262.50
+  // - Late Night Loading (7pm-12am): $2.81/hr × 5 = $14.05 (Note: Late night loading applies Mon-Fri only, not Sunday)
+  // Total: $37.50 + $262.50 = $300.00 (30000 cents)
+  // Note: Late night loading ($2.81/hr) only applies Mon-Fri, not Sunday
   {
     id: 'job-005',
     _type: 'shift',
-    title: 'Sunday Bartender',
-    description: 'Sunday service with premium penalty rates. HIGA Award: 1.5x Sunday penalty applies.',
+    title: 'Sunday Evening Bartender',
+    description: 'Sunday evening service with 2026 HIGA Award rates. Casual worker: 175% Sunday penalty + 25% casual loading applies.',
     status: 'completed',
     payRate: 30,
     hourlyRate: 30, // Base rate
@@ -211,14 +219,14 @@ export const DEMO_JOBS = [
       const nextSunday = new Date();
       const daysUntilSunday = (7 - nextSunday.getDay()) % 7 || 7;
       nextSunday.setDate(nextSunday.getDate() + daysUntilSunday);
-      nextSunday.setHours(12, 0, 0, 0); // 12pm start
+      nextSunday.setHours(19, 0, 0, 0); // 7pm start
       return nextSunday.toISOString();
     })(),
     endTime: (() => {
       const nextSunday = new Date();
       const daysUntilSunday = (7 - nextSunday.getDay()) % 7 || 7;
       nextSunday.setDate(nextSunday.getDate() + daysUntilSunday);
-      nextSunday.setHours(20, 0, 0, 0); // 8pm end (8 hours)
+      nextSunday.setHours(24, 0, 0, 0); // 12am (midnight) end (5 hours)
       return nextSunday.toISOString();
     })(),
     location: { address: '123 Demo Street', city: 'Sydney', state: 'NSW' },
@@ -232,14 +240,19 @@ export const DEMO_JOBS = [
     employerId: 'demo-user-001',
     businessId: 'demo-user-001',
     createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    // ATOMIC SETTLEMENT DATA with HIGA Award Breakdown
+    // ATOMIC SETTLEMENT DATA with 2026 HIGA Award Breakdown
     paymentStatus: 'PAID',
     payout: {
       id: 'payout-demo-sunday-001',
       settlementId: generateDemoSettlementId(-7 * 24 * 60 * 60 * 1000),
-      // Sunday Penalty: 8 hours × $30 × 1.5 = $360 (36000 cents)
-      amountCents: 36000, // Gross pay with Sunday penalty
-      hoursWorked: 8,
+      // 2026 HIGA Calculation for Casual Sunday Evening (7pm-12am):
+      // Base: $30/hr × 5 hours = $150
+      // Casual Loading (25%): $30 × 0.25 × 5 = $37.50
+      // Sunday Penalty (175% for casual): $30 × 1.75 × 5 = $262.50
+      // Total: $37.50 + $262.50 = $300.00 (30000 cents)
+      // Note: Late night loading ($2.81/hr) only applies Mon-Fri, not Sunday
+      amountCents: 30000, // Gross pay with Sunday penalty + casual loading
+      hoursWorked: 5,
       hourlyRate: 30, // Base rate (displayed)
       status: 'completed',
       settlementType: 'immediate',
@@ -249,20 +262,27 @@ export const DEMO_JOBS = [
         const nextSunday = new Date();
         const daysUntilSunday = (7 - nextSunday.getDay()) % 7 || 7;
         nextSunday.setDate(nextSunday.getDate() + daysUntilSunday);
-        nextSunday.setHours(20, 30, 0, 0); // 30 min after shift end
+        nextSunday.setHours(24, 30, 0, 0); // 30 min after shift end (12:30am)
         return nextSunday.toISOString();
       })(),
-      // HIGA Award Breakdown - Line Items
+      // 2026 HIGA Award Breakdown - Line Items
       awardBreakdown: {
         basePayCents: 0, // Sunday: all pay is penalty
-        penaltyPayCents: 36000, // Sunday penalty (1.5x)
+        penaltyPayCents: 30000, // Sunday penalty (175% for casual) + Casual loading (25%)
         lineItems: [
           {
+            type: 'CASUAL_LOADING',
+            description: 'Casual Loading (25%) - 5.00 hours',
+            hours: 5,
+            rate: 7.50, // $30 × 0.25 = $7.50/hour
+            amountCents: 3750, // $37.50
+          },
+          {
             type: 'SUNDAY_PENALTY',
-            description: 'Sunday Penalty (1.5x) - 8.00 hours',
-            hours: 8,
-            rate: 45, // $30 × 1.5 = $45/hour
-            amountCents: 36000,
+            description: 'Sunday Penalty (175%) - 5.00 hours',
+            hours: 5,
+            rate: 52.50, // $30 × 1.75 = $52.50/hour
+            amountCents: 26250, // $262.50
           },
         ],
       },

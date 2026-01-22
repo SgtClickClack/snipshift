@@ -178,7 +178,7 @@ export async function exportLedgerEntriesForReconciliation(
 export interface CreateLedgerLineItemInput {
   ledgerEntryId: string;
   settlementId?: string | null;
-  lineItemType: 'BASE_PAY' | 'SUNDAY_PENALTY' | 'LATE_NIGHT_LOADING';
+  lineItemType: 'BASE_PAY' | 'CASUAL_LOADING' | 'SUNDAY_PENALTY' | 'SATURDAY_PENALTY' | 'LATE_NIGHT_LOADING' | 'NIGHT_LOADING';
   description: string;
   hours: number; // Hours as decimal (e.g., 2.5)
   rateCents: number; // Rate per hour in cents
