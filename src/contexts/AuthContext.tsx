@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { auth } from '@/lib/firebase';
-import { browserLocalPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
+import { browserLocalPersistence, getRedirectResult, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 
 export interface User {
@@ -19,6 +19,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  isAuthReady: boolean; // Alias for !isLoading, used by some components
   isAuthenticated: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
@@ -97,30 +98,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
+    let isInitialAuthCheck = true;
 
     // Minimalist: functional modular calls only.
     setPersistence(auth, browserLocalPersistence).catch((error) => {
       logger.error('AuthContext', 'Failed to set Firebase persistence', error);
     });
 
-    unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      firebaseUserRef.current = firebaseUser;
-
+    // Process redirect result BEFORE setting up onAuthStateChanged
+    // This ensures that if the app loads with auth params in the URL (e.g., after Google redirect),
+    // they are processed before the Guard decides to redirect to the landing page.
+    // isLoading stays TRUE until both getRedirectResult and the initial onAuthStateChanged complete.
+    const processRedirectResult = async () => {
       try {
-        if (!firebaseUser) {
+        const redirectResult = await getRedirectResult(auth);
+        if (redirectResult?.user) {
+          // Redirect result found - hydrate the user
+          firebaseUserRef.current = redirectResult.user;
+          await hydrateFromFirebaseUser(redirectResult.user);
+        }
+      } catch (error) {
+        logger.error('AuthContext', 'Failed to process redirect result', error);
+      }
+    };
+
+    // Process redirect result first, then set up auth state listener
+    processRedirectResult().finally(() => {
+      // Set up auth state listener after redirect result is processed
+      unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+        firebaseUserRef.current = firebaseUser;
+
+        try {
+          if (!firebaseUser) {
+            setUser(null);
+            setToken(null);
+            // Only set loading to false on the initial auth check
+            if (isInitialAuthCheck) {
+              setIsLoading(false);
+              isInitialAuthCheck = false;
+            }
+            return;
+          }
+
+          await hydrateFromFirebaseUser(firebaseUser);
+        } catch (error) {
+          logger.error('AuthContext', 'Auth hydration failed', error);
           setUser(null);
           setToken(null);
-          return;
+        } finally {
+          // Only set loading to false on the initial auth check
+          if (isInitialAuthCheck) {
+            setIsLoading(false);
+            isInitialAuthCheck = false;
+          }
         }
-
-        await hydrateFromFirebaseUser(firebaseUser);
-      } catch (error) {
-        logger.error('AuthContext', 'Auth hydration failed', error);
-        setUser(null);
-        setToken(null);
-      } finally {
-        setIsLoading(false);
-      }
+      });
     });
 
     return () => {
@@ -133,6 +165,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       token,
       isLoading,
+      isAuthReady: !isLoading, // Alias for !isLoading, used by some components
       // Consider the user authenticated if Firebase session exists (token set), even if /api/me is still 404.
       isAuthenticated: !!token,
       login,
