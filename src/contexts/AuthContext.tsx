@@ -37,33 +37,61 @@ interface AuthProviderProps {
 async function fetchAppUser(idToken: string, isOnboardingMode: boolean = false): Promise<User | null> {
   // Skip fetch entirely if in onboarding mode
   if (isOnboardingMode) {
+    console.log('[AuthContext] Skipping /api/me fetch - onboarding mode active');
     return null;
   }
 
-  const res = await fetch('/api/me', {
-    headers: {
-      Authorization: `Bearer ${idToken}`,
-      'Content-Type': 'application/json',
-    },
-    cache: 'no-store',
-  });
-
-  if (res.ok) {
-    const apiUser = (await res.json()) as User;
-    return apiUser;
-  }
-
-  // 404 is expected for brand new Firebase users that haven't been created in our DB yet.
-  if (res.status === 404) return null;
-
-  // 401 during onboarding is expected - suppress warning to reduce console noise
-  if (res.status === 401 && isOnboardingMode) {
+  // Double-check pathname before making the request (defensive check)
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/onboarding')) {
+    console.log('[AuthContext] Skipping /api/me fetch - on onboarding route');
     return null;
   }
 
-  // Anything else: keep the app stable and treat as "no profile".
-  logger.warn('AuthContext', 'Failed to fetch /api/me', { status: res.status });
-  return null;
+  try {
+    const res = await fetch('/api/me', {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (res.ok) {
+      const apiUser = (await res.json()) as User;
+      return apiUser;
+    }
+
+    // 404 is expected for brand new Firebase users that haven't been created in our DB yet.
+    if (res.status === 404) {
+      console.log('[AuthContext] /api/me returned 404 - user profile not found in DB (expected for new users)');
+      return null;
+    }
+
+    // 401 during onboarding is expected - suppress warning to reduce console noise
+    if (res.status === 401 && isOnboardingMode) {
+      console.log('[AuthContext] /api/me returned 401 during onboarding - suppressing (expected)');
+      return null;
+    }
+
+    // Log 401 errors with more context for debugging
+    if (res.status === 401) {
+      const errorText = await res.text().catch(() => 'Unable to read error response');
+      logger.warn('AuthContext', 'Failed to fetch /api/me - 401 Unauthorized', { 
+        status: res.status,
+        error: errorText.substring(0, 200), // Limit error text length
+        hasToken: !!idToken,
+        tokenLength: idToken?.length,
+      });
+      return null;
+    }
+
+    // Anything else: keep the app stable and treat as "no profile".
+    logger.warn('AuthContext', 'Failed to fetch /api/me', { status: res.status });
+    return null;
+  } catch (error) {
+    logger.error('AuthContext', 'Error fetching /api/me', error);
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
@@ -95,10 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       email: firebaseUser.email 
     });
     
-    const idToken = await firebaseUser.getIdToken();
-    setToken(idToken);
-
-    // CRITICAL: Skip profile fetch on onboarding route to prevent 401/404 polling loop
+    // CRITICAL: Check onboarding mode BEFORE any async operations to prevent race conditions
     // The onboarding page is responsible for creating the profile, not verifying it
     // Use startsWith to catch all onboarding sub-routes
     const isOnboarding = typeof window !== 'undefined' && 
@@ -109,12 +134,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[AuthContext] Onboarding mode active - suppressing profile fetch', {
         pathname: window.location.pathname
       });
+      // Still set token for use by onboarding form, but skip profile fetch
+      const idToken = await firebaseUser.getIdToken();
+      setToken(idToken);
       setUser(null); // Keep user as null since profile doesn't exist yet
       return;
     }
 
     // Clear onboarding mode flag if we're not on onboarding route
     isOnboardingModeRef.current = false;
+
+    const idToken = await firebaseUser.getIdToken();
+    setToken(idToken);
 
     const apiUser = await fetchAppUser(idToken, isOnboardingModeRef.current);
     if (apiUser) {

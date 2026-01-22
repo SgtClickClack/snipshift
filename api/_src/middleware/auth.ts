@@ -95,6 +95,7 @@ export function authenticateUser(
         message: initError?.message,
       });
       console.error('[AUTH] Check environment variables: FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+      console.error('[AUTH DEBUG] Project ID from env:', process.env.FIREBASE_PROJECT_ID);
       res.status(503).json({ 
         message: 'Authentication service unavailable',
         error: 'Firebase Admin not initialized',
@@ -103,14 +104,41 @@ export function authenticateUser(
       return;
     }
 
+    // Log Firebase Admin initialization status for /api/me debugging
+    const isMeEndpoint = req.path === '/api/me';
+    if (isMeEndpoint) {
+      console.log('[AUTH DEBUG] Firebase Admin initialized successfully', {
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        hasAuthInstance: !!firebaseAuth,
+      });
+    }
+
     let token: string | undefined;
     const authHeader = req.headers.authorization;
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split('Bearer ')[1];
+    // Harden token extraction with validation
+    if (authHeader && typeof authHeader === 'string') {
+      if (authHeader.startsWith('Bearer ')) {
+        const extractedToken = authHeader.substring(7); // More reliable than split
+        if (extractedToken && extractedToken.trim().length > 0) {
+          token = extractedToken.trim();
+        } else {
+          console.warn('[AUTH] Bearer token is empty after extraction', {
+            path: req.path,
+            headerLength: authHeader.length,
+          });
+        }
+      } else {
+        // Log if Authorization header exists but doesn't start with Bearer
+        if (isMeEndpoint) {
+          console.warn('[AUTH] Authorization header missing Bearer prefix', {
+            prefix: authHeader.substring(0, 20),
+          });
+        }
+      }
     } else if (req.query.token && typeof req.query.token === 'string') {
       // Allow token in query param for SSE/WebSockets where headers are hard to set
-      token = req.query.token;
+      token = req.query.token.trim();
     }
 
     // Bypass for E2E Testing - Only allow in test environment for security
@@ -172,26 +200,42 @@ export function authenticateUser(
     // Wrap async logic in Promise to handle errors properly
     Promise.resolve().then(async () => {
       try {
-        // Log token verification attempt for debugging (only in production for /api/me)
+        // Log token verification attempt for debugging (always for /api/me)
         const isMeEndpoint = req.path === '/api/me';
-        if (isMeEndpoint && process.env.NODE_ENV === 'production') {
+        if (isMeEndpoint) {
           console.log('[AUTH] Verifying token for /api/me', {
             hasToken: !!token,
             tokenLength: token?.length,
             tokenPrefix: token ? token.substring(0, 30) + '...' : 'none',
             projectId: process.env.FIREBASE_PROJECT_ID,
+            firebaseAuthInitialized: !!firebaseAuth,
           });
         }
         
-        const decodedToken = await firebaseAuth.verifyIdToken(token!);
+        // Validate token before verification
+        if (!token || token.length === 0) {
+          console.error('[AUTH ERROR] Empty or invalid token provided', {
+            path: req.path,
+            hasAuthHeader: !!req.headers.authorization,
+          });
+          res.status(401).json({ 
+            message: 'Unauthorized: Invalid token format',
+            code: 'auth/invalid-token'
+          });
+          return;
+        }
+        
+        const decodedToken = await firebaseAuth.verifyIdToken(token);
         const { uid, email } = decodedToken;
         
-        // Log successful verification for /api/me in production
-        if (isMeEndpoint && process.env.NODE_ENV === 'production') {
+        // Log successful verification for /api/me (always log for debugging)
+        if (isMeEndpoint) {
           console.log('[AUTH] Token verified successfully', {
             uid,
             email,
-            projectId: decodedToken.project_id || decodedToken.aud,
+            tokenProjectId: decodedToken.project_id || decodedToken.aud,
+            envProjectId: process.env.FIREBASE_PROJECT_ID,
+            projectIdMatch: (decodedToken.project_id || decodedToken.aud) === process.env.FIREBASE_PROJECT_ID,
           });
         }
 
@@ -267,7 +311,27 @@ export function authenticateUser(
                                 errorCode === 'auth/argument-error' ||
                                 errorMessage.includes('Decoding Firebase ID token failed');
         
-        if (!isPublicEndpoint || !isExpectedError) {
+        // Always log token verification failures for /api/me to help diagnose issues
+        // but use different log levels based on whether it's expected
+        if (isMeEndpoint) {
+          if (isExpectedError) {
+            console.log('[AUTH] Token verification failed for /api/me (expected):', {
+              code: errorCode,
+              message: errorMessage.substring(0, 100),
+            });
+          } else {
+            console.error('[AUTH ERROR] Token verification failed for /api/me:', {
+              code: errorCode,
+              message: errorMessage,
+              hasToken: !!token,
+              tokenLength: token?.length,
+              tokenPrefix: token ? token.substring(0, 30) + '...' : 'none',
+              firebaseInitialized: !!firebaseAuth,
+              envProjectId: process.env.FIREBASE_PROJECT_ID,
+              errorStack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+            });
+          }
+        } else if (!isPublicEndpoint || !isExpectedError) {
           // Log detailed error information for debugging (only for unexpected errors)
           console.error('[AUTH ERROR] Token verification failed:', {
             code: errorCode,

@@ -62,7 +62,12 @@ function initializeFirebase(): admin.auth.Auth | null {
               }),
               projectId: projectId,
           }, appName);
-          console.log('[FIREBASE] Admin initialized successfully via individual env vars');
+          console.log('[FIREBASE] Admin initialized successfully via individual env vars', {
+            projectId: projectId,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL?.substring(0, 20) + '...',
+            hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+            privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
+          });
         } catch (e: any) {
             console.error('[FIREBASE] Init Failed (individual vars):', e?.message || e);
             console.error('[FIREBASE] Stack:', e?.stack);
@@ -114,7 +119,11 @@ function initializeFirebase(): admin.auth.Auth | null {
             },
             appName
           );
-          console.log('[FIREBASE] Admin initialized successfully via FIREBASE_SERVICE_ACCOUNT');
+          console.log('[FIREBASE] Admin initialized successfully via FIREBASE_SERVICE_ACCOUNT', {
+            projectId: finalProjectId || serviceAccount?.project_id,
+            serviceAccountProjectId: serviceAccount?.project_id,
+            envProjectId: process.env.FIREBASE_PROJECT_ID,
+          });
         } catch (e: any) {
           console.error('[FIREBASE] Init Failed (FIREBASE_SERVICE_ACCOUNT):', e?.message || e);
           console.error('[FIREBASE] Stack:', e?.stack);
@@ -176,7 +185,11 @@ function initializeFirebase(): admin.auth.Auth | null {
       }
       
       authInstance = firebaseAdmin.auth(app);
-      console.log('[FIREBASE] Auth instance created with validated project ID:', REQUIRED_PROJECT_ID);
+      const finalProjectId = app.options.projectId || REQUIRED_PROJECT_ID;
+      console.log('[FIREBASE] Auth instance created with validated project ID:', finalProjectId, {
+        requiredProjectId: REQUIRED_PROJECT_ID,
+        matches: finalProjectId === REQUIRED_PROJECT_ID,
+      });
     } else {
       console.warn('[FIREBASE] No Firebase app initialized - auth will fail');
     }
