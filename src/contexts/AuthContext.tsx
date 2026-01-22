@@ -92,6 +92,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasCompletedOnboarding: apiUser.hasCompletedOnboarding 
       });
       setUser({ ...apiUser, uid: firebaseUser.uid });
+      
+      // Clear any auth-related URL parameters once user is confirmed
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hasApiKey = searchParams.has('apiKey');
+        const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
+        
+        if (hasApiKey || hasAuthMode) {
+          console.log('[AuthContext] Clearing auth-related URL parameters after user confirmation');
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+        }
+      }
     } else {
       // Firebase session exists, but no DB profile yet (new user / still registering).
       console.log('[AuthContext] No user profile in DB (404) - user may need to complete registration');
@@ -232,6 +245,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!isLoading && user) {
       const currentPath = window.location.pathname;
+      
+      // Clear any remaining auth-related URL parameters
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hasApiKey = searchParams.has('apiKey');
+        const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
+        
+        if (hasApiKey || hasAuthMode) {
+          console.log('[AuthContext] Clearing remaining auth URL parameters');
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+        }
+      }
+      
       // Redirect authenticated users away from public-only routes
       if (currentPath === '/login' || currentPath === '/signup') {
         // Check if user has completed onboarding before redirecting to dashboard
