@@ -4,7 +4,7 @@ import {
   GoogleAuthProvider,
   signInWithRedirect,
   getRedirectResult,
-  onAuthStateChanged,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
   signOut,
   sendPasswordResetEmail,
   setPersistence,
@@ -198,11 +198,11 @@ export const signOutUser = async () => {
 
 // Auth state listener
 export const onAuthStateChange = (callback: (user: FirebaseAuthUser | null) => void) => {
-  return onAuthStateChanged(auth, callback);
+  return firebaseOnAuthStateChanged(auth, callback);
 };
 
 // Export the raw Firebase function for direct use
-export { onAuthStateChanged };
+export const onAuthStateChanged = firebaseOnAuthStateChanged;
 
 /**
  * Send a password reset email via Firebase Auth.
