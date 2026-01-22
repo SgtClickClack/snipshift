@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-22 - Onboarding Role Card Unlock (Firebase-Only)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Removed disabled/pointer lock styling from onboarding role cards so Firebase-authenticated users can select roles even before a DB profile exists.
+- Kept role selection guarded by Firebase session checks and waitlist mode without reintroducing `/api/me` polling.
+
+**Impact:**
+- New Google users can select Venue/Staff roles immediately on `/onboarding` without the not-allowed cursor lock.
+- Onboarding remains safe from auth/profile fetch loops while the profile is created via form submission.
+
+---
+
 ### Update: 2026-01-22 - Modular Auth Context Rebuild (Firebase v10)
 
 **Status:** ✅ **UPDATED**

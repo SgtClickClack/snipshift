@@ -1,4 +1,28 @@
-﻿
+
+#### 2026-01-22: Unlock Onboarding Role Cards for Firebase Auth
+
+**Core Components**
+- Onboarding role selection (`src/pages/onboarding.tsx`)
+
+**Key Features**
+- Removed disabled/pointer lock styling so role cards stay clickable once Firebase auth is confirmed.
+- Kept role selection gated to Firebase session checks without requiring a DB profile.
+
+**Integration Points**
+- Routing: `/onboarding`
+- Auth: Firebase `auth.currentUser` / `useAuth` token state
+
+**File Paths**
+- `src/pages/onboarding.tsx`
+
+**Next Priority Task**
+- Verify Venue/Staff role cards are clickable for new Google users during onboarding in production.
+
+**Code Organization & Quality**
+- Preserved the single source of truth for role selection gating via `hasFirebaseSession`.
+
+---
+
 #### 2026-01-11: Fix Landing Page Mobile Horizontal Overflow (Blowout)
 
 **Core Components**

@@ -997,13 +997,8 @@ export default function Onboarding() {
                   dispatch({ type: 'SELECT_ROLE', role: 'professional' });
                   logger.debug('Onboarding', '[Onboarding] Role selection dispatched');
                 }}
-                disabled={!hasFirebaseSession && !machineContext.isWaitlistOnly}
-                style={{ 
-                  cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', 
-                  pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none',
-                  opacity: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 1 : 0.5
-                }}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}
+                disabled={false}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'professional' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'professional' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><User className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'professional' ? 'text-brand-neon' : 'text-white'}`}>I'm looking for shifts</h3>
@@ -1027,13 +1022,8 @@ export default function Onboarding() {
                   // Automatically navigate to venue onboarding hub
                   navigate('/onboarding/hub', { replace: true });
                 }}
-                disabled={!hasFirebaseSession && !machineContext.isWaitlistOnly}
-                style={{ 
-                  cursor: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'pointer' : 'not-allowed', 
-                  pointerEvents: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 'auto' : 'none',
-                  opacity: (hasFirebaseSession || machineContext.isWaitlistOnly) ? 1 : 0.5
-                }}
-                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'}`}
+                disabled={false}
+                className={`flex flex-col items-center p-6 rounded-xl border-2 transition-all ${machineContext.selectedRole === 'venue' ? 'border-brand-neon bg-brand-neon/10 shadow-neon-realistic' : 'border-zinc-700 bg-zinc-800/50 hover:border-brand-neon/50'} ${(hasFirebaseSession || machineContext.isWaitlistOnly) ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 <div className={`p-4 rounded-full mb-4 ${machineContext.selectedRole === 'venue' ? 'bg-brand-neon text-black' : 'bg-zinc-700 text-white'}`}><Building2 className="h-8 w-8" /></div>
                 <h3 className={`text-lg font-semibold mb-2 ${machineContext.selectedRole === 'venue' ? 'text-brand-neon' : 'text-white'}`}>I need to fill shifts</h3>
