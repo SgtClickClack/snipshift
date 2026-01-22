@@ -36,9 +36,19 @@
           {
             "key": "Cache-Control",
             "value": "no-cache"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
           }
         ]
       }
     ]
-  }
+  },
+  "storage": [
+    {
+      "target": "default",
+      "rules": "storage.rules"
+    }
+  ]
 }
