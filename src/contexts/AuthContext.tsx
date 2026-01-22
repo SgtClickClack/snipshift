@@ -1,16 +1,17 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, signOutUser } from '@/lib/firebase';
-import { 
-  User as FirebaseUser,
+import { auth } from '@/lib/firebase';
+import {
+  browserLocalPersistence,
+  getRedirectResult,
   onAuthStateChanged,
-  setPersistence, 
-  browserLocalPersistence, 
-  getRedirectResult 
+  setPersistence,
+  signOut,
+  type User as FirebaseUser,
 } from 'firebase/auth';
 import { logger } from '@/lib/logger';
-import { getDashboardRoute, normalizeVenueToBusiness, isBusinessRole } from '@/lib/roles';
+import { isBusinessRole, normalizeVenueToBusiness } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export interface User {
@@ -100,14 +101,11 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
   const navigate = useNavigate();
 
-  /**
-   * Normalize backend role values into the app's canonical roles.
-   */
   const normalizeRoleValue = (raw: unknown): User['currentRole'] | null => {
     if (typeof raw !== 'string') return null;
     const r = raw.toLowerCase();
@@ -168,109 +166,77 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   };
 
-  const fetchUserProfile = async (firebaseUser: FirebaseUser): Promise<User | null> => {
+  const fetchUserProfile = useCallback(async (currentFirebaseUser: FirebaseUser): Promise<User | null> => {
     try {
-      const idToken = await firebaseUser.getIdToken(true);
+      const idToken = await currentFirebaseUser.getIdToken(true);
       setToken(idToken);
-      
+
       const res = await fetch('/api/me', {
         headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
       });
-      
+
       if (res.ok) {
         const apiUser = await res.json();
-        return normalizeUserFromApi(apiUser, firebaseUser.uid);
+        return normalizeUserFromApi(apiUser, currentFirebaseUser.uid);
       }
-      
+
       if (res.status === 404) {
         logger.debug('AuthContext', 'Firebase user has no database profile (404)');
         return null;
       }
-      
+
       if (res.status === 401) {
         logger.warn('AuthContext', 'Got 401, attempting token refresh');
-        const refreshedToken = await firebaseUser.getIdToken(true);
+        const refreshedToken = await currentFirebaseUser.getIdToken(true);
         setToken(refreshedToken);
-        
+
         const retryRes = await fetch('/api/me', {
           headers: {
-            'Authorization': `Bearer ${refreshedToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${refreshedToken}`,
+            'Content-Type': 'application/json',
+          },
         });
-        
+
         if (retryRes.ok) {
           const apiUser = await retryRes.json();
-          return normalizeUserFromApi(apiUser, firebaseUser.uid);
+          return normalizeUserFromApi(apiUser, currentFirebaseUser.uid);
         }
       }
-      
+
       logger.error('AuthContext', 'Profile fetch failed', { status: res.status });
       return null;
     } catch (error) {
       logger.error('AuthContext', 'Error fetching user profile:', error);
       return null;
     }
-  };
+  }, []);
 
-  // MODULAR FIREBASE PATTERN: Single useEffect on mount
-  // CRITICAL: Use ONLY functional syntax - NEVER call methods on auth object
-  // ❌ NEVER: auth.onAuthStateChanged() or auth.setPersistence() or auth.getRedirectResult()
-  // ✅ ALWAYS: onAuthStateChanged(auth, ...) or setPersistence(auth, ...) or getRedirectResult(auth)
   useEffect(() => {
-    if (!auth) {
-      logger.error('AuthContext', 'Firebase auth is undefined - initialization failed');
-      setIsLoading(false);
-      return;
-    }
-
     let unsubscribe: (() => void) | null = null;
 
     const initializeAuth = async () => {
       try {
-        // Step 1: Set persistence to LOCAL (survives page refresh)
-        // MODULAR SYNTAX: setPersistence(auth, browserLocalPersistence)
         await setPersistence(auth, browserLocalPersistence);
-        logger.debug('AuthContext', 'Persistence set to browserLocalPersistence');
-
-        // Step 2: Handle redirect result (for Google sign-in redirect flow)
-        // MODULAR SYNTAX: getRedirectResult(auth)
-        const redirectResult = await getRedirectResult(auth);
-        if (redirectResult?.user) {
-          logger.debug('AuthContext', 'Google redirect result received:', redirectResult.user.uid);
-          await redirectResult.user.getIdToken(true);
-        }
       } catch (error) {
-        logger.error('AuthContext', 'Error during auth initialization:', error);
+        logger.error('AuthContext', 'Failed to set persistence', error);
       }
 
-      // Step 3: Listen for auth state changes
-      // MODULAR SYNTAX: onAuthStateChanged(auth, callback)
-      // This is the ONLY correct way to listen to auth state in Firebase v9+
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-        if (firebaseUser) {
-          logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);
-          
-          const appUser = await fetchUserProfile(firebaseUser);
+      try {
+        await getRedirectResult(auth);
+      } catch (error) {
+        logger.error('AuthContext', 'Failed to read redirect result', error);
+      }
+
+      unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+        setFirebaseUser(nextUser);
+
+        if (nextUser) {
+          const appUser = await fetchUserProfile(nextUser);
           setUser(appUser);
-          
-          // Auto-redirect from login/signup pages
-          const currentPath = window.location.pathname;
-          if (['/login', '/signup'].includes(currentPath) && appUser) {
-            const target = appUser.hasCompletedOnboarding === false || !appUser.isOnboarded
-              ? '/onboarding'
-              : appUser.currentRole && appUser.currentRole !== 'client'
-                ? getDashboardRoute(appUser.currentRole)
-                : '/role-selection';
-            if (target !== currentPath) {
-              navigate(target, { replace: true });
-            }
-          }
         } else {
-          logger.debug('AuthContext', 'No Firebase user');
           setUser(null);
           setToken(null);
         }
@@ -280,13 +246,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     initializeAuth();
-    
+
     return () => {
       if (unsubscribe) {
         unsubscribe();
       }
     };
-  }, [navigate]);
+  }, [fetchUserProfile]);
 
   const login = useCallback((newUser: User) => {
     setUser(newUser);
@@ -295,9 +261,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = useCallback(async () => {
     try {
-      await signOutUser();
+      await signOut(auth);
       setUser(null);
       setToken(null);
+      setFirebaseUser(null);
       navigate('/login', { replace: true });
       logger.debug('AuthContext', 'User logged out');
     } catch (error) {
@@ -310,57 +277,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logger.debug('AuthContext', 'Clearing user state:', reason);
     setUser(null);
     setToken(null);
+    setFirebaseUser(null);
   }, []);
 
   const setCurrentRole = useCallback((role: NonNullable<User['currentRole']>) => {
-    setUser(prev => {
+    setUser((prev) => {
       if (!prev) return prev;
       const updatedRoles = prev.roles.includes(role) ? prev.roles : [...prev.roles, role];
       return { ...prev, currentRole: role, roles: updatedRoles };
     });
   }, []);
 
-  const hasRole = useCallback((role: NonNullable<User['currentRole']>): boolean => {
-    if (!user) return false;
-    if (user.currentRole === role) return true;
-    if (user.roles.includes(role)) return true;
-    if (role === 'business' && (user.currentRole === 'hub' || user.currentRole === 'venue' as any)) return true;
-    if ((role === 'hub' || role === 'venue' as any) && user.currentRole === 'business') return true;
-    return false;
-  }, [user]);
+  const hasRole = useCallback(
+    (role: NonNullable<User['currentRole']>): boolean => {
+      if (!user) return false;
+      if (user.currentRole === role) return true;
+      if (user.roles.includes(role)) return true;
+      if (role === 'business' && isBusinessRole(user.currentRole || '')) return true;
+      if ((role === 'hub' || role === 'venue') && isBusinessRole(user.currentRole || '')) return true;
+      return false;
+    },
+    [user]
+  );
 
   const updateRoles = useCallback((roles: User['roles']) => {
-    setUser(prev => {
+    setUser((prev) => {
       if (!prev) return prev;
       return { ...prev, roles };
     });
   }, []);
 
   const getToken = useCallback(async (): Promise<string | null> => {
-    // MODULAR SYNTAX: Access auth.currentUser property (not a method call)
-    // This is safe - currentUser is a property, not a method
-    if (auth.currentUser) {
-      try {
-        const newToken = await auth.currentUser.getIdToken();
-        setToken(newToken);
-        return newToken;
-      } catch (error) {
-        logger.error('AuthContext', 'Error getting token:', error);
-        return null;
-      }
+    if (!firebaseUser) return token;
+    try {
+      const newToken = await firebaseUser.getIdToken();
+      setToken(newToken);
+      return newToken;
+    } catch (error) {
+      logger.error('AuthContext', 'Error getting token:', error);
+      return null;
     }
-    return token;
-  }, [token]);
+  }, [firebaseUser, token]);
 
   const refreshUser = useCallback(async () => {
-    // MODULAR SYNTAX: Access auth.currentUser property (not a method call)
-    if (!auth.currentUser) return;
-    
-    const refreshedUser = await fetchUserProfile(auth.currentUser);
+    if (!firebaseUser) return;
+    const refreshedUser = await fetchUserProfile(firebaseUser);
     if (refreshedUser) {
       setUser(refreshedUser);
     }
-  }, []);
+  }, [fetchUserProfile, firebaseUser]);
 
   const value: AuthContextType = {
     user,

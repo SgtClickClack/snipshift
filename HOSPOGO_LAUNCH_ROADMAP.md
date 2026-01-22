@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-01-22 - Modular Auth Context Rebuild (Firebase v10)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Rebuilt Firebase client initialization with modular v10 patterns and enforced `authDomain = hospogo.com`.
+- Simplified AuthContext to use functional listeners (`setPersistence`, `getRedirectResult`, `onAuthStateChanged`) and removed custom gates.
+- Updated auth guard/login to rely only on `user` and `isLoading`.
+
+**Impact:**
+- Eliminates auth-object method calls that triggered runtime errors and stabilizes auth initialization flow.
+
+---
+
 ### Update: 2026-01-21 - Emergency Demo Auth Bypass
 
 **Status:** ✅ **UPDATED**

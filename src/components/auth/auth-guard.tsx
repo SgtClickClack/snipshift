@@ -13,15 +13,15 @@ interface AuthGuardProps {
   redirectTo?: string;
 }
 
-export function AuthGuard({ 
-  children, 
-  requireAuth = false, 
-  requiredRole, 
+export function AuthGuard({
+  children,
+  requireAuth = false,
+  requiredRole,
   allowedRoles,
-  redirectTo 
+  redirectTo,
 }: AuthGuardProps) {
   // MODULAR PATTERN: Use ONLY useAuth() hook - no direct auth object access
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV;
 
@@ -34,15 +34,15 @@ export function AuthGuard({
   const isOnboardingRoute = location.pathname.startsWith('/onboarding');
   if (isOnboardingRoute) {
     // Allow access if user is authenticated (useAuth handles Firebase session state)
-    if (isAuthenticated) {
+    if (user) {
       return <>{children}</>;
     }
   }
 
   // REQUIRE AUTH: User must be authenticated
-  if (requireAuth && !isAuthenticated) {
+  if (requireAuth && !user) {
     // Allow onboarding routes if user is authenticated but not yet onboarded
-    if (isOnboardingRoute && isAuthenticated) {
+    if (isOnboardingRoute && user) {
       logger.debug('AuthGuard', 'User authenticated, allowing onboarding access');
       return <>{children}</>;
     }
@@ -53,7 +53,7 @@ export function AuthGuard({
 
   // AUTHENTICATED USER ON AUTH PAGES: Redirect away from login/signup
   const authPages = ['/login', '/signup'];
-  if (isAuthenticated && user && authPages.includes(location.pathname)) {
+  if (user && authPages.includes(location.pathname)) {
     logger.debug('AuthGuard', 'Authenticated user on auth page, redirecting', {
       isOnboarded: user.isOnboarded,
       currentRole: user.currentRole,
@@ -71,7 +71,7 @@ export function AuthGuard({
 
   // ONBOARDING CHECK: User not onboarded should go to onboarding
   const publicRoutes = ['/onboarding', '/', '/terms', '/privacy', '/login', '/signup', '/forgot-password', '/contact', '/about'];
-  if (isAuthenticated && user && user.isOnboarded === false) {
+  if (user && user.isOnboarded === false) {
     if (!publicRoutes.includes(location.pathname) && !isOnboardingRoute) {
       return <Navigate to="/onboarding" replace />;
     }
@@ -79,7 +79,7 @@ export function AuthGuard({
 
   // ROLE CHECK: If no role, redirect to onboarding or role selection
   const roleAgnosticRoutes = ['/messages', '/profile', '/settings', '/notifications', '/wallet', '/earnings'];
-  if (isAuthenticated && user && user.isOnboarded !== false && (!user.currentRole || user.currentRole === 'client')) {
+  if (user && user.isOnboarded !== false && (!user.currentRole || user.currentRole === 'client')) {
     if (roleAgnosticRoutes.includes(location.pathname)) {
       return <>{children}</>;
     }

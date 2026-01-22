@@ -1,3 +1,33 @@
+#### 2026-01-22: Modular Auth Context Rebuild (Firebase v10)
+
+**Core Components**
+- Firebase initialization (`src/lib/firebase.ts`)
+- AuthContext modular listener (`src/contexts/AuthContext.tsx`)
+- Auth guard + login sync (`src/components/auth/auth-guard.tsx`, `src/pages/login.tsx`)
+
+**Key Features**
+- Rebuilt Firebase client initialization with modular v10 patterns and `authDomain = hospogo.com`.
+- Replaced AuthContext with functional SDK listeners (`setPersistence`, `getRedirectResult`, `onAuthStateChanged`) and removed custom gates.
+- Simplified auth guard and login flows to rely only on `user` and `isLoading`.
+
+**Integration Points**
+- Firebase Auth redirect flow
+- `/api/me` profile sync
+
+**File Paths**
+- `src/lib/firebase.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/components/auth/auth-guard.tsx`
+- `src/pages/login.tsx`
+
+**Next Priority Task**
+- Validate Google redirect sign-in and email/password login across `/login` and `/signup`.
+
+**Code Organization & Quality**
+- Auth logic now uses functional modular patterns without auth-object method calls.
+
+---
+
 #### 2026-01-22: Production Auth Rebuild & Award Engine Test Suite
 
 **Core Components**
