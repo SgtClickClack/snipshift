@@ -26,7 +26,8 @@ export function AuthGuard({
   const shouldDebug = import.meta.env.DEV;
 
   // Check if there's a Firebase session (user might have signed in but profile not yet created)
-  const hasFirebaseSession = !!auth.currentUser;
+  // Defensive check: ensure auth is initialized before accessing currentUser
+  const hasFirebaseSession = !!(auth && auth.currentUser);
 
   // Show loading screen while auth is initializing
   if (isLoading) {

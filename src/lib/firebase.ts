@@ -73,11 +73,22 @@ if (app.options.projectId !== REQUIRED_PROJECT_ID) {
 export { app };
 
 // Initialize Auth and Export it as a constant
+// CRITICAL: This must be a direct constant export - no lazy initialization
 export const auth = getAuth(app);
 
+// Runtime validation: Ensure auth is never undefined
+if (!auth) {
+  throw new Error('Firebase Auth initialization failed: auth is undefined');
+}
+
 // For debugging in console - expose auth to window for inspection
+// This must happen synchronously to ensure it's available immediately
 if (typeof window !== 'undefined') {
   (window as any).firebaseAuth = auth;
+  // Also log to console in dev mode for verification
+  if (import.meta.env.DEV) {
+    console.debug('[Firebase] Auth instance initialized and exposed to window.firebaseAuth');
+  }
 }
 
 // Connect to Firebase Auth Emulator in E2E mode if explicitly enabled and available

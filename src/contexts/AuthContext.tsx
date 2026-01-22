@@ -215,16 +215,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // STANDARD FIREBASE PATTERN: Single useEffect on mount
   useEffect(() => {
+    // CRITICAL: Validate auth is initialized before proceeding
+    if (!auth) {
+      logger.error('AuthContext', 'Firebase auth is undefined - initialization failed');
+      setIsLoading(false);
+      return;
+    }
+
     let unsubscribe: (() => void) | null = null;
 
     // Initialize auth state: Set persistence, handle redirect result, then listen for changes
     const initializeAuth = async () => {
       try {
         // Step 1: Set persistence to LOCAL (survives page refresh)
+        // MODULAR SYNTAX: setPersistence(auth, ...) NOT auth.setPersistence(...)
         await setPersistence(auth, browserLocalPersistence);
         logger.debug('AuthContext', 'Persistence set to browserLocalPersistence');
 
         // Step 2: Handle redirect result (for Google sign-in redirect flow)
+        // MODULAR SYNTAX: getRedirectResult(auth) NOT auth.getRedirectResult()
         const redirectResult = await getRedirectResult(auth);
         if (redirectResult?.user) {
           logger.debug('AuthContext', 'Google redirect result received:', redirectResult.user.uid);
@@ -236,6 +245,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Step 3: Listen for auth state changes (synchronous - returns unsubscribe immediately)
+      // MODULAR SYNTAX: onAuthStateChanged(auth, ...) NOT auth.onAuthStateChanged(...)
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
           logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);

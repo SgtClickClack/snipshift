@@ -50,7 +50,8 @@ export default function LoginPage() {
     }
     
     // Case 2: Firebase user exists but no database record yet (just completed Google signin)
-    if (auth.currentUser && !user) {
+    // Defensive check: ensure auth is initialized before accessing currentUser
+    if (auth && auth.currentUser && !user) {
       logger.debug('Login', 'Firebase user exists but no database record, redirecting to onboarding', {
         uid: auth.currentUser.uid,
         email: auth.currentUser.email,
