@@ -507,7 +507,10 @@ export default function SignupPage() {
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
+                  autoComplete="username"
+                  inputMode="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -524,7 +527,9 @@ export default function SignupPage() {
                 <div className="relative mt-2">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     required
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -554,7 +559,9 @@ export default function SignupPage() {
                 <div className="relative mt-2">
                   <Input
                     id="confirmPassword"
+                    name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     required
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}

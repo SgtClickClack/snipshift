@@ -174,8 +174,9 @@ export default function LoginPage() {
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
-                  autoComplete="email"
+                  autoComplete="username"
                   inputMode="email"
                   autoFocus
                   required
@@ -194,6 +195,7 @@ export default function LoginPage() {
                 <div className="relative mt-2">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
