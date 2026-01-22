@@ -15,8 +15,8 @@ export function AuthGuard({
   requireAuth = false,
   redirectTo,
 }: AuthGuardProps) {
-  // Minimalist guard: rely only on { user, isLoading } from AuthContext
-  const { user, isLoading } = useAuth();
+  // Minimalist guard: rely only on { user, isLoading, token } from AuthContext
+  const { user, isLoading, token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -74,12 +74,46 @@ export function AuthGuard({
   // This bypasses "Authentication pending" state when popup completes before context hydration
   const hasFirebaseUser = auth.currentUser !== null;
   
-  // PRIORITY CHECK: If Firebase user exists and not loading, immediately clear pending state
-  // and allow passage to dashboard
+  // Handle case where Firebase auth succeeded but DB profile doesn't exist (404)
+  // Redirect to onboarding if we have a token (Firebase auth succeeded) but no user (DB profile missing)
+  useEffect(() => {
+    if (isLoading) return;
+    
+    // Check Firebase user directly in the effect to ensure reactivity
+    const hasFirebaseUserNow = auth.currentUser !== null;
+    
+    // If we have Firebase auth (token exists) but no DB user profile, redirect to onboarding
+    // This handles the 404 case where Firebase auth succeeds but /api/me returns 404
+    if (token && !user && hasFirebaseUserNow) {
+      // Don't redirect if we're already on onboarding or other public routes
+      const publicRoutes = ['/onboarding', '/login', '/signup', '/', '/forgot-password'];
+      const isOnPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+      
+      if (!isOnPublicRoute) {
+        console.log('[AuthGuard] Firebase auth succeeded but DB profile missing (404), redirecting to /onboarding');
+        navigate('/onboarding', { replace: true });
+      }
+    }
+  }, [token, user, isLoading, location.pathname, navigate]);
+  
+  // PRIORITY CHECK: If Firebase user exists and not loading, check if we need to redirect
+  // If DB profile exists, allow passage; otherwise, the useEffect above will handle redirect
   if (hasFirebaseUser && !isLoading) {
-    // User is authenticated via popup - allow passage immediately
-    console.log('[AuthGuard] Firebase user exists, bypassing pending state');
-    return <>{children}</>;
+    // If we have a DB user, allow passage immediately
+    if (user) {
+      console.log('[AuthGuard] Firebase user exists + DB profile loaded, allowing passage');
+      return <>{children}</>;
+    }
+    // If no DB user but we're on onboarding, allow passage (let onboarding handle it)
+    if (location.pathname.startsWith('/onboarding')) {
+      console.log('[AuthGuard] Firebase user exists but no DB profile, allowing onboarding');
+      return <>{children}</>;
+    }
+    // Otherwise, wait for the useEffect to redirect (or show loading if still processing)
+    if (!token) {
+      // No token yet, still loading
+      return <LoadingScreen />;
+    }
   }
 
   // Show loading screen only if auth handshake is still in progress

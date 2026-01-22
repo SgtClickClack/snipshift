@@ -22,6 +22,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthReady: boolean; // Alias for !isLoading, used by some components
   isAuthenticated: boolean;
+  hasUser: boolean; // Standardized: true when user object exists (DB profile loaded)
   login: (user: User) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -301,6 +302,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthReady: !isLoading, // Alias for !isLoading, used by some components
       // Consider the user authenticated if Firebase session exists (token set), even if /api/me is still 404.
       isAuthenticated: !!token,
+      // Standardized: true when user object exists (DB profile loaded)
+      hasUser: !!user,
       login,
       logout,
       refreshUser,

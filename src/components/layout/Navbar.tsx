@@ -39,7 +39,7 @@ async function prefetchConversations(): Promise<unknown> {
 }
 
 export default function Navbar() {
-  const { user, logout, isAuthenticated, isLoading } = useAuth();
+  const { user, logout, hasUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const verification = useVerificationStatus({ enableRedirect: false, protectedPaths: [] });
@@ -323,7 +323,7 @@ export default function Navbar() {
                   </Sheet>
                 </div>
               </>
-            ) : !isLoading ? (
+            ) : !isLoading && !hasUser ? (
               <>
                 <Link to="/login">
                   <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10">Login</Button>

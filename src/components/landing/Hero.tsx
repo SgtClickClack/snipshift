@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
 
 export default function Hero() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, hasUser, isLoading } = useAuth();
   const heroImageUrl = encodeURI("/hospogonewhero.png");
   
   // Determine dashboard route based on user role
@@ -50,7 +50,7 @@ export default function Hero() {
           </Link>
 
           {/* Sign Up CTA - Ghost button style */}
-          {!isAuthenticated && (
+          {!hasUser && !isLoading && (
             <Link to="/signup">
               <Button
                 variant="ghost"
@@ -61,7 +61,7 @@ export default function Hero() {
             </Link>
           )}
 
-          {isAuthenticated && user && (
+          {hasUser && user && (
             <Link to={getDashboardLink()}>
               <Button
                 variant="ghost"
@@ -104,7 +104,7 @@ export default function Hero() {
             </p>
 
             {/* Action Buttons */}
-            {!isAuthenticated ? (
+            {!hasUser && !isLoading ? (
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-stretch sm:items-center">
                 <Link to="/signup?role=hub" className="w-full sm:w-auto">
                   <Button
@@ -125,7 +125,7 @@ export default function Hero() {
                   </Button>
                 </Link>
               </div>
-            ) : (
+            ) : hasUser ? (
               <Link to={getDashboardLink()} className="w-full sm:w-auto">
                 <Button
                   className="w-full sm:w-auto bg-[#BFFF00] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all min-h-[44px]"

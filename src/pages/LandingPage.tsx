@@ -20,7 +20,7 @@ import { getDashboardRoute } from "@/lib/roles";
 import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, hasUser, isAuthReady } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const hasCleanedUp = useRef(false);
@@ -49,7 +49,7 @@ export default function LandingPage() {
     if (isLoading) return; // Wait for auth handshake to complete
     if (!isAuthReady) return;
 
-    if (!isAuthenticated) {
+    if (!hasUser) {
       hasCleanedUp.current = true;
       // Clear stale redirect/onboarding data that could cause race conditions
       try {
@@ -64,7 +64,7 @@ export default function LandingPage() {
         // Ignore storage errors (e.g., private browsing mode)
       }
     }
-  }, [isAuthenticated, isAuthReady, isLoading]);
+  }, [hasUser, isAuthReady, isLoading]);
 
   // Show nothing or splash screen while auth state is loading
   // This ensures we wait for the auth handshake to complete before rendering
@@ -120,7 +120,7 @@ export default function LandingPage() {
               </Link>
 
               {/* Sign Up CTA - Ghost button style */}
-              {!isAuthenticated && (
+              {!hasUser && !isLoading && (
                 <Link to="/signup">
                   <Button
                     variant="ghost"
@@ -131,7 +131,7 @@ export default function LandingPage() {
                 </Link>
               )}
 
-              {isAuthenticated && user && (
+              {hasUser && user && (
                 <Link to={getDashboardRoute(user.currentRole)}>
                   <Button
                     variant="ghost"
@@ -174,7 +174,7 @@ export default function LandingPage() {
                 </p>
 
                 {/* Action Buttons */}
-                {!isAuthenticated && (
+                {!hasUser && !isLoading && (
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
                     <Link to="/signup?role=hub" className="w-full sm:w-auto">
                       <Button
@@ -197,7 +197,7 @@ export default function LandingPage() {
                   </div>
                 )}
 
-                {isAuthenticated && user && (
+                {hasUser && user && (
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
                     <Link to={getDashboardRoute(user.currentRole)} className="w-full sm:w-auto">
                       <Button
@@ -326,7 +326,7 @@ export default function LandingPage() {
                       <span className="text-zinc-300">No long-term contracts required</span>
                     </li>
                   </ul>
-                  {!isAuthenticated && (
+                  {!hasUser && !isLoading && (
                     <Link to="/signup?role=hub">
                       <Button className="w-full bg-[#BFFF00] text-black font-black py-4 rounded-full hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300">
                         Get Started as Venue
@@ -362,7 +362,7 @@ export default function LandingPage() {
                       <span className="text-zinc-300">Build your reputation with ratings</span>
                     </li>
                   </ul>
-                  {!isAuthenticated && (
+                  {!hasUser && !isLoading && (
                     <Link to="/signup?role=professional">
                       <Button className="w-full border-2 border-white text-white font-bold py-4 rounded-full hover:bg-white/5 transition-all duration-300" variant="ghost">
                         Get Started as Staff
@@ -398,7 +398,7 @@ export default function LandingPage() {
         <FAQSection />
 
         {/* Final CTA Section */}
-        {!isAuthenticated && (
+        {!hasUser && !isLoading && (
           <section className="py-16 md:py-24 bg-[#1f1f1f]">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <h2 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">Ready to Get Started?</h2>
