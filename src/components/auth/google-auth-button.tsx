@@ -237,6 +237,8 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
 
   return (
     <Button
+      id="google-auth-button"
+      name="google-auth-button"
       type="button"
       variant="outline"
       className="w-full"
