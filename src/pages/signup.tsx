@@ -19,7 +19,7 @@ import { getDashboardRoute } from "@/lib/roles";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { login, isAuthenticated, isAuthReady, user, isLoading } = useAuth();
   const [formData, setFormData] = useState({
@@ -263,7 +263,7 @@ export default function SignupPage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       // 1. Create user in Firebase to establish auth session
@@ -445,7 +445,7 @@ export default function SignupPage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -592,10 +592,10 @@ export default function SignupPage() {
                 type="submit" 
                 variant="accent"
                 className="w-full font-medium shadow-neon-realistic"
-                disabled={isLoading || !agreedToTerms}
+                disabled={isSubmitting || !agreedToTerms}
                 data-testid="button-signup-submit"
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isSubmitting ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 
