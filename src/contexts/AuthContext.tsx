@@ -275,6 +275,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // STEP 3: Both getRedirectResult and initial onAuthStateChanged have completed
         // Now we can safely set isLoading to false
         console.log('[AuthContext] Handshake is Complete');
+        
+        // DEBUG: Check if Chrome bounce tracking stripped the cookie
+        console.log('[Auth] Current Firebase User:', auth.currentUser);
+        if (!auth.currentUser && !firebaseUserRef.current) {
+          console.warn('[Auth] WARNING: auth.currentUser is null after handshake - browser may have stripped the cookie due to bounce tracking mitigations');
+        }
+        
         setIsLoading(false);
         
         // NOTE: Auto-navigation removed to prevent race conditions.
