@@ -48,6 +48,12 @@ export interface Shift {
   killFeeAmount?: string | null; // numeric(10,2) as string in most API payloads
   staffCancellationReason?: string | null;
   isEmergencyFill?: boolean;
+
+  // Capacity: staff required (default 1). assignedStaff/assignments for one-to-many.
+  capacity?: number;
+  /** Array of assigned workers (preferred). Legacy: single assignedStaff or assigneeId. */
+  assignedStaff?: Array<{ id?: string; name?: string; displayName?: string; avatarUrl?: string }> | { id?: string; name?: string; displayName?: string; avatarUrl?: string };
+  assignments?: Array<{ userId: string; displayName?: string; avatarUrl?: string }>;
 }
 
 export interface Post {

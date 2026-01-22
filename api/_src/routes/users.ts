@@ -459,6 +459,93 @@ router.get('/me/can-work-alcohol-shifts', authenticateUser, asyncHandler(async (
 }));
 
 /**
+ * GET /api/me/productivity-ready
+ *
+ * Check if the current user is "Productivity Ready" for enterprise clients.
+ * This is the gate for large groups like Endeavour.
+ * 
+ * Requirements:
+ * - Government ID verification approved
+ * - VEVO work rights verification completed (and not expired)
+ */
+router.get('/me/productivity-ready', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const productivityReadyService = await import('../services/productivity-ready.service.js');
+  const result = await productivityReadyService.checkProductivityReady(req.user.id);
+  res.status(200).json(result);
+}));
+
+/**
+ * POST /api/me/vevo-verification
+ *
+ * Complete VEVO verification for the current user.
+ * This is typically called after manual verification by admin or automated VEVO check.
+ * 
+ * Body:
+ * - vevoReferenceNumber: string (required)
+ * - vevoCheckType: 'citizen' | 'permanent_resident' | 'work_visa' | 'student_visa' (required)
+ * - vevoExpiryDate: string (ISO date, optional - null for citizens/permanent residents)
+ */
+router.post('/me/vevo-verification', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { vevoReferenceNumber, vevoCheckType, vevoExpiryDate } = req.body;
+
+  // Validate required fields
+  if (!vevoReferenceNumber || typeof vevoReferenceNumber !== 'string') {
+    res.status(400).json({ message: 'vevoReferenceNumber is required' });
+    return;
+  }
+
+  const validCheckTypes = ['citizen', 'permanent_resident', 'work_visa', 'student_visa'];
+  if (!vevoCheckType || !validCheckTypes.includes(vevoCheckType)) {
+    res.status(400).json({ message: 'vevoCheckType must be one of: citizen, permanent_resident, work_visa, student_visa' });
+    return;
+  }
+
+  const productivityReadyService = await import('../services/productivity-ready.service.js');
+  const result = await productivityReadyService.completeVevoVerification({
+    userId: req.user.id,
+    vevoReferenceNumber,
+    vevoCheckType,
+    vevoExpiryDate: vevoExpiryDate ? new Date(vevoExpiryDate) : null,
+  });
+
+  if (!result.success) {
+    res.status(400).json({ message: result.error || 'VEVO verification failed' });
+    return;
+  }
+
+  res.status(200).json({
+    message: 'VEVO verification completed',
+    productivityReady: result.productivityReady,
+  });
+}));
+
+/**
+ * GET /api/me/can-work-enterprise
+ *
+ * Check if user can work for enterprise venues (requires Productivity Ready flag)
+ */
+router.get('/me/can-work-enterprise', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const productivityReadyService = await import('../services/productivity-ready.service.js');
+  const result = await productivityReadyService.canWorkForEnterprise(req.user.id);
+  res.status(200).json(result);
+}));
+
+/**
  * GET /api/professionals
  *
  * Returns a lightweight list of professionals for business scheduling/invites.

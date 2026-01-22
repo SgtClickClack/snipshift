@@ -507,3 +507,117 @@ export async function cancelPaymentIntent(paymentIntentId: string): Promise<bool
     return false;
   }
 }
+
+/**
+ * Capture PaymentIntent and return both charge ID and transfer ID
+ * 
+ * This is the atomic settlement method that:
+ * 1. Captures the PaymentIntent
+ * 2. Retrieves the automatic transfer ID (from transfer_data.destination)
+ * 3. Returns both IDs for complete audit trail
+ * 
+ * IMPORTANT: For Stripe Connect with transfer_data.destination, the transfer
+ * is created automatically on capture. We retrieve it from the charge.
+ */
+export interface AtomicSettlementResult {
+  success: boolean;
+  chargeId: string | null;
+  transferId: string | null;
+  error?: string;
+}
+
+export async function capturePaymentIntentAtomic(
+  paymentIntentId: string,
+  settlementId: string
+): Promise<AtomicSettlementResult> {
+  if (!stripe) {
+    return { success: false, chargeId: null, transferId: null, error: 'Stripe not configured' };
+  }
+
+  try {
+    // Step 1: Capture the PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.capture(paymentIntentId);
+    
+    const chargeId = typeof paymentIntent.latest_charge === 'string' 
+      ? paymentIntent.latest_charge 
+      : paymentIntent.latest_charge?.id || null;
+    
+    if (!chargeId) {
+      console.warn(`[STRIPE_CONNECT] No charge ID after capture for ${paymentIntentId}`);
+      return { success: true, chargeId: null, transferId: null };
+    }
+
+    // Step 2: Retrieve the charge to get the transfer ID
+    // When using transfer_data.destination, Stripe automatically creates a transfer
+    const charge = await stripe.charges.retrieve(chargeId, {
+      expand: ['transfer'],
+    });
+
+    const transferId = typeof charge.transfer === 'string' 
+      ? charge.transfer 
+      : charge.transfer?.id || null;
+
+    console.log(`[STRIPE_CONNECT] Atomic settlement completed - Settlement: ${settlementId}, Charge: ${chargeId}, Transfer: ${transferId}`);
+    
+    return {
+      success: true,
+      chargeId,
+      transferId,
+    };
+  } catch (error: any) {
+    console.error(`[STRIPE_CONNECT] Atomic settlement failed for ${paymentIntentId}:`, error);
+    return {
+      success: false,
+      chargeId: null,
+      transferId: null,
+      error: error.message || 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Get transfer details by transfer ID
+ * Used for reconciliation and audit purposes
+ */
+export async function getTransfer(transferId: string) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
+  try {
+    const transfer = await stripe.transfers.retrieve(transferId);
+    return transfer;
+  } catch (error: any) {
+    console.error('[STRIPE_CONNECT] Error retrieving transfer:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if funds have arrived in connected account
+ * Used for immediate settlement verification
+ */
+export async function verifyTransferArrival(
+  accountId: string,
+  transferId: string
+): Promise<boolean> {
+  if (!stripe) {
+    return false;
+  }
+
+  try {
+    const transfer = await stripe.transfers.retrieve(transferId);
+    
+    // Check if transfer is to the correct account and has arrived
+    if (transfer.destination !== accountId) {
+      console.warn(`[STRIPE_CONNECT] Transfer ${transferId} destination mismatch: expected ${accountId}, got ${transfer.destination}`);
+      return false;
+    }
+
+    // Transfer is considered arrived if it's not reversed
+    return !transfer.reversed;
+  } catch (error: any) {
+    console.error(`[STRIPE_CONNECT] Error verifying transfer arrival:`, error);
+    return false;
+  }
+}

@@ -1,3 +1,55 @@
+#### 2026-01-21: Atomic Settlement Implementation (D365/Workday + Productivity Ready)
+
+**Core Components**
+- Payouts schema (`api/_src/db/schema/payouts.ts`): Added `settlementId`, `settlementType`, `generateSettlementId()`
+- Financial ledger schema (`api/_src/db/schema/financial-ledger.ts`): Added `settlementId`, new entry types
+- Profiles schema (`api/_src/db/schema/profiles.ts`): Added VEVO verification fields, `productivityReady` flag
+- Stripe Connect service (`api/_src/services/stripe-connect.service.ts`): `capturePaymentIntentAtomic()` for immediate transfer
+- Productivity Ready service (`api/_src/services/productivity-ready.service.ts`): VEVO verification and enterprise compliance gate
+- Settlements routes (`api/_src/routes/settlements.ts`): D365/Workday export endpoints
+
+**Key Features**
+- **Atomic Settlement**: Shift completion now uses `capturePaymentIntentAtomic()` which captures payment AND retrieves the Transfer ID in one operation. Bypasses legacy "Pending Batch" state - payouts go directly to `processing` → `completed`.
+- **Settlement ID**: Every payout gets a unique Settlement ID (format: `STL-{YYYYMMDD}-{random6}`) for enterprise ERP reconciliation. Stored in both `payouts` and `financial_ledger_entries` tables.
+- **D365/Workday Export**: New `/api/settlements/export` endpoint returns CSV or JSON with all settlement fields needed for ERP import. Supports date range, status, and settlement type filters.
+- **VEVO Verification**: New profile fields for Australian work rights verification: `vevoVerified`, `vevoVerifiedAt`, `vevoExpiryDate`, `vevoReferenceNumber`, `vevoCheckType`.
+- **Productivity Ready Flag**: Single gate for enterprise compliance (Endeavour Group, etc.). TRUE only when `idVerifiedStatus === 'APPROVED'` AND `vevoVerified === true` AND VEVO not expired.
+- **New Ledger Entry Types**: `IMMEDIATE_SETTLEMENT_COMPLETED`, `IMMEDIATE_SETTLEMENT_FAILED` for audit trail.
+
+**Integration Points**
+- Stripe Connect: `transfer_data.destination` transfer IDs now captured after payment capture
+- Shift completion: Updated to use atomic settlement with Settlement ID tracking
+- API endpoints: `/api/me/productivity-ready`, `/api/me/vevo-verification`, `/api/me/can-work-enterprise`
+- Settlement API: `/api/settlements/export`, `/api/settlements/:settlementId`, `/api/settlements/ledger/export`
+
+**File Paths**
+- `api/_src/db/schema/payouts.ts`: settlementId, settlementType, generateSettlementId()
+- `api/_src/db/schema/financial-ledger.ts`: settlementId, new entry types
+- `api/_src/db/schema/profiles.ts`: VEVO and productivityReady fields
+- `api/_src/db/schema.ts`: Export generateSettlementId
+- `api/_src/db/migrations/0036_atomic_settlement_and_productivity_ready.sql`: Migration
+- `api/_src/repositories/payouts.repository.ts`: settlementId support, exportSettlementsForReconciliation()
+- `api/_src/repositories/financial-ledger.repository.ts`: settlementId support, export functions
+- `api/_src/services/stripe-connect.service.ts`: capturePaymentIntentAtomic(), getTransfer(), verifyTransferArrival()
+- `api/_src/services/productivity-ready.service.ts`: VEVO verification, canWorkForEnterprise()
+- `api/_src/routes/shifts.ts`: Updated shift completion with atomic settlement
+- `api/_src/routes/users.ts`: productivity-ready, vevo-verification, can-work-enterprise endpoints
+- `api/_src/routes/settlements.ts`: Settlement export endpoints
+- `api/_src/index.ts`: Register settlements router
+
+**Next Priority Task**
+- Run migration: `api/_src/db/migrations/0036_atomic_settlement_and_productivity_ready.sql`
+- Test settlement export endpoint with real data
+- Integrate VEVO verification with admin dashboard or automated provider
+
+**Code Organization & Quality**
+- Settlement ID format designed for human readability and uniqueness
+- Productivity Ready is a computed flag that auto-updates on verification changes
+- CSV export format compatible with standard ERP import tools
+- All ledger entries include settlementId for complete audit trail
+
+---
+
 #### 2026-01-21: Google & Email Auth Redirect Loop Fix (Finalized)
 
 **Core Components**

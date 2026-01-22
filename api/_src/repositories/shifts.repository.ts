@@ -5,7 +5,7 @@
  */
 
 import { eq, and, desc, sql, gte, lte, isNull } from 'drizzle-orm';
-import { shifts } from '../db/schema/shifts.js';
+import { shifts, shiftAssignments } from '../db/schema/shifts.js';
 import { users } from '../db/schema/users.js';
 import { getDb } from '../db/index.js';
 
@@ -56,6 +56,7 @@ function hydrateLegacyShiftRow(row: any): typeof shifts.$inferSelect {
     killFeeAmount: row?.killFeeAmount ?? null,
     staffCancellationReason: row?.staffCancellationReason ?? null,
     isEmergencyFill: row?.isEmergencyFill ?? false,
+    capacity: row?.capacity ?? 1,
   } as any;
 }
 
@@ -152,6 +153,7 @@ export async function getShifts(filters: ShiftFilters = {}): Promise<PaginatedSh
         uniformRequirements: shifts.uniformRequirements,
         rsaRequired: shifts.rsaRequired,
         expectedPax: shifts.expectedPax,
+        capacity: shifts.capacity,
         status: shifts.status,
         attendanceStatus: shifts.attendanceStatus,
         paymentStatus: shifts.paymentStatus,
@@ -251,6 +253,7 @@ export async function getShiftById(id: string): Promise<ShiftWithShop | null> {
       uniformRequirements: shifts.uniformRequirements,
       rsaRequired: shifts.rsaRequired,
       expectedPax: shifts.expectedPax,
+      capacity: shifts.capacity,
       status: shifts.status,
       attendanceStatus: shifts.attendanceStatus,
       paymentStatus: shifts.paymentStatus,
@@ -303,6 +306,7 @@ export async function createShift(shiftData: {
   uniformRequirements?: string;
   rsaRequired?: boolean;
   expectedPax?: number;
+  capacity?: number;
   status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
   assigneeId?: string;
   location?: string;
@@ -316,6 +320,8 @@ export async function createShift(shiftData: {
     console.error('[createShift] Database not available');
     return null;
   }
+
+  const capacity = Math.max(1, shiftData.capacity ?? 1);
 
   try {
     const [newShift] = await db
@@ -331,6 +337,7 @@ export async function createShift(shiftData: {
         uniformRequirements: shiftData.uniformRequirements || null,
         rsaRequired: shiftData.rsaRequired ?? false,
         expectedPax: shiftData.expectedPax ?? null,
+        capacity,
         status: shiftData.status || 'draft',
         assigneeId: shiftData.assigneeId || null,
         location: shiftData.location || null,
@@ -340,6 +347,17 @@ export async function createShift(shiftData: {
         parentShiftId: shiftData.parentShiftId || null,
       })
       .returning();
+
+    if (newShift && shiftData.assigneeId) {
+      try {
+        await db.insert(shiftAssignments).values({
+          shiftId: newShift.id,
+          userId: shiftData.assigneeId,
+        });
+      } catch (aErr) {
+        console.warn('[createShift] Failed to insert shift_assignment (table may not exist yet):', (aErr as Error)?.message);
+      }
+    }
 
     return newShift || null;
   } catch (error: any) {
@@ -1018,6 +1036,7 @@ export async function getShiftsByEmployer(employerId: string, status?: 'draft' |
         uniformRequirements: shifts.uniformRequirements,
         rsaRequired: shifts.rsaRequired,
         expectedPax: shifts.expectedPax,
+        capacity: shifts.capacity,
         status: shifts.status,
         attendanceStatus: shifts.attendanceStatus,
         paymentStatus: shifts.paymentStatus,
@@ -1069,6 +1088,7 @@ export async function getShiftsByEmployer(employerId: string, status?: 'draft' |
       uniformRequirements: row.uniformRequirements,
       rsaRequired: row.rsaRequired,
       expectedPax: row.expectedPax,
+      capacity: row.capacity ?? 1,
       status: row.status,
       attendanceStatus: row.attendanceStatus,
       paymentStatus: row.paymentStatus,
@@ -1184,6 +1204,7 @@ export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' |
         uniformRequirements: shifts.uniformRequirements,
         rsaRequired: shifts.rsaRequired,
         expectedPax: shifts.expectedPax,
+        capacity: shifts.capacity,
         status: shifts.status,
         attendanceStatus: shifts.attendanceStatus,
         paymentStatus: shifts.paymentStatus,
@@ -1235,6 +1256,7 @@ export async function getShiftsByAssignee(assigneeId: string, status?: 'draft' |
       uniformRequirements: row.uniformRequirements,
       rsaRequired: row.rsaRequired,
       expectedPax: row.expectedPax,
+      capacity: row.capacity ?? 1,
       status: row.status,
       attendanceStatus: row.attendanceStatus,
       paymentStatus: row.paymentStatus,

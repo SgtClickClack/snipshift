@@ -151,6 +151,7 @@ export const ShiftSchema = z.object({
   uniformRequirements: z.string().optional(),
   rsaRequired: z.boolean().optional(),
   expectedPax: z.union([z.number().int().nonnegative(), z.string()]).optional(),
+  capacity: z.union([z.number().int().min(1), z.string().refine((v) => { const n = parseInt(v, 10); return !isNaN(n) && n >= 1; })]).optional(),
   pay: z.union([ // Alias for hourlyRate for frontend compatibility
     z.number().positive('Pay rate must be a positive number'),
     z.string().refine((val) => {

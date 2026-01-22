@@ -68,6 +68,7 @@ import pushTokensRouter from './routes/push-tokens.js';
 import cronHealthCheckRouter from './routes/cron/health-check.js';
 import cronWeeklyReportRouter from './routes/cron/weekly-report.js';
 import cronFinancialReconcileRouter from './routes/cron/financial-reconcile.js';
+import settlementsRouter from './routes/settlements.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { initializePusher } from './services/pusher.service.js';
@@ -220,6 +221,7 @@ app.use('/api/push-tokens', pushTokensRouter);
 app.use('/api/cron', cronHealthCheckRouter);
 app.use('/api/cron', cronWeeklyReportRouter);
 app.use('/api/cron', cronFinancialReconcileRouter);
+app.use('/api/settlements', settlementsRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic

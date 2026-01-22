@@ -39,6 +39,7 @@ export const shifts = pgTable('shifts', {
   uniformRequirements: text('uniform_requirements'),
   rsaRequired: boolean('rsa_required').notNull().default(false),
   expectedPax: integer('expected_pax'),
+  capacity: integer('capacity').notNull().default(1),
   status: shiftStatusEnum('status').notNull().default('draft'),
   attendanceStatus: attendanceStatusEnum('attendance_status').default('pending'),
   paymentStatus: paymentStatusEnum('payment_status').default('UNPAID'),
@@ -225,6 +226,22 @@ export interface ShiftDraftData {
   useEndDate?: boolean;
   assigneeOption?: 'keep' | 'open-slot';
 }
+
+/**
+ * Shift Assignments table
+ * One-to-many: a shift can have multiple assigned workers (capacity >= 1).
+ * assigneeId on shifts remains for backward compatibility.
+ */
+export const shiftAssignments = pgTable('shift_assignments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  shiftId: uuid('shift_id').notNull().references(() => shifts.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  shiftIdIdx: index('shift_assignments_shift_id_idx').on(table.shiftId),
+  userIdIdx: index('shift_assignments_user_id_idx').on(table.userId),
+  shiftUserUnique: index('shift_assignments_shift_user_unique').on(table.shiftId, table.userId),
+}));
 
 export const shiftDrafts = pgTable('shift_drafts', {
   id: uuid('id').defaultRandom().primaryKey(),

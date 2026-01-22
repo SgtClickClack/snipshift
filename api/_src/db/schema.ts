@@ -9,7 +9,7 @@ import { pgTable, uuid, varchar, text, decimal, date, time, timestamp, pgEnum, i
 import { relations } from 'drizzle-orm';
 import { users, userRoleEnum, hospitalityRoleEnum } from './schema/users.js';
 import { notifications, notificationTypeEnum } from './schema/notifications.js';
-import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations, shiftLogs, shiftDrafts } from './schema/shifts.js';
+import { shifts, shiftStatusEnum, shiftOffers, shiftOfferStatusEnum, attendanceStatusEnum, shiftReviews, shiftReviewTypeEnum, shiftInvitations, shiftLogs, shiftDrafts, shiftAssignments } from './schema/shifts.js';
 import { profiles } from './schema/profiles.js';
 import { posts, postTypeEnum } from './schema/posts.js';
 import { postLikes } from './schema/post-likes.js';
@@ -22,7 +22,7 @@ import { venues, venueStatusEnum } from './schema/venues.js';
 import { shiftApplications, shiftApplicationStatusEnum } from './schema/shift-applications.js';
 import { shiftWaitlist, waitlistStatusEnum } from './schema/shift-waitlist.js';
 import { priorityBoostTokens } from './schema/priority-boost-tokens.js';
-import { payouts } from './schema/payouts.js';
+import { payouts, generateSettlementId } from './schema/payouts.js';
 import { financialLedgerEntries, ledgerEntryTypeEnum } from './schema/financial-ledger.js';
 import { userPushTokens } from './schema/push-tokens.js';
 import { userCalendarTokens } from './schema/calendar-tokens.js';
@@ -44,6 +44,7 @@ export {
   shiftReviews, shiftReviewTypeEnum,
   shiftLogs,
   shiftDrafts,
+  shiftAssignments,
   posts, postTypeEnum,
   postLikes,
   comments,
@@ -55,10 +56,11 @@ export {
   shiftWaitlist, waitlistStatusEnum,
   priorityBoostTokens,
   payouts,
+  generateSettlementId,
   financialLedgerEntries,
   ledgerEntryTypeEnum,
-    userPushTokens,
-    userCalendarTokens,
+  userPushTokens,
+  userCalendarTokens,
   failedEmails
 };
 

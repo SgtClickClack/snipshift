@@ -446,6 +446,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
             uniformRequirements: shift.uniformRequirements,
             rsaRequired: !!shift.rsaRequired,
             expectedPax: shift.expectedPax,
+            capacity: Math.max(1, shift.capacity ?? 1),
             status: shift.status || 'open',
           };
           // Add recurring metadata if present
@@ -474,6 +475,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
           uniformRequirements: shiftData.uniformRequirements,
           rsaRequired: !!shiftData.rsaRequired,
           expectedPax: shiftData.expectedPax,
+          capacity: Math.max(1, shiftData.capacity ?? 1),
           status: shiftData.status || 'open',
         };
         return [await createShift(payload)];

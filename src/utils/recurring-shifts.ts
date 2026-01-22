@@ -18,6 +18,7 @@ export interface BaseShiftData {
   status?: 'draft' | 'invited' | 'open' | 'filled' | 'completed';
   assigneeId?: string | null;
   employerId: string;
+  capacity?: number;
 }
 
 /**
@@ -86,6 +87,7 @@ export function generateRecurringShifts(
       location: baseShift.location,
       status,
       assigneeId,
+      capacity: baseShift.capacity ?? 1,
       recurringSeriesId,
       isRecurring: true,
       recurringIndex: i,

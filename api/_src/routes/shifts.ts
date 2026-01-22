@@ -210,6 +210,12 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
     const lat = (req.body as any).lat;
     const lng = (req.body as any).lng;
     
+    const capacity = typeof (shiftData as any).capacity === 'number'
+      ? Math.max(1, (shiftData as any).capacity)
+      : typeof (req.body as any).capacity === 'string'
+        ? Math.max(1, parseInt((req.body as any).capacity, 10) || 1)
+        : 1;
+
     const shiftPayload = {
       employerId: userId,
       role: (shiftData as any).role,
@@ -221,6 +227,7 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
       uniformRequirements: (shiftData as any).uniformRequirements,
       rsaRequired: !!(shiftData as any).rsaRequired,
       expectedPax,
+      capacity,
       // If a staff member is selected, create an invited shift
       status: assignedStaffId ? 'invited' : (shiftData.status || 'draft'),
       location: shiftData.location,
@@ -3555,19 +3562,39 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
       payoutId = payout.id;
     });
 
-    // STEP 2: Capture payment (if applicable), then atomically reconcile DB state.
+    // STEP 2: ATOMIC SETTLEMENT - Capture payment and create immediate transfer
+    // This bypasses the old 'Pending Batch' state and triggers immediate transfer to connected account.
     const captureNeeded = !!shift.paymentIntentId && shift.paymentStatus === 'AUTHORIZED';
     let stripeChargeId: string | null = null;
+    let stripeTransferId: string | null = null;
     let captureSucceeded = false;
+    
+    // Get the payout to retrieve the settlement ID
+    const payoutForSettlement = await payoutsRepo.getPayoutByShiftId(id);
+    const settlementId = payoutForSettlement?.settlementId || '';
+    
     if (captureNeeded) {
       try {
-        stripeChargeId = await stripeConnectService.capturePaymentIntentWithChargeId(shift.paymentIntentId!);
-        captureSucceeded = !!stripeChargeId;
+        // Use atomic settlement to capture and get both charge ID and transfer ID
+        const settlementResult = await stripeConnectService.capturePaymentIntentAtomic(
+          shift.paymentIntentId!,
+          settlementId
+        );
+        
+        captureSucceeded = settlementResult.success;
+        stripeChargeId = settlementResult.chargeId;
+        stripeTransferId = settlementResult.transferId;
+        
         if (!stripeChargeId) {
-          console.warn(`[SHIFT_COMPLETE] PaymentIntent capture returned no chargeId for shift ${id}`);
+          console.warn(`[SHIFT_COMPLETE] Atomic settlement returned no chargeId for shift ${id}`);
         }
+        if (!stripeTransferId) {
+          console.warn(`[SHIFT_COMPLETE] Atomic settlement returned no transferId for shift ${id} - funds may still be in transit`);
+        }
+        
+        console.log(`[SHIFT_COMPLETE] Atomic settlement completed - Settlement: ${settlementId}, Charge: ${stripeChargeId}, Transfer: ${stripeTransferId}`);
       } catch (error: any) {
-        console.error(`[SHIFT_COMPLETE] Error capturing payment for shift ${id}:`, error);
+        console.error(`[SHIFT_COMPLETE] Error in atomic settlement for shift ${id}:`, error);
       }
     }
 
@@ -3582,26 +3609,31 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
 
     await db.transaction(async (tx) => {
       if (captureSucceeded) {
-        // Mark payout as completed and persist Stripe charge linkage (if available)
+        // Mark payout as completed with both charge and transfer IDs for full audit trail
         await payoutsRepo.updatePayoutStatus(
           payoutId!,
           'completed',
-          stripeChargeId ? { stripeChargeId } : undefined,
+          { 
+            stripeChargeId: stripeChargeId || undefined, 
+            stripeTransferId: stripeTransferId || undefined 
+          },
           tx
         );
 
-        // Append immutable ledger entry (guardrail for audits + reconciliation)
+        // Append immutable ledger entry with Settlement ID for D365/Workday reconciliation
         await ledgerRepo.createLedgerEntry(
           {
-            entryType: 'SHIFT_PAYOUT_COMPLETED',
+            entryType: 'IMMEDIATE_SETTLEMENT_COMPLETED',
             amountCents,
             currency: 'aud',
+            settlementId: settlementId || null,
             shiftId: id,
             payoutId: payoutId!,
             workerId: shift.assigneeId ?? null,
             venueId: shift.employerId,
             stripePaymentIntentId: shift.paymentIntentId ?? null,
             stripeChargeId: stripeChargeId ?? null,
+            stripeTransferId: stripeTransferId ?? null,
           },
           tx
         );
@@ -3633,9 +3665,10 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
         await payoutsRepo.updatePayoutStatus(payoutId!, 'failed', undefined, tx);
         await ledgerRepo.createLedgerEntry(
           {
-            entryType: 'SHIFT_PAYOUT_FAILED',
+            entryType: 'IMMEDIATE_SETTLEMENT_FAILED',
             amountCents,
             currency: 'aud',
+            settlementId: settlementId || null,
             shiftId: id,
             payoutId: payoutId!,
             workerId: shift.assigneeId ?? null,
@@ -3681,10 +3714,13 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
       shift: updatedShift,
       payout: payout ? {
         id: payout.id,
+        settlementId: payout.settlementId, // For D365/Workday reconciliation
         amountCents: payout.amountCents,
         hoursWorked: parseFloat(payout.hoursWorked),
         hourlyRate: parseFloat(payout.hourlyRate),
         status: payout.status,
+        settlementType: payout.settlementType,
+        stripeTransferId: payout.stripeTransferId,
       } : null,
     });
   } catch (error: any) {

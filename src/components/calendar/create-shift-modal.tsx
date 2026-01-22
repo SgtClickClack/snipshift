@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/useToast";
 import { HOSPITALITY_ROLES } from "@/utils/hospitality";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { StaffRequiredField } from "./ShiftSettings";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
 interface CreateShiftModalProps {
@@ -63,6 +64,7 @@ export default function CreateShiftModal({
     uniformRequirements: "",
     rsaRequired: false,
     expectedPax: "",
+    staffRequired: 1,
   });
 
   const [repeatWeekly, setRepeatWeekly] = useState(false);
@@ -122,6 +124,7 @@ export default function CreateShiftModal({
         uniformRequirements: data.uniformRequirements,
         rsaRequired: data.rsaRequired,
         expectedPax: data.expectedPax,
+        staffRequired: data.staffRequired ?? 1,
         repeatWeekly,
         endDate: endDate ? format(endDate, 'yyyy-MM-dd') : undefined,
         numberOfOccurrences,
@@ -177,6 +180,7 @@ export default function CreateShiftModal({
       uniformRequirements: draft.uniformRequirements || "",
       rsaRequired: draft.rsaRequired || false,
       expectedPax: draft.expectedPax || "",
+      staffRequired: draft.staffRequired ?? 1,
     });
 
     if (draft.repeatWeekly) {
@@ -235,6 +239,7 @@ export default function CreateShiftModal({
         uniformRequirements: "",
         rsaRequired: false,
         expectedPax: "",
+        staffRequired: 1,
       });
       setRepeatWeekly(false);
       const date = new Date();
@@ -354,6 +359,7 @@ export default function CreateShiftModal({
         formData.expectedPax === "" || formData.expectedPax === null
           ? undefined
           : Number.parseInt(String(formData.expectedPax), 10),
+      capacity: Math.max(1, formData.staffRequired ?? 1),
       status: 'open' as const,
     };
 
@@ -553,6 +559,11 @@ export default function CreateShiftModal({
                 className="bg-zinc-900 border-zinc-700"
               />
             </div>
+            <StaffRequiredField
+              value={formData.staffRequired ?? 1}
+              onChange={(v) => setFormData({ ...formData, staffRequired: v })}
+              data-testid="staff-required-input"
+            />
           </div>
 
           {/* Repeat Section */}
