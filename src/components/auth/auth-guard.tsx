@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardRoute, isBusinessRole } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { logger } from '@/lib/logger';
-import { auth } from '@/lib/firebase';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -21,13 +20,10 @@ export function AuthGuard({
   allowedRoles,
   redirectTo 
 }: AuthGuardProps) {
+  // MODULAR PATTERN: Use ONLY useAuth() hook - no direct auth object access
   const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
   const shouldDebug = import.meta.env.DEV;
-
-  // Check if there's a Firebase session (user might have signed in but profile not yet created)
-  // Defensive check: ensure auth is initialized before accessing currentUser
-  const hasFirebaseSession = !!(auth && auth.currentUser);
 
   // Show loading screen while auth is initializing
   if (isLoading) {
@@ -37,27 +33,21 @@ export function AuthGuard({
   // PUBLIC ROUTES: Allow access to onboarding pages during onboarding flow
   const isOnboardingRoute = location.pathname.startsWith('/onboarding');
   if (isOnboardingRoute) {
-    // Allow access if user has Firebase session or is authenticated
-    if (hasFirebaseSession || isAuthenticated) {
+    // Allow access if user is authenticated (useAuth handles Firebase session state)
+    if (isAuthenticated) {
       return <>{children}</>;
     }
   }
 
   // REQUIRE AUTH: User must be authenticated
   if (requireAuth && !isAuthenticated) {
-    // Allow onboarding routes if there's a Firebase session (new signup)
-    if (isOnboardingRoute && hasFirebaseSession) {
-      logger.debug('AuthGuard', 'Firebase session exists, allowing onboarding access');
+    // Allow onboarding routes if user is authenticated but not yet onboarded
+    if (isOnboardingRoute && isAuthenticated) {
+      logger.debug('AuthGuard', 'User authenticated, allowing onboarding access');
       return <>{children}</>;
     }
     
-    // User has Firebase session but no profile - redirect to onboarding
-    if (hasFirebaseSession && !isOnboardingRoute) {
-      logger.debug('AuthGuard', 'Firebase session exists but no profile, redirecting to onboarding');
-      return <Navigate to="/onboarding" replace />;
-    }
-    
-    // No authentication - redirect to login
+    // User not authenticated - redirect to login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -104,7 +94,6 @@ export function AuthGuard({
       user.currentRole === requiredRole ||
       (user.roles && user.roles.includes(requiredRole as any));
     
-    // Business role equivalence
     const hasBusinessRoleMatch = 
       requiredRole === 'business' && isBusinessRole(user.currentRole || '');
     

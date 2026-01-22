@@ -10,7 +10,6 @@ import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
-
 import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
 
@@ -19,7 +18,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
+  
+  // MODULAR PATTERN: Use ONLY useAuth() hook - no direct auth object access
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -31,9 +33,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (authLoading) return;
     
-    // Case 1: User is fully authenticated with database record
+    // User is fully authenticated with database record
     if (user) {
-      // User is already logged in, redirect to appropriate dashboard
       if (user.isOnboarded === false) {
         navigate("/onboarding", { replace: true });
         return;
@@ -48,17 +49,6 @@ export default function LoginPage() {
       navigate("/dashboard", { replace: true });
       return;
     }
-    
-    // Case 2: Firebase user exists but no database record yet (just completed Google signin)
-    // Defensive check: ensure auth is initialized before accessing currentUser
-    if (auth && auth.currentUser && !user) {
-      logger.debug('Login', 'Firebase user exists but no database record, redirecting to onboarding', {
-        uid: auth.currentUser.uid,
-        email: auth.currentUser.email,
-      });
-      navigate('/onboarding', { replace: true });
-      return;
-    }
   }, [authLoading, user, navigate]);
 
   // Handle post-login redirection based on user role
@@ -66,21 +56,17 @@ export default function LoginPage() {
     if (pendingRedirect && !authLoading && user) {
       setPendingRedirect(false);
       
-      // Check if user has a role and is onboarded
       if (user.isOnboarded === false) {
-        // User needs to complete onboarding
         navigate("/onboarding", { replace: true });
         return;
       }
       
       if (user.currentRole && user.currentRole !== 'client') {
-        // User has a role - redirect to their dashboard
         const dashboardRoute = getDashboardRoute(user.currentRole);
         navigate(dashboardRoute, { replace: true });
         return;
       }
       
-      // User is onboarded but has no role or is a client - go to role selection
       navigate("/role-selection", { replace: true });
     }
   }, [pendingRedirect, authLoading, user, navigate]);
@@ -90,13 +76,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Fix 1: Ghost Space - Trim email to handle copy-paste trailing spaces
       const cleanEmail = formData.email.trim();
       const cleanPassword = formData.password.trim();
-
-      // Removed test bypass - E2E tests need to use proper authentication
-      // Proceed with normal Firebase authentication
       
+      // MODULAR SYNTAX: signInWithEmailAndPassword(auth, email, password)
       await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
       
       toast({
@@ -104,11 +87,8 @@ export default function LoginPage() {
         description: "Welcome back!",
       });
 
-      // Set flag to wait for auth state to sync and user profile to load
-      // The useEffect above will handle the role-based redirection
       setPendingRedirect(true);
     } catch (error: unknown) {
-      // CRITICAL: Always log the error code for debugging
       const code =
         typeof error === 'object' && error && 'code' in error
           ? String((error as { code: unknown }).code)
@@ -119,7 +99,6 @@ export default function LoginPage() {
           ? String((error as { message: unknown }).message || '')
           : '';
       
-      // Log full error details including code for debugging
       console.error("[Login] Sign-in error:", {
         code,
         message: errorMessage,
@@ -130,18 +109,15 @@ export default function LoginPage() {
       let errorTitle = "Something went wrong";
       let errorDescription = supportMessage;
       
-      // Handle Firebase auth errors with specific error codes
       if (code) {
         switch (code) {
           case 'auth/operation-not-allowed':
-            // Email/Password provider is disabled in Firebase Console
             console.error('[Login] Email/Password authentication is not enabled in Firebase Console');
             console.error('[Login] To fix: Go to Firebase Console > Authentication > Sign-in method > Enable "Email/Password"');
             errorTitle = "Authentication method disabled";
             errorDescription = "Email/Password sign-in is not enabled. Please contact support or try signing in with Google.";
             break;
           case 'auth/invalid-credential':
-            // Invalid email or password (Firebase 9+ uses this instead of wrong-password/user-not-found)
             console.error('[Login] Invalid credentials provided');
             errorTitle = "Invalid credentials";
             errorDescription = "The email or password you entered is incorrect. Please try again.";
@@ -175,13 +151,11 @@ export default function LoginPage() {
             errorDescription = "Please check your email address";
             break;
           default:
-            // For unknown Firebase errors, log the code and show generic message
             console.warn('[Login] Unhandled Firebase error code:', code);
             errorDescription = supportMessage;
         }
       } else if (!code && typeof error === 'object' && error && 'message' in error) {
         const message = String((error as { message: unknown }).message || '');
-        // Handle non-Firebase errors (e.g., network errors without code)
         if (message.includes('network') || message.includes('fetch')) {
           errorTitle = "Network error";
           errorDescription = "Please check your connection and try again";

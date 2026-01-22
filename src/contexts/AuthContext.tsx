@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, signOutUser } from '../lib/firebase';
+import { auth, signOutUser } from '@/lib/firebase';
 import { 
   User as FirebaseUser,
   onAuthStateChanged,
@@ -186,13 +186,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       if (res.status === 404) {
-        // User exists in Firebase but not in database - needs to complete signup
         logger.debug('AuthContext', 'Firebase user has no database profile (404)');
         return null;
       }
       
       if (res.status === 401) {
-        // Token invalid - try refresh
         logger.warn('AuthContext', 'Got 401, attempting token refresh');
         const refreshedToken = await firebaseUser.getIdToken(true);
         setToken(refreshedToken);
@@ -218,12 +216,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // STANDARD FIREBASE PATTERN: Single useEffect on mount
-  // MODULAR SYNTAX ENFORCEMENT: All Firebase calls use functional syntax
-  // ❌ NEVER: auth.onAuthStateChanged() or auth.setPersistence()
-  // ✅ ALWAYS: onAuthStateChanged(auth, ...) or setPersistence(auth, ...)
+  // MODULAR FIREBASE PATTERN: Single useEffect on mount
+  // CRITICAL: Use ONLY functional syntax - NEVER call methods on auth object
+  // ❌ NEVER: auth.onAuthStateChanged() or auth.setPersistence() or auth.getRedirectResult()
+  // ✅ ALWAYS: onAuthStateChanged(auth, ...) or setPersistence(auth, ...) or getRedirectResult(auth)
   useEffect(() => {
-    // CRITICAL: Validate auth is initialized before proceeding
     if (!auth) {
       logger.error('AuthContext', 'Firebase auth is undefined - initialization failed');
       setIsLoading(false);
@@ -232,34 +229,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     let unsubscribe: (() => void) | null = null;
 
-    // Initialize auth state: Set persistence, handle redirect result, then listen for changes
     const initializeAuth = async () => {
       try {
         // Step 1: Set persistence to LOCAL (survives page refresh)
-        // MODULAR SYNTAX: setPersistence(auth, ...) NOT auth.setPersistence(...)
+        // MODULAR SYNTAX: setPersistence(auth, browserLocalPersistence)
         await setPersistence(auth, browserLocalPersistence);
         logger.debug('AuthContext', 'Persistence set to browserLocalPersistence');
 
         // Step 2: Handle redirect result (for Google sign-in redirect flow)
-        // MODULAR SYNTAX: getRedirectResult(auth) NOT auth.getRedirectResult()
+        // MODULAR SYNTAX: getRedirectResult(auth)
         const redirectResult = await getRedirectResult(auth);
         if (redirectResult?.user) {
           logger.debug('AuthContext', 'Google redirect result received:', redirectResult.user.uid);
-          // Force token refresh to ensure it's persisted and ready for backend
           await redirectResult.user.getIdToken(true);
         }
       } catch (error) {
         logger.error('AuthContext', 'Error during auth initialization:', error);
       }
 
-      // Step 3: Listen for auth state changes (synchronous - returns unsubscribe immediately)
-      // MODULAR SYNTAX: onAuthStateChanged(auth, ...) NOT auth.onAuthStateChanged(...)
+      // Step 3: Listen for auth state changes
+      // MODULAR SYNTAX: onAuthStateChanged(auth, callback)
       // This is the ONLY correct way to listen to auth state in Firebase v9+
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
           logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);
           
-          // Fetch profile from /api/me
           const appUser = await fetchUserProfile(firebaseUser);
           setUser(appUser);
           
@@ -281,15 +275,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setToken(null);
         }
 
-        // CRITICAL: Only set isLoading(false) AFTER profile fetch completes or firebaseUser is confirmed null
         setIsLoading(false);
       });
     };
 
-    // Execute initialization
     initializeAuth();
     
-    // Cleanup function
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -333,7 +324,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!user) return false;
     if (user.currentRole === role) return true;
     if (user.roles.includes(role)) return true;
-    // Handle business role equivalence
     if (role === 'business' && (user.currentRole === 'hub' || user.currentRole === 'venue' as any)) return true;
     if ((role === 'hub' || role === 'venue' as any) && user.currentRole === 'business') return true;
     return false;
@@ -347,6 +337,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const getToken = useCallback(async (): Promise<string | null> => {
+    // MODULAR SYNTAX: Access auth.currentUser property (not a method call)
+    // This is safe - currentUser is a property, not a method
     if (auth.currentUser) {
       try {
         const newToken = await auth.currentUser.getIdToken();
@@ -361,6 +353,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [token]);
 
   const refreshUser = useCallback(async () => {
+    // MODULAR SYNTAX: Access auth.currentUser property (not a method call)
     if (!auth.currentUser) return;
     
     const refreshedUser = await fetchUserProfile(auth.currentUser);
@@ -384,7 +377,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshUser,
   };
 
-  // Show loading screen while initializing
   if (isLoading) {
     return <LoadingScreen />;
   }
