@@ -214,6 +214,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         } else {
           console.log('[AuthContext] No redirect result found');
+          
+          // FALLBACK: Check window.location.search manually if getRedirectResult returns null
+          // Chrome's bounce tracking may strip apiKey params during redirect from firebaseapp.com
+          // to hospogo.com, causing getRedirectResult to return null even when auth succeeded
+          const urlParams = new URLSearchParams(window.location.search);
+          const apiKey = urlParams.get('apiKey');
+          
+          if (apiKey) {
+            console.log('[AuthContext] apiKey found in URL params - Chrome bounce tracking may have interfered');
+            console.log('[AuthContext] Forcing re-initialization of Firebase Auth state...');
+            
+            // Force a re-initialization by checking auth.currentUser
+            // If the user is authenticated but getRedirectResult failed, we need to hydrate manually
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+              console.log('[AuthContext] Found authenticated user via auth.currentUser fallback', {
+                uid: currentUser.uid,
+                email: currentUser.email
+              });
+              firebaseUserRef.current = currentUser;
+              await hydrateFromFirebaseUser(currentUser);
+            } else {
+              console.log('[AuthContext] No authenticated user found despite apiKey in URL - may need to retry auth flow');
+            }
+            
+            // Clean up the URL params to prevent re-processing
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, '', cleanUrl);
+          }
         }
 
         // STEP 2: Wrap onAuthStateChanged in a Promise that resolves after the first callback
