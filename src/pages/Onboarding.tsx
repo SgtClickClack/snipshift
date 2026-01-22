@@ -455,6 +455,7 @@ export default function Onboarding() {
     // If we have Firebase auth (token exists), allow onboarding to proceed
     // The DB profile will be created when the user submits the form
     if (token || isAuthenticated) {
+      console.log('[Onboarding] Onboarding mode active - suppressing profile fetch');
       setIsVerifyingUser(false);
       return;
     }
