@@ -16,7 +16,7 @@ interface GoogleAuthButtonProps {
 export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { refreshUser, startManualAuthPolling } = useAuth();
+  const { refreshUser } = useAuth();
   const navigate = useNavigate();
   // Prevent double-click/double-fire in Strict Mode
   const isAuthInProgress = useRef(false);
@@ -95,8 +95,6 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       return;
     }
 
-    startManualAuthPolling();
-    
     // Lock immediately before any async operations
     isAuthInProgress.current = true;
     setIsLoading(true);

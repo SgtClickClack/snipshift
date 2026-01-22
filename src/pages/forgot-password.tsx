@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/useToast';
-import { sendPasswordReset } from '@/lib/firebase';
+import { sendPasswordReset } from '@/lib/auth';
 
 type SubmitState =
   | { status: 'idle' }

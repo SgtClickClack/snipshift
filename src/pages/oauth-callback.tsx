@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +20,7 @@ import { Loader2 } from 'lucide-react';
 export function OAuthCallback() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthReady, isAuthenticated, user, triggerPostAuthRedirect, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const [statusMessage, setStatusMessage] = useState('Completing sign-in…');
 
   // Prevent double execution in React Strict Mode
@@ -57,19 +57,16 @@ export function OAuthCallback() {
 
   // Update status message based on auth state
   useEffect(() => {
-    if (!isAuthReady) {
+    if (isLoading) {
       setStatusMessage('Completing sign-in…');
     } else if (isAuthenticated && !user) {
       setStatusMessage('Verifying your account…');
-    } else if (isAuthenticated && user && !user.isOnboarded) {
-      setStatusMessage('Preparing onboarding…');
     } else if (isAuthenticated && user) {
       setStatusMessage('Redirecting to your dashboard…');
     }
-  }, [isAuthReady, isAuthenticated, user]);
+  }, [isLoading, isAuthenticated, user]);
 
   useEffect(() => {
-    if (!isAuthReady) return;
     if (isLoading) return; // Wait for loading to complete
     if (hasRedirected.current) return;
 
@@ -80,15 +77,14 @@ export function OAuthCallback() {
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
       }
-      // Centralize post-auth routing in AuthContext (role-based clean-break redirects, etc.).
-      triggerPostAuthRedirect();
+      navigate('/dashboard', { replace: true });
       return;
     }
     
     // If auth is ready but no user after loading completes, 
     // the user might need to complete onboarding
     // AuthContext will handle the redirect to /onboarding if needed
-  }, [isAuthReady, isAuthenticated, user, triggerPostAuthRedirect, isLoading]);
+  }, [isAuthenticated, user, isLoading, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -104,7 +100,7 @@ export function OAuthCallback() {
         </div>
         {/* Progress indicator */}
         <div className="flex justify-center gap-1.5 pt-2">
-          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${isAuthReady ? 'bg-primary' : 'bg-muted'}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${!isLoading ? 'bg-primary' : 'bg-muted'}`} />
           <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${isAuthenticated ? 'bg-primary' : 'bg-muted'}`} />
           <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${user ? 'bg-primary' : 'bg-muted'}`} />
         </div>

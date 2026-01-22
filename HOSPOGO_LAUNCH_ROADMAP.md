@@ -14,11 +14,11 @@
 
 **Action Taken:**
 - Rebuilt Firebase client initialization with modular v10 patterns and enforced `authDomain = hospogo.com`.
-- Simplified AuthContext to use functional listeners (`setPersistence`, `getRedirectResult`, `onAuthStateChanged`) and removed custom gates.
+- Simplified AuthContext to use functional listeners (`setPersistence`, `onAuthStateChanged`) and removed provider-level loading gates.
 - Updated auth guard/login to rely only on `user` and `isLoading`.
 
 **Impact:**
-- Eliminates auth-object method calls that triggered runtime errors and stabilizes auth initialization flow.
+- Removes the primary mismatch vector behind “TypeError: u is not a function” loops by aligning all auth surfaces to a minimal, modular v10 contract.
 
 ---
 

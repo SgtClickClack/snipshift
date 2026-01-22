@@ -4,27 +4,46 @@
 - Firebase initialization (`src/lib/firebase.ts`)
 - AuthContext modular listener (`src/contexts/AuthContext.tsx`)
 - Auth guard + login sync (`src/components/auth/auth-guard.tsx`, `src/pages/login.tsx`)
+- Google auth + OAuth callback reliability (`src/components/auth/google-auth-button.tsx`, `src/pages/oauth-callback.tsx`)
+- Password reset + Google redirect helpers (`src/lib/auth.ts`, `src/pages/forgot-password.tsx`)
+- Onboarding sync + role selection (`src/hooks/useUserSync.ts`, `src/pages/Onboarding.tsx`, `src/pages/role-selection.tsx`)
+- Clean-break route redirects (`src/components/auth/venue-route.tsx`, `src/components/auth/worker-route.tsx`)
 
 **Key Features**
-- Rebuilt Firebase client initialization with modular v10 patterns and `authDomain = hospogo.com`.
-- Replaced AuthContext with functional SDK listeners (`setPersistence`, `getRedirectResult`, `onAuthStateChanged`) and removed custom gates.
-- Simplified auth guard and login flows to rely only on `user` and `isLoading`.
+- **Hard reset to Firebase v10 modular init**: rewrote `src/lib/firebase.ts` to only export `app`, `auth`, and `storage` via `initializeApp(...)` + `getAuth(app)` (with `authDomain = hospogo.com`) and added a `globalThis` cache to prevent Vite HMR double-init crashes.
+- **Minimalist AuthContext**: rewrote `src/contexts/AuthContext.tsx` to rely only on functional modular calls (`setPersistence(auth, ...)`, `onAuthStateChanged(auth, ...)`) with no auth-object dot access and no provider-level loading gate.
+- **Stopped the “TypeError: u is not a function” loop** by removing stale/undefined AuthContext method calls and aligning auth surfaces to the new context contract:
+  - `AuthGuard` + `LoginPage` now check only `user` and `isLoading`.
+  - `GoogleAuthButton` no longer calls removed polling helpers.
+  - `OAuthCallback` no longer calls removed post-auth redirect helpers.
+- **Moved deprecated Firebase helpers out of `firebase.ts`**: `src/lib/auth.ts` now owns Google redirect + password reset helpers so the firebase init module stays minimal and v10-correct.
+- **Simplified sync gating**: rewrote `useUserSync` to use `{ token, user, isLoading, refreshUser }` and removed `isAuthReady` dependency that could deadlock onboarding/role flows.
 
 **Integration Points**
 - Firebase Auth redirect flow
 - `/api/me` profile sync
+- `/api/register` (Google signup idempotent create)
 
 **File Paths**
 - `src/lib/firebase.ts`
 - `src/contexts/AuthContext.tsx`
 - `src/components/auth/auth-guard.tsx`
 - `src/pages/login.tsx`
+- `src/components/auth/google-auth-button.tsx`
+- `src/pages/oauth-callback.tsx`
+- `src/lib/auth.ts`
+- `src/pages/forgot-password.tsx`
+- `src/hooks/useUserSync.ts`
+- `src/pages/Onboarding.tsx`
+- `src/pages/role-selection.tsx`
+- `src/components/auth/venue-route.tsx`
+- `src/components/auth/worker-route.tsx`
 
 **Next Priority Task**
-- Validate Google redirect sign-in and email/password login across `/login` and `/signup`.
+- Validate Google redirect sign-in end-to-end (redirect → `/oauth/callback` → `/dashboard`) on `hospogo.com`.
 
 **Code Organization & Quality**
-- Auth logic now uses functional modular patterns without auth-object method calls.
+- Auth init is now a clean modular v10 surface (`firebase.ts`) with auth behavior isolated to `AuthContext` + `lib/auth` utilities, reducing mismatch risk and preventing undefined-method runtime crashes.
 
 ---
 

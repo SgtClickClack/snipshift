@@ -9,10 +9,10 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
  * Prevents worker/professional accounts from accessing venue dashboards/routes.
  */
 export function VenueRoute() {
-  const { user, isAuthReady } = useAuth();
+  const { user, isLoading } = useAuth();
 
   // If auth is ready and user is known, send clearly-mismatched roles to their correct home.
-  if (isAuthReady && user?.currentRole === 'professional') {
+  if (!isLoading && user?.currentRole === 'professional') {
     return <Navigate to="/worker/dashboard" replace />;
   }
 

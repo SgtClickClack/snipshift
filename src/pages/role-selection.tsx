@@ -5,24 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Store, UserCheck, Award, GraduationCap, FastForward, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUserSync } from "@/hooks/useUserSync";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute, mapRoleToApiRole } from "@/lib/roles";
-import { auth } from "@/lib/firebase";
 
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Array<"hub" | "professional" | "brand" | "trainer">>([]);
   const { toast } = useToast();
-  const { user, setCurrentRole, updateRoles, token, isAuthReady } = useAuth();
-  const { isSynced, isPolling } = useUserSync({ enabled: true });
-  
-  // Check if there's a Firebase session (user might have signed in but profile not yet created)
-  const hasFirebaseSession = !!auth.currentUser || !!token;
+  const { user, token, isLoading: authLoading, refreshUser } = useAuth();
   
   // Show loader until user profile is synced
-  const shouldShowLoader = !isAuthReady || !hasFirebaseSession || !isSynced || !user?.id || isPolling;
+  const shouldShowLoader = authLoading || !token || !user?.id;
   
   const toggleRole = (role: "hub" | "professional" | "brand" | "trainer") => {
     setSelectedRoles((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
@@ -59,9 +53,6 @@ export default function RoleSelectionPage() {
         }
       }
       
-      // Update client-side roles so the navbar switcher sees them immediately
-      updateRoles(Array.from(new Set([...(user.roles || []), ...selectedRoles])) as any);
-      
       // Set currentRole to the first selected role
       const primaryRole = selectedRoles[0];
       
@@ -81,7 +72,8 @@ export default function RoleSelectionPage() {
         throw new Error(errorData.message || `Failed to set current role`);
       }
       
-      setCurrentRole(primaryRole);
+      // Refresh the session profile so the app reflects role changes immediately.
+      await refreshUser();
 
       toast({
         title: "Roles updated",

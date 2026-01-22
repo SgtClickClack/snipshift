@@ -9,9 +9,7 @@ import { FastForward, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/auth/google-auth-button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { logger } from "@/lib/logger";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDashboardRoute } from "@/lib/roles";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -29,45 +27,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (authLoading) return;
-    
-    // User is fully authenticated with database record
+
     if (user) {
-      if (user.isOnboarded === false) {
-        navigate("/onboarding", { replace: true });
-        return;
-      }
-      
-      if (user.currentRole && user.currentRole !== 'client') {
-        const dashboardRoute = getDashboardRoute(user.currentRole);
-        navigate(dashboardRoute, { replace: true });
-        return;
-      }
-      
       navigate("/dashboard", { replace: true });
-      return;
     }
   }, [authLoading, user, navigate]);
 
-  // Handle post-login redirection based on user role
   useEffect(() => {
     if (pendingRedirect && !authLoading && user) {
       setPendingRedirect(false);
-      
-      if (user.isOnboarded === false) {
-        navigate("/onboarding", { replace: true });
-        return;
-      }
-      
-      if (user.currentRole && user.currentRole !== 'client') {
-        const dashboardRoute = getDashboardRoute(user.currentRole);
-        navigate(dashboardRoute, { replace: true });
-        return;
-      }
-      
-      navigate("/role-selection", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [pendingRedirect, authLoading, user, navigate]);
 

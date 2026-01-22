@@ -386,7 +386,7 @@ const clearStorage = () => {
 };
 
 export default function Onboarding() {
-  const { user, refreshUser, isAuthenticated, isAuthReady, isLoading, token } = useAuth();
+  const { user, refreshUser, isAuthenticated, isLoading, token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isSynced, isPolling, isNewUser } = useUserSync({ enabled: true });
@@ -447,7 +447,7 @@ export default function Onboarding() {
 
   // Wait for auth to be ready and verify user exists in database before showing onboarding
   useEffect(() => {
-    if (!isAuthReady) return;
+    if (isLoading) return;
     
     // Force session refresh if user is stale or missing
     const refreshSessionIfNeeded = async () => {
@@ -484,7 +484,6 @@ export default function Onboarding() {
       setIsVerifyingUser(false);
     }
   }, [
-    isAuthReady,
     isLoading,
     isAuthenticated,
     userId,
@@ -1197,7 +1196,7 @@ export default function Onboarding() {
   // 3. Not in ROLE_SELECTION AND (not synced OR no user.id OR polling) - other steps need full user sync
   // Don't show loader for COMPLETED state - show success screen instead
   const shouldShowLoader = (machineContext.state as OnboardingState) === 'COMPLETED' ? false : (
-    !isAuthReady || 
+    isLoading || 
     (!hasFirebaseSession && machineContext.state !== 'ROLE_SELECTION') ||
     (machineContext.state !== 'ROLE_SELECTION' && (!isSynced || !user?.id || isPolling))
   );

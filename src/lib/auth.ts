@@ -54,9 +54,19 @@ async function maybeResetFirebaseSession() {
  * of Google silently reusing stale/broken legacy sessions.
  */
 export async function getGoogleProvider() {
-  const { googleProvider } = await import('./firebase');
-  googleProvider.setCustomParameters({ prompt: 'select_account' });
-  return googleProvider;
+  const { GoogleAuthProvider } = await import('firebase/auth');
+
+  // Cache the provider instance so we don't recreate it on every call.
+  const g = globalThis as unknown as { __hospogoGoogleProvider?: InstanceType<typeof GoogleAuthProvider> };
+  if (!g.__hospogoGoogleProvider) {
+    const provider = new GoogleAuthProvider();
+    provider.addScope('email');
+    provider.addScope('profile');
+    provider.setCustomParameters({ prompt: 'select_account' });
+    g.__hospogoGoogleProvider = provider;
+  }
+
+  return g.__hospogoGoogleProvider;
 }
 
 /**
@@ -149,8 +159,15 @@ export async function signInWithGoogleDevAware() {
       return await signInWithGoogleLocalDevPopup();
     }
 
-    const { signInWithGoogle } = await import('./firebase');
-    return await signInWithGoogle();
+    const { auth } = await import('./firebase');
+    const googleProvider = await getGoogleProvider();
+    const { signInWithRedirect, setPersistence, browserLocalPersistence } = await import('firebase/auth');
+
+    await setPersistence(auth, browserLocalPersistence);
+    await signInWithRedirect(auth, googleProvider);
+
+    // Redirect flow: auth completion happens after navigation, so return null.
+    return null;
   } catch (error) {
     if (isHttp400StyleAuthFailure(error)) {
       shouldResetFirebaseSessionBeforeNextAttempt = true;
@@ -158,6 +175,19 @@ export async function signInWithGoogleDevAware() {
     }
     throw error;
   }
+}
+
+export async function sendPasswordReset(email: string) {
+  const cleanEmail = email.trim();
+
+  if (import.meta.env.VITE_E2E === '1') {
+    // Keep E2E deterministic (no outbound email).
+    return;
+  }
+
+  const { auth } = await import('./firebase');
+  const { sendPasswordResetEmail } = await import('firebase/auth');
+  await sendPasswordResetEmail(auth, cleanEmail);
 }
 
 export const authService = {
