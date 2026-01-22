@@ -143,31 +143,17 @@ export async function signInWithGoogleLocalDevPopup() {
 }
 
 /**
- * Environment-aware Google sign-in:
- * - Use popup flow on localhost for dev convenience.
- * - Use redirect flow elsewhere to avoid COOP popup blocks.
+ * Force popup-based Google sign-in to bypass Chrome's bounce tracking mitigations.
+ * Popup flow keeps the user on the primary domain and provides a direct identity
+ * signal that Chrome cannot delete, eliminating cross-domain redirect issues.
  */
 export async function signInWithGoogleDevAware() {
   await maybeResetFirebaseSession();
 
-  const isLocalhost =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
+  // Always use popup flow to bypass Chrome bounce tracking mitigations
+  // This eliminates cross-domain redirects that Chrome may block
   try {
-    if (isLocalhost) {
-      return await signInWithGoogleLocalDevPopup();
-    }
-
-    const { auth } = await import('./firebase');
-    const googleProvider = await getGoogleProvider();
-    const { signInWithRedirect, setPersistence, browserLocalPersistence } = await import('firebase/auth');
-
-    await setPersistence(auth, browserLocalPersistence);
-    await signInWithRedirect(auth, googleProvider);
-
-    // Redirect flow: auth completion happens after navigation, so return null.
-    return null;
+    return await signInWithGoogleLocalDevPopup();
   } catch (error) {
     if (isHttp400StyleAuthFailure(error)) {
       shouldResetFirebaseSessionBeforeNextAttempt = true;

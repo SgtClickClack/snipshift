@@ -247,6 +247,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // STEP 2: Wrap onAuthStateChanged in a Promise that resolves after the first callback
         // This ensures we wait for the initial auth state before proceeding
+        // onAuthStateChanged is the primary listener for popup results - it fires immediately
+        // when signInWithPopup completes, providing a direct identity signal
         await new Promise<void>((resolve) => {
           unsub = onAuthStateChanged(auth, async (firebaseUser) => {
             firebaseUserRef.current = firebaseUser;
@@ -257,6 +259,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setToken(null);
               } else {
                 await hydrateFromFirebaseUser(firebaseUser);
+                
+                // CRITICAL: Immediate navigation for popup flow results
+                // This ensures navigation happens inside the popup promise resolution,
+                // bypassing Chrome's bounce tracking mitigations
+                // Only navigate if we're on auth pages and user is authenticated
+                if (!isInitialAuthCheck) {
+                  const currentPath = window.location.pathname;
+                  if (currentPath === '/login' || currentPath === '/signup') {
+                    console.log('[AuthContext] Popup auth successful, navigating to dashboard');
+                    navigate('/dashboard', { replace: true });
+                  }
+                }
               }
             } catch (error) {
               logger.error('AuthContext', 'Auth hydration failed', error);

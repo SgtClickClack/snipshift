@@ -109,22 +109,21 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
     }
     
     try {
-      // Step 1: Firebase authentication
-      // In production, this uses redirect flow (100% reliable against COOP blocking)
-      // In localhost, this uses popup flow for development convenience
+      // Step 1: Firebase authentication via popup flow
+      // Popup flow bypasses Chrome's bounce tracking mitigations by keeping the user
+      // on the primary domain and providing a direct identity signal
       const firebaseUser = await signInWithGoogleDevAware();
       
-      // If null is returned, it means redirect flow was initiated
-      // The page will redirect to Google, then back to the app
-      // AuthContext will handle the redirect result via handleGoogleRedirectResult()
+      // Popup flow always returns a user (or throws an error)
+      // If null is returned, it means popup was blocked and fallback redirect was used
       if (!firebaseUser) {
-        // Redirect flow: user will be redirected away, so we don't need to do anything here
+        // Fallback redirect flow: user will be redirected away
         // The loading state will persist until redirect happens
-        logger.debug('GoogleAuthButton', 'Redirect flow initiated - user will be redirected to Google');
+        logger.debug('GoogleAuthButton', 'Popup blocked, fallback redirect initiated');
         return; // Don't reset state - redirect is happening
       }
       
-      // Popup flow (localhost only): Handle the user immediately
+      // Popup flow: Handle the user immediately
       // Step 2: Ensure user exists in our database BEFORE AuthContext tries to fetch profile
       // This prevents race conditions where /api/me fails because user doesn't exist yet
       await ensureUserInDatabase(firebaseUser);
@@ -158,30 +157,19 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         logger.debug('GoogleAuthButton', 'Analytics tracking failed (non-blocking):', error);
       }
       
-      // Step 6: Refresh user profile and redirect
-      // This triggers AuthContext to fetch the profile and determine the correct redirect
-      // NOTE: Analytics tracking above is non-blocking and doesn't delay this flow
+      // Step 4: Refresh user profile to trigger AuthContext hydration
+      // This ensures onAuthStateChanged fires and processes the user
       try {
         await refreshUser();
       } catch (refreshError) {
-        logger.debug('GoogleAuthButton', 'refreshUser failed, navigating to onboarding', refreshError);
+        logger.debug('GoogleAuthButton', 'refreshUser failed, navigating to dashboard', refreshError);
       }
       
-      // NEW: Wait for AuthContext to process before checking redirect
-      // This prevents race conditions where we check redirect before AuthContext has finished
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Step 7: Force redirect to onboarding as fallback (AuthContext should handle this, 
-      // but we add a fallback to ensure navigation happens)
-      // Give AuthContext a moment to process, then navigate if still on auth pages
-      // NOTE: Navigation happens immediately, not waiting for analytics
-      setTimeout(() => {
-        const currentPath = window.location.pathname;
-        if (currentPath === '/login' || currentPath === '/signup') {
-          logger.debug('GoogleAuthButton', 'Fallback redirect to onboarding');
-          navigate('/onboarding', { replace: true });
-        }
-      }, 500);
+      // Step 5: Immediate navigation to dashboard after popup success
+      // This forces navigation inside the popup promise resolution, bypassing bounce tracking
+      // AuthContext's onAuthStateChanged will handle the final redirect based on onboarding status
+      logger.debug('GoogleAuthButton', 'Popup auth successful, navigating to dashboard');
+      navigate('/dashboard', { replace: true });
       
       // Call onSuccess if provided (for custom handling)
       if (onSuccess) {
