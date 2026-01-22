@@ -3592,9 +3592,12 @@ router.patch('/:id/complete', authenticateUser, asyncHandler(async (req: Authent
     if (captureNeeded) {
       try {
         // Use atomic settlement to capture and get both charge ID and transfer ID
+        // Pass amountCents to ensure PaymentIntent is updated with award-calculated amount
+        // This ensures the worker receives the correct 2026 HIGA award-based pay
         const settlementResult = await stripeConnectService.capturePaymentIntentAtomic(
           shift.paymentIntentId!,
-          settlementId
+          settlementId,
+          amountCents // Award-calculated amount (includes Sunday penalty, late-night loading, etc.)
         );
         
         captureSucceeded = settlementResult.success;

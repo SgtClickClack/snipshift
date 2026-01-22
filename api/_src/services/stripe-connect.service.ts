@@ -512,12 +512,16 @@ export async function cancelPaymentIntent(paymentIntentId: string): Promise<bool
  * Capture PaymentIntent and return both charge ID and transfer ID
  * 
  * This is the atomic settlement method that:
- * 1. Captures the PaymentIntent
- * 2. Retrieves the automatic transfer ID (from transfer_data.destination)
- * 3. Returns both IDs for complete audit trail
+ * 1. Updates PaymentIntent amount if award calculation differs (2026 HIGA rates)
+ * 2. Captures the PaymentIntent
+ * 3. Retrieves the automatic transfer ID (from transfer_data.destination)
+ * 4. Returns both IDs for complete audit trail
  * 
  * IMPORTANT: For Stripe Connect with transfer_data.destination, the transfer
  * is created automatically on capture. We retrieve it from the charge.
+ * 
+ * The amountCents parameter ensures the worker receives the correct award-based pay,
+ * even if the PaymentIntent was created with a different (simpler) calculation.
  */
 export interface AtomicSettlementResult {
   success: boolean;
@@ -528,13 +532,33 @@ export interface AtomicSettlementResult {
 
 export async function capturePaymentIntentAtomic(
   paymentIntentId: string,
-  settlementId: string
+  settlementId: string,
+  amountCents?: number // Optional: award-calculated amount to ensure correct transfer
 ): Promise<AtomicSettlementResult> {
   if (!stripe) {
     return { success: false, chargeId: null, transferId: null, error: 'Stripe not configured' };
   }
 
   try {
+    // Step 0: Retrieve current PaymentIntent to check amount
+    const currentPaymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    // Step 0.5: Update PaymentIntent amount if award calculation differs
+    // This ensures the worker receives the correct 2026 HIGA award-based pay
+    if (amountCents !== undefined && amountCents !== currentPaymentIntent.amount) {
+      const commissionRate = parseFloat(process.env.HOSPOGO_COMMISSION_RATE || '0.10'); // 10% default
+      const newApplicationFeeAmount = Math.round(amountCents * commissionRate);
+      
+      console.log(`[STRIPE_CONNECT] Updating PaymentIntent ${paymentIntentId} amount from ${currentPaymentIntent.amount} to ${amountCents} cents (award calculation)`);
+      
+      await stripe.paymentIntents.update(paymentIntentId, {
+        amount: amountCents,
+        application_fee_amount: newApplicationFeeAmount,
+      });
+      
+      console.log(`[STRIPE_CONNECT] PaymentIntent updated - New amount: ${amountCents} cents, Application fee: ${newApplicationFeeAmount} cents`);
+    }
+    
     // Step 1: Capture the PaymentIntent
     const paymentIntent = await stripe.paymentIntents.capture(paymentIntentId);
     
