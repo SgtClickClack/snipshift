@@ -389,7 +389,9 @@ export default function Onboarding() {
   const { user, refreshUser, isAuthenticated, isLoading, token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isSynced, isPolling, isNewUser } = useUserSync({ enabled: true });
+  // Disable polling on onboarding page to prevent 401/404 loop
+  // The user is new and we'll create the profile via form submission
+  const { isSynced, isPolling, isNewUser } = useUserSync({ enabled: false });
   const userId = user?.id ?? null;
   const userCurrentRole = user?.currentRole ?? null;
   const userRolesKey = Array.isArray(user?.roles) ? user.roles.join('|') : '';
@@ -445,51 +447,33 @@ export default function Onboarding() {
     }
   }, [user, isPolling]);
 
-  // Wait for auth to be ready and verify user exists in database before showing onboarding
+  // Wait for auth to be ready - allow onboarding if we have Firebase auth (token)
+  // Don't wait for DB profile since we'll create it during onboarding
   useEffect(() => {
     if (isLoading) return;
     
-    // Force session refresh if user is stale or missing
-    const refreshSessionIfNeeded = async () => {
-      if (!user && !isLoading && isAuthenticated) {
-        logger.debug('Onboarding', '[Onboarding] User object is null but authenticated, refreshing session...');
-        try {
-          await refreshUser();
-        } catch (error) {
-          console.error('[Onboarding] Failed to refresh session:', error);
-        }
-      }
-    };
+    // If we have Firebase auth (token exists), allow onboarding to proceed
+    // The DB profile will be created when the user submits the form
+    if (token || isAuthenticated) {
+      setIsVerifyingUser(false);
+      return;
+    }
     
-    refreshSessionIfNeeded();
-    
-    // If auth is ready but no user, redirect to login (unless in waitlist-only flow or new user)
-    if (!user && !isLoading && !machineContext.isWaitlistOnly && !isNewUser) {
-      // Give a small grace period for the user profile to load
+    // If no Firebase auth, redirect to login (unless in waitlist-only flow)
+    if (!token && !isLoading && !machineContext.isWaitlistOnly) {
+      // Give a small grace period for auth to initialize
       const timeout = setTimeout(() => {
-        if (!user && !isNewUser) {
+        if (!token) {
           navigate('/login', { replace: true });
         }
       }, 2000);
       return () => clearTimeout(timeout);
     }
-    
-    // User is verified, allow onboarding to proceed
-    if (user && user.id) {
-      setIsVerifyingUser(false);
-    } else if (isNewUser) {
-      setIsVerifyingUser(false);
-    } else if (machineContext.isWaitlistOnly) {
-      // In waitlist-only flow, allow proceeding without user.id
-      setIsVerifyingUser(false);
-    }
   }, [
     isLoading,
     isAuthenticated,
-    userId,
-    isNewUser,
+    token,
     navigate,
-    refreshUser,
     machineContext.isWaitlistOnly,
   ]);
 
@@ -711,34 +695,37 @@ export default function Onboarding() {
   const updateVenueFormData = (updates: Partial<VenueOnboardingData>) => setVenueFormData((prev) => ({ ...prev, ...updates }));
 
   const saveStepData = async () => {
-    // In waitlist-only flow, allow saving without user.id for step 1
-    if (!machineContext.isWaitlistOnly && !user?.id) {
-      console.error('[Onboarding] saveStepData: User ID not found', { 
-        hasUser: !!user, 
-        userId: user?.id,
-        currentStep: machineContext.stepIndex,
-        isWaitlistOnly: machineContext.isWaitlistOnly,
-      });
-      throw new Error('User session not available. Please refresh the page.');
+    // Ensure we have Firebase auth token before making API calls
+    // The authenticateUser middleware will auto-create the user if it doesn't exist
+    if (!token && !auth.currentUser) {
+      throw new Error('Authentication required. Please sign in again.');
+    }
+    
+    // Force refresh token to ensure it's valid
+    let idToken = token;
+    if (auth.currentUser) {
+      idToken = await auth.currentUser.getIdToken(true);
+    }
+    
+    if (!idToken) {
+      throw new Error('Authentication token not available. Please sign in again.');
     }
     
     try {
       if (machineContext.state === 'PERSONAL_DETAILS') {
-        // Only save if user.id exists (waitlist flow may not have user yet)
-        if (user?.id) {
-          await apiRequest('PUT', '/api/me', { 
-            displayName: formData.displayName, 
-            phone: formData.phone, 
-            location: formData.location, 
-            avatarUrl: formData.avatarUrl || undefined 
-          });
-          await refreshUser();
-        }
+        // Create/update user profile - middleware will auto-create if user doesn't exist
+        await apiRequest('PUT', '/api/me', { 
+          displayName: formData.displayName, 
+          phone: formData.phone, 
+          location: formData.location, 
+          avatarUrl: formData.avatarUrl || undefined 
+        });
+        // Refresh user data to get the newly created user profile
+        await refreshUser();
       }
       if (machineContext.state === 'VENUE_DETAILS') {
-        if (!user?.id) {
-          throw new Error('User session required for venue profile');
-        }
+        // User profile should exist by this point (created in PERSONAL_DETAILS step)
+        // But if not, the API will handle it via middleware
         // Validate venue form data
         if (!venueFormData.venueName.trim()) {
           throw new Error('Venue name is required');
@@ -777,9 +764,7 @@ export default function Onboarding() {
         dispatch({ type: 'NEXT' });
       }
       if (machineContext.state === 'ROLE_EXPERIENCE') {
-        if (!user?.id) {
-          throw new Error('User session required for this step');
-        }
+        // Update user profile - user should exist by this point
         await apiRequest('PUT', '/api/me', { 
           hospitalityRole: formData.hospitalityRole || undefined, 
           hourlyRatePreference: formData.hourlyRatePreference || undefined, 
@@ -806,34 +791,15 @@ export default function Onboarding() {
     if (!canProceed) return;
     if (machineContext.stepIndex >= TOTAL_STEPS - 1) return;
     
-    // Check user.id for non-waitlist flows and non-role-selection steps
-    if (!machineContext.isWaitlistOnly && machineContext.state !== 'ROLE_SELECTION' && !user?.id) {
-      console.error('[Onboarding] User ID not found, attempting to refresh session...');
+    // Ensure we have Firebase auth token (required for API calls)
+    // Don't check for user.id since it will be created during onboarding
+    if (machineContext.state !== 'ROLE_SELECTION' && !token && !auth.currentUser) {
       toast({ 
-        title: 'Your session took a break.',
-        description: 'Please log back in to continue.',
+        title: 'Authentication required',
+        description: 'Please sign in again to continue.',
         variant: 'destructive'
       });
-      try {
-        await refreshUser();
-        // If still no user after refresh, show error
-        if (!user?.id) {
-          toast({ 
-            title: 'Your session took a break.',
-            description: 'Please log back in to continue.',
-            variant: 'destructive'
-          });
-          navigate('/login', { replace: true });
-        }
-      } catch (refreshError) {
-        console.error('[Onboarding] Failed to refresh user:', refreshError);
-        toast({ 
-          title: 'Your session took a break.',
-          description: 'Please log back in to continue.',
-          variant: 'destructive'
-        });
-        navigate('/login', { replace: true });
-      }
+      navigate('/login', { replace: true });
       return;
     }
     
@@ -891,20 +857,39 @@ export default function Onboarding() {
   };
 
   const handleComplete = async () => {
-    if (!machineContext.isWaitlistOnly && !user?.id) return;
     if (!canProceed) return;
+    
+    // Ensure we have Firebase auth
+    if (!token && !auth.currentUser) {
+      toast({ 
+        title: 'Authentication required', 
+        description: 'Please sign in again to complete onboarding.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
+      // Save any remaining step data
       await saveStepData();
-      if (auth.currentUser) await auth.currentUser.getIdToken(true);
+      
+      // Force refresh token to ensure it's valid
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+      }
       
       // Mark onboarding as completed in the database
+      // The authenticateUser middleware ensures the user exists
       await apiRequest('PUT', '/api/me', { 
         hasCompletedOnboarding: true
       });
       
       // Force refresh token to get updated claims
-      if (auth.currentUser) await auth.currentUser.getIdToken(true);
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+      }
+      
       // Refresh user data to get updated hasCompletedOnboarding status
       await refreshUser();
       
@@ -1238,7 +1223,7 @@ export default function Onboarding() {
                   <Button 
                     type="button" 
                     onClick={handleComplete} 
-                    disabled={!canProceed || isSubmitting || (!machineContext.isWaitlistOnly && !user?.id)} 
+                    disabled={!canProceed || isSubmitting || (!token && !auth.currentUser)} 
                     variant="accent" 
                     className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" 
                     data-testid="onboarding-complete"
@@ -1259,7 +1244,7 @@ export default function Onboarding() {
                   <Button 
                     type="button" 
                     onClick={handleNext} 
-                    disabled={!canProceed || isSavingStep || (!machineContext.isWaitlistOnly && !user?.id)} 
+                    disabled={!canProceed || isSavingStep || (machineContext.state !== 'ROLE_SELECTION' && !token && !auth.currentUser)} 
                     variant="accent" 
                     className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" 
                     data-testid="onboarding-next"
