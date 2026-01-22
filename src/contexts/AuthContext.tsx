@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
 import { browserLocalPersistence, getRedirectResult, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Keep the current Firebase user without ever touching auth.currentUser.
   const firebaseUserRef = useRef<FirebaseUser | null>(null);
@@ -149,17 +151,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('[AuthContext] Handshake is Complete');
         setIsLoading(false);
         
-        // STEP 4: Automatic navigation trigger - if user is authenticated and on /login, redirect to dashboard
-        // This ensures the UI doesn't get stuck on the loading screen after handshake completes
-        // Note: We check firebaseUserRef.current here because user state may not be updated yet
-        // The useEffect below will also handle this case once user state is fully set
-        if (firebaseUserRef.current && window.location.pathname === '/login') {
-          // Use setTimeout to ensure state updates have propagated
+        // STEP 4: Automatic navigation trigger - IMMEDIATELY after handshake completes
+        // This ensures the UI doesn't get stuck on the loading screen
+        const firebaseUser = firebaseUserRef.current;
+        if (firebaseUser) {
+          console.log('[Auth] User verified, triggering auto-navigation');
+          // Use a small timeout to ensure state has propagated, then navigate
           setTimeout(() => {
-            if (window.location.pathname === '/login') {
-              window.location.replace('/dashboard');
-            }
-          }, 100);
+            navigate('/dashboard', { replace: true });
+          }, 50);
         }
       } catch (error) {
         logger.error('AuthContext', 'Auth initialization failed', error);
@@ -175,15 +175,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       if (unsub) unsub();
     };
-  }, [hydrateFromFirebaseUser]);
+  }, [hydrateFromFirebaseUser, navigate]);
 
   // Additional useEffect to handle navigation after auth state changes
   // This provides a secondary navigation trigger when user state updates
   useEffect(() => {
-    if (!isLoading && user && window.location.pathname === '/login') {
-      window.location.replace('/dashboard');
+    if (!isLoading && user) {
+      const currentPath = window.location.pathname;
+      // Redirect authenticated users away from public-only routes
+      if (currentPath === '/login' || currentPath === '/signup') {
+        console.log('[Auth] User authenticated, redirecting from', currentPath, 'to /dashboard');
+        navigate('/dashboard', { replace: true });
+      }
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, navigate]);
 
   const value = useMemo<AuthContextType>(
     () => ({

@@ -26,9 +26,14 @@ export function AuthGuard({
   }
 
   // Automatic redirect: If user is authenticated and on a public-only route like /login, redirect to dashboard
+  // This useEffect aggressively watches user and isLoading to ensure navigation happens immediately
   useEffect(() => {
-    if (!isLoading && user && location.pathname === '/login') {
-      navigate('/dashboard', { replace: true });
+    if (!isLoading && user) {
+      // If user is authenticated, redirect from public-only routes
+      if (location.pathname === '/login' || location.pathname === '/signup') {
+        console.log('[AuthGuard] User authenticated, forcing navigation to /dashboard');
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [user, isLoading, location.pathname, navigate]);
 
