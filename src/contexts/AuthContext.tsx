@@ -148,6 +148,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Now we can safely set isLoading to false
         console.log('[AuthContext] Handshake is Complete');
         setIsLoading(false);
+        
+        // STEP 4: Automatic navigation trigger - if user is authenticated and on /login, redirect to dashboard
+        // This ensures the UI doesn't get stuck on the loading screen after handshake completes
+        // Note: We check firebaseUserRef.current here because user state may not be updated yet
+        // The useEffect below will also handle this case once user state is fully set
+        if (firebaseUserRef.current && window.location.pathname === '/login') {
+          // Use setTimeout to ensure state updates have propagated
+          setTimeout(() => {
+            if (window.location.pathname === '/login') {
+              window.location.replace('/dashboard');
+            }
+          }, 100);
+        }
       } catch (error) {
         logger.error('AuthContext', 'Auth initialization failed', error);
         setUser(null);
@@ -163,6 +176,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (unsub) unsub();
     };
   }, [hydrateFromFirebaseUser]);
+
+  // Additional useEffect to handle navigation after auth state changes
+  // This provides a secondary navigation trigger when user state updates
+  useEffect(() => {
+    if (!isLoading && user && window.location.pathname === '/login') {
+      window.location.replace('/dashboard');
+    }
+  }, [user, isLoading]);
 
   const value = useMemo<AuthContextType>(
     () => ({
