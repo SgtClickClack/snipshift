@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -62,8 +62,8 @@ if (firebaseConfig.projectId !== REQUIRED_PROJECT_ID) {
   throw new Error(`Unauthorized Project ID: Expected '${REQUIRED_PROJECT_ID}', got '${firebaseConfig.projectId}'`);
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase - prevent re-initialization if app already exists
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 // SECURITY: Double-check the initialized app's project ID
 if (app.options.projectId !== REQUIRED_PROJECT_ID) {
@@ -71,7 +71,14 @@ if (app.options.projectId !== REQUIRED_PROJECT_ID) {
 }
 
 export { app };
+
+// Initialize Auth and Export it as a constant
 export const auth = getAuth(app);
+
+// For debugging in console - expose auth to window for inspection
+if (typeof window !== 'undefined') {
+  (window as any).firebaseAuth = auth;
+}
 
 // Connect to Firebase Auth Emulator in E2E mode if explicitly enabled and available
 // Only connect if VITE_USE_FIREBASE_EMULATOR is set to "1" to avoid connection errors

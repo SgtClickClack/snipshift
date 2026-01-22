@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOutUser, auth } from '../lib/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
-import { setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { setPersistence, browserLocalPersistence, getRedirectResult } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { getDashboardRoute, normalizeVenueToBusiness, isBusinessRole } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -217,45 +217,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
 
-    // Step 1: Set persistence to LOCAL (survives page refresh)
-    setPersistence(auth, browserLocalPersistence)
-      .then(() => {
+    // Initialize auth state: Set persistence, handle redirect result, then listen for changes
+    const initializeAuth = async () => {
+      try {
+        // Step 1: Set persistence to LOCAL (survives page refresh)
+        await setPersistence(auth, browserLocalPersistence);
         logger.debug('AuthContext', 'Persistence set to browserLocalPersistence');
-      })
-      .catch((error) => {
-        logger.error('AuthContext', 'Failed to set persistence:', error);
-      });
 
-    // Step 2: Listen for auth state changes (synchronous - returns unsubscribe immediately)
-    unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);
-        
-        // Fetch profile from /api/me
-        const appUser = await fetchUserProfile(firebaseUser);
-        setUser(appUser);
-        
-        // Auto-redirect from login/signup pages
-        const currentPath = window.location.pathname;
-        if (['/login', '/signup'].includes(currentPath) && appUser) {
-          const target = appUser.hasCompletedOnboarding === false || !appUser.isOnboarded
-            ? '/onboarding'
-            : appUser.currentRole && appUser.currentRole !== 'client'
-              ? getDashboardRoute(appUser.currentRole)
-              : '/role-selection';
-          if (target !== currentPath) {
-            navigate(target, { replace: true });
-          }
+        // Step 2: Handle redirect result (for Google sign-in redirect flow)
+        const redirectResult = await getRedirectResult(auth);
+        if (redirectResult?.user) {
+          logger.debug('AuthContext', 'Google redirect result received:', redirectResult.user.uid);
+          // Force token refresh to ensure it's persisted and ready for backend
+          await redirectResult.user.getIdToken(true);
         }
-      } else {
-        logger.debug('AuthContext', 'No Firebase user');
-        setUser(null);
-        setToken(null);
+      } catch (error) {
+        logger.error('AuthContext', 'Error during auth initialization:', error);
       }
 
-      // CRITICAL: Only set isLoading(false) AFTER profile fetch completes or firebaseUser is confirmed null
-      setIsLoading(false);
-    });
+      // Step 3: Listen for auth state changes (synchronous - returns unsubscribe immediately)
+      unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          logger.debug('AuthContext', 'Firebase user authenticated:', firebaseUser.uid);
+          
+          // Fetch profile from /api/me
+          const appUser = await fetchUserProfile(firebaseUser);
+          setUser(appUser);
+          
+          // Auto-redirect from login/signup pages
+          const currentPath = window.location.pathname;
+          if (['/login', '/signup'].includes(currentPath) && appUser) {
+            const target = appUser.hasCompletedOnboarding === false || !appUser.isOnboarded
+              ? '/onboarding'
+              : appUser.currentRole && appUser.currentRole !== 'client'
+                ? getDashboardRoute(appUser.currentRole)
+                : '/role-selection';
+            if (target !== currentPath) {
+              navigate(target, { replace: true });
+            }
+          }
+        } else {
+          logger.debug('AuthContext', 'No Firebase user');
+          setUser(null);
+          setToken(null);
+        }
+
+        // CRITICAL: Only set isLoading(false) AFTER profile fetch completes or firebaseUser is confirmed null
+        setIsLoading(false);
+      });
+    };
+
+    // Execute initialization
+    initializeAuth();
     
     // Cleanup function
     return () => {
