@@ -190,10 +190,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const apiUser = await fetchAppUser(idToken, isOnboardingModeRef.current, firebaseUser);
     if (apiUser) {
+      // Verify the user record exists and matches Firebase UID
+      // After migration, the Postgres record should have firebase_uid column populated
+      const userFirebaseUid = apiUser.uid || (apiUser as any).firebase_uid;
+      const tokenFirebaseUid = firebaseUser.uid;
+      
+      if (userFirebaseUid && tokenFirebaseUid && userFirebaseUid !== tokenFirebaseUid) {
+        console.warn('[AuthContext] Firebase UID mismatch between token and user record', {
+          tokenUid: tokenFirebaseUid,
+          userUid: userFirebaseUid,
+          userId: apiUser.id
+        });
+      }
+      
       console.log('[AuthContext] User profile fetched successfully', { 
         id: apiUser.id, 
         isOnboarded: apiUser.isOnboarded,
-        hasCompletedOnboarding: apiUser.hasCompletedOnboarding 
+        hasCompletedOnboarding: apiUser.hasCompletedOnboarding,
+        firebaseUid: userFirebaseUid || tokenFirebaseUid,
+        firebaseUidMatch: userFirebaseUid === tokenFirebaseUid
       });
       setUser({ ...apiUser, uid: firebaseUser.uid });
       

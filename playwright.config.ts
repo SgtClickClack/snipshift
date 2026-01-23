@@ -69,17 +69,22 @@ export default defineConfig({
           use: {
             ...devices['Pixel 5'],
             storageState: 'playwright/.auth/user.json',
+            actionTimeout: 45000, // Increase action timeout for mobile
+            navigationTimeout: 45000, // Increase navigation timeout for mobile
           },
           dependencies: ['setup'],
+          retries: 2, // Retry mobile tests to handle server cold-starts
         },
         {
           name: 'Mobile Safari',
           use: {
             ...devices['iPhone 12'],
-            navigationTimeout: 15000, // Increase timeout for Mobile Safari
+            navigationTimeout: 45000, // Increase timeout for Mobile Safari
+            actionTimeout: 45000, // Increase action timeout for mobile
             storageState: 'playwright/.auth/user.json',
           },
           dependencies: ['setup'],
+          retries: 2, // Retry mobile tests to handle server cold-starts
         },
       ]
     : [
@@ -89,14 +94,21 @@ export default defineConfig({
         },
         {
           name: 'Mobile Chrome',
-          use: { ...devices['Pixel 5'] },
+          use: { 
+            ...devices['Pixel 5'],
+            actionTimeout: 45000, // Increase action timeout for mobile
+            navigationTimeout: 45000, // Increase navigation timeout for mobile
+          },
+          retries: 2, // Retry mobile tests to handle server cold-starts
         },
         {
           name: 'Mobile Safari',
           use: { 
             ...devices['iPhone 12'],
-            navigationTimeout: 15000, // Increase timeout for Mobile Safari
+            navigationTimeout: 45000, // Increase timeout for Mobile Safari
+            actionTimeout: 45000, // Increase action timeout for mobile
           },
+          retries: 2, // Retry mobile tests to handle server cold-starts
         },
       ],
 

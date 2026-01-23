@@ -37,13 +37,6 @@ import { format } from "date-fns";
 import { formatDateSafe, toISOStringSafe, toDateSafe } from "@/utils/date-formatter";
 import { createShift, fetchShopShifts, updateShiftStatus, decideApplication, getShiftApplications, updateApplicationStatus, ShiftApplication, requestBackupFromWaitlist } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { ApplicationCard, Application } from "@/components/applications/ApplicationCard";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import {

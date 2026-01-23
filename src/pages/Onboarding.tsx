@@ -847,19 +847,43 @@ export default function Onboarding() {
         });
         await refreshUser();
       }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorStatus = (error as { status?: number })?.status;
-      const errorResponse = (error as { response?: unknown })?.response;
-      console.error('[Onboarding] Error saving step data:', {
-        error: errorMessage,
-        currentStep: machineContext.stepIndex,
-        userId: user?.id,
-        status: errorStatus,
-        response: errorResponse
-      });
-      throw error; // Re-throw so handleNext can catch it
-    }
+      } catch (error: unknown) {
+        // Extract diagnostic message from API error response if available
+        let errorMessage = 'Please try again.';
+        let diagnosticMessage = '';
+        
+        if (error instanceof Error) {
+          errorMessage = error.message;
+          
+          // Try to extract diagnostic info from error message (format: "status: {json}")
+          const statusMatch = error.message.match(/^\d+:\s*(.+)$/);
+          if (statusMatch) {
+            try {
+              const errorData = JSON.parse(statusMatch[1]);
+              // Use diagnostic message if available, otherwise use message
+              diagnosticMessage = errorData.diagnostic || errorData.message || errorMessage;
+              errorMessage = errorData.message || errorMessage;
+            } catch {
+              // Not JSON, use the message as-is
+              diagnosticMessage = errorMessage;
+            }
+          } else {
+            diagnosticMessage = errorMessage;
+          }
+        }
+        
+        const errorStatus = (error as { status?: number })?.status;
+        const errorResponse = (error as { response?: unknown })?.response;
+        console.error('[Onboarding] Error saving step data:', {
+          error: errorMessage,
+          diagnostic: diagnosticMessage,
+          currentStep: machineContext.stepIndex,
+          userId: user?.id,
+          status: errorStatus,
+          response: errorResponse
+        });
+        throw error; // Re-throw so handleNext can catch it
+      }
   };
 
   const handleNext = async () => {
@@ -914,11 +938,34 @@ export default function Onboarding() {
         dispatch({ type: 'NEXT' });
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
+      // Extract diagnostic message from API error response if available
+      let errorMessage = 'Please try again.';
+      let diagnosticMessage = '';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Try to extract diagnostic info from error message (format: "status: {json}")
+        const statusMatch = error.message.match(/^\d+:\s*(.+)$/);
+        if (statusMatch) {
+          try {
+            const errorData = JSON.parse(statusMatch[1]);
+            // Use diagnostic message if available, otherwise use message
+            diagnosticMessage = errorData.diagnostic || errorData.message || errorMessage;
+            errorMessage = errorData.message || errorMessage;
+          } catch {
+            // Not JSON, use the message as-is
+            diagnosticMessage = errorMessage;
+          }
+        } else {
+          diagnosticMessage = errorMessage;
+        }
+      }
+      
       console.error('[Onboarding] Error saving step data:', error);
       toast({ 
         title: 'Could not save', 
-        description: errorMessage, 
+        description: diagnosticMessage || errorMessage, 
         variant: 'destructive' 
       });
     } finally {
@@ -986,9 +1033,36 @@ export default function Onboarding() {
         navigate('/dashboard', { replace: true });
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to complete onboarding. Please try again.';
+      // Extract diagnostic message from API error response if available
+      let errorMessage = 'Failed to complete onboarding. Please try again.';
+      let diagnosticMessage = '';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Try to extract diagnostic info from error message (format: "status: {json}")
+        const statusMatch = error.message.match(/^\d+:\s*(.+)$/);
+        if (statusMatch) {
+          try {
+            const errorData = JSON.parse(statusMatch[1]);
+            // Use diagnostic message if available, otherwise use message
+            diagnosticMessage = errorData.diagnostic || errorData.message || errorMessage;
+            errorMessage = errorData.message || errorMessage;
+          } catch {
+            // Not JSON, use the message as-is
+            diagnosticMessage = errorMessage;
+          }
+        } else {
+          diagnosticMessage = errorMessage;
+        }
+      }
+      
       console.error('Onboarding completion error:', error);
-      toast({ title: 'Setup Failed', description: errorMessage, variant: 'destructive' });
+      toast({ 
+        title: 'Setup Failed', 
+        description: diagnosticMessage || errorMessage, 
+        variant: 'destructive' 
+      });
       setIsSubmitting(false);
     }
   };
@@ -1296,12 +1370,12 @@ export default function Onboarding() {
                   <Button 
                     type="button" 
                     onClick={handleComplete} 
-                    disabled={!canProceed || isSubmitting || (!token && !auth.currentUser)} 
+                    disabled={!canProceed || isSubmitting || isSavingStep || (!token && !auth.currentUser)} 
                     variant="accent" 
                     className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" 
                     data-testid="onboarding-complete"
                   >
-                    {isSubmitting ? (
+                    {isSubmitting || isSavingStep ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Completing...
@@ -1317,12 +1391,12 @@ export default function Onboarding() {
                   <Button 
                     type="button" 
                     onClick={handleNext} 
-                    disabled={!canProceed || isSavingStep || (machineContext.state !== 'ROLE_SELECTION' && !hasFirebaseUser)} 
+                    disabled={!canProceed || isSavingStep || isSubmitting || (machineContext.state !== 'ROLE_SELECTION' && !hasFirebaseUser)} 
                     variant="accent" 
                     className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300" 
                     data-testid="onboarding-next"
                   >
-                    {isSavingStep ? (
+                    {isSavingStep || isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         {machineContext.state === 'VENUE_DETAILS' ? 'Creating Profile...' : 'Saving...'}
