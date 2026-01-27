@@ -1,0 +1,35 @@
+audit_summary:
+  status: REDIRECT_LOOP_CONFIRMED
+  timestamp: "2026-01-27T21:00:00+10:00"
+  location: "src/pages/role-selection.tsx"
+  
+  root_cause:
+    - "Role Selection page redirects directly to `getDashboardRoute(primaryRole)`."
+    - "If `primaryRole` is 'hub', it redirects to `/venue/dashboard`."
+    - "However, newly created Venues have `user.isOnboarded = false` (or `hasCompletedOnboarding = false`)."
+    - "If the `/venue/dashboard` page (or AuthGuard) detects incomplete onboarding, it redirects back to `/onboarding` (or `/role-selection` if role is missing)."
+    - "Since `role-selection.tsx` sets the role via API but doesn't complete the full onboarding wizard (e.g. Venue Details), the user is stuck in a loop: Role Select -> Dashboard -> Onboarding -> Role Select (because user object might not reflect the role update locally yet)."
+
+  logic_mismatch:
+    frontend_role: "hub"
+    backend_role: "business"
+    mapping_status: "HANDLED" # mapRoleToApiRole handles this correctly in role-selection.tsx
+    
+  fix_strategy:
+    - "Modify `role-selection.tsx` to redirect to the NEXT step of onboarding instead of the dashboard."
+    - "For 'hub'/'business' role: Redirect to `/onboarding/hub` (Venue Details)."
+    - "For 'professional' role: Redirect to `/onboarding` (Staff Details)."
+    
+  yaml_fix: |
+    # In src/pages/role-selection.tsx
+    # Replace the navigation logic:
+    
+    if (dbRole === 'business') {
+      navigate('/onboarding/hub');
+    } else {
+      navigate('/onboarding');
+    }
+    
+    # Instead of:
+    # navigate(getDashboardRoute(primaryRole));
+

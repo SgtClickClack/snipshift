@@ -182,6 +182,39 @@ router.post('/register', asyncHandler(async (req, res) => {
         if (isMissingFirebaseUidColumn(dbError)) {
           console.warn('[REGISTER] firebase_uid column missing, falling back to email-only match');
           firebaseUid = null;
+        } else if (dbError?.code === '23505' || dbError?.message?.includes('unique constraint')) {
+          // Email already exists - link Google to existing account (user may have signed up with email first)
+          const existingByEmail = await usersRepo.getUserByEmail(email);
+          if (existingByEmail) {
+            try {
+              const updated = await usersRepo.updateUser(existingByEmail.id, {
+                firebaseUid: firebaseUid!,
+                lastLogin: new Date(),
+              });
+              if (updated) {
+                res.status(200).json({
+                  id: updated.id,
+                  email: updated.email,
+                  name: updated.name,
+                  role: updated.role,
+                  isOnboarded: updated.isOnboarded ?? false,
+                });
+                return;
+              }
+            } catch (updateErr: any) {
+              if (!isMissingFirebaseUidColumn(updateErr)) throw updateErr;
+            }
+            // Return existing user even if firebase_uid update failed (e.g. column missing)
+            res.status(200).json({
+              id: existingByEmail.id,
+              email: existingByEmail.email,
+              name: existingByEmail.name,
+              role: existingByEmail.role,
+              isOnboarded: existingByEmail.isOnboarded ?? false,
+            });
+            return;
+          }
+          throw dbError;
         } else {
           throw dbError;
         }

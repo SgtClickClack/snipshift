@@ -1,3 +1,29 @@
+#### 2026-01-27: /api/register 500 fix – link Google to existing email
+
+**Core Components**
+- Users API route (`api/_src/routes/users.ts`)
+- Google auth button (`src/components/auth/google-auth-button.tsx`)
+
+**Key Features**
+- When `upsertUserByFirebaseUid` throws PG unique violation (23505), treat as “email already exists” and link Google to that account: fetch user by email, update `firebase_uid` and `last_login`, return 200 with existing user.
+- If `updateUser` fails due to missing `firebase_uid` column, still return 200 with existing user so OAuth flow completes.
+- Clarified frontend comment: 200 = existing/updated, 201 = created.
+
+**Integration Points**
+- `POST /api/register` (Bearer token + email/name)
+- `usersRepo.getUserByEmail`, `usersRepo.updateUser`
+
+**File Paths**
+- `api/_src/routes/users.ts`
+- `src/components/auth/google-auth-button.tsx`
+
+**Next Priority Task**
+- Re-test Google sign-in after email signup (and vice versa) to confirm no more 500 on `/api/register`.
+
+**Code Organization & Quality**
+- Kept idempotent semantics: linking Google to an existing email returns 200, not 201/409.
+
+---
 #### 2026-01-22: Token Verification Hardening + Error Logging
 
 **Core Components**

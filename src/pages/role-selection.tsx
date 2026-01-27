@@ -77,10 +77,17 @@ export default function RoleSelectionPage() {
 
       toast({
         title: "Roles updated",
-        description: `You're set as ${selectedRoles.join(", ")}. Redirecting...`,
+        description: `You're set as ${selectedRoles.join(", ")}. Continuing setup...`,
       });
 
-      navigate(getDashboardRoute(primaryRole));
+      // Redirect to the appropriate onboarding flow based on the primary role
+      // Do NOT redirect to dashboard yet, as the user likely needs to complete profile details
+      if (primaryRole === 'hub' || primaryRole === 'brand' || primaryRole === 'business') {
+        navigate('/onboarding/hub');
+      } else {
+        // Professional/Staff flow
+        navigate('/onboarding');
+      }
     } catch (error: any) {
       toast({
         title: "Error",

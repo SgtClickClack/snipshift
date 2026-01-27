@@ -47,7 +47,7 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
       }),
     });
 
-    // 201 = created, 409 = already exists - both are fine
+    // 200 = existing/updated, 201 = created - both are success; 409 = legacy already-exists
     if (!registerRes.ok && registerRes.status !== 409) {
       const errorData = await registerRes.json().catch(() => ({} as any));
 

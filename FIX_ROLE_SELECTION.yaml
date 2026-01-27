@@ -1,0 +1,22 @@
+fix_summary:
+  status: ROLE_LOOP_FIXED
+  timestamp: "2026-01-27T21:05:00+10:00"
+  
+  changes:
+    role_selection:
+      file: "src/pages/role-selection.tsx"
+      action: "Updated navigation logic."
+      details: "Redirects to `/onboarding/hub` or `/onboarding` instead of the dashboard after role selection. This ensures users complete the mandatory setup steps before hitting the dashboard (which would otherwise bounce them back)."
+      verification: "User state is refreshed via `refreshUser()` before navigation."
+
+    role_handling:
+      file: "src/lib/roles.ts"
+      status: "VERIFIED"
+      notes: "`isBusinessRole` correctly handles aliases ('hub', 'venue', 'brand'). No changes needed."
+
+    middleware_check:
+      status: "SKIPPED"
+      reason: "No src/middleware.ts exists (Vite architecture). AuthGuard (frontend) and api/middleware/auth.ts (backend) handle protection. AuthGuard was fixed in the previous turn."
+
+  next_steps:
+    - "Verify the Venue Onboarding flow (hub.tsx) to ensure it correctly identifies the 'business' role returned by the API."

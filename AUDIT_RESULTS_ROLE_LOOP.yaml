@@ -1,0 +1,36 @@
+audit_summary:
+  status: REDIRECT_LOOP_DETECTED
+  timestamp: "2026-01-27T20:55:00+10:00"
+  
+  findings:
+    role_selection_logic:
+      file: src/pages/role-selection.tsx
+      status: RISK
+      observation: "The page handles 'hub' role but the backend maps it to 'business'. The redirect logic uses 'getDashboardRoute(primaryRole)'. If primaryRole is 'hub' (from local state), it might route correctly, but if it relies on 'user.currentRole' from the refreshed profile (which is 'business'), and getDashboardRoute doesn't handle 'business', it could fail."
+      
+    role_helpers:
+      file: src/lib/roles.ts
+      status: PASS
+      observation: "Helper 'roleToRoute' correctly maps both 'hub' and 'business' to '/venue/dashboard'. This mitigates the risk in role-selection.tsx, assuming getDashboardRoute is used correctly."
+      
+    auth_context:
+      file: src/contexts/AuthContext.tsx
+      status: PASS
+      observation: "The previous fix (removing the early null return) is present. 'fetchAppUser' now runs even in onboarding mode, which is correct."
+      
+    middleware:
+      status: NOT_FOUND
+      observation: "No middleware.ts found (Vite app). Auth logic is client-side in AuthGuard and AuthContext."
+
+  root_cause_hypothesis:
+    - "The redirect loop might be caused by `AuthGuard` or `DashboardRedirect` seeing a user with `hasCompletedOnboarding: false` (or undefined) even after they select a role."
+    - "If `role-selection.tsx` calls `refreshUser()` but the backend doesn't set `hasCompletedOnboarding = true` until later steps, the user is stuck."
+    - "However, `role-selection.tsx` only redirects to dashboard. If the dashboard is protected and checks for onboarding completion, it might bounce them back."
+
+  recommendations:
+    - "Verify if `PATCH /api/users/${user.id}/roles` or `current-role` sets `hasCompletedOnboarding` to true? Likely NOT. It probably remains false until the full onboarding wizard is done."
+    - "If `role-selection.tsx` redirects to `/venue/dashboard`, and that page is protected by `AuthGuard`, and `AuthGuard` (or the page itself) requires `hasCompletedOnboarding`, then we have a gap."
+    - "Actually, `role-selection.tsx` is an onboarding step. The user selects a role, then goes to dashboard? NO. They should go to the next step of onboarding (e.g. Venue Details or Profile Setup)."
+    - "Wait, `role-selection.tsx` redirects to `getDashboardRoute(primaryRole)`. For a venue, this is `/venue/dashboard`. If the user hasn't filled out their venue details (Hub Onboarding), the dashboard might redirect them back to onboarding, creating a loop."
+    - "FIX: Role selection should redirect to the next ONBOARDING step (e.g. `/onboarding/hub`), not the dashboard, unless the user is already fully onboarded."
+

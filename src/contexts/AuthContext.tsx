@@ -278,6 +278,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Primary async function to handle the complete auth handshake
     const initializeAuth = async () => {
+      // E2E Bypass: Check for test user in sessionStorage
+      if (typeof window !== 'undefined') {
+        const e2eUserStr = sessionStorage.getItem('hospogo_test_user');
+        if (e2eUserStr) {
+          try {
+            const e2eUser = JSON.parse(e2eUserStr);
+            console.log('[AuthContext] E2E Test User detected:', e2eUser);
+            
+            // Apply Dashboard Phase override if needed
+            if (sessionStorage.getItem('E2E_DASHBOARD_PHASE')) {
+              console.log('[AuthContext] E2E Dashboard Phase detected - Forcing onboarding completion');
+              e2eUser.hasCompletedOnboarding = true;
+              e2eUser.isOnboarded = true;
+            }
+            
+            setUser(e2eUser);
+            setIsLoading(false);
+            return; // Skip Firebase listener in E2E mode if test user is forced
+          } catch (e) {
+            console.error('[AuthContext] Failed to parse E2E test user', e);
+          }
+        }
+      }
+
       try {
         // POPUP-ONLY FLOW: Bypass redirect check entirely
         // onAuthStateChanged is now the ONLY authority for initial user hydration
