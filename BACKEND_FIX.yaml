@@ -1,0 +1,40 @@
+# Registration 500 diagnosis and fix log
+# Task: Identify why api/register returns 500 Internal Server Error
+
+backend_diagnosis:
+  status: "FIX_APPLIED"
+  timestamp: "2026-01-28"
+
+  checks_performed:
+    role_vs_drizzle_enum:
+      result: "MISMATCH_FIXED"
+      detail: |
+        - RegisterSchema did NOT accept 'venue'; frontend/onboarding often use role: 'venue'.
+        - Drizzle userRoleEnum (api/_src/db/schema/users.ts) is:
+          ['professional','business','admin','trainer','hub','pending_onboarding'] — no 'venue', no 'brand'.
+        - If frontend sent role: 'venue', validation rejected it (400). If some path sent 'brand' unmapped, DB could hit enum error → 500.
+      fix_applied: |
+        - Added 'venue' to RegisterSchema.
+        - Map requestedRole 'venue' and 'brand' to 'business' before calling repo, so DB only receives enum values.
+      files: ["api/_src/routes/users.ts"]
+
+    database_url_and_jwt:
+      result: "OK_JWT_NOT_USED"
+      detail: |
+        - DATABASE_URL: Loaded via dotenv in api/_src/index.ts — first from cwd (.env), then from ../.env if still missing.
+        - Root .env contains DATABASE_URL=postgresql://... — OK when API runs from repo root or when api/.env is absent and ../.env is used.
+        - JWT_SECRET: Not used by the register flow. Auth uses Firebase (verifyIdToken); no JWT_SECRET required for registration.
+      recommendation: "Ensure API is started from a directory where dotenv can see DATABASE_URL (e.g. run from repo root or from api/ with root .env as fallback)."
+
+    try_catch_swallowing:
+      result: "NO_SWALLOWING"
+      detail: |
+        - Register handler has an outer try/catch that returns 500 with message: error?.message || 'Unknown error' and reports to errorReporting.
+        - Inner createUser catch returns 500 with dbError?.message and logs dbError + stack. Database errors are propagated to the client.
+        - No branch catches a DB/enum error and returns success or hides the real cause; 500 responses include the underlying error message.
+      recommendation: "For harder-to-debug 500s, ensure NODE_ENV=development so the response includes stack/details."
+
+  summary:
+    - "Role mismatch fixed: 'venue' and 'brand' now accepted and mapped to 'business' before DB insert."
+    - "DATABASE_URL is loaded from .env; JWT_SECRET is not used by register."
+    - "Try/catch does not swallow database errors; they are logged and returned in the 500 body."

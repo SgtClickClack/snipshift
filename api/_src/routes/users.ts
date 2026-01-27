@@ -79,7 +79,8 @@ const OnboardingCompleteSchema = z.object({
 // Name and password are optional to support OAuth flows where:
 // - Name can be extracted from Firebase token (displayName)
 // - Password is not required for OAuth providers
-// Role is optional and defaults to 'professional' if not provided
+// Role is optional and defaults to 'pending_onboarding' if not provided.
+// Frontend aliases 'venue' and 'brand' are accepted; both map to DB enum value 'business'.
 const RegisterSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(255).optional(),
@@ -87,7 +88,7 @@ const RegisterSchema = z.object({
     z.string().min(8),
     z.literal(''),
   ]).optional(),
-  role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand', 'pending_onboarding']).optional(),
+  role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand', 'venue', 'pending_onboarding']).optional(),
 });
 
 const isMissingFirebaseUidColumn = (error: any): boolean => {
@@ -166,8 +167,12 @@ router.post('/register', asyncHandler(async (req, res) => {
     // Ensure name is always a string (fallback to email prefix if somehow still undefined)
     const finalName = name || email.split('@')[0];
 
+    // Map frontend role aliases to Drizzle user_role enum values (schema has no 'venue' or 'brand')
     const requestedRole = role || 'pending_onboarding';
-    const dbRole = requestedRole === 'brand' ? 'business' : requestedRole;
+    let dbRole = requestedRole;
+    if (requestedRole === 'brand' || requestedRole === 'venue') {
+      dbRole = 'business';
+    }
 
     if (firebaseUid) {
       let upsertedUser;
