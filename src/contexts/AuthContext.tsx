@@ -39,18 +39,15 @@ async function fetchAppUser(
   isOnboardingMode: boolean = false,
   firebaseUser?: FirebaseUser | null
 ): Promise<User | null> {
-  // Skip fetch entirely if in onboarding mode
-  if (isOnboardingMode) {
-    console.log('[AuthContext] Skipping /api/me fetch - onboarding mode active');
-    return null;
-  }
-
+  // Allow fetching user even in onboarding mode to resolve dependency deadlock
+  // We need user.id for onboarding API calls (e.g. payout setup, venue profile creation)
+  
   // Double-check pathname before making the request (defensive check)
-  // Suppress on signup/onboarding routes since new users don't have DB profiles yet
+  // Suppress on signup route since new users don't have DB profiles yet
   if (typeof window !== 'undefined') {
     const currentPath = window.location.pathname;
-    if (currentPath.startsWith('/onboarding') || currentPath === '/signup') {
-      console.log('[AuthContext] Skipping /api/me fetch - on signup/onboarding route', {
+    if (currentPath === '/signup') {
+      console.log('[AuthContext] Skipping /api/me fetch - on signup route', {
         pathname: currentPath
       });
       return null;
@@ -235,15 +232,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const firebaseUser = firebaseUserRef.current;
     if (!firebaseUser) return;
     
-    // CRITICAL: Skip refresh on signup/onboarding route to prevent 401/404 polling loop
+    // CRITICAL: Skip refresh on signup route to prevent 401/404 polling loop
+    // But allow on onboarding routes to support step progression
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-    const isOnSignupOrOnboarding = currentPath.startsWith('/onboarding') || 
-                                  currentPath === '/signup' || 
-                                  isOnboardingModeRef.current;
+    const isOnSignup = currentPath === '/signup';
     
-    if (isOnSignupOrOnboarding) {
-      isOnboardingModeRef.current = true;
-      console.log('[AuthContext] On signup/onboarding route - suppressing profile refresh', {
+    if (isOnSignup) {
+      console.log('[AuthContext] On signup route - suppressing profile refresh', {
         pathname: currentPath
       });
       return;

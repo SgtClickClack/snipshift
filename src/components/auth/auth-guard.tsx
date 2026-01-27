@@ -36,7 +36,9 @@ export function AuthGuard({
       return;
     }
 
-    if (hasFirebaseUser && user && isOnboardingPath) {
+    // Only redirect to dashboard if user has explicitly completed onboarding
+    // This allows users to stay on onboarding pages even if the user object exists
+    if (hasFirebaseUser && user && user.hasCompletedOnboarding && isOnboardingPath) {
       navigate('/dashboard', { replace: true });
     }
   }, [hasFirebaseUser, user, isOnboardingPath, isLoading, navigate]);
