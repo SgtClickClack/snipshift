@@ -162,6 +162,9 @@ tests/storageState.json
 tests/auth-setup-failure.png
 .env.bak-*
 
+# Firebase CLI cache / deploy state
+.firebase/
+
 # Firebase service account files (security)
 snipshift-75b04-service-account.json
 *-service-account.json

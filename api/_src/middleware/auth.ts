@@ -10,6 +10,20 @@ import { getAuth, getFirebaseInitError } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 
 /**
+ * Helper function to ensure error logs are flushed to Vercel logs
+ * Uses process.stderr.write to ensure immediate flushing
+ */
+function logAuthError(...args: any[]): void {
+  const message = args.map(arg => 
+    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+  ).join(' ');
+  // Use process.stderr.write to ensure immediate flushing in Vercel
+  process.stderr.write(`[AUTH ERROR] ${message}\n`);
+  // Also call console.error for compatibility
+  console.error('[AUTH ERROR]', ...args);
+}
+
+/**
  * Express request with user property
  */
 export interface AuthenticatedRequest extends Request {
@@ -91,11 +105,11 @@ export function authenticateUser(
     const firebaseAuth = getAuth();
     if (!firebaseAuth) {
       const initError = getFirebaseInitError();
-      console.error('[AUTH] Firebase auth service is not initialized', {
+      logAuthError('Firebase auth service is not initialized', {
         message: initError?.message,
       });
-      console.error('[AUTH] Check environment variables: FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
-      console.error('[AUTH DEBUG] Project ID from env:', process.env.FIREBASE_PROJECT_ID);
+      logAuthError('Check environment variables: FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+      logAuthError('Project ID from env:', process.env.FIREBASE_PROJECT_ID);
       console.log('[AUTH DEBUG] Backend Project ID:', process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID);
       res.status(503).json({ 
         message: 'Authentication service unavailable',
@@ -225,7 +239,7 @@ export function authenticateUser(
         
         // Validate token before verification
         if (!token || token.length === 0) {
-          console.error('[AUTH ERROR] Empty or invalid token provided', {
+          logAuthError('Empty or invalid token provided', {
             path: req.path,
             hasAuthHeader: !!req.headers.authorization,
           });
@@ -241,41 +255,138 @@ export function authenticateUser(
         try {
           decodedToken = await firebaseAuth.verifyIdToken(token);
         } catch (verifyError: any) {
-          // Enhanced error logging for token verification failures
+          // HARDENED ERROR LOGGING: Detailed analysis of why token validation failed
           const errorCode = verifyError?.code || 'unknown';
           const errorMessage = verifyError?.message || 'Token verification failed';
+          const errorName = verifyError?.name || 'UnknownError';
           
-          console.error('[AUTH ERROR] Token verification failed with specific error:', {
-            code: errorCode,
-            message: errorMessage,
-            path: req.path,
-            tokenStart: token?.substring(0, 10),
-            tokenLength: token?.length,
-            envProjectId: process.env.FIREBASE_PROJECT_ID,
-            firebaseAuthInitialized: !!firebaseAuth,
-            // Common error reasons:
-            isExpired: errorCode === 'auth/id-token-expired' || errorMessage.includes('expired'),
-            isInvalidFormat: errorCode === 'auth/argument-error' || errorMessage.includes('Decoding'),
-            isProjectMismatch: errorMessage.includes('project') || errorMessage.includes('audience'),
-            isRevoked: errorCode === 'auth/id-token-revoked',
-            errorStack: process.env.NODE_ENV === 'development' ? verifyError?.stack : undefined,
-          });
-          
-          // Provide specific error messages based on error type
-          let userFriendlyMessage = 'Unauthorized: Invalid token';
-          if (errorCode === 'auth/id-token-expired') {
-            userFriendlyMessage = 'Unauthorized: Token expired. Please sign in again.';
-          } else if (errorCode === 'auth/id-token-revoked') {
-            userFriendlyMessage = 'Unauthorized: Token revoked. Please sign in again.';
-          } else if (errorMessage.includes('project') || errorMessage.includes('audience')) {
-            userFriendlyMessage = 'Unauthorized: Token project mismatch. Check FIREBASE_PROJECT_ID environment variable.';
-            console.error('[AUTH ERROR] Project ID mismatch detected. Expected:', process.env.FIREBASE_PROJECT_ID);
+          // Decode token header to check project ID (if possible)
+          let tokenProjectId: string | null = null;
+          let tokenExpiry: number | null = null;
+          try {
+            const tokenParts = token.split('.');
+            if (tokenParts.length >= 2) {
+              // Decode base64url (JWT uses base64url, not standard base64)
+              const decodeBase64Url = (str: string): string => {
+                // Replace base64url characters with base64 characters
+                const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+                // Add padding if needed
+                const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+                return Buffer.from(padded, 'base64').toString('utf-8');
+              };
+              
+              const header = JSON.parse(decodeBase64Url(tokenParts[0]));
+              const payload = JSON.parse(decodeBase64Url(tokenParts[1]));
+              tokenProjectId = payload.aud || payload.project_id || null;
+              tokenExpiry = payload.exp || null;
+            }
+          } catch (decodeError) {
+            // Token is malformed - can't decode
+            logAuthError('Token is malformed - cannot decode header/payload:', {
+              error: (decodeError as Error).message,
+            });
           }
+
+          // Determine failure reason with detailed diagnostics
+          const failureReason = {
+            isExpired: errorCode === 'auth/id-token-expired' || 
+                      errorMessage.toLowerCase().includes('expired') ||
+                      (tokenExpiry && tokenExpiry < Date.now() / 1000),
+            isInvalidFormat: errorCode === 'auth/argument-error' || 
+                            errorMessage.toLowerCase().includes('decoding') ||
+                            errorMessage.toLowerCase().includes('malformed'),
+            isProjectMismatch: errorMessage.toLowerCase().includes('project') || 
+                             errorMessage.toLowerCase().includes('audience') ||
+                             (tokenProjectId && tokenProjectId !== process.env.FIREBASE_PROJECT_ID),
+            isRevoked: errorCode === 'auth/id-token-revoked',
+            isMalformedHeader: errorCode === 'auth/argument-error' && 
+                              (errorMessage.toLowerCase().includes('header') || 
+                               errorMessage.toLowerCase().includes('jwt')),
+            isInvalidSignature: errorMessage.toLowerCase().includes('signature') ||
+                               errorMessage.toLowerCase().includes('verification'),
+          };
+
+          // Log comprehensive error details (using helper to ensure flushing)
+          logAuthError('============================================');
+          logAuthError('Token Verification Failed - Detailed Analysis');
+          logAuthError('============================================');
+          logAuthError('Error Code:', errorCode);
+          logAuthError('Error Name:', errorName);
+          logAuthError('Error Message:', errorMessage);
+          logAuthError('Path:', req.path);
+          logAuthError('Method:', req.method);
+          logAuthError('============================================');
+          logAuthError('Token Details:');
+          logAuthError('  - Length:', token?.length);
+          logAuthError('  - Prefix:', token?.substring(0, 20) + '...');
+          logAuthError('  - Suffix:', '...' + token?.substring(Math.max(0, token.length - 20)));
+          logAuthError('  - Token Project ID (from payload):', tokenProjectId || 'N/A (could not decode)');
+          logAuthError('  - Token Expiry:', tokenExpiry ? new Date(tokenExpiry * 1000).toISOString() : 'N/A');
+          logAuthError('  - Is Expired:', failureReason.isExpired);
+          logAuthError('============================================');
+          logAuthError('Environment Configuration:');
+          logAuthError('  - FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID || 'NOT SET');
+          logAuthError('  - Firebase Auth Initialized:', !!firebaseAuth);
+          logAuthError('  - Project ID Match:', tokenProjectId === process.env.FIREBASE_PROJECT_ID ? 'YES' : 'NO');
+          logAuthError('============================================');
+          logAuthError('Failure Reason Analysis:');
+          logAuthError('  - Is Expired:', failureReason.isExpired);
+          logAuthError('  - Is Invalid Format:', failureReason.isInvalidFormat);
+          logAuthError('  - Is Project Mismatch:', failureReason.isProjectMismatch);
+          logAuthError('  - Is Revoked:', failureReason.isRevoked);
+          logAuthError('  - Is Malformed Header:', failureReason.isMalformedHeader);
+          logAuthError('  - Is Invalid Signature:', failureReason.isInvalidSignature);
+          logAuthError('============================================');
+          
+          if (process.env.NODE_ENV === 'development') {
+            logAuthError('Full Error Stack:', verifyError?.stack);
+          }
+          
+          // Provide specific error messages based on failure reason
+          let userFriendlyMessage = 'Unauthorized: Invalid token';
+          let diagnosticMessage = '';
+          
+          if (failureReason.isExpired) {
+            userFriendlyMessage = 'Unauthorized: Token expired. Please sign in again.';
+            diagnosticMessage = `Token expired at ${tokenExpiry ? new Date(tokenExpiry * 1000).toISOString() : 'unknown time'}`;
+          } else if (failureReason.isRevoked) {
+            userFriendlyMessage = 'Unauthorized: Token revoked. Please sign in again.';
+            diagnosticMessage = 'Token has been revoked by Firebase Admin SDK';
+          } else if (failureReason.isProjectMismatch) {
+            userFriendlyMessage = 'Unauthorized: Token project mismatch. Check FIREBASE_PROJECT_ID environment variable.';
+            diagnosticMessage = `Token project ID '${tokenProjectId}' does not match expected '${process.env.FIREBASE_PROJECT_ID}'`;
+            logAuthError('🔍 PROJECT ID MISMATCH DETECTED:', {
+              tokenProjectId,
+              expectedProjectId: process.env.FIREBASE_PROJECT_ID,
+              mismatch: tokenProjectId !== process.env.FIREBASE_PROJECT_ID,
+            });
+          } else if (failureReason.isMalformedHeader) {
+            userFriendlyMessage = 'Unauthorized: Malformed token header.';
+            diagnosticMessage = 'Token header is malformed or invalid JWT format';
+          } else if (failureReason.isInvalidSignature) {
+            userFriendlyMessage = 'Unauthorized: Invalid token signature.';
+            diagnosticMessage = 'Token signature verification failed';
+          } else if (failureReason.isInvalidFormat) {
+            userFriendlyMessage = 'Unauthorized: Invalid token format.';
+            diagnosticMessage = 'Token format is invalid or cannot be decoded';
+          } else {
+            diagnosticMessage = `Unknown error: ${errorMessage}`;
+          }
+          
+          logAuthError('Diagnostic:', diagnosticMessage);
+          logAuthError('============================================');
           
           res.status(401).json({ 
             message: userFriendlyMessage,
             error: errorMessage,
-            code: errorCode
+            code: errorCode,
+            diagnostic: diagnosticMessage,
+            // Include diagnostic info in development/test environments
+            ...(process.env.NODE_ENV !== 'production' ? {
+              tokenProjectId,
+              expectedProjectId: process.env.FIREBASE_PROJECT_ID,
+              failureReasons: failureReason,
+            } : {}),
           });
           return;
         }
@@ -338,7 +449,7 @@ export function authenticateUser(
               console.log('[AUTH] Race condition detected, fetching user again');
               user = await usersRepo.getUserByEmail(email);
             } else {
-              console.error('[AUTH] Failed to auto-create user:', createError);
+              logAuthError('Failed to auto-create user:', createError);
               res.status(500).json({ message: 'Failed to create user account' });
               return;
             }
@@ -396,7 +507,7 @@ export function authenticateUser(
               message: errorMessage.substring(0, 100),
             });
           } else {
-            console.error(`[AUTH ERROR] Token verification failed for ${req.path}:`, {
+            logAuthError(`Token verification failed for ${req.path}:`, {
               code: errorCode,
               message: errorMessage,
               hasToken: !!token,
@@ -410,7 +521,7 @@ export function authenticateUser(
           }
         } else if (!isPublicEndpoint || !isExpectedError) {
           // Log detailed error information for debugging (only for unexpected errors)
-          console.error('[AUTH ERROR] Token verification failed:', {
+          logAuthError('Token verification failed:', {
             code: errorCode,
             message: errorMessage,
             path: req.path,
@@ -421,7 +532,7 @@ export function authenticateUser(
           
           // Only log stack in development
           if (process.env.NODE_ENV === 'development') {
-            console.error('[AUTH ERROR] Stack:', error?.stack);
+            logAuthError('Stack:', error?.stack);
           }
         }
         
@@ -432,16 +543,16 @@ export function authenticateUser(
         });
       }
     }).catch((error: any) => {
-      console.error('[AUTH ERROR] Promise rejection:', error?.message || error);
-      console.error('[AUTH ERROR] Stack:', error?.stack);
+      logAuthError('Promise rejection:', error?.message || error);
+      logAuthError('Stack:', error?.stack);
       res.status(500).json({ 
         message: 'Internal server error during authentication',
         error: error?.message || 'Unknown error'
       });
     });
   } catch (error: any) {
-    console.error('[AUTH ERROR] Synchronous error:', error?.message || error);
-    console.error('[AUTH ERROR] Stack:', error?.stack);
+    logAuthError('Synchronous error:', error?.message || error);
+    logAuthError('Stack:', error?.stack);
     res.status(500).json({ 
       message: 'Internal server error',
       error: error?.message || 'Unknown error'

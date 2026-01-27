@@ -1,0 +1,31 @@
+fixes_applied:
+  branch: "fix/onboarding-deadlock"
+  timestamp: "2026-01-27T20:30:00+10:00"
+  
+  components:
+    auth_context:
+      file: "src/contexts/AuthContext.tsx"
+      change: "Removed suppression of user fetching in `fetchAppUser` and `refreshUser` for `/onboarding` paths."
+      rationale: "Required to allow `hub.tsx` and `PayoutSettings.tsx` to access `user.id` for API calls."
+      status: "FIXED"
+      
+    auth_guard:
+      file: "src/components/auth/auth-guard.tsx"
+      change: "Updated redirect condition to check `user.hasCompletedOnboarding`."
+      rationale: "Prevents redirect loop where existing users were kicked out of onboarding before finishing."
+      status: "FIXED"
+      
+    stripe_connect:
+      file: "api/_src/routes/stripe-connect.ts"
+      change: "Updated `returnUrl` and `refreshUrl` to point to `/onboarding?step=payouts`."
+      rationale: "Ensures users return to the wizard flow to complete setup instead of landing on a potentially broken dashboard."
+      status: "FIXED"
+
+  verification:
+    - "User object will now populate in `Onboarding.tsx`."
+    - "AuthGuard will allow access to `/onboarding` for authenticated users until `hasCompletedOnboarding` is true."
+    - "Stripe flow will loop back to the Onboarding wizard."
+
+  next_steps:
+    - "Run E2E tests to verify the full flow."
+    - "Deploy backend to update Stripe return URLs."

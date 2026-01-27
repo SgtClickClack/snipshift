@@ -120,6 +120,19 @@ const PORT = process.env.PORT || 5000;
     console.log('[STARTUP]   Using individual Firebase env vars');
   }
   
+  // CRITICAL: Log error immediately if FIREBASE_SERVICE_ACCOUNT is missing
+  // This ensures the error is visible in Vercel logs on server start
+  if (!hasFirebase) {
+    process.stderr.write('[STARTUP ERROR] ⚠️  CRITICAL: Firebase Admin SDK credentials are missing!\n');
+    process.stderr.write('[STARTUP ERROR] Authentication will fail. Set one of:\n');
+    process.stderr.write('[STARTUP ERROR]   - FIREBASE_SERVICE_ACCOUNT (JSON string)\n');
+    process.stderr.write('[STARTUP ERROR]   - OR FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY\n');
+    console.error('[STARTUP ERROR] ⚠️  CRITICAL: Firebase Admin SDK credentials are missing!');
+    console.error('[STARTUP ERROR] Authentication will fail. Set one of:');
+    console.error('[STARTUP ERROR]   - FIREBASE_SERVICE_ACCOUNT (JSON string)');
+    console.error('[STARTUP ERROR]   - OR FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY');
+  }
+  
   console.log(`[STARTUP] NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
   console.log(`[STARTUP] VERCEL: ${process.env.VERCEL || 'not set'}`);
   console.log('[STARTUP] Environment validation complete');

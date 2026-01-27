@@ -92,8 +92,9 @@ router.post('/account/create', authenticateUser, asyncHandler(async (req: Authen
 
     // Create onboarding link
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const returnUrl = `${frontendUrl}/professional-dashboard?view=payouts&onboarding=complete`;
-    const refreshUrl = `${frontendUrl}/professional-dashboard?view=payouts&onboarding=refresh`;
+    // Redirect back to onboarding flow (payouts step) instead of dashboard to ensure wizard completion
+    const returnUrl = `${frontendUrl}/onboarding?step=payouts&status=success`;
+    const refreshUrl = `${frontendUrl}/onboarding?step=payouts&status=refresh`;
 
     const onboardingUrl = await stripeConnectService.createConnectOnboardingLink(
       accountId,
@@ -133,8 +134,9 @@ router.post('/account/onboarding-link', authenticateUser, asyncHandler(async (re
 
   try {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const returnUrl = `${frontendUrl}/professional-dashboard?view=payouts&onboarding=complete`;
-    const refreshUrl = `${frontendUrl}/professional-dashboard?view=payouts&onboarding=refresh`;
+    // Redirect back to onboarding flow (payouts step) instead of dashboard to ensure wizard completion
+    const returnUrl = `${frontendUrl}/onboarding?step=payouts&status=success`;
+    const refreshUrl = `${frontendUrl}/onboarding?step=payouts&status=refresh`;
 
     const onboardingUrl = await stripeConnectService.createConnectOnboardingLink(
       user.stripeAccountId,

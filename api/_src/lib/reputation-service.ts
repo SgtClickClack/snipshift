@@ -1040,8 +1040,17 @@ export async function checkAndSendReactivationEmails(): Promise<{ processed: num
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     
     // Get all professionals who had a suspension that recently expired
+    // Explicitly select only needed columns to avoid issues with missing firebase_uid column
     const suspendedUsers = await db
-      .select()
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role,
+        strikes: users.strikes,
+        shiftsSinceLastStrike: users.shiftsSinceLastStrike,
+        suspendedUntil: users.suspendedUntil,
+      })
       .from(users)
       .where(
         and(
@@ -1052,7 +1061,15 @@ export async function checkAndSendReactivationEmails(): Promise<{ processed: num
           sql`${users.suspendedUntil} <= ${now}`,
           sql`${users.suspendedUntil} > ${new Date(now.getTime() - 60 * 60 * 1000)}` // Within last hour
         )
-      );
+      )
+      .catch((error: any) => {
+        // Handle missing column error gracefully
+        if (error?.code === '42703' || (error?.message && error.message.includes('does not exist'))) {
+          console.warn('[REPUTATION] Database schema issue detected, skipping suspension check:', error.message);
+          return [];
+        }
+        throw error;
+      });
 
     for (const user of suspendedUsers) {
       processed++;

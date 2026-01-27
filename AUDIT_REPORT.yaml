@@ -1,0 +1,96 @@
+audit_meta:
+  timestamp: "2026-01-27T20:10:00+10:00"
+  project: "HospoGo (formerly Snipshift)"
+  path: "C:\\Users\\USER\\Snipshift"
+  auditor: "Senior Lead Engineer (Clawdbot)"
+  status: "CRITICAL_ISSUES_FOUND"
+
+executive_summary:
+  status: "BLOCKER"
+  overview: "The Signup -> Onboarding -> Dashboard flow is currently broken due to a circular dependency between AuthContext and AuthGuard. Users are effectively locked out of completing onboarding because the system suppresses their identity to avoid a redirect loop."
+
+architecture_overview:
+  frontend: "Vite + React"
+  backend: "Express (api/_src)"
+  database: "PostgreSQL via Drizzle ORM"
+  auth: "Firebase Auth + Custom JWT Middleware"
+  hosting: "Vercel (implied by config files)"
+
+critical_issues:
+  - id: "AUTH-001"
+    component: "AuthContext"
+    file: "src/contexts/AuthContext.tsx"
+    severity: "BLOCKER"
+    issue: "Aggressive User Suppression"
+    description: |
+      The `fetchAppUser` function explicitly returns `null` if `location.pathname` starts with `/onboarding`.
+      Code: `if (isOnboardingMode) { return null; }`
+    impact: |
+      - Staff Onboarding: `PayoutSettings.tsx` fails because `user.id` is null.
+      - Venue Onboarding: `hub.tsx` redirects to login because `user` is null.
+      - General: API calls requiring `user.id` fail silently or throw errors during onboarding.
+
+  - id: "AUTH-002"
+    component: "AuthGuard"
+    file: "src/components/auth/auth-guard.tsx"
+    severity: "HIGH"
+    issue: "Premature Dashboard Redirect"
+    description: |
+      AuthGuard redirects authenticated users to `/dashboard` immediately if they are on an onboarding route.
+      Code: `if (hasFirebaseUser && user && isOnboardingPath) { navigate('/dashboard'); }`
+    impact: |
+      Creates a deadlock with AUTH-001. We need the user object to onboard, but if we load it, the guard kicks the user out.
+
+  - id: "ROLE-001"
+    component: "Role Mapping"
+    file: "src/lib/roles.ts"
+    severity: "MEDIUM"
+    issue: "Inconsistent Role Aliasing"
+    description: |
+      Frontend uses 'venue', 'hub', 'brand'. Backend normalizes all these to 'business'.
+      `src/pages/role-selection.tsx` sets 'hub'.
+      `api/_src/routes/users.ts` saves 'business'.
+    impact: |
+      Frontend logic relying on `user.role === 'hub'` will fail. Logic must use `isBusinessRole()` helper.
+
+  - id: "STRIPE-001"
+    component: "Stripe Connect"
+    file: "api/_src/routes/stripe-connect.ts"
+    severity: "MEDIUM"
+    issue: "Incorrect Return URL"
+    description: |
+      Stripe Connect return URL is hardcoded to the Dashboard.
+      `const returnUrl = .../professional-dashboard...`
+    impact: |
+      Users returning from Stripe may bypass remaining onboarding steps or trigger the AuthGuard redirect loop again.
+
+logic_flow_verification:
+  signup:
+    status: "PASS"
+    details: "Firebase Auth + `api/register` correctly auto-creates users."
+  
+  role_selection:
+    status: "WARNING"
+    details: "Works, but relies on role mapping that needs strict frontend handling (normalizeVenueToBusiness)."
+  
+  onboarding_staff:
+    status: "FAIL"
+    details: "Fails at Payout Setup due to AUTH-001 (User is null)."
+  
+  onboarding_venue:
+    status: "FAIL"
+    details: "Fails immediately due to AUTH-001 (User is null -> Redirect to Login)."
+  
+  dashboard_routing:
+    status: "PASS"
+    details: "Dashboard routing logic in `dashboard-redirect.tsx` and role checks in dashboards are correct."
+
+recommendations:
+  immediate_fixes:
+    1: "AuthContext: Remove `if (isOnboardingMode) return null;`. Allow user fetching on all protected routes."
+    2: "AuthGuard: Change redirect logic. Only redirect to `/dashboard` if `user.hasCompletedOnboarding === true`."
+    3: "Hub Onboarding: Ensure `hub.tsx` uses `isBusinessRole(user.role)` instead of strict string equality."
+  
+  process_improvements:
+    1: "Stripe: Update return URL to point to `/onboarding?step=payouts` to maintain wizard flow."
+    2: "Testing: Add an E2E test that explicitly completes the entire onboarding funnel to catch these regressions."
