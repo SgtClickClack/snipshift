@@ -1,6 +1,6 @@
 /**
  * Regression tests for AuthGuard redirection logic.
- * Verifies onboarding vs dashboard redirect based on hasCompletedOnboarding.
+ * Verifies onboarding vs dashboard redirect based on isOnboarded (single source of truth).
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -38,14 +38,14 @@ const onboardingLocation = {
   key: 'default',
 };
 
-function renderAuthGuardOnOnboarding(hasCompletedOnboarding: boolean) {
+function renderAuthGuardOnOnboarding(isOnboarded: boolean) {
   mockUseLocation.mockReturnValue(onboardingLocation);
   mockUseNavigate.mockClear();
   mockUseAuth.mockReturnValue({
     user: {
       id: 'u1',
       email: 'user@example.com',
-      hasCompletedOnboarding,
+      isOnboarded,
     },
     isLoading: false,
     hasFirebaseUser: true,
@@ -65,7 +65,7 @@ describe('AuthGuard redirection logic', () => {
     vi.clearAllMocks();
   });
 
-  it('Test Case A: User hasCompletedOnboarding = false. Expect: No redirect from /onboarding', async () => {
+  it('Test Case A: User isOnboarded = false. Expect: No redirect from /onboarding', async () => {
     renderAuthGuardOnOnboarding(false);
 
     await waitFor(() => {
@@ -78,7 +78,7 @@ describe('AuthGuard redirection logic', () => {
     expect(dashboardCalls).toHaveLength(0);
   });
 
-  it('Test Case B: User hasCompletedOnboarding = true. Expect: Immediate redirect to /dashboard', async () => {
+  it('Test Case B: User isOnboarded = true. Expect: Immediate redirect to /dashboard', async () => {
     renderAuthGuardOnOnboarding(true);
 
     await waitFor(() => {

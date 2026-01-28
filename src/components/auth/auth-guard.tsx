@@ -36,9 +36,9 @@ export function AuthGuard({
       return;
     }
 
-    // Only redirect to dashboard if user has explicitly completed onboarding
-    // This allows users to stay on onboarding pages even if the user object exists
-    if (hasFirebaseUser && user && user.hasCompletedOnboarding && isOnboardingPath) {
+    // Redirect to dashboard only when isOnboarded is true (single source of truth from API).
+    // /onboarding and /onboarding/hub are only reachable when isOnboarded is explicitly false.
+    if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath) {
       navigate('/dashboard', { replace: true });
     }
   }, [hasFirebaseUser, user, isOnboardingPath, isLoading, navigate]);
@@ -51,9 +51,8 @@ export function AuthGuard({
     return <DashboardLayoutSkeleton />;
   }
 
-  // Only show skeleton on onboarding paths when we are mid-redirect (user completed onboarding).
-  // Do NOT block onboarding content when user exists but has not completed onboarding.
-  if (hasFirebaseUser && user && user.hasCompletedOnboarding && isOnboardingPath) {
+  // Show skeleton on onboarding paths when user is onboarded (mid-redirect to dashboard).
+  if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath) {
     return <DashboardLayoutSkeleton />;
   }
 

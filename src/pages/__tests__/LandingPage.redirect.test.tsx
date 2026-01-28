@@ -1,6 +1,6 @@
 /**
  * Regression tests for LandingPage redirect logic.
- * Aligns with AuthGuard: redirect by user existence and hasCompletedOnboarding.
+ * Aligns with AuthGuard: redirect by user existence and isOnboarded (single source of truth).
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -32,7 +32,7 @@ vi.mock('@/lib/roles', () => ({ getDashboardRoute: () => '/dashboard' }));
 
 const landingLocation = { pathname: '/', search: '', hash: '', state: null, key: 'default' };
 
-function renderLanding(overrides: { user?: { id: string; hasCompletedOnboarding?: boolean } | null; isLoading?: boolean } = {}) {
+function renderLanding(overrides: { user?: { id: string; isOnboarded?: boolean } | null; isLoading?: boolean } = {}) {
   const { user = null, isLoading = false } = overrides;
   mockUseLocation.mockReturnValue(landingLocation);
   mockUseNavigate.mockClear();
@@ -54,9 +54,9 @@ describe('LandingPage redirect logic', () => {
     vi.clearAllMocks();
   });
 
-  it('User exists AND hasCompletedOnboarding is true -> navigate("/dashboard")', async () => {
+  it('User exists AND isOnboarded is true -> navigate("/dashboard")', async () => {
     renderLanding({
-      user: { id: 'u1', hasCompletedOnboarding: true },
+      user: { id: 'u1', isOnboarded: true },
       isLoading: false,
     });
 
@@ -65,9 +65,9 @@ describe('LandingPage redirect logic', () => {
     });
   });
 
-  it('User exists AND hasCompletedOnboarding is false -> navigate("/onboarding")', async () => {
+  it('User exists AND isOnboarded is false -> navigate("/onboarding")', async () => {
     renderLanding({
-      user: { id: 'u1', hasCompletedOnboarding: false },
+      user: { id: 'u1', isOnboarded: false },
       isLoading: false,
     });
 
@@ -88,7 +88,7 @@ describe('LandingPage redirect logic', () => {
     });
   });
 
-  it('User exists, hasCompletedOnboarding undefined -> treat as not completed, navigate("/onboarding")', async () => {
+  it('User exists, isOnboarded undefined -> treat as not completed, navigate("/onboarding")', async () => {
     renderLanding({
       user: { id: 'u1' },
       isLoading: false,

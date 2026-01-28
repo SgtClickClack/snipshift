@@ -200,22 +200,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
       }
       
-      console.log('[AuthContext] User profile fetched successfully', { 
-        id: apiUser.id, 
+      // Single source of truth: derive hasCompletedOnboarding from API isOnboarded to avoid redirect loops
+      const isOnboarded = apiUser.isOnboarded === true;
+      const normalizedUser: User = {
+        ...apiUser,
+        uid: firebaseUser.uid,
+        hasCompletedOnboarding: isOnboarded,
+      };
+      console.log('[AuthContext] User profile fetched successfully', {
+        id: apiUser.id,
         isOnboarded: apiUser.isOnboarded,
-        hasCompletedOnboarding: apiUser.hasCompletedOnboarding,
+        hasCompletedOnboarding: normalizedUser.hasCompletedOnboarding,
         firebaseUid: userFirebaseUid || tokenFirebaseUid,
-        firebaseUidMatch: userFirebaseUid === tokenFirebaseUid
+        firebaseUidMatch: userFirebaseUid === tokenFirebaseUid,
       });
-      setUser({ ...apiUser, uid: firebaseUser.uid });
+      setUser(normalizedUser);
 
-      // Force redirect to dashboard so user gets past "Authentication Failed" and sees the app.
-      const hasCompletedOnboarding = apiUser.hasCompletedOnboarding !== false && apiUser.isOnboarded !== false;
+      // Harden redirect: if API says isOnboarded, send directly to dashboard (no onboarding routes)
       const isVenueRole = (apiUser.currentRole || apiUser.role || '').toLowerCase() === 'business' ||
         (apiUser.roles || []).some((r: string) => ['business', 'venue', 'hub'].includes((r || '').toLowerCase()));
-      if (hasCompletedOnboarding) {
+      if (isOnboarded) {
         const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
-        console.log('[AuthContext] Valid profile — redirecting to', targetPath);
+        console.log('[AuthContext] User is onboarded — redirecting to', targetPath);
         setRedirecting(true);
         navigate(targetPath, { replace: true });
       }
@@ -409,9 +415,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (hasFirebaseUser) {
         const pathForNav = window.location.pathname;
-        const explicitlyOnboarded = user && user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
+        const explicitlyOnboarded = user && user.isOnboarded === true;
 
-        // Onboarding priority: only go to /onboarding if not explicitly onboarded and not already on an onboarding route
+        // Onboarding priority: only go to /onboarding if isOnboarded is not true; otherwise dashboard
         const targetPath = explicitlyOnboarded
           ? '/dashboard'
           : isOnboardingRoute(pathForNav)
@@ -453,23 +459,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       const isOnboarded = user.isOnboarded === true;
-      const strictlyCompletedOnboarding =
-        user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
 
-      if (isOnboarded || strictlyCompletedOnboarding) {
-        console.log('[Auth] User authenticated and considered onboarded, redirecting from', currentPath, 'to /dashboard', {
-          isOnboarded,
-          hasCompletedOnboarding: user.hasCompletedOnboarding,
-        });
+      if (isOnboarded) {
+        console.log('[Auth] User is onboarded, redirecting from', currentPath, 'to /dashboard');
         setRedirecting(true);
         navigate('/dashboard', { replace: true });
       } else {
-        // Onboarding priority: only redirect to /onboarding if explicitly not onboarded and not already on an onboarding route
+        // Only send to onboarding when isOnboarded is explicitly false (or unset)
         if (!isOnboardingRoute(currentPath)) {
-          console.log('[Auth] User authenticated but not onboarded, redirecting from', currentPath, 'to /onboarding', {
-            isOnboarded,
-            hasCompletedOnboarding: user.hasCompletedOnboarding,
-          });
+          console.log('[Auth] User not onboarded, redirecting from', currentPath, 'to /onboarding');
           setRedirecting(true);
           navigate('/onboarding', { replace: true });
         }

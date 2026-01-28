@@ -91,7 +91,8 @@ export default function VenueDashboard() {
   // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
   // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
   const hasValidRole = isBusinessRole(user?.currentRole);
-  const hasCompletedOnboarding = user?.hasCompletedOnboarding !== false && user?.isOnboarded !== false;
+  // Derived from isOnboarded (single source of truth in AuthContext)
+  const hasCompletedOnboarding = user?.isOnboarded === true;
 
   // DEMO MODE: Bypass all loading states and render dashboard immediately with mock data
   const demoMode = isDemoMode();

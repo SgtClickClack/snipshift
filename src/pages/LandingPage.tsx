@@ -25,15 +25,15 @@ export default function LandingPage() {
   const location = useLocation();
   const hasCleanedUp = useRef(false);
 
-  // Redirect logic aligned with AuthGuard: use hasCompletedOnboarding to choose destination
+  // Redirect logic: use isOnboarded (single source of truth; hasCompletedOnboarding is derived from it in AuthContext)
   useEffect(() => {
     if (location.pathname !== '/') return;
     if (isLoading) return;
 
     if (!user) return;
 
-    const hasCompletedOnboarding = user.hasCompletedOnboarding === true;
-    if (hasCompletedOnboarding) {
+    const isOnboarded = user.isOnboarded === true;
+    if (isOnboarded) {
       navigate('/dashboard', { replace: true });
     } else {
       navigate('/onboarding', { replace: true });

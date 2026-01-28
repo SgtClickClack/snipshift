@@ -60,8 +60,8 @@ export default function SignupPage() {
         isOnboarded: user.isOnboarded,
       });
       
-      // PRIORITY 1: If not onboarded, go to onboarding
-      if (user.isOnboarded === false || user.hasCompletedOnboarding === false) {
+      // PRIORITY 1: If not onboarded (single source of truth: isOnboarded from API), go to onboarding
+      if (user.isOnboarded !== true) {
         console.log('[Signup] Navigation triggered to /onboarding (not onboarded)');
         navigate('/onboarding', { replace: true });
         return;
