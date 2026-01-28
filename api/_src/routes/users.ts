@@ -14,6 +14,8 @@ import { uploadProfileImages } from '../middleware/upload.js';
 import admin from 'firebase-admin';
 import { errorReporting } from '../services/error-reporting.service.js';
 import { getCorrelationId } from '../middleware/correlation-id.js';
+import { maskEmail } from '../utils/mask-contact.js';
+import { hasEmployerAssigneeRelationship } from '../repositories/shifts.repository.js';
 
 const router = Router();
 
@@ -627,7 +629,7 @@ router.get('/professionals', authenticateUser, asyncHandler(async (req: Authenti
     // SECURITY: Mask email addresses until professional relationship is established
     const maskedData = await Promise.all(
       result.data.map(async (pro) => {
-        const hasRelationship = await hasProfessionalRelationship(viewerId, pro.id);
+        const hasRelationship = await hasEmployerAssigneeRelationship(viewerId, pro.id);
         return {
           ...pro,
           email: hasRelationship ? pro.email : maskEmail(pro.email),
@@ -653,7 +655,7 @@ router.get('/professionals', authenticateUser, asyncHandler(async (req: Authenti
   // SECURITY: Mask email addresses until professional relationship is established
   const maskedData = await Promise.all(
     result.map(async (pro) => {
-      const hasRelationship = await hasProfessionalRelationship(viewerId, pro.id);
+      const hasRelationship = await hasEmployerAssigneeRelationship(viewerId, pro.id);
       return {
         ...pro,
         email: hasRelationship ? pro.email : maskEmail(pro.email),

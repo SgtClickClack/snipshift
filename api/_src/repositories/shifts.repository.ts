@@ -1000,6 +1000,29 @@ export async function deleteShift(id: string): Promise<boolean> {
 }
 
 /**
+ * Returns true if the employer has ever had the given user assigned to a shift (professional relationship).
+ * Used to decide when to reveal contact info to venues.
+ */
+export async function hasEmployerAssigneeRelationship(employerId: string, assigneeId: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) {
+    return false;
+  }
+  const rows = await db
+    .select({ id: shifts.id })
+    .from(shifts)
+    .where(
+      and(
+        eq(shifts.employerId, employerId),
+        eq(shifts.assigneeId, assigneeId),
+        isNull(shifts.deletedAt)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
+/**
  * Get shifts created by a specific employer
  */
 export async function getShiftsByEmployer(employerId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion'): Promise<typeof shifts.$inferSelect[]> {
