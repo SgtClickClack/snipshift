@@ -29,10 +29,20 @@ interface AuthContextType {
   isVenueMissing: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  /** Refreshes /api/me and /api/venues/me; keeps isRedirecting true during refresh. Returns venueReady (false if venue missing or 404/429 after retry). */
+  refreshUser: () => Promise<{ venueReady: boolean }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/** API base URL for fetch calls (e.g. '' for same-origin, or 'https://api.hospogo.com' if API is on another host). */
+function getApiBase(): string {
+  const base = import.meta.env.VITE_API_URL;
+  if (typeof base === 'string' && base.trim()) {
+    return base.trim().replace(/\/$/, '');
+  }
+  return '';
+}
 
 /** Paths where user is already in onboarding flow; do not redirect to /onboarding if already here */
 function isOnboardingRoute(path: string): boolean {
@@ -54,7 +64,7 @@ async function fetchAppUser(
   // Always attempt fetch so existing users (e.g. returning to /signup) get their profile and can be redirected to dashboard.
   const attemptFetch = async (token: string, isRetry: boolean = false): Promise<User | null> => {
     try {
-      const res = await fetch('/api/me', {
+      const res = await fetch(`${getApiBase()}/api/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -233,15 +243,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isVenueMissingRef.current = false;
           setIsVenueMissing(false); // clear until we know otherwise
           try {
-            const venueRes = await fetch('/api/venues/me', {
+            let venueRes = await fetch(`${getApiBase()}/api/venues/me`, {
               headers: {
                 Authorization: `Bearer ${idToken}`,
                 'Content-Type': 'application/json',
               },
               cache: 'no-store',
             });
-            if (venueRes.status === 404) {
-              console.log('[AuthContext] User is onboarded but /api/venues/me returned 404 — staying on onboarding hub');
+            // Rate limit: retry once after 1s to avoid permanent redirect loop
+            if (venueRes.status === 429) {
+              await new Promise((r) => setTimeout(r, 1000));
+              venueRes = await fetch(`${getApiBase()}/api/venues/me`, {
+                headers: {
+                  Authorization: `Bearer ${idToken}`,
+                  'Content-Type': 'application/json',
+                },
+                cache: 'no-store',
+              });
+            }
+            if (venueRes.status === 404 || venueRes.status === 429) {
+              console.log('[AuthContext] User is onboarded but /api/venues/me returned', venueRes.status, '— staying on onboarding hub');
               isVenueMissingRef.current = true;
               setIsVenueMissing(true);
               setRedirecting(true);
@@ -299,9 +320,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [navigate]);
 
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async (): Promise<{ venueReady: boolean }> => {
     const firebaseUser = firebaseUserRef.current;
-    if (!firebaseUser) return;
+    if (!firebaseUser) return { venueReady: false };
     
     // CRITICAL: Skip refresh on signup route to prevent 401/404 polling loop
     // But allow on onboarding routes to support step progression
@@ -312,16 +333,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[AuthContext] On signup route - suppressing profile refresh', {
         pathname: currentPath
       });
-      return;
+      return { venueReady: false };
     }
     
     // Clear onboarding mode flag if we're not on signup/onboarding route
     isOnboardingModeRef.current = false;
     
+    setRedirecting(true);
     try {
       await hydrateFromFirebaseUser(firebaseUser);
+      return { venueReady: !isVenueMissingRef.current };
     } catch (error) {
       logger.error('AuthContext', 'refreshUser failed', error);
+      return { venueReady: false };
+    } finally {
+      setRedirecting(false);
     }
   }, [hydrateFromFirebaseUser]);
 

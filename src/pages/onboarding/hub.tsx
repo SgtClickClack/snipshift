@@ -283,9 +283,8 @@ export default function HubOnboardingPage() {
         await auth.currentUser.getIdToken(true);
       }
 
-      if (refreshUser) {
-        await refreshUser();
-      }
+      // Sync with backend: refresh /api/me and /api/venues/me before navigating (prevents redirect loop)
+      const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
 
       toast({
         title: "Venue Profile Created",
@@ -299,9 +298,12 @@ export default function HubOnboardingPage() {
         await initializePaymentSetup();
         setCurrentStep(2);
       } else {
-        // No payment needed (Starter tier), go directly to dashboard
+        // No payment needed (Starter tier): only go to dashboard once venue check passes
         clearSessionStorage();
-        navigate('/venue/dashboard');
+        if (venueReady) {
+          navigate('/venue/dashboard');
+        }
+        // If !venueReady, stay on hub (e.g. 429/404); AuthContext keeps isVenueMissing true
       }
     } catch (error: any) {
       console.error('Onboarding error:', error);
@@ -369,8 +371,9 @@ export default function HubOnboardingPage() {
         variant: "default",
       });
 
+      const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
       clearSessionStorage();
-      navigate('/venue/dashboard');
+      if (venueReady) navigate('/venue/dashboard');
     } catch (error: any) {
       console.error('Subscription error:', error);
       toast({
@@ -378,9 +381,9 @@ export default function HubOnboardingPage() {
         description: error.message || 'Failed to create subscription. You can subscribe later from the Wallet page.',
         variant: 'destructive',
       });
-      // Still navigate to dashboard even if subscription fails
+      const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
       clearSessionStorage();
-      navigate('/venue/dashboard');
+      if (venueReady) navigate('/venue/dashboard');
     } finally {
       setIsSubmitting(false);
     }
@@ -392,14 +395,15 @@ export default function HubOnboardingPage() {
     sessionStorage.removeItem('signupRolePreference');
   };
 
-  const skipPayment = () => {
+  const skipPayment = async () => {
     toast({
       title: "Payment Skipped",
       description: "You can subscribe anytime from your Wallet page.",
       variant: "default",
     });
+    const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
     clearSessionStorage();
-    navigate('/venue/dashboard');
+    if (venueReady) navigate('/venue/dashboard');
   };
 
   // Determine total steps
