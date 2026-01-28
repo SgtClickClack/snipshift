@@ -1,3 +1,46 @@
+#### 2026-01-28: Auth Entry Flow – Landing Gate, No Flash, Onboarding Priority
+
+**Core Components**
+- Auth: `src/contexts/AuthContext.tsx`
+- App routing: `src/App.tsx`
+
+**Key Features**
+- **Landing gate:** Unauthenticated users are never redirected from `/`; they can always stay on the landing page. Redirect logic in useEffects that monitor `user`/`loading` only runs when user is logged in; auth-params effect skips redirect when on `/` with no Firebase user.
+- **No flashing:** Added `isRedirecting` state to AuthProvider; set true before any `navigate()` and cleared after pathname settles (150ms). App shows `LoadingScreen` when `isLoading || isRedirecting`, so route components do not mount until auth and redirect are settled.
+- **Onboarding priority:** Redirect to `/onboarding` only when `isOnboarded` is explicitly false and current path is not already an onboarding route (`/onboarding`, `/onboarding/*`, `/role-selection`). Helper `isOnboardingRoute(path)` used in auth-params effect and post-auth redirect effect.
+
+**Integration Points**
+- AuthContext exposes `isRedirecting`; AppRoutes uses it with `isLoading` to show full-page loader.
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/App.tsx`
+
+**Next Priority Task**
+- Address Dependabot findings (optional); run full E2E against staging if desired.
+
+---
+
+#### 2026-01-28: v1.0.0-stable Release – Final Save Point
+
+**Core Components**
+- E2E: `frontend/e2e/onboarding-flow.spec.ts` (Maps suggestion check made resilient for E2E without Maps API).
+
+**Key Features**
+- **Verification:** Node.js v24.4.1 confirmed; full onboarding E2E suite run and passed (4/4).
+- **Execution:** All changes committed; tag `v1.0.0-stable` created (recreated to point at release commit) and pushed to `origin` with `main`.
+- **Save point:** Immutable release: "Stable production build: Whitelisted updates, role isolation, and hardened Maps fallback."
+
+**Integration Points**
+- Git: `main` and tag `v1.0.0-stable` pushed to origin.
+
+**File Paths**
+- `frontend/e2e/onboarding-flow.spec.ts`
+
+**Next Priority Task**
+- Address Dependabot findings (optional); run full E2E against staging if desired.
+
+---
 
 #### 2026-01-28: Repository-Wide Endpoint Audit (v1.0.0-stable prep)
 
@@ -24,7 +67,7 @@
 - `tests/auth-flow.spec.ts`, `tests/core-marketplace.spec.ts`, `tests/pro-marketplace.spec.ts`, `tests/e2e/onboarding.spec.ts`, `tests/e2e/subscription_flow.spec.ts`, `e2e/mobile-interactions.spec.ts`, `e2e/mobile-onboarding.spec.ts`
 
 **Next Priority Task**
-- Tag v1.0.0-stable after smoke/E2E pass; optionally run full E2E suite against staging.
+- v1.0.0-stable tagged and pushed; optionally run full E2E suite against staging.
 
 **Code Organization & Quality**
 - All async routes already use `asyncHandler`; try/catch blocks in stripe/stripe-connect/payments/marketplace/shifts now return generic messages only (no `error.message` to client).

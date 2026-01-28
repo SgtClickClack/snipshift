@@ -22,6 +22,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthReady: boolean; // Alias for !isLoading, used by some components
+  isRedirecting: boolean; // True while a redirect is in progress (prevents route flash)
   hasUser: boolean; // Standardized: true when user object exists (DB profile loaded)
   hasFirebaseUser: boolean; // True when Firebase session exists
   login: (user: User) => void;
@@ -30,6 +31,11 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/** Paths where user is already in onboarding flow; do not redirect to /onboarding if already here */
+function isOnboardingRoute(path: string): boolean {
+  return path.startsWith('/onboarding') || path === '/role-selection';
+}
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -120,6 +126,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRedirecting, setRedirecting] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -128,6 +135,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const firebaseUserRef = useRef<FirebaseUser | null>(null);
   // Track if we're in onboarding mode to prevent profile fetches
   const isOnboardingModeRef = useRef<boolean>(false);
+
+  // Clear redirecting flag after pathname has settled (prevents flash of wrong route)
+  useEffect(() => {
+    if (!isRedirecting) return;
+    const t = setTimeout(() => setRedirecting(false), 150);
+    return () => clearTimeout(t);
+  }, [location.pathname, isRedirecting]);
 
   const login = useCallback((newUser: User) => {
     setUser(newUser);
@@ -202,6 +216,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (hasCompletedOnboarding) {
         const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
         console.log('[AuthContext] Valid profile — redirecting to', targetPath);
+        setRedirecting(true);
         navigate(targetPath, { replace: true });
       }
       
@@ -331,6 +346,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   const currentPath = window.location.pathname;
                   if (currentPath === '/login' || currentPath === '/signup') {
                     console.log('[AuthContext] Popup auth successful, navigating to dashboard');
+                    setRedirecting(true);
                     navigate('/dashboard', { replace: true });
                   }
                 }
@@ -377,79 +393,84 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (isLoading) return; // Wait for auth to settle
-    
+
+    // Landing gate: if user is NOT logged in, never redirect away from '/' (allow landing to stay)
+    const currentPath = window.location.pathname;
+    const hasFirebaseUserNow = !!firebaseUserRef.current || !!auth.currentUser;
+    if (currentPath === '/' && !hasFirebaseUserNow) return;
+
     const searchParams = new URLSearchParams(window.location.search);
     const hasApiKey = searchParams.has('apiKey');
     const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
-    
+
     if (hasApiKey || hasAuthMode) {
-      console.log('[AuthContext] Detected Firebase auth params in URL', { 
-        hasApiKey, 
-        hasAuthMode,
-        search: window.location.search,
-        hasToken: !!token,
-        hasFirebaseUser: !!firebaseUserRef.current
-      });
-      
-      // Check if Firebase user exists for auth completion
       const currentFirebaseUser = firebaseUserRef.current || auth.currentUser;
       const hasFirebaseUser = !!currentFirebaseUser;
-      
+
       if (hasFirebaseUser) {
-        // User is authenticated - force navigation to dashboard
-        const hasCompletedOnboarding = user?.hasCompletedOnboarding !== false && user?.isOnboarded !== false;
-        const targetPath = hasCompletedOnboarding ? '/dashboard' : '/onboarding';
-        
+        const pathForNav = window.location.pathname;
+        const explicitlyOnboarded = user && user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
+
+        // Onboarding priority: only go to /onboarding if not explicitly onboarded and not already on an onboarding route
+        const targetPath = explicitlyOnboarded
+          ? '/dashboard'
+          : isOnboardingRoute(pathForNav)
+            ? pathForNav
+            : '/onboarding';
+
+        if (targetPath === pathForNav) return; // Already on correct route
+
         console.log('[AuthContext] Auth params detected + user authenticated, forcing navigation to', targetPath);
-        
-        // Clean URL parameters before navigating
+
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, '', cleanUrl);
-        
-        // Navigate immediately
+
+        setRedirecting(true);
         navigate(targetPath, { replace: true });
       }
     }
   }, [isLoading, token, user, navigate]);
 
-  // Additional useEffect to handle navigation after auth state changes
-  // This provides a secondary navigation trigger when user state updates
+  // useEffect that monitors user and loading: redirect authenticated users away from login/signup only.
+  // Landing gate: if user is NOT logged in, do nothing — they are ALWAYS allowed to stay on '/' (landing).
   useEffect(() => {
-    if (!isLoading && user) {
-      const currentPath = window.location.pathname;
-      
+    if (isLoading || !user) return;
+
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/login' && currentPath !== '/signup') return;
+
       // Clear any remaining auth-related URL parameters (failsafe)
       if (typeof window !== 'undefined') {
         const searchParams = new URLSearchParams(window.location.search);
         const hasApiKey = searchParams.has('apiKey');
         const hasAuthMode = searchParams.get('mode') === 'signIn' || searchParams.get('mode') === 'signUp';
-        
+
         if (hasApiKey || hasAuthMode) {
           console.log('[AuthContext] Clearing remaining auth URL parameters (failsafe)');
           const cleanUrl = window.location.pathname;
           window.history.replaceState({}, '', cleanUrl);
         }
       }
-      
-      // Redirect authenticated users away from public-only routes
-      if (currentPath === '/login' || currentPath === '/signup') {
-        // Treat users as eligible for dashboard when they've been flagged as onboarded,
-        // even if hasCompletedOnboarding is still false (to avoid redirect loops).
-        const isOnboarded = user.isOnboarded === true;
-        const strictlyCompletedOnboarding =
-          user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
 
-        if (isOnboarded || strictlyCompletedOnboarding) {
-          console.log('[Auth] User authenticated and considered onboarded, redirecting from', currentPath, 'to /dashboard', {
-            isOnboarded,
-            hasCompletedOnboarding: user.hasCompletedOnboarding,
-          });
-          navigate('/dashboard', { replace: true });
-        } else {
+      const isOnboarded = user.isOnboarded === true;
+      const strictlyCompletedOnboarding =
+        user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
+
+      if (isOnboarded || strictlyCompletedOnboarding) {
+        console.log('[Auth] User authenticated and considered onboarded, redirecting from', currentPath, 'to /dashboard', {
+          isOnboarded,
+          hasCompletedOnboarding: user.hasCompletedOnboarding,
+        });
+        setRedirecting(true);
+        navigate('/dashboard', { replace: true });
+      } else {
+        // Onboarding priority: only redirect to /onboarding if explicitly not onboarded and not already on an onboarding route
+        if (!isOnboardingRoute(currentPath)) {
           console.log('[Auth] User authenticated but not onboarded, redirecting from', currentPath, 'to /onboarding', {
             isOnboarded,
             hasCompletedOnboarding: user.hasCompletedOnboarding,
           });
+          setRedirecting(true);
           navigate('/onboarding', { replace: true });
         }
       }
@@ -480,15 +501,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       token,
       isLoading,
-      isAuthReady: !isLoading, // Alias for !isLoading, used by some components
-      // Standardized: true when user object exists (DB profile loaded)
+      isAuthReady: !isLoading,
+      isRedirecting,
       hasUser: !!user,
       hasFirebaseUser: !!firebaseUser,
       login,
       logout,
       refreshUser,
     }),
-    [user, token, isLoading, firebaseUser, login, logout, refreshUser]
+    [user, token, isLoading, isRedirecting, firebaseUser, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

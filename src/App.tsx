@@ -97,22 +97,21 @@ const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 
 function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const location = useLocation();
-  const { isLoading } = useAuth();
+  const { isLoading, isRedirecting } = useAuth();
   const isBridgeRoute = location.pathname === '/auth/bridge';
   const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || isBridgeRoute;
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/onboarding/role-selection', '/forgot-password', '/auth/bridge'].includes(location.pathname);
-  
+
   // Initialize push notifications when user is authenticated
   usePushNotifications();
-  
-  // Show loading screen while auth is initializing to prevent errors
-  // BUT only after HTML splash has been removed to avoid duplicate loading screens
-  if (isLoading && splashHandled && !isBridgeRoute) {
+
+  // Show full-page loader while auth is settling OR a redirect is in progress (prevents route flash)
+  const showFullPageLoader = (isLoading || isRedirecting) && splashHandled && !isBridgeRoute;
+  if (showFullPageLoader) {
     return <LoadingScreen />;
   }
-  
+
   // If still loading but HTML splash hasn't been removed yet, render nothing
-  // The HTML splash in index.html will handle displaying the loading state
   if (isLoading && !splashHandled && !isBridgeRoute) {
     return null;
   }
