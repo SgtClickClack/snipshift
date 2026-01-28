@@ -264,8 +264,8 @@ test('Venue Manager Journey: Post shift, receive application, approve, and compl
     });
   });
   
-  await page.route('**/api/users/role**', async (route) => {
-    console.log('🟢 Mocking POST /api/users/role');
+  await page.route('**/api/users/onboarding/complete**', async (route) => {
+    console.log('🟢 Mocking POST /api/users/onboarding/complete');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -700,7 +700,7 @@ test('Venue Manager Journey: Post shift, receive application, approve, and compl
     // VERIFY HYDRATION: Wait for AuthContext to process the mock /api/me response
     // The button should be enabled once AuthContext has loaded the user
     // 1. Mock the role update API immediately
-    await page.route('**/api/users/role', r => r.fulfill({ 
+    await page.route('**/api/users/onboarding/complete', r => r.fulfill({ 
       status: 200, 
       body: JSON.stringify({ success: true, role: 'business' }) 
     }));

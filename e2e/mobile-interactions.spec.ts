@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Mobile Button & Interaction Audit', () => {
   // Setup API Mocks to avoid backend dependencies
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/users/role', async route => {
+    await page.route('**/api/users/onboarding/complete', async route => {
       await route.fulfill({
         status: 200,
         json: {

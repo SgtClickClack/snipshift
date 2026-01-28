@@ -49,9 +49,9 @@ router.post('/create-account-link', authenticateUser, asyncHandler(async (req: A
       res.status(200).json({
         accountLink: accountLink,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[STRIPE] Error creating account link:', error);
-      res.status(500).json({ message: 'Failed to create account link', error: error.message });
+      res.status(500).json({ message: 'Failed to create account link' });
     }
     return;
   }
@@ -96,9 +96,9 @@ router.post('/create-account-link', authenticateUser, asyncHandler(async (req: A
       accountId,
       accountLink,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE] Error creating Connect account:', error);
-    res.status(500).json({ message: 'Failed to create Connect account', error: error.message });
+    res.status(500).json({ message: 'Failed to create Connect account' });
   }
 }));
 

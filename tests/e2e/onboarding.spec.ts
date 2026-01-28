@@ -420,7 +420,7 @@ test.describe('Onboarding Flow E2E Tests', () => {
       await setupUserContext(context, newUser);
 
       // Mock role selection API
-      await page.route('**/api/users/role', async (route) => {
+      await page.route('**/api/users/onboarding/complete', async (route) => {
         if (route.request().method() === 'POST') {
           await route.fulfill({
             status: 200,
@@ -488,7 +488,7 @@ test.describe('Onboarding Flow E2E Tests', () => {
       
       // Wait for either the price to appear or navigation to complete
       await page.waitForResponse(
-        (response) => response.url().includes('/api/users/role') && response.request().method() === 'POST',
+        (response) => response.url().includes('/api/users/onboarding/complete') && response.request().method() === 'POST',
         { timeout: 10000 }
       ).catch(() => {});
       

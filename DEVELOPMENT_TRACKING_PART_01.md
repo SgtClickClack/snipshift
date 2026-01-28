@@ -1,4 +1,90 @@
 
+#### 2026-01-28: Repository-Wide Endpoint Audit (v1.0.0-stable prep)
+
+**Core Components**
+- App: `src/pages/Onboarding.tsx`, `src/pages/home.tsx`, `src/pages/onboarding/professional.tsx`
+- API: `api/_src/routes/stripe.ts`, `api/_src/routes/stripe-connect.ts`, `api/_src/routes/payments.ts`, `api/_src/routes/marketplace.ts`, `api/_src/routes/shifts.ts`
+- UI: `src/components/ui/location-input.tsx`
+- E2E/tests: route mocks updated in `tests/`, `e2e/`
+
+**Key Features**
+- **Ghost routes:** Replaced all `/api/users/role` with `POST /api/users/onboarding/complete` (hardened path). No `/api/users/update` found.
+- **Stripe secrets:** `api/_src/routes/webhooks.ts` uses `process.env.STRIPE_WEBHOOK_SECRET` (no hardcoded secret). `stripe.ts` does not handle webhooks.
+- **Error logging:** Removed `error.message` from client JSON in stripe, stripe-connect, payments, marketplace, shifts; full errors still logged server-side via `console.error`.
+- **Maps fallback:** LocationInput fallback (when Maps API fails) now has amber border/bg, placeholder, MapPin icon, and hint text: "You can still type your address here if suggestions aren't available."
+
+**Integration Points**
+- Backend: `POST /api/users/onboarding/complete` (users.ts) with `role`, `displayName`, `phone`, `location`, optional `bio`/`avatarUrl`.
+- E2E mocks: All specs now mock `**/api/users/onboarding/complete` instead of `**/api/users/role`.
+
+**File Paths**
+- `src/pages/Onboarding.tsx`, `src/pages/home.tsx`, `src/pages/onboarding/professional.tsx`
+- `api/_src/routes/stripe.ts`, `api/_src/routes/stripe-connect.ts`, `api/_src/routes/payments.ts`, `api/_src/routes/marketplace.ts`, `api/_src/routes/shifts.ts`
+- `src/components/ui/location-input.tsx`
+- `tests/auth-flow.spec.ts`, `tests/core-marketplace.spec.ts`, `tests/pro-marketplace.spec.ts`, `tests/e2e/onboarding.spec.ts`, `tests/e2e/subscription_flow.spec.ts`, `e2e/mobile-interactions.spec.ts`, `e2e/mobile-onboarding.spec.ts`
+
+**Next Priority Task**
+- Tag v1.0.0-stable after smoke/E2E pass; optionally run full E2E suite against staging.
+
+**Code Organization & Quality**
+- All async routes already use `asyncHandler`; try/catch blocks in stripe/stripe-connect/payments/marketplace/shifts now return generic messages only (no `error.message` to client).
+
+---
+
+#### 2026-01-28: Harden E2E Onboarding Suite (404 Detection, Maps Check, Endpoint Alignment)
+
+**Core Components**
+- Onboarding E2E spec (`frontend/e2e/onboarding-flow.spec.ts`)
+- Location input (`src/components/ui/location-input.tsx`)
+
+**Key Features**
+- Added `page.waitForResponse` for POST `/api/onboarding/complete` and assert response status 200; test fails on 404 (missing backend route).
+- Venue Details flow: type "Brisbane" in Location, assert suggestion dropdown visible (`data-testid="location-suggestions"` or `.pac-container`) to catch RefererNotAllowedMapError.
+- E2E mock aligned to POST `/api/onboarding/complete` (hub.tsx uses this endpoint; no POST `/api/users/role` in hub).
+
+**Integration Points**
+- Backend: POST `/api/onboarding/complete` (users.ts); hub.tsx already uses this endpoint.
+- E2E: `npx playwright test frontend/e2e/onboarding-flow.spec.ts --config=playwright.frontend.config.ts`
+
+**File Paths**
+- `frontend/e2e/onboarding-flow.spec.ts`
+- `src/components/ui/location-input.tsx` (added `data-testid="location-suggestions"` to PopoverContent)
+
+**Next Priority Task**
+- Run E2E against staging/prod to confirm 404 and Maps failures are caught.
+
+**Code Organization & Quality**
+- No change in hub.tsx; it already calls `/api/onboarding/complete`. Comment in spec documents endpoint alignment.
+
+---
+
+#### 2026-01-28: Fix Location Auto-Suggest on Venue Profile (HospoGo Onboarding)
+
+**Core Components**
+- Location input (`src/components/ui/location-input.tsx`)
+- Venue Profile / onboarding hub (`src/pages/onboarding/hub.tsx`)
+
+**Key Features**
+- Switched to `google.maps.places.AutocompleteSuggestion` (Place Autocomplete Data API) when available; fallback to legacy `use-places-autocomplete` (AutocompleteService) if new API is not loaded.
+- Added `readyToLoadMaps` prop so Google Maps script loads only after auth handshake; hub passes `readyToLoadMaps={isAuthReady}` to avoid race conditions.
+- Added a small loading spinner (Loader2) inside the Location input while suggestions are fetching.
+
+**Integration Points**
+- Auth: `useAuth().isAuthReady` (hub) to gate Maps load
+- Google Maps: `loadGoogleMaps()`, `google.maps.importLibrary('places')`, `AutocompleteSuggestion.fetchAutocompleteSuggestions`, session tokens, `Place.fetchFields`
+
+**File Paths**
+- `src/components/ui/location-input.tsx`
+- `src/pages/onboarding/hub.tsx`
+
+**Next Priority Task**
+- Manually verify "brisbane" auto-complete on Venue Profile (onboarding hub) in dev/prod.
+
+**Code Organization & Quality**
+- Kept legacy path for backward compatibility; single component handles both new and legacy APIs with shared UI (spinner, popover, Command list).
+
+---
+
 #### 2026-01-22: Unlock Onboarding Role Cards for Firebase Auth
 
 **Core Components**

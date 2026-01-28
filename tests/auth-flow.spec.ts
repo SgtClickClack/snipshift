@@ -180,7 +180,7 @@ test.describe('Auth Flow - New User', () => {
     });
 
     // Mock role assignment API
-    await page.route('**/api/users/role', async (route) => {
+    await page.route('**/api/users/onboarding/complete', async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({
           status: 200,

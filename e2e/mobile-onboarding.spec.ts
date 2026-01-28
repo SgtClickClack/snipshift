@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Mobile Onboarding', () => {
   test('Professional Onboarding - Mobile Layout Check', async ({ page }) => {
     // 1. Setup API Mocks to avoid backend dependencies/errors
-    await page.route('**/api/users/role', async route => {
+    await page.route('**/api/users/onboarding/complete', async route => {
         await route.fulfill({ 
             status: 200,
             json: { 

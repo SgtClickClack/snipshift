@@ -87,9 +87,9 @@ router.get('/venues', asyncHandler(async (req, res) => {
         hasMore: page < totalPages,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[MARKETPLACE] Error fetching venues:', error);
-    res.status(500).json({ message: 'Failed to fetch venues', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch venues' });
   }
 }));
 
@@ -175,9 +175,9 @@ router.get('/venues/:id', asyncHandler(async (req, res) => {
       createdAt: venue.createdAt.toISOString(),
       updatedAt: venue.updatedAt.toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[MARKETPLACE] Error fetching venue:', error);
-    res.status(500).json({ message: 'Failed to fetch venue', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch venue' });
   }
 }));
 
@@ -358,9 +358,9 @@ router.get('/shifts', asyncHandler(async (req, res) => {
         radius: radius,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[MARKETPLACE] Error fetching shifts:', error);
-    res.status(500).json({ message: 'Failed to fetch shifts', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch shifts' });
   }
 }));
 

@@ -49,9 +49,9 @@ router.get('/account/status', authenticateUser, asyncHandler(async (req: Authent
       payoutsEnabled: account.payouts_enabled || false,
       accountId: user.stripeAccountId,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error getting account status:', error);
-    res.status(500).json({ message: 'Failed to get account status', error: error.message });
+    res.status(500).json({ message: 'Failed to get account status' });
   }
 }));
 
@@ -111,9 +111,9 @@ router.post('/account/create', authenticateUser, asyncHandler(async (req: Authen
       accountId,
       onboardingUrl,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error creating Connect account:', error);
-    res.status(500).json({ message: 'Failed to create Connect account', error: error.message });
+    res.status(500).json({ message: 'Failed to create Connect account' });
   }
 }));
 
@@ -152,9 +152,9 @@ router.post('/account/onboarding-link', authenticateUser, asyncHandler(async (re
     res.status(200).json({
       onboardingUrl,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error creating onboarding link:', error);
-    res.status(500).json({ message: 'Failed to create onboarding link', error: error.message });
+    res.status(500).json({ message: 'Failed to create onboarding link' });
   }
 }));
 
@@ -183,9 +183,9 @@ router.get('/account/verify', authenticateUser, asyncHandler(async (req: Authent
       canAcceptShifts: isReady,
       reason: isReady ? null : 'Account not fully onboarded',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error verifying account:', error);
-    res.status(500).json({ message: 'Failed to verify account', error: error.message });
+    res.status(500).json({ message: 'Failed to verify account' });
   }
 }));
 
@@ -228,9 +228,9 @@ router.post('/customer/create', authenticateUser, asyncHandler(async (req: Authe
     res.status(200).json({
       customerId,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error creating customer:', error);
-    res.status(500).json({ message: 'Failed to create Stripe customer', error: error.message });
+    res.status(500).json({ message: 'Failed to create Stripe customer' });
   }
 }));
 
@@ -272,9 +272,9 @@ router.post('/setup-intent', authenticateUser, asyncHandler(async (req: Authenti
     res.status(200).json({
       clientSecret,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error creating SetupIntent:', error);
-    res.status(500).json({ message: 'Failed to create SetupIntent', error: error.message });
+    res.status(500).json({ message: 'Failed to create SetupIntent' });
   }
 }));
 
@@ -310,9 +310,9 @@ router.post('/account/login-link', authenticateUser, asyncHandler(async (req: Au
     res.status(200).json({
       loginUrl,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error creating login link:', error);
-    res.status(500).json({ message: 'Failed to create login link', error: error.message });
+    res.status(500).json({ message: 'Failed to create login link' });
   }
 }));
 
@@ -346,9 +346,9 @@ router.get('/payment-methods', authenticateUser, asyncHandler(async (req: Authen
         } : null,
       })),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_CONNECT] Error listing payment methods:', error);
-    res.status(500).json({ message: 'Failed to list payment methods', error: error.message });
+    res.status(500).json({ message: 'Failed to list payment methods' });
   }
 }));
 

@@ -62,11 +62,12 @@ export default function ProfessionalOnboardingPage() {
         await auth.currentUser.getIdToken(true);
       }
 
-      const response = await apiRequest('POST', '/api/users/role', {
+      const response = await apiRequest('POST', '/api/users/onboarding/complete', {
         role: 'professional',
-        shopName: formData.displayName, // API expects shopName for backward compatibility (used for display name)
+        displayName: formData.displayName,
+        phone: (user as { phone?: string })?.phone ?? '',
         location: formData.location,
-        description: `${formData.profession}\n\n${formData.bio}`, // Combine profession and bio
+        bio: `${formData.profession}\n\n${formData.bio}`.trim() || undefined,
       });
 
       if (!response.ok) {

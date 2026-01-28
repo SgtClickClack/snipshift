@@ -201,8 +201,8 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
     });
   });
   
-  await page.route('**/api/users/role**', async (route) => {
-    console.log('🟢 Mocking POST /api/users/role');
+  await page.route('**/api/users/onboarding/complete**', async (route) => {
+    console.log('🟢 Mocking POST /api/users/onboarding/complete');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -665,7 +665,7 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   
   // STEP 0: ROLE SELECTION - Robust implementation
   // Ensure the Role API mock is ready
-  await page.route('**/api/users/role', r => r.fulfill({ 
+  await page.route('**/api/users/onboarding/complete', r => r.fulfill({ 
     status: 200, 
     body: JSON.stringify({ success: true, role: 'professional' }) 
   }));

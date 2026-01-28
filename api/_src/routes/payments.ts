@@ -50,9 +50,9 @@ router.get('/balance/:userId', authenticateUser, requireSelfParam('userId'), asy
       pending: pending / 100,
       currency: balance.available?.[0]?.currency || balance.pending?.[0]?.currency || 'aud',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[PAYMENTS] Error getting balance:', error);
-    res.status(500).json({ message: 'Failed to get balance', error: error.message });
+    res.status(500).json({ message: 'Failed to get balance' });
   }
 }));
 
@@ -129,9 +129,9 @@ router.get('/history/:userId', authenticateUser, requireSelfParam('userId'), asy
     );
 
     res.status(200).json({ history });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[PAYMENTS] Error getting payment history:', error);
-    res.status(500).json({ message: 'Failed to get payment history', error: error.message });
+    res.status(500).json({ message: 'Failed to get payment history' });
   }
 }));
 

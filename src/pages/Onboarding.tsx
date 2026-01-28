@@ -539,8 +539,11 @@ export default function Onboarding() {
     const saveVenueRole = async () => {
       try {
         logger.debug('Onboarding', '[Onboarding] Saving venue role to database...');
-        const response = await apiRequest('POST', '/api/users/role', {
-          role: 'venue' as 'business',
+        const response = await apiRequest('POST', '/api/users/onboarding/complete', {
+          role: 'venue',
+          displayName: user?.name || user?.email || 'Venue',
+          phone: (user as { phone?: string })?.phone ?? '',
+          location: (user as { location?: string })?.location ?? '',
         });
         
         if (!response.ok) {

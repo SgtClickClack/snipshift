@@ -1988,9 +1988,9 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
         error: 'This shift was just accepted by another professional' 
       });
     } else if (error.message?.includes('payment authorization')) {
-      res.status(500).json({ message: 'Failed to create payment authorization', error: error.message });
+      res.status(500).json({ message: 'Failed to create payment authorization' });
     } else {
-      res.status(500).json({ message: 'Failed to accept shift', error: error.message });
+      res.status(500).json({ message: 'Failed to accept shift' });
     }
   }
 }));

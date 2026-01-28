@@ -27,7 +27,12 @@ export default function HomePage() {
     
     try {
       // Update user role via API (this adds the role to their account)
-      await apiRequest("POST", `/api/users/role`, { role });
+      await apiRequest("POST", "/api/users/onboarding/complete", {
+        role,
+        displayName: user?.name ?? user?.email ?? "User",
+        phone: (user as { phone?: string })?.phone ?? "",
+        location: (user as { location?: string })?.location ?? "",
+      });
       
       // Update local auth state
       const updatedUser = { ...user!, role };

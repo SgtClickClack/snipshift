@@ -249,11 +249,12 @@ export default function HubOnboardingPage() {
         await auth.currentUser.getIdToken(true);
       }
 
-      const response = await apiRequest('POST', '/api/users/role', {
+      const response = await apiRequest('POST', '/api/onboarding/complete', {
         role: 'hub',
-        shopName: formData.venueName,
+        displayName: formData.venueName,
+        phone: (user as { phone?: string })?.phone ?? '',
         location: formData.location,
-        description: formData.description,
+        bio: formData.description || undefined,
       });
 
       if (!response.ok) {
@@ -575,6 +576,7 @@ export default function HubOnboardingPage() {
                         }
                       }}
                       placeholder="Start typing a city or address..."
+                      readyToLoadMaps={isAuthReady}
                       className={`bg-card text-foreground placeholder:text-steel-500/80 ${
                         getFieldError('location', formData.location, true) 
                           ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500' 

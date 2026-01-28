@@ -386,7 +386,7 @@ test.describe('Subscription & Stripe Flow', () => {
       await setupSubscriptionMocks(page);
 
       // Mock user role endpoint
-      await page.route('**/api/users/role', async (route) => {
+      await page.route('**/api/users/onboarding/complete', async (route) => {
         if (route.request().method() === 'POST') {
           await route.fulfill({
             status: 200,
@@ -495,7 +495,7 @@ test.describe('Subscription & Stripe Flow', () => {
       // Setup authenticated user context
       await setupUserContext(context, { ...NEW_SIGNUP_USER, isOnboarded: false });
 
-      await page.route('**/api/users/role', async (route) => {
+      await page.route('**/api/users/onboarding/complete', async (route) => {
         if (route.request().method() === 'POST') {
           await route.fulfill({
             status: 200,

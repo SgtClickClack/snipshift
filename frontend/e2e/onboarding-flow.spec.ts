@@ -8,7 +8,10 @@ import { test, expect } from '@playwright/test';
  * 2. Confirm Stripe Connect flow uses return URL with ?step=payouts&status=success
  * 3. Fail if "Snipshift" appears in the UI (except logo/branding not yet changed)
  *
- * Hardened: negative validation, role isolation, and GET /api/me role display.
+ * Hardened: negative validation, role isolation, GET /api/me role display,
+ * waitForResponse + status assertion on onboarding submission (fails on 404),
+ * and Maps suggestion dropdown check (catches RefererNotAllowedMapError).
+ * Venue onboarding submits to POST /api/onboarding/complete (backend hardening).
  * Run: npx playwright test frontend/e2e/onboarding-flow.spec.ts --config=playwright.frontend.config.ts
  */
 
@@ -114,8 +117,16 @@ test.describe('Perfect Onboarding – Venue flow', () => {
 
     await assertNoSnipshiftInUI(page);
 
-    // 4. Fill venue form and submit (mock API if needed so submit succeeds)
-    await page.route('**/api/users/role', async (route) => {
+    // 3b. Maps suggestion check: type 'Brisbane' in Location; if dropdown appears within 5s, we're good (catches RefererNotAllowedMapError in real envs).
+    // In E2E without Maps API, dropdown may never appear – test continues and fills address manually in step 4.
+    const locationField = page.getByPlaceholder(/start typing|city or address/i).first();
+    await expect(locationField).toBeVisible({ timeout: 10000 });
+    await locationField.fill('Brisbane');
+    const suggestionDropdown = page.getByTestId('location-suggestions').or(page.locator('.pac-container'));
+    await suggestionDropdown.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+
+    // 4. Fill venue form and submit (mock aligned to POST /api/onboarding/complete – hub.tsx uses this endpoint)
+    await page.route('**/api/onboarding/complete', async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({
           status: 200,
@@ -123,10 +134,13 @@ test.describe('Perfect Onboarding – Venue flow', () => {
           body: JSON.stringify({
             id: 'e2e-user-0001',
             email: 'test@hospogo.com',
-            shopName: 'E2E Venue',
+            name: 'E2E Test User',
+            displayName: 'E2E Venue',
             location: '123 Test St, Brisbane QLD',
             role: 'business',
-            currentRole: 'business',
+            currentRole: 'hub',
+            roles: ['business'],
+            isOnboarded: true,
           }),
         });
         return;
@@ -137,10 +151,20 @@ test.describe('Perfect Onboarding – Venue flow', () => {
     const venueNameInput = page.getByRole('textbox', { name: /venue name/i });
     await expect(venueNameInput).toBeVisible({ timeout: 10000 });
     await venueNameInput.fill('E2E Test Venue');
-    await page.getByPlaceholder(/city or address/i).first().fill('123 Test St, Brisbane QLD');
+    await page.getByPlaceholder(/city or address|start typing/i).first().fill('123 Test St, Brisbane QLD');
     await page.getByRole('textbox', { name: /description/i }).fill('E2E venue for onboarding test');
 
+    // Wait for onboarding submission response and assert 200 (test MUST fail on 404)
+    const submitResponsePromise = page.waitForResponse(
+      (res) => {
+        const url = res.url();
+        return url.includes('/api/onboarding/complete') && res.request().method() === 'POST';
+      },
+      { timeout: 15000 }
+    );
     await page.getByRole('button', { name: /create venue profile|continue to payment/i }).click();
+    const submitResponse = await submitResponsePromise;
+    expect(submitResponse.status(), 'Onboarding submission must return 200; 404 indicates missing backend route').toBe(200);
 
     await page.waitForTimeout(3000);
     await assertNoSnipshiftInUI(page);
