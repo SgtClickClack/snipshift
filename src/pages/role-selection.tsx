@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, UserCheck, Award, GraduationCap, FastForward, Loader2 } from "lucide-react";
+import { Store, UserCheck, Award, GraduationCap, FastForward } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 import { getDashboardRoute, mapRoleToApiRole, isBusinessRole } from "@/lib/roles";
+import { DashboardLayoutSkeleton } from "@/components/loading/skeleton-loaders";
 
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
@@ -15,10 +16,11 @@ export default function RoleSelectionPage() {
   const { toast } = useToast();
   const { user, token, isLoading: authLoading, refreshUser } = useAuth();
   
-  // Show loader until user profile is synced
+  // Show loader until user profile is synced from DB (avoid redirect before hydration)
   const shouldShowLoader = authLoading || !token || !user?.id;
 
-  // If user already has business or venue role, bypass this page and go to venue-details (fixes loop)
+  // If user already has business or venue role, bypass this page and go to venue-details (fixes loop).
+  // Only runs when user exists (profile hydrated); never redirects before /api/me has returned.
   useEffect(() => {
     if (shouldShowLoader || !user) return;
     const role = user.currentRole ?? user.role;
@@ -144,15 +146,7 @@ export default function RoleSelectionPage() {
   ];
 
   if (shouldShowLoader) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-steel-900 via-steel-800 to-steel-950 flex items-center justify-center p-6">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-brand-neon mx-auto" />
-          <h2 className="text-xl font-semibold text-white">Preparing your HospoGo Workspace...</h2>
-          <p className="text-gray-400">Setting up your account, just a moment</p>
-        </div>
-      </div>
-    );
+    return <DashboardLayoutSkeleton />;
   }
 
   return (

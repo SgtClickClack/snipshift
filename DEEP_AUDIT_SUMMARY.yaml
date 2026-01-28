@@ -1,0 +1,37 @@
+audit_report:
+  status: "COMPLETE"
+  timestamp: "2026-01-28T13:20:00+10:00"
+  
+  renaming_candidates:
+    status: "PENDING"
+    findings: "The search for 'Snipshift' is still running. Will need to be checked in a separate turn once complete."
+
+  auth_middleware:
+    file: "api/_src/middleware/auth.ts"
+    status: "PASS"
+    details: |
+      - `AuthenticatedRequest` interface defines `user.role` as a union type that includes `'business'`, `'hub'`, `'venue'`.
+      - Wait, the interface in `auth.ts` is: `role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding'`.
+      - This is GOOD. It means the middleware won't break if it sees 'venue' or 'hub', even though we are normalizing to 'business' in the DB. It's permissive.
+      - `authenticateUser` logic fetches user from DB. If the DB role is 'business', `req.user.role` will be 'business'.
+      - Admin checks use `req.user.role === 'admin'`. Correct.
+      - Conclusion: Middleware is robust enough to handle the role normalization.
+
+  db_schema_audit:
+    file: "api/_src/db/schema/users.ts"
+    status: "WARNING"
+    details: |
+      - `userRoleEnum` is defined as `['professional', 'business', 'admin', 'trainer', 'hub', 'pending_onboarding']`.
+      - CRITICAL: It is MISSING 'venue' and 'brand'.
+      - However, our fix in `users.ts` normalizes 'venue' and 'brand' to 'business' BEFORE insertion.
+      - So, as long as the normalization logic holds, the DB schema is fine.
+      - BUT, `hub` is still in the enum. The "Clean Break" migration implies we should be moving away from `hub`.
+      - Ideally, `hub` should be removed from the enum in a future migration to enforce `business` strictly, but for now, it's harmless legacy support.
+
+  top_5_fixes:
+    1.  **Enforce Role Normalization Everywhere:** We patched `api/register`, but what about `api/users/role` (role switching)? We need to ensure *all* write paths normalize 'venue'/'hub'/'brand' to 'business'.
+    2.  **Fix Onboarding Redirect Loop (Root Cause):** Ensure `role-selection.tsx` redirects to `/onboarding/hub` (for venues) and not the dashboard. (This was identified in the previous turn).
+    3.  **Rename 'Snipshift' to 'HospoGo':** Complete the rebranding sweep to avoid user confusion (e.g., in email templates or meta tags).
+    4.  **Stripe Connect Return URL:** Update the return URL to keep users in the onboarding wizard (`/onboarding?step=payouts`) instead of dumping them on the dashboard.
+    5.  **Remove Legacy 'Hub' Enum:** Plan a migration to migrate all existing 'hub' role users to 'business' and then remove 'hub' from the Postgres enum to enforce strict typing.
+

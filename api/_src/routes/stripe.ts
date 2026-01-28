@@ -35,9 +35,9 @@ router.post('/create-account-link', authenticateUser, asyncHandler(async (req: A
   // Check if user already has a Connect account
   if (user.stripeAccountId) {
     // If account exists, create a new account link for onboarding/updates
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const returnUrl = `${frontendUrl}/venue/dashboard?onboarding=complete`;
-    const refreshUrl = `${frontendUrl}/venue/dashboard?onboarding=refresh`;
+    const appUrl = process.env.VITE_APP_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
+    const returnUrl = `${appUrl}/onboarding?step=payouts&status=success`;
+    const refreshUrl = `${appUrl}/onboarding?step=payouts&status=refresh`;
 
     try {
       const accountLink = await stripeConnectService.createAccountLinkWithIdentity(
@@ -75,9 +75,9 @@ router.post('/create-account-link', authenticateUser, asyncHandler(async (req: A
     });
 
     // Create account link with identity verification
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const returnUrl = `${frontendUrl}/venue/dashboard?onboarding=complete`;
-    const refreshUrl = `${frontendUrl}/venue/dashboard?onboarding=refresh`;
+    const appUrl = process.env.VITE_APP_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
+    const returnUrl = `${appUrl}/onboarding?step=payouts&status=success`;
+    const refreshUrl = `${appUrl}/onboarding?step=payouts&status=refresh`;
 
     const accountLink = await stripeConnectService.createAccountLinkWithIdentity(
       accountId,

@@ -25,18 +25,18 @@ export default function LandingPage() {
   const location = useLocation();
   const hasCleanedUp = useRef(false);
 
-  // Force redirect to dashboard if user is present
+  // Redirect logic aligned with AuthGuard: use hasCompletedOnboarding to choose destination
   useEffect(() => {
-    // Only redirect if we're on the landing page
     if (location.pathname !== '/') return;
-    
-    // Wait for auth state to settle before checking
     if (isLoading) return;
-    
-    // If user exists, immediately redirect to dashboard
-    if (user) {
-      console.log('[LandingPage] User present, redirecting to dashboard');
+
+    if (!user) return;
+
+    const hasCompletedOnboarding = user.hasCompletedOnboarding === true;
+    if (hasCompletedOnboarding) {
       navigate('/dashboard', { replace: true });
+    } else {
+      navigate('/onboarding', { replace: true });
     }
   }, [user, isLoading, navigate, location.pathname]);
 

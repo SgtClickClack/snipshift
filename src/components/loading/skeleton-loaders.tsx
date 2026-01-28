@@ -2,6 +2,47 @@ import { SkeletonLoader } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
 /**
+ * DashboardLayoutSkeleton – mimics the main dashboard layout (navbar + stats + content).
+ * Use in AuthGuard and role-selection during auth handshake to avoid jerkiness.
+ */
+export function DashboardLayoutSkeleton() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col w-full">
+      {/* Navbar placeholder */}
+      <div className="h-14 md:h-16 border-b border-border bg-background">
+        <div className="max-w-7xl mx-auto h-full px-4 flex items-center gap-4">
+          <SkeletonLoader className="h-8 w-24 rounded" />
+          <SkeletonLoader className="h-8 w-16 rounded ml-auto" />
+          <SkeletonLoader className="h-8 w-8 rounded-full" />
+        </div>
+      </div>
+      {/* Main content area */}
+      <div className="flex-1 p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Stats row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
+            ))}
+          </div>
+          {/* Content blocks */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="h-64 rounded-lg bg-muted animate-pulse" />
+              <div className="h-48 rounded-lg bg-muted animate-pulse" />
+            </div>
+            <div className="space-y-4">
+              <div className="h-48 rounded-lg bg-muted animate-pulse" />
+              <div className="h-32 rounded-lg bg-muted animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * DashboardStatsSkeleton - Matches dashboard-stats component dimensions
  * Shows 4 stat cards in a grid layout
  */

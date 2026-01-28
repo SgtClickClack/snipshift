@@ -2,9 +2,63 @@
  * Authentication Middleware
  * 
  * Verifies Firebase ID Tokens and attaches the user to the request.
+ * Includes optional rate limiting for /api/register and /api/me to prevent 429s from downstream abuse.
  */
 
 import { Request, Response, NextFunction } from 'express';
+
+/** In-memory rate limit store: key = client id (IP), value = { count, resetAt } */
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX = 40;
+
+function getClientId(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+/**
+ * Rate limiter for /api/register and /api/me.
+ * Use on routes: POST /register, GET /me (when router is mounted at /api).
+ * Returns 429 Too Many Requests when exceeded.
+ */
+export function rateLimitRegisterAndMe(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const path = (req as any).originalUrl ?? req.path;
+  const isRegister = path === '/api/register' || path.endsWith('/api/register');
+  const isMe = path === '/api/me' || path.endsWith('/api/me');
+  if (!isRegister && !isMe) {
+    next();
+    return;
+  }
+
+  const now = Date.now();
+  const id = getClientId(req);
+  let entry = rateLimitStore.get(id);
+
+  if (!entry || now >= entry.resetAt) {
+    entry = { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    rateLimitStore.set(id, entry);
+    next();
+    return;
+  }
+
+  entry.count += 1;
+  if (entry.count > RATE_LIMIT_MAX) {
+    res.status(429).json({
+      message: 'Too many requests. Please try again in a minute.',
+      code: 'RATE_LIMIT_EXCEEDED',
+    });
+    return;
+  }
+  next();
+}
 import * as usersRepo from '../repositories/users.repository.js';
 import { getAuth, getFirebaseInitError } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
@@ -92,9 +146,14 @@ export function authenticateUser(
   res: Response,
   next: NextFunction
 ): void {
-  // Log when auth middleware is called
-  if (req.path.startsWith('/api/')) {
-    console.log(`[AUTH] authenticateUser called for ${req.method} ${req.path}`, {
+  // Path for /api/me: when router is mounted at /api, req.path is /me; use originalUrl for reliable detection
+  const pathForLog = (req as any).originalUrl ?? req.path;
+  const isMeEndpoint = pathForLog === '/api/me' || String(pathForLog).endsWith('/api/me');
+
+  // Log when auth middleware is called (DEBUG)
+  if (isMeEndpoint || req.path?.startsWith('/api/')) {
+    process.stderr.write(`[AUTH DEBUG] authenticateUser ${req.method} path=${pathForLog} hasAuth=${!!req.headers.authorization}\n`);
+    console.log(`[AUTH] authenticateUser called for ${req.method} ${pathForLog}`, {
       hasAuthHeader: !!req.headers.authorization,
       authHeaderPrefix: req.headers.authorization?.substring(0, 20),
     });
@@ -120,7 +179,6 @@ export function authenticateUser(
     }
 
     // Log Firebase Admin initialization status for /api/me debugging
-    const isMeEndpoint = req.path === '/api/me';
     if (isMeEndpoint) {
       console.log('[AUTH DEBUG] Firebase Admin initialized successfully', {
         projectId: process.env.FIREBASE_PROJECT_ID,
@@ -209,7 +267,7 @@ export function authenticateUser(
     if (!token) {
       // Suppress logging for expected 401s (when user is not authenticated)
       // Only log if this is not a common public endpoint that might be called without auth
-      const isPublicEndpoint = req.path === '/api/me' || req.path.startsWith('/api/notifications');
+      const isPublicEndpoint = isMeEndpoint || (req.path?.startsWith?.('/api/notifications') ?? false);
       if (!isPublicEndpoint) {
         console.log(`[AUTH] No token provided for ${req.method} ${req.path}`);
       }
@@ -224,10 +282,9 @@ export function authenticateUser(
     Promise.resolve().then(async () => {
       try {
         // Log token verification attempt for debugging (always for /api/me)
-        const isMeEndpoint = req.path === '/api/me';
-        const isUsersEndpoint = req.path === '/api/users';
+        const isUsersEndpoint = pathForLog === '/api/users' || String(pathForLog).includes('/api/users');
         if (isMeEndpoint || isUsersEndpoint) {
-          console.log(`[AUTH] Verifying token for ${req.path}`, {
+          console.log(`[AUTH] Verifying token for ${pathForLog}`, {
             hasToken: !!token,
             tokenLength: token?.length,
             tokenPrefix: token ? token.substring(0, 30) + '...' : 'none',
@@ -416,9 +473,18 @@ export function authenticateUser(
 
         // Find user in our DB to get role
         let user;
+        if (isMeEndpoint) {
+          process.stderr.write(`[AUTH DEBUG] GET /api/me: looking up user by email email=${email} uid=${firebaseUid}\n`);
+        }
         try {
           user = await usersRepo.getUserByEmail(email);
+          if (isMeEndpoint) {
+            process.stderr.write(`[AUTH DEBUG] GET /api/me: getUserByEmail result ${user ? `found id=${user.id}` : 'null (404)'}\n`);
+          }
         } catch (dbError: any) {
+          if (isMeEndpoint) {
+            logAuthError('[AUTH DEBUG] GET /api/me: getUserByEmail threw', dbError?.message, dbError?.code);
+          }
           if (isDatabaseComputeQuotaExceededError(dbError)) {
             res.status(503).json({
               message: 'Service temporarily unavailable: database compute quota exceeded. Please try again later.',
@@ -430,6 +496,9 @@ export function authenticateUser(
         }
 
         if (!user) {
+          if (isMeEndpoint) {
+            process.stderr.write(`[AUTH DEBUG] GET /api/me: user not in DB, auto-creating email=${email} firebaseUid=${firebaseUid}\n`);
+          }
           // Auto-create user if they have valid Firebase token but don't exist in DB
           // This handles race conditions during OAuth sign-up flow where /api/me is called
           // before /api/register completes
@@ -456,6 +525,9 @@ export function authenticateUser(
           }
           
           if (!user) {
+            if (isMeEndpoint) {
+              process.stderr.write(`[AUTH DEBUG] GET /api/me: auto-create failed or returned null, sending 401\n`);
+            }
             res.status(401).json({ message: 'Unauthorized: User not found in database' });
             return;
           }
@@ -492,22 +564,22 @@ export function authenticateUser(
         
         // Suppress detailed logging for expected 401s on public endpoints
         // (e.g., when user is not authenticated and tries to access /api/me)
-        const isPublicEndpoint = req.path === '/api/me' || req.path.startsWith('/api/notifications');
+        const isPublicEndpoint = isMeEndpoint || (req.path?.startsWith?.('/api/notifications') ?? false);
         const isExpectedError = errorCode === 'auth/id-token-expired' || 
                                 errorCode === 'auth/argument-error' ||
                                 errorMessage.includes('Decoding Firebase ID token failed');
         
         // Always log token verification failures for /api/me and /api/users to help diagnose issues
         // but use different log levels based on whether it's expected
-        const isUsersEndpoint = req.path === '/api/users';
-        if (isMeEndpoint || isUsersEndpoint) {
+        const isUsersEndpointCatch = pathForLog === '/api/users' || String(pathForLog).includes('/api/users');
+        if (isMeEndpoint || isUsersEndpointCatch) {
           if (isExpectedError) {
-            console.log(`[AUTH] Token verification failed for ${req.path} (expected):`, {
+            console.log(`[AUTH] Token verification failed for ${pathForLog} (expected):`, {
               code: errorCode,
               message: errorMessage.substring(0, 100),
             });
           } else {
-            logAuthError(`Token verification failed for ${req.path}:`, {
+            logAuthError(`Token verification failed for ${pathForLog}:`, {
               code: errorCode,
               message: errorMessage,
               hasToken: !!token,

@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { verifyApprovedWaitlist } from '../middleware/waitlist-verification.js';
+import { normalizeRole } from '../utils/normalizeRole.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import type { VenueAddress, OperatingHours } from '../db/schema/venues.js';
@@ -51,6 +52,16 @@ router.post(
   asyncHandler(async (req: AuthenticatedRequest, res) => {
     if (!req.user) {
       res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // Venue-onboarding is for business users only (venue/hub/brand normalize to business)
+    const normalizedRole = normalizeRole(req.user.role);
+    if (normalizedRole !== 'business') {
+      res.status(403).json({
+        error: 'Forbidden',
+        message: 'Venue onboarding is only available for business accounts.',
+      });
       return;
     }
 
@@ -142,13 +153,12 @@ router.post(
       return;
     }
 
-    // Update user role to 'business' and ensure isOnboarded is true
+    // Update user role to 'business' and ensure isOnboarded is true.
+    // DB only receives canonical roles; venue/hub/brand map to 'business'.
     const currentUser = await usersRepo.getUserById(req.user.id);
     if (currentUser) {
       const existingRoles = currentUser.roles || [];
-      const rolesToStore = Array.from(new Set([...existingRoles, 'business', 'venue']));
-      
-      // Always update to ensure role='business' and isOnboarded=true
+      const rolesToStore = Array.from(new Set([...existingRoles, 'business']));
       await usersRepo.updateUser(req.user.id, {
         role: 'business',
         roles: rolesToStore,

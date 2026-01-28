@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { authenticateUser, AuthenticatedRequest, rateLimitRegisterAndMe } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as profilesRepo from '../repositories/profiles.repository.js';
@@ -104,7 +104,7 @@ const isMissingFirebaseUidColumn = (error: any): boolean => {
 };
 
     // Register new user (creates user and sends welcome email)
-router.post('/register', asyncHandler(async (req, res) => {
+router.post('/register', rateLimitRegisterAndMe, asyncHandler(async (req, res) => {
   const correlationId = getCorrelationId(req);
   
   try {
@@ -423,7 +423,7 @@ router.post('/register', asyncHandler(async (req, res) => {
 }));
 
 // Get current user profile
-router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   try {
     // DEBUG: log incoming request (auth middleware already ran and set req.user)
     const uid = req.user?.id;

@@ -295,6 +295,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
             
             setUser(e2eUser);
+            setToken('mock-e2e-token'); // So pages that check token (e.g. role-selection) don't stay on loader
             setIsLoading(false);
             return; // Skip Firebase listener in E2E mode if test user is forced
           } catch (e) {

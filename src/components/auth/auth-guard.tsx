@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LoadingSpinner } from '@/components/loading/loading-spinner';
+import { DashboardLayoutSkeleton } from '@/components/loading/skeleton-loaders';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -44,15 +44,17 @@ export function AuthGuard({
   }, [hasFirebaseUser, user, isOnboardingPath, isLoading, navigate]);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <DashboardLayoutSkeleton />;
   }
 
   if (hasFirebaseUser && !user && !isOnboardingPath) {
-    return <LoadingSpinner />;
+    return <DashboardLayoutSkeleton />;
   }
 
-  if (hasFirebaseUser && user && isOnboardingPath) {
-    return <LoadingSpinner />;
+  // Only show skeleton on onboarding paths when we are mid-redirect (user completed onboarding).
+  // Do NOT block onboarding content when user exists but has not completed onboarding.
+  if (hasFirebaseUser && user && user.hasCompletedOnboarding && isOnboardingPath) {
+    return <DashboardLayoutSkeleton />;
   }
 
   if (requireAuth && !hasAuth) {

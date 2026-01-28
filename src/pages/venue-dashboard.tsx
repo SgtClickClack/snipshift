@@ -87,17 +87,27 @@ const VenueDashboardSkeleton = () => (
 
 export default function VenueDashboard() {
   const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading } = useAuth();
+  const navigate = useNavigate();
   // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
   // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
   const hasValidRole = isBusinessRole(user?.currentRole);
-  
+  const hasCompletedOnboarding = user?.hasCompletedOnboarding !== false && user?.isOnboarded !== false;
+
   // DEMO MODE: Bypass all loading states and render dashboard immediately with mock data
   const demoMode = isDemoMode();
   if (demoMode) {
     return <VenueDashboardContent demoMode={true} />;
   }
 
+  // Auth/role not ready: show skeleton (never a blank screen)
   if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
+    return <VenueDashboardSkeleton />;
+  }
+
+  // User has valid role but has not completed onboarding: redirect to onboarding
+  // so we never render a null/blank screen (handles hasCompletedOnboarding: false)
+  if (user && !hasCompletedOnboarding) {
+    navigate('/onboarding', { replace: true });
     return <VenueDashboardSkeleton />;
   }
 

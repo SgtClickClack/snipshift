@@ -100,7 +100,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const { isLoading } = useAuth();
   const isBridgeRoute = location.pathname === '/auth/bridge';
   const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || isBridgeRoute;
-  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/forgot-password', '/auth/bridge'].includes(location.pathname);
+  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/onboarding/role-selection', '/forgot-password', '/auth/bridge'].includes(location.pathname);
   
   // Initialize push notifications when user is authenticated
   usePushNotifications();
@@ -175,6 +175,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         } />
 
         <Route path="/role-selection" element={
+          <AuthGuard requireAuth={true}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <RoleSelectionPage />
+            </Suspense>
+          </AuthGuard>
+        } />
+
+        <Route path="/onboarding/role-selection" element={
           <AuthGuard requireAuth={true}>
             <Suspense fallback={<PageLoadingFallback />}>
               <RoleSelectionPage />
@@ -611,6 +619,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 }
 
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 
 // Track if HTML splash has been removed (shared between App and AppRoutes)
 let htmlSplashRemoved = false;
@@ -637,9 +646,10 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="hospogo-ui-theme">
-      <div className="relative w-full overflow-x-hidden min-h-screen">
-        <HelmetProvider>
-          <ErrorBoundary>
+      <GlobalErrorBoundary>
+        <div className="relative w-full overflow-x-hidden min-h-screen">
+          <HelmetProvider>
+            <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
               <TooltipProvider>
                 <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -662,9 +672,10 @@ function App() {
                 </Router>
               </TooltipProvider>
             </QueryClientProvider>
-          </ErrorBoundary>
-        </HelmetProvider>
-      </div>
+            </ErrorBoundary>
+          </HelmetProvider>
+        </div>
+      </GlobalErrorBoundary>
     </ThemeProvider>
   );
 }
