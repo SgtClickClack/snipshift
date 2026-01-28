@@ -369,6 +369,26 @@ router.post('/register', asyncHandler(async (req, res) => {
       isOnboarded: verifiedUser.isOnboarded ?? false,
     });
   } catch (error: any) {
+    // If user already exists by email or UID, return 200 with existing user instead of 500
+    const email = req.body?.email;
+    if (email) {
+      try {
+        const existingByEmail = await usersRepo.getUserByEmail(email);
+        if (existingByEmail) {
+          res.status(200).json({
+            id: existingByEmail.id,
+            email: existingByEmail.email,
+            name: existingByEmail.name,
+            role: existingByEmail.role,
+            isOnboarded: existingByEmail.isOnboarded ?? false,
+          });
+          return;
+        }
+      } catch (_) {
+        // Ignore lookup errors; fall through to error reporting
+      }
+    }
+
     // Log exact error to error reporting service
     const errorToReport = error instanceof Error ? error : new Error(String(error?.message || 'Unknown error'));
     await errorReporting.captureError(

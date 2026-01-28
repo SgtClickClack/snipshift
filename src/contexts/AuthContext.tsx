@@ -134,10 +134,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Fire-and-forget: clean up push tokens so a Firebase 400 cannot block or crash logout
-    cleanupPushNotifications().catch((err) => {
+    // Cleanup push tokens in try/catch so a Firebase 400 never blocks or crashes logout
+    try {
+      await cleanupPushNotifications();
+    } catch (err) {
       logger.warn('AuthContext', 'Push cleanup failed during logout (non-fatal)', err);
-    });
+    }
     try {
       await signOut(auth);
     } catch (err) {
@@ -147,8 +149,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setFirebaseUser(null);
       setUser(null);
       setToken(null);
+      // Always redirect to landing so user never stays on a protected page after sign-out
+      navigate('/', { replace: true });
     }
-  }, []);
+  }, [navigate]);
 
   const hydrateFromFirebaseUser = useCallback(async (firebaseUser: FirebaseUser) => {
     console.log('[AuthContext] Hydrating user from Firebase', { 
