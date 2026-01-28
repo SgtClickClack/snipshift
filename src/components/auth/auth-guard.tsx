@@ -15,7 +15,7 @@ export function AuthGuard({
   redirectTo,
 }: AuthGuardProps) {
   // Minimalist guard: rely on Firebase session + DB profile
-  const { user, isLoading, hasFirebaseUser } = useAuth();
+  const { user, isLoading, hasFirebaseUser, isVenueMissing } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -37,11 +37,11 @@ export function AuthGuard({
     }
 
     // Redirect to dashboard only when isOnboarded is true (single source of truth from API).
-    // /onboarding and /onboarding/hub are only reachable when isOnboarded is explicitly false.
-    if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath) {
+    // Exception: do NOT redirect from /onboarding/hub when venue is missing (404) — user must complete venue setup.
+    if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath && !isVenueMissing) {
       navigate('/dashboard', { replace: true });
     }
-  }, [hasFirebaseUser, user, isOnboardingPath, isLoading, navigate]);
+  }, [hasFirebaseUser, user, isOnboardingPath, isVenueMissing, isLoading, navigate]);
 
   if (isLoading) {
     return <DashboardLayoutSkeleton />;
@@ -51,8 +51,9 @@ export function AuthGuard({
     return <DashboardLayoutSkeleton />;
   }
 
-  // Show skeleton on onboarding paths when user is onboarded (mid-redirect to dashboard).
-  if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath) {
+  // Show skeleton on onboarding paths when user is onboarded and not venue-missing (mid-redirect to dashboard).
+  // When isVenueMissing, allow hub to render so user can complete venue setup.
+  if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath && !isVenueMissing) {
     return <DashboardLayoutSkeleton />;
   }
 

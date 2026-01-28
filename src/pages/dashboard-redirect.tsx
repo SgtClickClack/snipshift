@@ -4,7 +4,7 @@ import { getDashboardRoute } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export default function DashboardRedirect() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isVenueMissing } = useAuth();
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -12,6 +12,11 @@ export default function DashboardRedirect() {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Venue users with no venue record must complete setup on hub (avoid redirect loop)
+  if (isVenueMissing) {
+    return <Navigate to="/onboarding/hub" replace />;
   }
 
   if (user.currentRole) {

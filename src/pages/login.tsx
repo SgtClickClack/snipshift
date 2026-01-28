@@ -18,7 +18,7 @@ export default function LoginPage() {
   const supportMessage = "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.";
   
   // MODULAR PATTERN: Use ONLY useAuth() hook - no direct auth object access
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isVenueMissing } = useAuth();
   
   const [formData, setFormData] = useState({
     email: "",
@@ -33,9 +33,9 @@ export default function LoginPage() {
     // Clear pending state immediately when valid user is detected
     if (user) {
       setPendingRedirect(false);
-      navigate("/dashboard", { replace: true });
+      navigate(isVenueMissing ? '/onboarding/hub' : '/dashboard', { replace: true });
     }
-  }, [authLoading, user, navigate]);
+  }, [authLoading, user, isVenueMissing, navigate]);
 
   useEffect(() => {
     // Also check auth.currentUser directly for popup flow

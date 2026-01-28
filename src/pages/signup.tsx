@@ -21,7 +21,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { login, hasUser, user, isLoading } = useAuth();
+  const { login, hasUser, user, isLoading, isVenueMissing } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -67,10 +67,10 @@ export default function SignupPage() {
         return;
       }
       
-      // PRIORITY 2: If has a valid role, go to role-specific dashboard
+      // PRIORITY 2: If has a valid role, go to role-specific dashboard (or hub if venue missing)
       if (user.currentRole && user.currentRole !== 'client') {
-        const dashboardRoute = getDashboardRoute(user.currentRole);
-        console.log('[Signup] Navigation triggered to', dashboardRoute, '(has role)');
+        const dashboardRoute = isVenueMissing ? '/onboarding/hub' : getDashboardRoute(user.currentRole);
+        console.log('[Signup] Navigation triggered to', dashboardRoute, isVenueMissing ? '(venue missing)' : '(has role)');
         navigate(dashboardRoute, { replace: true });
         return;
       }
@@ -93,7 +93,7 @@ export default function SignupPage() {
     }
     
     console.log('[Signup] No redirect needed - showing signup form');
-  }, [isLoading, user, navigate]);
+  }, [isLoading, user, isVenueMissing, navigate]);
 
   // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount
   // If popup just completed auth, immediately redirect without showing signup UI

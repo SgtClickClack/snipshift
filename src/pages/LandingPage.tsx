@@ -20,7 +20,7 @@ import { getDashboardRoute } from "@/lib/roles";
 import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
-  const { user, isLoading, hasUser, isAuthReady } = useAuth();
+  const { user, isLoading, hasUser, isAuthReady, isVenueMissing } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const hasCleanedUp = useRef(false);
@@ -34,11 +34,11 @@ export default function LandingPage() {
 
     const isOnboarded = user.isOnboarded === true;
     if (isOnboarded) {
-      navigate('/dashboard', { replace: true });
+      navigate(isVenueMissing ? '/onboarding/hub' : '/dashboard', { replace: true });
     } else {
       navigate('/onboarding', { replace: true });
     }
-  }, [user, isLoading, navigate, location.pathname]);
+  }, [user, isLoading, isVenueMissing, navigate, location.pathname]);
 
   // Clear stale auth-related localStorage/sessionStorage data on landing page load
   // This prevents race conditions from old redirects or onboarding states

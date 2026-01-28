@@ -86,7 +86,7 @@ const VenueDashboardSkeleton = () => (
 );
 
 export default function VenueDashboard() {
-  const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading, isVenueMissing } = useAuth();
   const navigate = useNavigate();
   // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
   // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
@@ -102,6 +102,12 @@ export default function VenueDashboard() {
 
   // Auth/role not ready: show skeleton (never a blank screen)
   if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
+    return <VenueDashboardSkeleton />;
+  }
+
+  // User is onboarded but venue record is missing (404) — stay on hub to complete setup
+  if (user && isVenueMissing) {
+    navigate('/onboarding/hub', { replace: true });
     return <VenueDashboardSkeleton />;
   }
 
