@@ -198,6 +198,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </AuthGuard>
         } />
 
+        <Route path="/onboarding/venue-details" element={
+          <AuthGuard requireAuth={true}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <HubOnboardingPage />
+            </Suspense>
+          </AuthGuard>
+        } />
+
         <Route path="/onboarding/professional" element={
           <AuthGuard requireAuth={true}>
             <Suspense fallback={<PageLoadingFallback />}>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Store, UserCheck, Award, GraduationCap, FastForward, Loader2 } from "lu
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
-import { getDashboardRoute, mapRoleToApiRole } from "@/lib/roles";
+import { getDashboardRoute, mapRoleToApiRole, isBusinessRole } from "@/lib/roles";
 
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
@@ -17,6 +17,19 @@ export default function RoleSelectionPage() {
   
   // Show loader until user profile is synced
   const shouldShowLoader = authLoading || !token || !user?.id;
+
+  // If user already has business or venue role, bypass this page and go to venue-details (fixes loop)
+  useEffect(() => {
+    if (shouldShowLoader || !user) return;
+    const role = user.currentRole ?? user.role;
+    const hasVenueRole =
+      role === 'business' || role === 'venue' ||
+      isBusinessRole(user.currentRole) ||
+      (Array.isArray(user.roles) && user.roles.some((r) => isBusinessRole(r)));
+    if (hasVenueRole) {
+      navigate('/onboarding/venue-details', { replace: true });
+    }
+  }, [user, shouldShowLoader, navigate]);
   
   const toggleRole = (role: "hub" | "professional" | "brand" | "trainer") => {
     setSelectedRoles((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);

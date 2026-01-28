@@ -1,27 +1,10 @@
 import { eq, sql, and, inArray } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
 import { users } from '../db/schema.js';
+import { normalizeRole } from '../utils/normalizeRole.js';
 
 // In-memory store for development
 export let mockUsers: typeof users.$inferSelect[] = [];
-
-/**
- * Normalize role values: 'venue' maps to 'business' internally for permissions.
- * This ensures consistent role handling across the system.
- */
-function normalizeRole(
-  role: string | null | undefined
-): 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding' {
-  if (!role) return 'pending_onboarding';
-  const normalized = role.toLowerCase();
-  // Map 'venue' to 'business' for internal consistency
-  if (normalized === 'venue') return 'business';
-  // Return valid roles as-is, default to 'professional' for unknown values
-  if (['professional', 'business', 'admin', 'trainer', 'hub', 'pending_onboarding'].includes(normalized)) {
-    return normalized as 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'pending_onboarding';
-  }
-  return 'pending_onboarding';
-}
 
 /**
  * Normalize roles array: applies normalizeRole to each role and removes duplicates.
@@ -382,20 +365,25 @@ export async function updateUser(
   userData: Partial<typeof users.$inferSelect>
 ): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
+  const toSet = { ...userData, updatedAt: new Date() } as Record<string, unknown>;
+  if (toSet.role !== undefined) {
+    toSet.role = normalizeRole(toSet.role as string);
+  }
+  if (Array.isArray(toSet.roles) && toSet.roles.length > 0) {
+    toSet.roles = toSet.roles.map((r: unknown) => normalizeRole(r as string));
+    toSet.roles = Array.from(new Set(toSet.roles as string[]));
+  }
   if (!db) {
     const index = mockUsers.findIndex((u) => u.id === id);
     if (index === -1) return null;
-    
-    mockUsers[index] = { ...mockUsers[index], ...userData, updatedAt: new Date() };
+    mockUsers[index] = { ...mockUsers[index], ...toSet } as typeof users.$inferSelect;
     return normalizeUserRoles(mockUsers[index]);
   }
-
   const [updatedUser] = await db
     .update(users)
-    .set({ ...userData, updatedAt: new Date() })
+    .set(toSet as Partial<typeof users.$inferSelect>)
     .where(eq(users.id, id))
     .returning();
-    
   return updatedUser ? normalizeUserRoles(updatedUser) : null;
 }
 

@@ -8,6 +8,7 @@ import * as proVerificationService from '../services/pro-verification.service.js
 import { auth } from '../config/firebase.js';
 import { isDatabaseComputeQuotaExceededError } from '../utils/dbErrors.js';
 import { normalizeParam } from '../utils/request-params.js';
+import { normalizeRole } from '../utils/normalizeRole.js';
 import { z } from 'zod';
 import { uploadProfileImages } from '../middleware/upload.js';
 import admin from 'firebase-admin';
@@ -88,6 +89,7 @@ const RegisterSchema = z.object({
     z.string().min(8),
     z.literal(''),
   ]).optional(),
+  // UPDATED: Added 'venue' to enum to prevent 400 errors from frontend
   role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand', 'venue', 'pending_onboarding']).optional(),
 });
 
@@ -112,7 +114,7 @@ router.post('/register', asyncHandler(async (req, res) => {
       return;
     }
 
-    const { email, password, role } = validationResult.data;
+    const { email, password } = validationResult.data;
     let { name } = validationResult.data;
     let firebaseUid: string | null = null;
 
@@ -167,12 +169,9 @@ router.post('/register', asyncHandler(async (req, res) => {
     // Ensure name is always a string (fallback to email prefix if somehow still undefined)
     const finalName = name || email.split('@')[0];
 
-    // Map frontend role aliases to Drizzle user_role enum values (schema has no 'venue' or 'brand')
-    const requestedRole = role || 'pending_onboarding';
-    let dbRole = requestedRole;
-    if (requestedRole === 'brand' || requestedRole === 'venue') {
-      dbRole = 'business';
-    }
+    // Normalize role before DB: hub/venue/brand -> business (global util)
+    const requestedRole = validationResult.data.role || 'pending_onboarding';
+    const dbRole = normalizeRole(requestedRole);
 
     if (firebaseUid) {
       let upsertedUser;
@@ -1221,41 +1220,15 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
 
   const { role, displayName, bio, phone, location, avatarUrl } = validationResult.data;
 
-  // Map frontend roles to backend database roles (clean break migration)
-  // Clean-break aliases:
-  // - 'staff' / 'worker' → 'professional' in DB
-  // - 'venue' → 'business' in DB  
-  // - 'hub' stays as 'hub' in DB
-  // Legacy aliases:
-  // - 'brand' → 'business' in DB
-  // - 'trainer' stays as 'trainer'
-  let dbRole: string;
-  switch (role) {
-    case 'staff':
-    case 'worker':
-      dbRole = 'professional';
-      break;
-    case 'venue':
-      dbRole = 'business';
-      break;
-    case 'brand':
-      dbRole = 'business';
-      break;
-    case 'hub':
-    case 'trainer':
-    case 'professional':
-    case 'business':
-    default:
-      dbRole = role;
-  }
+  // Normalize role before DB: hub/venue/brand -> business (global util)
+  const dbRole = normalizeRole(role);
 
   // Fetch current user to get existing roles
   const currentUser = await usersRepo.getUserById(req.user.id);
   const existingRoles = currentUser?.roles || [];
-  
-  // Add the role to the roles array if not already present
-  // Store the frontend role name (e.g., 'brand') in the roles array
-  const rolesToStore = Array.from(new Set([...existingRoles, role]));
+
+  // DB stores only normalized roles (business/professional for aliases)
+  const rolesToStore = Array.from(new Set([...existingRoles, dbRole]));
 
   // Prepare update object
   const updates: any = {
@@ -1277,112 +1250,9 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
     return;
   }
 
-    // Return updated user object
-    // Map database role back to frontend role for currentRole if needed
-    const frontendCurrentRole = role; // Use the original frontend role (brand, trainer, etc.)
-    
-    res.status(200).json({
-      id: updatedUser.id,
-      email: updatedUser.email,
-      name: updatedUser.name,
-      displayName: updatedUser.name,
-      bio: updatedUser.bio,
-      phone: updatedUser.phone,
-      location: updatedUser.location,
-      avatarUrl: updatedUser.avatarUrl || null,
-      bannerUrl: updatedUser.bannerUrl || null,
-      roles: updatedUser.roles || [role], // Use roles from DB (includes frontend role names)
-      currentRole: frontendCurrentRole, // Return the frontend role name
-      uid: req.user.uid,
-      isOnboarded: updatedUser.isOnboarded ?? false,
-    });
-}));
-
-// Validation schema for role update
-const UpdateRoleSchema = z.object({
-  role: z.string(),
-  shopName: z.string().optional(),
-  location: z.string().optional(),
-  description: z.string().optional(),
-});
-
-// Update user role (e.g. for Shop Onboarding)
-router.post('/users/role', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  // Validate request body
-  const validationResult = UpdateRoleSchema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({
-      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-    });
-    return;
-  }
-
-  const { role, shopName, location, description } = validationResult.data;
-  const updates: any = {};
-  
-  // Map frontend roles to backend database roles
-  // 'venue' and 'hub' both map to 'business' in the database
-  if (role === 'hub' || role === 'venue') {
-    updates.role = 'business'; // Map 'hub' and 'venue' to 'business'
-    if (shopName) updates.name = shopName;
-    if (location) updates.location = location;
-    if (description) updates.bio = description;
-    updates.isOnboarded = true;
-  } else {
-     // Allow other role updates if valid enum
-     const validRoles = ['professional', 'business', 'brand', 'trainer'];
-     if (validRoles.includes(role)) {
-        updates.role = role;
-        if (shopName) updates.name = shopName;
-        if (location) updates.location = location;
-        if (description) updates.bio = description;
-        // CRITICAL: Set isOnboarded to true for professional role to complete onboarding
-        // This prevents redirect loops back to role selector
-        if (role === 'professional') {
-          updates.isOnboarded = true;
-        }
-     } else {
-        res.status(400).json({ message: 'Invalid role for this endpoint' });
-        return;
-     }
-  }
-
-  // Fetch current user to get existing roles
-  const currentUser = await usersRepo.getUserById(req.user.id);
-  if (currentUser) {
-    const existingRoles = currentUser.roles || [];
-    const newRole = updates.role;
-    
-    // Store both the frontend role name (venue/hub) and the database role (business) in roles array
-    const rolesToAdd = [];
-    if (newRole && !existingRoles.includes(newRole)) {
-      rolesToAdd.push(newRole);
-    }
-    // Also add the frontend role name if it's different from the DB role
-    if (role === 'venue' && !existingRoles.includes('venue')) {
-      rolesToAdd.push('venue');
-    }
-    if (role === 'hub' && !existingRoles.includes('hub')) {
-      rolesToAdd.push('hub');
-    }
-    
-    if (rolesToAdd.length > 0) {
-      updates.roles = [...existingRoles, ...rolesToAdd];
-    }
-  }
-
-  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
-  
-  if (!updatedUser) {
-    console.error('[POST /users/role] User not found for update');
-    res.status(404).json({ message: 'User not found' });
-    return;
-  }
+  // Return updated user object
+  // Map database role back to frontend role for currentRole if needed
+  const frontendCurrentRole = role; // Use the original frontend role (brand, trainer, etc.)
 
   res.status(200).json({
     id: updatedUser.id,
@@ -1392,315 +1262,11 @@ router.post('/users/role', authenticateUser, asyncHandler(async (req: Authentica
     bio: updatedUser.bio,
     phone: updatedUser.phone,
     location: updatedUser.location,
-    roles: updatedUser.roles || [updatedUser.role], // Use roles from DB
-    currentRole: updatedUser.role,
+    avatarUrl: updatedUser.avatarUrl || null,
+    bannerUrl: updatedUser.bannerUrl || null,
+    roles: updatedUser.roles || [role], // Use roles from DB (includes frontend role names)
+    currentRole: frontendCurrentRole, // Return the frontend role name
     uid: req.user.uid,
-    isOnboarded: updatedUser.isOnboarded ?? false,
-  });
-}));
-
-// Update user roles (add or remove roles from the roles array)
-router.patch('/users/:id/roles', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
-    console.error('[PATCH /users/:id/roles] Unauthorized - no user in request');
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  if (req.params.id !== req.user.id) {
-    console.error('[PATCH /users/:id/roles] Forbidden - user ID mismatch', { 
-      requestedId: req.params.id, 
-      userId: req.user.id 
-    });
-    res.status(403).json({ message: 'Forbidden' });
-    return;
-  }
-
-  const schema = z.object({
-    action: z.enum(['add', 'remove']),
-    role: z.enum(['professional', 'business', 'admin', 'trainer', 'hub', 'brand']),
-  });
-
-  const validationResult = schema.safeParse(req.body);
-  if (!validationResult.success) {
-    console.error('[PATCH /users/:id/roles] Validation error:', validationResult.error.errors);
-    res.status(400).json({ 
-      message: 'Validation error: ' + validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-    });
-    return;
-  }
-
-  const { action, role } = validationResult.data;
-  
-  // Map 'hub' to 'business' for database storage
-  const dbRole = role === 'hub' ? 'business' : role;
-
-  // Fetch current user to get existing roles
-  const currentUser = await usersRepo.getUserById(req.user.id);
-  if (!currentUser) {
-    console.error('[PATCH /users/:id/roles] User not found:', req.user.id);
-    res.status(404).json({ message: 'User not found' });
-    return;
-  }
-
-  const existingRoles = currentUser.roles || [];
-
-  let updatedRoles: string[];
-  
-  if (action === 'add') {
-    // Add role if not already present
-    if (!existingRoles.includes(dbRole)) {
-      updatedRoles = [...existingRoles, dbRole];
-    } else {
-      updatedRoles = existingRoles;
-    }
-  } else {
-    // Remove role if present
-    updatedRoles = existingRoles.filter(r => r !== dbRole);
-    
-    // Ensure user always has at least one role
-    if (updatedRoles.length === 0) {
-      console.error('[PATCH /users/:id/roles] Cannot remove last role');
-      res.status(400).json({ message: 'Cannot remove the last role' });
-      return;
-    }
-  }
-
-  // Update user with new roles array
-  const updates: any = { roles: updatedRoles };
-  
-  // If adding the first role or if this is the primary role, also update the main role field
-  if (action === 'add' && (!currentUser.role || currentUser.role === 'professional')) {
-    updates.role = dbRole;
-  }
-
-  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
-  
-  if (!updatedUser) {
-    console.error('[PATCH /users/:id/roles] Failed to update user');
-    res.status(500).json({ message: 'Failed to update user roles' });
-    return;
-  }
-
-  res.status(200).json({
-    id: updatedUser.id,
-    roles: updatedUser.roles || [updatedUser.role],
-    currentRole: updatedUser.role,
-  });
-}));
-
-// Update current role (for role switching)
-router.patch('/users/:id/current-role', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  if (req.params.id !== req.user.id) {
-    res.status(403).json({ message: 'Forbidden' });
-    return;
-  }
-
-  const schema = z.object({
-    role: z.enum(['professional', 'business', 'admin', 'trainer']),
-  });
-
-  const validationResult = schema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({ message: 'Invalid role' });
-    return;
-  }
-
-  const { role } = validationResult.data;
-
-  // Since DB is single-role, "switching" role actually updates the DB role
-  // TODO: In the future, this should only toggle the session view if multiple roles are supported in DB
-  // Note: We don't update 'roles' here, as switching views doesn't grant new roles
-  const updatedUser = await usersRepo.updateUser(req.user.id, { role });
-
-  if (!updatedUser) {
-    res.status(404).json({ message: 'User not found' });
-    return;
-  }
-
-  res.status(200).json({
-    id: updatedUser.id,
-    role: updatedUser.role,
-    currentRole: updatedUser.role
-  });
-}));
-
-/**
- * Check if there's a professional relationship between two users
- * A professional relationship exists if:
- * - User A is an employer and User B is assigned to one of User A's shifts (or vice versa)
- * - The shift status is 'filled', 'confirmed', or 'completed'
- */
-async function hasProfessionalRelationship(
-  viewerId: string | undefined,
-  profileUserId: string
-): Promise<boolean> {
-  if (!viewerId || viewerId === profileUserId) {
-    return false; // Can't have relationship with self, or no viewer
-  }
-
-  try {
-    const shiftsRepo = await import('../repositories/shifts.repository.js');
-    const { getDb } = await import('../db/index.js');
-    const { shifts } = await import('../db/schema.js');
-    const { eq, or, and, inArray } = await import('drizzle-orm');
-    
-    const db = getDb();
-    if (!db) {
-      return false;
-    }
-
-    // Check if viewer is employer and profile user is assignee
-    const employerShifts = await db
-      .select({ id: shifts.id })
-      .from(shifts)
-      .where(
-        and(
-          eq(shifts.employerId, viewerId),
-          eq(shifts.assigneeId, profileUserId),
-          inArray(shifts.status, ['filled', 'confirmed', 'completed'])
-        )
-      )
-      .limit(1);
-
-    if (employerShifts.length > 0) {
-      return true;
-    }
-
-    // Check if viewer is assignee and profile user is employer
-    const assigneeShifts = await db
-      .select({ id: shifts.id })
-      .from(shifts)
-      .where(
-        and(
-          eq(shifts.assigneeId, viewerId),
-          eq(shifts.employerId, profileUserId),
-          inArray(shifts.status, ['filled', 'confirmed', 'completed'])
-        )
-      )
-      .limit(1);
-
-    return assigneeShifts.length > 0;
-  } catch (error) {
-    console.error('[hasProfessionalRelationship] Error:', error);
-    return false; // Fail closed - don't reveal contact info on error
-  }
-}
-
-/**
- * Mask email address to prevent platform leakage before professional relationship
- * Example: "john.doe@gmail.com" -> "j***@g***.com"
- */
-function maskEmail(email: string): string {
-  if (!email || !email.includes('@')) return '***@***.***';
-  const [local, domain] = email.split('@');
-  const domainParts = domain.split('.');
-  const maskedLocal = local.charAt(0) + '***';
-  const maskedDomain = domainParts[0].charAt(0) + '***.' + domainParts.slice(1).join('.');
-  return `${maskedLocal}@${maskedDomain}`;
-}
-
-/**
- * Mask phone number to prevent platform leakage before professional relationship
- * Example: "+61412345678" -> "+61***678"
- */
-function maskPhone(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  const cleaned = phone.replace(/\s/g, '');
-  if (cleaned.length < 6) return '***';
-  return cleaned.slice(0, 3) + '***' + cleaned.slice(-3);
-}
-
-// Get public user profile by ID
-router.get('/users/:id', asyncHandler(async (req, res) => {
-  const userId = normalizeParam(req.params.id);
-  
-  // Get viewer ID from auth token if present (optional for public profiles)
-  const viewerId = (req as any).user?.id;
-  
-  const user = await usersRepo.getUserById(userId);
-  
-  if (!user) {
-    res.status(404).json({ message: 'User not found' });
-    return;
-  }
-
-  // Calculate reliability score if user is a professional
-  let reliabilityScore: number | null = null;
-  let noShowCount: number = 0;
-  
-  if (user.role === 'professional') {
-    const reputationService = await import('../lib/reputation-service.js');
-    reliabilityScore = await reputationService.calculateReliabilityScore(user.id);
-    noShowCount = user.noShowCount ?? 0;
-  }
-
-  // SECURITY: Check if viewer has a professional relationship with this user
-  // Only reveal contact info (email/phone) if there's an accepted shift relationship
-  const hasRelationship = await hasProfessionalRelationship(viewerId, user.id);
-  const isOwnProfile = viewerId === user.id;
-
-  // Return public profile data
-  // SECURITY: Mask sensitive contact information unless professional relationship exists
-  res.status(200).json({
-    id: user.id,
-    name: user.name,
-    displayName: user.name,
-    role: user.role,
-    bio: user.bio,
-    location: user.location,
-    avatarUrl: user.avatarUrl || null,
-    bannerUrl: user.bannerUrl || null,
-    averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
-    reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
-    joinedDate: user.createdAt.toISOString(),
-    verified: user.isOnboarded,
-    // Reliability metrics (for professionals)
-    reliabilityScore: reliabilityScore,
-    noShowCount: noShowCount,
-    // SECURITY: Only reveal contact info if professional relationship exists or viewing own profile
-    email: (hasRelationship || isOwnProfile) ? user.email : maskEmail(user.email),
-    phone: (hasRelationship || isOwnProfile) ? (user.phone || null) : maskPhone(user.phone),
-    // Flag to indicate if contact details are revealed
-    contactRevealed: hasRelationship || isOwnProfile,
-  });
-}));
-
-// Get current user's reputation stats (for professionals)
-router.get('/me/reputation', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
-  }
-
-  const userId = req.user.id;
-  
-  // Import reputation service dynamically to avoid circular deps
-  const reputationService = await import('../lib/reputation-service.js');
-  
-  const stats = await reputationService.getUserReputationStats(userId);
-  
-  if (!stats) {
-    res.status(404).json({ message: 'User not found' });
-    return;
-  }
-
-  res.status(200).json({
-    strikes: stats.strikes,
-    reliabilityScore: stats.reliabilityScore,
-    reliabilityLabel: stats.reliabilityLabel,
-    shiftsSinceLastStrike: stats.shiftsSinceLastStrike,
-    shiftsUntilStrikeRemoval: stats.shiftsUntilStrikeRemoval,
-    recoveryProgress: stats.recoveryProgress,
-    suspendedUntil: stats.suspendedUntil?.toISOString() || null,
-    isSuspended: stats.isSuspended,
-    completedShiftCount: stats.completedShiftCount,
-    noShowCount: stats.noShowCount,
   });
 }));
 
