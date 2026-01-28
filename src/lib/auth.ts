@@ -155,18 +155,12 @@ export async function signInWithGoogleDevAware() {
   try {
     const user = await signInWithGoogleLocalDevPopup();
     
-    // FAILSAFE: Immediately navigate to dashboard after popup resolves
-    // This ensures navigation happens even if React state updates are intercepted
+    // Popup flow will trigger React state updates and navigation via AuthContext
+    // and the calling components (e.g. GoogleAuthButton). Avoid hard reloads here
+    // to prevent redirect loops and preserve SPA state.
     if (user && typeof window !== 'undefined') {
       console.log('[Auth] Popup auth complete, triggering failsafe navigation to /dashboard');
-      // Use setTimeout to allow React state to propagate first
-      // If React navigation fails, this hard redirect will ensure the user reaches dashboard
-      setTimeout(() => {
-        if (window.location.pathname === '/login' || window.location.pathname === '/signup') {
-          console.log('[Auth] Failsafe: Hard redirect to /dashboard');
-          window.location.href = '/dashboard';
-        }
-      }, 500);
+      // Intentionally no hard redirect here; navigation is handled upstream.
     }
     
     return user;

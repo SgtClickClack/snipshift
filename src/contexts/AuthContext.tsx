@@ -433,13 +433,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Redirect authenticated users away from public-only routes
       if (currentPath === '/login' || currentPath === '/signup') {
-        // Check if user has completed onboarding before redirecting to dashboard
-        const hasCompletedOnboarding = user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
-        if (hasCompletedOnboarding) {
-          console.log('[Auth] User authenticated + onboarded, redirecting from', currentPath, 'to /dashboard');
+        // Treat users as eligible for dashboard when they've been flagged as onboarded,
+        // even if hasCompletedOnboarding is still false (to avoid redirect loops).
+        const isOnboarded = user.isOnboarded === true;
+        const strictlyCompletedOnboarding =
+          user.hasCompletedOnboarding !== false && user.isOnboarded !== false;
+
+        if (isOnboarded || strictlyCompletedOnboarding) {
+          console.log('[Auth] User authenticated and considered onboarded, redirecting from', currentPath, 'to /dashboard', {
+            isOnboarded,
+            hasCompletedOnboarding: user.hasCompletedOnboarding,
+          });
           navigate('/dashboard', { replace: true });
         } else {
-          console.log('[Auth] User authenticated but not onboarded, redirecting from', currentPath, 'to /onboarding');
+          console.log('[Auth] User authenticated but not onboarded, redirecting from', currentPath, 'to /onboarding', {
+            isOnboarded,
+            hasCompletedOnboarding: user.hasCompletedOnboarding,
+          });
           navigate('/onboarding', { replace: true });
         }
       }
