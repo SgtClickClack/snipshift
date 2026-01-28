@@ -1,5 +1,6 @@
 // Temporary compatibility shim: prefer useAuth from contexts/AuthContext
 import type { User } from '@shared/firebase-schema';
+import { toast } from '@/hooks/useToast';
 
 let currentUser: User | null = null;
 
@@ -103,6 +104,18 @@ export async function signInWithGoogleLocalDevPopup() {
             'hospogo_auth_bridge',
             JSON.stringify({ uid: result.user.uid, ts: Date.now() })
           );
+
+          // UX bridge: guide the user when the popup was blocked and we fall back to the
+          // localStorage bridge so it doesn't feel like the app is "stuck".
+          try {
+            toast({
+              title: 'Almost there!',
+              description: 'Please click anywhere on the page to finish signing in.',
+            });
+          } catch (toastError) {
+            // Never let toast failures break auth; this is best-effort UX sugar.
+            console.warn('[Auth] Failed to show bridge guidance toast (non-critical):', toastError);
+          }
         }
       } catch (bridgeError) {
         console.warn('[Auth] Failed to open bridge popup (non-critical):', bridgeError);

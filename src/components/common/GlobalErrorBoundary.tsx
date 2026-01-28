@@ -27,8 +27,14 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[GlobalErrorBoundary] Uncaught error:', error);
-    console.error('[GlobalErrorBoundary] Component stack:', errorInfo.componentStack);
+    if (import.meta.env.PROD) {
+      // In production, avoid logging internal stack traces or error objects
+      console.error('[GlobalErrorBoundary] An unexpected error occurred');
+    } else {
+      // In development, keep detailed logging for easier debugging
+      console.error('[GlobalErrorBoundary] Uncaught error:', error);
+      console.error('[GlobalErrorBoundary] Component stack:', errorInfo.componentStack);
+    }
   }
 
   private handleReload = () => {

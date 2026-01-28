@@ -70,7 +70,9 @@ router.post('/create-account-link', authenticateUser, asyncHandler(async (req: A
     }
 
     // Update user with account ID
-    await usersRepo.updateUser(userId, {
+    // NOTE: This route is allowed to touch sensitive fields like stripeAccountId,
+    // so we intentionally use the internal_dangerouslyUpdateUser helper.
+    await usersRepo.internal_dangerouslyUpdateUser(userId, {
       stripeAccountId: accountId,
     });
 

@@ -31,6 +31,7 @@ import { calculateDistance, validateLocationProximity } from '../utils/geofencin
 import * as shiftLogsRepo from '../repositories/shift-logs.repository.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
 import { normalizeParam, normalizeQueryOptional } from '../utils/request-params.js';
+import { normalizeRole } from '../utils/normalizeRole.js';
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
 import { uploadProofImage } from '../middleware/upload.js';
 import admin from 'firebase-admin';
@@ -110,6 +111,13 @@ router.post('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest
   
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Enforce business-only shift creation
+  const normalized = normalizeRole(req.user?.role);
+  if (normalized !== 'business') {
+    res.status(403).json({ message: 'Only business accounts can create shifts.' });
     return;
   }
 

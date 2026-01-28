@@ -607,7 +607,8 @@ export default function HubOnboardingPage() {
                     type="submit" 
                     variant="accent"
                     className="w-full shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !formData.venueName.trim() || !formData.location.trim()}
+                    data-testid="button-venue-details-submit"
                   >
                     {isSubmitting ? (
                       <>

@@ -1,3 +1,77 @@
+#### 2026-01-28: E2E Onboarding Suite – Production Comprehensive
+
+**Core Components**
+- E2E onboarding spec (`frontend/e2e/onboarding-flow.spec.ts`)
+- Venue onboarding form (`src/pages/onboarding/hub.tsx`)
+
+**Key Features**
+- **Negative test:** Venue Details form with empty required fields – Continue button stays disabled and validation message ("Venue name is required") appears after blur.
+- **Role isolation:** Venue user navigating to `/worker/map` is verified redirected or blocked (404/unauthorized/redirect to venue dashboard).
+- **DB verification:** After onboarding, mock `GET /api/me` with `currentRole: 'business'` and assert profile header reflects role (e.g. "Find Shifts" not visible for business user).
+- Submit button on Venue Details step disabled when `venueName` or `location` is empty (`hub.tsx`).
+
+**Integration Points**
+- Playwright E2E: `npx playwright test frontend/e2e/onboarding-flow.spec.ts --config=playwright.frontend.config.ts`
+- Auth/role: `GET /api/me`, Navbar role-based links (`link-find-shifts-desktop`, `link-find-shifts-mobile`)
+
+**File Paths**
+- `frontend/e2e/onboarding-flow.spec.ts`
+- `src/pages/onboarding/hub.tsx`
+
+**Next Priority Task**
+- Re-run E2E suite after any change to validation, role guards, or `/api/me` role display to catch regressions.
+
+---
+
+#### 2026-01-28: Harden Auth Bridge & Stripe Security Pipes
+
+**Core Components**
+- Stripe Connect routes (`api/_src/routes/stripe.ts`)
+- Venue onboarding routes (`api/_src/routes/onboarding.ts`)
+- Auth bridge helper (`src/lib/auth.ts`)
+
+**Key Features**
+- Tightened security around sensitive user flags by routing Stripe Connect account ID and onboarding role flips through `internal_dangerouslyUpdateUser` instead of the public `updateUser` helper, preventing generic profile flows from ever touching `stripeAccountId` / `isOnboarded`.
+- Added UX guidance to the auth bridge fallback: when the bridge popup is blocked and the code falls back to a localStorage bridge, the app now surfaces a toast instructing the user to click anywhere on the page to finish signing in, reducing the “stuck” perception.
+
+**Integration Points**
+- Stripe Connect onboarding: `POST /api/stripe/create-account-link`
+- Venue onboarding: `POST /api/onboarding/venue-profile`
+- Google auth popup bridge: `signInWithGoogleLocalDevPopup` → `/auth/bridge` + localStorage bridge path
+
+**File Paths**
+- `api/_src/routes/stripe.ts`
+- `api/_src/routes/onboarding.ts`
+- `src/lib/auth.ts`
+
+**Next Priority Task**
+- Manually verify the full auth bridge flow in Chrome (popup allowed vs. popup blocked) and ensure the Stripe onboarding + venue onboarding steps complete with correct `stripeAccountId` and `isOnboarded` flags in production.
+
+---
+
+#### 2026-01-28: Enforce Business Role for Shift Creation
+
+**Core Components**
+- Shift creation API (`api/_src/routes/shifts.ts`)
+
+**Key Features**
+- Enforced normalized role checks so only `business` accounts can create shifts, blocking bypass attempts from professional or pending-onboarding users.
+- Reused the global `normalizeRole` helper to keep role semantics consistent with onboarding and user profile flows.
+
+**Integration Points**
+- API endpoint: `POST /api/shifts`
+
+**File Paths**
+- `api/_src/routes/shifts.ts`
+
+**Next Priority Task**
+- Add backend tests to cover 403 responses for non-business roles attempting `POST /api/shifts`.
+
+**Code Organization & Quality**
+- Kept authorization logic close to existing auth checks and reused the shared role normalization utility instead of introducing new patterns.
+
+---
+
 #### 2026-01-27: /api/register 500 fix – link Google to existing email
 
 **Core Components**

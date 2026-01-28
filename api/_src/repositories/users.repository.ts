@@ -7,6 +7,65 @@ import { normalizeRole } from '../utils/normalizeRole.js';
 export let mockUsers: typeof users.$inferSelect[] = [];
 
 /**
+ * Whitelist of user fields that are safe for general profile/settings updates.
+ *
+ * IMPORTANT:
+ * - Sensitive flags like role, roles, isOnboarded, isActive, stripeAccountId,
+ *   stripeCustomerId, stripeOnboardingComplete, verificationStatus, and
+ *   compliance flags MUST NOT be added here.
+ * - Internal callers that need to modify those fields must use
+ *   internal_dangerouslyUpdateUser instead.
+ */
+const ALLOWED_PROFILE_UPDATE_FIELDS: Array<keyof typeof users.$inferSelect> = [
+  'name',
+  'bio',
+  'phone',
+  'location',
+  'avatarUrl',
+  'bannerUrl',
+  'hourlyRatePreference',
+  'hospitalityRole',
+  'notificationPreferences',
+  'favoriteProfessionals',
+];
+
+function buildSafeProfileUpdate(
+  updates: Partial<typeof users.$inferSelect>
+): Partial<typeof users.$inferSelect> {
+  const safe: Partial<typeof users.$inferSelect> = {};
+
+  for (const key of ALLOWED_PROFILE_UPDATE_FIELDS) {
+    if (updates[key] !== undefined) {
+      // Indexing into inferred Drizzle type – safe at runtime, so allow it.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (safe as any)[key] = (updates as any)[key];
+    }
+  }
+
+  return safe;
+}
+
+function normalizeUserUpdatePayload(
+  updates: Partial<typeof users.$inferSelect>
+): Record<string, unknown> {
+  const toSet: Record<string, unknown> = {
+    ...updates,
+    updatedAt: new Date(),
+  };
+
+  if (toSet.role !== undefined) {
+    toSet.role = normalizeRole(toSet.role as string);
+  }
+
+  if (Array.isArray(toSet.roles) && toSet.roles.length > 0) {
+    const normalizedRoles = (toSet.roles as string[]).map((r) => normalizeRole(r));
+    toSet.roles = Array.from(new Set(normalizedRoles));
+  }
+
+  return toSet;
+}
+
+/**
  * Normalize roles array: applies normalizeRole to each role and removes duplicates.
  */
 function normalizeRolesArray(
@@ -381,31 +440,63 @@ export async function getOrCreateMockBusinessUser(): Promise<typeof users.$infer
   return user;
 }
 
-// Update user function
+/**
+ * Public-safe user update for profile/settings flows.
+ *
+ * Applies a strict allowlist so that mass-assignment of sensitive fields
+ * (role, isOnboarded, Stripe IDs, etc.) is not possible from generic
+ * "updates" objects.
+ */
 export async function updateUser(
   id: string,
   userData: Partial<typeof users.$inferSelect>
 ): Promise<typeof users.$inferSelect | null> {
   const db = getDb();
-  const toSet = { ...userData, updatedAt: new Date() } as Record<string, unknown>;
-  if (toSet.role !== undefined) {
-    toSet.role = normalizeRole(toSet.role as string);
-  }
-  if (Array.isArray(toSet.roles) && toSet.roles.length > 0) {
-    toSet.roles = toSet.roles.map((r: unknown) => normalizeRole(r as string));
-    toSet.roles = Array.from(new Set(toSet.roles as string[]));
-  }
+  const safeUpdates = buildSafeProfileUpdate(userData);
+  const toSet = normalizeUserUpdatePayload(safeUpdates);
+
   if (!db) {
     const index = mockUsers.findIndex((u) => u.id === id);
     if (index === -1) return null;
     mockUsers[index] = { ...mockUsers[index], ...toSet } as typeof users.$inferSelect;
     return normalizeUserRoles(mockUsers[index]);
   }
+
   const [updatedUser] = await db
     .update(users)
     .set(toSet as Partial<typeof users.$inferSelect>)
     .where(eq(users.id, id))
     .returning();
+
+  return updatedUser ? normalizeUserRoles(updatedUser) : null;
+}
+
+/**
+ * Internal-only update helper for system/Stripe/onboarding/admin flows that
+ * intentionally need to modify sensitive flags (role, isOnboarded, Stripe IDs, etc.).
+ *
+ * WARNING: Do not expose this via generic "update profile" style routes.
+ */
+export async function internal_dangerouslyUpdateUser(
+  id: string,
+  userData: Partial<typeof users.$inferSelect>
+): Promise<typeof users.$inferSelect | null> {
+  const db = getDb();
+  const toSet = normalizeUserUpdatePayload(userData);
+
+  if (!db) {
+    const index = mockUsers.findIndex((u) => u.id === id);
+    if (index === -1) return null;
+    mockUsers[index] = { ...mockUsers[index], ...toSet } as typeof users.$inferSelect;
+    return normalizeUserRoles(mockUsers[index]);
+  }
+
+  const [updatedUser] = await db
+    .update(users)
+    .set(toSet as Partial<typeof users.$inferSelect>)
+    .where(eq(users.id, id))
+    .returning();
+
   return updatedUser ? normalizeUserRoles(updatedUser) : null;
 }
 

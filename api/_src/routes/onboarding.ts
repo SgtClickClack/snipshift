@@ -159,7 +159,9 @@ router.post(
     if (currentUser) {
       const existingRoles = currentUser.roles || [];
       const rolesToStore = Array.from(new Set([...existingRoles, 'business']));
-      await usersRepo.updateUser(req.user.id, {
+      // NOTE: Onboarding is allowed to elevate roles and flip isOnboarded,
+      // so we intentionally use the internal_dangerouslyUpdateUser helper.
+      await usersRepo.internal_dangerouslyUpdateUser(req.user.id, {
         role: 'business',
         roles: rolesToStore,
         isOnboarded: true,
