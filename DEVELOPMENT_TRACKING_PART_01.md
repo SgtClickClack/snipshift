@@ -1,3 +1,29 @@
+#### 2026-01-28: Data Integrity – Onboarded Venues (No Ghost Dashboards)
+
+**Core Components**
+- Auth: `src/contexts/AuthContext.tsx`
+- Venue Dashboard: `src/pages/venue-dashboard.tsx`
+- API: `api/_src/routes/venues.ts`
+
+**Key Features**
+- **Safety catch (AuthContext):** If user is `isOnboarded` and venue role but `GET /api/venues/me` returns 404, redirect to `/onboarding/hub` instead of `/venue/dashboard` so they can create their venue record.
+- **Dashboard loader:** Venue Dashboard fetches `/api/venues/me`; on 404 shows a clear "Profile Incomplete" state with "Finish Setup" button to `/onboarding/hub`. Skeleton shown while venue is loading to avoid flash.
+- **Backend alignment:** `GET /api/venues/me` already looks up venue by `userId` (owner); added comments documenting owner = current user.
+
+**Integration Points**
+- AuthContext calls `GET /api/venues/me` before redirecting venue users to dashboard; 404 or network error → `/onboarding/hub`.
+- Venue dashboard uses query key `['venue-status', user?.id]` (shared with VenueStatusCard); 404 handled as `null` to show Profile Incomplete.
+
+**File Paths**
+- `src/contexts/AuthContext.tsx`
+- `src/pages/venue-dashboard.tsx` (CardDescription import; venue query; Profile Incomplete UI; skeleton while venue loading)
+- `api/_src/routes/venues.ts` (comments only)
+
+**Next Priority Task**
+- Address Dependabot findings (optional); run full E2E against staging if desired.
+
+---
+
 #### 2026-01-28: Auth Entry Flow – Landing Gate, No Flash, Onboarding Priority
 
 **Core Components**

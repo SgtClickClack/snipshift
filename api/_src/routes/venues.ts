@@ -8,7 +8,7 @@ import * as payoutsRepo from '../repositories/payouts.repository.js';
 
 const router = express.Router();
 
-// Get current user's venue
+// Get current user's venue (owner = current user; venue.userId must match req.user.id)
 router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   
@@ -17,6 +17,7 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
     return;
   }
 
+  // Look up venue where owner (userId) matches the authenticated user — prevents ghost dashboards
   const venue = await venuesRepo.getVenueByUserId(userId);
   
   if (!venue) {

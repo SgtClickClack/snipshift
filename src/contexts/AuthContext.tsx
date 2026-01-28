@@ -220,6 +220,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const isVenueRole = (apiUser.currentRole || apiUser.role || '').toLowerCase() === 'business' ||
         (apiUser.roles || []).some((r: string) => ['business', 'venue', 'hub'].includes((r || '').toLowerCase()));
       if (isOnboarded) {
+        // Data integrity: venue users must have a venue record — prevent "ghost dashboards"
+        if (isVenueRole) {
+          try {
+            const venueRes = await fetch('/api/venues/me', {
+              headers: {
+                Authorization: `Bearer ${idToken}`,
+                'Content-Type': 'application/json',
+              },
+              cache: 'no-store',
+            });
+            if (venueRes.status === 404) {
+              console.log('[AuthContext] User is onboarded but /api/venues/me returned 404 — redirecting to onboarding hub');
+              setRedirecting(true);
+              navigate('/onboarding/hub', { replace: true });
+              return;
+            }
+          } catch (venueErr) {
+            logger.warn('AuthContext', 'Failed to fetch /api/venues/me before redirect', venueErr);
+            // On network error, still send to hub so user can complete setup
+            setRedirecting(true);
+            navigate('/onboarding/hub', { replace: true });
+            return;
+          }
+        }
         const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
         console.log('[AuthContext] User is onboarded — redirecting to', targetPath);
         setRedirecting(true);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, Suspense } from "reac
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isDemoMode, DEMO_USER, DEMO_JOBS, DEMO_APPLICATIONS, DEMO_STATS, DEMO_SHIFT_APPLICATIONS } from "@/lib/demo-data";
 import {
   Dialog,
@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { isBusinessRole } from "@/lib/roles";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle, AlertTriangle } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -235,6 +235,26 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
     e.preventDefault();
     updateProfileMutation.mutate(profileData);
   };
+
+  // Data integrity: detect "ghost dashboard" — onboarded but no venue record (404 from /api/venues/me)
+  const { data: venueMe, isLoading: isLoadingVenue, isFetched: isVenueFetched } = useQuery({
+    queryKey: ['venue-status', user?.id],
+    queryFn: async () => {
+      if (demoMode) return {};
+      try {
+        const res = await apiRequest('GET', '/api/venues/me');
+        return res.ok ? res.json() : null;
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('404:')) return null;
+        throw err;
+      }
+    },
+    enabled: !demoMode && !!user?.id,
+    staleTime: 2 * 60 * 1000,
+    retry: (_, error) => !(error instanceof Error && error.message.includes('404:')),
+    throwOnError: false,
+  });
+  const isProfileIncomplete = !demoMode && isVenueFetched && !isLoadingVenue && (venueMe === null || venueMe === undefined);
 
   const { data: applications = [], isLoading: isLoadingApplications, refetch: refetchApplications } = useQuery({
     queryKey: ['/api/applications'],
@@ -720,6 +740,43 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   // DEMO MODE: Skip role check
   if (!demoMode && (!user || !isBusinessRole(user.currentRole))) {
     return <div>Access denied</div>;
+  }
+
+  // While venue is loading (data integrity check), show skeleton to avoid flashing dashboard then Profile Incomplete
+  if (!demoMode && !!user?.id && isLoadingVenue) {
+    return <VenueDashboardSkeleton />;
+  }
+
+  // Data integrity: show "Profile Incomplete" when venue fetch returned 404 (no venue record)
+  if (isProfileIncomplete) {
+    return (
+      <div className="min-h-screen bg-background overflow-x-hidden flex items-center justify-center p-4">
+        <SEO title="Profile Incomplete | Business Dashboard" />
+        <Card className="max-w-md w-full border-2 border-amber-500/50 bg-card">
+          <CardHeader>
+            <div className="flex justify-center mb-2">
+              <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-4">
+                <AlertTriangle className="h-12 w-12 text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
+            <CardTitle className="text-center text-xl">Profile Incomplete</CardTitle>
+            <CardDescription className="text-center text-muted-foreground">
+              Your venue profile hasn&apos;t been set up yet. Finish setup to access your dashboard and post shifts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            <Button
+              onClick={() => navigate('/onboarding/hub', { replace: true })}
+              className="w-full"
+              size="lg"
+              data-testid="button-finish-setup"
+            >
+              Finish Setup
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
