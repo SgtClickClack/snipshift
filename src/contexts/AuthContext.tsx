@@ -25,6 +25,8 @@ interface AuthContextType {
   isRedirecting: boolean; // True while a redirect is in progress (prevents route flash)
   hasUser: boolean; // Standardized: true when user object exists (DB profile loaded)
   hasFirebaseUser: boolean; // True when Firebase session exists
+  /** True when user is onboarded but /api/venues/me returned 404 — stay on hub, do not redirect to dashboard */
+  isVenueMissing: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -127,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRedirecting, setRedirecting] = useState(false);
+  const [isVenueMissing, setIsVenueMissing] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -135,6 +138,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const firebaseUserRef = useRef<FirebaseUser | null>(null);
   // Track if we're in onboarding mode to prevent profile fetches
   const isOnboardingModeRef = useRef<boolean>(false);
+  // Sync with isVenueMissing state so redirect logic can read it in the same tick
+  const isVenueMissingRef = useRef<boolean>(false);
 
   // Clear redirecting flag after pathname has settled (prevents flash of wrong route)
   useEffect(() => {
@@ -163,6 +168,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setFirebaseUser(null);
       setUser(null);
       setToken(null);
+      isVenueMissingRef.current = false;
+      setIsVenueMissing(false);
       // Always redirect to landing so user never stays on a protected page after sign-out
       navigate('/', { replace: true });
     }
@@ -217,11 +224,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(normalizedUser);
 
       // Harden redirect: if API says isOnboarded, send directly to dashboard (no onboarding routes)
+      // Do NOT redirect to dashboard if venue check has failed with 404 (isVenueMissing).
       const isVenueRole = (apiUser.currentRole || apiUser.role || '').toLowerCase() === 'business' ||
         (apiUser.roles || []).some((r: string) => ['business', 'venue', 'hub'].includes((r || '').toLowerCase()));
       if (isOnboarded) {
         // Data integrity: venue users must have a venue record — prevent "ghost dashboards"
         if (isVenueRole) {
+          isVenueMissingRef.current = false;
+          setIsVenueMissing(false); // clear until we know otherwise
           try {
             const venueRes = await fetch('/api/venues/me', {
               headers: {
@@ -231,18 +241,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
               cache: 'no-store',
             });
             if (venueRes.status === 404) {
-              console.log('[AuthContext] User is onboarded but /api/venues/me returned 404 — redirecting to onboarding hub');
+              console.log('[AuthContext] User is onboarded but /api/venues/me returned 404 — staying on onboarding hub');
+              isVenueMissingRef.current = true;
+              setIsVenueMissing(true);
               setRedirecting(true);
-              navigate('/onboarding/hub', { replace: true });
+              if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
+                navigate('/onboarding/hub', { replace: true });
+              }
               return;
             }
+            isVenueMissingRef.current = false;
           } catch (venueErr) {
             logger.warn('AuthContext', 'Failed to fetch /api/venues/me before redirect', venueErr);
             // On network error, still send to hub so user can complete setup
+            isVenueMissingRef.current = true;
+            setIsVenueMissing(true);
             setRedirecting(true);
-            navigate('/onboarding/hub', { replace: true });
+            if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
+              navigate('/onboarding/hub', { replace: true });
+            }
             return;
           }
+        }
+        // Do NOT redirect to dashboard if venue check has failed with 404 (same or previous run)
+        if (isVenueMissingRef.current) {
+          setRedirecting(true);
+          if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
+            navigate('/onboarding/hub', { replace: true });
+          }
+          return;
         }
         const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
         console.log('[AuthContext] User is onboarded — redirecting to', targetPath);
@@ -375,9 +402,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 if (!isInitialAuthCheck) {
                   const currentPath = window.location.pathname;
                   if (currentPath === '/login' || currentPath === '/signup') {
-                    console.log('[AuthContext] Popup auth successful, navigating to dashboard');
+                    const target = isVenueMissingRef.current ? '/onboarding/hub' : '/dashboard';
+                    console.log('[AuthContext] Popup auth successful, navigating to', target);
                     setRedirecting(true);
-                    navigate('/dashboard', { replace: true });
+                    navigate(target, { replace: true });
                   }
                 }
               }
@@ -440,10 +468,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (hasFirebaseUser) {
         const pathForNav = window.location.pathname;
         const explicitlyOnboarded = user && user.isOnboarded === true;
+        const venueMissing = isVenueMissingRef.current;
 
         // Onboarding priority: only go to /onboarding if isOnboarded is not true; otherwise dashboard
+        // Do NOT send to dashboard if venue check failed with 404 — keep on hub
         const targetPath = explicitlyOnboarded
-          ? '/dashboard'
+          ? (venueMissing ? '/onboarding/hub' : '/dashboard')
           : isOnboardingRoute(pathForNav)
             ? pathForNav
             : '/onboarding';
@@ -483,11 +513,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       const isOnboarded = user.isOnboarded === true;
+      const venueMissing = isVenueMissingRef.current;
 
       if (isOnboarded) {
-        console.log('[Auth] User is onboarded, redirecting from', currentPath, 'to /dashboard');
-        setRedirecting(true);
-        navigate('/dashboard', { replace: true });
+        if (venueMissing) {
+          if (currentPath !== '/onboarding/hub') {
+            console.log('[Auth] User onboarded but venue missing, redirecting from', currentPath, 'to /onboarding/hub');
+            setRedirecting(true);
+            navigate('/onboarding/hub', { replace: true });
+          }
+        } else {
+          console.log('[Auth] User is onboarded, redirecting from', currentPath, 'to /dashboard');
+          setRedirecting(true);
+          navigate('/dashboard', { replace: true });
+        }
       } else {
         // Only send to onboarding when isOnboarded is explicitly false (or unset)
         if (!isOnboardingRoute(currentPath)) {
@@ -526,11 +565,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isRedirecting,
       hasUser: !!user,
       hasFirebaseUser: !!firebaseUser,
+      isVenueMissing,
       login,
       logout,
       refreshUser,
     }),
-    [user, token, isLoading, isRedirecting, firebaseUser, login, logout, refreshUser]
+    [user, token, isLoading, isRedirecting, isVenueMissing, firebaseUser, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

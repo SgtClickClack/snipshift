@@ -40,6 +40,8 @@ function initFirebase(): { app: FirebaseApp; auth: Auth; storage: FirebaseStorag
 
 // Modular Firebase v10-only initialization.
 // Wrap init in try/catch so Firebase Installations 400 (or other init errors) do not block app render.
+// If you see 400 errors for firebaseinstallations: enable the "Firebase Installations API" in
+// Google Cloud Console for this project (APIs & Services → Enable APIs).
 let app: FirebaseApp;
 let auth: Auth;
 let storage: FirebaseStorage;
