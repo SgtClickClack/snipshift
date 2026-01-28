@@ -474,7 +474,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           navigate('/onboarding', { replace: true });
         }
       }
-    }
   }, [user, isLoading, navigate]);
 
   // Failsafe: Clean URL parameters when user successfully lands on dashboard
