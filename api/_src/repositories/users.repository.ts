@@ -288,6 +288,28 @@ export async function getUserById(id: string): Promise<typeof users.$inferSelect
 }
 
 /**
+ * Get user by Firebase UID. Returns existing user if found (used to avoid duplicate creation on register).
+ */
+export async function getUserByFirebaseUid(firebaseUid: string): Promise<typeof users.$inferSelect | null> {
+  const db = getDb();
+  if (!db) {
+    const user = mockUsers.find((u) => u.firebaseUid === firebaseUid);
+    return user ? normalizeUserRoles(user) : null;
+  }
+
+  try {
+    const [user] = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
+    return user ? normalizeUserRoles(user) : null;
+  } catch (error: any) {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    if (error?.code === '42703' || (message.includes('firebase_uid') && message.includes('does not exist'))) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
  * Batch fetch users by IDs (optimized for N+1 prevention)
  * Returns a Map of userId -> user for O(1) lookups
  */

@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
 import { browserLocalPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
+import { cleanupPushNotifications } from '@/lib/push-notifications';
 
 export interface User {
   id: string;
@@ -42,18 +43,7 @@ async function fetchAppUser(
   // Allow fetching user even in onboarding mode to resolve dependency deadlock
   // We need user.id for onboarding API calls (e.g. payout setup, venue profile creation)
   
-  // Double-check pathname before making the request (defensive check)
-  // Suppress on signup route since new users don't have DB profiles yet
-  if (typeof window !== 'undefined') {
-    const currentPath = window.location.pathname;
-    if (currentPath === '/signup') {
-      console.log('[AuthContext] Skipping /api/me fetch - on signup route', {
-        pathname: currentPath
-      });
-      return null;
-    }
-  }
-
+  // Always attempt fetch so existing users (e.g. returning to /signup) get their profile and can be redirected to dashboard.
   const attemptFetch = async (token: string, isRetry: boolean = false): Promise<User | null> => {
     try {
       const res = await fetch('/api/me', {
@@ -144,11 +134,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const logout = useCallback(async () => {
-    await signOut(auth);
-    firebaseUserRef.current = null;
-    setFirebaseUser(null);
-    setUser(null);
-    setToken(null);
+    // Fire-and-forget: clean up push tokens so a Firebase 400 cannot block or crash logout
+    cleanupPushNotifications().catch((err) => {
+      logger.warn('AuthContext', 'Push cleanup failed during logout (non-fatal)', err);
+    });
+    try {
+      await signOut(auth);
+    } catch (err) {
+      logger.warn('AuthContext', 'Firebase signOut failed (clearing state anyway)', err);
+    } finally {
+      firebaseUserRef.current = null;
+      setFirebaseUser(null);
+      setUser(null);
+      setToken(null);
+    }
   }, []);
 
   const hydrateFromFirebaseUser = useCallback(async (firebaseUser: FirebaseUser) => {
@@ -156,37 +155,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       uid: firebaseUser.uid, 
       email: firebaseUser.email 
     });
-    
-    // CRITICAL: Check signup/onboarding mode BEFORE any async operations to prevent race conditions
-    // Suppress profile fetch on signup/onboarding routes since new users don't have DB profiles yet
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-    const isOnSignupOrOnboarding = currentPath.startsWith('/onboarding') || 
-                                  currentPath === '/signup' || 
-                                  isOnboardingModeRef.current;
-    
-    if (isOnSignupOrOnboarding) {
-      isOnboardingModeRef.current = true;
-      console.log('[AuthContext] On signup/onboarding route - suppressing profile fetch', {
-        pathname: currentPath
-      });
-      // Still set token for use by onboarding form, but skip profile fetch
-      // Force refresh to ensure we have a valid token after popup auth
-      const idToken = await firebaseUser.getIdToken(/* forceRefresh */ true);
-      setToken(idToken);
-      setUser(null); // Keep user as null since profile doesn't exist yet
-      return;
-    }
 
-    // Clear onboarding mode flag if we're not on signup/onboarding route
-    isOnboardingModeRef.current = false;
-
-    // Force refresh token after popup authentication to ensure we have a fresh, valid token
-    // This is critical because tokens may not be immediately available after popup auth
+    // Always fetch profile: if we get a valid profile, we stop suppressing and redirect to dashboard.
+    // This fixes "Onboarding Hell" where existing users (e.g. julian.g.roberts@gmail.com) were stuck
+    // because we suppressed the fetch on /role-selection or /onboarding.
     const idToken = await firebaseUser.getIdToken(/* forceRefresh */ true);
     setToken(idToken);
 
-    const apiUser = await fetchAppUser(idToken, isOnboardingModeRef.current, firebaseUser);
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const effectivelyOnboarding = currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection' || isOnboardingModeRef.current;
+    const apiUser = await fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
+
     if (apiUser) {
+      // Valid profile: stop suppressing; set user and force redirect to dashboard.
+      isOnboardingModeRef.current = false;
       // Verify the user record exists and matches Firebase UID
       // After migration, the Postgres record should have firebase_uid column populated
       const userFirebaseUid = apiUser.uid || (apiUser as any).firebase_uid;
@@ -208,6 +190,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         firebaseUidMatch: userFirebaseUid === tokenFirebaseUid
       });
       setUser({ ...apiUser, uid: firebaseUser.uid });
+
+      // Force redirect to dashboard so user gets past "Authentication Failed" and sees the app.
+      const hasCompletedOnboarding = apiUser.hasCompletedOnboarding !== false && apiUser.isOnboarded !== false;
+      const isVenueRole = (apiUser.currentRole || apiUser.role || '').toLowerCase() === 'business' ||
+        (apiUser.roles || []).some((r: string) => ['business', 'venue', 'hub'].includes((r || '').toLowerCase()));
+      if (hasCompletedOnboarding) {
+        const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
+        console.log('[AuthContext] Valid profile — redirecting to', targetPath);
+        navigate(targetPath, { replace: true });
+      }
       
       // Clear any auth-related URL parameters once user is confirmed
       if (typeof window !== 'undefined') {
@@ -222,11 +214,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
     } else {
-      // Firebase session exists, but no DB profile yet (new user / still registering).
-      console.log('[AuthContext] No user profile in DB (404) - user may need to complete registration');
+      // No profile: new user or still registering. Only suppress UI on signup/onboarding routes.
+      if (currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection') {
+        isOnboardingModeRef.current = true;
+        console.log('[AuthContext] No user profile in DB (404) - on signup/onboarding, keeping user null');
+      }
       setUser(null);
     }
-  }, []);
+  }, [navigate]);
 
   const refreshUser = useCallback(async () => {
     const firebaseUser = firebaseUserRef.current;
@@ -255,13 +250,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [hydrateFromFirebaseUser]);
 
   // Track pathname changes to keep onboarding mode flag in sync
-  // This ensures we suppress fetches even if onAuthStateChanged fires before navigation completes
+  // This ensures we suppress fetches / treat 401 as expected when still in registration flow.
+  // Include /role-selection so 401 from /api/me during role choice is not treated as "auth failed".
   useEffect(() => {
     const isOnSignupOrOnboarding = location.pathname.startsWith('/onboarding') || 
-                                   location.pathname === '/signup';
+                                   location.pathname === '/signup' ||
+                                   location.pathname === '/role-selection';
     isOnboardingModeRef.current = isOnSignupOrOnboarding;
     if (isOnSignupOrOnboarding) {
-      console.log('[AuthContext] Pathname changed - onboarding mode active', {
+      console.log('[AuthContext] Pathname changed - onboarding/registration mode active', {
         pathname: location.pathname
       });
     }

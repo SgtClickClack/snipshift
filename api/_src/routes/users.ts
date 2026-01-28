@@ -175,6 +175,32 @@ router.post('/register', asyncHandler(async (req, res) => {
     const requestedRole = validationResult.data.role || 'pending_onboarding';
     const dbRole = normalizeRole(requestedRole);
 
+    // CRITICAL: If user already exists by Firebase UID or email, return 200 with existing user (avoid duplicate creation / 500)
+    if (firebaseUid) {
+      const existingByUid = await usersRepo.getUserByFirebaseUid(firebaseUid);
+      if (existingByUid) {
+        res.status(200).json({
+          id: existingByUid.id,
+          email: existingByUid.email,
+          name: existingByUid.name,
+          role: existingByUid.role,
+          isOnboarded: existingByUid.isOnboarded ?? false,
+        });
+        return;
+      }
+    }
+    const existingByEmail = await usersRepo.getUserByEmail(email);
+    if (existingByEmail) {
+      res.status(200).json({
+        id: existingByEmail.id,
+        email: existingByEmail.email,
+        name: existingByEmail.name,
+        role: existingByEmail.role,
+        isOnboarded: existingByEmail.isOnboarded ?? false,
+      });
+      return;
+    }
+
     if (firebaseUid) {
       let upsertedUser;
       try {
@@ -238,33 +264,7 @@ router.post('/register', asyncHandler(async (req, res) => {
       }
     }
 
-    // Check if user already exists - if so, treat as login and return existing profile
-    // This prevents 409 Conflict errors from breaking frontend redirect flow (OAuth flows)
-    const existingUser = await usersRepo.getUserByEmail(email);
-    if (existingUser) {
-      console.log('[REGISTER] User already exists, returning existing profile for:', email);
-      // CRITICAL: Verify the database record exists before completing OAuth flow
-      // Re-fetch to ensure we have the latest data
-      const verifiedExistingUser = await usersRepo.getUserById(existingUser.id);
-      if (!verifiedExistingUser) {
-        console.error('[REGISTER ERROR] Existing user found but not verifiable in database');
-        res.status(500).json({ 
-          message: 'Failed to verify user account',
-          error: 'User record not found'
-        });
-        return;
-      }
-      res.status(200).json({
-        id: verifiedExistingUser.id,
-        email: verifiedExistingUser.email,
-        name: verifiedExistingUser.name,
-        role: verifiedExistingUser.role,
-        isOnboarded: verifiedExistingUser.isOnboarded ?? false,
-      });
-      return;
-    }
-
-    // Create user
+    // Create user (existing user already returned 200 above)
     let newUser;
     try {
       newUser = await usersRepo.createUser({
@@ -405,15 +405,23 @@ router.post('/register', asyncHandler(async (req, res) => {
 // Get current user profile
 router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   try {
+    // DEBUG: log incoming request (auth middleware already ran and set req.user)
+    const uid = req.user?.id;
+    const email = req.user?.email;
+    process.stderr.write(`[GET /api/me DEBUG] handler entered req.user.id=${uid ?? 'null'} email=${email ?? 'null'}\n`);
+
     if (!req.user) {
+      process.stderr.write('[GET /api/me DEBUG] no req.user, returning 401\n');
       res.status(401).json({ message: 'Unauthorized' });
       return;
     }
-    
+
     // Fetch latest user data from DB to ensure we have bio, phone, etc.
     const user = await usersRepo.getUserById(req.user.id);
-    
+    process.stderr.write(`[GET /api/me DEBUG] getUserById(${req.user.id}) => ${user ? `found email=${user.email}` : 'null (404)'}\n`);
+
     if (!user) {
+       process.stderr.write(`[GET /api/me DEBUG] returning 404 User not found id=${req.user.id}\n`);
        res.status(404).json({ message: 'User not found' });
        return;
     }

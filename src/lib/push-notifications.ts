@@ -11,7 +11,21 @@ import { logger } from './logger';
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 
 /**
- * Check if push notifications are supported in this browser
+ * Safe getter for Firebase Messaging. Never throws.
+ * Firebase Installations can return 400 (e.g. project/sender mismatch); the app MUST still render.
+ */
+function safeGetMessaging(): Messaging | null {
+  try {
+    return getMessaging(app);
+  } catch (error) {
+    logger.warn('push-notifications', 'getMessaging failed (non-fatal, app will render):', error);
+    return null;
+  }
+}
+
+/**
+ * Check if push notifications are supported in this browser.
+ * Wrapped so Firebase Installations 400/errors never crash the app.
  */
 export async function isPushNotificationSupported(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
@@ -26,12 +40,12 @@ export async function isPushNotificationSupported(): Promise<boolean> {
     return false;
   }
 
-  // Check if Firebase Messaging is supported
+  // Check if Firebase Messaging is supported (can throw 400 from Installations)
   try {
     const supported = await isSupported();
     return supported;
   } catch (error) {
-    logger.error('push-notifications', 'Error checking FCM support:', error);
+    logger.warn('push-notifications', 'FCM support check failed (non-fatal):', error);
     return false;
   }
 }
@@ -117,8 +131,9 @@ export async function getFCMToken(): Promise<string | null> {
       return null;
     }
 
-    // Initialize Firebase Messaging
-    const messaging = getMessaging(app);
+    // Initialize Firebase Messaging (safe: 400 from Installations must not crash app)
+    const messaging = safeGetMessaging();
+    if (!messaging) return null;
 
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
@@ -133,15 +148,13 @@ export async function getFCMToken(): Promise<string | null> {
       return null;
     }
   } catch (error: any) {
-    logger.error('push-notifications', 'Error getting FCM token:', error);
-    
-    // Handle specific Firebase errors
+    // Firebase Installations 400 / getToken errors must not crash the app
+    logger.warn('push-notifications', 'FCM token error (non-fatal):', error);
     if (error?.code === 'messaging/permission-blocked') {
       logger.warn('push-notifications', 'Notification permission blocked by user');
     } else if (error?.code === 'messaging/permission-default') {
       logger.warn('push-notifications', 'Notification permission not yet requested');
     }
-    
     return null;
   }
 }
@@ -215,14 +228,15 @@ function getDeviceId(): string {
 }
 
 /**
- * Set up foreground message handler
- * This handles notifications when the app is in the foreground
+ * Set up foreground message handler.
+ * Safe: Firebase Installations 400 must not crash the app; returns null on failure.
  */
 export function setupForegroundMessageHandler(
   onMessageReceived: (payload: any) => void
 ): (() => void) | null {
   try {
-    const messaging = getMessaging(app);
+    const messaging = safeGetMessaging();
+    if (!messaging) return null;
     
     const unsubscribe = onMessage(messaging, (payload) => {
       logger.info('push-notifications', 'Foreground message received:', payload);
@@ -231,51 +245,51 @@ export function setupForegroundMessageHandler(
 
     return unsubscribe;
   } catch (error) {
-    logger.error('push-notifications', 'Error setting up foreground message handler:', error);
+    logger.warn('push-notifications', 'Foreground message handler setup failed (non-fatal):', error);
     return null;
   }
 }
 
 /**
- * Initialize push notifications for a user
- * Call this when the user logs in
+ * Initialize push notifications for a user. Call this when the user logs in.
+ * Entirely wrapped: app MUST render even if Firebase Installations returns 400.
  */
 export async function initializePushNotifications(userId: string): Promise<void> {
   try {
-    // Check if supported
     const supported = await isPushNotificationSupported();
     if (!supported) {
       logger.info('push-notifications', 'Push notifications not supported, skipping initialization');
       return;
     }
 
-    // Get FCM token
     const token = await getFCMToken();
     if (!token) {
       logger.warn('push-notifications', 'Could not obtain FCM token');
       return;
     }
 
-    // Register token with backend
     await registerPushToken(token, userId);
   } catch (error) {
-    logger.error('push-notifications', 'Error initializing push notifications:', error);
+    logger.warn('push-notifications', 'Push init failed (non-fatal, app will continue):', error);
   }
 }
 
 /**
- * Clean up push notifications when user logs out
+ * Clean up push notifications when user logs out.
+ * Wrapped defensively so Firebase 400 (e.g. mismatched projectId/messagingSenderId)
+ * or installations.delete() failures never crash the app or block logout.
  */
 export async function cleanupPushNotifications(): Promise<void> {
+  const messaging = safeGetMessaging();
+  if (!messaging) return;
+
   try {
-    // Get current token if available
-    const messaging = getMessaging(app);
     const token = await getToken(messaging);
-    
     if (token) {
       await unregisterPushToken(token);
     }
-  } catch (error) {
-    logger.error('push-notifications', 'Error cleaning up push notifications:', error);
+  } catch (error: unknown) {
+    // Firebase 400 / installations errors must not crash the app; log and swallow
+    logger.warn('push-notifications', 'Token cleanup failed (non-fatal):', error);
   }
 }
