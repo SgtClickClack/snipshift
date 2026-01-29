@@ -164,6 +164,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => clearTimeout(t);
   }, [location.pathname, isRedirecting]);
 
+  // Unlock body scroll when navigation lock ends (fixes frozen scroll on dashboard)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!isNavigationLocked) {
+      document.body.style.overflow = 'auto';
+    }
+  }, [isNavigationLocked]);
+
   const login = useCallback((newUser: User) => {
     setUser(newUser);
   }, []);

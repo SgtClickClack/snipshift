@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
@@ -97,13 +97,36 @@ const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 
 function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const location = useLocation();
-  const { isLoading, isRedirecting } = useAuth();
+  const { isLoading, isRedirecting, isNavigationLocked } = useAuth();
+
+  // Performance check: if isNavigationLocked takes >2s to flip, optimize GET /api/venues/me
+  const lockStartRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (isNavigationLocked) {
+      if (lockStartRef.current === null) lockStartRef.current = Date.now();
+    } else {
+      if (lockStartRef.current !== null) {
+        const elapsed = Date.now() - lockStartRef.current;
+        console.log('[App] isNavigationLocked changed to false', { elapsedMs: elapsed });
+        if (elapsed > 2000) {
+          console.warn('[App] isNavigationLocked took >2s to unlock — consider optimizing GET /api/venues/me');
+        }
+        lockStartRef.current = null;
+      }
+    }
+  }, [isNavigationLocked]);
+
   const isBridgeRoute = location.pathname === '/auth/bridge';
   const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || isBridgeRoute;
   const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/onboarding/role-selection', '/forgot-password', '/auth/bridge'].includes(location.pathname);
 
   // Initialize push notifications when user is authenticated
   usePushNotifications();
+
+  // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished hydrateFromFirebaseUser (including venue 200/404 check)
+  if (isNavigationLocked && splashHandled && !isBridgeRoute) {
+    return <LoadingScreen />;
+  }
 
   // Show full-page loader while auth is settling OR a redirect is in progress (prevents route flash)
   const showFullPageLoader = (isLoading || isRedirecting) && splashHandled && !isBridgeRoute;

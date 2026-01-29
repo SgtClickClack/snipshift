@@ -59,8 +59,9 @@ import {
 
 type ActiveView = 'overview' | 'jobs' | 'applications' | 'profile' | 'calendar' | 'shift-applications' | 'analytics';
 
+/** In-flow skeleton only: no fixed position, no z-index overlay, no pointer-events: none or overflow: hidden — so scroll works and nothing persists after unmount. */
 const VenueDashboardSkeleton = () => (
-  <div className="min-h-screen bg-background p-4 md:p-6">
+  <div className="min-h-screen bg-background p-4 md:p-6 overflow-auto">
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header skeleton */}
       <div className="h-16 bg-muted animate-pulse rounded-lg" />
