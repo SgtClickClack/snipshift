@@ -31,6 +31,33 @@ export interface Venue {
   updatedAt: Date;
 }
 
+import type { Transaction } from '../db/transactions.js';
+
+/**
+ * Create a new venue profile within a transaction (for atomic onboarding)
+ */
+export async function createVenueInTransaction(
+  tx: Transaction,
+  input: CreateVenueInput
+): Promise<Venue> {
+  const [newVenue] = await tx
+    .insert(venues)
+    .values({
+      userId: input.userId,
+      waitlistId: input.waitlistId || null,
+      venueName: input.venueName,
+      liquorLicenseNumber: input.liquorLicenseNumber || null,
+      address: input.address,
+      operatingHours: input.operatingHours,
+    })
+    .returning();
+
+  if (!newVenue) {
+    throw new Error('[VENUES REPO] Failed to create venue in transaction');
+  }
+  return newVenue as Venue;
+}
+
 /**
  * Create a new venue profile
  */

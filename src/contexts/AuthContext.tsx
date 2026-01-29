@@ -23,6 +23,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthReady: boolean; // Alias for !isLoading, used by some components
   isRedirecting: boolean; // True while a redirect is in progress (prevents route flash)
+  /** True until hydrateFromFirebaseUser (including venue 200/404 check) has fully completed. Blocks router from mounting any route. */
+  isNavigationLocked: boolean;
   hasUser: boolean; // Standardized: true when user object exists (DB profile loaded)
   hasFirebaseUser: boolean; // True when Firebase session exists
   /** True when user is onboarded but /api/venues/me returned 404 — stay on hub, do not redirect to dashboard */
@@ -139,6 +141,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRedirecting, setRedirecting] = useState(false);
+  const [isNavigationLocked, setIsNavigationLocked] = useState(true);
   const [isVenueMissing, setIsVenueMissing] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const navigate = useNavigate();
@@ -262,9 +265,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
               });
             }
             if (venueRes.status === 404 || venueRes.status === 429) {
-              console.log('[AuthContext] User is onboarded but /api/venues/me returned', venueRes.status, '— staying on onboarding hub');
+              console.log('[AuthContext] User is onboarded but /api/venues/me returned', venueRes.status, '— data healing: setting isOnboarded=false locally so hub can re-submit');
               isVenueMissingRef.current = true;
               setIsVenueMissing(true);
+              // DATA HEALING: Set isOnboarded to false in local state so Hub form can re-submit correctly
+              setUser((prev) => prev ? { ...prev, isOnboarded: false, hasCompletedOnboarding: false } : null);
               setRedirecting(true);
               if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
                 navigate('/onboarding/hub', { replace: true });
@@ -277,6 +282,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // On network error, still send to hub so user can complete setup
             isVenueMissingRef.current = true;
             setIsVenueMissing(true);
+            // DATA HEALING: Set isOnboarded to false in local state so Hub form can re-submit correctly
+            setUser((prev) => prev ? { ...prev, isOnboarded: false, hasCompletedOnboarding: false } : null);
             setRedirecting(true);
             if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
               navigate('/onboarding/hub', { replace: true });
@@ -395,6 +402,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(e2eUser);
             setToken('mock-e2e-token'); // So pages that check token (e.g. role-selection) don't stay on loader
             setIsLoading(false);
+            setIsNavigationLocked(false);
             return; // Skip Firebase listener in E2E mode if test user is forced
           } catch (e) {
             console.error('[AuthContext] Failed to parse E2E test user', e);
@@ -449,18 +457,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         });
 
-        // onAuthStateChanged has completed - safe to set isLoading to false
+        // onAuthStateChanged has completed - hydrateFromFirebaseUser (including venue 200/404) is done
         console.log('[AuthContext] Handshake is Complete (popup-only flow)');
         
         // DEBUG: Log current Firebase state
         console.log('[Auth] Current Firebase User:', auth.currentUser);
         
         setIsLoading(false);
+        setIsNavigationLocked(false);
       } catch (error) {
         logger.error('AuthContext', 'Auth initialization failed', error);
         setUser(null);
         setToken(null);
         setIsLoading(false);
+        setIsNavigationLocked(false);
       }
     };
 
@@ -589,6 +599,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isLoading,
       isAuthReady: !isLoading,
       isRedirecting,
+      isNavigationLocked,
       hasUser: !!user,
       hasFirebaseUser: !!firebaseUser,
       isVenueMissing,
@@ -596,7 +607,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       refreshUser,
     }),
-    [user, token, isLoading, isRedirecting, isVenueMissing, firebaseUser, login, logout, refreshUser]
+    [user, token, isLoading, isRedirecting, isNavigationLocked, isVenueMissing, firebaseUser, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

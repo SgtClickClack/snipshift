@@ -16,6 +16,10 @@ import { errorReporting } from '../services/error-reporting.service.js';
 import { getCorrelationId } from '../middleware/correlation-id.js';
 import { maskEmail } from '../utils/mask-contact.js';
 import { hasEmployerAssigneeRelationship } from '../repositories/shifts.repository.js';
+import { withTransaction } from '../db/transactions.js';
+import { createVenueInTransaction } from '../repositories/venues.repository.js';
+import { users, venues } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 
@@ -69,6 +73,7 @@ const CreateProfileSchema = UpdateProfileSchema.extend({
 // Accepts both canonical roles and clean-break aliases:
 // - 'staff' / 'worker' → maps to 'professional'
 // - 'venue' / 'hub' → maps to 'business' (hub is stored as-is in roles array)
+// Optional city/state for venue address when role is hub/venue/business
 const OnboardingCompleteSchema = z.object({
   role: z.enum(['professional', 'business', 'trainer', 'brand', 'hub', 'staff', 'worker', 'venue']),
   displayName: z.string().min(1).max(255),
@@ -76,6 +81,8 @@ const OnboardingCompleteSchema = z.object({
   bio: z.string().max(1000).optional(),
   location: z.string().max(255),
   avatarUrl: z.string().url().optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(50).optional(),
 });
 
 // Validation schema for user registration
@@ -1232,6 +1239,8 @@ router.patch('/settings', authenticateUser, asyncHandler(async (req: Authenticat
 }));
 
 // Complete onboarding
+// ATOMIC: For venue/hub roles, create venue record BEFORE setting isOnboarded=true.
+// Ensures no user is ever marked onboarded without a valid venue record.
 router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {
     console.warn('[POST /onboarding/complete] Unauthorized - no user');
@@ -1248,7 +1257,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
     return;
   }
 
-  const { role, displayName, bio, phone, location, avatarUrl } = validationResult.data;
+  const { role, displayName, bio, phone, location, avatarUrl, city, state } = validationResult.data;
 
   // Normalize role before DB: hub/venue/brand -> business (global util)
   const dbRole = normalizeRole(role);
@@ -1260,20 +1269,96 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
   // DB stores only normalized roles (business/professional for aliases)
   const rolesToStore = Array.from(new Set([...existingRoles, dbRole]));
 
-  // Prepare update object
-  const updates: any = {
-    name: displayName,
-    role: dbRole, // Database role (business for brand, trainer for trainer, etc.)
-    roles: rolesToStore, // Frontend roles array
-    bio: bio || null,
-    phone: phone,
-    location: location,
-    isOnboarded: true,
-  };
-  if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
+  const isVenueRole = ['hub', 'venue', 'business'].includes(dbRole);
 
-  // Update user in database
-  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  let updatedUser: typeof users.$inferSelect | null;
+
+  if (isVenueRole) {
+    // ATOMIC: Create venue first, then set isOnboarded. Use transaction so both succeed or both roll back.
+    try {
+      updatedUser = await withTransaction(async (tx) => {
+        const venueAddress = {
+          street: location || 'TBC',
+          suburb: city || 'Brisbane',
+          postcode: '4000',
+          city: city || 'Brisbane',
+          state: state || 'QLD',
+          country: 'AU',
+        };
+        const defaultOperatingHours = {
+          monday: { open: '09:00', close: '17:00' },
+          tuesday: { open: '09:00', close: '17:00' },
+          wednesday: { open: '09:00', close: '17:00' },
+          thursday: { open: '09:00', close: '17:00' },
+          friday: { open: '09:00', close: '17:00' },
+          saturday: { open: '09:00', close: '17:00' },
+          sunday: { closed: true },
+        };
+
+        // 1. Create or update venue record FIRST (before isOnboarded)
+        const [existingVenue] = await tx
+          .select()
+          .from(venues)
+          .where(eq(venues.userId, req.user!.id))
+          .limit(1);
+
+        if (existingVenue) {
+          await tx
+            .update(venues)
+            .set({
+              venueName: displayName,
+              address: venueAddress,
+              operatingHours: defaultOperatingHours,
+              updatedAt: new Date(),
+            })
+            .where(eq(venues.id, existingVenue.id));
+        } else {
+          await createVenueInTransaction(tx, {
+            userId: req.user!.id,
+            venueName: displayName,
+            address: venueAddress,
+            operatingHours: defaultOperatingHours,
+          });
+        }
+
+        // 2. Only then update user with isOnboarded=true
+        const [user] = await tx
+          .update(users)
+          .set({
+            name: displayName,
+            role: dbRole,
+            roles: rolesToStore,
+            bio: bio || null,
+            phone,
+            location,
+            isOnboarded: true,
+            ...(avatarUrl !== undefined && { avatarUrl }),
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, req.user!.id))
+          .returning();
+
+        return user || null;
+      });
+    } catch (err) {
+      console.error('[POST /onboarding/complete] Transaction failed:', err);
+      res.status(500).json({ message: 'Failed to complete onboarding. Please try again.' });
+      return;
+    }
+  } else {
+    // Non-venue roles: update user only (use internal_dangerouslyUpdateUser for isOnboarded)
+    const updates: any = {
+      name: displayName,
+      role: dbRole,
+      roles: rolesToStore,
+      bio: bio || null,
+      phone,
+      location,
+      isOnboarded: true,
+    };
+    if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
+    updatedUser = await usersRepo.internal_dangerouslyUpdateUser(req.user.id, updates);
+  }
 
   if (!updatedUser) {
     res.status(404).json({ message: 'User not found' });
@@ -1281,8 +1366,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
   }
 
   // Return updated user object
-  // Map database role back to frontend role for currentRole if needed
-  const frontendCurrentRole = role; // Use the original frontend role (brand, trainer, etc.)
+  const frontendCurrentRole = role;
 
   res.status(200).json({
     id: updatedUser.id,
@@ -1294,8 +1378,8 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
     location: updatedUser.location,
     avatarUrl: updatedUser.avatarUrl || null,
     bannerUrl: updatedUser.bannerUrl || null,
-    roles: updatedUser.roles || [role], // Use roles from DB (includes frontend role names)
-    currentRole: frontendCurrentRole, // Return the frontend role name
+    roles: updatedUser.roles || [role],
+    currentRole: frontendCurrentRole,
     uid: req.user.uid,
   });
 }));

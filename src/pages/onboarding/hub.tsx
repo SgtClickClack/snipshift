@@ -123,7 +123,7 @@ function PaymentForm({
 }
 
 export default function HubOnboardingPage() {
-  const { user, refreshUser, login, isLoading: isAuthLoading, isAuthReady } = useAuth();
+  const { user, refreshUser, login, isLoading: isAuthLoading, isAuthReady, isVenueMissing } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,6 +162,19 @@ export default function HubOnboardingPage() {
       setIsVerifyingUser(false);
     }
   }, [isAuthReady, isAuthLoading, user, navigate]);
+
+  // SUBMIT RE-ALIGNMENT: When venue fetch failed (isVenueMissing), pre-fill form from user so they can re-complete
+  useEffect(() => {
+    if (!isVenueMissing || !user) return;
+    setFormData((prev) => {
+      if (prev.venueName && prev.location) return prev;
+      return {
+        ...prev,
+        venueName: prev.venueName || (user.name as string) || '',
+        location: prev.location || (user.location as string) || '',
+      };
+    });
+  }, [isVenueMissing, user]);
 
   // Read plan preference from sessionStorage on mount
   useEffect(() => {
@@ -255,6 +268,8 @@ export default function HubOnboardingPage() {
         phone: (user as { phone?: string })?.phone ?? '',
         location: formData.location,
         bio: formData.description || undefined,
+        city: formData.city || undefined,
+        state: formData.state || undefined,
       });
 
       if (!response.ok) {
@@ -615,6 +630,7 @@ export default function HubOnboardingPage() {
                     className="w-full shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300"
                     disabled={isSubmitting || !formData.venueName.trim() || !formData.location.trim()}
                     data-testid="button-venue-details-submit"
+                    title={isVenueMissing ? 'Re-complete your venue profile' : undefined}
                   >
                     {isSubmitting ? (
                       <>
