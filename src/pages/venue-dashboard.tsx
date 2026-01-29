@@ -731,9 +731,10 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
     staleTime: demoMode ? Infinity : undefined,
   });
 
-  // Fetch shift message unread count
+  // Fetch shift message unread count (only when venue exists — avoids 500 for new venues)
+  const venueId = venueMe && typeof venueMe === 'object' && 'id' in venueMe ? (venueMe as { id: string }).id : undefined;
   const { data: shiftMessageUnreadData } = useQuery({
-    queryKey: ['shift-messages-unread-count'],
+    queryKey: ['shift-messages-unread-count', venueId],
     queryFn: async () => {
       // DEMO MODE: Return demo unread count immediately
       if (demoMode) {
@@ -742,7 +743,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       const res = await apiRequest("GET", "/api/shifts/messages/unread-count");
       return res.json();
     },
-    enabled: demoMode || !!user,
+    enabled: demoMode || (!!user && !!venueId),
     refetchInterval: demoMode ? false : 30000, // Don't refetch in demo mode
     staleTime: demoMode ? Infinity : undefined,
   });

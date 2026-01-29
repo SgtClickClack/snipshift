@@ -943,6 +943,7 @@ router.post('/:id/messages', authenticateUser, asyncHandler(async (req: Authenti
 
 // Get unread shift message count for current user
 // IMPORTANT: This route MUST come before DELETE /:id to avoid route conflicts
+// Graceful null: return { unreadCount: 0 } when no shifts/conversations or on DB error (e.g. new venues)
 router.get('/messages/unread-count', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
 
@@ -951,8 +952,13 @@ router.get('/messages/unread-count', authenticateUser, asyncHandler(async (req: 
     return;
   }
 
-  const unreadCount = await shiftMessagesRepo.getUnreadShiftMessageCount(userId);
-  res.status(200).json({ unreadCount });
+  try {
+    const unreadCount = await shiftMessagesRepo.getUnreadShiftMessageCount(userId);
+    res.status(200).json({ unreadCount });
+  } catch (err) {
+    console.error('[GET /api/shifts/messages/unread-count] Error:', err);
+    res.status(200).json({ unreadCount: 0 });
+  }
 }));
 
 // Clear all shifts AND jobs for the current user (dangerous - use with caution)
