@@ -157,7 +157,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Clear redirecting flag after pathname has settled (prevents flash of wrong route)
   useEffect(() => {
     if (!isRedirecting) return;
-    const t = setTimeout(() => setRedirecting(false), 150);
+    const t = setTimeout(() => setRedirecting(false), 50);
     return () => clearTimeout(t);
   }, [location.pathname, isRedirecting]);
 
@@ -243,8 +243,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (isOnboarded) {
         // Data integrity: venue users must have a venue record — prevent "ghost dashboards"
         if (isVenueRole) {
-          // Do NOT clear isVenueMissingRef here — only clear when /api/venues/me returns 200.
-          // Otherwise refetches (e.g. refreshUser) forget we had 404 and cause redirect loop.
+          // If we already know venue is missing this session, skip re-fetching /api/venues/me to avoid request loop
+          // (hydrate runs on every pathname change / Firebase callback; each run was calling /api/venues/me → 404)
+          if (isVenueMissingRef.current) {
+            setUser((prev) => prev ? { ...prev, isOnboarded: false, hasCompletedOnboarding: false } : null);
+            setIsVenueMissing(true);
+            if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
+              setRedirecting(true);
+              navigate('/onboarding/hub', { replace: true });
+            } else {
+              setRedirecting(false);
+            }
+            return;
+          }
           try {
             let venueRes = await fetch(`${getApiBase()}/api/venues/me`, {
               headers: {
@@ -270,9 +281,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setIsVenueMissing(true);
               // Clear local onboarding flag so hub shows form; isVenueMissingRef persists so refetches don't redirect loop
               setUser((prev) => prev ? { ...prev, isOnboarded: false, hasCompletedOnboarding: false } : null);
-              setRedirecting(true);
               if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
+                setRedirecting(true);
                 navigate('/onboarding/hub', { replace: true });
+              } else {
+                setRedirecting(false);
               }
               return;
             }
@@ -286,25 +299,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setIsVenueMissing(true);
             // DATA HEALING: Set isOnboarded to false in local state so Hub form can re-submit correctly
             setUser((prev) => prev ? { ...prev, isOnboarded: false, hasCompletedOnboarding: false } : null);
-            setRedirecting(true);
             if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
+              setRedirecting(true);
               navigate('/onboarding/hub', { replace: true });
+            } else {
+              setRedirecting(false);
             }
             return;
           }
         }
         // Do NOT redirect to dashboard if venue check has failed with 404 (same or previous run)
         if (isVenueMissingRef.current) {
-          setRedirecting(true);
           if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
+            setRedirecting(true);
             navigate('/onboarding/hub', { replace: true });
+          } else {
+            setRedirecting(false);
           }
           return;
         }
         const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
         console.log('[AuthContext] User is onboarded — redirecting to', targetPath);
-        setRedirecting(true);
-        navigate(targetPath, { replace: true });
+        if (location.pathname === targetPath) {
+          setRedirecting(false);
+        } else {
+          setRedirecting(true);
+          navigate(targetPath, { replace: true });
+        }
       }
       
       // Clear any auth-related URL parameters once user is confirmed
@@ -440,8 +461,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   if (currentPath === '/login' || currentPath === '/signup') {
                     const target = isVenueMissingRef.current ? '/onboarding/hub' : '/dashboard';
                     console.log('[AuthContext] Popup auth successful, navigating to', target);
-                    setRedirecting(true);
-                    navigate(target, { replace: true });
+                    if (window.location.pathname === target) {
+                      setRedirecting(false);
+                    } else {
+                      setRedirecting(true);
+                      navigate(target, { replace: true });
+                    }
                   }
                 }
               }
@@ -559,11 +584,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.log('[Auth] User onboarded but venue missing, redirecting from', currentPath, 'to /onboarding/hub');
             setRedirecting(true);
             navigate('/onboarding/hub', { replace: true });
+          } else {
+            setRedirecting(false);
           }
         } else {
           console.log('[Auth] User is onboarded, redirecting from', currentPath, 'to /dashboard');
-          setRedirecting(true);
-          navigate('/dashboard', { replace: true });
+          if (currentPath === '/dashboard') {
+            setRedirecting(false);
+          } else {
+            setRedirecting(true);
+            navigate('/dashboard', { replace: true });
+          }
         }
       } else {
         // Only send to onboarding when isOnboarded is explicitly false (or unset)
@@ -571,6 +602,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log('[Auth] User not onboarded, redirecting from', currentPath, 'to /onboarding');
           setRedirecting(true);
           navigate('/onboarding', { replace: true });
+        } else {
+          setRedirecting(false);
         }
       }
   }, [user, isLoading, navigate]);

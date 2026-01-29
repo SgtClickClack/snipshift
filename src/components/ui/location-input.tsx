@@ -33,6 +33,8 @@ interface LocationInputProps {
   disabled?: boolean;
   /** When false, Google Maps script is not loaded (e.g. until auth handshake is complete). Default true. */
   readyToLoadMaps?: boolean;
+  /** Called when Places API returns 403 (forbidden); parent can set loadError to show Manual Entry fallback. */
+  onPlacesApiError?: () => void;
   'data-testid'?: string;
 }
 
@@ -49,15 +51,19 @@ function PlacesAutocompleteNew({
   placeholder,
   className,
   disabled,
+  onPlacesApiError,
   'data-testid': dataTestId,
 }: LocationInputProps) {
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [open, setOpen] = useState(false);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+  /** When true, Places API failed (e.g. 403); stop requesting and show fallback hint. */
+  const [suggestionsUnavailable, setSuggestionsUnavailable] = useState(false);
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRequestRef = useRef<string>('');
+  const hasLogged403Ref = useRef(false);
 
   useEffect(() => {
     if (value !== inputValue) setInputValue(value);
@@ -78,6 +84,11 @@ function PlacesAutocompleteNew({
     if (!inputValue.trim()) {
       setSuggestions([]);
       setOpen(false);
+      return;
+    }
+
+    if (suggestionsUnavailable) {
+      setSuggestions([]);
       return;
     }
 
@@ -106,8 +117,17 @@ function PlacesAutocompleteNew({
         setOpen(items.length > 0);
       } catch (err) {
         if (lastRequestRef.current === query) {
-          logger.debug('LocationInput', 'AutocompleteSuggestion fetch failed:', err);
+          const msg = err instanceof Error ? err.message : String(err);
+          const is403 = msg.includes('403') || msg.toLowerCase().includes('forbidden');
+          if (is403 && !hasLogged403Ref.current) {
+            hasLogged403Ref.current = true;
+            logger.warn('LocationInput', 'Places API returned 403. Enable Places API (New) and add this origin to your API key HTTP referrers.');
+          } else if (!is403) {
+            logger.debug('LocationInput', 'AutocompleteSuggestion fetch failed:', err);
+          }
+          setSuggestionsUnavailable(true);
           setSuggestions([]);
+          if (is403) onPlacesApiError?.();
         }
       } finally {
         if (lastRequestRef.current === query) setIsSuggestionsLoading(false);
@@ -117,7 +137,7 @@ function PlacesAutocompleteNew({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [inputValue, getSessionToken]);
+  }, [inputValue, getSessionToken, suggestionsUnavailable, onPlacesApiError]);
 
   const handleSelect = async (item: SuggestionItem) => {
     const address = item.description;
@@ -159,24 +179,32 @@ function PlacesAutocompleteNew({
   return (
     <Popover open={open && suggestions.length > 0} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative w-full">
-          <Input
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value);
-              onChange(e.target.value);
-              if (e.target.value) setOpen(true);
-            }}
-            disabled={disabled}
-            placeholder={placeholder}
-            className={cn('pr-10 focus-visible:ring-brand-neon focus-visible:border-brand-neon', className)}
-            autoComplete="off"
-            data-testid={dataTestId}
-          />
-          {isSuggestionsLoading ? (
-            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" aria-hidden />
-          ) : (
-            <MapPin className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" aria-hidden />
+        <div className="relative w-full space-y-1">
+          <div className="relative">
+            <Input
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                onChange(e.target.value);
+                if (e.target.value) setOpen(true);
+              }}
+              disabled={disabled}
+              placeholder={placeholder}
+              className={cn('pr-10 focus-visible:ring-brand-neon focus-visible:border-brand-neon', className)}
+              autoComplete="off"
+              data-testid={dataTestId}
+              aria-describedby={suggestionsUnavailable ? 'location-suggestions-unavailable' : undefined}
+            />
+            {isSuggestionsLoading ? (
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" aria-hidden />
+            ) : (
+              <MapPin className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" aria-hidden />
+            )}
+          </div>
+          {suggestionsUnavailable && (
+            <p id="location-suggestions-unavailable" className="text-xs text-amber-200/90">
+              Suggestions unavailable; you can still type your full address.
+            </p>
           )}
         </div>
       </PopoverTrigger>
@@ -328,10 +356,14 @@ const PlacesAutocompleteLegacy = ({
 };
 
 export function LocationInput(props: LocationInputProps) {
-  const { readyToLoadMaps = true } = props;
+  const { readyToLoadMaps = true, onPlacesApiError: onPlacesApiErrorProp } = props;
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [useNewApi, setUseNewApi] = useState<boolean | null>(null);
+
+  const handlePlacesApiError = useCallback(() => {
+    setLoadError('Location suggestions unavailable');
+  }, []);
 
   useEffect(() => {
     if (!readyToLoadMaps) return;
@@ -406,7 +438,7 @@ export function LocationInput(props: LocationInputProps) {
   }
 
   if (useNewApi === true) {
-    return <PlacesAutocompleteNew {...props} />;
+    return <PlacesAutocompleteNew {...props} onPlacesApiError={onPlacesApiErrorProp ?? handlePlacesApiError} />;
   }
 
   return <PlacesAutocompleteLegacy {...props} />;

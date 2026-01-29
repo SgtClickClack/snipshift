@@ -316,7 +316,7 @@ export default function HubOnboardingPage() {
         // No payment needed (Starter tier): only go to dashboard once venue check passes
         clearSessionStorage();
         if (venueReady) {
-          navigate('/venue/dashboard');
+          navigate('/venue/dashboard', { replace: true });
         }
         // If !venueReady, stay on hub (e.g. 429/404); AuthContext keeps isVenueMissing true
       }
@@ -388,7 +388,7 @@ export default function HubOnboardingPage() {
 
       const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
       clearSessionStorage();
-      if (venueReady) navigate('/venue/dashboard');
+      if (venueReady) navigate('/venue/dashboard', { replace: true });
     } catch (error: any) {
       console.error('Subscription error:', error);
       toast({
@@ -398,7 +398,7 @@ export default function HubOnboardingPage() {
       });
       const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
       clearSessionStorage();
-      if (venueReady) navigate('/venue/dashboard');
+      if (venueReady) navigate('/venue/dashboard', { replace: true });
     } finally {
       setIsSubmitting(false);
     }
@@ -418,7 +418,7 @@ export default function HubOnboardingPage() {
     });
     const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
     clearSessionStorage();
-    if (venueReady) navigate('/venue/dashboard');
+    if (venueReady) navigate('/venue/dashboard', { replace: true });
   };
 
   // Determine total steps
