@@ -46,13 +46,23 @@ async function throwIfResNotOk(res: Response, url?: string) {
   }
 }
 
+/** API base URL when API is on a different host (e.g. VITE_API_URL=https://api.hospogo.com). */
+function getApiBase(): string {
+  const base = import.meta.env.VITE_API_URL;
+  if (typeof base === 'string' && base.trim()) {
+    return base.trim().replace(/\/$/, '');
+  }
+  return '';
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
   const isSafe = method.toUpperCase() === 'GET' || method.toUpperCase() === 'HEAD' || method.toUpperCase() === 'OPTIONS';
-  
+  const fullUrl = url.startsWith('http') ? url : `${getApiBase()}${url.startsWith('/') ? '' : '/'}${url}`;
+
   // Check if data is FormData
   const isFormData = data instanceof FormData;
   
@@ -82,14 +92,14 @@ export async function apiRequest(
     headers['Authorization'] = 'Bearer mock-test-token';
   }
 
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body: data ? (isFormData ? data : JSON.stringify(data)) : undefined,
     credentials: "include",
   });
 
-  await throwIfResNotOk(res, url);
+  await throwIfResNotOk(res, fullUrl);
   return res;
 }
 
@@ -113,7 +123,8 @@ export const getQueryFn: <T>(options: {
     }
 
     const url = queryKey.join("/") as string;
-    const res = await fetch(url, {
+    const fullUrl = url.startsWith('http') ? url : `${getApiBase()}${url.startsWith('/') ? '' : '/'}${url}`;
+    const res = await fetch(fullUrl, {
       credentials: "include",
       headers,
     });
@@ -128,7 +139,7 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
-    await throwIfResNotOk(res, url);
+    await throwIfResNotOk(res, fullUrl);
     return await res.json();
   };
 

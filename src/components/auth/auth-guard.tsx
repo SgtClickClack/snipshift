@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayoutSkeleton } from '@/components/loading/skeleton-loaders';
 
@@ -17,7 +17,6 @@ export function AuthGuard({
   // Minimalist guard: rely on Firebase session + DB profile
   const { user, isLoading, hasFirebaseUser, isVenueMissing } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const isOnboardingPath = location.pathname === '/onboarding' || location.pathname.startsWith('/onboarding/');
 
@@ -28,20 +27,19 @@ export function AuthGuard({
     !!sessionStorage.getItem('hospogo_test_user');
   const hasAuth = hasFirebaseUser || hasE2ETestUser;
 
-  useEffect(() => {
-    if (isLoading) return;
-
-    if (hasFirebaseUser && !user && !isOnboardingPath) {
-      navigate('/onboarding', { replace: true });
-      return;
-    }
-
-    // Redirect to dashboard only when isOnboarded is true (single source of truth from API).
-    // Exception: do NOT redirect from /onboarding/hub when venue is missing (404) — user must complete venue setup.
-    if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath && !isVenueMissing) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [hasFirebaseUser, user, isOnboardingPath, isVenueMissing, isLoading, navigate]);
+  // DISABLED: Global Redirect Lockdown - AuthContext is the sole authority for redirects.
+  // These useEffects conflicted with AuthContext rules and caused flashing. Routes don't mount until
+  // isNavigationLocked is false, at which point AuthContext has already navigated to the correct path.
+  // useEffect(() => {
+  //   if (isLoading) return;
+  //   if (hasFirebaseUser && !user && !isOnboardingPath) {
+  //     navigate('/onboarding', { replace: true });
+  //     return;
+  //   }
+  //   if (hasFirebaseUser && user && user.isOnboarded === true && isOnboardingPath && !isVenueMissing) {
+  //     navigate('/dashboard', { replace: true });
+  //   }
+  // }, [hasFirebaseUser, user, isOnboardingPath, isVenueMissing, isLoading, navigate]);
 
   if (isLoading) {
     return <DashboardLayoutSkeleton />;

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,25 +20,23 @@ import { getDashboardRoute } from "@/lib/roles";
 import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
-  const { user, isLoading, hasUser, isAuthReady, isVenueMissing } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { user, isLoading, hasUser, isAuthReady } = useAuth();
   const hasCleanedUp = useRef(false);
 
-  // Redirect logic: use isOnboarded (single source of truth; hasCompletedOnboarding is derived from it in AuthContext)
-  useEffect(() => {
-    if (location.pathname !== '/') return;
-    if (isLoading) return;
-
-    if (!user) return;
-
-    const isOnboarded = user.isOnboarded === true;
-    if (isOnboarded) {
-      navigate(isVenueMissing ? '/onboarding/hub' : '/dashboard', { replace: true });
-    } else {
-      navigate('/onboarding', { replace: true });
-    }
-  }, [user, isLoading, isVenueMissing, navigate, location.pathname]);
+  // DISABLED: Global Redirect Lockdown - AuthContext is the sole authority for redirects.
+  // This useEffect conflicted with AuthContext rules and caused flashing. Routes don't mount until
+  // isNavigationLocked is false, at which point AuthContext has already navigated to the correct path.
+  // useEffect(() => {
+  //   if (location.pathname !== '/') return;
+  //   if (isLoading) return;
+  //   if (!user) return;
+  //   const isOnboarded = user.isOnboarded === true;
+  //   if (isOnboarded) {
+  //     navigate(isVenueMissing ? '/onboarding/hub' : '/dashboard', { replace: true });
+  //   } else {
+  //     navigate('/onboarding', { replace: true });
+  //   }
+  // }, [user, isLoading, isVenueMissing, navigate, location.pathname]);
 
   // Clear stale auth-related localStorage/sessionStorage data on landing page load
   // This prevents race conditions from old redirects or onboarding states
