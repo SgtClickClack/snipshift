@@ -21,6 +21,8 @@ router.get('/me', authenticateUser, asyncHandler(async (req: AuthenticatedReques
   const venue = await venuesRepo.getVenueByUserId(userId);
   
   if (!venue) {
+    // Debug: log when user has no venue — helps diagnose onboarded user with missing venue (redirect loop)
+    console.log('[GET /api/venues/me] No venue found for userId=', userId, '— user may be marked isOnboarded=true; frontend will show hub to complete venue.');
     res.status(404).json({ message: 'Venue not found' });
     return;
   }

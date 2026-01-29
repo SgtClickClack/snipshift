@@ -243,8 +243,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (isOnboarded) {
         // Data integrity: venue users must have a venue record — prevent "ghost dashboards"
         if (isVenueRole) {
-          isVenueMissingRef.current = false;
-          setIsVenueMissing(false); // clear until we know otherwise
+          // Do NOT clear isVenueMissingRef here — only clear when /api/venues/me returns 200.
+          // Otherwise refetches (e.g. refreshUser) forget we had 404 and cause redirect loop.
           try {
             let venueRes = await fetch(`${getApiBase()}/api/venues/me`, {
               headers: {
@@ -265,10 +265,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
               });
             }
             if (venueRes.status === 404 || venueRes.status === 429) {
-              console.log('[AuthContext] User is onboarded but /api/venues/me returned', venueRes.status, '— data healing: setting isOnboarded=false locally so hub can re-submit');
+              console.log('[AuthContext] User is onboarded but /api/venues/me returned', venueRes.status, '— staying on hub (isVenueMissing); complete venue form below.');
               isVenueMissingRef.current = true;
               setIsVenueMissing(true);
-              // DATA HEALING: Set isOnboarded to false in local state so Hub form can re-submit correctly
+              // Clear local onboarding flag so hub shows form; isVenueMissingRef persists so refetches don't redirect loop
               setUser((prev) => prev ? { ...prev, isOnboarded: false, hasCompletedOnboarding: false } : null);
               setRedirecting(true);
               if (typeof window !== 'undefined' && window.location.pathname !== '/onboarding/hub') {
@@ -276,7 +276,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
               }
               return;
             }
+            // Only clear venue-missing when we got 200 — prevents redirect loop on refetch
             isVenueMissingRef.current = false;
+            setIsVenueMissing(false);
           } catch (venueErr) {
             logger.warn('AuthContext', 'Failed to fetch /api/venues/me before redirect', venueErr);
             // On network error, still send to hub so user can complete setup

@@ -520,6 +520,14 @@ export default function HubOnboardingPage() {
             </div>
           )}
 
+          {/* Clear UI state when backend says onboarded but venue record missing (404) — no silent redirect loop */}
+          {isVenueMissing && (
+            <div className="mb-4 p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm" role="alert">
+              <p className="font-medium">Complete your venue profile</p>
+              <p className="mt-1 text-amber-800">Your account is set up but the venue record is missing. Fill in the form below and submit to continue to your dashboard.</p>
+            </div>
+          )}
+
           <Card className="card-chrome">
             <CardHeader className="text-center">
               {renderStepIndicator()}
