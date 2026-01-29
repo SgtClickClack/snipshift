@@ -164,11 +164,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => clearTimeout(t);
   }, [location.pathname, isRedirecting]);
 
-  // Unlock body scroll when navigation lock ends (fixes frozen scroll on dashboard)
+  // Global body unlock: when auth handshake is done, re-enable scroll across all browsers
   useEffect(() => {
     if (typeof document === 'undefined') return;
     if (!isNavigationLocked) {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';
     }
   }, [isNavigationLocked]);
 

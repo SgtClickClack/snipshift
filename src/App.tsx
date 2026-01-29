@@ -124,6 +124,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   usePushNotifications();
 
   // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished hydrateFromFirebaseUser (including venue 200/404 check)
+  // LoadingScreen is rendered INSTEAD of Routes (not wrapping) — when it unmounts, Routes mount with no overlay; no pointer-events or scroll capture persists.
   if (isNavigationLocked && splashHandled && !isBridgeRoute) {
     return <LoadingScreen />;
   }

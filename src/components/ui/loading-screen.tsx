@@ -1,8 +1,9 @@
 const logoUrl = '/hospogo-navbar-banner.png';
 
+/** In-flow only: when unmounted, does not wrap Routes — no persistent overlay, pointer-events, or overflow. */
 export function LoadingScreen() {
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background dark:bg-steel-900 transition-opacity duration-300 pointer-events-auto" data-testid="loading-screen">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background dark:bg-steel-900 transition-opacity duration-300 pointer-events-auto" data-testid="loading-screen" aria-hidden="true">
       <div className="flex items-center justify-center mb-6 min-h-36">
         <img
           src={logoUrl} 

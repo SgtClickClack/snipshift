@@ -741,12 +741,19 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       if (demoMode) {
         return { unreadCount: 3 };
       }
-      const res = await apiRequest("GET", "/api/shifts/messages/unread-count");
-      return res.json();
+      try {
+        const res = await apiRequest("GET", "/api/shifts/messages/unread-count");
+        if (!res.ok) return { unreadCount: 0 };
+        return res.json();
+      } catch {
+        return { unreadCount: 0 };
+      }
     },
     enabled: demoMode || (!!user && !!venueId),
     refetchInterval: demoMode ? false : 30000, // Don't refetch in demo mode
     staleTime: demoMode ? Infinity : undefined,
+    fallbackData: { unreadCount: 0 },
+    throwOnError: false,
   });
 
   // Use API data for stats, but prefer local jobs calculation for consistency with the list view
