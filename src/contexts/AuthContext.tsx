@@ -153,6 +153,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isOnboardingModeRef = useRef<boolean>(false);
   // Sync with isVenueMissing state so redirect logic can read it in the same tick
   const isVenueMissingRef = useRef<boolean>(false);
+  /** 5-minute session cache for GET /api/venues/me: if we got 200 recently for this user, skip the blocking fetch so Dashboard mounts instantly. */
+  const VENUE_CACHE_TTL_MS = 5 * 60 * 1000;
+  const venueCacheRef = useRef<{ userId: string; cachedAt: number; hasVenue: boolean } | null>(null);
 
   // Clear redirecting flag after pathname has settled (prevents flash of wrong route)
   useEffect(() => {
@@ -183,6 +186,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setToken(null);
       isVenueMissingRef.current = false;
       setIsVenueMissing(false);
+      venueCacheRef.current = null;
       // Always redirect to landing so user never stays on a protected page after sign-out
       navigate('/', { replace: true });
     }
@@ -256,6 +260,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
             return;
           }
+          // 5-minute session cache: if we got 200 for this user recently, skip blocking fetch so Dashboard mounts instantly
+          const cached = venueCacheRef.current;
+          const now = Date.now();
+          if (cached && cached.userId === firebaseUser.uid && (now - cached.cachedAt) < VENUE_CACHE_TTL_MS && cached.hasVenue) {
+            isVenueMissingRef.current = false;
+            setIsVenueMissing(false);
+            const targetPath = '/venue/dashboard';
+            if (location.pathname === targetPath) {
+              setRedirecting(false);
+            } else {
+              setRedirecting(true);
+              navigate(targetPath, { replace: true });
+            }
+            return;
+          }
           try {
             let venueRes = await fetch(`${getApiBase()}/api/venues/me`, {
               headers: {
@@ -292,6 +311,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Only clear venue-missing when we got 200 — prevents redirect loop on refetch
             isVenueMissingRef.current = false;
             setIsVenueMissing(false);
+            // Session cache: next time we can skip this fetch and mount Dashboard instantly (5 min TTL)
+            venueCacheRef.current = { userId: firebaseUser.uid, cachedAt: Date.now(), hasVenue: true };
           } catch (venueErr) {
             logger.warn('AuthContext', 'Failed to fetch /api/venues/me before redirect', venueErr);
             // On network error, still send to hub so user can complete setup

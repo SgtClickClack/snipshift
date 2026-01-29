@@ -262,6 +262,21 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   });
   const isProfileIncomplete = !demoMode && isVenueFetched && !isLoadingVenue && (venueMe === null || venueMe === undefined);
 
+  // Stripe Connect status: used to hide Venue Status card when Stripe is missing (reduces orange wall of warnings)
+  const { data: stripeAccountStatus } = useQuery({
+    queryKey: ['stripe-connect-account-status', user?.id],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/stripe-connect/account/status');
+      if (res.status === 404) {
+        return { hasAccount: false, onboardingComplete: false, chargesEnabled: false };
+      }
+      return res.json();
+    },
+    enabled: !demoMode && !!user?.id && (user.currentRole === 'hub' || user.currentRole === 'business'),
+    staleTime: 5 * 60 * 1000,
+  });
+  const isStripeComplete = stripeAccountStatus?.onboardingComplete && stripeAccountStatus?.chargesEnabled;
+
   const { data: applications = [], isLoading: isLoadingApplications, refetch: refetchApplications } = useQuery({
     queryKey: ['/api/applications'],
     queryFn: async () => {
@@ -934,8 +949,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         {/* Stripe Connect Incomplete Banner */}
         <StripeConnectBanner />
 
-        {/* Venue Status Card */}
-        <VenueStatusCard />
+        {/* Venue Status Card: hide when Stripe Connection is missing (can't be verified until connected) */}
+        {isStripeComplete && <VenueStatusCard />}
 
         {/* Overview Tab */}
         {activeView === 'overview' && (
