@@ -752,6 +752,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
     enabled: demoMode || (!!user && !!venueId),
     refetchInterval: demoMode ? false : 30000, // Don't refetch in demo mode
     staleTime: demoMode ? Infinity : undefined,
+    retry: false,
     fallbackData: { unreadCount: 0 },
     throwOnError: false,
   });
