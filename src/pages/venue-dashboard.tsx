@@ -953,11 +953,14 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Onboarding Incomplete Banner - Shows when hub user has no active subscription */}
-        <CompleteSetupBanner />
+        {/* Subscription and Stripe banners: vertical stack with gap so they don't overlap on small screens */}
+        <div className="flex flex-col gap-4">
+          {/* Onboarding Incomplete Banner - Shows when hub user has no active subscription */}
+          <CompleteSetupBanner />
 
-        {/* Stripe Connect Incomplete Banner */}
-        <StripeConnectBanner />
+          {/* Stripe Connect Incomplete Banner */}
+          <StripeConnectBanner />
+        </div>
 
         {/* Venue Status Card: hide when Stripe Connection is missing (can't be verified until connected) */}
         {isStripeComplete && <VenueStatusCard />}

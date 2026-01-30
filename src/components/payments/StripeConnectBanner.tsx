@@ -125,11 +125,11 @@ export function StripeConnectBanner() {
 
   return (
     <div 
-      className="bg-gradient-to-r from-orange-600/15 via-orange-500/10 to-amber-600/15 border border-orange-500/40 rounded-lg p-4 mb-6"
+      className="w-full max-w-full bg-gradient-to-r from-orange-600/15 via-orange-500/10 to-amber-600/15 border border-orange-500/40 rounded-lg p-4 mb-6"
       role="alert"
       data-testid="stripe-connect-banner"
     >
-      <div className="flex items-start gap-4">
+      <div className="flex flex-wrap items-start gap-4">
         <div className="flex-shrink-0">
           <div className="w-10 h-10 rounded-full bg-orange-500/25 flex items-center justify-center">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
@@ -137,10 +137,10 @@ export function StripeConnectBanner() {
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-orange-100 mb-1">
+          <h3 className="text-sm font-semibold text-orange-100 mb-1 break-words">
             {hasStripeAccount ? 'Stripe Setup Incomplete' : 'Connect with Stripe'}
           </h3>
-          <p className="text-sm text-orange-200/90 mb-3">
+          <p className="text-sm text-orange-200/90 mb-3 break-words">
             {hasStripeAccount 
               ? 'Please complete your Stripe Connect verification to start receiving payments securely.'
               : 'Connect your Stripe account to enable secure payment processing and identity verification for your venue.'}

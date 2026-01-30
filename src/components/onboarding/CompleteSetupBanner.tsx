@@ -82,11 +82,11 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
 
   return (
     <div 
-      className={`bg-gradient-to-r from-amber-600/15 via-amber-500/10 to-yellow-600/15 border border-amber-500/40 rounded-lg p-4 mb-6 ${className}`}
+      className={`w-full max-w-full bg-gradient-to-r from-amber-600/15 via-amber-500/10 to-yellow-600/15 border border-amber-500/40 rounded-lg p-4 mb-6 ${className}`}
       role="alert"
       data-testid="complete-setup-banner"
     >
-      <div className="flex items-start gap-4">
+      <div className="flex flex-wrap items-start gap-4">
         <div className="flex-shrink-0">
           <div className="w-10 h-10 rounded-full bg-amber-500/25 flex items-center justify-center">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -94,10 +94,10 @@ export function CompleteSetupBanner({ className = '' }: CompleteSetupBannerProps
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-amber-100 mb-1">
+          <h3 className="text-sm font-semibold text-amber-100 mb-1 break-words">
             Complete Your Setup
           </h3>
-          <p className="text-sm text-amber-200/90 mb-3">
+          <p className="text-sm text-amber-200/90 mb-3 break-words">
             Your subscription setup is incomplete. Without an active subscription, a{' '}
             <strong>$20 booking fee</strong> will apply to each shift booking. 
             Subscribe to the Business plan to waive all booking fees.

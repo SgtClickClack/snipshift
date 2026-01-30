@@ -157,10 +157,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const VENUE_CACHE_TTL_MS = 5 * 60 * 1000;
   const venueCacheRef = useRef<{ userId: string; cachedAt: number; hasVenue: boolean } | null>(null);
 
-  // Clear redirecting flag after pathname has settled (prevents flash of wrong route)
+  // Clear redirecting flag after pathname has settled (prevents flash of wrong route).
+  // Mobile gets extra 200ms so processors have time to render the redirect without flashing.
   useEffect(() => {
     if (!isRedirecting) return;
-    const t = setTimeout(() => setRedirecting(false), 50);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const settleMs = 50 + (isMobile ? 200 : 0);
+    const t = setTimeout(() => setRedirecting(false), settleMs);
     return () => clearTimeout(t);
   }, [location.pathname, isRedirecting]);
 
