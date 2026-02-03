@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HospoGo | Private Investor Briefing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Exact Brand Neon Alignment */
+        :root {
+            --brand-neon: #deff9a;
+            --dark-bg: #0a0a0a;
+            --glass-bg: rgba(26, 26, 26, 0.6);
+        }
+
+        body { font-family: 'Urbanist', sans-serif; background-color: var(--dark-bg); color: #f5f5f5; }
+        
+        .text-neon { color: var(--brand-neon); }
+        .bg-neon { background-color: var(--brand-neon); }
+        .border-neon { border-color: var(--brand-neon); }
+        
+        .glass-card { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(222, 255, 154, 0.1); 
+            transition: all 0.3s ease; 
+        }
+        
+        .glass-card:hover { 
+            border-color: rgba(222, 255, 154, 0.4); 
+            transform: translateY(-4px); 
+        }
+        
+        .neon-glow { text-shadow: 0 0 20px rgba(222, 255, 154, 0.4); }
+        
+        .hero-gradient { 
+            background: radial-gradient(circle at center, rgba(222, 255, 154, 0.08) 0%, transparent 70%); 
+        }
+
+        /* High-Legibility Utilities */
+        .text-contrast-dark { color: #1a1a1a; }
+        .bg-dark-accent { background-color: #111111; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 px-6 py-4 flex justify-between items-center glass-card border-t-0 border-x-0">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl font-bold tracking-tighter">HOSPO<span class="text-neon">GO</span></span>
+        </div>
+        <div class="hidden md:flex gap-8 text-sm font-semibold tracking-wider uppercase">
+            <a href="#opportunity" class="hover:text-neon transition">Opportunity</a>
+            <a href="#trinity" class="hover:text-neon transition">The Trinity</a>
+            <a href="#technical" class="hover:text-neon transition">Technical Audit</a>
+            <a href="#investment" class="hover:text-neon transition">The Ask</a>
+        </div>
+        <a href="#event" class="bg-neon text-black px-6 py-2 rounded-full font-bold text-sm hover:opacity-90 transition">RSVP BRIEFING</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex flex-col justify-center items-center px-6 relative hero-gradient pt-20">
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-neon opacity-5 rounded-full blur-[120px]"></div>
+        <div class="text-center max-w-4xl">
+            <h1 class="text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-tight">
+                The Future of <br><span class="text-neon neon-glow">Hospitality Logistics</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Solving the labor crisis for 94,000 Australian venues through an integrated, audited, and enterprise-ready SaaS ecosystem.
+            </p>
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <div class="glass-card px-8 py-4 rounded-2xl flex items-center gap-3">
+                    <span class="text-3xl font-bold text-neon">$168M</span>
+                    <span class="text-xs text-gray-400 text-left uppercase font-bold tracking-widest leading-tight">Australian<br>TAM</span>
+                </div>
+                <div class="glass-card px-8 py-4 rounded-2xl flex items-center gap-3">
+                    <span class="text-3xl font-bold text-neon">630+</span>
+                    <span class="text-xs text-gray-400 text-left uppercase font-bold tracking-widest leading-tight">Audited R&D<br>Hours</span>
+                </div>
+                <div class="glass-card px-8 py-4 rounded-2xl flex items-center gap-3">
+                    <span class="text-3xl font-bold text-neon">100%</span>
+                    <span class="text-xs text-gray-400 text-left uppercase font-bold tracking-widest leading-tight">E2E Test<br>Stability</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Opportunity Section -->
+    <section id="opportunity" class="py-24 px-6 max-w-7xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+                <h2 class="text-4xl md:text-5xl font-bold mb-8">The <span class="text-neon">Suburban</span> Shift</h2>
+                <p class="text-lg text-gray-400 mb-6 leading-relaxed">
+                    Data from 2024-2025 shows a profound structural evolution. Suburban venues currently exhibit <strong>4.6% higher loyalty rates</strong> than CBD counterparts. 
+                </p>
+                <p class="text-lg text-gray-400 mb-8 leading-relaxed">
+                    As neighborhood venues become daily community hubs, they require professional-grade tools to manage rising labor costs (up for 88% of operators) and complex compliance mandates.
+                </p>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-4">
+                        <i class="fas fa-check-circle text-neon mt-1"></i>
+                        <div class="text-gray-300">
+                            <span class="font-bold text-white">Market Mandate:</span> 80% of venues plan a tech upgrade in 2025/26.
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <i class="fas fa-check-circle text-neon mt-1"></i>
+                        <div class="text-gray-300">
+                            <span class="font-bold text-white">Efficiency Dividend:</span> 85% reduction in roster-to-payroll admin time.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-card p-6 rounded-3xl text-center">
+                    <h4 class="text-neon text-3xl font-bold mb-2">6,141</h4>
+                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Brisbane LGA Venues</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl text-center">
+                    <h4 class="text-neon text-3xl font-bold mb-2">3,231</h4>
+                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Gold Coast Venues</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl text-center">
+                    <h4 class="text-neon text-3xl font-bold mb-2">$10M</h4>
+                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Post-Money Val.</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl text-center">
+                    <h4 class="text-neon text-3xl font-bold mb-2">10%</h4>
+                    <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Equity Offered</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Trinity Section -->
+    <section id="trinity" class="py-24 px-6 bg-dark-accent">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">The HospoGo <span class="text-neon">Trinity</span></h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">One integrated ecosystem to eliminate administrative paralysis.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Vault -->
+                <div class="glass-card p-10 rounded-[40px] relative overflow-hidden group">
+                    <div class="mb-8 w-16 h-16 bg-neon/10 rounded-2xl flex items-center justify-center text-neon text-3xl group-hover:bg-neon group-hover:text-black transition duration-500">
+                        <i class="fas fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">The Vault</h3>
+                    <p class="text-gray-400 leading-relaxed mb-6">
+                        Digital, auto-verifying identity layer for RSA, licensing, and certifications. API-driven verification ensures 100% compliance.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li><i class="fas fa-plus text-neon mr-2"></i> Auto-expiry alerts</li>
+                        <li><i class="fas fa-plus text-neon mr-2"></i> RSA/Licensing API Sync</li>
+                    </ul>
+                </div>
+                <!-- Marketplace -->
+                <div class="glass-card p-10 rounded-[40px] relative overflow-hidden group">
+                    <div class="mb-8 w-16 h-16 bg-neon/10 rounded-2xl flex items-center justify-center text-neon text-3xl group-hover:bg-neon group-hover:text-black transition duration-500">
+                        <i class="fas fa-users-viewfinder"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">The Marketplace</h3>
+                    <p class="text-gray-400 leading-relaxed mb-6">
+                        Hyper-local network of vetted, compliant staff. Fill gap shifts in under 60 seconds with pre-verified talent.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li><i class="fas fa-plus text-neon mr-2"></i> Vetted Skill Profiles</li>
+                        <li><i class="fas fa-plus text-neon mr-2"></i> Instant Shift Matching</li>
+                    </ul>
+                </div>
+                <!-- Engine -->
+                <div class="glass-card p-10 rounded-[40px] relative overflow-hidden group">
+                    <div class="mb-8 w-16 h-16 bg-neon/10 rounded-2xl flex items-center justify-center text-neon text-3xl group-hover:bg-neon group-hover:text-black transition duration-500">
+                        <i class="fas fa-engine-warning"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">The Engine</h3>
+                    <p class="text-gray-400 leading-relaxed mb-6">
+                        Financial-first roster builder with Live Costing and one-click Xero Sync. Plan for profit, not just attendance.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li><i class="fas fa-plus text-neon mr-2"></i> Auto-Fill Logic</li>
+                        <li><i class="fas fa-plus text-neon mr-2"></i> One-Click Xero Export</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Audit Section -->
+    <section id="technical" class="py-24 px-6 max-w-7xl mx-auto">
+        <div class="glass-card rounded-[50px] p-12 md:p-20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 opacity-10 text-9xl">
+                <i class="fas fa-code"></i>
+            </div>
+            <div class="max-w-3xl">
+                <span class="bg-neon text-black px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 inline-block">Technical Audit</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-8">Audited <span class="text-neon">Integrity</span></h2>
+                <p class="text-xl text-gray-400 mb-10 leading-relaxed">
+                    Unlike "conceptual" startups, HospoGo is a verified technical asset. Our engineering stack is built for stability and national scaling.
+                </p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="flex gap-4">
+                        <div class="text-neon text-2xl mt-1"><i class="fas fa-vial"></i></div>
+                        <div>
+                            <h5 class="font-bold mb-1">Pass Rate: 100%</h5>
+                            <p class="text-sm text-gray-500">Playwright E2E suite audits every financial pipeline daily.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="text-neon text-2xl mt-1"><i class="fas fa-lock"></i></div>
+                        <div>
+                            <h5 class="font-bold mb-1">AES-256 Security</h5>
+                            <p class="text-sm text-gray-500">Enterprise-grade encryption for Xero OAuth tokens and PII.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="text-neon text-2xl mt-1"><i class="fas fa-bolt"></i></div>
+                        <div>
+                            <h5 class="font-bold mb-1">Phase 4 R&D Complete</h5>
+                            <p class="text-sm text-gray-500">The Live Financial Engine is built, tested, and ready for deployment.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="text-neon text-2xl mt-1"><i class="fas fa-layer-group"></i></div>
+                        <div>
+                            <h5 class="font-bold mb-1">Stateless Architecture</h5>
+                            <p class="text-sm text-gray-500">Designed for rapid horizontal scaling across interstate markets.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Investment Section (Legibility Fix) -->
+    <section id="investment" class="py-24 px-6 bg-neon text-black">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <!-- Legibility Fix: Word 'Seed' changed to black for contrast -->
+                    <h2 class="text-5xl font-bold mb-8 tracking-tighter">The <span class="text-contrast-dark underline decoration-black/20">Seed</span> Round</h2>
+                    <p class="text-xl font-medium mb-10 leading-relaxed text-black/80">
+                        We are opening a $1,000,000 raise to capture the Brisbane and Gold Coast pilot markets and finalize national expansion.
+                    </p>
+                    <div class="space-y-6">
+                        <div class="border-b border-black/20 pb-4 flex justify-between items-end">
+                            <span class="font-bold text-[10px] uppercase tracking-widest text-black/60">Equity Offered</span>
+                            <span class="text-4xl font-black">10%</span>
+                        </div>
+                        <div class="border-b border-black/20 pb-4 flex justify-between items-end">
+                            <span class="font-bold text-[10px] uppercase tracking-widest text-black/60">Post-Money Valuation</span>
+                            <span class="text-4xl font-black">$10.0M</span>
+                        </div>
+                        <div class="border-b border-black/20 pb-4 flex justify-between items-end">
+                            <span class="font-bold text-[10px] uppercase tracking-widest text-black/60">Runway</span>
+                            <span class="text-4xl font-black">18 MO.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-black text-white p-12 rounded-[50px] shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-5 text-8xl"><i class="fas fa-chart-pie"></i></div>
+                    <h3 class="text-3xl font-bold mb-8 text-neon">Use of Funds</h3>
+                    <div class="space-y-8">
+                        <div>
+                            <div class="flex justify-between mb-2 font-bold uppercase tracking-widest text-[10px]">
+                                <span>Sales & Marketing</span>
+                                <span>40%</span>
+                            </div>
+                            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                                <div class="bg-neon h-full w-[40%]"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2 font-bold uppercase tracking-widest text-[10px]">
+                                <span>Engineering & R&D</span>
+                                <span>35%</span>
+                            </div>
+                            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                                <div class="bg-neon h-full w-[35%]"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2 font-bold uppercase tracking-widest text-[10px]">
+                                <span>Operations & Legal</span>
+                                <span>25%</span>
+                            </div>
+                            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                                <div class="bg-neon h-full w-[25%]"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-12 text-gray-500 text-xs leading-relaxed">
+                        Our 60/30/10 structure ensures founder-led technical integrity while empowering a performance-vested executive team.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Event/RSVP Section -->
+    <section id="event" class="py-24 px-6 text-center max-w-4xl mx-auto">
+        <h2 class="text-4xl md:text-5xl font-bold mb-6 italic">Secure Your Briefing</h2>
+        <p class="text-xl text-gray-400 mb-12">
+            Join Julian (CTO), Rick (CEO), and the HospoGo team for a technical deep-dive and operational scaling presentation in Brisbane City.
+        </p>
+        <div class="glass-card p-10 rounded-[40px] mb-12 text-left">
+            <div class="grid md:grid-cols-2 gap-10">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-neon mb-2">Location</p>
+                    <p class="text-lg font-bold">The Conference Room</p>
+                    <p class="text-gray-500">Brisbane City, QLD</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-neon mb-2">Live Demo</p>
+                    <p class="text-lg font-bold">Trinity Engine & Xero Sync</p>
+                    <p class="text-gray-500">Corporate Technical Briefing</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="document.getElementById('rsvp-msg').classList.toggle('hidden')" class="bg-white text-black px-12 py-5 rounded-full font-black text-lg hover:bg-neon transition duration-500 shadow-xl">
+            CONFIRM ATTENDANCE
+        </button>
+        <p id="rsvp-msg" class="hidden mt-6 text-neon font-bold animate-pulse">Request Sent. Our team will finalize your access shortly.</p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6 border-t border-white/5 text-center text-gray-600">
+        <p class="text-[10px] font-bold tracking-[0.3em] uppercase mb-4">&copy; 2026 HospoGo Pty Ltd | Private & Confidential</p>
+        <div class="flex justify-center gap-6">
+            <i class="fab fa-linkedin hover:text-neon cursor-pointer transition"></i>
+            <i class="fab fa-x-twitter hover:text-neon cursor-pointer transition"></i>
+            <i class="fas fa-envelope hover:text-neon cursor-pointer transition"></i>
+        </div>
+    </footer>
+
+</body>
+</html>

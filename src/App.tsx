@@ -34,6 +34,7 @@ import LoginPage from '@/pages/login';
 import SignupPage from '@/pages/signup';
 import ForgotPasswordPage from '@/pages/forgot-password';
 import StatusPage from '@/pages/status';
+import InvestorPortal from '@/pages/InvestorPortal';
 import { OAuthCallback } from '@/pages/oauth-callback';
 import NotFound from '@/pages/not-found';
 
@@ -117,15 +118,15 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   }, [isNavigationLocked]);
 
   const isBridgeRoute = location.pathname === '/auth/bridge';
-  const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || isBridgeRoute;
-  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/onboarding/role-selection', '/forgot-password', '/auth/bridge'].includes(location.pathname);
+  const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || location.pathname === '/investorportal' || isBridgeRoute;
+  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/onboarding/role-selection', '/forgot-password', '/auth/bridge', '/investorportal'].includes(location.pathname);
 
   // Initialize push notifications when user is authenticated
   usePushNotifications();
 
   // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished hydrateFromFirebaseUser (including venue 200/404 check)
   // Guard: on onboarding/signup routes, always render content even if navigation lock is true.
-  const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || location.pathname === '/role-selection';
+  const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || location.pathname === '/role-selection' || location.pathname === '/investorportal';
   const effectiveNavigationLocked = isSignupOrLandingOrOnboarding ? false : isNavigationLocked;
   const shouldShowLockScreen = effectiveNavigationLocked && splashHandled && !isBridgeRoute;
   if (shouldShowLockScreen) {
@@ -154,7 +155,8 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         <Route path="/" element={<LandingPage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
         <Route path="/status" element={<StatusPage />} />
-        
+        <Route path="/investorportal" element={<InvestorPortal />} />
+
         {/* Public marketplace routes */}
         <Route path="/marketplace/:id" element={
           <Suspense fallback={<PageLoadingFallback />}>
