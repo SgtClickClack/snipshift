@@ -79,7 +79,7 @@ function logAuthError(...args: any[]): void {
 
 /**
  * Express request with user property
- * When user is not in DB (valid Firebase token, new signup), id may be absent and needsOnboarding is true.
+ * When user is not in DB (valid Firebase token, new signup), id may be absent and isNewUser is true.
  */
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -88,8 +88,11 @@ export interface AuthenticatedRequest extends Request {
     name?: string;
     role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding';
     uid: string; // Firebase UID
-    /** True when Firebase token is valid but user not yet in DB — /api/me returns 200 with needs_onboarding */
+    firebaseUid?: string; // Alias for uid (from decoded token)
+    /** True when Firebase token is valid but user not yet in DB — /api/me returns 200 with needsOnboarding */
     needsOnboarding?: boolean;
+    /** True when Firebase token verified but user NOT found in DB — allows /api/me to proceed without 401 */
+    isNewUser?: boolean;
   };
 }
 
@@ -495,19 +498,22 @@ export function authenticateUser(
           return;
         }
 
-        // Find user in our DB to get role
+        // Step 2: Attempt to find user in DB via firebase_uid (fallback to email if column missing)
         let user;
         if (isMeEndpoint) {
-          process.stderr.write(`[AUTH DEBUG] GET /api/me: looking up user by email email=${email} uid=${firebaseUid}\n`);
+          process.stderr.write(`[AUTH DEBUG] GET /api/me: looking up user firebaseUid=${firebaseUid} email=${email}\n`);
         }
         try {
-          user = await usersRepo.getUserByEmail(email);
+          user = await usersRepo.getUserByFirebaseUid(firebaseUid);
+          if (!user) {
+            user = await usersRepo.getUserByEmail(email);
+          }
           if (isMeEndpoint) {
-            process.stderr.write(`[AUTH DEBUG] GET /api/me: getUserByEmail result ${user ? `found id=${user.id}` : 'null (404)'}\n`);
+            process.stderr.write(`[AUTH DEBUG] GET /api/me: DB lookup result ${user ? `found id=${user.id}` : 'null (isNewUser)'}\n`);
           }
         } catch (dbError: any) {
           if (isMeEndpoint) {
-            logAuthError('[AUTH DEBUG] GET /api/me: getUserByEmail threw', dbError?.message, dbError?.code);
+            logAuthError('[AUTH DEBUG] GET /api/me: DB lookup threw', dbError?.message, dbError?.code);
           }
           if (isDatabaseComputeQuotaExceededError(dbError)) {
             res.status(503).json({
@@ -519,54 +525,24 @@ export function authenticateUser(
           throw dbError;
         }
 
+        // CRITICAL: If user NOT found in DB, do NOT return 401. Set req.user with isNewUser and call next().
+        // This allows /api/me to return 200 with needsOnboarding, preventing the frontend 401 refresh loop.
         if (!user) {
           if (isMeEndpoint) {
-            process.stderr.write(`[AUTH DEBUG] GET /api/me: user not in DB, auto-creating email=${email} firebaseUid=${firebaseUid}\n`);
-          }
-          // Auto-create user if they have valid Firebase token but don't exist in DB
-          // This handles race conditions during OAuth sign-up flow where /api/me is called
-          // before /api/register completes
-          console.log('[AUTH] User not found, auto-creating from Firebase token:', email);
-          const displayName = decodedToken.name || decodedToken.display_name || email.split('@')[0];
-          try {
-            user = await usersRepo.createUser({
-              email,
-              name: displayName,
-              role: 'pending_onboarding',
+            process.stderr.write(`[AUTH DEBUG] GET /api/me: user not in DB — setting isNewUser, no 401\n`);
+            req.user = {
               firebaseUid,
-            });
-            console.log('[AUTH] Auto-created user with pending_onboarding role (isOnboarded: false):', user?.id);
-          } catch (createError: any) {
-            // If creation fails due to race condition (user was just created), try to fetch again
-            if (createError?.code === '23505') { // Postgres unique violation
-              console.log('[AUTH] Race condition detected, fetching user again');
-              user = await usersRepo.getUserByEmail(email);
-            } else {
-              logAuthError('Failed to auto-create user:', createError);
-              res.status(500).json({ message: 'Failed to create user account' });
-              return;
-            }
-          }
-          
-          if (!user) {
-            // Valid Firebase token but user not in DB (new signup, or auto-create failed).
-            // For /api/me: proceed with minimal context so endpoint can return 200 + needs_onboarding.
-            if (isMeEndpoint) {
-              process.stderr.write(`[AUTH DEBUG] GET /api/me: user not in DB, proceeding with needsOnboarding (no 401)\n`);
-              const displayName = decodedToken.name || decodedToken.display_name || email.split('@')[0];
-              req.user = {
-                email,
-                name: displayName,
-                uid: firebaseUid,
-                needsOnboarding: true,
-              };
-              next();
-              return;
-            }
-            // Non-/api/me endpoints still require a DB user
-            res.status(401).json({ message: 'Unauthorized: User not found in database' });
+              email: email || '',
+              uid: firebaseUid,
+              isNewUser: true,
+            };
+            next();
             return;
           }
+          // Non-/api/me endpoints still require a DB user
+          res.status(401).json({ message: 'Unauthorized: User not found in database' });
+          return;
+        }
 
         if (!user.firebaseUid || user.firebaseUid !== firebaseUid) {
           try {
@@ -581,7 +557,6 @@ export function authenticateUser(
               error: updateError?.message || updateError,
             });
           }
-        }
         }
 
         // Attach user to request object

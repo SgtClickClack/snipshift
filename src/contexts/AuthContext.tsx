@@ -14,6 +14,8 @@ export interface User {
   currentRole?: string | null;
   isOnboarded?: boolean;
   hasCompletedOnboarding?: boolean;
+  /** True when Firebase auth succeeded but user not yet in DB — needs to complete signup/onboarding */
+  isUnregistered?: boolean;
   [key: string]: unknown;
 }
 
@@ -75,10 +77,17 @@ async function fetchAppUser(
       });
 
       if (res.ok) {
-        const data = (await res.json()) as User & { status?: string };
-        // 200 with needs_onboarding = valid token, no DB profile yet — treat as null for onboarding flow
-        if (data.status === 'needs_onboarding' || data.id == null) {
-          return null;
+        const data = (await res.json()) as User & { status?: string; profile?: unknown; needsOnboarding?: boolean };
+        // 200 with profile: null or needsOnboarding = valid token, no DB profile yet — return partial unregistered user
+        if (data.profile === null || data.needsOnboarding === true || data.status === 'needs_onboarding' || data.id == null) {
+          return {
+            id: '',
+            email: data.email ?? '',
+            uid: data.uid,
+            isUnregistered: true,
+            isOnboarded: false,
+            hasCompletedOnboarding: false,
+          } as User;
         }
         return data as User;
       }
@@ -236,6 +245,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const apiUser = await fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
 
     if (apiUser) {
+      // Unregistered: Firebase auth OK but no DB profile — set partial user, unlock navigation, stay on signup
+      if (apiUser.isUnregistered) {
+        isOnboardingModeRef.current = true;
+        setIsNavigationLocked(false);
+        setUser({
+          ...apiUser,
+          uid: firebaseUser.uid,
+          email: apiUser.email || firebaseUser.email || '',
+        });
+        return;
+      }
+
       // Valid profile: stop suppressing; set user and force redirect to dashboard.
       isOnboardingModeRef.current = false;
       // Verify the user record exists and matches Firebase UID

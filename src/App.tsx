@@ -124,9 +124,10 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   usePushNotifications();
 
   // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished hydrateFromFirebaseUser (including venue 200/404 check)
-  // Exception: on /signup and /onboarding, never block — show form immediately so user can interact (skeleton safety)
-  const isSignupOrOnboarding = location.pathname === '/signup' || location.pathname.startsWith('/onboarding') || location.pathname === '/role-selection';
-  const shouldShowLockScreen = isNavigationLocked && splashHandled && !isBridgeRoute && !isSignupOrOnboarding;
+  // Exception: on /signup, / (Landing), and /onboarding, never block — show form immediately so user can interact (skeleton safety)
+  const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || location.pathname === '/role-selection';
+  const effectiveNavigationLocked = isSignupOrLandingOrOnboarding ? false : isNavigationLocked;
+  const shouldShowLockScreen = effectiveNavigationLocked && splashHandled && !isBridgeRoute;
   if (shouldShowLockScreen) {
     return <LoadingScreen />;
   }
