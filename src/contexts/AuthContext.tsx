@@ -29,6 +29,7 @@ interface AuthContextType {
   isRedirecting: boolean; // True while a redirect is in progress (prevents route flash)
   /** True until hydrateFromFirebaseUser (including venue 200/404 check) has fully completed. Blocks router from mounting any route. */
   isNavigationLocked: boolean;
+  isRegistered: boolean;
   hasUser: boolean; // Standardized: true when user object exists (DB profile loaded)
   hasFirebaseUser: boolean; // True when Firebase session exists
   /** True when user is onboarded but /api/venues/me returned 404 — stay on hub, do not redirect to dashboard */
@@ -59,16 +60,22 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+type AppUserResponse = {
+  user: User | null;
+  firebaseUser?: User | null;
+  needsOnboarding?: boolean;
+};
+
 async function fetchAppUser(
   idToken: string, 
   isOnboardingMode: boolean = false,
   firebaseUser?: FirebaseUser | null
-): Promise<User | null> {
+): Promise<AppUserResponse | null> {
   // Allow fetching user even in onboarding mode to resolve dependency deadlock
   // We need user.id for onboarding API calls (e.g. payout setup, venue profile creation)
   
   // Always attempt fetch so existing users (e.g. returning to /signup) get their profile and can be redirected to dashboard.
-  const attemptFetch = async (token: string, isRetry: boolean = false): Promise<User | null> => {
+  const attemptFetch = async (token: string, isRetry: boolean = false): Promise<AppUserResponse | null> => {
     try {
       const res = await fetch(`${getApiBase()}/api/me`, {
         headers: {
@@ -79,19 +86,31 @@ async function fetchAppUser(
       });
 
       if (res.ok) {
-        const data = (await res.json()) as User & { status?: string; profile?: unknown; needsOnboarding?: boolean; isNewUser?: boolean };
-        // 200 with profile: null = valid token, no DB profile yet — return partial unregistered user
-        if (data.profile === null || data.isNewUser === true) {
+        const data = (await res.json()) as
+          | (User & { profile?: unknown; needsOnboarding?: boolean; isNewUser?: boolean })
+          | { user: User | null; firebaseUser?: User | null; needsOnboarding?: boolean };
+        if ('user' in data) {
           return {
-            email: firebaseUser?.email ?? data.email ?? '',
-            firebaseUid: firebaseUser?.uid,
-            status: 'unregistered',
-            isUnregistered: true,
-            isOnboarded: false,
-            hasCompletedOnboarding: false,
-          } as User;
+            user: data.user,
+            firebaseUser: data.firebaseUser ?? null,
+            needsOnboarding: data.needsOnboarding,
+          };
         }
-        return data as User;
+        if (data.profile === null || data.isNewUser === true || data.needsOnboarding === true) {
+          return {
+            user: null,
+            firebaseUser: {
+              email: firebaseUser?.email ?? data.email ?? '',
+              firebaseUid: firebaseUser?.uid,
+              status: 'unregistered',
+              isUnregistered: true,
+              isOnboarded: false,
+              hasCompletedOnboarding: false,
+            },
+            needsOnboarding: true,
+          };
+        }
+        return { user: data as User };
       }
 
       // 404 is expected for brand new Firebase users that haven't been created in our DB yet.
@@ -157,6 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRedirecting, setRedirecting] = useState(false);
   const [isNavigationLocked, setIsNavigationLocked] = useState(true);
+  const [isRegistered, setIsRegistered] = useState(true);
   const [isVenueMissing, setIsVenueMissing] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const navigate = useNavigate();
@@ -222,6 +242,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setFirebaseUser(null);
       setUser(null);
       setToken(null);
+      setIsRegistered(false);
       isVenueMissingRef.current = false;
       setIsVenueMissing(false);
       venueCacheRef.current = null;
@@ -236,31 +257,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
       email: firebaseUser.email 
     });
 
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (currentPath.startsWith('/signup') || currentPath.startsWith('/onboarding')) {
+      setIsNavigationLocked(false);
+    }
+
     // Always fetch profile: if we get a valid profile, we stop suppressing and redirect to dashboard.
     // This fixes "Onboarding Hell" where existing users (e.g. julian.g.roberts@gmail.com) were stuck
     // because we suppressed the fetch on /role-selection or /onboarding.
     const idToken = await firebaseUser.getIdToken(/* forceRefresh */ true);
     setToken(idToken);
 
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
     const effectivelyOnboarding = currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection' || isOnboardingModeRef.current;
-    const apiUser = await fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
+    const apiResponse = await fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
 
-    if (apiUser) {
-      // Unregistered: Firebase auth OK but no DB profile — set partial user, unlock navigation, stay on signup
-      if (apiUser.isUnregistered || apiUser.status === 'unregistered') {
+    if (apiResponse) {
+      if (apiResponse.user === null && firebaseUser.uid) {
         isOnboardingModeRef.current = true;
+        setIsRegistered(false);
         setIsNavigationLocked(false);
-        setUser({
-          firebaseUid: firebaseUser.uid,
-          email: apiUser.email || firebaseUser.email || '',
-          status: 'unregistered',
-        });
+        setUser(null);
         return;
       }
 
       // Valid profile: stop suppressing; set user and force redirect to dashboard.
       isOnboardingModeRef.current = false;
+      setIsRegistered(true);
+      const apiUser = apiResponse.user;
+      if (!apiUser) {
+        setUser(null);
+        return;
+      }
       // Verify the user record exists and matches Firebase UID
       // After migration, the Postgres record should have firebase_uid column populated
       const userFirebaseUid = apiUser.uid || (apiUser as any).firebase_uid;
@@ -300,6 +327,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (isOnboarded) {
         // Data integrity: venue users must have a venue record — prevent "ghost dashboards"
         if (shouldCheckVenue) {
+          if (!apiUser.id) {
+            return;
+          }
           // If we already know venue is missing this session, skip re-fetching /api/venues/me to avoid request loop
           // (hydrate runs on every pathname change / Firebase callback; each run was calling /api/venues/me → 404)
           if (isVenueMissingRef.current) {
@@ -420,6 +450,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isOnboardingModeRef.current = true;
         console.log('[AuthContext] No user profile in DB (404) - on signup/onboarding, keeping user null');
       }
+      setIsRegistered(false);
       setUser(null);
     }
   }, [navigate]);
@@ -462,6 +493,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const isOnSignupOrOnboarding = location.pathname.startsWith('/onboarding') || 
                                    location.pathname === '/signup' ||
                                    location.pathname === '/role-selection';
+    if (isOnSignupOrOnboarding) {
+      setIsNavigationLocked(false);
+    }
     isOnboardingModeRef.current = isOnSignupOrOnboarding;
     if (location.pathname === '/signup') {
       setIsNavigationLocked(false);
@@ -501,6 +535,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             
             setUser(e2eUser);
             setToken('mock-e2e-token'); // So pages that check token (e.g. role-selection) don't stay on loader
+            setIsRegistered(true);
             setIsLoading(false);
             setIsNavigationLocked(false);
             return; // Skip Firebase listener in E2E mode if test user is forced
@@ -519,11 +554,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // It fires immediately when signInWithPopup completes, providing a direct identity signal
         await new Promise<void>((resolve) => {
           unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+            const path = typeof window !== 'undefined' ? window.location.pathname : '';
+            if (path.startsWith('/signup') || path.startsWith('/onboarding')) {
+              setIsNavigationLocked(false);
+            }
             firebaseUserRef.current = firebaseUser;
             setFirebaseUser(firebaseUser);
 
             // Early unlock: on signup/onboarding, don't block UI on /api/me — show form immediately
-            const path = typeof window !== 'undefined' ? window.location.pathname : '';
             if (path === '/signup' || path.startsWith('/onboarding') || path === '/role-selection') {
               setIsNavigationLocked(false);
             }
@@ -532,6 +570,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               if (!firebaseUser) {
                 setUser(null);
                 setToken(null);
+                setIsRegistered(false);
               } else {
                 await hydrateFromFirebaseUser(firebaseUser);
                 
@@ -541,7 +580,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // Only navigate if we're on auth pages and user is authenticated
                 if (!isInitialAuthCheck) {
                   const currentPath = window.location.pathname;
-                  if (currentPath === '/login' || currentPath === '/signup') {
+                  if (currentPath === '/login') {
                     const target = isVenueMissingRef.current ? '/onboarding/hub' : '/dashboard';
                     console.log('[AuthContext] Popup auth successful, navigating to', target);
                     if (window.location.pathname === target) {
@@ -600,6 +639,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Landing gate: if user is NOT logged in, never redirect away from '/' (allow landing to stay)
     const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/signup') || currentPath.startsWith('/onboarding')) return;
     const hasFirebaseUserNow = !!firebaseUserRef.current || !!auth.currentUser;
     if (currentPath === '/' && !hasFirebaseUserNow) return;
 
@@ -644,6 +684,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const currentPath = window.location.pathname;
     if (currentPath !== '/login' && currentPath !== '/signup') return;
+    if (currentPath === '/signup') return;
 
       // Clear any remaining auth-related URL parameters (failsafe)
       if (typeof window !== 'undefined') {
@@ -718,6 +759,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthReady: !isLoading,
       isRedirecting,
       isNavigationLocked,
+      isRegistered,
       hasUser: !!user,
       hasFirebaseUser: !!firebaseUser,
       isVenueMissing,
@@ -725,7 +767,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       refreshUser,
     }),
-    [user, token, isLoading, isRedirecting, isNavigationLocked, isVenueMissing, firebaseUser, login, logout, refreshUser]
+    [user, token, isLoading, isRedirecting, isNavigationLocked, isRegistered, isVenueMissing, firebaseUser, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

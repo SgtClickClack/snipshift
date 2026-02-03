@@ -86,8 +86,8 @@ export interface AuthenticatedRequest extends Request {
     id?: string;
     email: string;
     name?: string;
-    role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding';
-    uid: string; // Firebase UID
+    role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding' | null;
+    uid?: string; // Firebase UID
     firebaseUid?: string; // Alias for uid (from decoded token)
     /** True when Firebase token is valid but user not yet in DB — /api/me returns 200 with needsOnboarding */
     needsOnboarding?: boolean;
@@ -532,9 +532,9 @@ export function authenticateUser(
             process.stderr.write(`[AUTH DEBUG] GET /api/me: user not in DB — setting isNewUser, no 401\n`);
           }
           req.user = {
-            firebaseUid: decodedToken.uid ?? firebaseUid,
-            email: email || '',
-            uid: firebaseUid,
+            firebaseUid: decodedToken.uid,
+            email: decodedToken.email || '',
+            role: null,
             isNewUser: true,
           };
           next();

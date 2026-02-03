@@ -8,6 +8,22 @@
 
 ---
 
+### Update: 2026-02-03 - Auth Onboarding Stabilization (No Redirect Loops)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Middleware now sets `req.user` with `{ firebaseUid, email, role: null, isNewUser }` when DB user is missing.
+- `GET /api/me` returns `{ user: null, firebaseUser, needsOnboarding: true }` to avoid 401 loops.
+- AuthContext adds `isRegistered` and unlocks navigation immediately on `/signup` and `/onboarding`.
+- Venue fetch guarded to skip `/api/venues/me` when no user id is available.
+
+**Impact:**
+- New Firebase-authenticated users can stay on onboarding flows without redirect churn.
+- Unregistered users no longer trigger `/api/venues/me` calls or lockscreen flicker.
+
+---
+
 ### Update: 2026-02-03 - Signup Flow Unblocked for New Firebase Users
 
 **Status:** ✅ **UPDATED**

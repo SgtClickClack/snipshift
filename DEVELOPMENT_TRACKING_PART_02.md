@@ -30,6 +30,38 @@
 
 ---
 
+#### 2026-02-03: Auth Onboarding Stabilization (No Redirect Loops)
+
+**Core Components**
+- `api/_src/middleware/auth.ts` (new-user identity shape)
+- `api/_src/routes/users.ts` (GET `/api/me` returns onboarding handshake)
+- `src/contexts/AuthContext.tsx` (isRegistered state machine, onboarding unlock)
+- `src/App.tsx` (onboarding navigation lock guard)
+
+**Key Features**
+- Middleware now sets `req.user` with `firebaseUid`, `email`, `role: null`, and `isNewUser` when DB user is missing.
+- `GET /api/me` returns `{ user: null, firebaseUser, needsOnboarding: true }` for new users to avoid 401 loops.
+- AuthContext tracks `isRegistered` and unlocks navigation immediately on `/signup` or `/onboarding`.
+- Venue fetch guarded to skip `/api/venues/me` when no `user.id` is present.
+
+**Integration Points**
+- Auth middleware ↔ `/api/me` onboarding handshake for Firebase-only sessions.
+- Onboarding routes remain interactive without redirect-to-login/dashboard churn.
+
+**File Paths**
+- `api/_src/middleware/auth.ts`
+- `api/_src/routes/users.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/App.tsx`
+
+**Next Priority Task**
+- Validate onboarding from `/signup` to role selection with a fresh Firebase user.
+
+**Code Organization & Quality**
+- Kept changes scoped to auth middleware, `/api/me`, and onboarding guards.
+
+---
+
 #### 2025-02-03: Final Investor Demo Readiness - UI/UX Polish and E2E Stability
 
 **Core Components**

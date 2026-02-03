@@ -443,12 +443,13 @@ router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (
       return;
     }
 
-    // Valid Firebase token but user not yet in DB (isNewUser) — return explicit "unregistered" signal
+    // Valid Firebase token but user not yet in DB (isNewUser) — return onboarding signal
     if (req.user.isNewUser) {
-      process.stderr.write('[GET /api/me DEBUG] isNewUser — returning 200 with profile: null\n');
+      process.stderr.write('[GET /api/me DEBUG] isNewUser — returning 200 with user: null\n');
       res.status(200).json({
-        profile: null,
-        isNewUser: true,
+        user: null,
+        firebaseUser: req.user,
+        needsOnboarding: true,
       });
       return;
     }
