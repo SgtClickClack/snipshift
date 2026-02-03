@@ -28,6 +28,7 @@ import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
 import XeroIntegrationCard from '@/components/settings/XeroIntegrationCard';
 import XeroEmployeeMapper from '@/components/settings/XeroEmployeeMapper';
+import XeroSyncManager from '@/components/settings/XeroSyncManager';
 import { apiRequest } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams } from 'react-router-dom';
@@ -826,6 +827,7 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <XeroIntegrationCard />
                 <XeroEmployeeMapper />
+                <XeroSyncManager />
                 <BusinessSettings
                   initialData={businessSettings}
                   onSave={() => {

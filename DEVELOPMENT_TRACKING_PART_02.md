@@ -1,3 +1,36 @@
+#### 2025-02-03: Xero Integration Phase 3 – Timesheet Sync
+
+**Core Components**
+- XeroSyncManager (`src/components/settings/XeroSyncManager.tsx`)
+- Xero OAuth service (`api/_src/services/xero-oauth.service.ts`)
+- Xero integration routes (`api/_src/routes/integrations/xero.ts`)
+- Shifts repository (`api/_src/repositories/shifts.repository.ts`)
+
+**Key Features**
+- OAuth scopes extended: `payroll.timesheets`, `payroll.settings.read` for calendars and timesheet write.
+- `getPayrollCalendars`, `getPayItems`, `createTimesheet` in xero-oauth.service.
+- `getApprovedShiftsForEmployerInRange` – fetches completed/confirmed shifts with assignee for sync.
+- GET `/api/integrations/xero/calendars` – returns active payroll calendars.
+- POST `/api/integrations/xero/sync-timesheet` – aggregates shifts by mapped xeroEmployeeId, builds NumberOfUnits array, pushes draft timesheets to Xero.
+- Manual Sync UI: calendar select, date range, confirmation modal, success/error report.
+
+**Integration Points**
+- Xero Payroll AU API: PayrollCalendars, PayItems, Timesheets.
+- Settings page Business section: XeroIntegrationCard, XeroEmployeeMapper, XeroSyncManager.
+- IntegrationErrorBoundary wraps XeroSyncManager.
+
+**File Paths**
+- `api/_src/services/xero-oauth.service.ts`
+- `api/_src/repositories/shifts.repository.ts`
+- `api/_src/routes/integrations/xero.ts`
+- `src/components/settings/XeroSyncManager.tsx`
+- `src/pages/settings.tsx`
+
+**Next Priority Task**
+- Re-authenticate existing Xero connections to grant new scopes; add optional preview endpoint for sync confirmation modal.
+
+---
+
 #### 2025-02-03: Trust Signals – Xero & Stripe Logo Usage & Branding
 
 **Core Components**

@@ -4,7 +4,7 @@
  * Encapsulates database queries for shifts with pagination and filtering
  */
 
-import { eq, and, desc, sql, gte, lte, isNull } from 'drizzle-orm';
+import { eq, and, desc, sql, gte, lte, isNull, inArray } from 'drizzle-orm';
 import { shifts, shiftAssignments } from '../db/schema/shifts.js';
 import { users } from '../db/schema/users.js';
 import { getDb } from '../db/index.js';
@@ -907,6 +907,80 @@ export async function getShiftsByEmployerInRange(
     }
 
     console.error('[getShiftsByEmployerInRange] Database error:', {
+      message: error?.message,
+      code: error?.code,
+    });
+    return [];
+  }
+}
+
+/** Shift with assignee for Xero timesheet sync */
+export type ShiftWithAssignee = Pick<
+  typeof shifts.$inferSelect,
+  'id' | 'employerId' | 'assigneeId' | 'startTime' | 'endTime' | 'status'
+>;
+
+/**
+ * Get approved shifts (completed or confirmed) by employer within a date range.
+ * Only returns shifts with an assignee for Xero timesheet sync.
+ */
+export async function getApprovedShiftsForEmployerInRange(
+  employerId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<ShiftWithAssignee[]> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select({
+        id: shifts.id,
+        employerId: shifts.employerId,
+        assigneeId: shifts.assigneeId,
+        startTime: shifts.startTime,
+        endTime: shifts.endTime,
+        status: shifts.status,
+      })
+      .from(shifts)
+      .where(
+        and(
+          eq(shifts.employerId, employerId),
+          isNull(shifts.deletedAt),
+          inArray(shifts.status, ['completed', 'confirmed']),
+          gte(shifts.startTime, startDate),
+          lte(shifts.startTime, endDate),
+          sql`${shifts.assigneeId} IS NOT NULL`
+        )
+      );
+
+    return result as ShiftWithAssignee[];
+  } catch (error: any) {
+    if (shouldFallbackToLegacyShiftSchema(error)) {
+      console.warn('[getApprovedShiftsForEmployerInRange] Falling back to legacy query:', {
+        employerId,
+        message: error?.message,
+      });
+
+      const raw = await (db as any).execute(sql`
+        SELECT id, employer_id AS "employerId", assignee_id AS "assigneeId",
+               start_time AS "startTime", end_time AS "endTime", status
+        FROM shifts
+        WHERE employer_id = ${employerId}
+          AND deleted_at IS NULL
+          AND status IN ('completed', 'confirmed')
+          AND start_time >= ${startDate}
+          AND start_time <= ${endDate}
+          AND assignee_id IS NOT NULL
+      `);
+
+      const rows = (raw as any)?.rows ?? raw;
+      return rows as ShiftWithAssignee[];
+    }
+
+    console.error('[getApprovedShiftsForEmployerInRange] Database error:', {
       message: error?.message,
       code: error?.code,
     });

@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import { authenticateUser, AuthenticatedRequest, requireBusinessOwner } from '../../middleware/auth.js';
 import { asyncHandler } from '../../middleware/errorHandler.js';
 import * as xeroOauthService from '../../services/xero-oauth.service.js';
+import type { XeroTimesheetPayload } from '../../services/xero-oauth.service.js';
 import * as xeroRepo from '../../repositories/xero-integrations.repository.js';
 import * as usersRepo from '../../repositories/users.repository.js';
 import * as shiftsRepo from '../../repositories/shifts.repository.js';
@@ -280,4 +281,254 @@ router.post('/map-employees', authenticateUser, requireBusinessOwner, asyncHandl
   res.status(200).json({ message: 'Mappings saved' });
 }));
 
+/**
+ * GET /api/integrations/xero/calendars
+ * Returns active payroll calendars for Manual Sync. Business/venue owner only.
+ */
+router.get('/calendars', authenticateUser, requireBusinessOwner, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const tokens = await getValidTokens(userId);
+  if (!tokens) {
+    res.status(400).json({ message: 'Xero not connected or token expired. Please reconnect.' });
+    return;
+  }
+
+  const raw = await xeroOauthService.getPayrollCalendars(tokens.accessToken, tokens.tenantId);
+  const calendars = raw.map((c) => ({
+    id: c.PayrollCalendarID,
+    name: c.Name ?? 'Unnamed',
+    calendarType: c.CalendarType ?? 'WEEKLY',
+    startDate: parseXeroDate(c.StartDate),
+    paymentDate: parseXeroDate(c.PaymentDate),
+    referenceDate: parseXeroDate(c.ReferenceDate),
+  }));
+  res.status(200).json({ calendars });
+}));
+
+/**
+ * POST /api/integrations/xero/sync-timesheet
+ * Sync approved shifts to Xero timesheets. Business/venue owner only.
+ * Body: { calendarId: string, startDate: string (ISO), endDate: string (ISO) }
+ */
+router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { calendarId, startDate: startDateStr, endDate: endDateStr } = req.body as {
+    calendarId?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+
+  if (!calendarId || typeof calendarId !== 'string') {
+    res.status(400).json({ message: 'calendarId is required' });
+    return;
+  }
+  if (!startDateStr || typeof startDateStr !== 'string') {
+    res.status(400).json({ message: 'startDate is required (ISO date)' });
+    return;
+  }
+  if (!endDateStr || typeof endDateStr !== 'string') {
+    res.status(400).json({ message: 'endDate is required (ISO date)' });
+    return;
+  }
+
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    res.status(400).json({ message: 'Invalid startDate or endDate format' });
+    return;
+  }
+  if (startDate > endDate) {
+    res.status(400).json({ message: 'startDate must be before or equal to endDate' });
+    return;
+  }
+
+  const tokens = await getValidTokens(userId);
+  if (!tokens) {
+    res.status(400).json({ message: 'Xero not connected or token expired. Please reconnect.' });
+    return;
+  }
+
+  const synced: Array<{ employeeId: string; xeroEmployeeId: string; hours: number; status: string }> = [];
+  const failed: Array<{ employeeId: string; reason: string }> = [];
+
+  try {
+    const [calendars, payItems, shifts] = await Promise.all([
+      xeroOauthService.getPayrollCalendars(tokens.accessToken, tokens.tenantId),
+      xeroOauthService.getPayItems(tokens.accessToken, tokens.tenantId),
+      shiftsRepo.getApprovedShiftsForEmployerInRange(userId, startDate, endDate),
+    ]);
+
+    const calendar = calendars.find((c) => c.PayrollCalendarID === calendarId);
+    const daysInPeriod = getDaysInPeriod(calendar?.CalendarType ?? 'WEEKLY');
+
+    const ordinaryRate =
+      payItems.earningsRates.find((r) => r.EarningsType === 'ORDINARYTIMEEARNINGS') ??
+      payItems.earningsRates[0];
+    const earningsRateId = ordinaryRate?.EarningsRateID;
+    if (!earningsRateId) {
+      res.status(400).json({
+        message: 'No earnings rate found in Xero. Ensure Pay Items are configured.',
+        synced: [],
+        failed: [],
+      });
+      return;
+    }
+
+    const assigneeIds = [...new Set(shifts.map((s) => s.assigneeId).filter(Boolean))] as string[];
+    const staffWithXero = await Promise.all(
+      assigneeIds.map(async (aid) => {
+        const u = await usersRepo.getUserById(aid);
+        return u ? { userId: u.id, xeroEmployeeId: u.xeroEmployeeId } : null;
+      })
+    );
+
+    const assigneeToXero = new Map<string, string>();
+    for (const s of staffWithXero) {
+      if (s?.xeroEmployeeId) assigneeToXero.set(s.userId, s.xeroEmployeeId);
+      else if (s) failed.push({ employeeId: s.userId, reason: 'No Xero mapping' });
+    }
+
+    const hoursByEmployee = new Map<string, Map<string, number>>();
+    for (const shift of shifts) {
+      const aid = shift.assigneeId;
+      if (!aid || !assigneeToXero.has(aid)) continue;
+
+      const xeroId = assigneeToXero.get(aid)!;
+      if (!hoursByEmployee.has(xeroId)) {
+        hoursByEmployee.set(xeroId, new Map());
+      }
+      const byDate = hoursByEmployee.get(xeroId)!;
+
+      const start = shift.startTime instanceof Date ? shift.startTime : new Date(shift.startTime);
+      const end = shift.endTime instanceof Date ? shift.endTime : new Date(shift.endTime);
+      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      const dateKey = start.toISOString().slice(0, 10);
+      byDate.set(dateKey, (byDate.get(dateKey) ?? 0) + hours);
+    }
+
+    const periodStart = toDateOnly(startDate);
+    const periodEnd = toDateOnly(endDate);
+    const timesheets: XeroTimesheetPayload[] = [];
+
+    for (const [xeroEmployeeId, byDate] of hoursByEmployee) {
+      const numberOfUnits = buildNumberOfUnitsArray(
+        periodStart,
+        periodEnd,
+        daysInPeriod,
+        byDate
+      );
+      if (numberOfUnits.every((n) => n === 0)) continue;
+
+      timesheets.push({
+        EmployeeID: xeroEmployeeId,
+        StartDate: periodStart,
+        EndDate: periodEnd,
+        Status: 'DRAFT',
+        TimesheetLines: [{ EarningsRateID: earningsRateId, NumberOfUnits: numberOfUnits }],
+      });
+    }
+
+    if (timesheets.length === 0) {
+      res.status(200).json({
+        message: 'No approved shifts with Xero mapping in date range',
+        synced: [],
+        failed,
+      });
+      return;
+    }
+
+    await xeroOauthService.createTimesheet(tokens.accessToken, tokens.tenantId, timesheets);
+
+    for (const ts of timesheets) {
+      const totalHours = ts.TimesheetLines[0].NumberOfUnits.reduce((a, b) => a + b, 0);
+      const staffEntry = staffWithXero.find((s) => s?.xeroEmployeeId === ts.EmployeeID);
+      synced.push({
+        employeeId: staffEntry?.userId ?? ts.EmployeeID,
+        xeroEmployeeId: ts.EmployeeID,
+        hours: totalHours,
+        status: 'success',
+      });
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Sync failed';
+    console.error('[XERO] Sync timesheet error:', err);
+    res.status(500).json({
+      message: msg,
+      synced,
+      failed,
+    });
+    return;
+  }
+
+  res.status(200).json({ synced, failed });
+}));
+
 export default router;
+
+// --- Helpers ---
+
+function parseXeroDate(val: string | undefined): string | null {
+  if (!val) return null;
+  const m = /\/Date\((-?\d+)/.exec(val);
+  if (m) {
+    const d = new Date(parseInt(m[1], 10));
+    return d.toISOString().slice(0, 10);
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(val)) return val.slice(0, 10);
+  return null;
+}
+
+function getDaysInPeriod(calendarType: string): number {
+  switch (calendarType) {
+    case 'WEEKLY':
+      return 7;
+    case 'FORTNIGHTLY':
+      return 14;
+    case 'FOURWEEKLY':
+      return 28;
+    case 'MONTHLY':
+      return 31;
+    case 'TWICEMONTHLY':
+      return 15;
+    case 'QUARTERLY':
+      return 91;
+    default:
+      return 7;
+  }
+}
+
+function toDateOnly(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function buildNumberOfUnitsArray(
+  periodStart: string,
+  periodEnd: string,
+  daysInPeriod: number,
+  byDate: Map<string, number>
+): number[] {
+  const arr = new Array(daysInPeriod).fill(0);
+  const start = new Date(periodStart + 'T00:00:00Z');
+  const end = new Date(periodEnd + 'T23:59:59Z');
+
+  for (const [dateKey, hours] of byDate) {
+    const d = new Date(dateKey + 'T12:00:00Z');
+    if (d >= start && d <= end) {
+      const idx = Math.floor((d.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+      if (idx >= 0 && idx < daysInPeriod) {
+        arr[idx] = hours;
+      }
+    }
+  }
+  return arr;
+}
