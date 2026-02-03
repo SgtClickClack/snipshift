@@ -11,6 +11,7 @@ import {
   FileText,
   Handshake,
   CheckCircle,
+  ChartLine,
 } from "lucide-react";
 import Pricing from "@/components/landing/Pricing";
 import FAQSection from "@/components/landing/FAQSection";
@@ -180,7 +181,7 @@ export default function LandingPage() {
 
                 {/* Action Buttons */}
                 {!hasUser && !isLoading && (
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
                     <Link to="/signup?role=hub" className="w-full sm:w-auto">
                       <Button
                         className="w-full sm:w-auto bg-[#BFFF00] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300 min-h-[44px]"
@@ -199,17 +200,38 @@ export default function LandingPage() {
                         Find Shifts
                       </Button>
                     </Link>
+
+                    <Link to="/investorportal" className="w-full sm:w-auto">
+                      <Button
+                        variant="ghost"
+                        className="w-full sm:w-auto border-2 border-[#deff9a]/20 text-[#deff9a] font-bold px-12 py-5 rounded-full hover:border-[#deff9a]/50 hover:shadow-[0_0_12px_rgba(222,255,154,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        data-testid="button-investor-briefing"
+                      >
+                        <ChartLine className="h-4 w-4" />
+                        Investor Briefing
+                      </Button>
+                    </Link>
                   </div>
                 )}
 
                 {hasUser && user && (
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
                     <Link to={getDashboardRoute(user.currentRole)} className="w-full sm:w-auto">
                       <Button
                         className="w-full sm:w-auto bg-[#BFFF00] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(191,255,0,0.4)] transition-all duration-300 min-h-[44px]"
                         data-testid="button-go-to-dashboard"
                       >
                         Go to Dashboard
+                      </Button>
+                    </Link>
+                    <Link to="/investorportal" className="w-full sm:w-auto">
+                      <Button
+                        variant="ghost"
+                        className="w-full sm:w-auto border-2 border-[#deff9a]/20 text-[#deff9a] font-bold px-12 py-5 rounded-full hover:border-[#deff9a]/50 hover:shadow-[0_0_12px_rgba(222,255,154,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        data-testid="button-investor-briefing"
+                      >
+                        <ChartLine className="h-4 w-4" />
+                        Investor Briefing
                       </Button>
                     </Link>
                   </div>

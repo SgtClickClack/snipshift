@@ -98,11 +98,16 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-0 pt-8 border-t border-border dark:border-steel-800">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground dark:text-steel-400">
               © {new Date().getFullYear()} HospoGo. All rights reserved.
             </p>
-            <div className="mt-4 md:mt-0 flex space-x-6">
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+              <Link
+                to="/investorportal"
+                className="text-steel-400 hover:text-[#deff9a] transition-colors text-sm">
+                Private Investor Briefing
+              </Link>
               <a 
                 href="https://twitter.com/hospogo" 
                 target="_blank" 
