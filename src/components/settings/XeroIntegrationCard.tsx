@@ -116,7 +116,7 @@ export default function XeroIntegrationCard() {
               <span>Checking connection...</span>
             </div>
           ) : status?.connected ? (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between" data-testid="xero-status-connected">
               <div>
                 <p className="font-medium">Connected to {status.tenantName ?? 'Xero'}</p>
                 <p className="text-sm text-muted-foreground">Connection successful</p>
@@ -127,6 +127,7 @@ export default function XeroIntegrationCard() {
                 onClick={handleDisconnect}
                 disabled={isDisconnecting}
                 className="gap-2"
+                data-testid="xero-disconnect-button"
               >
                 {isDisconnecting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -137,18 +138,21 @@ export default function XeroIntegrationCard() {
               </Button>
             </div>
           ) : (
-            <Button
-              onClick={handleConnect}
-              disabled={isConnecting}
-              className="gap-2"
-            >
-              {isConnecting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Link2 className="h-4 w-4" />
-              )}
-              Connect to Xero
-            </Button>
+            <div data-testid="xero-status-disconnected">
+              <Button
+                onClick={handleConnect}
+                disabled={isConnecting}
+                className="gap-2"
+                data-testid="xero-connect-button"
+              >
+                {isConnecting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2 className="h-4 w-4" />
+                )}
+                Connect to Xero
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

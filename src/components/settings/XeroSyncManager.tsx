@@ -206,7 +206,7 @@ export default function XeroSyncManager() {
               <div className="space-y-2">
                 <Label>Payroll Calendar</Label>
                 <Select value={selectedCalendarId} onValueChange={setSelectedCalendarId}>
-                  <SelectTrigger>
+                  <SelectTrigger data-testid="xero-calendar-select">
                     <SelectValue placeholder="Select calendar" />
                   </SelectTrigger>
                   <SelectContent>
@@ -240,7 +240,7 @@ export default function XeroSyncManager() {
                 </div>
               </div>
 
-              <Button onClick={handleSyncClick} disabled={!canSync || isSyncing} className="gap-2">
+              <Button onClick={handleSyncClick} disabled={!canSync || isSyncing} className="gap-2" data-testid="xero-sync-now">
                 {isSyncing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -250,7 +250,7 @@ export default function XeroSyncManager() {
               </Button>
 
               {lastResult && (lastResult.synced.length > 0 || lastResult.failed.length > 0) && (
-                <div className="rounded-md border p-4 space-y-2">
+                <div className="rounded-md border p-4 space-y-2" data-testid="xero-sync-result">
                   <p className="font-medium text-sm">Last sync result</p>
                   {lastResult.synced.length > 0 && (
                     <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-500">
@@ -289,7 +289,7 @@ export default function XeroSyncManager() {
             <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isSyncing}>
               Cancel
             </Button>
-            <Button onClick={handleConfirmSync} disabled={isSyncing} className="gap-2">
+            <Button onClick={handleConfirmSync} disabled={isSyncing} className="gap-2" data-testid="xero-confirm-sync">
               {isSyncing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : null}

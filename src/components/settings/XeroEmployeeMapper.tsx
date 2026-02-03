@@ -140,7 +140,7 @@ export default function XeroEmployeeMapper() {
             </p>
           ) : hasLoaded && staff.length > 0 ? (
             <div className="space-y-4">
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border overflow-x-auto" data-testid="xero-employee-mapper-table">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
@@ -150,7 +150,7 @@ export default function XeroEmployeeMapper() {
                   </thead>
                   <tbody>
                     {staff.map((s) => (
-                      <tr key={s.id} className="border-b last:border-0">
+                      <tr key={s.id} className="border-b last:border-0" data-testid={`xero-staff-row-${s.id}`}>
                         <td className="p-3">
                           <div>
                             <p className="font-medium">{s.name}</p>
@@ -182,7 +182,7 @@ export default function XeroEmployeeMapper() {
                   </tbody>
                 </table>
               </div>
-              <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+              <Button onClick={handleSave} disabled={isSaving} className="gap-2" data-testid="xero-save-mappings">
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (

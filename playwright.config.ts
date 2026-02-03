@@ -125,6 +125,8 @@ export default defineConfig({
         env: {
           VITE_E2E: '1', // Disable tutorial overlay during E2E tests
           NODE_ENV: 'test', // Enable backend E2E authentication bypass
+          FRONTEND_URL: 'http://localhost:3000', // Xero callback redirect target
+          VITE_APP_URL: 'http://localhost:3000',
           // Note: The API server (port 5000) will receive NODE_ENV=test
           // via the env object above. Concurrently should pass env vars to child processes.
           // The backend middleware checks for process.env.NODE_ENV === 'test' to enable

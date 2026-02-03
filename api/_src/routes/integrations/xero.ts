@@ -55,6 +55,17 @@ router.get('/connect', authenticateUser, asyncHandler(async (req: AuthenticatedR
   }
 
   try {
+    // E2E test bypass: use fixed state and return callback URL so we can test without hitting Xero
+    if (process.env.NODE_ENV === 'test') {
+      const state = 'mock_state';
+      const expiresAt = new Date(Date.now() + STATE_EXPIRY_MS);
+      await xeroRepo.storeOAuthState(state, userId, expiresAt);
+      const baseUrl = process.env.VITE_APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+      const authUrl = `${baseUrl}/api/integrations/xero/callback?code=mock_code&state=mock_state`;
+      res.status(200).json({ authUrl });
+      return;
+    }
+
     const state = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + STATE_EXPIRY_MS);
     await xeroRepo.storeOAuthState(state, userId, expiresAt);
@@ -100,6 +111,26 @@ router.get('/callback', asyncHandler(async (req, res) => {
   if (!userId) {
     console.error('[XERO] Invalid or expired state');
     redirectToSettings({ xero: 'invalid_state' });
+    return;
+  }
+
+  // E2E test bypass: skip Xero API calls and create fake integration
+  if (process.env.NODE_ENV === 'test' && code === 'mock_code' && state === 'mock_state') {
+    try {
+      await xeroRepo.upsertXeroIntegration({
+        userId,
+        xeroTenantId: 'mock-tenant-id',
+        xeroTenantName: 'Mock Org',
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
+        expiresAt: new Date(Date.now() + 3600 * 1000),
+        scope: 'test',
+      });
+      redirectToSettings({ xero: 'connected' });
+    } catch (err) {
+      console.error('[XERO] Test callback error:', err);
+      redirectToSettings({ xero: 'error' });
+    }
     return;
   }
 
