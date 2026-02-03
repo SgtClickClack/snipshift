@@ -292,7 +292,7 @@ test.describe('Professional Calendar E2E Tests', () => {
       await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       
       // Find the main calendar area using data-testid
-      const calendarMainArea = page.getByTestId('calendar-main-area');
+      const calendarMainArea = page.getByTestId('calendar-container');
       
       // Wait for calendar to be visible and specific elements to load
       await expect(calendarMainArea).toBeVisible({ timeout: 10000 });
@@ -327,7 +327,7 @@ test.describe('Professional Calendar E2E Tests', () => {
       await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       
       // Find the main calendar area using data-testid
-      const calendarMainArea = page.getByTestId('calendar-main-area');
+      const calendarMainArea = page.getByTestId('calendar-container');
       
       // Wait for calendar to be visible and specific elements to load
       await expect(calendarMainArea).toBeVisible({ timeout: 10000 });

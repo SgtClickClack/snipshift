@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/** Test DB URL - single source of truth so API and E2E tests share data */
+const TEST_DATABASE_URL = 'postgresql://postgres:test@localhost:5433/hospogo_test';
+
 /**
  * Playwright Configuration for HospoGo E2E Tests
  * 
@@ -91,6 +94,7 @@ export default defineConfig({
         {
           name: 'chromium',
           use: { ...devices['Desktop Chrome'] },
+          testIgnore: [/calendar-(automation|capacity)\.spec\.ts/, /auth-business\.setup\.ts/, /business-setup\.spec\.ts/],
         },
         {
           name: 'Mobile Chrome',
@@ -100,6 +104,7 @@ export default defineConfig({
             navigationTimeout: 45000, // Increase navigation timeout for mobile
           },
           retries: 2, // Retry mobile tests to handle server cold-starts
+          testIgnore: [/calendar-(automation|capacity)\.spec\.ts/, /auth-business\.setup\.ts/, /business-setup\.spec\.ts/],
         },
         {
           name: 'Mobile Safari',
@@ -109,6 +114,22 @@ export default defineConfig({
             actionTimeout: 45000, // Increase action timeout for mobile
           },
           retries: 2, // Retry mobile tests to handle server cold-starts
+          testIgnore: [/calendar-(automation|capacity)\.spec\.ts/, /auth-business\.setup\.ts/, /business-setup\.spec\.ts/],
+        },
+        // Business E2E: venue dashboard tests with currentRole: 'business'
+        {
+          name: 'setup-business',
+          testMatch: /auth-business\.setup\.ts/,
+        },
+        {
+          name: 'business-e2e',
+          testMatch: /(calendar-(automation|capacity)|roster-costing)\.spec\.ts/,
+          use: {
+            ...devices['Desktop Chrome'],
+            storageState: 'playwright/.auth/business-user.json',
+            viewport: { width: 1440, height: 900 },
+          },
+          dependencies: ['setup-business'],
         },
       ],
 
@@ -127,6 +148,8 @@ export default defineConfig({
           NODE_ENV: 'test', // Enable backend E2E authentication bypass
           FRONTEND_URL: 'http://localhost:3000', // Xero callback redirect target
           VITE_APP_URL: 'http://localhost:3000',
+          VITE_API_URL: 'http://localhost:5000',
+          DATABASE_URL: TEST_DATABASE_URL, // API and E2E tests share hospogo_test DB
           // Note: The API server (port 5000) will receive NODE_ENV=test
           // via the env object above. Concurrently should pass env vars to child processes.
           // The backend middleware checks for process.env.NODE_ENV === 'test' to enable

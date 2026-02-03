@@ -5,6 +5,8 @@ import * as venuesRepo from '../repositories/venues.repository.js';
 import * as shiftApplicationsRepo from '../repositories/shift-applications.repository.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as payoutsRepo from '../repositories/payouts.repository.js';
+import * as rosterFinanceService from '../services/roster-finance.service.js';
+import * as usersRepo from '../repositories/users.repository.js';
 
 const router = express.Router();
 
@@ -90,6 +92,78 @@ router.get('/me/applications', authenticateUser, asyncHandler(async (req: Authen
   }));
 
   res.status(200).json(transformed);
+}));
+
+// Get staff list for current venue (business only - for pay rate management)
+// AUDIT: baseHourlyRate is only returned when requester has business/hub role (isBusiness check below)
+router.get('/me/staff', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const role = (req.user as any)?.role ?? (req.user as any)?.roles?.[0];
+  const isBusiness = role === 'business' || role === 'hub' || (Array.isArray((req.user as any)?.roles) && ((req.user as any).roles as string[]).includes('business'));
+  if (!isBusiness) {
+    res.status(403).json({ message: 'Staff list is only available for business users' });
+    return;
+  }
+
+  const staffIds = await shiftsRepo.getStaffIdsForEmployer(userId);
+  if (staffIds.length === 0) {
+    res.status(200).json([]);
+    return;
+  }
+
+  const staff = await Promise.all(
+    staffIds.map(async (id) => {
+      const u = await usersRepo.getUserById(id);
+      if (!u) return null;
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        baseHourlyRate: u.baseHourlyRate ? Number(u.baseHourlyRate) : null,
+        currency: u.currency || 'AUD',
+      };
+    })
+  );
+
+  res.status(200).json(staff.filter(Boolean));
+}));
+
+// Get roster wage totals for current venue (business only - for Financial Health indicator)
+router.get('/me/roster-totals', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const role = (req.user as any)?.role ?? (req.user as any)?.roles?.[0];
+  const isBusiness = role === 'business' || role === 'hub' || (Array.isArray((req.user as any)?.roles) && ((req.user as any).roles as string[]).includes('business'));
+  if (!isBusiness) {
+    res.status(403).json({ message: 'Roster totals are only available for business users' });
+    return;
+  }
+
+  const startDateParam = req.query.startDate as string;
+  const endDateParam = req.query.endDate as string;
+  if (!startDateParam || !endDateParam) {
+    res.status(400).json({ message: 'startDate and endDate query params are required' });
+    return;
+  }
+
+  const startDate = new Date(startDateParam);
+  const endDate = new Date(endDateParam);
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    res.status(400).json({ message: 'Invalid startDate or endDate' });
+    return;
+  }
+
+  const totals = await rosterFinanceService.calculateRosterTotals(userId, startDate, endDate);
+  res.status(200).json(totals);
 }));
 
 // Get analytics for current user's venue

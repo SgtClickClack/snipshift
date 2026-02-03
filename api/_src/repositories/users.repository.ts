@@ -2,6 +2,7 @@ import { eq, sql, and, inArray } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
 import { users } from '../db/schema.js';
 import { normalizeRole } from '../utils/normalizeRole.js';
+import * as shiftsRepo from './shifts.repository.js';
 
 // In-memory store for development
 export let mockUsers: typeof users.$inferSelect[] = [];
@@ -27,6 +28,12 @@ const ALLOWED_PROFILE_UPDATE_FIELDS: Array<keyof typeof users.$inferSelect> = [
   'hospitalityRole',
   'notificationPreferences',
   'favoriteProfessionals',
+];
+
+/** Fields Business/Owner can update for staff members (roster costing) */
+const BUSINESS_STAFF_UPDATE_FIELDS: Array<keyof typeof users.$inferSelect> = [
+  'baseHourlyRate',
+  'currency',
 ];
 
 function buildSafeProfileUpdate(
@@ -193,6 +200,8 @@ export async function createUser(
       stripeOnboardingComplete: false,
       stripeCustomerId: null,
       xeroEmployeeId: null,
+      baseHourlyRate: null,
+      currency: 'AUD',
       notificationPreferences: null,
       favoriteProfessionals: [],
       createdAt: new Date(),
@@ -506,6 +515,45 @@ export async function internal_dangerouslyUpdateUser(
  */
 export async function updateXeroEmployeeId(userId: string, xeroEmployeeId: string | null): Promise<typeof users.$inferSelect | null> {
   return internal_dangerouslyUpdateUser(userId, { xeroEmployeeId });
+}
+
+/**
+ * Update base_hourly_rate for a staff member. Only Business/Owner can call this.
+ * Verifies employer-staff relationship via shifts/assignments before updating.
+ */
+export async function updateStaffPayRate(
+  employerId: string,
+  staffId: string,
+  updates: { baseHourlyRate?: number | string | null; currency?: string }
+): Promise<typeof users.$inferSelect | null> {
+  const isStaff = await shiftsRepo.isStaffOfEmployer(employerId, staffId);
+  if (!isStaff) {
+    return null;
+  }
+
+  const toSet: Partial<typeof users.$inferSelect> = { updatedAt: new Date() };
+  if (updates.baseHourlyRate !== undefined) {
+    toSet.baseHourlyRate = updates.baseHourlyRate == null ? null : String(updates.baseHourlyRate);
+  }
+  if (updates.currency !== undefined) {
+    toSet.currency = updates.currency;
+  }
+
+  const db = getDb();
+  if (!db) {
+    const index = mockUsers.findIndex((u) => u.id === staffId);
+    if (index === -1) return null;
+    mockUsers[index] = { ...mockUsers[index], ...toSet } as typeof users.$inferSelect;
+    return normalizeUserRoles(mockUsers[index]);
+  }
+
+  const [updatedUser] = await db
+    .update(users)
+    .set(toSet)
+    .where(eq(users.id, staffId))
+    .returning();
+
+  return updatedUser ? normalizeUserRoles(updatedUser) : null;
 }
 
 /**

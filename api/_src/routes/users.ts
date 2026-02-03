@@ -777,6 +777,58 @@ router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   });
 }));
 
+// Update staff pay rate (Business/Owner only - for roster costing)
+router.patch('/users/:id/pay-rate', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const employerId = req.user?.id;
+  const staffId = normalizeParam(req.params.id);
+  if (!employerId || !staffId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const role = (req.user as any)?.role ?? (req.user as any)?.roles?.[0];
+  const isBusiness = role === 'business' || role === 'hub' || (Array.isArray((req.user as any)?.roles) && ((req.user as any).roles as string[]).includes('business'));
+  if (!isBusiness) {
+    res.status(403).json({ message: 'Only business owners can update staff pay rates' });
+    return;
+  }
+
+  const { baseHourlyRate, currency } = req.body ?? {};
+  const updates: { baseHourlyRate?: number | string | null; currency?: string } = {};
+  if (baseHourlyRate !== undefined) {
+    if (baseHourlyRate === null || baseHourlyRate === '') {
+      updates.baseHourlyRate = null;
+    } else {
+      const num = typeof baseHourlyRate === 'string' ? parseFloat(baseHourlyRate) : baseHourlyRate;
+      if (isNaN(num) || num < 0) {
+        res.status(400).json({ message: 'baseHourlyRate must be a non-negative number' });
+        return;
+      }
+      updates.baseHourlyRate = num;
+    }
+  }
+  if (currency !== undefined && typeof currency === 'string' && currency.length <= 3) {
+    updates.currency = currency;
+  }
+
+  if (updates.baseHourlyRate === undefined && updates.currency === undefined) {
+    res.status(400).json({ message: 'Provide baseHourlyRate or currency to update' });
+    return;
+  }
+
+  const updated = await usersRepo.updateStaffPayRate(employerId, staffId, updates);
+  if (!updated) {
+    res.status(404).json({ message: 'Staff member not found or not assigned to your venue' });
+    return;
+  }
+
+  res.status(200).json({
+    id: updated.id,
+    baseHourlyRate: updated.baseHourlyRate ? Number(updated.baseHourlyRate) : null,
+    currency: updated.currency,
+  });
+}));
+
 // Update current user profile
 router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {

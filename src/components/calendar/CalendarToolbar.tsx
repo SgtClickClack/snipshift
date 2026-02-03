@@ -1,5 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -7,8 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Settings, Plus } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Settings, Plus, Zap, DollarSign } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { View } from "react-big-calendar";
+import { fetchRosterTotals } from "@/lib/api";
+import { apiRequest } from "@/lib/queryClient";
 
 type JobStatus = 'all' | 'pending' | 'confirmed' | 'completed';
 
@@ -26,6 +36,23 @@ interface CalendarToolbarProps {
   isCalculatingMatches?: boolean;
   // Create Availability button (professional mode only)
   onCreateAvailability?: () => void;
+  // Auto-Fill Week from Templates (business mode only)
+  onAutoFillClick?: () => void;
+  // Date range for roster totals (business mode only)
+  dateRange?: { start: Date; end: Date } | null;
+}
+
+function formatCurrency(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat('en-AU', {
+      style: 'currency',
+      currency: currency || 'AUD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `$${amount.toFixed(2)}`;
+  }
 }
 
 export function CalendarToolbar({
@@ -37,7 +64,26 @@ export function CalendarToolbar({
   statusFilter = 'all',
   onStatusFilterChange,
   onCreateAvailability,
+  onAutoFillClick,
+  dateRange,
 }: CalendarToolbarProps) {
+  const { data: rosterTotals } = useQuery({
+    queryKey: ['roster-totals', dateRange?.start?.toISOString(), dateRange?.end?.toISOString()],
+    queryFn: () => fetchRosterTotals(dateRange!.start, dateRange!.end),
+    enabled: mode === 'business' && !!dateRange?.start && !!dateRange?.end,
+    staleTime: 30_000, // 30s - avoid redundant refetches during calendar drag-and-drop
+  });
+
+  const { data: xeroStatus } = useQuery({
+    queryKey: ['xero-status'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/integrations/xero/status');
+      return res.json() as Promise<{ connected?: boolean }>;
+    },
+    enabled: mode === 'business',
+  });
+  const isSyncedToXero = xeroStatus?.connected === true;
+
   return (
     <CardHeader className="border-b bg-gradient-to-r from-background via-purple-50/5 to-blue-50/5 dark:from-background dark:via-purple-950/10 dark:to-blue-950/10">
       <div className="flex flex-col gap-3">
@@ -64,6 +110,50 @@ export function CalendarToolbar({
               </Button>
             )}
             
+            {/* Financial Health indicator - Only show in business mode. Pulse when Xero disconnected (CTA for Lucas) */}
+            {mode === 'business' && rosterTotals !== undefined && (
+              <div
+                className={cn(
+                  "hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium",
+                  !isSyncedToXero && "animate-pulse"
+                )}
+                data-testid="est-wage-cost"
+                title={isSyncedToXero ? "Estimated wage cost for visible period" : "Estimated wage cost — sync to Xero to export"}
+              >
+                <DollarSign className="h-4 w-4 shrink-0" />
+                Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}
+              </div>
+            )}
+            {/* Roster Tools dropdown - Only show in business mode */}
+            {mode === 'business' && onAutoFillClick && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    title="Roster Tools"
+                    data-testid="roster-tools-dropdown"
+                    className="flex items-center gap-2"
+                  >
+                    <span>Roster Tools</span>
+                    <ChevronDown className="h-4 w-4 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={onAutoFillClick}
+                    data-testid="auto-fill-trigger"
+                    className="flex items-center gap-2"
+                  >
+                    <Zap className="h-4 w-4 shrink-0" />
+                    <span>Auto-Fill from Templates</span>
+                    <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 rounded font-medium shrink-0">
+                      Beta
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             {/* Calendar Settings Button - Only show in business mode */}
             {mode === 'business' && (
               <Button

@@ -45,11 +45,14 @@ const Toast = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
+  const ariaLive = (props as React.AriaAttributes)['aria-live'];
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), className)}
       {...props}
+      role={props.role ?? 'status'}
+      aria-live={ariaLive ?? 'polite'}
+      className={cn(toastVariants({ variant }), className)}
     />
   )
 })

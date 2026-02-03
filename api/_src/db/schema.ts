@@ -28,6 +28,7 @@ import { userPushTokens } from './schema/push-tokens.js';
 import { userCalendarTokens } from './schema/calendar-tokens.js';
 import { xeroIntegrations, xeroOauthState } from './schema/xero-integrations.js';
 import { failedEmails } from './schema/failed-emails.js';
+import { shiftTemplates } from './schema/shift-templates.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -66,7 +67,8 @@ export {
   userCalendarTokens,
   xeroIntegrations,
   xeroOauthState,
-  failedEmails
+  failedEmails,
+  shiftTemplates
 };
 
 /**

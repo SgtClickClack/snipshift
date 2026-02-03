@@ -103,6 +103,9 @@ export const users = pgTable('users', {
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }), // [PII] [SENSITIVE] Financial customer identifier
   totalEarnedCents: integer('total_earned_cents').notNull().default(0), // Total earnings in cents
   xeroEmployeeId: varchar('xero_employee_id', { length: 255 }), // Xero Payroll AU Employee ID for timesheet sync mapping
+  // Roster costing (set by Business/Owner for staff)
+  baseHourlyRate: decimal('base_hourly_rate', { precision: 10, scale: 2 }),
+  currency: varchar('currency', { length: 3 }).notNull().default('AUD'),
   // User preferences (JSONB for flexibility)
   notificationPreferences: jsonb('notification_preferences').$type<{
     newJobAlertsEmail?: boolean;

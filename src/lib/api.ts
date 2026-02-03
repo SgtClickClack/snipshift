@@ -502,6 +502,51 @@ export async function publishAllDraftShifts(payload: { start: string; end: strin
   }
 }
 
+export interface GenerateFromTemplatesPayload {
+  startDate: string;
+  endDate: string;
+  defaultHourlyRate?: string;
+  defaultLocation?: string;
+}
+
+export interface GenerateFromTemplatesResult {
+  success: boolean;
+  created: number;
+  skipped?: number;
+  errors?: string[];
+}
+
+export interface GenerateFromTemplatesPreviewResult {
+  estimatedCount: number;
+  hasTemplates: boolean;
+  error?: string;
+}
+
+/**
+ * Preview how many shifts would be generated from templates (for confirmation modal)
+ */
+export async function previewGenerateFromTemplates(startDate: string, endDate: string): Promise<GenerateFromTemplatesPreviewResult> {
+  try {
+    const params = new URLSearchParams({ startDate, endDate });
+    const res = await apiRequest('GET', `/api/shifts/generate-from-templates/preview?${params}`);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'previewGenerateFromTemplates');
+  }
+}
+
+/**
+ * Generate OPEN shifts from Capacity Planner templates for a date range
+ */
+export async function generateFromTemplates(payload: GenerateFromTemplatesPayload): Promise<GenerateFromTemplatesResult> {
+  try {
+    const res = await apiRequest('POST', '/api/shifts/generate-from-templates', payload);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'generateFromTemplates');
+  }
+}
+
 export async function clearAllShifts(): Promise<{ 
   success: boolean; 
   count: number; 
@@ -1314,4 +1359,38 @@ export async function getCalendarSyncUrl(): Promise<CalendarSyncResponse> {
   } catch (error) {
     throw toApiError(error, 'getCalendarSyncUrl');
   }
+}
+
+// Roster Finance (Business only)
+export interface RosterTotals {
+  totalHours: number;
+  totalCost: number;
+  currency: string;
+}
+
+/**
+ * Fetch roster wage totals for the visible period (business users only)
+ */
+export async function fetchRosterTotals(startDate: Date, endDate: Date): Promise<RosterTotals> {
+  const params = new URLSearchParams({
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  });
+  const res = await apiRequest('GET', `/api/venues/me/roster-totals?${params.toString()}`);
+  return res.json();
+}
+
+/**
+ * Update staff member's base hourly rate (business owners only)
+ */
+export async function updateStaffPayRate(
+  staffId: string,
+  baseHourlyRate: number | null,
+  currency?: string
+): Promise<{ id: string; baseHourlyRate: number | null; currency: string }> {
+  const body: { baseHourlyRate?: number | null; currency?: string } = {};
+  if (baseHourlyRate !== undefined) body.baseHourlyRate = baseHourlyRate;
+  if (currency !== undefined) body.currency = currency;
+  const res = await apiRequest('PATCH', `/api/users/${staffId}/pay-rate`, body);
+  return res.json();
 }

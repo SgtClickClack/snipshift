@@ -56,6 +56,27 @@ function getDefaultDateRange(): { start: string; end: string } {
   };
 }
 
+/** Map generic Xero API errors to user-friendly messages */
+function mapXeroErrorToUserMessage(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes('pay period') && (lower.includes('lock') || lower.includes('locked'))) {
+    return 'Pay period is locked in Xero. Unlock it in Xero Payroll to sync timesheets.';
+  }
+  if (lower.includes('403') || lower.includes('forbidden')) {
+    return 'Access denied. The pay period may be locked in Xero, or your Xero connection may need to be refreshed.';
+  }
+  if (lower.includes('duplicate') || lower.includes('already exists')) {
+    return 'A timesheet already exists for this employee and period in Xero.';
+  }
+  if (lower.includes('token') && (lower.includes('expired') || lower.includes('invalid'))) {
+    return 'Xero connection expired. Please reconnect in Settings.';
+  }
+  if (lower.includes('api error') || lower.includes('500')) {
+    return 'Xero is temporarily unavailable. Please try again in a few minutes.';
+  }
+  return raw;
+}
+
 export default function XeroSyncManager() {
   const { toast } = useToast();
   const [xeroConnected, setXeroConnected] = useState(false);
@@ -67,6 +88,14 @@ export default function XeroSyncManager() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
+  const [showSuccessBurst, setShowSuccessBurst] = useState(false);
+
+  useEffect(() => {
+    if (showSuccessBurst) {
+      const t = setTimeout(() => setShowSuccessBurst(false), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [showSuccessBurst]);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +175,7 @@ export default function XeroSyncManager() {
       const totalHours = (data.synced ?? []).reduce((sum: number, s: { hours?: number }) => sum + (s.hours ?? 0), 0);
 
       if (syncedCount > 0) {
+        setShowSuccessBurst(true);
         toast({
           title: 'Timesheets synced',
           description: `Synced ${syncedCount} employee(s). Total: ${totalHours.toFixed(1)} hours.${failedCount > 0 ? ` ${failedCount} skipped (no mapping).` : ''}`,
@@ -164,9 +194,11 @@ export default function XeroSyncManager() {
         });
       }
     } catch (err) {
+      const rawMsg = err instanceof Error ? err.message : 'Could not sync timesheets to Xero.';
+      const friendlyMsg = mapXeroErrorToUserMessage(rawMsg);
       toast({
         title: 'Sync failed',
-        description: err instanceof Error ? err.message : 'Could not sync timesheets to Xero.',
+        description: friendlyMsg,
         variant: 'destructive',
       });
       setConfirmOpen(false);
@@ -181,6 +213,16 @@ export default function XeroSyncManager() {
 
   return (
     <IntegrationErrorBoundary>
+      {showSuccessBurst && (
+        <div
+          className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
+          aria-hidden
+        >
+          <div className="animate-pulse rounded-full bg-emerald-500/30 p-8 scale-125">
+            <CheckCircle2 className="h-16 w-16 text-emerald-600 dark:text-emerald-400" />
+          </div>
+        </div>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

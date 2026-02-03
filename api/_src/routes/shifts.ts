@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { eq, and, sql } from 'drizzle-orm';
-import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { authenticateUser, AuthenticatedRequest, requireBusinessOwner } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import { ShiftSchema, ShiftInviteSchema, ShiftReviewSchema, BulkAcceptSchema } from '../validation/schemas.js';
 import { shiftOffers, shifts, shiftApplications, users, shiftDrafts } from '../db/schema.js';
@@ -33,6 +33,7 @@ import * as venuesRepo from '../repositories/venues.repository.js';
 import { normalizeParam, normalizeQueryOptional } from '../utils/request-params.js';
 import { normalizeRole } from '../utils/normalizeRole.js';
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
+import * as shiftGenerationService from '../services/shift-generation.service.js';
 import { uploadProofImage } from '../middleware/upload.js';
 import admin from 'firebase-admin';
 import type { ErrorContext } from '../services/error-reporting.service.js';
@@ -2550,6 +2551,82 @@ router.post('/publish-all', authenticateUser, asyncHandler(async (req: Authentic
 
   await Promise.all(draftShifts.map((s) => shiftsRepo.updateShift(s.id, { status: 'open' })));
   res.status(200).json({ success: true, count: draftShifts.length });
+}));
+
+// Preview how many shifts would be generated from templates (for confirmation modal)
+router.get('/generate-from-templates/preview', authenticateUser, requireBusinessOwner, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const startDate = (req.query.startDate as string) || '';
+  const endDate = (req.query.endDate as string) || '';
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
+
+  if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+    res.status(400).json({ message: 'Invalid startDate or endDate. Expected ISO date strings in query.' });
+    return;
+  }
+
+  if (start >= end) {
+    res.status(400).json({ message: 'startDate must be before endDate' });
+    return;
+  }
+
+  const preview = await shiftGenerationService.previewFromTemplates(userId, start, end);
+  res.status(200).json(preview);
+}));
+
+// Generate OPEN shifts from Capacity Planner templates
+router.post('/generate-from-templates', authenticateUser, requireBusinessOwner, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { startDate, endDate, defaultHourlyRate, defaultLocation } = (req.body || {}) as {
+    startDate?: string;
+    endDate?: string;
+    defaultHourlyRate?: string;
+    defaultLocation?: string;
+  };
+
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
+
+  if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+    res.status(400).json({ message: 'Invalid startDate or endDate. Expected ISO date strings.' });
+    return;
+  }
+
+  if (start >= end) {
+    res.status(400).json({ message: 'startDate must be before endDate' });
+    return;
+  }
+
+  const result = await shiftGenerationService.generateFromTemplates(userId, start, end, {
+    defaultHourlyRate: defaultHourlyRate || '45',
+    defaultLocation: defaultLocation || '',
+  });
+
+  if (result.errors.length > 0 && result.created === 0) {
+    res.status(400).json({
+      message: result.errors[0],
+      errors: result.errors,
+    });
+    return;
+  }
+
+  res.status(201).json({
+    success: true,
+    created: result.created,
+    skipped: result.skipped,
+    errors: result.errors.length > 0 ? result.errors : undefined,
+  });
 }));
 
 // Generate Roster: Create DRAFT slots from opening hours settings

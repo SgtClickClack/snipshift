@@ -440,9 +440,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Primary async function to handle the complete auth handshake
     const initializeAuth = async () => {
-      // E2E Bypass: Check for test user in sessionStorage
+      // E2E Bypass: Check for test user in sessionStorage (or localStorage when restored from Playwright storageState)
       if (typeof window !== 'undefined') {
-        const e2eUserStr = sessionStorage.getItem('hospogo_test_user');
+        const e2eUserStr = sessionStorage.getItem('hospogo_test_user') || localStorage.getItem('hospogo_test_user');
         if (e2eUserStr) {
           try {
             const e2eUser = JSON.parse(e2eUserStr);

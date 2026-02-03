@@ -36,7 +36,9 @@ import * as conversationsRepo from './repositories/conversations.repository.js';
 import * as messagesRepo from './repositories/messages.repository.js';
 import * as reportsRepo from './repositories/reports.repository.js';
 import * as shiftsRepo from './repositories/shifts.repository.js';
+import { sql } from 'drizzle-orm';
 import { getDatabase } from './db/connection.js';
+import { getDb } from './db/index.js';
 import { auth } from './config/firebase.js';
 import usersRouter from './routes/users.js';
 import chatsRouter from './routes/chats.js';
@@ -45,6 +47,7 @@ import adminRouter from './routes/admin.js';
 import adminHealthRouter from './routes/admin/health.js';
 import notificationsRouter from './routes/notifications.js';
 import shiftsRouter from './routes/shifts.js';
+import shiftTemplatesRouter from './routes/shift-templates.js';
 import applicationsRouter from './routes/applications.js';
 import communityRouter from './routes/community.js';
 import trainingRouter from './routes/training.js';
@@ -110,6 +113,10 @@ const PORT = process.env.PORT || 5000;
   const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   const hasDatabase = !!databaseUrl;
   console.log(`[STARTUP] DATABASE_URL: ${hasDatabase ? '✓ configured' : '✗ missing'}`);
+  if (process.env.NODE_ENV === 'test' && databaseUrl) {
+    const portMatch = databaseUrl.match(/:(\d+)\//);
+    console.log(`[STARTUP] Test mode DB port: ${portMatch ? portMatch[1] : 'unknown'} (5433=test DB)`);
+  }
   
   const hasFirebaseServiceAccount = !!process.env.FIREBASE_SERVICE_ACCOUNT;
   const hasFirebaseIndividualVars = !!(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY);
@@ -212,6 +219,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/admin/health', adminHealthRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/shifts', shiftsRouter);
+app.use('/api/shift-templates', shiftTemplatesRouter);
 app.use('/api/applications', applicationsRouter);
 app.use('/api/community', communityRouter);
 app.use('/api/training', trainingRouter);
@@ -247,6 +255,58 @@ app.post('/api/purchase-content', authenticateUser, (req, res, next) => {
   return trainingRouter(req, res, next);
 });
 
+
+// E2E test setup: ensure user and venue exist for mock-test-token (NODE_ENV=test only)
+if (process.env.NODE_ENV === 'test') {
+  app.post('/api/test/setup-venue', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const userId = req.user?.id;
+    const email = req.user?.email ?? 'test-owner@example.com';
+    const name = req.user?.name ?? 'Test Owner';
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+    const venuesRepo = await import('./repositories/venues.repository.js');
+    const usersRepo = await import('./repositories/users.repository.js');
+    // Ensure user exists (venue FK requires it)
+    const existingUser = await usersRepo.getUserById(userId);
+    if (!existingUser) {
+      const db = getDb();
+      if (db) {
+        await (db as any).execute(sql`
+          INSERT INTO users (id, email, name, role, roles, is_onboarded, created_at, updated_at)
+          VALUES (${userId}, ${email}, ${name}, 'business', ARRAY['business']::text[], true, NOW(), NOW())
+          ON CONFLICT (id) DO NOTHING
+        `);
+      } else {
+        await usersRepo.createUser({ email, name, role: 'business' });
+      }
+    }
+    const existing = await venuesRepo.getVenueByUserId(userId);
+    if (existing) {
+      res.status(200).json({ ok: true, venueId: existing.id, existing: true });
+      return;
+    }
+    const defaultAddress = { street: '123 Test St', suburb: 'Brisbane City', postcode: '4000', city: 'Brisbane', state: 'QLD', country: 'AU' };
+    const defaultHours = {
+      monday: { open: '09:00', close: '17:00' }, tuesday: { open: '09:00', close: '17:00' },
+      wednesday: { open: '09:00', close: '17:00' }, thursday: { open: '09:00', close: '17:00' },
+      friday: { open: '09:00', close: '17:00' }, saturday: { open: '09:00', close: '17:00' },
+      sunday: { closed: true },
+    };
+    const venue = await venuesRepo.createVenue({
+      userId,
+      venueName: 'E2E Auto-Fill Venue',
+      address: defaultAddress,
+      operatingHours: defaultHours,
+    });
+    if (!venue) {
+      res.status(500).json({ message: 'Failed to create venue' });
+      return;
+    }
+    res.status(200).json({ ok: true, venueId: venue.id });
+  }));
+}
 
 // Health check endpoint (legacy)
 app.get('/health', asyncHandler(async (req, res) => {

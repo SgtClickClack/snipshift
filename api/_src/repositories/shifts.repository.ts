@@ -1099,13 +1099,14 @@ export async function hasEmployerAssigneeRelationship(employerId: string, assign
 /**
  * Get unique staff (assignee) IDs who have worked shifts for an employer.
  * Used for Xero employee mapping - only staff who have worked for this venue can be mapped.
+ * Includes both assigneeId and shift_assignments.
  */
 export async function getStaffIdsForEmployer(employerId: string): Promise<string[]> {
   const db = getDb();
   if (!db) return [];
 
-  const result = await db
-    .selectDistinct({ assigneeId: shifts.assigneeId })
+  const fromAssignee = await db
+    .selectDistinct({ userId: shifts.assigneeId })
     .from(shifts)
     .where(
       and(
@@ -1115,7 +1116,59 @@ export async function getStaffIdsForEmployer(employerId: string): Promise<string
       )
     );
 
-  return result.map((r) => r.assigneeId as string).filter(Boolean);
+  const fromAssignments = await db
+    .selectDistinct({ userId: shiftAssignments.userId })
+    .from(shiftAssignments)
+    .innerJoin(shifts, eq(shiftAssignments.shiftId, shifts.id))
+    .where(
+      and(
+        eq(shifts.employerId, employerId),
+        isNull(shifts.deletedAt)
+      )
+    );
+
+  const ids = new Set<string>();
+  fromAssignee.forEach((r) => { if (r.userId) ids.add(r.userId); });
+  fromAssignments.forEach((r) => ids.add(r.userId));
+  return Array.from(ids);
+}
+
+/**
+ * Check if staffId has been assigned to any shift by employerId.
+ * Used to authorize Business/Owner to update staff pay rates.
+ */
+export async function isStaffOfEmployer(employerId: string, staffId: string): Promise<boolean> {
+  const db = getDb();
+  if (!db) return false;
+
+  const [fromAssignee] = await db
+    .select({ id: shifts.id })
+    .from(shifts)
+    .where(
+      and(
+        eq(shifts.employerId, employerId),
+        eq(shifts.assigneeId, staffId),
+        isNull(shifts.deletedAt)
+      )
+    )
+    .limit(1);
+
+  if (fromAssignee) return true;
+
+  const [fromAssignment] = await db
+    .select({ id: shiftAssignments.id })
+    .from(shiftAssignments)
+    .innerJoin(shifts, eq(shiftAssignments.shiftId, shifts.id))
+    .where(
+      and(
+        eq(shifts.employerId, employerId),
+        eq(shiftAssignments.userId, staffId),
+        isNull(shifts.deletedAt)
+      )
+    )
+    .limit(1);
+
+  return !!fromAssignment;
 }
 
 /**

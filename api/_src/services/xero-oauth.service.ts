@@ -280,13 +280,16 @@ export async function createTimesheet(
   if (!res.ok) {
     const errText = await res.text();
     let message = `Xero timesheet create failed: ${res.status} ${errText}`;
-    if (res.status === 400) {
-      const lower = errText.toLowerCase();
+    const lower = errText.toLowerCase();
+    if (res.status === 400 || res.status === 403) {
       if (lower.includes('lock') || lower.includes('locked')) {
         message = 'Pay period is locked in Xero. Cannot add timesheets.';
       } else if (lower.includes('duplicate') || lower.includes('already exists')) {
         message = 'A timesheet already exists for this employee and period.';
       }
+    }
+    if (res.status === 403 && !lower.includes('lock')) {
+      message = 'Access denied. The pay period may be locked in Xero, or your Xero connection may need to be refreshed.';
     }
     throw new Error(message);
   }

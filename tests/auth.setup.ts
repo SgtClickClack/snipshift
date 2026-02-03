@@ -1,4 +1,4 @@
-﻿import { chromium, FullConfig } from '@playwright/test';
+import { chromium, FullConfig } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';

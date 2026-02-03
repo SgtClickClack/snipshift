@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,9 +26,12 @@ import {
 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
+const CapacityPlanner = lazy(() => import('@/components/settings/CapacityPlanner'));
+import StaffPayRates from '@/components/settings/StaffPayRates';
 import XeroIntegrationCard from '@/components/settings/XeroIntegrationCard';
 import XeroEmployeeMapper from '@/components/settings/XeroEmployeeMapper';
-import XeroSyncManager from '@/components/settings/XeroSyncManager';
+
+const XeroSyncManager = lazy(() => import('@/components/settings/XeroSyncManager'));
 import { apiRequest } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams } from 'react-router-dom';
@@ -825,9 +828,15 @@ export default function SettingsPage() {
             {/* Business Settings Section */}
             {activeCategory === 'business' && isBusinessUser && (
               <div className="space-y-6">
+                <StaffPayRates />
                 <XeroIntegrationCard />
                 <XeroEmployeeMapper />
-                <XeroSyncManager />
+                <Suspense fallback={<Card><CardHeader><div className="h-6 w-48 animate-pulse rounded bg-muted" /><div className="h-4 w-32 mt-2 animate-pulse rounded bg-muted" /></CardHeader><CardContent className="space-y-4"><div className="h-10 w-full animate-pulse rounded bg-muted" /><div className="h-20 w-full animate-pulse rounded bg-muted" /></CardContent></Card>}>
+                  <XeroSyncManager />
+                </Suspense>
+                <Suspense fallback={<Card><CardHeader><div className="h-6 w-40 animate-pulse rounded bg-muted" /><div className="h-4 w-64 mt-2 animate-pulse rounded bg-muted" /></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">{[1,2,3,4,5,6,7].map((i) => <div key={i} className="rounded-lg border p-4 space-y-3"><div className="h-4 w-12 animate-pulse rounded bg-muted" /><div className="h-20 w-full animate-pulse rounded bg-muted" /></div>)}</div></CardContent></Card>}>
+                  <CapacityPlanner />
+                </Suspense>
                 <BusinessSettings
                   initialData={businessSettings}
                   onSave={() => {

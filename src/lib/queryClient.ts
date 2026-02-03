@@ -72,7 +72,12 @@ export async function apiRequest(
     ...(isSafe ? {} : { 'X-HospoGo-CSRF': '1' }),
   };
 
-  if (auth.currentUser) {
+  // E2E mode: always use mock-test-token (overrides cached Firebase session)
+  // Prevents 404 on /api/venues/me when Firebase has a stale user from manual testing
+  const isE2E = import.meta.env.VITE_E2E === '1' || (typeof window !== 'undefined' && localStorage.getItem('E2E_MODE') === 'true');
+  if (isE2E) {
+    headers['Authorization'] = 'Bearer mock-test-token';
+  } else if (auth.currentUser) {
     try {
       // Force refresh token if this is a retry after a 401
       // This ensures we have a fresh token for the retry
@@ -87,9 +92,6 @@ export async function apiRequest(
       // Don't add Authorization header if token fetch fails
       // This will cause a 401, which is better than sending an invalid token
     }
-  } else if (import.meta.env.VITE_E2E === '1') {
-    // E2E mode: API auth middleware supports this fixed bypass token.
-    headers['Authorization'] = 'Bearer mock-test-token';
   }
 
   const res = await fetch(fullUrl, {
@@ -111,15 +113,17 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const headers: Record<string, string> = {};
     
-    if (auth.currentUser) {
+    // E2E mode: always use mock-test-token (overrides cached Firebase session)
+    const isE2E = import.meta.env.VITE_E2E === '1' || (typeof window !== 'undefined' && localStorage.getItem('E2E_MODE') === 'true');
+    if (isE2E) {
+      headers['Authorization'] = 'Bearer mock-test-token';
+    } else if (auth.currentUser) {
       try {
         const token = await auth.currentUser.getIdToken();
         headers['Authorization'] = `Bearer ${token}`;
       } catch (error) {
         logger.error("getQueryFn", "Error getting auth token for query:", error);
       }
-    } else if (import.meta.env.VITE_E2E === '1') {
-      headers['Authorization'] = 'Bearer mock-test-token';
     }
 
     const url = queryKey.join("/") as string;

@@ -158,8 +158,11 @@ snipshift/
 /test-results/
 /playwright-report/
 /playwright/.cache/
+/playwright/.auth/
 tests/storageState.json
+tests/storageState-business.json
 tests/auth-setup-failure.png
+test-output*.txt
 .env.bak-*
 
 # Firebase CLI cache / deploy state

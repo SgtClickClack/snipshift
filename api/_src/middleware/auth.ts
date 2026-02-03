@@ -241,9 +241,8 @@ export function authenticateUser(
       token = req.query.token.trim();
     }
 
-    // Bypass for E2E Testing - Only allow in test environment for security
-    // This prevents production exploitation while maintaining E2E test reliability
-    // Accept any token starting with 'mock-test-' to bypass Firebase verification
+    // Bypass for E2E Testing - active whenever NODE_ENV=test (Playwright webServer sets this)
+    // Prevents production exploitation; E2E tests use Bearer mock-test-* with hospogo_test DB
     if (token && token.startsWith('mock-test-') && process.env.NODE_ENV === 'test') {
       // Return specific mock user object for E2E tests
       // This bypasses Firebase token verification
