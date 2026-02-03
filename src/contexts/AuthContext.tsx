@@ -75,8 +75,12 @@ async function fetchAppUser(
       });
 
       if (res.ok) {
-        const apiUser = (await res.json()) as User;
-        return apiUser;
+        const data = (await res.json()) as User & { status?: string };
+        // 200 with needs_onboarding = valid token, no DB profile yet — treat as null for onboarding flow
+        if (data.status === 'needs_onboarding' || data.id == null) {
+          return null;
+        }
+        return data as User;
       }
 
       // 404 is expected for brand new Firebase users that haven't been created in our DB yet.
@@ -85,14 +89,14 @@ async function fetchAppUser(
         return null;
       }
 
-      // 401 during onboarding is expected - suppress warning to reduce console noise
+      // 401 during onboarding: suppress and skip token refresh (avoids retry loops)
       if (res.status === 401 && isOnboardingMode) {
-        console.log('[AuthContext] /api/me returned 401 during onboarding - suppressing (expected)');
+        console.log('[AuthContext] /api/me returned 401 during onboarding - suppressing (suppress401)');
         return null;
       }
 
-      // If we get a 401 and haven't retried yet, try refreshing the token and retrying
-      if (res.status === 401 && !isRetry && firebaseUser) {
+      // If we get a 401 and haven't retried yet, try refreshing the token and retrying (skip when suppress401)
+      if (res.status === 401 && !isRetry && firebaseUser && !isOnboardingMode) {
         const errorText = await res.text().catch(() => 'Unable to read error response');
         console.log('[AuthContext] /api/me returned 401, refreshing token and retrying...', {
           error: errorText.substring(0, 200),
@@ -176,6 +180,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [isNavigationLocked]);
 
+  // Safety timeout: force isNavigationLocked to false after 3s if API is hanging (prevents stuck skeleton)
+  const NAVIGATION_LOCK_TIMEOUT_MS = 3000;
+  useEffect(() => {
+    if (!isNavigationLocked) return;
+    const t = setTimeout(() => {
+      setIsNavigationLocked(false);
+      console.warn('[AuthContext] Navigation lock safety timeout (3s) — forcing unlock');
+    }, NAVIGATION_LOCK_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [isNavigationLocked]);
+
   const login = useCallback((newUser: User) => {
     setUser(newUser);
   }, []);
@@ -254,11 +269,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Harden redirect: if API says isOnboarded, send directly to dashboard (no onboarding routes)
       // Do NOT redirect to dashboard if venue check has failed with 404 (isVenueMissing).
-      const isVenueRole = (apiUser.currentRole || apiUser.role || '').toLowerCase() === 'business' ||
+      const role = (apiUser.currentRole || apiUser.role || '').toLowerCase();
+      const isVenueRole = role === 'business' || role === 'venue' || role === 'hub' ||
         (apiUser.roles || []).some((r: string) => ['business', 'venue', 'hub'].includes((r || '').toLowerCase()));
+      // Only call GET /api/venues/me when user has a venue role — skip for pending_onboarding / new users
+      const shouldCheckVenue = isVenueRole && role !== 'pending_onboarding';
       if (isOnboarded) {
         // Data integrity: venue users must have a venue record — prevent "ghost dashboards"
-        if (isVenueRole) {
+        if (shouldCheckVenue) {
           // If we already know venue is missing this session, skip re-fetching /api/venues/me to avoid request loop
           // (hydrate runs on every pathname change / Firebase callback; each run was calling /api/venues/me → 404)
           if (isVenueMissingRef.current) {
@@ -477,6 +495,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           unsub = onAuthStateChanged(auth, async (firebaseUser) => {
             firebaseUserRef.current = firebaseUser;
             setFirebaseUser(firebaseUser);
+
+            // Early unlock: on signup/onboarding, don't block UI on /api/me — show form immediately
+            const path = typeof window !== 'undefined' ? window.location.pathname : '';
+            if (path === '/signup' || path.startsWith('/onboarding') || path === '/role-selection') {
+              setIsNavigationLocked(false);
+            }
 
             try {
               if (!firebaseUser) {

@@ -79,14 +79,17 @@ function logAuthError(...args: any[]): void {
 
 /**
  * Express request with user property
+ * When user is not in DB (valid Firebase token, new signup), id may be absent and needsOnboarding is true.
  */
 export interface AuthenticatedRequest extends Request {
   user?: {
-    id: string;
+    id?: string;
     email: string;
-    name: string;
-    role: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding';
+    name?: string;
+    role?: 'professional' | 'business' | 'admin' | 'trainer' | 'hub' | 'venue' | 'pending_onboarding';
     uid: string; // Firebase UID
+    /** True when Firebase token is valid but user not yet in DB — /api/me returns 200 with needs_onboarding */
+    needsOnboarding?: boolean;
   };
 }
 
@@ -546,9 +549,21 @@ export function authenticateUser(
           }
           
           if (!user) {
+            // Valid Firebase token but user not in DB (new signup, or auto-create failed).
+            // For /api/me: proceed with minimal context so endpoint can return 200 + needs_onboarding.
             if (isMeEndpoint) {
-              process.stderr.write(`[AUTH DEBUG] GET /api/me: auto-create failed or returned null, sending 401\n`);
+              process.stderr.write(`[AUTH DEBUG] GET /api/me: user not in DB, proceeding with needsOnboarding (no 401)\n`);
+              const displayName = decodedToken.name || decodedToken.display_name || email.split('@')[0];
+              req.user = {
+                email,
+                name: displayName,
+                uid: firebaseUid,
+                needsOnboarding: true,
+              };
+              next();
+              return;
             }
+            // Non-/api/me endpoints still require a DB user
             res.status(401).json({ message: 'Unauthorized: User not found in database' });
             return;
           }

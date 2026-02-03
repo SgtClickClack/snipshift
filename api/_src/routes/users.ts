@@ -435,11 +435,28 @@ router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (
     // DEBUG: log incoming request (auth middleware already ran and set req.user)
     const uid = req.user?.id;
     const email = req.user?.email;
-    process.stderr.write(`[GET /api/me DEBUG] handler entered req.user.id=${uid ?? 'null'} email=${email ?? 'null'}\n`);
+    process.stderr.write(`[GET /api/me DEBUG] handler entered req.user.id=${uid ?? 'null'} email=${email ?? 'null'} needsOnboarding=${!!req.user?.needsOnboarding}\n`);
 
     if (!req.user) {
       process.stderr.write('[GET /api/me DEBUG] no req.user, returning 401\n');
       res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // Valid Firebase token but user not yet in DB (new signup) — return 200 with needs_onboarding
+    if (req.user.needsOnboarding || !req.user.id) {
+      process.stderr.write('[GET /api/me DEBUG] needsOnboarding — returning 200 with status\n');
+      res.status(200).json({
+        id: null,
+        email: req.user.email,
+        name: req.user.name ?? req.user.email?.split('@')[0] ?? null,
+        status: 'needs_onboarding',
+        isOnboarded: false,
+        hasCompletedOnboarding: false,
+        currentRole: null,
+        roles: [],
+        uid: req.user.uid,
+      });
       return;
     }
 
