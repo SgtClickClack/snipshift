@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Pricing from "@/components/landing/Pricing";
 import FAQSection from "@/components/landing/FAQSection";
+import { PartnerTrustBar } from "@/components/landing/PartnerTrustBar";
 import { SEO } from "@/components/seo/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDashboardRoute } from "@/lib/roles";
@@ -165,10 +166,16 @@ export default function LandingPage() {
 
                 {/* Subheadline */}
                 <p 
-                  className="text-lg md:text-xl text-white max-w-lg mb-10 leading-relaxed font-medium"
+                  className="text-lg md:text-xl text-white max-w-lg mb-6 leading-relaxed font-medium"
                   style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.8)' }}
                 >
                   Instant coverage for venues. Instant work for staff. The marketplace that keeps your business moving.
+                </p>
+                <p 
+                  className="text-sm md:text-base text-white/90 max-w-lg mb-10"
+                  style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8)' }}
+                >
+                  Seamlessly integrates with Xero and Stripe.
                 </p>
 
                 {/* Action Buttons */}
@@ -376,15 +383,18 @@ export default function LandingPage() {
         {/* Trust Signals */}
         <section className="py-12 md:py-16 bg-[#161616]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-              <div className="flex items-center gap-3">
-                <Shield className="h-6 w-6 text-[#BFFF00]" />
-                <span className="text-lg font-semibold text-white">Verified Pros</span>
+            <div className="flex flex-col gap-10">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+                <div className="flex items-center gap-3">
+                  <Shield className="h-6 w-6 text-[#BFFF00]" />
+                  <span className="text-lg font-semibold text-white">Verified Pros</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-6 w-6 text-[#BFFF00]" />
+                  <span className="text-lg font-semibold text-white">Payments powered by Stripe</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-6 w-6 text-[#BFFF00]" />
-                <span className="text-lg font-semibold text-white">Secure Payments by Stripe</span>
-              </div>
+              <PartnerTrustBar variant="footer" className="pt-4 border-t border-zinc-800" />
             </div>
           </div>
         </section>

@@ -102,6 +102,7 @@ export const users = pgTable('users', {
   stripeOnboardingComplete: boolean('stripe_onboarding_complete').notNull().default(false),
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }), // [PII] [SENSITIVE] Financial customer identifier
   totalEarnedCents: integer('total_earned_cents').notNull().default(0), // Total earnings in cents
+  xeroEmployeeId: varchar('xero_employee_id', { length: 255 }), // Xero Payroll AU Employee ID for timesheet sync mapping
   // User preferences (JSONB for flexibility)
   notificationPreferences: jsonb('notification_preferences').$type<{
     newJobAlertsEmail?: boolean;
@@ -122,5 +123,6 @@ export const users = pgTable('users', {
   verificationStatusIdx: index('users_verification_status_idx').on(table.verificationStatus),
   topRatedBadgeIdx: index('users_top_rated_badge_idx').on(table.topRatedBadge),
   averageRatingIdx: index('users_average_rating_idx').on(table.averageRating),
+  xeroEmployeeIdIdx: index('users_xero_employee_id_idx').on(table.xeroEmployeeId),
 }));
 

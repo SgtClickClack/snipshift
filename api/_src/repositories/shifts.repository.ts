@@ -1023,6 +1023,28 @@ export async function hasEmployerAssigneeRelationship(employerId: string, assign
 }
 
 /**
+ * Get unique staff (assignee) IDs who have worked shifts for an employer.
+ * Used for Xero employee mapping - only staff who have worked for this venue can be mapped.
+ */
+export async function getStaffIdsForEmployer(employerId: string): Promise<string[]> {
+  const db = getDb();
+  if (!db) return [];
+
+  const result = await db
+    .selectDistinct({ assigneeId: shifts.assigneeId })
+    .from(shifts)
+    .where(
+      and(
+        eq(shifts.employerId, employerId),
+        isNull(shifts.deletedAt),
+        sql`${shifts.assigneeId} IS NOT NULL`
+      )
+    );
+
+  return result.map((r) => r.assigneeId as string).filter(Boolean);
+}
+
+/**
  * Get shifts created by a specific employer
  */
 export async function getShiftsByEmployer(employerId: string, status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion'): Promise<typeof shifts.$inferSelect[]> {

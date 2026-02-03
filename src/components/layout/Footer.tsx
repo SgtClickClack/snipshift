@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { PartnerTrustBar } from '@/components/landing/PartnerTrustBar';
+
 const logoUrl = '/hospogo-navbar-banner.png';
 
 export function Footer() {
@@ -89,8 +91,13 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
+        {/* Integrated With - Trust ribbon */}
         <div className="mt-8 pt-8 border-t border-border dark:border-steel-800">
+          <PartnerTrustBar variant="footer" className="pb-6" />
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="mt-0 pt-8 border-t border-border dark:border-steel-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground dark:text-steel-400">
               © {new Date().getFullYear()} HospoGo. All rights reserved.

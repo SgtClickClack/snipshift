@@ -1,3 +1,32 @@
+#### 2025-02-03: Trust Signals – Xero & Stripe Logo Usage & Branding
+
+**Core Components**
+- PartnerTrustBar (`src/components/landing/PartnerTrustBar.tsx`)
+- LandingPage hero and Trust Signals section (`src/pages/LandingPage.tsx`)
+- Footer Integrated With ribbon (`src/components/layout/Footer.tsx`)
+
+**Key Features**
+- Hero section: "Seamlessly integrates with Xero and Stripe." subheadline.
+- Trust Signals section: PartnerTrustBar with grayscale/muted logos in "Integrated with" ribbon.
+- Footer: "Integrated with" ribbon with Xero and Stripe logos (grayscale, tooltip on hover).
+- Compliance: "Works with Xero" / "Payments powered by Stripe" language; no formal partnership claims.
+- CTO note: Logos link to tooltips explaining usage (e.g., "Secure automated payroll sync", "PCI-compliant payment processing").
+
+**Integration Points**
+- Tooltip component for partner logo explanations
+- `public/logos/README.md` documents official asset sources (Xero Brand Gallery, Stripe Brand Resources)
+
+**File Paths**
+- `src/components/landing/PartnerTrustBar.tsx` (new)
+- `src/pages/LandingPage.tsx`
+- `src/components/layout/Footer.tsx`
+- `public/logos/README.md` (new)
+
+**Next Priority Task**
+- Download official Xero and Stripe logos from brand galleries; replace placeholder SVGs in `public/logos/`.
+
+---
+
 #### 2026-01-28: E2E Onboarding Suite – Production Comprehensive
 
 **Core Components**

@@ -26,6 +26,7 @@ import { payouts, generateSettlementId } from './schema/payouts.js';
 import { financialLedgerEntries, financialLedgerLineItems, ledgerEntryTypeEnum, ledgerLineItemTypeEnum } from './schema/financial-ledger.js';
 import { userPushTokens } from './schema/push-tokens.js';
 import { userCalendarTokens } from './schema/calendar-tokens.js';
+import { xeroIntegrations, xeroOauthState } from './schema/xero-integrations.js';
 import { failedEmails } from './schema/failed-emails.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
@@ -63,6 +64,8 @@ export {
   ledgerLineItemTypeEnum,
   userPushTokens,
   userCalendarTokens,
+  xeroIntegrations,
+  xeroOauthState,
   failedEmails
 };
 

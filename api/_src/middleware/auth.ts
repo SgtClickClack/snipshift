@@ -121,6 +121,28 @@ export function requireAdmin(
 }
 
 /**
+ * Business/Owner authorization middleware.
+ * Allows hub, business, venue, and admin roles (venue owners, business users).
+ * MUST be used after authenticateUser middleware
+ */
+export function requireBusinessOwner(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized: Authentication required' });
+    return;
+  }
+  const allowed = ['hub', 'business', 'venue', 'admin'] as const;
+  if (!allowed.includes(req.user.role as typeof allowed[number])) {
+    res.status(403).json({ message: 'Forbidden: Business or venue owner access required' });
+    return;
+  }
+  next();
+}
+
+/**
  * Super Admin authorization middleware (alias for requireAdmin)
  * For platform owner access - ensures only admin role can access
  * MUST be used after authenticateUser middleware

@@ -192,6 +192,7 @@ export async function createUser(
       stripeAccountId: null,
       stripeOnboardingComplete: false,
       stripeCustomerId: null,
+      xeroEmployeeId: null,
       notificationPreferences: null,
       favoriteProfessionals: [],
       createdAt: new Date(),
@@ -498,6 +499,23 @@ export async function internal_dangerouslyUpdateUser(
     .returning();
 
   return updatedUser ? normalizeUserRoles(updatedUser) : null;
+}
+
+/**
+ * Update xeroEmployeeId for a user (used by Xero employee mapping).
+ */
+export async function updateXeroEmployeeId(userId: string, xeroEmployeeId: string | null): Promise<typeof users.$inferSelect | null> {
+  return internal_dangerouslyUpdateUser(userId, { xeroEmployeeId });
+}
+
+/**
+ * Get user ID by xeroEmployeeId (for duplicate mapping validation).
+ */
+export async function getUserByXeroEmployeeId(xeroEmployeeId: string): Promise<typeof users.$inferSelect | null> {
+  const db = getDb();
+  if (!db) return null;
+  const [user] = await db.select().from(users).where(eq(users.xeroEmployeeId, xeroEmployeeId));
+  return user ? normalizeUserRoles(user) : null;
 }
 
 // Delete user function (for cleanup)

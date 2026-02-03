@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
+import XeroIntegrationCard from '@/components/settings/XeroIntegrationCard';
+import XeroEmployeeMapper from '@/components/settings/XeroEmployeeMapper';
 import { apiRequest } from '@/lib/queryClient';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams } from 'react-router-dom';
@@ -821,13 +823,17 @@ export default function SettingsPage() {
 
             {/* Business Settings Section */}
             {activeCategory === 'business' && isBusinessUser && (
-              <BusinessSettings
-                initialData={businessSettings}
-                onSave={() => {
-                  // Settings are saved to database via the component
-                  // User will be refreshed automatically
-                }}
-              />
+              <div className="space-y-6">
+                <XeroIntegrationCard />
+                <XeroEmployeeMapper />
+                <BusinessSettings
+                  initialData={businessSettings}
+                  onSave={() => {
+                    // Settings are saved to database via the component
+                    // User will be refreshed automatically
+                  }}
+                />
+              </div>
             )}
 
             {/* Verification Section */}
