@@ -443,11 +443,21 @@ router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (
       return;
     }
 
-    // Valid Firebase token but user not yet in DB (isNewUser) — return 200 with profile: null, needsOnboarding: true
+    // Valid Firebase token but user not yet in DB (isNewUser) — return explicit "unregistered" signal
+    if (req.user.isNewUser) {
+      process.stderr.write('[GET /api/me DEBUG] isNewUser — returning 200 with profile: null\n');
+      res.status(200).json({
+        profile: null,
+        isNewUser: true,
+      });
+      return;
+    }
+
+    // Valid Firebase token but user not yet in DB (needsOnboarding) — return 200 with profile: null
     // This prevents the frontend from seeing 401 and entering the refresh/retry loop during signup
     const userId = req.user.id;
-    if (req.user.isNewUser || req.user.needsOnboarding || !userId) {
-      process.stderr.write('[GET /api/me DEBUG] isNewUser/needsOnboarding — returning 200 with profile: null\n');
+    if (req.user.needsOnboarding || !userId) {
+      process.stderr.write('[GET /api/me DEBUG] needsOnboarding — returning 200 with profile: null\n');
       res.status(200).json({
         profile: null,
         needsOnboarding: true,

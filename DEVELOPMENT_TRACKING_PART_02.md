@@ -1,3 +1,35 @@
+#### 2026-02-03: Restore Signup Flow (New Firebase Users Unblocked)
+
+**Core Components**
+- `api/_src/middleware/auth.ts` (new-user passthrough after token verification)
+- `api/_src/routes/users.ts` (GET `/api/me` new-user response)
+- `src/contexts/AuthContext.tsx` (unregistered hydration + signup unlock)
+- `src/App.tsx` (signup route guard removal + loader bypass)
+
+**Key Features**
+- Verified Firebase users without DB profiles now reach API routes with `isNewUser` instead of 401.
+- `GET /api/me` returns `{ profile: null, isNewUser: true }` for new users to unblock signup UI.
+- AuthContext treats `profile: null` as unregistered, sets local user state, and unlocks navigation immediately.
+- Signup route renders without profile-based guards and bypasses the global LoadingScreen.
+
+**Integration Points**
+- Auth middleware ↔ `/api/me` handshake for Firebase-only sessions.
+- Signup route and navigation lock behavior in App shell.
+
+**File Paths**
+- `api/_src/middleware/auth.ts`
+- `api/_src/routes/users.ts`
+- `src/contexts/AuthContext.tsx`
+- `src/App.tsx`
+
+**Next Priority Task**
+- Validate Firebase signup end-to-end (auth → `/signup` → onboarding creation) in dev.
+
+**Code Organization & Quality**
+- Kept changes localized to auth middleware, `/api/me`, and signup routing.
+
+---
+
 #### 2025-02-03: Final Investor Demo Readiness - UI/UX Polish and E2E Stability
 
 **Core Components**

@@ -526,21 +526,18 @@ export function authenticateUser(
         }
 
         // CRITICAL: If user NOT found in DB, do NOT return 401. Set req.user with isNewUser and call next().
-        // This allows /api/me to return 200 with needsOnboarding, preventing the frontend 401 refresh loop.
+        // This allows requests to reach the API instead of dying at the gate.
         if (!user) {
           if (isMeEndpoint) {
             process.stderr.write(`[AUTH DEBUG] GET /api/me: user not in DB — setting isNewUser, no 401\n`);
-            req.user = {
-              firebaseUid,
-              email: email || '',
-              uid: firebaseUid,
-              isNewUser: true,
-            };
-            next();
-            return;
           }
-          // Non-/api/me endpoints still require a DB user
-          res.status(401).json({ message: 'Unauthorized: User not found in database' });
+          req.user = {
+            firebaseUid: decodedToken.uid ?? firebaseUid,
+            email: email || '',
+            uid: firebaseUid,
+            isNewUser: true,
+          };
+          next();
           return;
         }
 

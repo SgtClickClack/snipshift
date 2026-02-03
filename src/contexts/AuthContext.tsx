@@ -7,15 +7,17 @@ import { logger } from '@/lib/logger';
 import { cleanupPushNotifications } from '@/lib/push-notifications';
 
 export interface User {
-  id: string;
+  id?: string;
   email: string;
   uid?: string;
+  firebaseUid?: string;
   roles?: string[];
   currentRole?: string | null;
   isOnboarded?: boolean;
   hasCompletedOnboarding?: boolean;
   /** True when Firebase auth succeeded but user not yet in DB — needs to complete signup/onboarding */
   isUnregistered?: boolean;
+  status?: string;
   [key: string]: unknown;
 }
 
@@ -77,13 +79,13 @@ async function fetchAppUser(
       });
 
       if (res.ok) {
-        const data = (await res.json()) as User & { status?: string; profile?: unknown; needsOnboarding?: boolean };
-        // 200 with profile: null or needsOnboarding = valid token, no DB profile yet — return partial unregistered user
-        if (data.profile === null || data.needsOnboarding === true || data.status === 'needs_onboarding' || data.id == null) {
+        const data = (await res.json()) as User & { status?: string; profile?: unknown; needsOnboarding?: boolean; isNewUser?: boolean };
+        // 200 with profile: null = valid token, no DB profile yet — return partial unregistered user
+        if (data.profile === null || data.isNewUser === true) {
           return {
-            id: '',
-            email: data.email ?? '',
-            uid: data.uid,
+            email: firebaseUser?.email ?? data.email ?? '',
+            firebaseUid: firebaseUser?.uid,
+            status: 'unregistered',
             isUnregistered: true,
             isOnboarded: false,
             hasCompletedOnboarding: false,
@@ -246,13 +248,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     if (apiUser) {
       // Unregistered: Firebase auth OK but no DB profile — set partial user, unlock navigation, stay on signup
-      if (apiUser.isUnregistered) {
+      if (apiUser.isUnregistered || apiUser.status === 'unregistered') {
         isOnboardingModeRef.current = true;
         setIsNavigationLocked(false);
         setUser({
-          ...apiUser,
-          uid: firebaseUser.uid,
+          firebaseUid: firebaseUser.uid,
           email: apiUser.email || firebaseUser.email || '',
+          status: 'unregistered',
         });
         return;
       }
@@ -461,6 +463,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                                    location.pathname === '/signup' ||
                                    location.pathname === '/role-selection';
     isOnboardingModeRef.current = isOnSignupOrOnboarding;
+    if (location.pathname === '/signup') {
+      setIsNavigationLocked(false);
+    }
     if (isOnSignupOrOnboarding) {
       console.log('[AuthContext] Pathname changed - onboarding/registration mode active', {
         pathname: location.pathname

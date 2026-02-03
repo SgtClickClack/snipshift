@@ -8,6 +8,22 @@
 
 ---
 
+### Update: 2026-02-03 - Signup Flow Unblocked for New Firebase Users
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Allowed verified Firebase users without DB profiles to pass auth middleware with `isNewUser` instead of 401.
+- `GET /api/me` now returns `{ profile: null, isNewUser: true }` to explicitly signal unregistered state.
+- AuthContext treats `profile: null` as unregistered, unlocks navigation, and bypasses signup loading blocks.
+- Signup route no longer depends on DB profile guards or global LoadingScreen gating.
+
+**Impact:**
+- New Firebase-authenticated users can reach `/signup` and proceed with onboarding without 401 deadlocks.
+- Frontend receives explicit "unregistered" state to drive registration UI.
+
+---
+
 ### Update: 2026-01-22 - Onboarding Interactivity + Profile Create Sync
 
 **Status:** ✅ **UPDATED**

@@ -134,7 +134,8 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 
   // Show full-page loader while auth is settling OR a redirect is in progress (prevents route flash)
   const showFullPageLoader = (isLoading || isRedirecting) && splashHandled && !isBridgeRoute;
-  if (showFullPageLoader) {
+  const shouldBypassLoading = location.pathname === '/signup';
+  if (showFullPageLoader && !shouldBypassLoading) {
     return <LoadingScreen />;
   }
 
@@ -182,11 +183,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </AuthGuard>
         } />
         
-        <Route path="/signup" element={
-          <AuthGuard>
-            <SignupPage />
-          </AuthGuard>
-        } />
+        <Route path="/signup" element={<SignupPage />} />
 
         <Route path="/forgot-password" element={
           <AuthGuard>
