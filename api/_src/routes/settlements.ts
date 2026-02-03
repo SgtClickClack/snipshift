@@ -32,7 +32,8 @@ const router = Router();
  * Auth: Requires authenticated venue owner
  */
 router.get('/export', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
@@ -47,7 +48,7 @@ router.get('/export', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   const [user] = await db
     .select()
     .from(users)
-    .where(eq(users.id, req.user.id))
+    .where(eq(users.id, userId))
     .limit(1);
 
   if (!user || user.role !== 'business') {
@@ -77,7 +78,7 @@ router.get('/export', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     endDate: parsedEndDate,
     status: status as 'pending' | 'processing' | 'completed' | 'failed' | undefined,
     settlementType: settlementType as 'immediate' | 'batch' | undefined,
-    venueId: req.user.id,
+    venueId: userId,
   });
 
   // Return CSV format if requested
@@ -223,7 +224,8 @@ router.get('/:settlementId', authenticateUser, asyncHandler(async (req: Authenti
  * - entryType: specific entry type to filter (optional)
  */
 router.get('/ledger/export', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
@@ -238,7 +240,7 @@ router.get('/ledger/export', authenticateUser, asyncHandler(async (req: Authenti
   const [user] = await db
     .select()
     .from(users)
-    .where(eq(users.id, req.user.id))
+    .where(eq(users.id, userId))
     .limit(1);
 
   if (!user || user.role !== 'business') {

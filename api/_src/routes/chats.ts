@@ -29,9 +29,9 @@ router.get('/user/:userId', authenticateUser, requireSelfParam('userId'), asyncH
     const participantRoles: Record<string, string> = {};
 
     // Add current user
-    if (currentUser) {
-      participantNames[currentUser.id] = currentUser.name;
-      participantRoles[currentUser.id] = currentUser.role;
+    if (currentUser?.id) {
+      participantNames[currentUser.id] = currentUser.name ?? '';
+      participantRoles[currentUser.id] = currentUser.role ?? 'user';
     }
 
     // Add other participant

@@ -50,7 +50,8 @@ router.post(
   authenticateUser,
   verifyApprovedWaitlist,
   asyncHandler(async (req: AuthenticatedRequest, res) => {
-    if (!req.user) {
+    const userId = req.user?.id;
+    if (!req.user || !userId) {
       res.status(401).json({ message: 'Unauthorized' });
       return;
     }
@@ -100,7 +101,7 @@ router.post(
     }
 
     // Check if venue already exists for this user
-    const existingVenue = await venuesRepo.getVenueByUserId(req.user.id);
+    const existingVenue = await venuesRepo.getVenueByUserId(userId);
     
     if (existingVenue) {
       // Update existing venue
@@ -137,7 +138,7 @@ router.post(
 
     // Create new venue profile
     const newVenue = await venuesRepo.createVenue({
-      userId: req.user.id,
+      userId,
       waitlistId: waitlistEntry.id,
       venueName,
       address: address as VenueAddress,
@@ -155,13 +156,13 @@ router.post(
 
     // Update user role to 'business' and ensure isOnboarded is true.
     // DB only receives canonical roles; venue/hub/brand map to 'business'.
-    const currentUser = await usersRepo.getUserById(req.user.id);
+    const currentUser = await usersRepo.getUserById(userId);
     if (currentUser) {
       const existingRoles = currentUser.roles || [];
       const rolesToStore = Array.from(new Set([...existingRoles, 'business']));
       // NOTE: Onboarding is allowed to elevate roles and flip isOnboarded,
       // so we intentionally use the internal_dangerouslyUpdateUser helper.
-      await usersRepo.internal_dangerouslyUpdateUser(req.user.id, {
+      await usersRepo.internal_dangerouslyUpdateUser(userId, {
         role: 'business',
         roles: rolesToStore,
         isOnboarded: true,

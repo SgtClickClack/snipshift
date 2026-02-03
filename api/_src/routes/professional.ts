@@ -242,12 +242,11 @@ router.get('/jobs', asyncHandler(async (req, res) => {
  * Returns: Array of application objects with job details
  */
 router.get('/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
-
-  const userId = req.user.id;
   
   // Parse and map status query parameter
   // UI uses "confirmed" but database uses "accepted"

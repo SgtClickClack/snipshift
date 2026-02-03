@@ -16,12 +16,12 @@ const router = Router();
 
 // Get applications (as applicant or employer)
 router.get('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
-  const userId = req.user.id;
   const role = req.user.role; // 'professional', 'business', 'hub', etc.
   const { status } = req.query;
   

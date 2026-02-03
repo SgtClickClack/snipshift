@@ -444,7 +444,8 @@ router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (
     }
 
     // Valid Firebase token but user not yet in DB (new signup) — return 200 with needs_onboarding
-    if (req.user.needsOnboarding || !req.user.id) {
+    const userId = req.user.id;
+    if (req.user.needsOnboarding || !userId) {
       process.stderr.write('[GET /api/me DEBUG] needsOnboarding — returning 200 with status\n');
       res.status(200).json({
         id: null,
@@ -461,16 +462,16 @@ router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (
     }
 
     // Fetch latest user data from DB to ensure we have bio, phone, etc.
-    const user = await usersRepo.getUserById(req.user.id);
-    process.stderr.write(`[GET /api/me DEBUG] getUserById(${req.user.id}) => ${user ? `found email=${user.email}` : 'null (404)'}\n`);
+    const user = await usersRepo.getUserById(userId);
+    process.stderr.write(`[GET /api/me DEBUG] getUserById(${userId}) => ${user ? `found email=${user.email}` : 'null (404)'}\n`);
 
     if (!user) {
-       process.stderr.write(`[GET /api/me DEBUG] returning 404 User not found id=${req.user.id}\n`);
+       process.stderr.write(`[GET /api/me DEBUG] returning 404 User not found id=${userId}\n`);
        res.status(404).json({ message: 'User not found' });
        return;
     }
 
-    const profileCompliance = await profilesRepo.getProfileCompliance(req.user.id);
+    const profileCompliance = await profilesRepo.getProfileCompliance(userId);
 
     // Map DB user to frontend User shape
     res.status(200).json({
@@ -522,12 +523,13 @@ router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (
  * Includes: verificationStatus, completedShiftCount, noShowCount, topRatedBadge, etc.
  */
 router.get('/me/verification-status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
-  const status = await proVerificationService.getProVerificationStatus(req.user.id);
+  const status = await proVerificationService.getProVerificationStatus(userId);
   
   if (!status) {
     res.status(404).json({ message: 'Verification status not found' });
@@ -544,12 +546,13 @@ router.get('/me/verification-status', authenticateUser, asyncHandler(async (req:
  * Returns eligibility status and reasons
  */
 router.get('/me/can-work-alcohol-shifts', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
-  const result = await proVerificationService.canWorkAlcoholServiceShift(req.user.id);
+  const result = await proVerificationService.canWorkAlcoholServiceShift(userId);
   res.status(200).json(result);
 }));
 
@@ -564,13 +567,14 @@ router.get('/me/can-work-alcohol-shifts', authenticateUser, asyncHandler(async (
  * - VEVO work rights verification completed (and not expired)
  */
 router.get('/me/productivity-ready', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
   const productivityReadyService = await import('../services/productivity-ready.service.js');
-  const result = await productivityReadyService.checkProductivityReady(req.user.id);
+  const result = await productivityReadyService.checkProductivityReady(userId);
   res.status(200).json(result);
 }));
 
@@ -586,7 +590,8 @@ router.get('/me/productivity-ready', authenticateUser, asyncHandler(async (req: 
  * - vevoExpiryDate: string (ISO date, optional - null for citizens/permanent residents)
  */
 router.post('/me/vevo-verification', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
@@ -607,7 +612,7 @@ router.post('/me/vevo-verification', authenticateUser, asyncHandler(async (req: 
 
   const productivityReadyService = await import('../services/productivity-ready.service.js');
   const result = await productivityReadyService.completeVevoVerification({
-    userId: req.user.id,
+    userId,
     vevoReferenceNumber,
     vevoCheckType,
     vevoExpiryDate: vevoExpiryDate ? new Date(vevoExpiryDate) : null,
@@ -630,13 +635,14 @@ router.post('/me/vevo-verification', authenticateUser, asyncHandler(async (req: 
  * Check if user can work for enterprise venues (requires Productivity Ready flag)
  */
 router.get('/me/can-work-enterprise', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
   const productivityReadyService = await import('../services/productivity-ready.service.js');
-  const result = await productivityReadyService.canWorkForEnterprise(req.user.id);
+  const result = await productivityReadyService.canWorkForEnterprise(userId);
   res.status(200).json(result);
 }));
 
@@ -721,13 +727,14 @@ router.get('/professionals', authenticateUser, asyncHandler(async (req: Authenti
 
 // Create user profile (explicit onboarding handshake)
 router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
 
   console.log('[POST /api/users] Profile creation request:', {
-    userId: req.user.id,
+    userId,
     firebaseUid: req.user.uid,
     email: req.user.email,
     hasBody: !!req.body,
@@ -749,14 +756,14 @@ router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     console.error('[POST /api/users] UID mismatch:', {
       requestUid: firebase_uid,
       verifiedUid: req.user.uid,
-      userId: req.user.id,
+      userId,
     });
     res.status(403).json({ message: 'Forbidden: Firebase UID mismatch' });
     return;
   }
 
   console.log('[POST /api/users] Updating profile for verified user:', {
-    userId: req.user.id,
+    userId,
     firebaseUid: req.user.uid,
     displayName,
     hasPhone: !!phone,
@@ -770,11 +777,11 @@ router.post('/users', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   if (location !== undefined) updates.location = location;
   if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
 
-  // Note: req.user.id comes from the database (created by auth middleware if needed)
+  // Note: userId comes from the database (created by auth middleware if needed)
   // All fields (phone, location, avatarUrl) are nullable in the schema, so partial updates are safe
-  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  const updatedUser = await usersRepo.updateUser(userId, updates);
   if (!updatedUser) {
-    console.error('[POST /api/users] Failed to update user:', req.user.id);
+    console.error('[POST /api/users] Failed to update user:', userId);
     res.status(500).json({ message: 'Failed to create profile' });
     return;
   }
@@ -848,7 +855,8 @@ router.patch('/users/:id/pay-rate', authenticateUser, asyncHandler(async (req: A
 
 // Update current user profile
 router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
@@ -858,7 +866,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   
   // Log incoming request for debugging
   console.log('[PUT /api/me] Update request:', {
-    userId: req.user.id,
+    userId,
     hasFiles: !!files,
     fileFields: files ? Object.keys(files) : [],
     hasAvatarUrl: !!req.body.avatarUrl,
@@ -1120,11 +1128,11 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
   // Update user in database
   let updatedUser;
   try {
-    updatedUser = await usersRepo.updateUser(req.user.id, updates);
+    updatedUser = await usersRepo.updateUser(userId, updates);
   } catch (dbError: any) {
     // Detailed error logging for database write failures
     console.error('[PUT /api/me] Database write failed:', {
-      userId: req.user.id,
+      userId,
       error: dbError?.message || dbError,
       errorCode: dbError?.code,
       errorName: dbError?.name,
@@ -1162,7 +1170,7 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
 
   if (!updatedUser) {
     console.error('[PUT /api/me] User not found after update attempt:', {
-      userId: req.user.id,
+      userId,
       updates: Object.keys(updates)
     });
     res.status(404).json({ message: 'User not found' });
@@ -1190,13 +1198,13 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
       profileUpdates.id_document_url = processedGovernmentIdUrl;
     }
     if (Object.keys(profileUpdates).length > 0) {
-      await profilesRepo.upsertProfileCompliance(req.user.id, profileUpdates);
+      await profilesRepo.upsertProfileCompliance(userId, profileUpdates);
     }
   } catch (error) {
     console.warn('[PUT /api/me] Failed to upsert profile compliance fields:', error);
   }
 
-  const profileCompliance = await profilesRepo.getProfileCompliance(req.user.id);
+  const profileCompliance = await profilesRepo.getProfileCompliance(userId);
 
   console.log('[PUT /api/me] Update successful:', {
     userId: updatedUser.id,
@@ -1251,7 +1259,8 @@ router.put('/me', authenticateUser, uploadProfileImages, asyncHandler(async (req
 
 // Update user settings (notification preferences, favorites, etc.)
 router.patch('/settings', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
-  if (!req.user) {
+  const userId = req.user?.id;
+  if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
@@ -1293,7 +1302,7 @@ router.patch('/settings', authenticateUser, asyncHandler(async (req: Authenticat
   }
 
   // Update user in database
-  const updatedUser = await usersRepo.updateUser(req.user.id, updates);
+  const updatedUser = await usersRepo.updateUser(userId, updates);
 
   if (!updatedUser) {
     res.status(404).json({ message: 'User not found' });
@@ -1316,6 +1325,12 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
+  const userId = req.user.id;
+  if (!userId) {
+    console.warn('[POST /onboarding/complete] User ID missing');
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
 
   // Validate request body
   const validationResult = OnboardingCompleteSchema.safeParse(req.body);
@@ -1332,7 +1347,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
   const dbRole = normalizeRole(role);
 
   // Fetch current user to get existing roles
-  const currentUser = await usersRepo.getUserById(req.user.id);
+  const currentUser = await usersRepo.getUserById(userId);
   const existingRoles = currentUser?.roles || [];
 
   // DB stores only normalized roles (business/professional for aliases)
@@ -1368,7 +1383,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
         const [existingVenue] = await tx
           .select()
           .from(venues)
-          .where(eq(venues.userId, req.user!.id))
+          .where(eq(venues.userId, userId))
           .limit(1);
 
         if (existingVenue) {
@@ -1383,7 +1398,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
             .where(eq(venues.id, existingVenue.id));
         } else {
           await createVenueInTransaction(tx, {
-            userId: req.user!.id,
+            userId,
             venueName: displayName,
             address: venueAddress,
             operatingHours: defaultOperatingHours,
@@ -1404,7 +1419,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
             ...(avatarUrl !== undefined && { avatarUrl }),
             updatedAt: new Date(),
           })
-          .where(eq(users.id, req.user!.id))
+          .where(eq(users.id, userId))
           .returning();
 
         return user || null;
@@ -1426,7 +1441,7 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
       isOnboarded: true,
     };
     if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
-    updatedUser = await usersRepo.internal_dangerouslyUpdateUser(req.user.id, updates);
+    updatedUser = await usersRepo.internal_dangerouslyUpdateUser(userId, updates);
   }
 
   if (!updatedUser) {
