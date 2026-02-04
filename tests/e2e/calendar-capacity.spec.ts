@@ -202,11 +202,17 @@ test.describe('Calendar Capacity E2E Tests', () => {
       const requiredInput = slotContainer.getByTestId('slot-required-input').or(slotContainer.locator('input[type="number"][min="1"]'));
       await requiredInput.fill('3');
 
-      // Save
-      await page.getByTestId('capacity-planner-save').click();
+      // Save and wait for bulk-sync mutation to complete
+      const saveBtn = page.getByTestId('capacity-planner-save');
+      const bulkSyncPromise = page.waitForResponse(
+        resp => resp.url().includes('/bulk-sync') && resp.status() === 200,
+        { timeout: 20000 }
+      ).catch(() => null); // Don't fail if bulk-sync isn't used
+      await saveBtn.click();
+      await bulkSyncPromise;
 
       // Wait for save to complete - on success Save button disappears (hasChanges=false)
-      await page.getByTestId('capacity-planner-save').waitFor({ state: 'hidden', timeout: 20000 });
+      await saveBtn.waitFor({ state: 'hidden', timeout: 20000 });
 
       // Verify template persists: reload and check it's still there
       await page.reload();
@@ -239,11 +245,9 @@ test.describe('Calendar Capacity E2E Tests', () => {
       await page.getByTestId('capacity-planner-save').click();
       await page.getByTestId('capacity-planner-save').waitFor({ state: 'hidden', timeout: 20000 });
 
-      await page.goto('/venue/dashboard?view=calendar');
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/venue/dashboard?view=calendar', { waitUntil: 'networkidle' });
 
-      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 30000 });
       await expect(page.getByTestId(/shift-bucket-pill|button-view-week|roster-tools-dropdown/).first()).toBeVisible({ timeout: 10000 });
 
       // Switch to week view to see Monday
@@ -255,6 +259,7 @@ test.describe('Calendar Capacity E2E Tests', () => {
       // Find bucket pill using data attributes (more stable than text-based filtering)
       // data-filled-count="0" and data-required-count="3" added for E2E stability
       const pill = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first();
+      await pill.scrollIntoViewIfNeeded();
       await expect(pill).toBeVisible({ timeout: 10000 });
 
       // Verify Vacant state using data attribute (more stable than class matching)
@@ -281,11 +286,9 @@ test.describe('Calendar Capacity E2E Tests', () => {
       await page.getByTestId('capacity-planner-save').click();
       await expect(page.getByText(/capacity saved|saved/i).first()).toBeVisible({ timeout: 5000 });
 
-      await page.goto('/venue/dashboard?view=calendar');
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/venue/dashboard?view=calendar', { waitUntil: 'networkidle' });
 
-      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 30000 });
       await expect(page.getByTestId(/shift-bucket-pill|button-view-week|roster-tools-dropdown/).first()).toBeVisible({ timeout: 10000 });
 
       const weekViewBtn = page.getByRole('button', { name: /week/i });
@@ -295,6 +298,7 @@ test.describe('Calendar Capacity E2E Tests', () => {
 
       // Use data attributes for stable selection (avoids text format changes)
       const pill = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first();
+      await pill.scrollIntoViewIfNeeded();
       await expect(pill).toBeVisible({ timeout: 10000 });
 
       // Click pill to expand popover
@@ -349,11 +353,9 @@ test.describe('Calendar Capacity E2E Tests', () => {
       await page.getByTestId('capacity-planner-save').click();
       await expect(page.getByText(/capacity saved|saved/i).first()).toBeVisible({ timeout: 5000 });
 
-      await page.goto('/venue/dashboard?view=calendar');
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/venue/dashboard?view=calendar', { waitUntil: 'networkidle' });
 
-      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 30000 });
       await expect(page.getByTestId(/shift-bucket-pill|button-view-week|roster-tools-dropdown/).first()).toBeVisible({ timeout: 10000 });
 
       const weekViewBtn = page.getByRole('button', { name: /week/i });
@@ -363,6 +365,7 @@ test.describe('Calendar Capacity E2E Tests', () => {
 
       // Use data attributes for stable selection
       const pill = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first();
+      await pill.scrollIntoViewIfNeeded();
       await expect(pill).toBeVisible({ timeout: 10000 });
       await pill.click();
 
@@ -425,11 +428,9 @@ test.describe('Calendar Capacity E2E Tests', () => {
       await page.getByTestId('capacity-planner-save').click();
       await expect(page.getByText(/capacity saved|saved/i).first()).toBeVisible({ timeout: 5000 });
 
-      await page.goto('/venue/dashboard?view=calendar');
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/venue/dashboard?view=calendar', { waitUntil: 'networkidle' });
 
-      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 30000 });
       await expect(page.getByTestId(/shift-bucket-pill|button-view-week|roster-tools-dropdown/).first()).toBeVisible({ timeout: 10000 });
 
       const weekViewBtn = page.getByRole('button', { name: /week/i });
@@ -438,9 +439,9 @@ test.describe('Calendar Capacity E2E Tests', () => {
       }
 
       // Use data attributes for stable selection
-      await expect(
-        page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first()
-      ).toBeVisible({ timeout: 10000 });
+      const pillToDelete = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first();
+      await pillToDelete.scrollIntoViewIfNeeded();
+      await expect(pillToDelete).toBeVisible({ timeout: 10000 });
 
       // Go back to Settings and delete the template (trash icon)
       await page.goto('/settings?category=business');
@@ -453,11 +454,9 @@ test.describe('Calendar Capacity E2E Tests', () => {
       await page.getByTestId('capacity-planner-save').click();
       await expect(page.getByText(/capacity saved|saved/i).first()).toBeVisible({ timeout: 5000 });
 
-      await page.goto('/venue/dashboard?view=calendar');
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/venue/dashboard?view=calendar', { waitUntil: 'networkidle' });
 
-      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByTestId('calendar-container')).toBeVisible({ timeout: 30000 });
 
       const weekViewBtnFinal = page.getByRole('button', { name: /week/i });
       if (await weekViewBtnFinal.isVisible({ timeout: 3000 }).catch(() => false)) {

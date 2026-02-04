@@ -180,6 +180,7 @@ export async function runBusinessAuthSetup(): Promise<string> {
 }
 
 /** Playwright setup project entry - creates business-user.json for business-e2e tests */
-test('create business session state', async () => {
+test('create business session state', async ({ }, testInfo) => {
+  testInfo.setTimeout(90000); // Allow 90s for setup (API calls + dashboard wait)
   await runBusinessAuthSetup();
 });

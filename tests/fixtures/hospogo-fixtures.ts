@@ -1,7 +1,6 @@
 import { test as base, expect, type Page, type BrowserContext } from '@playwright/test';
 import { setupUserContext } from '../e2e/seed_data';
-import { E2E_VENUE_OWNER } from '../e2e/e2e-business-fixtures';
-import { E2E_PROFESSIONAL } from '../e2e/auth-professional.setup';
+import { E2E_VENUE_OWNER, E2E_PROFESSIONAL } from '../e2e/e2e-business-fixtures';
 
 /**
  * HospoGo Custom Playwright Fixtures

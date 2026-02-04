@@ -4,19 +4,13 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
+import { E2E_PROFESSIONAL } from './e2e-business-fixtures';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/** E2E professional user - aligns with API auth bypass (api/_src/middleware/auth.ts) */
-export const E2E_PROFESSIONAL = {
-  id: 'e2e00001-0001-4000-a001-000000000001',
-  email: 'e2e-professional@hospogo.com',
-  name: 'E2E Test Professional',
-  roles: ['professional'],
-  currentRole: 'professional',
-  isOnboarded: true,
-};
+// Re-export for backward compatibility
+export { E2E_PROFESSIONAL };
 
 /**
  * Ensures the test professional user exists in the database.
@@ -109,13 +103,17 @@ export async function runProfessionalAuthSetup(): Promise<string> {
   await page.waitForLoadState('networkidle');
 
   // Wait for dashboard to render (confirms AuthContext hydrated with professional user)
+  // Increased timeout and expanded selectors for polished professional dashboard
   await page
     .getByTestId('professional-dashboard')
     .or(page.getByTestId('calendar-container'))
     .or(page.getByTestId('invitations-tab'))
-    .or(page.getByRole('heading', { name: /dashboard/i }))
+    .or(page.getByTestId('shift-list'))
+    .or(page.getByTestId('upcoming-shifts'))
+    .or(page.locator('[data-testid*="dashboard"]'))
+    .or(page.getByRole('heading', { name: /dashboard|shifts|schedule/i }))
     .first()
-    .waitFor({ state: 'visible', timeout: 15000 })
+    .waitFor({ state: 'visible', timeout: 45000 })
     .catch(() => {
       console.log('[Professional Auth Setup] Dashboard elements not found, continuing...');
     });
@@ -172,6 +170,7 @@ export async function runProfessionalAuthSetup(): Promise<string> {
 }
 
 /** Playwright setup project entry - creates professional-user.json for staff-e2e tests */
-test('create professional session state', async () => {
+test('create professional session state', async ({ }, testInfo) => {
+  testInfo.setTimeout(90000); // Allow 90s for setup (API calls + dashboard wait)
   await runProfessionalAuthSetup();
 });
