@@ -297,6 +297,49 @@ export async function markAsConverted(
 }
 
 /**
+ * Get waitlist entries for a worker (basic entry info, no shift details)
+ * Used when full shift/venue details are fetched separately
+ */
+export async function getWaitlistEntriesByWorker(
+  workerId: string
+): Promise<Array<{
+  id: string;
+  shiftId: string;
+  rank: number;
+  status: string;
+  createdAt: Date | null;
+}>> {
+  const db = getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const entries = await db
+      .select({
+        id: shiftWaitlist.id,
+        shiftId: shiftWaitlist.shiftId,
+        rank: shiftWaitlist.rank,
+        status: shiftWaitlist.status,
+        createdAt: shiftWaitlist.createdAt,
+      })
+      .from(shiftWaitlist)
+      .where(
+        and(
+          eq(shiftWaitlist.workerId, workerId),
+          eq(shiftWaitlist.status, 'active')
+        )
+      )
+      .orderBy(asc(shiftWaitlist.rank));
+
+    return entries;
+  } catch (error) {
+    console.error('[SHIFT_WAITLIST REPO] Error getting waitlist entries by worker:', error);
+    return [];
+  }
+}
+
+/**
  * Get all waitlisted shifts for a worker
  */
 export async function getWaitlistedShiftsForWorker(

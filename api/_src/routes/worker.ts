@@ -328,7 +328,7 @@ router.get('/waitlisted-shifts', authenticateUser, asyncHandler(async (req: Auth
 
     // Get full shift details for each waitlist entry
     const shiftsWithDetails = await Promise.all(
-      waitlistedEntries.map(async (entry) => {
+      waitlistedEntries.map(async (entry: { id: string; shiftId: string; rank: number; status: string; createdAt: Date | null }) => {
         const shift = await shiftsRepo.getShiftById(entry.shiftId);
         if (!shift) return null;
 
@@ -338,7 +338,7 @@ router.get('/waitlisted-shifts', authenticateUser, asyncHandler(async (req: Auth
         return {
           waitlistEntry: {
             id: entry.id,
-            position: entry.position,
+            position: entry.rank,
             joinedAt: entry.createdAt?.toISOString() || new Date().toISOString(),
             status: entry.status || 'active',
           },
@@ -362,7 +362,12 @@ router.get('/waitlisted-shifts', authenticateUser, asyncHandler(async (req: Auth
     );
 
     // Filter out null entries (shifts that no longer exist)
-    const validShifts = shiftsWithDetails.filter((s): s is NonNullable<typeof s> => s !== null);
+    type WaitlistedShiftItem = {
+      waitlistEntry: { id: string; position: number; joinedAt: string; status: string };
+      shift: { id: string; title: string; description: string; startTime: string; endTime: string; hourlyRate: string; location: string | null; status: string };
+      venue: { id: string; name: string | null; avatarUrl: string | null } | null;
+    };
+    const validShifts = shiftsWithDetails.filter((s: WaitlistedShiftItem | null): s is WaitlistedShiftItem => s !== null);
 
     res.status(200).json({
       shifts: validShifts,
