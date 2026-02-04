@@ -44,7 +44,9 @@ import {
   CheckCircle2,
   Calendar,
   MapPin,
-  Loader2
+  Loader2,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
@@ -238,8 +240,40 @@ export default function InvestorPortal() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showRSVPModal, setShowRSVPModal] = useState(false);
   const [rsvpSuccess, setRsvpSuccess] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const { toast } = useToast();
   const { user, hasUser } = useAuth();
+  
+  // Handle feedback submission
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackMessage.trim()) return;
+    
+    setFeedbackSubmitting(true);
+    try {
+      // Store feedback locally (in production, send to API)
+      const feedbackData = {
+        type: 'investor-portal',
+        message: feedbackMessage.trim(),
+        page: '/investorportal',
+        timestamp: new Date().toISOString(),
+        userId: user?.id,
+      };
+      const existing = JSON.parse(localStorage.getItem('user-feedback') || '[]');
+      existing.push(feedbackData);
+      localStorage.setItem('user-feedback', JSON.stringify(existing));
+      
+      toast({ title: 'Feedback Sent', description: 'Thank you for your input.' });
+      setFeedbackMessage('');
+      setShowFeedbackModal(false);
+    } catch {
+      toast({ title: 'Error', description: 'Failed to send feedback.', variant: 'destructive' });
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
   
   // RSVP Mutation
   const rsvpMutation = useMutation({
@@ -642,9 +676,18 @@ export default function InvestorPortal() {
             <span className="text-2xl font-black tracking-tighter italic">
               HOSPO<span style={{ color: '#BAFF39' }}>GO</span>
             </span>
-            <p className="text-xs text-gray-600 text-center md:text-left">
-              © 2026 HospoGo Pty Ltd. All rights reserved. This document is confidential and intended for authorized investors only.
-            </p>
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+              <button
+                onClick={() => setShowFeedbackModal(true)}
+                className="text-xs text-gray-500 hover:text-[#BAFF39] transition-colors flex items-center gap-2 uppercase tracking-widest font-medium"
+              >
+                <MessageSquare size={14} />
+                Send Feedback
+              </button>
+              <p className="text-xs text-gray-600 text-center md:text-left">
+                © 2026 HospoGo Pty Ltd. All rights reserved.
+              </p>
+            </div>
           </div>
         </footer>
 
@@ -811,6 +854,65 @@ export default function InvestorPortal() {
                 }
               }
             `}</style>
+          </div>
+        )}
+
+        {/* Feedback Modal - Minimal glassmorphism style */}
+        {showFeedbackModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+            <div 
+              className="relative w-full max-w-md bg-[#0d0d0d] border border-white/10 rounded-[32px] shadow-2xl overflow-hidden"
+              style={{ animation: 'modalSlideIn 0.3s ease-out' }}
+            >
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-[#BAFF39]" />
+                    Send Feedback
+                  </h3>
+                  <button 
+                    onClick={() => setShowFeedbackModal(false)}
+                    className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                    aria-label="Close feedback"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleFeedbackSubmit}>
+                  <textarea
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                    placeholder="Share your thoughts on the investor portal..."
+                    rows={4}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#BAFF39]/50 transition-colors resize-none mb-4"
+                  />
+                  
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowFeedbackModal(false)}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={feedbackSubmitting || !feedbackMessage.trim()}
+                      className="bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90 rounded-full px-6 font-bold text-xs uppercase tracking-widest"
+                    >
+                      {feedbackSubmitting ? 'Sending...' : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Send
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         )}
       </div>

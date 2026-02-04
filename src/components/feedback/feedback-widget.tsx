@@ -1,4 +1,5 @@
-﻿import { useState } from "react";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MessageSquare, X, Send } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
+
+/** Routes where the floating FAB should be hidden (e.g., pages with their own chat widget) */
+const HIDDEN_FAB_ROUTES = ['/investorportal', '/investor-portal'];
 
 interface FeedbackData {
   type: string;
@@ -25,6 +29,12 @@ export function FeedbackWidget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const location = useLocation();
+  
+  // Hide floating FAB on specific routes (they have their own feedback integration)
+  const shouldHideFAB = HIDDEN_FAB_ROUTES.some(route => 
+    location.pathname.toLowerCase().startsWith(route)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,15 +89,17 @@ export function FeedbackWidget() {
 
   return (
     <>
-      {/* Floating feedback button - Adjust position on mobile to avoid overlapping form buttons */}
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-floating rounded-full h-12 w-12 p-0 shadow-lg"
-        data-testid="button-open-feedback"
-      >
-        <MessageSquare className="h-5 w-5" />
-        <span className="sr-only">Send Feedback</span>
-      </Button>
+      {/* Floating feedback button - Hidden on pages with dedicated chat widgets */}
+      {!shouldHideFAB && (
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-floating rounded-full h-12 w-12 p-0 shadow-lg"
+          data-testid="button-open-feedback"
+        >
+          <MessageSquare className="h-5 w-5" />
+          <span className="sr-only">Send Feedback</span>
+        </Button>
+      )}
 
       {/* Feedback modal */}
       {isOpen && (
