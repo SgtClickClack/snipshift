@@ -246,6 +246,37 @@ export default function InvestorPortal() {
   const { toast } = useToast();
   const { user, hasFirebaseUser } = useAuth();
   
+  // SESSION-LOCKED AUTH STATE: Once we detect the user is authenticated, 
+  // "lock in" that state for the session to prevent button flicker during token refresh
+  const [isSessionAuthenticated, setIsSessionAuthenticated] = useState(() => {
+    // Check sessionStorage on mount
+    return sessionStorage.getItem('investor-portal-auth') === 'true';
+  });
+  
+  // Lock in authenticated state when Firebase confirms user
+  useEffect(() => {
+    if (hasFirebaseUser && !isSessionAuthenticated) {
+      sessionStorage.setItem('investor-portal-auth', 'true');
+      setIsSessionAuthenticated(true);
+    }
+  }, [hasFirebaseUser, isSessionAuthenticated]);
+  
+  // Clear session auth on explicit logout (when hasFirebaseUser becomes false after being true)
+  // But ONLY if we've been authenticated for more than 2 seconds (prevents token refresh flicker)
+  const authTimestampRef = React.useRef<number | null>(null);
+  useEffect(() => {
+    if (hasFirebaseUser) {
+      authTimestampRef.current = Date.now();
+    } else if (authTimestampRef.current && Date.now() - authTimestampRef.current > 5000) {
+      // User was authenticated for >5 seconds and now isn't - likely a real logout
+      sessionStorage.removeItem('investor-portal-auth');
+      setIsSessionAuthenticated(false);
+    }
+  }, [hasFirebaseUser]);
+  
+  // Show dashboard button if either live auth or session-locked auth is true
+  const showDashboardButton = hasFirebaseUser || isSessionAuthenticated;
+  
   // Handle feedback submission
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,9 +513,9 @@ export default function InvestorPortal() {
         )}
 
         {/* Back to Dashboard - Floating button for logged-in users with brand neon glow */}
-        {/* Uses hasFirebaseUser for faster auth resolution - no waiting for full profile load */}
+        {/* Uses session-locked auth state to prevent flicker during Firebase token refresh */}
         {/* Z-Index: 60 - Floats above content, below modals (z-100+) */}
-        {hasFirebaseUser && (
+        {showDashboardButton && (
           <Link
             to={getDashboardPath()}
             className="fixed bottom-6 left-6 z-60 flex items-center gap-2 px-5 py-3 rounded-full bg-black/80 backdrop-blur-md border-2 border-[#BAFF39]/40 text-white text-xs font-bold uppercase tracking-widest hover:bg-black hover:border-[#BAFF39] transition-all duration-300 shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:shadow-[0_0_30px_rgba(186,255,57,0.5)] group"
