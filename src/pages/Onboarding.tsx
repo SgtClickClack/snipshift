@@ -1086,6 +1086,7 @@ export default function Onboarding() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button 
                 type="button" 
+                data-testid="role-professional"
                 onClick={() => {
                   // Allow role selection if Firebase user is confirmed (hasFirebaseUser)
                   // Don't require user.id since profile will be created during onboarding
@@ -1113,6 +1114,7 @@ export default function Onboarding() {
               </button>
               <button 
                 type="button" 
+                data-testid="role-business"
                 onClick={() => {
                   // Allow role selection if Firebase user is confirmed (hasFirebaseUser)
                   // Don't require user.id since profile will be created during onboarding

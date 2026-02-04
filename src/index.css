@@ -17,23 +17,26 @@
     /* Slightly blue-shifted charcoal to better match the baked-in background of /brand-wordmark.png */
     --navbar: 214 23% 10%; /* #141A20 */
     --navbar-foreground: 0 0% 100%; /* #FFFFFF */
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    /* HospoGo dark-first: popovers match card surfaces */
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 98%;
     /* Primary: Brand Neon (#BAFF39) */
     --primary: 81 100% 61%;
     --primary-foreground: 210 21% 5%;
     /* Secondary: Deep Charcoal surfaces */
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    /* Accent: White (#FFFFFF) */
-    --accent: 0 0% 100%;
-    --accent-foreground: 0 0% 10%;
+    /* HospoGo dark-first: muted surfaces are dark charcoal */
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    /* HospoGo dark-first: accent surfaces use dark charcoal */
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
+    /* HospoGo dark-first: borders and inputs use dark tones */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
     --ring: 81 100% 61%;
     --radius: 0.5rem;
     --error: 0 75% 45%;

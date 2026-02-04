@@ -485,6 +485,10 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           <Navigate to="/venue/dashboard" replace />
         } />
 
+        <Route path="/hub-dashboard" element={
+          <Navigate to="/venue/dashboard" replace />
+        } />
+
         {/* Branded dashboard paths (keep underlying pages stable) */}
         <Route path="/venue/dashboard" element={
           <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>

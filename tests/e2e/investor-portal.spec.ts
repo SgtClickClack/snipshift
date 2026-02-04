@@ -5,9 +5,12 @@
  * - Navigation and RSVP functionality
  * - Data Room document access
  * - Brand-accurate Electric Lime (#BAFF39) styling
+ * - Authenticated Persistence (Neutral Zone behavior)
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, BrowserContext, Browser } from '@playwright/test';
+import { setupUserContext } from './seed_data';
+import { E2E_VENUE_OWNER } from './e2e-business-fixtures';
 
 /** Brand-accurate Electric Lime color */
 const BRAND_ELECTRIC_LIME = '#BAFF39';
@@ -288,6 +291,205 @@ test.describe('Investor Portal E2E Tests', () => {
       await expect(page.getByText('40%')).toBeVisible();
       await expect(page.getByText('35%')).toBeVisible();
       await expect(page.getByText('25%')).toBeVisible();
+    });
+  });
+
+  /**
+   * Authenticated Persistence Tests (Neutral Zone)
+   * 
+   * The Investor Portal is a "Neutral Zone" - authenticated users should
+   * remain on this page and NOT be redirected to their dashboard.
+   * This is critical for investors who are also business owners to view
+   * the portal without being bounced to the app dashboard.
+   */
+  test.describe('Authenticated Persistence (Neutral Zone)', () => {
+    let browser: Browser;
+    let authenticatedContext: BrowserContext;
+    let authenticatedPage: Page;
+
+    test.beforeAll(async ({ browser: b }) => {
+      browser = b;
+    });
+
+    test.beforeEach(async () => {
+      // Create authenticated context with business user
+      authenticatedContext = await browser.newContext({
+        baseURL: 'http://localhost:3000',
+        viewport: { width: 1440, height: 900 },
+      });
+
+      await setupUserContext(authenticatedContext, E2E_VENUE_OWNER);
+      authenticatedPage = await authenticatedContext.newPage();
+
+      // Setup API auth bypass
+      await authenticatedPage.route('**/api/**', async (route) => {
+        const headers = { ...route.request().headers() };
+        if (!headers['authorization']?.startsWith('Bearer mock-test-')) {
+          headers['authorization'] = 'Bearer mock-test-token';
+        }
+        await route.continue({ headers });
+      });
+    });
+
+    test.afterEach(async () => {
+      await authenticatedPage?.close();
+      await authenticatedContext?.close();
+    });
+
+    test('Authenticated Business user stays on /investorportal (no redirect to dashboard)', async () => {
+      test.setTimeout(60000);
+
+      // Navigate to investor portal while authenticated
+      await authenticatedPage.goto('/investorportal', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await authenticatedPage.waitForLoadState('networkidle');
+
+      // Wait for potential redirects to settle
+      await authenticatedPage.waitForTimeout(2000);
+
+      // ============================================
+      // CRITICAL ASSERTION: URL should still be /investorportal
+      // ============================================
+      const currentUrl = authenticatedPage.url();
+      expect(currentUrl).toContain('/investorportal');
+      expect(currentUrl).not.toContain('/dashboard');
+      expect(currentUrl).not.toContain('/venue/dashboard');
+
+      // Verify the investor portal content is visible (not dashboard content)
+      const heroTitle = authenticatedPage.locator('h1');
+      await expect(heroTitle).toBeVisible({ timeout: 10000 });
+      await expect(heroTitle).toContainText(/logistics/i);
+
+      // Verify dashboard elements are NOT present
+      const dashboardElements = authenticatedPage.getByTestId('venue-dashboard')
+        .or(authenticatedPage.getByTestId('calendar-container'))
+        .or(authenticatedPage.getByTestId('roster-tools-dropdown'));
+      
+      await expect(dashboardElements).not.toBeVisible({ timeout: 3000 });
+    });
+
+    test('Authenticated user can access Data Room documents without redirect', async () => {
+      test.setTimeout(60000);
+
+      await authenticatedPage.goto('/investorportal', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await authenticatedPage.waitForLoadState('networkidle');
+
+      // Scroll to Data Room
+      await authenticatedPage.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+      await authenticatedPage.waitForTimeout(500);
+
+      // ============================================
+      // ASSERTION: Data Room documents are accessible
+      // ============================================
+      const whitepaperCard = authenticatedPage.getByTestId('doc-card-whitepaper')
+        .or(authenticatedPage.locator('text=Technical White Paper').locator('..').locator('..'));
+      
+      await expect(whitepaperCard.first()).toBeVisible({ timeout: 10000 });
+
+      // Click to open document
+      await whitepaperCard.first().click();
+
+      // Verify modal opens (not a redirect)
+      const modal = authenticatedPage.locator('[role="dialog"]')
+        .or(authenticatedPage.locator('.fixed.inset-0'));
+      await expect(modal.first()).toBeVisible({ timeout: 5000 });
+
+      // Verify content is displayed
+      await expect(modal.first()).toContainText(/technical white paper/i);
+
+      // Close modal
+      await authenticatedPage.keyboard.press('Escape');
+      await authenticatedPage.waitForTimeout(300);
+
+      // ============================================
+      // ASSERTION: Still on investor portal after closing modal
+      // ============================================
+      expect(authenticatedPage.url()).toContain('/investorportal');
+    });
+
+    test('Authenticated user can submit RSVP without redirect', async () => {
+      test.setTimeout(60000);
+
+      await authenticatedPage.goto('/investorportal', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await authenticatedPage.waitForLoadState('networkidle');
+
+      // Find and click RSVP button
+      const rsvpButton = authenticatedPage.getByRole('button', { name: /rsvp briefing/i });
+      await expect(rsvpButton).toBeVisible({ timeout: 10000 });
+      await rsvpButton.click();
+
+      // Verify toast appears
+      const toast = authenticatedPage.getByRole('status')
+        .or(authenticatedPage.locator('[data-testid="toast"]'));
+      await expect(toast.filter({ hasText: /rsvp confirmed/i }).first()).toBeVisible({ timeout: 5000 });
+
+      // Wait for any potential redirects
+      await authenticatedPage.waitForTimeout(2000);
+
+      // ============================================
+      // ASSERTION: Still on investor portal after RSVP
+      // ============================================
+      expect(authenticatedPage.url()).toContain('/investorportal');
+    });
+
+    test('Authenticated user can navigate all portal sections without redirect', async () => {
+      test.setTimeout(90000);
+
+      await authenticatedPage.goto('/investorportal', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await authenticatedPage.waitForLoadState('networkidle');
+
+      // Navigate to Trinity section
+      const trinityLink = authenticatedPage.locator('nav a', { hasText: /trinity/i });
+      if (await trinityLink.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await trinityLink.click();
+        await authenticatedPage.waitForTimeout(500);
+        expect(authenticatedPage.url()).toContain('/investorportal');
+      }
+
+      // Navigate to Vault/Data Room section
+      const vaultLink = authenticatedPage.locator('nav a', { hasText: /vault|data room/i });
+      if (await vaultLink.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await vaultLink.click();
+        await authenticatedPage.waitForTimeout(500);
+        expect(authenticatedPage.url()).toContain('/investorportal');
+      }
+
+      // Navigate to Investment section
+      const investmentLink = authenticatedPage.locator('nav a', { hasText: /investment|ask/i });
+      if (await investmentLink.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await investmentLink.click();
+        await authenticatedPage.waitForTimeout(500);
+        expect(authenticatedPage.url()).toContain('/investorportal');
+      }
+
+      // ============================================
+      // FINAL ASSERTION: Remained on portal throughout
+      // ============================================
+      expect(authenticatedPage.url()).toContain('/investorportal');
+    });
+
+    test('Direct navigation from dashboard to investor portal works', async () => {
+      test.setTimeout(60000);
+
+      // First, navigate to dashboard (authenticated)
+      await authenticatedPage.goto('/venue/dashboard', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await authenticatedPage.waitForLoadState('networkidle');
+
+      // Then navigate to investor portal
+      await authenticatedPage.goto('/investorportal', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await authenticatedPage.waitForLoadState('networkidle');
+
+      // Wait for potential redirects
+      await authenticatedPage.waitForTimeout(2000);
+
+      // ============================================
+      // ASSERTION: Successfully on investor portal
+      // ============================================
+      expect(authenticatedPage.url()).toContain('/investorportal');
+
+      // Verify portal content is displayed
+      const heroTitle = authenticatedPage.locator('h1');
+      await expect(heroTitle).toBeVisible({ timeout: 10000 });
+      await expect(heroTitle).toContainText(/logistics/i);
     });
   });
 });

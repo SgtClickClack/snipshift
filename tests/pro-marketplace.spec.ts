@@ -473,7 +473,7 @@ test('Hospo Staff Onboarding: Complete profile, apply for shifts, clock in with 
   const termsCheckbox = page.getByTestId('checkbox-terms');
   await termsCheckbox.check();
   
-  const signupButton = page.getByTestId('button-signup');
+  const signupButton = page.getByTestId('button-signup-submit');
   await expect(signupButton).toBeEnabled({ timeout: 5000 });
   await page.waitForTimeout(300);
 

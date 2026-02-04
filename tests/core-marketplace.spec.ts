@@ -496,7 +496,7 @@ test('Venue Manager Journey: Post shift, receive application, approve, and compl
   await termsCheckbox.check();
   
   // Wait for signup button to be enabled and stable
-  const signupButton = page.getByTestId('button-signup');
+  const signupButton = page.getByTestId('button-signup-submit');
   await expect(signupButton).toBeEnabled({ timeout: 5000 });
   await page.waitForTimeout(300); // Small delay to ensure form state is stable
 
@@ -705,10 +705,27 @@ test('Venue Manager Journey: Post shift, receive application, approve, and compl
       body: JSON.stringify({ success: true, role: 'business' }) 
     }));
     
-    // 2. Select the Venue role - try testid first, fallback to text selector
+    // 2. Wait for role selection UI to be ready (loader to disappear, buttons to appear)
+    // The loader shows when: !hasFirebaseUser && (isLoading || state !== 'ROLE_SELECTION')
+    // Wait for either role-business testid OR the text to appear
     const venueButtonTestId = page.locator('[data-testid="role-business"]');
-    const venueButtonText = page.getByText(/I need to fill shifts|Venue/i);
+    const venueButtonText = page.getByText(/I need to fill shifts/i);
     
+    // Wait for role selection to be visible with increased timeout
+    try {
+      await Promise.race([
+        venueButtonTestId.waitFor({ state: 'visible', timeout: 15000 }),
+        venueButtonText.first().waitFor({ state: 'visible', timeout: 15000 })
+      ]);
+    } catch (e) {
+      console.log('Role selection buttons not visible after 15s, taking diagnostic screenshot...');
+      await page.screenshot({ path: 'role-selection-timeout.png' });
+      // Check if we're still showing a loader
+      const hasLoader = await page.locator('.animate-spin').isVisible().catch(() => false);
+      console.log(`Loader visible: ${hasLoader}`);
+    }
+    
+    // 3. Select the Venue role - try testid first, fallback to text selector
     if (await venueButtonTestId.isVisible({ timeout: 2000 }).catch(() => false)) {
       await venueButtonTestId.click();
     } else {
@@ -1528,7 +1545,7 @@ test('Venue Manager Journey: Post shift, receive application, approve, and compl
   await termsCheckbox2.check();
   
   // Wait for signup button to be enabled and stable
-  const signupButton2 = page.getByTestId('button-signup');
+  const signupButton2 = page.getByTestId('button-signup-submit');
   await expect(signupButton2).toBeEnabled({ timeout: 5000 });
   await page.waitForTimeout(300); // Small delay to ensure form state is stable
   

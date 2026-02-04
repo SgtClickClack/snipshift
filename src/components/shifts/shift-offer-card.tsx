@@ -30,76 +30,78 @@ export function ShiftOfferCard({
   const estimatedTotalPay = durationHours * hourlyRate;
 
   return (
-    <Card className="border-2 border-teal-500/30 hover:border-teal-500/50 transition-colors">
+    <Card className="border-2 border-[#BAFF39]/30 hover:border-[#BAFF39]/50 transition-colors">
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
           {/* Business Logo */}
           <div className="flex-shrink-0">
             {offer.businessLogo ? (
-              <OptimizedImage
+                <OptimizedImage
                 src={offer.businessLogo}
                 alt={offer.businessName}
                 fallbackType="image"
-                className="w-16 h-16 rounded-lg object-cover border-2 border-teal-200"
+                className="w-16 h-16 rounded-lg object-cover border-2 border-[#BAFF39]/40"
                 containerClassName="rounded-lg"
               />
             ) : (
-              <div className="w-16 h-16 rounded-lg bg-teal-100 flex items-center justify-center border-2 border-teal-200">
-                <Building2 className="w-8 h-8 text-teal-600" />
+              <div className="w-16 h-16 rounded-lg bg-[#BAFF39]/10 flex items-center justify-center border-2 border-[#BAFF39]/40">
+                <Building2 className="w-8 h-8 text-[#BAFF39]" />
               </div>
             )}
           </div>
 
           {/* Business Name and Title */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-foreground mb-1">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 truncate">
               {offer.businessName}
             </h3>
-            <h4 className="text-xl font-bold text-foreground mb-2">
+            <h4 className="text-lg sm:text-xl font-bold text-foreground mb-2 line-clamp-2">
               {offer.title}
             </h4>
-            <Badge variant="outline" className="border-teal-500 text-teal-700">
+            <Badge variant="outline" className="border-[#BAFF39] text-[#BAFF39]">
               Job Request
             </Badge>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Date and Time */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span className="font-medium">
-            {format(startTime, "EEEE, MMMM d, yyyy")}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span>
-            {format(startTime, "h:mm a")} - {format(endTime, "h:mm a")}
-          </span>
-          <span className="text-muted-foreground/70">
-            ({durationHours.toFixed(1)} hours)
-          </span>
+      <CardContent className="space-y-3 sm:space-y-4">
+        {/* Date and Time - Grid layout for mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium truncate">
+              {format(startTime, "EEE, MMM d, yyyy")}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="w-4 h-4 flex-shrink-0 sm:hidden" />
+            <span className="truncate">
+              {format(startTime, "h:mm a")} - {format(endTime, "h:mm a")}
+            </span>
+            <span className="text-muted-foreground/70 text-xs whitespace-nowrap">
+              ({durationHours.toFixed(1)}h)
+            </span>
+          </div>
         </div>
 
         {/* Location */}
         {offer.location && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{offer.location}</span>
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{offer.location}</span>
           </div>
         )}
 
-        {/* Pay Information */}
-        <div className="flex items-baseline justify-between pt-2 border-t">
-          <div>
-            <div className="text-sm text-muted-foreground">Hourly Rate</div>
-            <div className="text-lg font-semibold">${hourlyRate.toFixed(2)}/hr</div>
+        {/* Pay Information - Stack on mobile, side-by-side on desktop */}
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-3 pt-3 border-t">
+          <div className="flex items-baseline justify-between sm:block">
+            <div className="text-xs sm:text-sm text-muted-foreground">Hourly Rate</div>
+            <div className="text-base sm:text-lg font-semibold">${hourlyRate.toFixed(2)}/hr</div>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-muted-foreground">Estimated Total Pay</div>
-            <div className="text-3xl font-bold text-teal-600">
+          <div className="flex items-baseline justify-between sm:block sm:text-right">
+            <div className="text-xs sm:text-sm text-muted-foreground">Total Pay</div>
+            <div className="text-2xl sm:text-3xl font-bold text-[#BAFF39]">
               ${estimatedTotalPay.toFixed(2)}
             </div>
           </div>
@@ -120,7 +122,8 @@ export function ShiftOfferCard({
             type="button"
             onClick={() => onAccept(offer.id)}
             disabled={isProcessing}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            variant="accent"
+            className="flex-1"
             data-testid="shift-offer-accept-button"
           >
             Accept Shift
@@ -130,7 +133,7 @@ export function ShiftOfferCard({
             onClick={() => onDecline(offer.id)}
             disabled={isProcessing}
             variant="outline"
-            className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+            className="flex-1 border-zinc-600 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
             data-testid="shift-offer-decline-button"
           >
             Decline

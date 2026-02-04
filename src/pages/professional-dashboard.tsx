@@ -51,25 +51,133 @@ const ViewLoader = () => (
 );
 
 const ProfessionalDashboardSkeleton = () => (
-  <div className="min-h-screen bg-background p-4 md:p-6">
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header skeleton */}
-      <div className="h-16 bg-muted animate-pulse rounded-lg" />
-      {/* Stats skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <div className="min-h-screen bg-background">
+    {/* Banner/Profile Header skeleton */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative h-32 md:h-40 bg-zinc-800/50 rounded-xl animate-pulse overflow-hidden">
+        <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end gap-4">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-zinc-700 animate-pulse" />
+          <div className="flex-1 space-y-2">
+            <div className="h-6 w-48 bg-zinc-700 rounded animate-pulse" />
+            <div className="h-4 w-32 bg-zinc-700/60 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Dashboard Header skeleton */}
+    <div className="bg-card/95 border-b-2 border-border/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-40 bg-zinc-800 rounded animate-pulse" />
+            <div className="h-4 w-56 bg-zinc-800/60 rounded animate-pulse" />
+          </div>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 w-24 bg-zinc-800 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+        {/* Tabs skeleton */}
+        <div className="flex gap-4 mt-4 overflow-x-auto pb-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-8 w-20 bg-zinc-800/60 rounded animate-pulse flex-shrink-0" />
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Stats skeleton - matches DashboardStatsSkeleton layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+          <div key={i} className="p-6 bg-card border border-border rounded-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 space-y-3">
+                <div className="h-4 w-24 bg-zinc-800 rounded animate-pulse" />
+                <div className="h-8 w-20 bg-zinc-800 rounded animate-pulse" />
+                <div className="h-3 w-32 bg-zinc-800/60 rounded animate-pulse" />
+              </div>
+              <div className="h-11 w-11 rounded-xl bg-zinc-800 animate-pulse" />
+            </div>
+          </div>
         ))}
       </div>
-      {/* Content skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="h-64 bg-muted animate-pulse rounded-lg" />
-          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+
+      {/* Job Requests / Invitations skeleton */}
+      <div className="mb-8 p-6 bg-card border border-border rounded-lg">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-6 w-32 bg-zinc-800 rounded animate-pulse" />
+          <div className="h-5 w-6 bg-[#BAFF39]/20 rounded-full animate-pulse" />
         </div>
-        <div className="space-y-4">
-          <div className="h-48 bg-muted animate-pulse rounded-lg" />
-          <div className="h-48 bg-muted animate-pulse rounded-lg" />
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="p-4 border border-[#BAFF39]/20 rounded-lg">
+              <div className="flex gap-4">
+                <div className="w-16 h-16 rounded-lg bg-zinc-800 animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-40 bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-4 w-32 bg-zinc-800/60 rounded animate-pulse" />
+                  <div className="flex gap-4">
+                    <div className="h-4 w-24 bg-zinc-800/40 rounded animate-pulse" />
+                    <div className="h-4 w-20 bg-zinc-800/40 rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="h-8 w-28 bg-[#BAFF39]/20 rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main content grid - Upcoming Shifts + Recommended */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Up Next / Upcoming Shifts skeleton */}
+        <div className="p-6 bg-card border border-border rounded-lg">
+          <div className="h-6 w-24 bg-zinc-800 rounded animate-pulse mb-4" />
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 border border-border rounded-lg">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 w-48 bg-zinc-800 rounded animate-pulse" />
+                    <div className="flex gap-3">
+                      <div className="h-4 w-20 bg-zinc-800/60 rounded animate-pulse" />
+                      <div className="h-4 w-16 bg-zinc-800/60 rounded animate-pulse" />
+                      <div className="h-4 w-24 bg-zinc-800/60 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-6 w-20 bg-zinc-800/40 rounded-full animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recommended for You skeleton */}
+        <div className="p-6 bg-card border border-border rounded-lg">
+          <div className="h-6 w-40 bg-zinc-800 rounded animate-pulse mb-4" />
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 border border-border rounded-lg">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 w-40 bg-zinc-800 rounded animate-pulse" />
+                    <div className="flex gap-3">
+                      <div className="h-4 w-16 bg-zinc-800/60 rounded animate-pulse" />
+                      <div className="h-4 w-24 bg-zinc-800/60 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <div className="h-6 w-16 bg-zinc-800 rounded animate-pulse" />
+                    <div className="h-3 w-12 bg-zinc-800/40 rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="h-9 w-full bg-[#BAFF39]/20 rounded-lg animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

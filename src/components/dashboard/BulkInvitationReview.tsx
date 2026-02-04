@@ -281,7 +281,7 @@ export function BulkInvitationReview() {
         </div>
 
         <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-sm font-medium text-green-600">
+          <div className="flex items-center gap-1 text-sm font-medium text-[#BAFF39]">
             <DollarSign className="h-4 w-4" />
             ${calculateEarnings(shift.hourlyRate, shift.startTime, shift.endTime)}
           </div>

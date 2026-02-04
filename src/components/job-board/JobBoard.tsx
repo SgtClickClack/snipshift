@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,61 +54,71 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, distance }: O
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <CardTitle className="text-lg mb-2">{shift.title}</CardTitle>
-            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+      <CardHeader className="pb-3 sm:pb-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base sm:text-lg mb-2 line-clamp-2">{shift.title}</CardTitle>
+            {/* Mobile-first grid layout for shift details */}
+            <div className="grid grid-cols-1 gap-1.5 text-sm text-muted-foreground">
+              {/* Date row */}
               {startTime && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formatDate(startTime)}</span>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{formatDate(startTime)}</span>
                 </div>
               )}
+              {/* Time row */}
               {startTime && endTime && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{formatTime(startTime)} - {formatTime(endTime)}</span>
-                  {hours && <span className="ml-1">({hours}h)</span>}
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{formatTime(startTime)} - {formatTime(endTime)}</span>
+                  {hours && <span className="text-xs whitespace-nowrap">({hours}h)</span>}
                 </div>
               )}
+              {/* Location row */}
               {shift.location && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{shift.location}</span>
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{shift.location}</span>
                   {distance !== undefined && (
-                    <span className="text-xs">({distance.toFixed(1)} mi)</span>
+                    <span className="text-xs whitespace-nowrap">({distance.toFixed(1)} mi)</span>
                   )}
                 </div>
               )}
             </div>
           </div>
-          <Badge variant={shift.autoAccept ? 'default' : 'secondary'} className="ml-2">
-            {shift.autoAccept ? 'Instant Accept' : 'Apply'}
+          <Badge 
+            variant={shift.autoAccept ? 'default' : 'secondary'} 
+            className={`shrink-0 self-start ${shift.autoAccept ? 'bg-[#BAFF39] text-black' : ''}`}
+          >
+            {shift.autoAccept ? 'Instant' : 'Apply'}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {shift.description && (
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+          <p className="text-sm text-muted-foreground mb-3 sm:mb-4 line-clamp-2">
             {shift.description}
           </p>
         )}
-        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-green-600" />
-            <span className="text-lg font-semibold">${hourlyRate.toFixed(2)}/hr</span>
+        {/* Pay and action - optimized for mobile */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-[#BAFF39]" />
+              <span className="text-lg font-semibold">${hourlyRate.toFixed(2)}/hr</span>
+            </div>
             {hours && (
-              <span className="text-sm text-muted-foreground">
-                (${(hourlyRate * parseFloat(hours)).toFixed(2)} total)
+              <span className="text-sm font-medium text-[#BAFF39]">
+                ${(hourlyRate * parseFloat(hours)).toFixed(0)} total
               </span>
             )}
           </div>
           <Button
             onClick={() => onApply(shift.id)}
             disabled={isApplying || hasApplied}
-            variant={hasApplied ? 'outline' : 'default'}
-            className="w-full sm:w-auto min-w-32 min-h-[44px]"
+            variant={hasApplied ? 'outline' : 'accent'}
+            className="w-full min-h-[44px]"
           >
             {isApplying ? (
               <>
