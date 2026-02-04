@@ -222,14 +222,19 @@ export default function LeadTracker() {
     });
   }, [leads, searchQuery, statusFilter]);
 
-  // Stats
+  // Stats with Projected ARR calculation
+  // INVESTOR BRIEFING: Shows Rick the financial impact of his sales pipeline
+  const MONTHLY_PLATFORM_FEE = 149; // $149/month Logistics Platform Fee per venue
   const stats = useMemo(() => {
     const total = leads.length;
     const active = leads.filter((l: Lead) => l.status === 'active').length;
     const onboarding = leads.filter((l: Lead) => l.status === 'onboarding').length;
     const leadCount = leads.filter((l: Lead) => l.status === 'lead').length;
     const conversionRate = total > 0 ? Math.round((active / total) * 100) : 0;
-    return { total, active, onboarding, lead: leadCount, conversionRate };
+    // Projected ARR: (Active + Onboarding) * $149 Platform Fee * 12 months
+    const projectedMRR = (active + onboarding) * MONTHLY_PLATFORM_FEE;
+    const projectedARR = projectedMRR * 12;
+    return { total, active, onboarding, lead: leadCount, conversionRate, projectedMRR, projectedARR };
   }, [leads]);
 
   // Add/Update lead mutation
@@ -740,6 +745,40 @@ export default function LeadTracker() {
           </div>
         </div>
 
+        {/* Live Revenue Engine - Projected ARR Banner */}
+        <Card className="bg-gradient-to-r from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.15)]">
+          <CardContent className="py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-2xl bg-[#BAFF39]/20">
+                  <Rocket className="h-8 w-8 text-[#BAFF39]" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold">Live Revenue Engine</p>
+                  <p className="text-4xl font-black text-[#BAFF39] tracking-tight">
+                    ${stats.projectedARR.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-zinc-400 mt-1">Projected ARR</p>
+                </div>
+              </div>
+              <div className="flex gap-6 text-center">
+                <div className="px-6 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                  <p className="text-2xl font-bold text-[#BAFF39]">${stats.projectedMRR.toLocaleString()}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">Monthly MRR</p>
+                </div>
+                <div className="px-6 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                  <p className="text-2xl font-bold text-white">{stats.active + stats.onboarding}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">Paying Venues</p>
+                </div>
+                <div className="px-6 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                  <p className="text-2xl font-bold text-amber-400">${MONTHLY_SUBSCRIPTION_PRICE}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">Per Venue</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="bg-zinc-900/80 border-zinc-800">
@@ -857,6 +896,7 @@ export default function LeadTracker() {
                       <TableHead className="text-zinc-400">Venue Name</TableHead>
                       <TableHead className="text-zinc-400">Contact Person</TableHead>
                       <TableHead className="text-zinc-400">Status</TableHead>
+                      <TableHead className="text-zinc-400">Projected ARR</TableHead>
                       <TableHead className="text-zinc-400">Last Contacted</TableHead>
                       <TableHead className="text-zinc-400">Notes</TableHead>
                       <TableHead className="text-zinc-400 text-right">Actions</TableHead>
@@ -897,6 +937,16 @@ export default function LeadTracker() {
                             >
                               {statusConfig.label}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {/* Projected ARR: $149 x 12 for active/onboarding, $0 for leads */}
+                            {lead.status === 'lead' ? (
+                              <span className="text-zinc-600">—</span>
+                            ) : (
+                              <span className={`font-semibold ${lead.status === 'active' ? 'text-[#BAFF39]' : 'text-blue-400'}`}>
+                                ${(MONTHLY_SUBSCRIPTION_PRICE * 12).toLocaleString()}
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="text-zinc-400">
                             <div className="flex items-center gap-2">

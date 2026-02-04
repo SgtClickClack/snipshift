@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronLeft, ChevronRight, Settings, Plus, Zap, DollarSign, Users, Star, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Settings, Plus, Zap, DollarSign, Users, Star, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { View } from "react-big-calendar";
 import { fetchRosterTotals } from "@/lib/api";
@@ -60,6 +60,55 @@ function formatCurrency(amount: number, currency: string): string {
   } catch {
     return `$${amount.toFixed(2)}`;
   }
+}
+
+// Xero Logo SVG Component
+const XeroLogo = ({ className = "h-4 w-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 14.379l-2.526-2.526 2.526-2.526a.75.75 0 10-1.06-1.06L14.308 10.79l-2.527-2.526a.75.75 0 00-1.06 1.06l2.526 2.527-2.526 2.526a.75.75 0 101.06 1.06l2.527-2.526 2.526 2.526a.75.75 0 101.06-1.06zM9.692 13.293l-2.526-2.526a.75.75 0 00-1.06 1.06l2.526 2.527-2.526 2.526a.75.75 0 101.06 1.06l2.526-2.526 2.526 2.526a.75.75 0 101.06-1.06l-2.526-2.526 2.526-2.527a.75.75 0 10-1.06-1.06l-2.526 2.526z" />
+  </svg>
+);
+
+/**
+ * SyncToXeroMenuItem - High visibility item to sync payroll to Xero
+ * Navigates to Settings > Business Settings where XeroSyncManager lives
+ */
+function SyncToXeroMenuItem({ isConnected }: { isConnected: boolean }) {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    // Navigate to Settings page with Integrations category pre-selected (Xero lives here)
+    navigate('/settings?category=integrations');
+  };
+  
+  return (
+    <DropdownMenuItem
+      onClick={handleClick}
+      data-testid="sync-to-xero-trigger"
+      className={cn(
+        "flex items-center gap-2",
+        isConnected 
+          ? "bg-[#BAFF39]/10 hover:bg-[#BAFF39]/20 text-[#BAFF39] border-l-2 border-[#BAFF39]" 
+          : ""
+      )}
+    >
+      {isConnected ? (
+        <XeroLogo className="h-4 w-4 shrink-0 text-[#BAFF39]" />
+      ) : (
+        <RefreshCw className="h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
+      <span className={isConnected ? "font-medium" : ""}>Sync to Xero Payroll</span>
+      {isConnected ? (
+        <span className="text-[10px] bg-[#BAFF39]/30 text-[#BAFF39] px-1.5 rounded font-bold shrink-0">
+          Connected
+        </span>
+      ) : (
+        <span className="text-[10px] bg-muted text-muted-foreground px-1.5 rounded font-medium shrink-0">
+          Setup
+        </span>
+      )}
+    </DropdownMenuItem>
+  );
 }
 
 /**
@@ -216,6 +265,9 @@ export function CalendarToolbar({
                       )}
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuSeparator />
+                  {/* Xero Sync - High visibility for investor demo */}
+                  <SyncToXeroMenuItem isConnected={isSyncedToXero} />
                   <DropdownMenuSeparator />
                   <ManageATeamMenuItem />
                 </DropdownMenuContent>

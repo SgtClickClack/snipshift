@@ -36,6 +36,8 @@ export const QUERY_KEYS = {
   
   // Integration-related queries
   XERO_STATUS: 'xero-status',
+  XERO_SYNC_LOGS: 'xero-sync-logs-recent',
+  XERO_PAYROLL_READINESS: 'xero-payroll-readiness',
 } as const;
 
 /**

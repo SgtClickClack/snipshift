@@ -240,11 +240,24 @@ export default function ProfessionalCalendar(props: ProfessionalCalendarProps) {
     ? isBusinessRole(user?.currentRole)
     : user?.currentRole === 'professional';
 
-  if (isRoleLoading || !hasValidRole) {
-    return null;
-  }
+  // HOOK ORDER FIX: Always render content component to maintain consistent hook counts
+  // across renders. The content component handles its own loading/validation states.
+  // This prevents React error #310 ("Rendered fewer hooks than expected") which occurs
+  // when conditional rendering causes different hook counts between renders.
+  return (
+    <ProfessionalCalendarContent 
+      {...props} 
+      _isRoleLoading={isRoleLoading}
+      _hasValidRole={hasValidRole}
+    />
+  );
+}
 
-  return <ProfessionalCalendarContent {...props} />;
+interface ProfessionalCalendarContentProps extends ProfessionalCalendarProps {
+  /** Internal: Whether role is still loading (passed from wrapper) */
+  _isRoleLoading?: boolean;
+  /** Internal: Whether user has valid role for this calendar mode (passed from wrapper) */
+  _hasValidRole?: boolean;
 }
 
 function ProfessionalCalendarContent({
@@ -253,7 +266,9 @@ function ProfessionalCalendarContent({
   onDateSelect,
   mode = 'professional',
   onCreateShift: _onCreateShift,
-}: ProfessionalCalendarProps) {
+  _isRoleLoading = false,
+  _hasValidRole = true,
+}: ProfessionalCalendarContentProps) {
   // Note: onCreateShift is available via _onCreateShift if needed
   // Log component mount/unmount for debugging reloads
   useEffect(() => {
@@ -1526,11 +1541,16 @@ function ProfessionalCalendarContent({
       });
 
       if (result.success) {
+        // INVESTOR BRIEFING: High-end feedback toast with specific counts
+        const invitedCount = result.invitationsSent || 0;
+        const slotsFilled = result.shiftsAssigned || result.shiftsCreated || 0;
         toast({
-          title: "A-Team Invited!",
-          description: result.message,
+          title: "🚀 A-Team Dispatched!",
+          description: invitedCount > 0 || slotsFilled > 0
+            ? `${invitedCount} invitation${invitedCount !== 1 ? 's' : ''} sent. ${slotsFilled} shift${slotsFilled !== 1 ? 's' : ''} are now Pending.`
+            : result.message || "Your A-Team has been notified.",
         });
-        // Refresh calendar data
+        // Refresh calendar data to show Amber (#F59E0B) status on buckets
         queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
         queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.VENUE_SHIFTS] });
@@ -2522,6 +2542,14 @@ function ProfessionalCalendarContent({
       professional: selectedProfessional,
     });
   };
+
+  // HOOK ORDER FIX: Role validation moved here (after all hooks) to prevent
+  // React error #310 ("Rendered fewer hooks than expected").
+  // Previously this was in the wrapper, but conditional rendering there caused
+  // inconsistent hook counts during auth state hydration.
+  if (_isRoleLoading || !_hasValidRole) {
+    return null;
+  }
 
   // Show loading skeleton while settings are being fetched
   if (isLoadingSettings && isBusinessRole(user?.currentRole || '')) {

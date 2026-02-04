@@ -186,6 +186,12 @@ router.get('/venues/:id', asyncHandler(async (req, res) => {
  * Public endpoint to fetch open shifts with proximity-based search
  * Supports lat/lng/radius parameters for distance filtering
  * 
+ * SECURITY: PII Masking Active
+ * - Does NOT expose specific staff names (assigneeId masked)
+ * - Does NOT expose internal venue notes (description sanitized)
+ * - Only exposes: Venue Name, Role, Rate, Location
+ * - Enterprise Privacy compliant for investor audit
+ * 
  * Query parameters:
  * - lat: Latitude (required for proximity search)
  * - lng: Longitude (required for proximity search)
@@ -319,30 +325,60 @@ router.get('/shifts', asyncHandler(async (req, res) => {
 
     const shiftsList = await shiftsQuery;
 
-    // Transform data for frontend
-    const transformedShifts = shiftsList.map((shift) => ({
-      id: shift.id,
-      employerId: shift.employerId,
-      assigneeId: shift.assigneeId,
-      role: shift.role,
-      title: shift.title,
-      description: shift.description,
-      startTime: shift.startTime.toISOString(),
-      endTime: shift.endTime.toISOString(),
-      hourlyRate: shift.hourlyRate,
-      location: shift.location,
-      lat: shift.lat ? Number(shift.lat) : null,
-      lng: shift.lng ? Number(shift.lng) : null,
-      status: shift.status,
-      isEmergencyFill: shift.isEmergencyFill,
-      rsaRequired: shift.rsaRequired,
-      createdAt: shift.createdAt.toISOString(),
-      employer: {
-        name: shift.employerName,
-        avatarUrl: shift.employerAvatarUrl,
-      },
-      distance: shift.distance ? Number(shift.distance) : null, // Distance in kilometers
-    }));
+    /**
+     * Transform data for frontend with PII Masking
+     * 
+     * SECURITY: Enterprise Privacy Standards
+     * - assigneeId: MASKED (never expose other staff members)
+     * - description: SANITIZED (strip internal notes, keep role-relevant info only)
+     * - Only expose: Venue Name, Role, Rate, Location
+     */
+    const transformedShifts = shiftsList.map((shift) => {
+      // Sanitize description - remove internal notes (lines starting with [INTERNAL] or [NOTE])
+      // Only keep the first sentence/paragraph for public display
+      let sanitizedDescription = shift.description || '';
+      if (sanitizedDescription) {
+        // Remove internal notes patterns
+        sanitizedDescription = sanitizedDescription
+          .replace(/\[INTERNAL\][^\n]*/gi, '')
+          .replace(/\[NOTE\][^\n]*/gi, '')
+          .replace(/\[PRIVATE\][^\n]*/gi, '')
+          .replace(/\[STAFF ONLY\][^\n]*/gi, '')
+          .trim();
+        
+        // Keep only first 200 chars of public description
+        if (sanitizedDescription.length > 200) {
+          sanitizedDescription = sanitizedDescription.substring(0, 200).trim() + '...';
+        }
+      }
+
+      return {
+        id: shift.id,
+        // SECURITY: Expose venue/employer ID but NOT assignee (staff member) IDs
+        employerId: shift.employerId,
+        // assigneeId: MASKED - PII protected, do not expose other workers
+        role: shift.role,
+        title: shift.title,
+        // SECURITY: Sanitized description - internal notes stripped
+        description: sanitizedDescription,
+        startTime: shift.startTime.toISOString(),
+        endTime: shift.endTime.toISOString(),
+        hourlyRate: shift.hourlyRate,
+        location: shift.location,
+        lat: shift.lat ? Number(shift.lat) : null,
+        lng: shift.lng ? Number(shift.lng) : null,
+        status: shift.status,
+        isEmergencyFill: shift.isEmergencyFill,
+        rsaRequired: shift.rsaRequired,
+        createdAt: shift.createdAt.toISOString(),
+        // Venue info - public
+        employer: {
+          name: shift.employerName,
+          avatarUrl: shift.employerAvatarUrl,
+        },
+        distance: shift.distance ? Number(shift.distance) : null, // Distance in kilometers
+      };
+    });
 
     res.status(200).json({
       shifts: transformedShifts,

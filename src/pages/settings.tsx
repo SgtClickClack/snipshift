@@ -23,7 +23,8 @@ import {
   Copy,
   Check,
   Loader2,
-  Star
+  Star,
+  Plug
 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
@@ -55,7 +56,7 @@ import {
 import { mapRoleToApiRole, getDashboardRoute, AppRole } from '@/lib/roles';
 import { getCalendarSyncUrl } from '@/lib/api';
 
-type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business' | 'a-team';
+type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'integrations' | 'a-team';
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
@@ -106,8 +107,11 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const category = searchParams.get('category');
-    const valid: SettingsCategory[] = ['account', 'security', 'notifications', 'verification', 'business'];
-    if (category && valid.includes(category as SettingsCategory)) {
+    const valid: SettingsCategory[] = ['account', 'security', 'notifications', 'verification', 'integrations', 'a-team'];
+    // Support both 'business' and 'integrations' URL params - map 'business' to 'integrations'
+    if (category === 'business') {
+      setActiveCategory('integrations');
+    } else if (category && valid.includes(category as SettingsCategory)) {
       setActiveCategory(category as SettingsCategory);
     }
   }, [searchParams]);
@@ -298,14 +302,14 @@ export default function SettingsPage() {
   });
   const favoritesCount = favoritesData?.length || 0;
 
-  const categories: Array<{ id: SettingsCategory; label: string; icon: typeof User; badge?: number }> = [
+  const categories: Array<{ id: SettingsCategory; label: string; icon: typeof User; badge?: number; highlight?: boolean }> = [
     { id: 'account', label: 'Account', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'verification', label: 'Verification', icon: Shield },
     ...(isBusinessUser ? [
       { id: 'a-team' as SettingsCategory, label: 'A-Team', icon: Star, badge: favoritesCount },
-      { id: 'business' as SettingsCategory, label: 'Business Settings', icon: Building2 },
+      { id: 'integrations' as SettingsCategory, label: 'Integrations', icon: Plug, highlight: true },
     ] : []),
   ];
 
@@ -330,28 +334,39 @@ export default function SettingsPage() {
                   {categories.map((category) => {
                     const Icon = category.icon;
                     const isATeam = category.id === 'a-team';
+                    const isIntegrations = category.id === 'integrations';
                     // Show neon border when A-Team has 0 favorites (setup required)
                     const needsSetup = isATeam && (category.badge === undefined || category.badge === 0);
                     return (
                       <button
                         key={category.id}
                         onClick={() => setActiveCategory(category.id)}
+                        data-testid={`settings-tab-${category.id}`}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-all ${
                           activeCategory === category.id
                             ? isATeam 
                               ? 'bg-yellow-500 text-white'
-                              : 'bg-primary text-primary-foreground'
+                              : isIntegrations
+                                ? 'bg-[#BAFF39] text-black'
+                                : 'bg-primary text-primary-foreground'
                             : isATeam
                               ? 'text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10'
-                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                              : isIntegrations
+                                ? 'text-[#BAFF39] hover:bg-[#BAFF39]/10 border border-[#BAFF39]/30'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                         } ${
                           needsSetup && activeCategory !== category.id
                             ? 'border-2 border-[#BAFF39] animate-pulse shadow-[0_0_8px_rgba(186,255,57,0.4)]'
                             : ''
                         }`}
                       >
-                        <Icon className={`h-5 w-5 ${isATeam ? (activeCategory === category.id ? 'fill-current' : 'fill-yellow-500/30') : ''}`} />
+                        <Icon className={`h-5 w-5 ${isATeam ? (activeCategory === category.id ? 'fill-current' : 'fill-yellow-500/30') : ''} ${isIntegrations && activeCategory !== category.id ? 'text-[#BAFF39]' : ''}`} />
                         <span className="flex-1 text-left">{category.label}</span>
+                        {isIntegrations && activeCategory !== category.id && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-[#BAFF39]/20 text-[#BAFF39] rounded font-bold">
+                            Xero
+                          </span>
+                        )}
                         {isATeam && needsSetup && activeCategory !== category.id && (
                           <span className="text-[10px] px-1.5 py-0.5 bg-[#BAFF39]/20 text-[#BAFF39] rounded font-bold animate-pulse">
                             Setup
@@ -912,8 +927,8 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Business Settings Section */}
-            {activeCategory === 'business' && isBusinessUser && (
+            {/* Integrations Section (formerly Business Settings) */}
+            {activeCategory === 'integrations' && isBusinessUser && (
               <div className="space-y-6">
                 <StaffPayRates />
                 <XeroIntegrationCard />

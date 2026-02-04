@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     question: "Are there any fees for staff?",
-    answer: "No. The Professional plan for staff is Free Forever. You keep 100% of your hourly rate. We charge venues a subscription or booking fee to keep the platform running."
+    answer: "No. The Professional plan for staff is Free Forever. You keep 100% of your hourly rate. We charge venues a Logistics Platform Fee to keep the platform running."
   }
 ];
 

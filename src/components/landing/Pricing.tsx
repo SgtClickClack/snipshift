@@ -39,7 +39,7 @@ export default function Pricing() {
       name: "Business",
       price: "$149",
       duration: "month",
-      description: "For venues that need a regular, reliable roster.",
+      description: "Full access to the Logistics Engine for reliable roster management.",
       features: [
         "**Unlimited Booking Fees waived**",
         "Smart-Fill Roster Technology",

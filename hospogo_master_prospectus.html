@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HospoGo Strategic Prospectus 2026</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root {
+      --brand-neon: #BAFF39;
+      --bg-dark: #0a0a0a;
+      --bg-card: rgba(255,255,255,0.03);
+      --text-primary: #ffffff;
+      --text-secondary: #9ca3af;
+      --border-subtle: rgba(255,255,255,0.08);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    /* Header */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    
+    .logo {
+      font-size: 28px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: -0.02em;
+    }
+    
+    .logo span {
+      color: var(--brand-neon);
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 120px 0;
+      text-align: center;
+      position: relative;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: var(--brand-neon);
+      border-radius: 50%;
+      filter: blur(200px);
+      opacity: 0.08;
+      pointer-events: none;
+    }
+    
+    .hero h1 {
+      font-size: clamp(48px, 10vw, 120px);
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: -0.05em;
+      line-height: 0.9;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+    
+    .hero h1 .highlight {
+      color: var(--brand-neon);
+    }
+    
+    .hero p {
+      font-size: 20px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 48px;
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-bottom: 80px;
+    }
+    
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 32px;
+      text-align: center;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--brand-neon);
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: 900;
+      font-style: italic;
+      color: var(--brand-neon);
+      margin-bottom: 8px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-secondary);
+    }
+    
+    /* Section */
+    section {
+      padding: 80px 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+    
+    section h2 {
+      font-size: 48px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    
+    section h2 .highlight {
+      color: var(--brand-neon);
+    }
+    
+    .section-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+      max-width: 600px;
+    }
+    
+    /* Problem Section - Logistics Gap */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    
+    .problem-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 32px;
+    }
+    
+    .problem-card.highlight-gap {
+      border-color: var(--brand-neon);
+      background: rgba(186, 255, 57, 0.03);
+    }
+    
+    .problem-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .problem-card h3 .icon {
+      color: var(--brand-neon);
+    }
+    
+    .problem-card p {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+    
+    /* AU Venues - Logistics Gap Card */
+    .au-venues-card {
+      background: linear-gradient(135deg, rgba(186,255,57,0.1), rgba(186,255,57,0.02));
+      border: 2px solid var(--brand-neon);
+      border-radius: 32px;
+      padding: 48px;
+      margin-top: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .au-venues-card::before {
+      content: 'LOGISTICS GAP';
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      color: var(--brand-neon);
+      background: rgba(0,0,0,0.5);
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+    
+    .au-venues-card h3 {
+      font-size: 32px;
+      font-weight: 900;
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+    
+    .au-venues-card .big-stat {
+      font-size: 72px;
+      font-weight: 900;
+      font-style: italic;
+      color: var(--brand-neon);
+      margin-bottom: 8px;
+    }
+    
+    .au-venues-card p {
+      color: var(--text-secondary);
+      font-size: 16px;
+      max-width: 500px;
+    }
+    
+    /* Trinity Architecture */
+    .trinity-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    
+    @media (max-width: 768px) {
+      .trinity-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .trinity-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 32px;
+      padding: 40px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    
+    .trinity-card:hover {
+      border-color: var(--brand-neon);
+      transform: translateY(-8px);
+    }
+    
+    .trinity-card .icon-wrap {
+      width: 64px;
+      height: 64px;
+      background: rgba(186,255,57,0.1);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      font-size: 28px;
+    }
+    
+    .trinity-card h3 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    
+    .trinity-card .subtitle {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--brand-neon);
+      margin-bottom: 16px;
+    }
+    
+    .trinity-card ul {
+      list-style: none;
+      color: var(--text-secondary);
+    }
+    
+    .trinity-card li {
+      padding: 8px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+    
+    .trinity-card li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--brand-neon);
+    }
+    
+    /* Revenue Model */
+    .revenue-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 32px;
+      padding: 48px;
+      margin-bottom: 32px;
+    }
+    
+    .revenue-highlight {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .revenue-highlight .price {
+      font-size: 64px;
+      font-weight: 900;
+      font-style: italic;
+      color: var(--brand-neon);
+    }
+    
+    .revenue-highlight .period {
+      font-size: 20px;
+      color: var(--text-secondary);
+    }
+    
+    .revenue-card .label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    
+    /* Investment Section */
+    .investment-section {
+      background: var(--brand-neon);
+      padding: 120px 0;
+      margin: 0 -24px;
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+    
+    .investment-section h2 {
+      color: #000;
+      font-size: 72px;
+    }
+    
+    .investment-section .section-subtitle {
+      color: rgba(0,0,0,0.7);
+    }
+    
+    .investment-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    
+    @media (max-width: 768px) {
+      .investment-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .investment-terms {
+      color: #000;
+    }
+    
+    .investment-terms .term-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .investment-terms .term-label {
+      font-weight: 600;
+    }
+    
+    .investment-terms .term-value {
+      font-weight: 900;
+      font-size: 20px;
+    }
+    
+    .allocation-card {
+      background: #000;
+      border-radius: 48px;
+      padding: 48px;
+    }
+    
+    .allocation-card h3 {
+      color: var(--brand-neon);
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 32px;
+    }
+    
+    .allocation-bar {
+      margin-bottom: 24px;
+    }
+    
+    .allocation-bar .bar-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .allocation-bar .bar-header .label {
+      color: var(--text-secondary);
+    }
+    
+    .allocation-bar .bar-header .value {
+      color: var(--brand-neon);
+    }
+    
+    .allocation-bar .bar-track {
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .allocation-bar .bar-fill {
+      height: 100%;
+      background: var(--brand-neon);
+      border-radius: 4px;
+    }
+    
+    /* Roadmap - Logistics Expansion */
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    
+    @media (max-width: 900px) {
+      .roadmap-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 500px) {
+      .roadmap-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .roadmap-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative;
+    }
+    
+    .roadmap-card.active {
+      border-color: var(--brand-neon);
+    }
+    
+    .roadmap-card .quarter {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--brand-neon);
+      margin-bottom: 12px;
+    }
+    
+    .roadmap-card h4 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .roadmap-card .licenses {
+      font-size: 28px;
+      font-weight: 900;
+      font-style: italic;
+      color: var(--brand-neon);
+    }
+    
+    .roadmap-card .licenses-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    /* Footer */
+    footer {
+      padding: 48px 0;
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    
+    footer p {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo">HOSPO<span>GO</span></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <h1>The <span class="highlight">Logistics</span> Engine</h1>
+        <p>Solving the workforce crisis for 94,000 Australian venues through an integrated, audited, and enterprise-ready SaaS ecosystem.</p>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">$168M</div>
+            <div class="stat-label">National TAM</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">$94,500</div>
+            <div class="stat-label">Audited R&D</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">$149</div>
+            <div class="stat-label">Platform Fee / Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">$10M</div>
+            <div class="stat-label">Seed Valuation</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem: The Logistics Gap -->
+    <section id="problem">
+      <div class="container">
+        <h2>The <span class="highlight">Logistics Gap</span></h2>
+        <p class="section-subtitle">78% of neighborhood venues operate with fragmented systems. No integrated solution exists—until HospoGo.</p>
+        
+        <div class="problem-grid">
+          <div class="problem-card">
+            <h3><span class="icon">📱</span> WhatsApp Scheduling</h3>
+            <p>Shift coordination via group chats. No audit trail. Lost messages. Compliance blind spots.</p>
+          </div>
+          <div class="problem-card">
+            <h3><span class="icon">📋</span> Paper Timesheets</h3>
+            <p>Manual entry into Xero. Hours of admin per week. Error-prone payroll.</p>
+          </div>
+          <div class="problem-card">
+            <h3><span class="icon">📂</span> Spreadsheet Compliance</h3>
+            <p>RSA/RCG tracking in Excel. Expired certificates go unnoticed. Fines and liability.</p>
+          </div>
+          <div class="problem-card highlight-gap">
+            <h3><span class="icon">🔗</span> No Integration</h3>
+            <p>Scheduling, compliance, and payroll as separate silos. The Logistics Void.</p>
+          </div>
+        </div>
+        
+        <!-- AU Venues - Logistics Gap Highlight -->
+        <div class="au-venues-card">
+          <h3>Australian Venue Opportunity</h3>
+          <div class="big-stat">94,000</div>
+          <p>Neighborhood cafes, bars, and restaurants underserved by enterprise logistics tools. Our primary TAM represents $168M in annual platform fees.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trinity Architecture -->
+    <section id="solution">
+      <div class="container">
+        <h2>The <span class="highlight">Trinity</span> Architecture</h2>
+        <p class="section-subtitle">Three integrated engines working in harmony to revolutionize hospitality workforce logistics.</p>
+        
+        <div class="trinity-grid">
+          <div class="trinity-card">
+            <div class="icon-wrap">🛡️</div>
+            <h3>The Vault</h3>
+            <div class="subtitle">Compliance Engine</div>
+            <ul>
+              <li>Automated RSA/RCG verification</li>
+              <li>Real-time expiry alerts</li>
+              <li>Licensing authority API sync</li>
+              <li>Digital credential storage</li>
+            </ul>
+          </div>
+          <div class="trinity-card">
+            <div class="icon-wrap">🎯</div>
+            <h3>The Marketplace</h3>
+            <div class="subtitle">Talent Engine</div>
+            <ul>
+              <li>Vetted skill profiles</li>
+              <li>Instant shift matching</li>
+              <li>A-Team favorites system</li>
+              <li>Two-sided network effects</li>
+            </ul>
+          </div>
+          <div class="trinity-card">
+            <div class="icon-wrap">⚡</div>
+            <h3>The Engine</h3>
+            <div class="subtitle">Logistics Core</div>
+            <ul>
+              <li>Capacity-based scheduling</li>
+              <li>Template-driven auto-fill</li>
+              <li>Real-time Xero sync</li>
+              <li>One-click payroll export</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Revenue Model -->
+    <section id="revenue">
+      <div class="container">
+        <h2>The <span class="highlight">Logistics Platform Fee</span></h2>
+        <p class="section-subtitle">High-margin, predictable revenue from venue platform licenses.</p>
+        
+        <div class="revenue-card">
+          <div class="revenue-highlight">
+            <span class="price">$149</span>
+            <span class="period">/month per venue</span>
+          </div>
+          <div class="label">Logistics Platform Fee</div>
+          <p style="color: var(--text-secondary); max-width: 500px;">
+            Full Trinity Engine access. Unlimited staff. Xero integration. Marketplace posting. 
+            85%+ gross margin with <$200 CAC target.
+          </p>
+        </div>
+        
+        <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Roadmap: Logistics Expansion</h3>
+        <div class="roadmap-grid">
+          <div class="roadmap-card active">
+            <div class="quarter">Q1 2026</div>
+            <h4>Brisbane 100</h4>
+            <div class="licenses">50</div>
+            <div class="licenses-label">Active Platform Licenses</div>
+          </div>
+          <div class="roadmap-card">
+            <div class="quarter">Q2 2026</div>
+            <h4>Gold Coast</h4>
+            <div class="licenses">100</div>
+            <div class="licenses-label">Active Platform Licenses</div>
+          </div>
+          <div class="roadmap-card">
+            <div class="quarter">Q3 2026</div>
+            <h4>SEQ Saturation</h4>
+            <div class="licenses">200</div>
+            <div class="licenses-label">Active Platform Licenses</div>
+          </div>
+          <div class="roadmap-card">
+            <div class="quarter">Q4 2026</div>
+            <h4>National & Series A</h4>
+            <div class="licenses">500</div>
+            <div class="licenses-label">Active Platform Licenses</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Investment Section -->
+    <section class="investment-section" id="investment">
+      <div class="container">
+        <h2>The <span style="background:#000;color:#BAFF39;padding:0 16px;border-radius:24px;">$1.0M</span> Raise</h2>
+        <p class="section-subtitle">Funding the Logistics Expansion from Brisbane to national rollout.</p>
+        
+        <div class="investment-grid">
+          <div class="investment-terms">
+            <div class="term-row">
+              <span class="term-label">Raise Amount</span>
+              <span class="term-value">$1,000,000 AUD</span>
+            </div>
+            <div class="term-row">
+              <span class="term-label">Valuation</span>
+              <span class="term-value">$10M Post-Money</span>
+            </div>
+            <div class="term-row">
+              <span class="term-label">Equity Offered</span>
+              <span class="term-value">10.0%</span>
+            </div>
+            <div class="term-row">
+              <span class="term-label">Instrument</span>
+              <span class="term-value">SAFE</span>
+            </div>
+            <div class="term-row">
+              <span class="term-label">Minimum Check</span>
+              <span class="term-value">$25,000</span>
+            </div>
+          </div>
+          
+          <div class="allocation-card">
+            <h3>Resource Allocation</h3>
+            <div class="allocation-bar">
+              <div class="bar-header">
+                <span class="label">Sales & Marketing</span>
+                <span class="value">60%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: 60%;"></div>
+              </div>
+            </div>
+            <div class="allocation-bar">
+              <div class="bar-header">
+                <span class="label">Engineering & R&D</span>
+                <span class="value">30%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: 30%;"></div>
+              </div>
+            </div>
+            <div class="allocation-bar">
+              <div class="bar-header">
+                <span class="label">Operations & Legal</span>
+                <span class="value">10%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: 10%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="logo" style="margin-bottom: 16px;">HOSPO<span>GO</span></div>
+      <p>© 2026 HospoGo Pty Ltd. All rights reserved. This document is confidential and intended for authorized investors only.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -40,6 +40,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
+import InvestorChatWidget from "@/components/investor/InvestorChatWidget";
 
 /** Navigation items for the investor portal */
 const NAV_ITEMS = [
@@ -67,7 +68,7 @@ const documents: DocumentItem[] = [
     title: "Strategic Prospectus",
     subtitle: "2026 Roadmap & Market Analysis",
     icon: <TrendingUp className="w-8 h-8" />,
-    description: "A comprehensive look at the $168M Australian TAM, our 'Suburban Loyalty' strategy, and the 200/500 subscription milestones.",
+    description: "A comprehensive look at the $168M Australian TAM, our 'Suburban Loyalty' strategy, and the 200/500 Active Platform License milestones.",
     content: `## Strategic Prospectus 2026
       
 ### 1. Market Opportunity
@@ -78,7 +79,7 @@ The Australian hospitality industry represents a $168M annual TAM. Our focus is 
 
 ### 3. Execution Roadmap
 - **Q1:** Brisbane 100 Pilot Launch.
-- **Q2:** Reach 200 Paid Subscriptions.
+- **Q2:** Reach 200 Active Platform Licenses.
 - **Q4:** National Expansion & Series A.`
   },
   {
@@ -438,7 +439,8 @@ export default function InvestorPortal() {
         )}
 
         {/* Back to Dashboard - Floating button for logged-in users with brand neon glow */}
-        {hasUser && (
+        {/* Hidden when document modal is open to prevent z-index bleed-through */}
+        {hasUser && !selectedDoc && (
           <Link
             to={getDashboardPath()}
             className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full bg-black/80 backdrop-blur-md border-2 border-[#BAFF39]/40 text-white text-xs font-bold uppercase tracking-widest hover:bg-black hover:border-[#BAFF39] transition-all duration-300 shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:shadow-[0_0_30px_rgba(186,255,57,0.5)] group"
@@ -585,11 +587,12 @@ export default function InvestorPortal() {
               </p>
               <div className="grid grid-cols-2 gap-12">
                 <div>
-                  <div className="text-6xl font-black mb-2 tracking-tighter italic">10.0%</div>
+                  {/* Equity percentage in Electric Lime for investor emphasis */}
+                  <div className="text-6xl font-black mb-2 tracking-[-0.05em] italic text-[#BAFF39] drop-shadow-[0_0_20px_rgba(186,255,57,0.3)]">10.0%</div>
                   <div className="text-[11px] font-bold uppercase tracking-widest opacity-60">Equity Participation</div>
                 </div>
                 <div>
-                  <div className="text-6xl font-black mb-2 tracking-tighter italic">$10.0M</div>
+                  <div className="text-6xl font-black mb-2 tracking-[-0.05em] italic">$10.0M</div>
                   <div className="text-[11px] font-bold uppercase tracking-widest opacity-60">Post-Money Valuation</div>
                 </div>
               </div>
@@ -695,6 +698,9 @@ export default function InvestorPortal() {
           .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #BAFF39; }
         `}</style>
+
+        {/* AI Investor Chat Widget - Hidden when document viewer is open */}
+        {!selectedDoc && <InvestorChatWidget />}
 
         {/* Executive RSVP Confirmation Modal */}
         {showRSVPModal && (

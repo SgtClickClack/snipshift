@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/useToast';
 import { fetchShifts, applyToShift } from '@/lib/api';
 import { Shift } from '@/shared/types';
-import { format, parseISO, isToday, isTomorrow } from 'date-fns';
-import { MapPin, Clock, DollarSign, Calendar, Filter, X, CheckCircle2, Loader2, Search } from 'lucide-react';
+import { format, parseISO, isToday, isTomorrow, differenceInHours } from 'date-fns';
+import { MapPin, Clock, DollarSign, Calendar, Filter, X, CheckCircle2, Loader2, Search, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { calculateDistance } from '@/lib/google-maps';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -23,18 +23,24 @@ interface JobBoardFilters {
   minHourlyRate?: number;
 }
 
+type ApplicationState = 'idle' | 'pending' | 'applied';
+
 interface OpportunityCardProps {
   shift: Shift;
   onApply: (shiftId: string) => void;
   isApplying: boolean;
   hasApplied: boolean;
+  applicationState: ApplicationState;
   distance?: number;
 }
 
-function OpportunityCard({ shift, onApply, isApplying, hasApplied, distance }: OpportunityCardProps) {
+function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationState, distance }: OpportunityCardProps) {
   const startTime = shift.startTime ? parseISO(shift.startTime) : null;
   const endTime = shift.endTime ? parseISO(shift.endTime) : null;
   const hourlyRate = parseFloat(shift.hourlyRate || '0');
+  
+  // Check if shift is urgent (starts within 24 hours)
+  const isUrgent = startTime ? differenceInHours(startTime, new Date()) <= 24 && differenceInHours(startTime, new Date()) > 0 : false;
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'Date TBD';
@@ -87,12 +93,24 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, distance }: O
               )}
             </div>
           </div>
-          <Badge 
-            variant={shift.autoAccept ? 'default' : 'secondary'} 
-            className={`shrink-0 self-start ${shift.autoAccept ? 'bg-[#BAFF39] text-black' : ''}`}
-          >
-            {shift.autoAccept ? 'Instant' : 'Apply'}
-          </Badge>
+          <div className="flex flex-col gap-1.5 items-end shrink-0 self-start">
+            {/* Urgent Badge - Pulsing Electric Lime for shifts < 24h */}
+            {isUrgent && (
+              <Badge 
+                variant="outline" 
+                className="bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/50 animate-pulse shadow-[0_0_10px_rgba(186,255,57,0.4)]"
+              >
+                <Zap className="h-3 w-3 mr-1" />
+                Urgent
+              </Badge>
+            )}
+            <Badge 
+              variant={shift.autoAccept ? 'default' : 'secondary'} 
+              className={`${shift.autoAccept ? 'bg-[#BAFF39] text-black shadow-[0_0_12px_rgba(186,255,57,0.35)]' : ''}`}
+            >
+              {shift.autoAccept ? 'Instant' : 'Apply'}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
@@ -116,18 +134,24 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, distance }: O
           </div>
           <Button
             onClick={() => onApply(shift.id)}
-            disabled={isApplying || hasApplied}
-            variant={hasApplied ? 'outline' : 'accent'}
-            className="w-full min-h-[44px]"
+            disabled={isApplying || hasApplied || applicationState === 'pending'}
+            variant={hasApplied || applicationState === 'applied' ? 'outline' : 'default'}
+            className={`w-full min-h-[44px] font-semibold transition-all duration-200 ${
+              applicationState === 'idle' && !hasApplied
+                ? 'bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90 shadow-[0_0_14px_rgba(186,255,57,0.4)] hover:shadow-[0_0_20px_rgba(186,255,57,0.5)]'
+                : applicationState === 'pending'
+                ? 'bg-[#BAFF39]/60 text-black/70 cursor-wait'
+                : 'border-[#BAFF39]/40 text-[#BAFF39]'
+            }`}
           >
-            {isApplying ? (
+            {isApplying || applicationState === 'pending' ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Applying...
+                Pending...
               </>
-            ) : hasApplied ? (
+            ) : hasApplied || applicationState === 'applied' ? (
               <>
-                <CheckCircle2 className="h-4 w-4 mr-2" />
+                <CheckCircle2 className="h-4 w-4 mr-2 text-[#BAFF39]" />
                 Applied
               </>
             ) : (
@@ -149,6 +173,7 @@ export default function JobBoard() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [appliedShiftIds, setAppliedShiftIds] = useState<Set<string>>(new Set());
   const [applyingShiftId, setApplyingShiftId] = useState<string | null>(null);
+  const [applicationStates, setApplicationStates] = useState<Map<string, ApplicationState>>(new Map());
 
   // Get user location with HIGH ACCURACY GPS
   useEffect(() => {
@@ -242,15 +267,19 @@ export default function JobBoard() {
     });
   }, [filteredShifts, userLocation]);
 
-  // Apply to shift mutation
+  // Apply to shift mutation with optimistic UI
   const applyMutation = useMutation({
     mutationFn: applyToShift,
     onMutate: async (shiftId: string) => {
       setApplyingShiftId(shiftId);
-      // Optimistic update
-      setAppliedShiftIds((prev) => new Set(prev).add(shiftId));
+      // Optimistic update - immediately show "Pending" state for high-velocity feedback
+      setApplicationStates((prev) => new Map(prev).set(shiftId, 'pending'));
     },
     onSuccess: (data, shiftId) => {
+      // Transition from 'pending' to 'applied' state
+      setApplicationStates((prev) => new Map(prev).set(shiftId, 'applied'));
+      setAppliedShiftIds((prev) => new Set(prev).add(shiftId));
+      
       if (data.instantAccept) {
         toast({
           title: 'Shift Accepted!',
@@ -267,7 +296,8 @@ export default function JobBoard() {
       }
     },
     onError: (error: any, shiftId) => {
-      // Revert optimistic update
+      // Revert optimistic update - set back to 'idle' state
+      setApplicationStates((prev) => new Map(prev).set(shiftId, 'idle'));
       setAppliedShiftIds((prev) => {
         const next = new Set(prev);
         next.delete(shiftId);
@@ -427,6 +457,7 @@ export default function JobBoard() {
               onApply={handleApply}
               isApplying={applyingShiftId === shift.id}
               hasApplied={appliedShiftIds.has(shift.id)}
+              applicationState={applicationStates.get(shift.id) || 'idle'}
               distance={distance}
             />
           ))}

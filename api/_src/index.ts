@@ -73,6 +73,7 @@ import cronWeeklyReportRouter from './routes/cron/weekly-report.js';
 import cronFinancialReconcileRouter from './routes/cron/financial-reconcile.js';
 import settlementsRouter from './routes/settlements.js';
 import xeroRouter from './routes/integrations/xero.js';
+import investorsRouter from './routes/investors.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { initializePusher } from './services/pusher.service.js';
@@ -245,6 +246,7 @@ app.use('/api/cron', cronWeeklyReportRouter);
 app.use('/api/cron', cronFinancialReconcileRouter);
 app.use('/api/settlements', settlementsRouter);
 app.use('/api/integrations/xero', xeroRouter);
+app.use('/api/investors', investorsRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic
@@ -2418,35 +2420,6 @@ app.get('/', (req, res) => {
     documentation: '/api/docs' // Placeholder
   });
 });
-
-// ============================================
-// INVESTOR PORTAL ENDPOINTS
-// ============================================
-
-// Handler for investor RSVP submission
-app.post('/api/investors/rsvp', asyncHandler(async (req, res) => {
-  const { email, name, timestamp } = req.body;
-  
-  // Log the RSVP for now - in production this would store to a database
-  console.log('[INVESTOR RSVP]', {
-    email: email || 'anonymous',
-    name: name || 'Anonymous Investor',
-    timestamp: timestamp || new Date().toISOString(),
-    ip: req.ip,
-    userAgent: req.get('user-agent'),
-  });
-  
-  // Return success response
-  res.status(200).json({
-    success: true,
-    message: 'RSVP confirmed',
-    eventDetails: {
-      date: 'February 28, 2026',
-      time: '6:00 PM AEST',
-      location: 'Brisbane CBD',
-    },
-  });
-}));
 
 // Favicon handler to prevent 404s
 app.get('/favicon.ico', (req, res) => {

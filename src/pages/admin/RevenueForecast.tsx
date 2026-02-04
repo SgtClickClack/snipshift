@@ -2,7 +2,7 @@
  * RevenueForecast - CEO "North Star" Dashboard
  * 
  * Rick's revenue projection engine for the Brisbane 100 campaign:
- * - Projected ARR: (Total Leads * Conversion Rate * $149/month)
+ * - Projected ARR: (Total Leads * Conversion Rate * $149 Platform Fee/month)
  * - 12-month growth projection chart
  * - Key milestone tracking
  * 
@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 // Pricing constants
-const MONTHLY_SUBSCRIPTION = 149; // $149/month per venue
+const MONTHLY_PLATFORM_FEE = 149; // $149/month Logistics Platform Fee per venue
 const ANNUAL_MULTIPLIER = 12;
 
 // Mock lead data - synced with LeadTracker
@@ -72,16 +72,16 @@ export default function RevenueForecast() {
     const { totalLeads, conversionRate, activeVenues } = leadStats;
     
     // Current state
-    const currentMRR = activeVenues * MONTHLY_SUBSCRIPTION;
+    const currentMRR = activeVenues * MONTHLY_PLATFORM_FEE;
     const currentARR = currentMRR * ANNUAL_MULTIPLIER;
     
     // Projected based on pipeline
     const projectedActiveVenues = Math.round(totalLeads * (conversionRate / 100));
-    const projectedMRR = projectedActiveVenues * MONTHLY_SUBSCRIPTION;
+    const projectedMRR = projectedActiveVenues * MONTHLY_PLATFORM_FEE;
     const projectedARR = projectedMRR * ANNUAL_MULTIPLIER;
     
     // Brisbane 100 milestone
-    const brisbane100MRR = 100 * MONTHLY_SUBSCRIPTION;
+    const brisbane100MRR = 100 * MONTHLY_PLATFORM_FEE;
     const brisbane100ARR = brisbane100MRR * ANNUAL_MULTIPLIER;
     
     // 12-month growth projection (compound growth)
@@ -96,7 +96,7 @@ export default function RevenueForecast() {
         100 // Cap at Brisbane 100
       );
       
-      const mrr = projectedVenues * MONTHLY_SUBSCRIPTION;
+      const mrr = projectedVenues * MONTHLY_PLATFORM_FEE;
       
       return {
         month: monthName,
@@ -170,7 +170,7 @@ export default function RevenueForecast() {
             className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30 px-4 py-2"
           >
             <Star className="h-4 w-4 mr-2" />
-            ${MONTHLY_SUBSCRIPTION}/venue/month
+            ${MONTHLY_PLATFORM_FEE}/venue/month
           </Badge>
         </div>
 
@@ -191,7 +191,7 @@ export default function RevenueForecast() {
                 <span className="text-zinc-500">AUD</span>
               </div>
               <p className="text-sm text-zinc-500 mt-2">
-                {leadStats.activeVenues} active venues × ${MONTHLY_SUBSCRIPTION}/mo
+                {leadStats.activeVenues} active venues × ${MONTHLY_PLATFORM_FEE}/mo
               </p>
             </CardContent>
           </Card>
@@ -235,7 +235,7 @@ export default function RevenueForecast() {
                 <span className="text-zinc-500">AUD</span>
               </div>
               <p className="text-sm text-zinc-500 mt-2">
-                100 venues × ${MONTHLY_SUBSCRIPTION}/mo × 12
+                100 venues × ${MONTHLY_PLATFORM_FEE}/mo × 12
               </p>
               {brisbane100Month >= 0 && (
                 <Badge className="mt-3 bg-blue-500/20 text-blue-400 border-blue-500/30">
@@ -475,8 +475,8 @@ export default function RevenueForecast() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 rounded-xl bg-zinc-800/50 text-center">
-                <p className="text-2xl font-bold text-white">${MONTHLY_SUBSCRIPTION}</p>
-                <p className="text-xs text-zinc-500">Monthly Subscription</p>
+                <p className="text-2xl font-bold text-white">${MONTHLY_PLATFORM_FEE}</p>
+                <p className="text-xs text-zinc-500">Monthly Platform Fee</p>
               </div>
               <div className="p-4 rounded-xl bg-zinc-800/50 text-center">
                 <p className="text-2xl font-bold text-white">{leadStats.conversionRate}%</p>

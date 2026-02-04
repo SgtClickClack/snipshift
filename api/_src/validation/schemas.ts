@@ -360,3 +360,16 @@ export const GeneralContactSchema = z.object({
 });
 
 export type GeneralContactInput = z.infer<typeof GeneralContactSchema>;
+
+/**
+ * Schema for investor AI chat query
+ * Used by the Foundry Agent investor bot
+ */
+export const InvestorQuerySchema = z.object({
+  query: z.string()
+    .min(1, 'Query is required')
+    .max(2000, 'Query must be less than 2000 characters'),
+  sessionId: z.string().uuid().optional(), // For conversation context tracking
+});
+
+export type InvestorQueryInput = z.infer<typeof InvestorQuerySchema>;

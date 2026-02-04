@@ -223,6 +223,7 @@
   /* Subtle pulse animation for vacant shift buckets - alerts owner of staffing risks */
   .animate-pulse-subtle {
     animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    will-change: opacity;
   }
   
   /* Touch scroll - iOS momentum scrolling */

@@ -19,7 +19,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { isBusinessRole } from "@/lib/roles";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle, AlertTriangle } from "lucide-react";
+import { useXeroStatus, useXeroSyncLogs } from "@/hooks/useXeroStatus";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle, AlertTriangle, ArrowRight, ShieldCheck, Settings } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -122,9 +123,20 @@ export default function VenueDashboard() {
   return <VenueDashboardContent demoMode={false} />;
 }
 
+// Xero Logo SVG Component
+const XeroLogo = ({ className = "h-4 w-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 14.379l-2.526-2.526 2.526-2.526a.75.75 0 10-1.06-1.06L14.308 10.79l-2.527-2.526a.75.75 0 00-1.06 1.06l2.526 2.527-2.526 2.526a.75.75 0 101.06 1.06l2.527-2.526 2.526 2.526a.75.75 0 101.06-1.06zM9.692 13.293l-2.526-2.526a.75.75 0 00-1.06 1.06l2.526 2.527-2.526 2.526a.75.75 0 101.06 1.06l2.526-2.526 2.526 2.526a.75.75 0 101.06-1.06l-2.526-2.526 2.526-2.527a.75.75 0 10-1.06-1.06l-2.526 2.526z" />
+  </svg>
+);
+
 function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   const { user: authUser, refreshUser } = useAuth();
   const { toast } = useToast();
+  
+  // Xero integration status
+  const { isConnected: isXeroConnected, tenantName: xeroTenantName, payrollReadiness } = useXeroStatus();
+  const { logs: recentXeroSyncLogs } = useXeroSyncLogs(3);
   
   // DEMO MODE: Use demo user data when real user is not available
   const user = demoMode ? (DEMO_USER as any) : authUser;
@@ -844,11 +856,37 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Business Dashboard</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-foreground">Business Dashboard</h1>
+                {/* Xero Status Pill - High visibility for investor demo */}
+                {isXeroConnected && (
+                  <Badge 
+                    className="flex items-center gap-1.5 px-3 py-1 border-2 border-[#BAFF39] bg-[#BAFF39]/10 text-[#BAFF39] font-semibold shadow-[0_0_10px_rgba(186,255,57,0.3)] hover:shadow-[0_0_15px_rgba(186,255,57,0.4)] transition-shadow"
+                    data-testid="xero-status-pill"
+                  >
+                    <XeroLogo className="h-3.5 w-3.5" />
+                    <span className="text-xs">Connected to Xero</span>
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  </Badge>
+                )}
+              </div>
               <p className="text-muted-foreground">{user.displayName || user.email}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <TutorialTrigger />
+              {/* Xero Quick Link Button */}
+              {isXeroConnected && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10 hover:border-[#BAFF39]"
+                  onClick={() => navigate('/settings?category=integrations')}
+                  data-testid="button-xero-quick-link"
+                >
+                  <XeroLogo className="mr-1.5 h-4 w-4" />
+                  Xero Sync
+                </Button>
+              )}
               <Button 
                 id="messages-btn"
                 onClick={() => handleQuickAction('open-messages')}
@@ -975,12 +1013,108 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
               <DashboardStats role="hub" stats={stats} onStatClick={handleStatClick} />
             )}
             
+            {/* Payroll Readiness Widget - High visibility for Lucas during investor demo */}
+            {isXeroConnected && payrollReadiness && (
+              <Card 
+                className="group relative overflow-hidden bg-gradient-to-r from-[#BAFF39]/5 to-transparent border-2 border-[#BAFF39]/30 shadow-[0_0_20px_rgba(186,255,57,0.1)] hover:shadow-[0_0_30px_rgba(186,255,57,0.2)] transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/settings?category=integrations')}
+                data-testid="payroll-readiness-widget"
+              >
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#BAFF39] via-[#BAFF39]/50 to-transparent" />
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="rounded-xl p-3 bg-[#BAFF39] border border-[#BAFF39] shadow-neon-realistic">
+                        <ShieldCheck className="h-6 w-6 text-black" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-bold text-foreground">Payroll Readiness</h3>
+                          <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30 text-xs">
+                            <XeroLogo className="h-3 w-3 mr-1" />
+                            Xero
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {payrollReadiness.approvedShifts} of {payrollReadiness.completedShifts} completed shifts approved for sync
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-center">
+                        <span className="text-4xl font-bold text-[#BAFF39] drop-shadow-[0_0_10px_rgba(186,255,57,0.5)]">
+                          {payrollReadiness.percentage}%
+                        </span>
+                        <p className="text-xs text-muted-foreground mt-1">Ready</p>
+                      </div>
+                      {payrollReadiness.pendingApproval > 0 && (
+                        <div className="text-center border-l border-border/50 pl-6">
+                          <span className="text-2xl font-semibold text-amber-500">
+                            {payrollReadiness.pendingApproval}
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-1">Pending</p>
+                        </div>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-[#BAFF39] hover:text-[#BAFF39] hover:bg-[#BAFF39]/10"
+                      >
+                        Ready to Sync
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <Card className="bg-card rounded-lg border border-border shadow-sm">
               <CardHeader className="bg-card border-b border-border">
                 <CardTitle className="text-foreground">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
+                  {/* Xero Sync Logs - High visibility for investor demo */}
+                  {isXeroConnected && recentXeroSyncLogs.length > 0 && recentXeroSyncLogs.map((log) => (
+                    <div 
+                      key={`xero-${log.id}`}
+                      className="flex items-center justify-between p-3 bg-[#BAFF39]/5 border border-[#BAFF39]/20 rounded-lg cursor-pointer hover:bg-[#BAFF39]/10 transition-colors"
+                      onClick={() => navigate('/settings?category=integrations')}
+                      data-testid={`xero-sync-log-${log.id}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-full p-2 bg-[#BAFF39]/20">
+                          <ShieldCheck className="h-4 w-4 text-[#BAFF39]" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium flex items-center gap-2">
+                            Payroll Synced to Xero
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${
+                                log.status === 'success' 
+                                  ? 'bg-green-500/20 text-green-500 border-green-500/30' 
+                                  : log.status === 'partial'
+                                  ? 'bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30'
+                                  : 'bg-red-500/20 text-red-500 border-red-500/30'
+                              }`}
+                            >
+                              {log.status === 'success' ? 'Success' : log.status === 'partial' ? 'Partial' : 'Failed'}
+                            </Badge>
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Period ending {formatDateSafe(log.dateRange.end, "MMM d, yyyy")} • {log.totalHours.toFixed(1)} hours
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDateSafe(log.syncedAt, "MMM d")}
+                      </span>
+                    </div>
+                  ))}
+                  
+                  {/* Regular Job Activity */}
                   {(jobs || []).slice(0, 3).map((job) => (
                     <div 
                       key={job.id} 
@@ -1000,7 +1134,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                       </span>
                     </div>
                   ))}
-                  {jobs.length === 0 && (
+                  {jobs.length === 0 && !isXeroConnected && (
                     <p className="text-muted-foreground text-center py-4">
                       No recent activity. Post your first job to get started!
                     </p>

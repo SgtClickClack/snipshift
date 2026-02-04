@@ -202,12 +202,12 @@ export default function Navbar() {
                           </Link>
                         </DropdownMenuItem>
                       )}
-                      {/* CEO Insights Section - Only visible to Rick */}
+                      {/* CEO Insights Section - Only visible to Rick (Founder Access) */}
                       {(user.email === 'rick@hospogo.com' || user.email === 'rick@snipshift.com.au') && (
                         <>
                           <DropdownMenuSeparator className="bg-steel-600" />
                           <DropdownMenuLabel className="text-xs text-[#BAFF39] font-semibold flex items-center gap-2">
-                            <Crown className="h-3 w-3" />
+                            <Crown className="h-3.5 w-3.5 text-[#BAFF39] drop-shadow-[0_0_4px_rgba(186,255,57,0.6)]" />
                             CEO Insights
                           </DropdownMenuLabel>
                           <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">

@@ -51,7 +51,13 @@ interface SyncHistoryEntry {
   auditLogUrl?: string;
 }
 
-// Mock data for development
+/**
+ * Mock data for investor demo - Lucas's "Security Blanket"
+ * Shows Success/Partial/Success pattern to demonstrate:
+ * 1. How full syncs work (Success)
+ * 2. How "Partial Success" gracefully handles mapping errors without stopping payroll
+ * 3. Resilient recovery after partial issues (Success)
+ */
 const MOCK_HISTORY: SyncHistoryEntry[] = [
   {
     id: '1',
@@ -88,30 +94,6 @@ const MOCK_HISTORY: SyncHistoryEntry[] = [
     calendarName: 'Weekly Payroll',
     dateRange: { start: '2026-01-13', end: '2026-01-19' },
     auditLogUrl: '/admin/audit/xero/sync-3',
-  },
-  {
-    id: '4',
-    syncedAt: '2026-01-28T09:00:00Z',
-    status: 'failed',
-    totalEmployees: 8,
-    syncedEmployees: 0,
-    failedEmployees: 8,
-    totalHours: 0,
-    calendarName: 'Weekly Payroll',
-    dateRange: { start: '2026-01-06', end: '2026-01-12' },
-    auditLogUrl: '/admin/audit/xero/sync-4',
-  },
-  {
-    id: '5',
-    syncedAt: '2026-01-25T11:30:00Z',
-    status: 'success',
-    totalEmployees: 14,
-    syncedEmployees: 14,
-    failedEmployees: 0,
-    totalHours: 112.75,
-    calendarName: 'Weekly Payroll',
-    dateRange: { start: '2025-12-30', end: '2026-01-05' },
-    auditLogUrl: '/admin/audit/xero/sync-5',
   },
 ];
 
