@@ -14,6 +14,7 @@
 
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
 import { 
   FileText, 
   Cpu, 
@@ -26,10 +27,12 @@ import {
   LayoutGrid,
   Lock,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
+import { useAuth } from "@/contexts/AuthContext";
 
 /** Document metadata for the investor data room */
 interface DocumentItem {
@@ -205,6 +208,16 @@ HospoGo is positioned at the intersection of regulatory pressure, platform adopt
 export default function InvestorPortal() {
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
   const { toast } = useToast();
+  const { user, hasUser } = useAuth();
+  
+  // Determine dashboard path based on user role
+  const getDashboardPath = () => {
+    if (!user) return '/dashboard';
+    const role = (user.currentRole || '').toLowerCase();
+    if (['hub', 'business', 'venue'].includes(role)) return '/venue/dashboard';
+    if (role === 'professional') return '/professional-dashboard';
+    return '/dashboard';
+  };
 
   const handleRSVP = () => {
     toast({
@@ -244,6 +257,18 @@ export default function InvestorPortal() {
             RSVP Briefing
           </Button>
         </nav>
+
+        {/* Back to Dashboard - Floating button for logged-in users */}
+        {hasUser && (
+          <Link
+            to={getDashboardPath()}
+            className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 hover:border-[#BAFF39]/50 transition-all duration-300 shadow-xl group"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Dashboard</span>
+          </Link>
+        )}
 
         {/* Hero Section */}
         <section id="opportunity" className="relative min-h-screen flex flex-col justify-center items-center px-6 text-center overflow-hidden pt-20">

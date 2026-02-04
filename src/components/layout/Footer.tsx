@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ShieldCheck } from 'lucide-react';
 import { PartnerTrustBar } from '@/components/landing/PartnerTrustBar';
 
 const logoUrl = '/hospogo-navbar-banner.png';
@@ -101,7 +102,8 @@ export function Footer() {
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
               <Link
                 to="/investorportal"
-                className="text-steel-400 hover:text-[#BAFF39] transition-colors text-sm">
+                className="text-steel-500 hover:text-[#BAFF39] transition-colors text-sm flex items-center gap-1.5">
+                <ShieldCheck size={14} className="opacity-60" />
                 Private Investor Briefing
               </Link>
               <a 

@@ -62,6 +62,11 @@ function isOnboardingRoute(path: string): boolean {
   return path.startsWith('/onboarding') || path === '/role-selection';
 }
 
+/** Neutral routes: pages that should NOT trigger auth-based redirects (e.g. investor portal) */
+function isNeutralRoute(path: string): boolean {
+  return path.startsWith('/investorportal');
+}
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -475,14 +480,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
-        console.log('[AuthContext] User is onboarded — redirecting to', targetPath);
-        setIsTransitioning(false);
-        setIsSystemReady(true); // Auth complete - system ready
-        if (location.pathname === targetPath) {
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        
+        // Neutral route check: allow investor portal to remain visible even for logged-in users
+        if (isNeutralRoute(currentPath)) {
+          console.log('[AuthContext] User is onboarded but on neutral route — skipping redirect', { currentPath });
+          setIsTransitioning(false);
+          setIsSystemReady(true);
           setRedirecting(false);
         } else {
-          setRedirecting(true);
-          navigate(targetPath, { replace: true });
+          console.log('[AuthContext] User is onboarded — redirecting to', targetPath);
+          setIsTransitioning(false);
+          setIsSystemReady(true); // Auth complete - system ready
+          if (location.pathname === targetPath) {
+            setRedirecting(false);
+          } else {
+            setRedirecting(true);
+            navigate(targetPath, { replace: true });
+          }
         }
       } else {
         // Not onboarded yet
@@ -703,8 +718,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (isLoading) return; // Wait for auth to settle
 
     // Landing gate: if user is NOT logged in, never redirect away from '/' (allow landing to stay)
+    // Also skip redirect logic for neutral routes (investor portal)
     const currentPath = window.location.pathname;
-    if (currentPath.startsWith('/signup') || currentPath.startsWith('/onboarding')) return;
+    if (currentPath.startsWith('/signup') || currentPath.startsWith('/onboarding') || isNeutralRoute(currentPath)) return;
     const hasFirebaseUserNow = !!firebaseUserRef.current || !!auth.currentUser;
     if (currentPath === '/' && !hasFirebaseUserNow) return;
 
