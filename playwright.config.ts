@@ -34,8 +34,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Use multiple workers locally, single worker in CI to prevent Cursor/IDE disconnects during high-load browser runs */
   workers: process.env.CI ? 1 : undefined,
-  /* Fail fast - stop after first failure */
-  maxFailures: 1,
+  /* Allow all tests to run even if some fail */
+  maxFailures: 0,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

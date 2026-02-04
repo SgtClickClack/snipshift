@@ -1,0 +1,98 @@
+/**
+ * Professional Dashboard Kill-Switch CSS
+ * 
+ * Critical overrides to fix the "white-container glitch" that affects
+ * the Professional Dashboard demo. This file contains targeted fixes
+ * that ensure consistent dark theme rendering across all dashboard views.
+ * 
+ * IMPORTANT: This import must remain active in main.tsx for investor demos.
+ */
+
+/* ==========================================================================
+   Professional Dashboard Container Fix
+   Prevents white background bleed-through on dashboard cards
+   ========================================================================== */
+
+.professional-dashboard-container,
+[data-dashboard="professional"] {
+  background-color: transparent !important;
+}
+
+/* Fix card backgrounds in dark mode */
+.dark .professional-dashboard-container .card,
+.dark [data-dashboard="professional"] .card {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* ==========================================================================
+   Generic Container Transparency Fix
+   Ensures nested containers don't create white boxes
+   ========================================================================== */
+
+.dark .bg-white {
+  background-color: hsl(var(--card)) !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* ==========================================================================
+   Dashboard Grid Layout Fix
+   Prevents layout shifts during data loading
+   ========================================================================== */
+
+.dashboard-grid {
+  min-height: 200px;
+}
+
+.dashboard-grid > * {
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* ==========================================================================
+   Stats Card Fix
+   Ensures stat cards render with correct dark theme colors
+   ========================================================================== */
+
+.dark .stats-card,
+.dark [data-component="stats-card"] {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+
+/* ==========================================================================
+   Action Button Consistency
+   Electric Lime accent preservation
+   ========================================================================== */
+
+.dark .btn-primary-lime {
+  background-color: #BAFF39 !important;
+  color: #0f172a !important;
+}
+
+.dark .btn-primary-lime:hover {
+  background-color: #a8eb33 !important;
+}
+
+/* ==========================================================================
+   Table Container Fix
+   Prevents table backgrounds from flashing white
+   ========================================================================== */
+
+.dark table,
+.dark [role="table"] {
+  background-color: transparent !important;
+}
+
+.dark thead,
+.dark [role="rowgroup"]:first-child {
+  background-color: hsl(var(--muted) / 0.5) !important;
+}
+
+.dark tbody tr:hover,
+.dark [role="row"]:hover {
+  background-color: hsl(var(--muted) / 0.3) !important;
+}

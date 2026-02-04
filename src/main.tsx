@@ -4,6 +4,8 @@ import App from "./App";
 import "./index.css";
 // Import react-big-calendar CSS globally to ensure it loads
 import "react-big-calendar/lib/css/react-big-calendar.css";
+// Pro Dashboard Kill-Switch: Critical fix for white-container glitch in dark mode demos
+import "@/styles/pro-dashboard-overrides.css";
 import { StartupErrorBoundary } from "@/components/error/StartupErrorBoundary";
 import { initializeGTM } from "@/lib/analytics";
 import { logger } from "@/lib/logger";

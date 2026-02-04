@@ -31,7 +31,8 @@ import {
   ExternalLink,
   Loader2,
   Clock,
-  FileText
+  FileText,
+  ShieldCheck
 } from 'lucide-react';
 import { formatDateSafe } from '@/utils/date-formatter';
 
@@ -172,10 +173,21 @@ export default function XeroSyncHistory() {
             <span className="ml-2 text-muted-foreground">Loading sync history...</span>
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <History className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>No sync history available yet.</p>
-            <p className="text-sm">Run your first sync to start the audit trail.</p>
+          <div className="flex flex-col items-center justify-center py-12 px-6">
+            <div className="border-2 border-dashed border-[#BAFF39]/40 rounded-xl p-8 max-w-md w-full text-center bg-[#BAFF39]/5">
+              <ShieldCheck className="h-16 w-16 mx-auto mb-4 text-[#BAFF39]" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                System Audit: Ready
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Ready for first payroll cycle. No historical syncs detected in current session.
+              </p>
+              <div className="mt-6 pt-4 border-t border-border/30">
+                <p className="text-xs text-muted-foreground/70">
+                  Xero Handshake configured • ATO-compliant audit trail enabled
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">

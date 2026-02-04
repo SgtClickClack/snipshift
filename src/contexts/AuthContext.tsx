@@ -245,6 +245,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const logout = useCallback(async () => {
+    // Clear auth timestamp immediately to allow redirect on explicit logout
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('hospogo_auth_timestamp');
+    }
+    
     // Cleanup push tokens in try/catch so a Firebase 400 never blocks or crashes logout
     try {
       await cleanupPushNotifications();
@@ -429,6 +434,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsNavigationLocked(false);
       setIsTransitioning(false);
       setIsSystemReady(true); // User profile is enough to mark system ready
+      
+      // RESILIENCE: Track successful auth timestamp to prevent redirect during token refresh
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('hospogo_auth_timestamp', Date.now().toString());
+      }
 
       // Determine role and venue requirements
       const role = (apiUser.currentRole || apiUser.role || '').toLowerCase();

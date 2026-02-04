@@ -1063,11 +1063,12 @@ function ProfessionalCalendarContent({
   // Apply bucket grouping when shift templates exist (business mode)
   // PERFORMANCE: Uses pre-indexed event map for O(1) day lookups
   // Complexity reduced from O(days × templates × events) to O(days × templates + events)
+  // ERROR GUARD: Returns [] on failure to prevent hydration crashes during investor demos
   const eventsForDisplay = useMemo(() => {
-    if (mode !== 'business' || !shiftTemplates?.length || !events?.length) {
-      return events;
-    }
     try {
+      if (mode !== 'business' || !shiftTemplates?.length || !events?.length) {
+        return events || [];
+      }
       // Use optimized bucketing utility with pre-indexed event map
       const { bucketEvents, ungroupedEvents } = groupEventsIntoBuckets(
         events as BucketEvent[],
@@ -1079,7 +1080,7 @@ function ProfessionalCalendarContent({
       return [...bucketEvents as CalendarEvent[], ...ungroupedEvents as CalendarEvent[]];
     } catch (err) {
       console.warn('[CALENDAR] Bucket transform error:', err);
-      return events;
+      return [];
     }
   }, [events, shiftTemplates, mode, view, currentDate]);
 

@@ -1,4 +1,4 @@
-import { test as base, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test as base, expect, type Page, type BrowserContext, type TestInfo } from '@playwright/test';
 import { setupUserContext } from '../e2e/seed_data';
 import { E2E_VENUE_OWNER, E2E_PROFESSIONAL } from '../e2e/e2e-business-fixtures';
 
@@ -15,6 +15,59 @@ import { E2E_VENUE_OWNER, E2E_PROFESSIONAL } from '../e2e/e2e-business-fixtures'
  *   });
  */
 
+/**
+ * Console Error Collector
+ * 
+ * Collects all console errors during test execution for comprehensive audit.
+ * Instead of failing immediately, errors are aggregated and reported at test end.
+ * This enables full suite completion while maintaining error visibility.
+ * 
+ * Pattern: Non-blocking audit collection → Post-test manifest report
+ */
+interface ConsoleErrorCollector {
+  errors: string[];
+  attach: (page: Page) => void;
+  report: (testName: string) => void;
+}
+
+function createConsoleErrorCollector(): ConsoleErrorCollector {
+  const errors: string[] = [];
+  
+  return {
+    errors,
+    attach: (page: Page) => {
+      page.on('console', (msg) => {
+        if (msg.type() === 'error') {
+          const text = msg.text();
+          // Collect critical errors for audit (React minified, uncaught exceptions)
+          if (
+            text.includes('Minified React error') ||
+            text.includes('Error #') ||
+            text.includes('Uncaught Error') ||
+            text.includes('Unhandled Promise Rejection')
+          ) {
+            errors.push(`[CRITICAL] ${text}`);
+          } else {
+            // Also track non-critical errors (404s, network issues) for completeness
+            errors.push(`[WARN] ${text}`);
+          }
+        }
+      });
+    },
+    report: (testName: string) => {
+      if (errors.length > 0) {
+        console.log('\n' + '='.repeat(70));
+        console.log(`--- CONSOLE ERROR MANIFEST: ${testName} ---`);
+        console.log('='.repeat(70));
+        errors.forEach((err, idx) => {
+          console.log(`  ${idx + 1}. ${err}`);
+        });
+        console.log('='.repeat(70) + '\n');
+      }
+    }
+  };
+}
+
 type HospoGoFixtures = {
   /** A page pre-authenticated as a Business Owner, navigated to /venue/dashboard */
   businessPage: Page;
@@ -24,7 +77,11 @@ type HospoGoFixtures = {
 
 export const test = base.extend<HospoGoFixtures>({
   // Fixture: A page pre-authenticated as a Business Owner
-  businessPage: async ({ page, context }, use) => {
+  businessPage: async ({ page, context }, use, testInfo) => {
+    // 0. Create console error collector for audit manifest
+    const errorCollector = createConsoleErrorCollector();
+    errorCollector.attach(page);
+    
     // 1. Setup the E2E Auth Context (Bypassing Firebase/Redirects)
     await setupUserContext(context, E2E_VENUE_OWNER);
 
@@ -150,10 +207,17 @@ export const test = base.extend<HospoGoFixtures>({
     await expect(dashboardReady.first()).toBeVisible({ timeout: 15000 });
 
     await use(page);
+    
+    // Post-test: Report any collected console errors as audit manifest
+    errorCollector.report(testInfo.title);
   },
 
   // Fixture: A page pre-authenticated as a Professional (Staff)
-  staffPage: async ({ page, context }, use) => {
+  staffPage: async ({ page, context }, use, testInfo) => {
+    // 0. Create console error collector for audit manifest
+    const errorCollector = createConsoleErrorCollector();
+    errorCollector.attach(page);
+    
     // 1. Setup the E2E Auth Context
     await setupUserContext(context, E2E_PROFESSIONAL);
 
@@ -201,6 +265,9 @@ export const test = base.extend<HospoGoFixtures>({
     await expect(dashboardReady.first()).toBeVisible({ timeout: 15000 });
 
     await use(page);
+    
+    // Post-test: Report any collected console errors as audit manifest
+    errorCollector.report(testInfo.title);
   },
 });
 

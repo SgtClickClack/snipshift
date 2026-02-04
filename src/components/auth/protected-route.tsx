@@ -45,8 +45,14 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
   }
 
   // Not authenticated - redirect to login
-  const hasAuth = hasFirebaseUser || hasE2ETestUser;
-  if (!hasAuth || !user) {
+  // RESILIENCE: Check for recently valid auth (prevents redirect during token refresh)
+  // Firebase token refresh can briefly cause hasFirebaseUser to be false
+  const hasRecentAuth = typeof window !== 'undefined' && 
+    sessionStorage.getItem('hospogo_auth_timestamp') && 
+    Date.now() - parseInt(sessionStorage.getItem('hospogo_auth_timestamp') || '0') < 10000;
+  
+  const hasAuth = hasFirebaseUser || hasE2ETestUser || hasRecentAuth;
+  if (!hasAuth || (!user && !hasRecentAuth)) {
     // Store the attempted URL for post-login redirect
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
