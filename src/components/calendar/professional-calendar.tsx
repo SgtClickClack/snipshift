@@ -3605,7 +3605,7 @@ function ProfessionalCalendarContent({
             if (firstEvent?.resource?.booking?.shift || firstEvent?.resource?.booking?.job) {
               const shift = firstEvent.resource?.booking?.shift || firstEvent.resource?.booking?.job;
               if (shift?.id) {
-                inviteMutation.mutate({ shiftId: shift.id, workerId: professional.id });
+                assignStaffMutation.mutate({ shiftId: shift.id, professional });
               }
             } else {
               // Create new shift and assign
