@@ -12,10 +12,17 @@ const getEnv = (key: keyof ImportMetaEnv) => {
 
 // Project snipshift-75b04: VITE_FIREBASE_PROJECT_ID and VITE_FIREBASE_MESSAGING_SENDER_ID
 // must match this project exactly; mismatches cause Firebase 400 errors (e.g. on token cleanup).
+// 
+// CRITICAL: authDomain must use env variable to avoid COOP (Cross-Origin-Opener-Policy) errors.
+// Hardcoding authDomain causes popup auth to fail with "window.closed" blocked errors.
 function buildConfig() {
+  // For local development, use the Firebase default authDomain if VITE_FIREBASE_AUTH_DOMAIN is not set
+  const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 
+                     `${getEnv('VITE_FIREBASE_PROJECT_ID')}.firebaseapp.com`;
+  
   return {
     apiKey: getEnv('VITE_FIREBASE_API_KEY'),
-    authDomain: 'snipshift-75b04.firebaseapp.com',
+    authDomain,
     projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
     storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
     messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
