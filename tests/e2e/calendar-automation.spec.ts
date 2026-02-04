@@ -7,9 +7,9 @@
  * - Error handling: no templates shows error and disables Generate button
  */
 
-import { test, expect, BrowserContext, Page } from '@playwright/test';
+import { test, expect, E2E_VENUE_OWNER, E2E_PROFESSIONAL } from '../fixtures/hospogo-fixtures';
+import { BrowserContext, Page } from '@playwright/test';
 import { setupUserContext, TEST_PROFESSIONAL } from './seed_data';
-import { E2E_VENUE_OWNER } from './e2e-business-fixtures';
 import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
 
@@ -170,6 +170,14 @@ test.describe('Calendar Automation E2E Tests', () => {
   test.beforeEach(async ({ context, page }, testInfo) => {
     const venueId = await ensureVenueForE2E();
 
+    // Setup E2E auth context
+    await setupUserContext(context, E2E_VENUE_OWNER);
+
+    // Block Stripe JS to prevent external network calls and flakiness
+    await page.route('https://js.stripe.com/**', (route) => route.abort());
+    await page.route('https://m.stripe.com/**', (route) => route.abort());
+    await page.route('https://r.stripe.com/**', (route) => route.abort());
+
     // Ensure API requests from browser use mock-test-token (E2E auth bypass)
     await page.route('**/api/**', async (route) => {
       const request = route.request();
@@ -229,8 +237,6 @@ test.describe('Calendar Automation E2E Tests', () => {
       testInfo.skip(true, 'Test DB unavailable or ensureTestVenueExists failed (run: docker-compose -f api/docker-compose.test.yml up -d)');
     }
     await cleanupShiftsAndTemplates();
-
-    await setupUserContext(context, E2E_VENUE_OWNER);
 
     if (venueId) {
       await createTestTemplate(venueId);
@@ -613,6 +619,11 @@ test.describe('Calendar Automation E2E Tests', () => {
       // Setup professional user context
       await setupUserContext(professionalContext, TEST_PROFESSIONAL);
       const professionalPage = await professionalContext.newPage();
+
+      // Block Stripe JS to prevent external network calls
+      await professionalPage.route('https://js.stripe.com/**', (route) => route.abort());
+      await professionalPage.route('https://m.stripe.com/**', (route) => route.abort());
+      await professionalPage.route('https://r.stripe.com/**', (route) => route.abort());
 
       // Mock invitations API
       await professionalPage.route('**/api/shifts/invitations/me', async (route) => {

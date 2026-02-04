@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { IntegrationErrorBoundary } from '@/components/common/IntegrationErrorBoundary';
 import { apiRequest } from '@/lib/queryClient';
 import { RefreshCw, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import XeroSyncHistory from './XeroSyncHistory';
 
 interface XeroCalendar {
   id: string;
@@ -33,8 +34,8 @@ interface XeroCalendar {
 }
 
 interface SyncResult {
-  synced: Array<{ employeeId: string; xeroEmployeeId: string; hours: number; status: string }>;
-  failed: Array<{ employeeId: string; reason: string }>;
+  synced: Array<{ employeeId: string; xeroEmployeeId: string; hours: number; status: string; employeeName?: string }>;
+  failed: Array<{ employeeId: string; reason: string; employeeName?: string }>;
   message?: string;
 }
 
@@ -292,8 +293,28 @@ export default function XeroSyncManager() {
               </Button>
 
               {lastResult && (lastResult.synced.length > 0 || lastResult.failed.length > 0) && (
-                <div className="rounded-md border p-4 space-y-2" data-testid="xero-sync-result">
-                  <p className="font-medium text-sm">Last sync result</p>
+                <div className="rounded-md border p-4 space-y-4" data-testid="xero-sync-result">
+                  {/* Header with status badge */}
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm">Last sync result</p>
+                    {lastResult.synced.length > 0 && lastResult.failed.length > 0 && (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/30">
+                        Partial Success
+                      </span>
+                    )}
+                    {lastResult.synced.length > 0 && lastResult.failed.length === 0 && (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-500/20 text-green-500 border border-green-500/30">
+                        Success
+                      </span>
+                    )}
+                    {lastResult.synced.length === 0 && lastResult.failed.length > 0 && (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-500/20 text-red-500 border border-red-500/30">
+                        Failed
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Synced employees */}
                   {lastResult.synced.length > 0 && (
                     <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-500">
                       <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -303,12 +324,57 @@ export default function XeroSyncManager() {
                       </span>
                     </div>
                   )}
+                  
+                  {/* Failed employees with detailed list */}
                   {lastResult.failed.length > 0 && (
-                    <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-500">
-                      <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                      <span>
-                        {lastResult.failed.length} skipped: {lastResult.failed.map((f) => f.reason).join(', ')}
-                      </span>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-500">
+                        <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>
+                          {lastResult.failed.length} employee(s) skipped
+                        </span>
+                      </div>
+                      
+                      {/* Detailed list of failed employees with #BAFF39 highlighting and Fix Mapping CTA */}
+                      <div className="ml-6 space-y-1.5">
+                        {lastResult.failed.map((failed, idx) => (
+                          <div 
+                            key={failed.employeeId || idx}
+                            className="flex items-center justify-between p-2 rounded-md bg-[#BAFF39]/10 border-2 border-[#BAFF39]/40 shadow-[0_0_8px_rgba(186,255,57,0.15)]"
+                            data-testid={`xero-failed-row-${failed.employeeId}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-[#BAFF39] animate-pulse" />
+                              <span className="text-sm font-semibold text-[#BAFF39]">
+                                {failed.employeeName || `Employee ${failed.employeeId.slice(0, 8)}...`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {failed.reason.includes('mapping') ? 'Missing Xero ID' : failed.reason}
+                              </span>
+                              {/* Fix Mapping CTA - high visibility for Lucas */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs font-bold bg-[#BAFF39] text-black hover:bg-[#BAFF39]/80 rounded-full shadow-md"
+                                onClick={() => {
+                                  // Navigate to team settings with employee ID
+                                  window.location.href = `/settings?category=team&highlight=${failed.employeeId}`;
+                                }}
+                                data-testid={`fix-mapping-${failed.employeeId}`}
+                              >
+                                Fix Mapping
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Action hint */}
+                      <p className="ml-6 text-xs text-muted-foreground">
+                        💡 Update staff Xero ID mappings in Settings → Team → Xero Integration
+                      </p>
                     </div>
                   )}
                 </div>
@@ -340,6 +406,9 @@ export default function XeroSyncManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sync History - Lucas's "Security Blanket" for financial integrity audit */}
+      <XeroSyncHistory />
     </IntegrationErrorBoundary>
   );
 }

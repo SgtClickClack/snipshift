@@ -15,9 +15,8 @@
  * 4. Staff Logic: Verify Accept All transitions status to CONFIRMED (Green)
  */
 
-import { test, expect, Page, BrowserContext, Browser } from '@playwright/test';
-import { E2E_VENUE_OWNER } from './e2e-business-fixtures';
-import { E2E_PROFESSIONAL } from './auth-professional.setup';
+import { test, expect, E2E_VENUE_OWNER, E2E_PROFESSIONAL } from '../fixtures/hospogo-fixtures';
+import { Page, BrowserContext, Browser } from '@playwright/test';
 import { setupUserContext, TEST_PROFESSIONAL } from './seed_data';
 import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
@@ -207,6 +206,14 @@ async function cleanupTestData(): Promise<void> {
 test.describe('Business Owner: Capacity & Automation Workflow', () => {
   test.beforeEach(async ({ context, page }) => {
     const venueId = await ensureTestVenueWithCapacity(4);
+
+    // Setup E2E auth context
+    await setupUserContext(context, E2E_VENUE_OWNER);
+
+    // Block Stripe JS to prevent external network calls and flakiness
+    await page.route('https://js.stripe.com/**', (route) => route.abort());
+    await page.route('https://m.stripe.com/**', (route) => route.abort());
+    await page.route('https://r.stripe.com/**', (route) => route.abort());
     
     // Ensure API requests use mock-test-token (E2E auth bypass)
     await page.route('**/api/**', async (route) => {
@@ -217,8 +224,6 @@ test.describe('Business Owner: Capacity & Automation Workflow', () => {
       }
       await route.continue({ headers });
     });
-
-    await setupUserContext(context, E2E_VENUE_OWNER);
   });
 
   test.afterEach(async () => {
@@ -437,6 +442,11 @@ test.describe('Professional: Staff Invitation & Acceptance', () => {
     await setupUserContext(professionalContext, TEST_PROFESSIONAL);
     professionalPage = await professionalContext.newPage();
 
+    // Block Stripe JS to prevent external network calls and flakiness
+    await professionalPage.route('https://js.stripe.com/**', (route) => route.abort());
+    await professionalPage.route('https://m.stripe.com/**', (route) => route.abort());
+    await professionalPage.route('https://r.stripe.com/**', (route) => route.abort());
+
     // Ensure API requests use mock-test-token-professional
     await professionalPage.route('**/api/**', async (route) => {
       const request = route.request();
@@ -621,6 +631,14 @@ test.describe('Dual-Context: Full Roster Lifecycle', () => {
     });
     await setupUserContext(professionalContext, TEST_PROFESSIONAL);
     professionalPage = await professionalContext.newPage();
+
+    // Block Stripe JS for both pages
+    await businessPage.route('https://js.stripe.com/**', (route) => route.abort());
+    await businessPage.route('https://m.stripe.com/**', (route) => route.abort());
+    await businessPage.route('https://r.stripe.com/**', (route) => route.abort());
+    await professionalPage.route('https://js.stripe.com/**', (route) => route.abort());
+    await professionalPage.route('https://m.stripe.com/**', (route) => route.abort());
+    await professionalPage.route('https://r.stripe.com/**', (route) => route.abort());
 
     // Setup API auth bypass for both
     await businessPage.route('**/api/**', async (route) => {

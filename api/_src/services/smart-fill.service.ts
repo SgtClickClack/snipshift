@@ -18,8 +18,8 @@ import * as shiftsRepo from '../repositories/shifts.repository.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
 import { getDb } from '../db/index.js';
-import { shifts, shiftOffers, shiftInvitations } from '../db/schema.js';
-import { eq, and, gte, lte, inArray, or } from 'drizzle-orm';
+import { shifts, shiftOffers, shiftInvitations, workerAvailability } from '../db/schema.js';
+import { eq, and, gte, lte, inArray, or, sql } from 'drizzle-orm';
 import { SHIFT_CONFIG } from '../config/business.config.js';
 
 export interface SmartFillResult {
@@ -60,6 +60,61 @@ function combineDateAndTime(baseDate: Date, timeStr: string): Date {
   const d = new Date(baseDate);
   d.setHours(h, m, 0, 0);
   return d;
+}
+
+/**
+ * Determine which availability slot(s) a shift falls into based on start time
+ * Morning: 06:00 - 11:00
+ * Lunch:   11:00 - 15:00
+ * Dinner:  15:00 - 23:00
+ */
+function getShiftSlot(startTime: Date): 'morning' | 'lunch' | 'dinner' {
+  const hour = startTime.getHours();
+  if (hour >= 6 && hour < 11) return 'morning';
+  if (hour >= 11 && hour < 15) return 'lunch';
+  return 'dinner';
+}
+
+/**
+ * Check if a professional has marked themselves as UNAVAILABLE for a specific date/slot
+ * Returns TRUE if they are unavailable (should be excluded from invitations)
+ */
+async function isWorkerUnavailable(
+  db: NonNullable<ReturnType<typeof getDb>>,
+  professionalId: string,
+  shiftDate: Date,
+  slotStart: Date
+): Promise<boolean> {
+  const dateStr = shiftDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const slot = getShiftSlot(slotStart);
+  
+  // Query the worker_availability table
+  const [availability] = await db
+    .select()
+    .from(workerAvailability)
+    .where(
+      and(
+        eq(workerAvailability.userId, professionalId),
+        eq(workerAvailability.date, dateStr)
+      )
+    )
+    .limit(1);
+  
+  // If no availability record exists, assume they are AVAILABLE (default open)
+  if (!availability) return false;
+  
+  // Check the specific slot - if the slot is FALSE, they are UNAVAILABLE
+  // The boolean flags represent: TRUE = available, FALSE = unavailable
+  switch (slot) {
+    case 'morning':
+      return availability.morning === false;
+    case 'lunch':
+      return availability.lunch === false;
+    case 'dinner':
+      return availability.dinner === false;
+    default:
+      return false;
+  }
 }
 
 /**
@@ -255,13 +310,17 @@ export async function smartFill(
         for (const prof of sortedProfessionals) {
           if (!prof) continue;
           
-          // Check availability (not already assigned to overlapping shift)
+          // Check 1: Shift collision (not already assigned to overlapping shift)
           const isAvailable = await isProfessionalAvailable(db, prof.id, slotStart, slotEnd);
+          if (!isAvailable) continue;
           
-          if (isAvailable) {
-            assignedProfessional = prof;
-            break;
-          }
+          // Check 2: Worker availability preference (has not marked themselves as unavailable)
+          const isUnavailable = await isWorkerUnavailable(db, prof.id, baseDate, slotStart);
+          if (isUnavailable) continue;
+          
+          // Professional is both free from conflicts AND has not marked themselves unavailable
+          assignedProfessional = prof;
+          break;
         }
 
         if (!assignedProfessional) {

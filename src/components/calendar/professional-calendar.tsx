@@ -1239,6 +1239,12 @@ function ProfessionalCalendarContent({
         });
         return;
       }
+
+      // Business mode with onDateSelect: delegate to parent (e.g. venue-dashboard CreateShiftModal)
+      if (mode === 'business' && onDateSelect) {
+        onDateSelect(start);
+        return;
+      }
       
       // Try to use settings-based times if available
       let shiftTimes = null;

@@ -1566,4 +1566,113 @@ router.post('/onboarding/complete', authenticateUser, asyncHandler(async (req: A
   });
 }));
 
+/**
+ * GET /api/me/availability
+ *
+ * Get the current user's availability preferences for the next 7 days
+ */
+router.get('/me/availability', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Import repository dynamically to avoid circular dependencies
+  const workerAvailabilityRepo = await import('../repositories/worker-availability.repository.js');
+
+  // Get availability for the next 7 days
+  const today = new Date();
+  const startDate = today.toISOString().split('T')[0];
+  
+  const endDate = new Date(today);
+  endDate.setDate(endDate.getDate() + 7);
+  const endDateStr = endDate.toISOString().split('T')[0];
+
+  const availability = await workerAvailabilityRepo.getWorkerAvailability(
+    userId,
+    startDate,
+    endDateStr
+  );
+
+  // Transform to simpler format for frontend
+  const transformed = availability.map((a) => ({
+    date: a.date,
+    morning: a.morning,
+    lunch: a.lunch,
+    dinner: a.dinner,
+  }));
+
+  res.status(200).json({
+    availability: transformed,
+    count: transformed.length,
+  });
+}));
+
+/**
+ * POST /api/me/availability
+ *
+ * Bulk save availability preferences for the authenticated user.
+ * Creates or updates availability records for specified dates.
+ * 
+ * Body:
+ * {
+ *   availability: [
+ *     { date: "2026-02-04", morning: true, lunch: false, dinner: true },
+ *     ...
+ *   ]
+ * }
+ */
+router.post('/me/availability', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const { availability } = req.body;
+
+  // Validate input
+  if (!Array.isArray(availability)) {
+    res.status(400).json({ message: 'availability must be an array' });
+    return;
+  }
+
+  // Validate each availability entry
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  for (const entry of availability) {
+    if (!entry.date || !dateRegex.test(entry.date)) {
+      res.status(400).json({ message: 'Each entry must have a valid date in YYYY-MM-DD format' });
+      return;
+    }
+    if (typeof entry.morning !== 'boolean' || 
+        typeof entry.lunch !== 'boolean' || 
+        typeof entry.dinner !== 'boolean') {
+      res.status(400).json({ message: 'morning, lunch, and dinner must be boolean values' });
+      return;
+    }
+  }
+
+  // Import repository dynamically
+  const workerAvailabilityRepo = await import('../repositories/worker-availability.repository.js');
+
+  try {
+    const results = await workerAvailabilityRepo.upsertWorkerAvailability(userId, availability);
+
+    res.status(200).json({
+      message: 'Availability saved successfully',
+      count: results.length,
+      availability: results.map((r) => ({
+        date: r.date,
+        morning: r.morning,
+        lunch: r.lunch,
+        dinner: r.dinner,
+      })),
+    });
+  } catch (error: any) {
+    console.error('[POST /api/me/availability] Error:', error);
+    res.status(500).json({ message: 'Failed to save availability' });
+  }
+}));
+
 export default router;

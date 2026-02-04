@@ -26,6 +26,9 @@ import { RecommendedShifts } from "@/components/shifts/RecommendedShifts";
 import { StandbyShiftsSection } from "./standby-shifts-section";
 import { StandbyHeroBadge } from "./StandbyHeroBadge";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
+import { EarningsOverview } from "@/components/dashboard/EarningsOverview";
+import { ProVaultManager } from "@/components/professional/ProVaultManager";
+import { AvailabilityToggle } from "@/components/professional/AvailabilityToggle";
 import { DashboardStatsSkeleton } from "@/components/loading/skeleton-loaders";
 import { EmptyState } from "@/components/ui/empty-state";
 // Application type not needed - Booking is defined locally
@@ -394,6 +397,20 @@ export default function ProfessionalOverview({
 
       {/* My Standby Shifts (Waitlist) */}
       <StandbyShiftsSection />
+
+      {/* Availability & Compliance Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Availability Picker */}
+        <AvailabilityToggle />
+        
+        {/* Compliance Vault */}
+        <ProVaultManager />
+      </div>
+
+      {/* Earnings Overview */}
+      <EarningsOverview 
+        onViewAll={() => onViewChange?.('earnings')}
+      />
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

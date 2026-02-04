@@ -10,7 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
-import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2 } from "lucide-react";
+import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2, Bell, ShieldCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -601,6 +601,21 @@ function ProfessionalDashboardContent() {
               <p className="text-muted-foreground">{user?.displayName || user?.email}</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {/* Notification Bell - Shows red dot for pending invitations */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative flex-shrink-0"
+                onClick={() => setActiveView('invitations')}
+                data-testid="button-notifications"
+              >
+                <Bell className="h-4 w-4" />
+                {pendingInvitationsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    {pendingInvitationsCount > 9 ? '9+' : pendingInvitationsCount}
+                  </span>
+                )}
+              </Button>
               <Button 
                 onClick={() => navigate('/professional-messages')}
                 className="flex-1 md:flex-none bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"

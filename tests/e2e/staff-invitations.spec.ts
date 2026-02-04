@@ -11,9 +11,9 @@
  * Part of staff-e2e project - runs with professional user authentication.
  */
 
-import { test, expect, Page, BrowserContext, Browser } from '@playwright/test';
+import { test, expect, E2E_PROFESSIONAL } from '../fixtures/hospogo-fixtures';
+import { Page, BrowserContext, Browser } from '@playwright/test';
 import { TEST_PROFESSIONAL, setupUserContext } from './seed_data';
-import { E2E_PROFESSIONAL } from './auth-professional.setup';
 
 /** Performance benchmark: TTI should be under 1000ms */
 const TTI_THRESHOLD_MS = 1000;
@@ -61,6 +61,11 @@ function createMockInvitations(count: number = 3) {
 test.describe('Staff Invitations: View & Manage', () => {
   test.beforeEach(async ({ context, page }) => {
     await setupUserContext(context, TEST_PROFESSIONAL);
+
+    // Block Stripe JS to prevent external network calls and flakiness
+    await page.route('https://js.stripe.com/**', (route) => route.abort());
+    await page.route('https://m.stripe.com/**', (route) => route.abort());
+    await page.route('https://r.stripe.com/**', (route) => route.abort());
 
     // Setup API auth bypass
     await page.route('**/api/**', async (route) => {
@@ -297,6 +302,11 @@ test.describe('Staff Invitations: Financial Privacy', () => {
   test.beforeEach(async ({ context, page }) => {
     await setupUserContext(context, TEST_PROFESSIONAL);
 
+    // Block Stripe JS to prevent external network calls and flakiness
+    await page.route('https://js.stripe.com/**', (route) => route.abort());
+    await page.route('https://m.stripe.com/**', (route) => route.abort());
+    await page.route('https://r.stripe.com/**', (route) => route.abort());
+
     await page.route('**/api/**', async (route) => {
       const headers = { ...route.request().headers() };
       if (!headers['authorization']?.startsWith('Bearer mock-test-')) {
@@ -379,6 +389,11 @@ test.describe('Staff Invitations: Performance', () => {
   test.beforeEach(async ({ context, page }) => {
     await setupUserContext(context, TEST_PROFESSIONAL);
 
+    // Block Stripe JS to prevent external network calls and flakiness
+    await page.route('https://js.stripe.com/**', (route) => route.abort());
+    await page.route('https://m.stripe.com/**', (route) => route.abort());
+    await page.route('https://r.stripe.com/**', (route) => route.abort());
+
     await page.route('**/api/**', async (route) => {
       const headers = { ...route.request().headers() };
       if (!headers['authorization']?.startsWith('Bearer mock-test-')) {
@@ -427,6 +442,11 @@ test.describe('Staff Invitations: Performance', () => {
 test.describe('Staff Invitations: Empty State', () => {
   test.beforeEach(async ({ context, page }) => {
     await setupUserContext(context, TEST_PROFESSIONAL);
+
+    // Block Stripe JS to prevent external network calls and flakiness
+    await page.route('https://js.stripe.com/**', (route) => route.abort());
+    await page.route('https://m.stripe.com/**', (route) => route.abort());
+    await page.route('https://r.stripe.com/**', (route) => route.abort());
 
     await page.route('**/api/**', async (route) => {
       const headers = { ...route.request().headers() };

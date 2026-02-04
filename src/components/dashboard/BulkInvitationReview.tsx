@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
@@ -21,8 +21,69 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  PartyPopper,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Confetti celebration component
+function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: number }) {
+  if (!show) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+      {/* Confetti particles */}
+      {Array.from({ length: 50 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute animate-confetti"
+          style={{
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 0.5}s`,
+            animationDuration: `${2 + Math.random() * 2}s`,
+            backgroundColor: ['#BAFF39', '#FFD700', '#FF6B6B', '#4ECDC4', '#9B59B6'][Math.floor(Math.random() * 5)],
+            width: `${8 + Math.random() * 8}px`,
+            height: `${8 + Math.random() * 8}px`,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+          }}
+        />
+      ))}
+      
+      {/* Success message overlay */}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto animate-in fade-in duration-300">
+        <div className="text-center p-8 max-w-md mx-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#BAFF39]/20 mb-6 animate-bounce">
+            <PartyPopper className="w-10 h-10 text-[#BAFF39]" />
+          </div>
+          <h2 className="text-3xl font-black text-white mb-3 flex items-center justify-center gap-2">
+            <Sparkles className="w-6 h-6 text-[#BAFF39]" />
+            You're Booked!
+            <Sparkles className="w-6 h-6 text-[#BAFF39]" />
+          </h2>
+          <p className="text-lg text-white/80 mb-4">
+            You just locked in
+          </p>
+          <div className="inline-block px-6 py-3 rounded-2xl bg-[#BAFF39] text-black font-black text-2xl shadow-[0_0_30px_rgba(186,255,57,0.5)]">
+            ${earnings.toFixed(2)}
+          </div>
+          <p className="text-sm text-white/60 mt-3">
+            in guaranteed earnings this week!
+          </p>
+        </div>
+      </div>
+      
+      <style>{`
+        @keyframes confetti {
+          0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+        .animate-confetti {
+          animation: confetti linear forwards;
+        }
+      `}</style>
+    </div>
+  );
+}
 
 interface ShiftInvitation {
   id: string;
@@ -86,6 +147,8 @@ export function BulkInvitationReview() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['all']));
   const [viewMode, setViewMode] = useState<'shop' | 'week'>('shop');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [celebrationEarnings, setCelebrationEarnings] = useState(0);
 
   // Fetch pending invitations
   const { data, isLoading, error } = useQuery<InvitationsResponse>({
@@ -96,6 +159,17 @@ export function BulkInvitationReview() {
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Calculate total earnings for selected shifts
+  const calculateSelectedEarnings = useCallback(() => {
+    if (!data?.invitations) return 0;
+    return data.invitations
+      .filter(inv => selectedIds.has(inv.id))
+      .reduce((sum, inv) => {
+        const hours = (new Date(inv.endTime).getTime() - new Date(inv.startTime).getTime()) / (1000 * 60 * 60);
+        return sum + (parseFloat(inv.hourlyRate) * hours);
+      }, 0);
+  }, [data?.invitations, selectedIds]);
 
   // Bulk accept mutation
   const bulkAcceptMutation = useMutation({
@@ -108,14 +182,32 @@ export function BulkInvitationReview() {
       queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/shifts/offers/me'] });
       
+      const acceptedIds = new Set(selectedIds);
       setSelectedIds(new Set());
 
       if (result.summary.accepted > 0) {
+        // Calculate earnings for accepted shifts
+        const earnings = data?.invitations
+          ?.filter(inv => acceptedIds.has(inv.id))
+          .reduce((sum, inv) => {
+            const hours = (new Date(inv.endTime).getTime() - new Date(inv.startTime).getTime()) / (1000 * 60 * 60);
+            return sum + (parseFloat(inv.hourlyRate) * hours);
+          }, 0) || 0;
+        
+        // Trigger confetti celebration!
+        setCelebrationEarnings(earnings);
+        setShowConfetti(true);
+        
+        // Auto-dismiss confetti after 4 seconds
+        setTimeout(() => {
+          setShowConfetti(false);
+        }, 4000);
+        
+        // Also show a toast for persistence
         toast({
-          title: `You've confirmed ${result.summary.accepted} shift${result.summary.accepted > 1 ? 's' : ''}!`,
-          description: result.summary.alreadyTaken > 0 
-            ? `${result.summary.alreadyTaken} shift${result.summary.alreadyTaken > 1 ? 's were' : ' was'} already taken.`
-            : 'The shops have been notified.',
+          title: `🎉 ${result.summary.accepted} shift${result.summary.accepted > 1 ? 's' : ''} confirmed!`,
+          description: `You've locked in $${earnings.toFixed(2)} in earnings!`,
+          className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
         });
       } else if (result.summary.alreadyTaken > 0) {
         toast({
@@ -446,8 +538,21 @@ export function BulkInvitationReview() {
     );
   }
 
+  // Calculate potential earnings for selected shifts
+  const selectedEarnings = useMemo(() => calculateSelectedEarnings(), [calculateSelectedEarnings]);
+  const totalPotentialEarnings = useMemo(() => {
+    if (!data?.invitations) return 0;
+    return data.invitations.reduce((sum, inv) => {
+      const hours = (new Date(inv.endTime).getTime() - new Date(inv.startTime).getTime()) / (1000 * 60 * 60);
+      return sum + (parseFloat(inv.hourlyRate) * hours);
+    }, 0);
+  }, [data?.invitations]);
+
   return (
     <div className="space-y-4">
+      {/* Confetti Celebration Overlay */}
+      <ConfettiCelebration show={showConfetti} earnings={celebrationEarnings} />
+      
       {/* Header with actions */}
       <Card>
         <CardHeader>
@@ -458,7 +563,10 @@ export function BulkInvitationReview() {
                 Pending Invitations
               </CardTitle>
               <CardDescription>
-                {data.totalCount} invitation{data.totalCount > 1 ? 's' : ''} waiting for your response
+                {data.totalCount} invitation{data.totalCount > 1 ? 's' : ''} • 
+                <span className="text-[#BAFF39] font-semibold ml-1">
+                  ${totalPotentialEarnings.toFixed(2)} potential
+                </span>
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -472,13 +580,22 @@ export function BulkInvitationReview() {
               <Button
                 onClick={handleAcceptSelected}
                 disabled={selectedIds.size === 0 || bulkAcceptMutation.isPending}
+                className={cn(
+                  "relative overflow-hidden transition-all duration-300",
+                  selectedIds.size > 0 && "bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black shadow-[0_0_20px_rgba(186,255,57,0.4)]"
+                )}
               >
                 {bulkAcceptMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                 )}
-                Accept Selected ({selectedIds.size})
+                Accept {selectedIds.size > 0 ? `(${selectedIds.size})` : 'Selected'}
+                {selectedIds.size > 0 && selectedEarnings > 0 && (
+                  <span className="ml-2 px-2 py-0.5 bg-black/20 rounded-full text-xs font-bold">
+                    ${selectedEarnings.toFixed(0)}
+                  </span>
+                )}
               </Button>
             </div>
           </div>

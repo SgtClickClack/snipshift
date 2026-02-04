@@ -105,6 +105,7 @@ export default defineConfig({
             /business-setup\.spec\.ts/,
             /financial_privacy\.spec\.ts/,
             /staff-invitations\.spec\.ts/,
+            /professional-flow\.spec\.ts/,
           ],
         },
         {
@@ -121,6 +122,7 @@ export default defineConfig({
             /business-setup\.spec\.ts/,
             /financial_privacy\.spec\.ts/,
             /staff-invitations\.spec\.ts/,
+            /professional-flow\.spec\.ts/,
           ],
         },
         {
@@ -137,6 +139,7 @@ export default defineConfig({
             /business-setup\.spec\.ts/,
             /financial_privacy\.spec\.ts/,
             /staff-invitations\.spec\.ts/,
+            /professional-flow\.spec\.ts/,
           ],
         },
         // ============================================
@@ -181,6 +184,23 @@ export default defineConfig({
             navigationTimeout: 30000, // 30s timeout for navigation
           },
           timeout: 60000, // 60s per-test timeout for staff acceptance tests
+          dependencies: ['setup-professional'],
+        },
+        // ============================================
+        // PROFESSIONAL E2E PROJECT (Full User Journey)
+        // ============================================
+        // Professional workflow tests: Vault/credentials, Availability, Accept All, RBAC Privacy
+        {
+          name: 'professional-e2e',
+          testMatch: /professional-flow\.spec\.ts/,
+          use: {
+            ...devices['Desktop Chrome'],
+            storageState: 'playwright/.auth/professional-user.json',
+            viewport: { width: 1440, height: 900 },
+            actionTimeout: 30000, // 30s timeout for parallel hydration logic
+            navigationTimeout: 30000, // 30s timeout for navigation
+          },
+          timeout: 120000, // 120s per-test timeout for comprehensive flow tests
           dependencies: ['setup-professional'],
         },
       ],

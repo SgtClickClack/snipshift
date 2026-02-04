@@ -732,48 +732,59 @@ test('Venue Manager Journey: Post shift, receive application, approve, and compl
       await venueButtonText.first().click();
     }
     
-    // Wait a moment for React state to update
-    await page.waitForTimeout(500);
+    // Wait a moment for React state to update and navigation to occur
+    // When venue role is selected, the app saves the role and navigates to /onboarding/hub automatically
+    await page.waitForTimeout(1000);
     
-    // 3. Force the Next button to be enabled and Click it via the DOM
-    // This bypasses React state lag during testing
-    const nextButtonClicked = await page.evaluate(() => {
-      const nextBtn = document.querySelector('[data-testid="onboarding-next"]') as HTMLButtonElement;
-      if (nextBtn) {
-        nextBtn.disabled = false;
-        nextBtn.click();
-        return true;
-      }
-      return false;
-    });
-    
-    // Fallback: if evaluate didn't work, use standard Playwright click
-    if (!nextButtonClicked) {
-      const nextBtn = page.getByTestId('onboarding-next');
-      await expect(nextBtn).toBeVisible({ timeout: 5000 });
-      await expect(nextBtn).toBeEnabled({ timeout: 5000 });
-      await nextBtn.click();
-    }
-    
-    // 4. When venue role is selected, it navigates to /onboarding/hub
-    // Wait for navigation to complete
-    await page.waitForURL('**/onboarding/hub', { timeout: 15000 }).catch(async () => {
-      // If navigation didn't happen, check if we're still on /onboarding and wait for personal details
-      const urlAfterRole = page.url();
-      if (urlAfterRole.includes('/onboarding') && !urlAfterRole.includes('/hub')) {
-        console.log('Still on /onboarding, waiting for personal details form...');
-        try {
-          await page.waitForSelector('[data-testid="onboarding-display-name"]', { state: 'visible', timeout: 15000 });
-        } catch (e) {
-          console.log('Personal details form not visible, checking screenshot...');
-          await page.screenshot({ path: 'onboarding-debug.png' });
-          throw e;
+    // Check if we've already navigated to /onboarding/hub (venue flow auto-navigates after role selection)
+    const currentUrlAfterRoleSelect = page.url();
+    if (currentUrlAfterRoleSelect.includes('/onboarding/hub')) {
+      console.log('Already navigated to /onboarding/hub after role selection');
+    } else {
+      // Still on /onboarding - try to find and click the Next button
+      // This handles cases where auto-navigation didn't occur
+      const nextButtonClicked = await page.evaluate(() => {
+        const nextBtn = document.querySelector('[data-testid="onboarding-next"]') as HTMLButtonElement;
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.click();
+          return true;
         }
-      } else {
-        await page.screenshot({ path: 'onboarding-debug.png' });
-        throw new Error(`Unexpected navigation: expected /onboarding/hub but got ${urlAfterRole}`);
+        return false;
+      });
+      
+      // Fallback: if evaluate didn't work, check if button exists before asserting
+      if (!nextButtonClicked) {
+        const nextBtn = page.getByTestId('onboarding-next');
+        const isNextBtnVisible = await nextBtn.isVisible().catch(() => false);
+        
+        if (isNextBtnVisible) {
+          await expect(nextBtn).toBeEnabled({ timeout: 5000 });
+          await nextBtn.click();
+        } else {
+          // Button not visible - app may have auto-navigated, wait for hub
+          console.log('Next button not visible, waiting for auto-navigation to /onboarding/hub...');
+        }
       }
-    });
+      
+      // Wait for navigation to /onboarding/hub
+      await page.waitForURL('**/onboarding/hub', { timeout: 15000 }).catch(async () => {
+        const urlAfterRole = page.url();
+        if (urlAfterRole.includes('/onboarding') && !urlAfterRole.includes('/hub')) {
+          console.log('Still on /onboarding, waiting for personal details form...');
+          try {
+            await page.waitForSelector('[data-testid="onboarding-display-name"]', { state: 'visible', timeout: 15000 });
+          } catch (e) {
+            console.log('Personal details form not visible, checking screenshot...');
+            await page.screenshot({ path: 'onboarding-debug.png' });
+            throw e;
+          }
+        } else if (!urlAfterRole.includes('/onboarding/hub')) {
+          await page.screenshot({ path: 'onboarding-debug.png' });
+          throw new Error(`Unexpected navigation: expected /onboarding/hub but got ${urlAfterRole}`);
+        }
+      });
+    }
   } else {
     console.log('Already on personal details step, skipping role selection');
   }

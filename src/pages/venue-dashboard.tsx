@@ -1554,11 +1554,25 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         {/* Calendar Tab */}
         {activeView === 'calendar' && (
           <div id="calendar-view">
+            <div className="flex justify-end mb-4">
+              <Button
+                onClick={handleCreateShift}
+                data-testid="button-create-shift"
+                variant="default"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Shift
+              </Button>
+            </div>
             <ProfessionalCalendar
               bookings={calendarBookings}
               isLoading={isLoading}
               mode="business"
               onCreateShift={handleCreateShift}
+              onDateSelect={(date) => {
+                setSelectedDateForShift(date);
+                setShowCreateShiftModal(true);
+              }}
             />
           </div>
         )}

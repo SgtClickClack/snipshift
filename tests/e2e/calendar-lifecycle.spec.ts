@@ -1,4 +1,5 @@
-import { test, expect, Browser, BrowserContext, Page } from '@playwright/test';
+import { test, expect } from '../fixtures/hospogo-fixtures';
+import { Browser, BrowserContext, Page } from '@playwright/test';
 import {
   TEST_SHOP_OWNER,
   TEST_PROFESSIONAL,
@@ -54,6 +55,14 @@ test.describe('Calendar Lifecycle E2E Tests', () => {
     // Create pages for each context
     shopPage = await shopContext.newPage();
     barberPage = await barberContext.newPage();
+
+    // Block Stripe JS for both pages to prevent external network calls
+    await shopPage.route('https://js.stripe.com/**', (route) => route.abort());
+    await shopPage.route('https://m.stripe.com/**', (route) => route.abort());
+    await shopPage.route('https://r.stripe.com/**', (route) => route.abort());
+    await barberPage.route('https://js.stripe.com/**', (route) => route.abort());
+    await barberPage.route('https://m.stripe.com/**', (route) => route.abort());
+    await barberPage.route('https://r.stripe.com/**', (route) => route.abort());
 
     // Create fresh test shift data
     testShifts = createTestShifts(TEST_SHOP_OWNER.id);

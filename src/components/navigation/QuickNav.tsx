@@ -1,56 +1,141 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { LayoutDashboard, Briefcase, ShieldCheck, Calendar } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface QuickNavProps {
   onViewChange?: (view: string) => void;
 }
 
+// Mobile bottom navigation links for professionals
+const NAV_ITEMS = [
+  { 
+    label: 'Overview', 
+    view: 'overview', 
+    testId: 'nav-overview',
+    icon: LayoutDashboard,
+  },
+  { 
+    label: 'Jobs', 
+    view: 'jobs', 
+    testId: 'nav-jobs',
+    icon: Briefcase,
+  },
+  { 
+    label: 'Vault', 
+    view: 'profile', 
+    testId: 'nav-vault',
+    icon: ShieldCheck,
+    extraParams: { section: 'vault' },
+  },
+  { 
+    label: 'Schedule', 
+    view: 'calendar', 
+    testId: 'nav-schedule',
+    icon: Calendar,
+  },
+];
+
 export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
-  const links = [
-    { label: 'Calendar', view: 'calendar', testId: 'nav-calendar', extraParams: {} },
-    { label: 'Jobs', view: 'jobs', testId: 'nav-jobs', extraParams: {} },
-    { label: 'Reputation', view: 'profile', testId: 'nav-reputation', extraParams: { reputation: 'true' } }
-  ];
+  const currentView = searchParams.get('view') || 'overview';
 
-  const handleClick = (link: typeof links[0]) => {
+  const handleClick = (item: typeof NAV_ITEMS[0]) => {
     // Build URL with proper query parameters
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('view', link.view);
+    const newParams = new URLSearchParams();
+    newParams.set('view', item.view);
     
-    // Add any extra parameters (like reputation=true)
-    Object.entries(link.extraParams).forEach(([key, value]) => {
-      newParams.set(key, value);
-    });
+    // Add any extra parameters
+    if ('extraParams' in item && item.extraParams) {
+      Object.entries(item.extraParams).forEach(([key, value]) => {
+        newParams.set(key, value);
+      });
+    }
     
     // Navigate with updated search params
     navigate(`/professional-dashboard?${newParams.toString()}`);
     
-    // Only call onViewChange if no extra params (to avoid overriding URL params)
-    // When extra params are present, the navigation will trigger a re-render and
-    // the component will read the view from the URL params
-    if (onViewChange && Object.keys(link.extraParams).length === 0) {
-      onViewChange(link.view);
+    // Callback for parent component
+    if (onViewChange) {
+      onViewChange(item.view);
     }
   };
 
   return (
-    <nav className="flex flex-col gap-4 p-4 bg-gray-100 rounded-lg" data-testid="quick-navigation">
-      <h2 data-testid="quick-navigation-title">Quick Navigation</h2>
-      <div className="flex gap-4">
-        {links.map(link => (
-          <button
-            key={link.testId}
-            onClick={() => handleClick(link)}
-            data-testid={link.testId}
-            className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-          >
-            {link.label}
-          </button>
-        ))}
-      </div>
-    </nav>
+    <>
+      {/* Desktop: Hidden on mobile */}
+      <nav className="hidden md:flex flex-col gap-4 p-4 bg-card rounded-lg border" data-testid="quick-navigation">
+        <h2 className="text-sm font-semibold text-muted-foreground" data-testid="quick-navigation-title">Quick Navigation</h2>
+        <div className="flex gap-4">
+          {NAV_ITEMS.map(item => {
+            const Icon = item.icon;
+            const isActive = currentView === item.view;
+            return (
+              <button
+                key={item.testId}
+                onClick={() => handleClick(item)}
+                data-testid={item.testId}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all",
+                  isActive 
+                    ? "bg-[#BAFF39]/10 text-[#BAFF39]" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Mobile Bottom Navigation - Fixed to bottom */}
+      <nav 
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border safe-area-inset-bottom"
+        data-testid="mobile-bottom-nav"
+      >
+        <div className="flex justify-around items-center h-16 px-2">
+          {NAV_ITEMS.map(item => {
+            const Icon = item.icon;
+            const isActive = currentView === item.view;
+            return (
+              <button
+                key={item.testId}
+                onClick={() => handleClick(item)}
+                data-testid={`mobile-${item.testId}`}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 min-w-[60px] py-2 px-3 rounded-lg transition-all",
+                  isActive 
+                    ? "text-[#BAFF39]" 
+                    : "text-muted-foreground"
+                )}
+              >
+                <Icon 
+                  className={cn(
+                    "h-5 w-5 transition-all",
+                    isActive && "drop-shadow-[0_0_8px_rgba(186,255,57,0.8)]"
+                  )} 
+                />
+                <span className={cn(
+                  "text-[10px] font-semibold tracking-wide",
+                  isActive && "text-[#BAFF39]"
+                )}>
+                  {item.label}
+                </span>
+                {/* Active indicator dot */}
+                {isActive && (
+                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#BAFF39] shadow-[0_0_6px_rgba(186,255,57,0.9)]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Spacer for mobile to prevent content from being hidden behind fixed nav */}
+      <div className="md:hidden h-16" aria-hidden="true" />
+    </>
   );
 };

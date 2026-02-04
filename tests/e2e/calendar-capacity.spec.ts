@@ -8,9 +8,8 @@
  * - Validation (required count >= 1, delete template removes bucket)
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, E2E_VENUE_OWNER } from '../fixtures/hospogo-fixtures';
 import { setupUserContext } from './seed_data';
-import { E2E_VENUE_OWNER } from './e2e-business-fixtures';
 import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
 
@@ -102,7 +101,16 @@ test.describe('Calendar Capacity E2E Tests', () => {
   test.beforeEach(async ({ context, page }) => {
     await ensureTestVenueExists();
     await cleanupShiftTemplates();
-    // Ensure API requests use mock-test-token (E2E auth bypass) to prevent Profile Incomplete redirects
+
+    // Setup E2E auth context
+    await setupUserContext(context, E2E_VENUE_OWNER);
+
+    // Block Stripe JS to prevent external network calls and flakiness
+    await page.route('https://js.stripe.com/**', (route) => route.abort());
+    await page.route('https://m.stripe.com/**', (route) => route.abort());
+    await page.route('https://r.stripe.com/**', (route) => route.abort());
+
+    // Ensure API requests use mock-test-token (E2E auth bypass)
     await page.route('**/api/**', async (route) => {
       const request = route.request();
       const headers = { ...request.headers() };
@@ -111,8 +119,6 @@ test.describe('Calendar Capacity E2E Tests', () => {
       }
       await route.continue({ headers });
     });
-
-    await setupUserContext(context, E2E_VENUE_OWNER);
 
     // Mock shift-templates API for tests that need it (avoids DB/auth issues in E2E)
     const storedTemplates: Array<Record<string, unknown>> = [];

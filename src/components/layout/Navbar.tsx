@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard } from "lucide-react";
+import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -96,7 +96,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="relative bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[50] pt-safe overflow-x-hidden w-full">
+    <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[50] pt-safe overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-20 min-w-0">
           <Link
@@ -201,6 +201,34 @@ export default function Navbar() {
                             <span>Admin Dashboard</span>
                           </Link>
                         </DropdownMenuItem>
+                      )}
+                      {/* CEO Insights Section - Only visible to Rick */}
+                      {(user.email === 'rick@hospogo.com' || user.email === 'rick@snipshift.com.au') && (
+                        <>
+                          <DropdownMenuSeparator className="bg-steel-600" />
+                          <DropdownMenuLabel className="text-xs text-[#BAFF39] font-semibold flex items-center gap-2">
+                            <Crown className="h-3 w-3" />
+                            CEO Insights
+                          </DropdownMenuLabel>
+                          <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
+                            <Link to="/admin/lead-tracker">
+                              <Target className="mr-2 h-4 w-4 text-[#BAFF39]" />
+                              <span>Lead Tracker</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
+                            <Link to="/admin/marketplace">
+                              <TrendingUp className="mr-2 h-4 w-4 text-[#BAFF39]" />
+                              <span>Marketplace Liquidity</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
+                            <Link to="/admin/revenue">
+                              <DollarSign className="mr-2 h-4 w-4 text-[#BAFF39]" />
+                              <span>Revenue Forecast</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
                       )}
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator className="bg-steel-600" />

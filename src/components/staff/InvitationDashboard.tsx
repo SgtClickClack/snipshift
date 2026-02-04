@@ -10,7 +10,7 @@
  * Used by professional/staff users to manage their shift invitations.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/button';
@@ -27,11 +27,116 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
-  DollarSign
+  DollarSign,
+  BadgeCheck,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ConfettiAnimation } from '@/components/onboarding/ConfettiAnimation';
 import { format, isToday, isTomorrow } from 'date-fns';
+
+/**
+ * High-Performance Confetti Animation
+ * Uses CSS transforms and requestAnimationFrame for smooth 60fps rendering
+ * Non-blocking - doesn't interfere with UI state transitions
+ */
+function HighPerformanceConfetti({ 
+  show, 
+  onComplete 
+}: { 
+  show: boolean; 
+  onComplete?: () => void;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [particles, setParticles] = useState<Array<{
+    id: number;
+    x: number;
+    delay: number;
+    duration: number;
+    color: string;
+    size: number;
+    rotation: number;
+  }>>([]);
+
+  useEffect(() => {
+    if (show && !isVisible) {
+      // Generate particles once
+      const newParticles = Array.from({ length: 60 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        delay: Math.random() * 0.5,
+        duration: 2.5 + Math.random() * 1.5,
+        color: ['#BAFF39', '#FFD700', '#FF6B6B', '#4ECDC4', '#9B59B6', '#FF69B4'][Math.floor(Math.random() * 6)],
+        size: 6 + Math.random() * 10,
+        rotation: Math.random() * 360,
+      }));
+      setParticles(newParticles);
+      setIsVisible(true);
+      
+      // Auto cleanup after animation
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setParticles([]);
+        onComplete?.();
+      }, 4000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [show, isVisible, onComplete]);
+
+  if (!isVisible) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[100] pointer-events-none overflow-hidden will-change-transform"
+      aria-hidden="true"
+    >
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute will-change-transform"
+          style={{
+            left: `${p.x}%`,
+            top: '-20px',
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            backgroundColor: p.color,
+            borderRadius: p.id % 3 === 0 ? '50%' : '2px',
+            transform: `rotate(${p.rotation}deg)`,
+            animation: `confetti-fall ${p.duration}s ease-out ${p.delay}s forwards`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(0) rotate(0deg) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg) scale(0.5);
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/**
+ * Earnings Locked In Badge
+ * Shown after successful acceptance to reinforce value proposition
+ */
+function EarningsLockedBadge({ amount }: { amount: number }) {
+  return (
+    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#BAFF39]/20 to-[#BAFF39]/10 border border-[#BAFF39]/30 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#BAFF39]/30">
+        <BadgeCheck className="w-4 h-4 text-[#BAFF39]" />
+      </div>
+      <span className="text-sm font-semibold text-white">Earnings Locked In</span>
+      <span className="text-sm font-black text-[#BAFF39]">${amount.toFixed(0)}</span>
+    </div>
+  );
+}
 
 interface ShiftInvitation {
   id: string;
@@ -121,6 +226,8 @@ export default function InvitationDashboard() {
   const [respondingIds, setRespondingIds] = useState<Set<string>>(new Set());
   const [isAcceptingAll, setIsAcceptingAll] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [lockedEarnings, setLockedEarnings] = useState<number | null>(null);
+  const [showSuccessState, setShowSuccessState] = useState(false);
 
   // Fetch pending invitations
   const { data: invitations = [], isLoading } = useQuery({
@@ -172,6 +279,13 @@ export default function InvitationDashboard() {
     },
   });
 
+  // Calculate total potential earnings
+  const totalPotentialEarnings = useMemo(() => {
+    return pendingInvitations.reduce((sum, inv) => {
+      return sum + calculateEstimatedPay(inv.shift.hourlyRate, inv.shift.startTime, inv.shift.endTime);
+    }, 0);
+  }, [pendingInvitations]);
+
   // Mutation for accept all
   const acceptAllMutation = useMutation({
     mutationFn: () => {
@@ -182,9 +296,15 @@ export default function InvitationDashboard() {
       setIsAcceptingAll(true);
     },
     onSuccess: (result) => {
-      // Trigger confetti celebration!
+      // Calculate earnings from accepted shifts
+      const earnings = pendingInvitations.reduce((sum, inv) => {
+        return sum + calculateEstimatedPay(inv.shift.hourlyRate, inv.shift.startTime, inv.shift.endTime);
+      }, 0);
+      
+      // Trigger high-performance confetti (non-blocking)
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
+      setLockedEarnings(earnings);
+      setShowSuccessState(true);
       
       // Force invalidate all relevant queries to update UI instantly
       queryClient.invalidateQueries({ queryKey: ['my-invitations'] });
@@ -195,7 +315,8 @@ export default function InvitationDashboard() {
       
       toast({
         title: '🎉 All Shifts Accepted!',
-        description: `You've confirmed ${result.accepted} shift${result.accepted !== 1 ? 's' : ''}. See you there!`,
+        description: `You've locked in $${earnings.toFixed(0)} in earnings!`,
+        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
       });
     },
     onError: (error: any) => {
@@ -209,6 +330,11 @@ export default function InvitationDashboard() {
       setIsAcceptingAll(false);
     },
   });
+
+  // Handle confetti completion (non-blocking transition)
+  const handleConfettiComplete = useCallback(() => {
+    setShowConfetti(false);
+  }, []);
 
   const handleRespond = (shiftId: string, accept: boolean) => {
     respondMutation.mutate({ shiftId, accept });
@@ -258,38 +384,72 @@ export default function InvitationDashboard() {
 
   return (
     <>
-      {showConfetti && <ConfettiAnimation />}
+      {/* High-Performance Confetti - Non-blocking UI */}
+      <HighPerformanceConfetti show={showConfetti} onComplete={handleConfettiComplete} />
       
       <div className="space-y-6 max-w-lg mx-auto p-4">
+        {/* Success State with Earnings Locked Badge */}
+        {showSuccessState && lockedEarnings !== null && (
+          <div className="flex flex-col items-center justify-center p-8 rounded-[40px] border border-[#BAFF39]/30 bg-gradient-to-b from-[#BAFF39]/10 to-transparent text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-20 h-20 rounded-full bg-[#BAFF39]/20 flex items-center justify-center mb-6 animate-bounce">
+              <Wallet className="w-10 h-10 text-[#BAFF39]" />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-4">You're All Set!</h2>
+            <EarningsLockedBadge amount={lockedEarnings} />
+            <p className="text-sm text-muted-foreground mt-4">
+              Check your calendar to see your upcoming shifts.
+            </p>
+          </div>
+        )}
+
         {/* Bulk Action Header - HospoGo Neon Style */}
-        <div className="relative p-8 rounded-[40px] border border-brand-neon/20 bg-brand-neon/5 text-center overflow-hidden">
-          {/* Glow effect */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand-neon opacity-10 rounded-full blur-3xl pointer-events-none"></div>
-          
-          <Sparkles className="text-brand-neon mx-auto mb-4" size={32} />
-          <h2 className="text-3xl font-black uppercase italic mb-2">
-            New <span className="text-brand-neon">Offers</span>
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            You have {pendingInvitations.length} shift{pendingInvitations.length !== 1 ? 's' : ''} waiting for your confirmation.
-          </p>
-          
-          <Button
-            onClick={handleAcceptAll}
-            disabled={isAcceptingAll}
-            className="w-full bg-brand-neon text-brand-dark py-6 rounded-2xl font-black text-lg uppercase tracking-widest shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] transition-all active:scale-95"
-            data-testid="accept-all-invitations-btn"
-          >
-            {isAcceptingAll ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              "Accept All Shifts"
+        {!showSuccessState && (
+          <div className="relative p-8 rounded-[40px] border border-brand-neon/20 bg-brand-neon/5 text-center overflow-hidden">
+            {/* Glow effect */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand-neon opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <Sparkles className="text-brand-neon mx-auto mb-4" size={32} />
+            <h2 className="text-3xl font-black uppercase italic mb-2">
+              New <span className="text-brand-neon">Offers</span>
+            </h2>
+            <p className="text-muted-foreground mb-2">
+              You have {pendingInvitations.length} shift{pendingInvitations.length !== 1 ? 's' : ''} waiting for your confirmation.
+            </p>
+            
+            {/* Potential earnings badge */}
+            {totalPotentialEarnings > 0 && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#BAFF39]/10 border border-[#BAFF39]/20 mb-6">
+                <DollarSign className="w-4 h-4 text-[#BAFF39]" />
+                <span className="text-sm font-semibold text-[#BAFF39]">
+                  ${totalPotentialEarnings.toFixed(0)} potential
+                </span>
+              </div>
             )}
-          </Button>
-        </div>
+            
+            <Button
+              onClick={handleAcceptAll}
+              disabled={isAcceptingAll}
+              className="w-full bg-brand-neon text-brand-dark py-6 rounded-2xl font-black text-lg uppercase tracking-widest shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] transition-all active:scale-95"
+              data-testid="accept-all-invitations-btn"
+            >
+              {isAcceptingAll ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Accept All Shifts
+                  {totalPotentialEarnings > 0 && (
+                    <span className="ml-2 px-2 py-0.5 bg-black/20 rounded-full text-sm">
+                      ${totalPotentialEarnings.toFixed(0)}
+                    </span>
+                  )}
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
         {/* Individual Invitations List */}
         <div className="space-y-4">

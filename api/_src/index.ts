@@ -306,6 +306,35 @@ if (process.env.NODE_ENV === 'test') {
     }
     res.status(200).json({ ok: true, venueId: venue.id });
   }));
+
+  app.post('/api/test/setup-professional', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+    // Accept user from body (E2E setup sends E2E_PROFESSIONAL) or fall back to token user
+    const body = (req.body || {}) as { id?: string; email?: string; name?: string };
+    const userId = body.id || req.user?.id;
+    const email = body.email ?? req.user?.email ?? 'e2e-professional@hospogo.com';
+    const name = body.name ?? req.user?.name ?? 'E2E Test Professional';
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+    const usersRepo = await import('./repositories/users.repository.js');
+    const existingUser = await usersRepo.getUserById(userId);
+    if (existingUser) {
+      res.status(200).json({ ok: true, userId, existing: true });
+      return;
+    }
+    const db = getDb();
+    if (db) {
+      await (db as any).execute(sql`
+        INSERT INTO users (id, email, name, role, roles, is_onboarded, created_at, updated_at)
+        VALUES (${userId}, ${email}, ${name}, 'professional', ARRAY['professional']::text[], true, NOW(), NOW())
+        ON CONFLICT (id) DO NOTHING
+      `);
+    } else {
+      await usersRepo.createUser({ email, name, role: 'professional' });
+    }
+    res.status(200).json({ ok: true, userId });
+  }));
 }
 
 // Health check endpoint (legacy)
@@ -2389,6 +2418,35 @@ app.get('/', (req, res) => {
     documentation: '/api/docs' // Placeholder
   });
 });
+
+// ============================================
+// INVESTOR PORTAL ENDPOINTS
+// ============================================
+
+// Handler for investor RSVP submission
+app.post('/api/investors/rsvp', asyncHandler(async (req, res) => {
+  const { email, name, timestamp } = req.body;
+  
+  // Log the RSVP for now - in production this would store to a database
+  console.log('[INVESTOR RSVP]', {
+    email: email || 'anonymous',
+    name: name || 'Anonymous Investor',
+    timestamp: timestamp || new Date().toISOString(),
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+  });
+  
+  // Return success response
+  res.status(200).json({
+    success: true,
+    message: 'RSVP confirmed',
+    eventDetails: {
+      date: 'February 28, 2026',
+      time: '6:00 PM AEST',
+      location: 'Brisbane CBD',
+    },
+  });
+}));
 
 // Favicon handler to prevent 404s
 app.get('/favicon.ico', (req, res) => {

@@ -242,7 +242,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!isNavigationLocked) return;
     const t = setTimeout(() => {
       setIsNavigationLocked(false);
-      console.warn('[AuthContext] Navigation lock safety timeout (6s) — forcing unlock');
+      console.warn('[AuthContext] Navigation lock safety timeout (3s) — forcing unlock');
     }, NAVIGATION_LOCK_TIMEOUT_MS);
     return () => clearTimeout(t);
   }, [isNavigationLocked]);
@@ -304,8 +304,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsNavigationLocked(false);
     }
 
-    // Get fresh token
-    const idToken = await firebaseUser.getIdToken(/* forceRefresh */ true);
+    // Get token WITHOUT forced refresh to avoid 1-2s network call
+    // Firebase automatically refreshes if token is expired (within 5 min of expiry)
+    // This is the key optimization: cached token lookup is <10ms vs forced refresh at 1-2s
+    const tokenStartTime = Date.now();
+    const idToken = await firebaseUser.getIdToken(/* forceRefresh */ false);
+    const tokenFetchDuration = Date.now() - tokenStartTime;
+    console.log('[AuthContext] Token retrieved (cached, no network)', { tokenFetchMs: tokenFetchDuration });
     setToken(idToken);
 
     const effectivelyOnboarding = currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection' || isOnboardingModeRef.current;
@@ -448,9 +453,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (isOnboarded) {
+        // NEUTRAL ZONE EARLY RETURN: Investor portal is a "no-redirect" zone
+        // Check BEFORE determining target path to prevent any redirect calculation
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (currentPath.startsWith('/investorportal')) {
+          console.log('[AuthContext] User is onboarded but on investor portal — skipping ALL redirect logic');
+          setIsVenueLoaded(true);
+          setRedirecting(false);
+          lastHydratedUidRef.current = firebaseUser.uid;
+          isHydratingRef.current = false;
+          return;
+        }
+        
         // Determine target path immediately (don't wait for venue)
         const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
         
         // Neutral route check: allow investor portal to remain visible
         if (isNeutralRoute(currentPath)) {
@@ -537,6 +553,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsVenueLoaded(true);
         setIsTransitioning(false);
         setIsSystemReady(true); // Auth complete (user needs onboarding but system is ready)
+        
+        // NEUTRAL ZONE EARLY RETURN: Investor portal is a "no-redirect" zone for non-onboarded users too
+        if (currentPath.startsWith('/investorportal')) {
+          console.log('[AuthContext] User not onboarded but on investor portal — skipping ALL redirect logic');
+          lastHydratedUidRef.current = firebaseUser.uid;
+          isHydratingRef.current = false;
+          return;
+        }
+        
+        // NEUTRAL ZONE: Allow investor portal to remain visible even for non-onboarded users
+        if (isNeutralRoute(currentPath)) {
+          console.log('[AuthContext] User not onboarded but on neutral route — skipping onboarding redirect', { currentPath });
+        }
       }
       
       // Clear auth-related URL parameters
@@ -758,6 +787,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // These indicate the user just completed popup auth and landed on home page
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    
+    // NEUTRAL ZONE EARLY RETURN: Investor portal is a "no-redirect" zone
+    // This must be the FIRST check to kill flicker before any auth logic runs
+    if (window.location.pathname.startsWith('/investorportal')) return;
+    
     if (isLoading) return; // Wait for auth to settle
 
     // Landing gate: if user is NOT logged in, never redirect away from '/' (allow landing to stay)
@@ -804,6 +838,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // useEffect that monitors user and loading: redirect authenticated users away from login/signup only.
   // Landing gate: if user is NOT logged in, do nothing — they are ALWAYS allowed to stay on '/' (landing).
   useEffect(() => {
+    // NEUTRAL ZONE EARLY RETURN: Investor portal is a "no-redirect" zone
+    // This must be the FIRST check to kill flicker before any auth logic runs
+    if (window.location.pathname.startsWith('/investorportal')) return;
+    
     if (isLoading || !user) return;
 
     const currentPath = window.location.pathname;
@@ -846,7 +884,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } else {
         // Only send to onboarding when isOnboarded is explicitly false (or unset)
-        if (!isOnboardingRoute(currentPath)) {
+        // NEUTRAL ZONE: Skip redirect if on investor portal (allow viewing without onboarding)
+        if (isNeutralRoute(currentPath)) {
+          console.log('[Auth] User not onboarded but on neutral route — allowing access', { currentPath });
+          setRedirecting(false);
+        } else if (!isOnboardingRoute(currentPath)) {
           console.log('[Auth] User not onboarded, redirecting from', currentPath, 'to /onboarding');
           setRedirecting(true);
           navigate('/onboarding', { replace: true });

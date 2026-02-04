@@ -293,9 +293,8 @@ export function AssignStaffModal({
           {/* Select All toggle (when multi-select is enabled) */}
           {enableMultiSelect && currentList.length > 0 && (
             <div className="flex items-center justify-between px-1">
-              <button
-                onClick={handleSelectAll}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              <label
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <Checkbox
                   checked={allCurrentSelected}
@@ -303,7 +302,7 @@ export function AssignStaffModal({
                   className="h-4 w-4"
                 />
                 <span>Select All ({currentList.length})</span>
-              </button>
+              </label>
               {someSelected && (
                 <span className="text-sm text-primary font-medium">
                   {selectedIds.size} selected
