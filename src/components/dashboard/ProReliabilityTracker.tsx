@@ -28,10 +28,10 @@ interface ReputationStats {
 const STRIKE_STATES = {
   0: {
     label: 'Elite Professional',
-    color: '#BFFF00', // Lime/neon green
+    color: '#BAFF39', // Lime/neon green
     subtext: 'You have a perfect reliability record!',
-    bgClass: 'from-[#BFFF00]/20 to-[#84cc16]/10',
-    borderClass: 'border-[#BFFF00]/50',
+    bgClass: 'from-[#BAFF39]/20 to-[#84cc16]/10',
+    borderClass: 'border-[#BAFF39]/50',
     textClass: 'text-[#84cc16]',
     icon: Trophy,
   },
@@ -312,7 +312,7 @@ export function ProReliabilityTracker() {
           <div 
             className={cn(
               'flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center',
-              strikes === 0 ? 'bg-[#BFFF00]/30' : strikes === 1 ? 'bg-amber-500/30' : 'bg-red-500/30'
+              strikes === 0 ? 'bg-[#BAFF39]/30' : strikes === 1 ? 'bg-amber-500/30' : 'bg-red-500/30'
             )}
           >
             <Icon 

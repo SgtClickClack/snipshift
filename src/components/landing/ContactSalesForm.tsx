@@ -132,15 +132,15 @@ export default function ContactSalesForm() {
         className="relative bg-zinc-900 border border-zinc-800 p-10 rounded-[2.5rem] shadow-2xl max-w-2xl mx-auto overflow-hidden"
       >
         {/* Glow effect */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#BFFF00]/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#BFFF00]/10 rounded-full blur-3xl" />
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#BAFF39]/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#BAFF39]/10 rounded-full blur-3xl" />
         
         <div className="relative text-center py-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#BFFF00]/20 rounded-full mb-6 ring-4 ring-[#BFFF00]/30">
-            <CheckCircle2 className="w-10 h-10 text-[#BFFF00]" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#BAFF39]/20 rounded-full mb-6 ring-4 ring-[#BAFF39]/30">
+            <CheckCircle2 className="w-10 h-10 text-[#BAFF39]" />
           </div>
           <h3 className="text-3xl font-black text-white mb-4">Message Sent!</h3>
-          <div className="text-[#BFFF00] font-bold text-lg p-4 bg-lime-500/10 rounded-xl border border-lime-500/20 inline-block">
+          <div className="text-[#BAFF39] font-bold text-lg p-4 bg-lime-500/10 rounded-xl border border-lime-500/20 inline-block">
             Our hospitality partnerships manager will reach out within 24 hours.
           </div>
           <p className="text-zinc-500 text-sm mt-6">
@@ -157,13 +157,13 @@ export default function ContactSalesForm() {
       className="relative bg-zinc-900 border border-zinc-800 p-10 rounded-[2.5rem] shadow-2xl max-w-2xl mx-auto overflow-hidden"
     >
       {/* Subtle glow effects */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#BFFF00]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#BFFF00]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#BAFF39]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#BAFF39]/5 rounded-full blur-3xl pointer-events-none" />
       
       <div className="relative">
         {/* Header with badge */}
         <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#BFFF00]/10 border border-[#BFFF00]/20 rounded-full text-[#BFFF00] text-xs font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#BAFF39]/10 border border-[#BAFF39]/20 rounded-full text-[#BAFF39] text-xs font-semibold mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             ENTERPRISE SOLUTIONS
           </div>
@@ -181,10 +181,10 @@ export default function ContactSalesForm() {
             {/* Company Name - Required */}
             <div className="md:col-span-2">
               <label htmlFor="companyName" className="block text-sm font-semibold text-zinc-300 mb-2">
-                Company Name <span className="text-[#BFFF00]">*</span>
+                Company Name <span className="text-[#BAFF39]">*</span>
               </label>
               <div className="relative group">
-                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BFFF00] transition-colors" />
+                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BAFF39] transition-colors" />
                 <input
                   type="text"
                   id="companyName"
@@ -193,7 +193,7 @@ export default function ContactSalesForm() {
                   onChange={handleChange}
                   placeholder="Your company name"
                   className={`w-full bg-black/50 border-2 ${
-                    errors.companyName ? 'border-red-500' : 'border-zinc-800 focus:border-[#BFFF00]'
+                    errors.companyName ? 'border-red-500' : 'border-zinc-800 focus:border-[#BAFF39]'
                   } text-white rounded-xl p-4 pl-12 outline-none transition-all placeholder:text-zinc-600`}
                   required
                 />
@@ -209,7 +209,7 @@ export default function ContactSalesForm() {
                 Your Name
               </label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BFFF00] transition-colors" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BAFF39] transition-colors" />
                 <input
                   type="text"
                   id="contactName"
@@ -217,7 +217,7 @@ export default function ContactSalesForm() {
                   value={formData.contactName}
                   onChange={handleChange}
                   placeholder="Your name"
-                  className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BFFF00] outline-none transition-all placeholder:text-zinc-600"
+                  className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BAFF39] outline-none transition-all placeholder:text-zinc-600"
                 />
               </div>
             </div>
@@ -225,10 +225,10 @@ export default function ContactSalesForm() {
             {/* Email - Required */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-zinc-300 mb-2">
-                Work Email <span className="text-[#BFFF00]">*</span>
+                Work Email <span className="text-[#BAFF39]">*</span>
               </label>
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BFFF00] transition-colors" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BAFF39] transition-colors" />
                 <input
                   type="email"
                   id="email"
@@ -237,7 +237,7 @@ export default function ContactSalesForm() {
                   onChange={handleChange}
                   placeholder="you@company.com"
                   className={`w-full bg-black/50 border-2 ${
-                    errors.email ? 'border-red-500' : 'border-zinc-800 focus:border-[#BFFF00]'
+                    errors.email ? 'border-red-500' : 'border-zinc-800 focus:border-[#BAFF39]'
                   } text-white rounded-xl p-4 pl-12 outline-none transition-all placeholder:text-zinc-600`}
                   required
                 />
@@ -253,7 +253,7 @@ export default function ContactSalesForm() {
                 Phone Number
               </label>
               <div className="relative group">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BFFF00] transition-colors" />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BAFF39] transition-colors" />
                 <input
                   type="tel"
                   id="phone"
@@ -261,7 +261,7 @@ export default function ContactSalesForm() {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+61 400 000 000"
-                  className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BFFF00] outline-none transition-all placeholder:text-zinc-600"
+                  className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BAFF39] outline-none transition-all placeholder:text-zinc-600"
                 />
               </div>
             </div>
@@ -272,7 +272,7 @@ export default function ContactSalesForm() {
                 Number of Locations
               </label>
               <div className="relative group">
-                <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BFFF00] transition-colors" />
+                <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-[#BAFF39] transition-colors" />
                 <input
                   type="number"
                   id="numberOfLocations"
@@ -281,7 +281,7 @@ export default function ContactSalesForm() {
                   onChange={handleChange}
                   placeholder="e.g. 5+"
                   min="1"
-                  className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BFFF00] outline-none transition-all placeholder:text-zinc-600"
+                  className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BAFF39] outline-none transition-all placeholder:text-zinc-600"
                 />
               </div>
             </div>
@@ -293,7 +293,7 @@ export default function ContactSalesForm() {
               Message
             </label>
             <div className="relative group">
-              <MessageSquare className="absolute left-4 top-4 w-5 h-5 text-zinc-500 group-focus-within:text-[#BFFF00] transition-colors" />
+              <MessageSquare className="absolute left-4 top-4 w-5 h-5 text-zinc-500 group-focus-within:text-[#BAFF39] transition-colors" />
               <textarea
                 id="message"
                 name="message"
@@ -301,7 +301,7 @@ export default function ContactSalesForm() {
                 onChange={handleChange}
                 placeholder="Tell us about your staffing needs..."
                 rows={4}
-                className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BFFF00] outline-none transition-all resize-none placeholder:text-zinc-600"
+                className="w-full bg-black/50 border-2 border-zinc-800 text-white rounded-xl p-4 pl-12 focus:border-[#BAFF39] outline-none transition-all resize-none placeholder:text-zinc-600"
               />
             </div>
           </div>
@@ -320,7 +320,7 @@ export default function ContactSalesForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#BFFF00] text-black font-black py-4 rounded-xl hover:shadow-[0_0_30px_rgba(191,255,0,0.4)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none flex items-center justify-center gap-2 text-lg"
+            className="w-full bg-[#BAFF39] text-black font-black py-4 rounded-xl hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none flex items-center justify-center gap-2 text-lg"
           >
             {isSubmitting ? (
               <>

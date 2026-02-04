@@ -69,7 +69,7 @@ import {
 } from "@/utils/shift-slot-generator";
 import { groupEventsIntoBuckets, type BucketEvent } from "@/utils/shift-bucketing";
 import { AutoSlotAssignmentModal } from "./auto-slot-assignment-modal";
-import { fetchProfessionals, ProfessionalListItem, generateFromTemplates, previewGenerateFromTemplates } from "@/lib/api";
+import { fetchProfessionals, ProfessionalListItem, generateFromTemplates, previewGenerateFromTemplates, inviteATeam } from "@/lib/api";
 import { ShiftAssignmentModal } from "./shift-assignment-modal";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { isBusinessRole } from "@/lib/roles";
@@ -340,6 +340,7 @@ function ProfessionalCalendarContent({
   const [showAutoFillModal, setShowAutoFillModal] = useState(false);
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [autoFillPreview, setAutoFillPreview] = useState<{ estimatedCount: number; error?: string } | null>(null);
+  const [isInvitingATeam, setIsInvitingATeam] = useState(false);
   
   // Calendar settings - stored in localStorage
   const getSettingsKey = useCallback(() => {
@@ -1493,6 +1494,44 @@ function ProfessionalCalendarContent({
     setShowAutoFillModal(true);
   }, []);
 
+  // Handle Invite A-Team - Smart fill with favorite professionals
+  const handleInviteATeamClick = useCallback(async () => {
+    if (!dateRange || isInvitingATeam) return;
+
+    setIsInvitingATeam(true);
+    try {
+      const result = await inviteATeam({
+        startDate: dateRange.start.toISOString(),
+        endDate: dateRange.end.toISOString(),
+      });
+
+      if (result.success) {
+        toast({
+          title: "A-Team Invited!",
+          description: result.message,
+        });
+        // Refresh calendar data
+        queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
+        queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.VENUE_SHIFTS] });
+      } else {
+        toast({
+          title: "Could not invite A-Team",
+          description: result.message || "No favorites configured or templates missing.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error inviting A-Team",
+        description: error?.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsInvitingATeam(false);
+    }
+  }, [dateRange, isInvitingATeam, queryClient, toast]);
+
   // Fetch preview when Auto-Fill modal opens
   useEffect(() => {
     if (!showAutoFillModal || !user?.id || mode !== 'business') return;
@@ -2495,6 +2534,8 @@ function ProfessionalCalendarContent({
             onStatusFilterChange={(value) => setStatusFilter(value)}
             onCreateAvailability={() => setShowCreateModal(true)}
             onAutoFillClick={mode === 'business' ? handleAutoFillClick : undefined}
+            onInviteATeamClick={mode === 'business' ? handleInviteATeamClick : undefined}
+            isInvitingATeam={isInvitingATeam}
             dateRange={dateRange}
           />
           <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden" style={{ minHeight: '750px' }}>

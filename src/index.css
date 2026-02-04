@@ -153,7 +153,7 @@
 
 @layer components {
   .btn-neon-primary {
-    @apply bg-[#BFFF00] text-black font-black py-3 px-8 rounded-full transition-all duration-300;
+    @apply bg-[#BAFF39] text-black font-black py-3 px-8 rounded-full transition-all duration-300;
     /* Apply the multi-layered shadow */
     box-shadow: 0 0 5px rgba(191, 255, 0, 0.9), 0 0 15px rgba(191, 255, 0, 0.5),
       0 0 30px rgba(191, 255, 0, 0.2);
@@ -167,7 +167,7 @@
   }
 
   .btn-neon-outline {
-    @apply border-2 border-[#BFFF00] text-[#BFFF00] font-bold py-3 px-8 rounded-full hover:bg-[#BFFF00] hover:text-black transition-all;
+    @apply border-2 border-[#BAFF39] text-[#BAFF39] font-bold py-3 px-8 rounded-full hover:bg-[#BAFF39] hover:text-black transition-all;
   }
 }
 
@@ -197,6 +197,22 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+  
+  /* Subtle pulse animation for vacant shift buckets - alerts owner of staffing risks */
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
   }
   .neon-glow {
     text-shadow: 0 0 5px rgba(191, 255, 0, 0.8), 0 0 10px rgba(191, 255, 0, 0.5);

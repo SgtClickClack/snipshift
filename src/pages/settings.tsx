@@ -28,6 +28,7 @@ import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
 const CapacityPlanner = lazy(() => import('@/components/settings/CapacityPlanner'));
 import StaffPayRates from '@/components/settings/StaffPayRates';
+import StaffFavourites from '@/components/settings/StaffFavourites';
 import XeroIntegrationCard from '@/components/settings/XeroIntegrationCard';
 import XeroEmployeeMapper from '@/components/settings/XeroEmployeeMapper';
 
@@ -828,6 +829,7 @@ export default function SettingsPage() {
             {/* Business Settings Section */}
             {activeCategory === 'business' && isBusinessUser && (
               <div className="space-y-6">
+                <StaffFavourites />
                 <StaffPayRates />
                 <XeroIntegrationCard />
                 <XeroEmployeeMapper />

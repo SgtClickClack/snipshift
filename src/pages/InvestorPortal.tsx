@@ -1,499 +1,400 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+/**
+ * InvestorPortal - HospoGo Seed Round Investor Data Room
+ * 
+ * A premium, dark-themed landing page for potential investors featuring:
+ * - Hero section with key metrics
+ * - Secure document vault with prospectus, whitepaper, and audit docs
+ * - The Ask section detailing the seed round terms
+ * - Modal document viewer
+ * 
+ * Brand Colors:
+ * - Neon: #BAFF39 (brand-neon Tailwind class)
+ * - Dark BG: #0a0a0a
+ */
+
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import {
-  CheckCircle,
-  Shield,
-  Users,
-  Cog,
-  Plus,
-  FlaskConical,
+import { 
+  FileText, 
+  Cpu, 
+  ShieldCheck, 
+  ArrowRight, 
+  Download, 
+  X, 
+  TrendingUp,
+  Briefcase,
+  LayoutGrid,
   Lock,
-  Zap,
-  Layers,
-  Code,
-  PieChart,
-  Linkedin,
-  Mail,
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/useToast';
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/useToast";
 
-const logoUrl = '/hospogo-navbar-banner.png';
+const BRAND_NEON = "#BAFF39";
+const DARK_BG = "#0a0a0a";
 
-/** Card styling - matches app's Landing page (bg-[#161616], border-zinc-800, brand-neon hover) */
-const portalCard =
-  'bg-[#161616] border border-zinc-800 rounded-3xl transition-all duration-300 ease-out hover:border-[#deff9a]/50 hover:-translate-y-1';
+/** Document metadata for the investor data room */
+interface DocumentItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  description: string;
+  content: string;
+}
+
+const documents: DocumentItem[] = [
+  {
+    id: 'prospectus',
+    title: "Strategic Prospectus",
+    subtitle: "2026 Roadmap & Market Analysis",
+    icon: <TrendingUp className="w-8 h-8" />,
+    description: "A comprehensive look at the $168M Australian TAM, our 'Suburban Loyalty' strategy, and the 200/500 subscription milestones.",
+    content: `## Strategic Prospectus 2026
+      
+### 1. Market Opportunity
+The Australian hospitality industry represents a $168M annual TAM. Our focus is the 94,000 neighborhood venues currently underserved by enterprise-grade logistics.
+
+### 2. The Suburban Advantage
+2025 data shows suburban venues retain 4.6% higher loyalty than CBD counterparts. HospoGo is built specifically for these community hubs.
+
+### 3. Execution Roadmap
+- **Q1:** Brisbane 100 Pilot Launch.
+- **Q2:** Reach 200 Paid Subscriptions.
+- **Q4:** National Expansion & Series A.`
+  },
+  {
+    id: 'whitepaper',
+    title: "Technical White Paper",
+    subtitle: "The Trinity Engine Architecture",
+    icon: <Cpu className="w-8 h-8" />,
+    description: "An architectural deep-dive into the automated Compliance Vault, Xero Sync Mutex patterns, and parallel hydration logic.",
+    content: `## Technical White Paper
+
+### 1. The Trinity Architecture
+- **The Vault:** Automated RSA/Licensing verification via integrated API layers.
+- **The Marketplace:** Vetted labor matching engine.
+- **The Engine:** Financial-first roster builder with real-time Xero synchronization.
+
+### 2. Engineering Standards
+- **Performance:** Parallel hydration ensures sub-100ms Time to Interactive (TTI).
+- **Security:** AES-256-GCM encryption for all financial and identity data.
+- **Reliability:** 100% passing rate on Playwright E2E business-critical test suites.`
+  },
+  {
+    id: 'audit',
+    title: "Development Audit",
+    subtitle: "Verified $94,500 Asset Valuation",
+    icon: <ShieldCheck className="w-8 h-8" />,
+    description: "An itemized breakdown of the 630 engineering hours invested to date, justifying the 'Sweat Equity' and baseline valuation.",
+    content: `## Development Audit Summary
+
+### 1. Resource Investment
+- **Total Hours:** 630 Audited R&D Hours.
+- **Market Valuation:** $94,500 AUD (calculated at $150/hr).
+
+### 2. Milestone Breakdown
+- **Infrastructure:** 140 Hours (Schema, Auth, Identity).
+- **Enterprise Sync:** 160 Hours (Xero OAuth2, AES Encryption).
+- **Logistics Engine:** 215 Hours (Capacity Planning, Auto-Fill, Costing).
+- **Branding & UX:** 115 Hours (Glassmorphism UI, Component Library).`
+  }
+];
 
 export default function InvestorPortal() {
+  const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
   const { toast } = useToast();
-  const [rsvpConfirmed, setRsvpConfirmed] = useState(false);
 
-  const handleConfirmAttendance = () => {
-    setRsvpConfirmed(true);
+  const handleRSVP = () => {
     toast({
-      title: 'Request Sent',
-      description: 'Our team will finalize your access shortly.',
-      variant: 'success',
+      title: "RSVP Confirmed",
+      description: "You have been added to the Brisbane Briefing attendee list.",
     });
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0a] text-[#f5f5f5] font-['Urbanist',sans-serif]" data-testid="investor-portal-page">
+    <>
       <Helmet>
-        <title>HospoGo | Private Investor Briefing</title>
-        <meta name="description" content="Private investor briefing for HospoGo - The Future of Hospitality Logistics" />
+        <title>Investor Portal | HospoGo</title>
+        <meta name="description" content="HospoGo Seed Round - $1M raise at $10M valuation. Access the investor data room for prospectus, whitepaper, and development audit." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      {/* Navigation - matches app navbar (bg surface, border-zinc-800) */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center bg-[#161616]/95 backdrop-blur-sm border-b border-zinc-800">
-        <Link to="/" className="flex items-center gap-2">
-          <img
-            src={logoUrl}
-            alt="HospoGo"
-            className="h-10 md:h-12 w-auto object-contain"
-            width={180}
-            height={48}
+      <div 
+        className="min-h-screen text-white scroll-smooth selection:bg-[#BAFF39] selection:text-black" 
+        style={{ backgroundColor: DARK_BG, fontFamily: "'Inter', 'Urbanist', sans-serif" }}
+      >
+        {/* Navigation */}
+        <nav className="fixed w-full z-50 px-6 py-4 flex justify-between items-center backdrop-blur-md border-b border-white/5 bg-black/20">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-black tracking-tighter uppercase italic">
+              HOSPO<span style={{ color: BRAND_NEON }}>GO</span>
+            </span>
+          </div>
+          <div className="hidden md:flex gap-8 text-[10px] font-bold tracking-[0.3em] uppercase">
+            <a href="#opportunity" className="hover:text-[#BAFF39] transition">Opportunity</a>
+            <a href="#trinity" className="hover:text-[#BAFF39] transition">Trinity</a>
+            <a href="#vault" className="hover:text-[#BAFF39] transition">Data Room</a>
+            <a href="#investment" className="hover:text-[#BAFF39] transition">The Ask</a>
+          </div>
+          <Button 
+            onClick={handleRSVP}
+            className="rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] border-none" 
+            style={{ backgroundColor: BRAND_NEON, color: 'black' }}
+          >
+            RSVP Briefing
+          </Button>
+        </nav>
+
+        {/* Hero Section */}
+        <section id="opportunity" className="relative min-h-screen flex flex-col justify-center items-center px-6 text-center overflow-hidden pt-20">
+          <div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full blur-[160px] opacity-10 pointer-events-none" 
+            style={{ background: `radial-gradient(circle, ${BRAND_NEON} 0%, transparent 70%)` }}
           />
-        </Link>
-        <div className="hidden md:flex gap-8 text-sm font-semibold tracking-wider uppercase">
-          <a href="#opportunity" className="hover:text-[#deff9a] transition-colors">
-            Opportunity
-          </a>
-          <a href="#trinity" className="hover:text-[#deff9a] transition-colors">
-            The Trinity
-          </a>
-          <a href="#technical" className="hover:text-[#deff9a] transition-colors">
-            Technical Audit
-          </a>
-          <a href="#investment" className="hover:text-[#deff9a] transition-colors">
-            The Ask
-          </a>
-        </div>
-        <a
-          href="#event"
-          className="bg-[#deff9a] text-black px-6 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-opacity"
-          data-testid="button-rsvp-briefing"
-        >
-          RSVP BRIEFING
-        </a>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="min-h-screen flex flex-col justify-center items-center px-6 relative pt-20 bg-[radial-gradient(circle_at_center,rgba(191,255,0,0.08)_0%,transparent_70%)]">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#deff9a] opacity-5 rounded-full blur-[120px]" />
-        <div className="text-center max-w-4xl">
-          <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-tight">
-            The Future of <br />
-            <span className="text-[#deff9a] [text-shadow:0_0_20px_rgba(191,255,0,0.4)]">
-              Hospitality Logistics
-            </span>
+          
+          <h1 className="text-6xl md:text-[10rem] font-black mb-8 leading-[0.85] tracking-tighter uppercase italic">
+            Future of <br />
+            <span style={{ color: BRAND_NEON }}>Logistics</span>
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-zinc-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Solving the labor crisis for 94,000 Australian venues through an integrated, audited, and
-            enterprise-ready SaaS ecosystem.
+          
+          <p className="text-lg md:text-2xl text-gray-400 max-w-2xl mb-16 font-medium leading-relaxed">
+            Solving the labor crisis for 94,000 Australian venues through an integrated, audited, and enterprise-ready SaaS ecosystem.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <div className={`${portalCard} px-6 sm:px-8 py-4 rounded-2xl flex items-center gap-3`}>
-              <span className="text-2xl sm:text-3xl font-bold text-[#deff9a]">$168M</span>
-              <span className="text-xs text-zinc-400 text-left uppercase font-bold tracking-widest leading-tight">
-                Australian
-                <br />
-                TAM
-              </span>
-            </div>
-            <div className={`${portalCard} px-6 sm:px-8 py-4 rounded-2xl flex items-center gap-3`}>
-              <span className="text-2xl sm:text-3xl font-bold text-[#deff9a]">630+</span>
-              <span className="text-xs text-zinc-400 text-left uppercase font-bold tracking-widest leading-tight">
-                Audited R&D
-                <br />
-                Hours
-              </span>
-            </div>
-            <div className={`${portalCard} px-6 sm:px-8 py-4 rounded-2xl flex items-center gap-3`}>
-              <span className="text-2xl sm:text-3xl font-bold text-[#deff9a]">100%</span>
-              <span className="text-xs text-zinc-400 text-left uppercase font-bold tracking-widest leading-tight">
-                E2E Test
-                <br />
-                Stability
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Opportunity Section */}
-      <section id="opportunity" className="py-16 md:py-24 bg-[#0A0A0A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-          <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 md:mb-8">
-              The <span className="text-[#deff9a]">Suburban</span> Shift
+          <div className="flex flex-wrap justify-center gap-6">
+            {[
+              { label: "National TAM", value: "$168M" },
+              { label: "Audited R&D", value: "$94.5K" },
+              { label: "Seed Valuation", value: "$10M" }
+            ].map((stat, i) => (
+              <div 
+                key={i} 
+                className="px-10 py-8 rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-md transition-transform hover:scale-105"
+              >
+                <div className="text-4xl font-black mb-1 italic" style={{ color: BRAND_NEON }}>{stat.value}</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Trinity Section */}
+        <section id="trinity" className="py-32 px-6 max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl md:text-7xl font-black mb-6 uppercase italic leading-none">
+              The <span style={{ color: BRAND_NEON }}>Trinity</span>
             </h2>
-            <p className="text-base md:text-lg text-zinc-400 mb-4 md:mb-6 leading-relaxed">
-              Data from 2024-2025 shows a profound structural evolution. Suburban venues currently
-              exhibit <strong className="text-zinc-300">4.6% higher loyalty rates</strong> than CBD
-              counterparts.
+            <p className="text-gray-500 text-xl leading-relaxed max-w-2xl mx-auto">
+              Three integrated engines working in harmony to revolutionize hospitality workforce logistics.
             </p>
-            <p className="text-base md:text-lg text-zinc-400 mb-6 md:mb-8 leading-relaxed">
-              As neighborhood venues become daily community hubs, they require professional-grade
-              tools to manage rising labor costs (up for 88% of operators) and complex compliance
-              mandates.
-            </p>
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
-                <CheckCircle className="text-[#deff9a] mt-1 h-5 w-5 flex-shrink-0" />
-                <div className="text-zinc-300">
-                  <span className="font-bold text-white">Market Mandate:</span> 80% of venues plan a
-                  tech upgrade in 2025/26.
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle className="text-[#deff9a] mt-1 h-5 w-5 flex-shrink-0" />
-                <div className="text-zinc-300">
-                  <span className="font-bold text-white">Efficiency Dividend:</span> 85% reduction in
-                  roster-to-payroll admin time.
-                </div>
-              </div>
-            </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">6,141</h4>
-              <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
-                Brisbane LGA Venues
-              </p>
-            </div>
-            <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">3,231</h4>
-              <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
-                Gold Coast Venues
-              </p>
-            </div>
-            <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">$10M</h4>
-              <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
-                Post-Money Val.
-              </p>
-            </div>
-            <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">10%</h4>
-              <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
-                Equity Offered
-              </p>
-            </div>
-          </div>
-        </div>
-        </div>
-      </section>
 
-      {/* The Trinity Section */}
-      <section id="trinity" className="py-16 md:py-24 bg-[#0A0A0A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-              The HospoGo <span className="text-[#deff9a]">Trinity</span>
-            </h2>
-            <p className="text-zinc-400 max-w-2xl mx-auto">
-              One integrated ecosystem to eliminate administrative paralysis.
-            </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "The Vault",
+                subtitle: "Compliance Engine",
+                icon: <ShieldCheck className="w-8 h-8" />,
+                description: "Automated RSA/Licensing verification. Real-time expiry alerts. Direct API sync with licensing authorities."
+              },
+              {
+                title: "The Marketplace",
+                subtitle: "Talent Matching",
+                icon: <LayoutGrid className="w-8 h-8" />,
+                description: "Vetted skill profiles. Instant shift matching. A-Team favorites for reliable roster building."
+              },
+              {
+                title: "The Engine",
+                subtitle: "Financial Logistics",
+                icon: <Cpu className="w-8 h-8" />,
+                description: "Capacity-based scheduling. Auto-fill from templates. One-click Xero export for payroll."
+              }
+            ].map((item, i) => (
+              <div 
+                key={i}
+                className="group relative p-10 rounded-[40px] bg-white/5 border border-white/10 transition-all duration-500 hover:border-[#BAFF39]/50 hover:-translate-y-2"
+              >
+                <div className="mb-8 w-16 h-16 rounded-2xl flex items-center justify-center bg-white/5 group-hover:bg-[#BAFF39] group-hover:text-black transition-all duration-500">
+                  {item.icon}
+                </div>
+                <h3 className="text-2xl font-bold mb-2 group-hover:text-[#BAFF39] transition-colors">{item.title}</h3>
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6">{item.subtitle}</p>
+                <p className="text-gray-400 leading-relaxed">{item.description}</p>
+              </div>
+            ))}
           </div>
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-            <div
-              className={`${portalCard} p-8 md:p-10 rounded-[40px] relative overflow-hidden group`}
-            >
-              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#deff9a]/10 rounded-2xl flex items-center justify-center text-[#deff9a] text-2xl md:text-3xl group-hover:bg-[#deff9a] group-hover:text-black transition duration-500">
-                <Shield className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">The Vault</h3>
-              <p className="text-zinc-400 leading-relaxed mb-4 md:mb-6 text-sm md:text-base">
-                Digital, auto-verifying identity layer for RSA, licensing, and certifications.
-                API-driven verification ensures 100% compliance.
-              </p>
-              <ul className="text-sm text-zinc-500 space-y-2">
-                <li className="flex items-center gap-2">
-                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Auto-expiry alerts
-                </li>
-                <li className="flex items-center gap-2">
-                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> RSA/Licensing API Sync
-                </li>
-              </ul>
-            </div>
-            <div
-              className={`${portalCard} p-8 md:p-10 rounded-[40px] relative overflow-hidden group`}
-            >
-              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#deff9a]/10 rounded-2xl flex items-center justify-center text-[#deff9a] text-2xl md:text-3xl group-hover:bg-[#deff9a] group-hover:text-black transition duration-500">
-                <Users className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">The Marketplace</h3>
-              <p className="text-zinc-400 leading-relaxed mb-4 md:mb-6 text-sm md:text-base">
-                Hyper-local network of vetted, compliant staff. Fill gap shifts in under 60 seconds
-                with pre-verified talent.
-              </p>
-              <ul className="text-sm text-zinc-500 space-y-2">
-                <li className="flex items-center gap-2">
-                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Vetted Skill Profiles
-                </li>
-                <li className="flex items-center gap-2">
-                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Instant Shift Matching
-                </li>
-              </ul>
-            </div>
-            <div
-              className={`${portalCard} p-8 md:p-10 rounded-[40px] relative overflow-hidden group`}
-            >
-              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#deff9a]/10 rounded-2xl flex items-center justify-center text-[#deff9a] text-2xl md:text-3xl group-hover:bg-[#deff9a] group-hover:text-black transition duration-500">
-                <Cog className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">The Engine</h3>
-              <p className="text-zinc-400 leading-relaxed mb-4 md:mb-6 text-sm md:text-base">
-                Financial-first roster builder with Live Costing and one-click Xero Sync. Plan for
-                profit, not just attendance.
-              </p>
-              <ul className="text-sm text-zinc-500 space-y-2">
-                <li className="flex items-center gap-2">
-                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Auto-Fill Logic
-                </li>
-                <li className="flex items-center gap-2">
-                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> One-Click Xero Export
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Technical Audit Section */}
-      <section id="technical" className="py-16 md:py-24 bg-[#0A0A0A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className={`${portalCard} rounded-[50px] p-8 sm:p-12 md:p-20 relative overflow-hidden`}>
-          <div className="absolute top-0 right-0 p-6 md:p-8 opacity-10 text-7xl md:text-9xl">
-            <Code className="h-24 w-24 md:h-36 md:w-36" />
-          </div>
-          <div className="max-w-3xl relative">
-            <span className="bg-[#deff9a] text-black px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 inline-block">
-              Technical Audit
-            </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 md:mb-8">
-              Audited <span className="text-[#deff9a]">Integrity</span>
-            </h2>
-            <p className="text-lg md:text-xl text-zinc-400 mb-8 md:mb-10 leading-relaxed">
-              Unlike &quot;conceptual&quot; startups, HospoGo is a verified technical asset. Our
-              engineering stack is built for stability and national scaling.
-            </p>
-            <div className="grid sm:grid-cols-2 gap-6 md:gap-8">
-              <div className="flex gap-4">
-                <div className="text-[#deff9a] text-2xl mt-1">
-                  <FlaskConical className="h-6 w-6" />
-                </div>
-                <div>
-                  <h5 className="font-bold mb-1">Pass Rate: 100%</h5>
-                  <p className="text-sm text-zinc-500">
-                    Playwright E2E suite audits every financial pipeline daily.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="text-[#deff9a] text-2xl mt-1">
-                  <Lock className="h-6 w-6" />
-                </div>
-                <div>
-                  <h5 className="font-bold mb-1">AES-256 Security</h5>
-                  <p className="text-sm text-zinc-500">
-                    Enterprise-grade encryption for Xero OAuth tokens and PII.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="text-[#deff9a] text-2xl mt-1">
-                  <Zap className="h-6 w-6" />
-                </div>
-                <div>
-                  <h5 className="font-bold mb-1">Phase 4 R&D Complete</h5>
-                  <p className="text-sm text-zinc-500">
-                    The Live Financial Engine is built, tested, and ready for deployment.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="text-[#deff9a] text-2xl mt-1">
-                  <Layers className="h-6 w-6" />
-                </div>
-                <div>
-                  <h5 className="font-bold mb-1">Stateless Architecture</h5>
-                  <p className="text-sm text-zinc-500">
-                    Designed for rapid horizontal scaling across interstate markets.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        </div>
-      </section>
-
-      {/* Investment Section */}
-      <section id="investment" className="py-16 md:py-24 bg-[#deff9a] text-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 md:mb-8 tracking-tighter">
-                The <span className="text-black underline decoration-black/20">Seed</span> Round
+        {/* Document Vault (Investor Data Room) */}
+        <section id="vault" className="py-32 px-6 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
+            <div className="max-w-2xl">
+              <h2 className="text-5xl md:text-7xl font-black mb-6 uppercase italic leading-none">
+                Investor <span style={{ color: BRAND_NEON }}>Data Room</span>
               </h2>
-              <p className="text-lg md:text-xl font-medium mb-8 md:mb-10 leading-relaxed text-black/80">
-                We are opening a $1,000,000 raise to capture the Brisbane and Gold Coast pilot markets
-                and finalize national expansion.
+              <p className="text-gray-500 text-xl leading-relaxed">
+                Secure access to the foundational artifacts justifying the HospoGo Seed Round and 2026 Strategic Pivot.
               </p>
-              <div className="space-y-6">
-                <div className="border-b border-black/20 pb-4 flex justify-between items-end">
-                  <span className="font-bold text-[10px] uppercase tracking-widest text-black/60">
-                    Equity Offered
-                  </span>
-                  <span className="text-3xl md:text-4xl font-black">10%</span>
-                </div>
-                <div className="border-b border-black/20 pb-4 flex justify-between items-end">
-                  <span className="font-bold text-[10px] uppercase tracking-widest text-black/60">
-                    Post-Money Valuation
-                  </span>
-                  <span className="text-3xl md:text-4xl font-black">$10.0M</span>
-                </div>
-                <div className="border-b border-black/20 pb-4 flex justify-between items-end">
-                  <span className="font-bold text-[10px] uppercase tracking-widest text-black/60">
-                    Runway
-                  </span>
-                  <span className="text-3xl md:text-4xl font-black">18 MO.</span>
-                </div>
-              </div>
             </div>
-            <div className="bg-black text-white p-8 md:p-12 rounded-[50px] shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-5 text-6xl md:text-8xl">
-                <PieChart className="h-20 w-20 md:h-32 md:w-32" />
-              </div>
-              <h3 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-[#deff9a]">
-                Use of Funds
-              </h3>
-              <div className="space-y-6 md:space-y-8">
-                <div>
-                  <div className="flex justify-between mb-2 font-bold uppercase tracking-widest text-[10px]">
-                    <span>Sales & Marketing</span>
-                    <span>40%</span>
-                  </div>
-                  <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#deff9a] h-full w-[40%]" />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2 font-bold uppercase tracking-widest text-[10px]">
-                    <span>Engineering & R&D</span>
-                    <span>35%</span>
-                  </div>
-                  <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#deff9a] h-full w-[35%]" />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2 font-bold uppercase tracking-widest text-[10px]">
-                    <span>Operations & Legal</span>
-                    <span>25%</span>
-                  </div>
-                  <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#deff9a] h-full w-[25%]" />
-                  </div>
-                </div>
-              </div>
-              <p className="mt-8 md:mt-12 text-zinc-500 text-xs leading-relaxed">
-                Our 60/30/10 structure ensures founder-led technical integrity while empowering a
-                performance-vested executive team.
-              </p>
+            <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-white/5 px-6 py-3 rounded-full border border-white/10 backdrop-blur-sm">
+              <Lock size={14} className="text-[#BAFF39]" /> Security: AES-256-GCM Encrypted
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Event/RSVP Section */}
-      <section id="event" className="py-16 md:py-24 bg-[#0A0A0A]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 italic">
-          Secure Your Briefing
-        </h2>
-        <p className="text-lg md:text-xl text-zinc-400 mb-8 md:mb-12">
-          Join Julian (CTO), Rick (CEO), and the HospoGo team for a technical deep-dive and
-          operational scaling presentation in Brisbane City.
-        </p>
-        <div className={`${portalCard} p-8 md:p-10 rounded-[40px] mb-8 md:mb-12 text-left`}>
-          <div className="grid md:grid-cols-2 gap-8 md:gap-10">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#deff9a] mb-2">
-                Location
+          <div className="grid md:grid-cols-3 gap-8">
+            {documents.map((doc) => (
+              <div 
+                key={doc.id}
+                className="group relative p-12 rounded-[48px] bg-white/5 border border-white/10 transition-all duration-700 hover:border-[#BAFF39]/50 hover:-translate-y-3 cursor-pointer overflow-hidden shadow-2xl"
+                onClick={() => setSelectedDoc(doc)}
+                data-testid={`doc-card-${doc.id}`}
+              >
+                <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-700">
+                  {doc.icon}
+                </div>
+                <div className="mb-10 w-20 h-20 rounded-3xl flex items-center justify-center bg-white/5 group-hover:bg-[#BAFF39] group-hover:text-black transition-all duration-500 shadow-xl">
+                  {React.cloneElement(doc.icon as React.ReactElement, { size: 32 })}
+                </div>
+                <h3 className="text-3xl font-bold mb-3 group-hover:text-[#BAFF39] transition-colors">{doc.title}</h3>
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-8">{doc.subtitle}</p>
+                <p className="text-gray-400 text-base leading-relaxed mb-12">
+                  {doc.description}
+                </p>
+                <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-[#BAFF39] group-hover:gap-5 transition-all">
+                  View Insights <ArrowRight size={16} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* The Ask Section */}
+        <section id="investment" className="py-32 px-6" style={{ backgroundColor: BRAND_NEON }}>
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-24 items-center">
+            <div className="text-black">
+              <h2 className="text-7xl md:text-9xl font-black mb-10 uppercase italic leading-[0.85] tracking-tighter">
+                The <span className="bg-black text-[#BAFF39] px-5 rounded-[40px]">Seed</span> <br />Round
+              </h2>
+              <p className="text-2xl font-semibold mb-16 opacity-90 leading-relaxed max-w-lg italic">
+                Opening a $1,000,000 raise to capture the Brisbane & Gold Coast pilot markets and execute the national logistics pivot.
               </p>
-              <p className="text-base md:text-lg font-bold">The Conference Room</p>
-              <p className="text-zinc-500">Brisbane City, QLD</p>
+              <div className="grid grid-cols-2 gap-12">
+                <div>
+                  <div className="text-6xl font-black mb-2 tracking-tighter italic">10.0%</div>
+                  <div className="text-[11px] font-bold uppercase tracking-widest opacity-60">Equity Participation</div>
+                </div>
+                <div>
+                  <div className="text-6xl font-black mb-2 tracking-tighter italic">$10.0M</div>
+                  <div className="text-[11px] font-bold uppercase tracking-widest opacity-60">Post-Money Valuation</div>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#deff9a] mb-2">
-                Live Demo
-              </p>
-              <p className="text-base md:text-lg font-bold">Trinity Engine & Xero Sync</p>
-              <p className="text-zinc-500">Corporate Technical Briefing</p>
+            
+            <div className="bg-black rounded-[80px] p-12 md:p-20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] border border-white/5">
+              <h3 className="text-4xl font-black mb-12 text-[#BAFF39] uppercase italic">Resource Allocation</h3>
+              <div className="space-y-12">
+                {[
+                  { label: "Sales & Marketing", value: 40, icon: <TrendingUp size={16} /> },
+                  { label: "Engineering & R&D", value: 35, icon: <Cpu size={16} /> },
+                  { label: "Ops & Legal", value: 25, icon: <Briefcase size={16} /> }
+                ].map((item, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between mb-4 text-[11px] font-bold uppercase tracking-[0.3em]">
+                      <span className="text-gray-500 flex items-center gap-2">
+                        {item.icon} {item.label}
+                      </span>
+                      <span style={{ color: BRAND_NEON }}>{item.value}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[#BAFF39] transition-all duration-1000" 
+                        style={{ width: `${item.value}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-        <Button
-          onClick={handleConfirmAttendance}
-          disabled={rsvpConfirmed}
-          className="bg-white text-black px-10 md:px-12 py-4 md:py-5 rounded-full font-black text-base md:text-lg hover:bg-[#deff9a] transition duration-500 shadow-xl disabled:opacity-80"
-          data-testid="button-confirm-attendance"
-        >
-          CONFIRM ATTENDANCE
-        </Button>
-        {rsvpConfirmed && (
-          <p className="mt-6 text-[#deff9a] font-bold animate-pulse">
-            Request Sent. Our team will finalize your access shortly.
-          </p>
+        </section>
+
+        {/* Footer */}
+        <footer className="py-16 px-6 border-t border-white/5">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <span className="text-2xl font-black tracking-tighter uppercase italic">
+              HOSPO<span style={{ color: BRAND_NEON }}>GO</span>
+            </span>
+            <p className="text-xs text-gray-600 text-center md:text-left">
+              © 2026 HospoGo Pty Ltd. All rights reserved. This document is confidential and intended for authorized investors only.
+            </p>
+          </div>
+        </footer>
+
+        {/* Document Viewer Modal */}
+        {selectedDoc && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 bg-black/95 backdrop-blur-2xl">
+            <div className="relative w-full max-w-5xl bg-[#0d0d0d] border border-white/10 rounded-[64px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+              <div className="p-12 border-b border-white/10 flex justify-between items-start">
+                <div>
+                  <h3 
+                    className="text-4xl font-black mb-2 uppercase italic tracking-tight" 
+                    style={{ color: BRAND_NEON }}
+                  >
+                    {selectedDoc.title}
+                  </h3>
+                  <p className="text-sm font-bold uppercase tracking-[0.2em] text-gray-500">
+                    {selectedDoc.subtitle}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setSelectedDoc(null)}
+                  className="p-4 hover:bg-white/10 rounded-full transition-all group"
+                  aria-label="Close document"
+                >
+                  <X className="group-hover:rotate-90 transition-transform" />
+                </button>
+              </div>
+              
+              <div className="p-12 overflow-y-auto custom-scrollbar flex-1 bg-black/20">
+                <div className="max-w-3xl mx-auto">
+                  <div className="whitespace-pre-line text-gray-300 leading-loose text-xl font-medium">
+                    {selectedDoc.content}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-10 bg-black border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-gray-600 italic">
+                  <ShieldCheck size={16} className="text-[#BAFF39]/40" /> Authorized for Executive Review only
+                </div>
+                <div className="flex gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="rounded-full px-8 py-6 border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/5"
+                  >
+                    Request Access
+                  </Button>
+                  <Button 
+                    className="rounded-full px-8 py-6 text-xs font-bold uppercase tracking-widest flex items-center gap-3 shadow-xl" 
+                    style={{ backgroundColor: BRAND_NEON, color: 'black' }}
+                  >
+                    Download PDF <Download size={16} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-        </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="py-8 md:py-12 px-4 sm:px-6 border-t border-zinc-800 text-center text-zinc-500">
-        <p className="text-[10px] font-bold tracking-[0.3em] uppercase mb-4">
-          &copy; 2026 HospoGo Pty Ltd | Private & Confidential
-        </p>
-        <div className="flex justify-center gap-6">
-          <a
-            href="https://www.linkedin.com/company/hospogo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#deff9a] transition-colors"
-            aria-label="LinkedIn"
-          >
-            <Linkedin className="h-5 w-5" />
-          </a>
-          <a
-            href="https://x.com/hospogo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#deff9a] transition-colors"
-            aria-label="X (Twitter)"
-          >
-            <svg
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden
-            >
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-          </a>
-          <a
-            href="mailto:info@hospogo.com"
-            className="hover:text-[#deff9a] transition-colors"
-            aria-label="Email"
-          >
-            <Mail className="h-5 w-5" />
-          </a>
-        </div>
-      </footer>
-    </div>
+        <style>{`
+          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #BAFF39; }
+        `}</style>
+      </div>
+    </>
   );
 }

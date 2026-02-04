@@ -22,12 +22,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Clock, Save, Sun, Sunset, Moon, Calendar, Trash2 } from "lucide-react";
+import { Clock, Save, Sun, Sunset, Moon, Calendar, Trash2, Plus, Users } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { clearAllShifts } from "@/lib/api";
 import { getCalendarInvalidationKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type ShiftPattern = 'full-day' | 'half-day' | 'thirds' | 'custom';
 
@@ -39,10 +41,37 @@ export interface OpeningHours {
   };
 }
 
+/** Custom shift slot for the 'custom' pattern */
+export interface CustomShiftSlot {
+  id?: string;
+  clientId?: string; // For new slots before save
+  label: string;
+  startTime: string;
+  endTime: string;
+  requiredStaff: number;
+}
+
 export interface CalendarSettings {
   openingHours: OpeningHours;
   shiftPattern: ShiftPattern;
   defaultShiftLength?: number; // in hours, for custom pattern
+  /** Required staff count for preset patterns (full-day, half-day, thirds) */
+  defaultRequiredStaff?: number;
+  /** Custom shift slots for 'custom' pattern */
+  customSlots?: CustomShiftSlot[];
+}
+
+/** API response type for shift templates */
+interface ShiftTemplateApi {
+  id: string;
+  venueId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  requiredStaffCount: number;
+  label: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface CalendarSettingsModalProps {
@@ -104,6 +133,138 @@ const SHIFT_PATTERNS = [
   },
 ];
 
+/** Slot Preview Component - Shows preview of generated shift templates */
+function SlotPreview({
+  pattern,
+  openingHours,
+  defaultRequiredStaff,
+  customSlots,
+  formatTime,
+}: {
+  pattern: ShiftPattern;
+  openingHours: OpeningHours;
+  defaultRequiredStaff: number;
+  customSlots: CustomShiftSlot[];
+  formatTime: (time: string) => string;
+}) {
+  // Calculate enabled days count
+  const enabledDays = DAYS_OF_WEEK.filter(d => openingHours[d.key]?.enabled);
+  
+  if (enabledDays.length === 0) {
+    return null;
+  }
+
+  // Get first enabled day for example preview
+  const exampleDay = enabledDays[0];
+  const dayHours = openingHours[exampleDay.key];
+  
+  // Generate preview slots based on pattern
+  const previewSlots: Array<{ label: string; time: string; staff: number }> = [];
+  
+  if (pattern === 'custom') {
+    customSlots.forEach(slot => {
+      previewSlots.push({
+        label: slot.label || 'Shift',
+        time: `${formatTime(slot.startTime)} – ${formatTime(slot.endTime)}`,
+        staff: slot.requiredStaff,
+      });
+    });
+  } else {
+    const openMinutes = timeToMinutesHelper(dayHours.open);
+    const closeMinutes = timeToMinutesHelper(dayHours.close);
+    const totalMinutes = closeMinutes - openMinutes;
+    
+    if (totalMinutes > 0) {
+      let slotCount = 1;
+      let slotLabels = ['Full Day'];
+      
+      switch (pattern) {
+        case 'full-day':
+          slotCount = 1;
+          slotLabels = ['Full Day'];
+          break;
+        case 'half-day':
+          slotCount = 2;
+          slotLabels = ['Morning', 'Afternoon'];
+          break;
+        case 'thirds':
+          slotCount = 3;
+          slotLabels = ['Morning', 'Midday', 'Evening'];
+          break;
+      }
+      
+      const slotDuration = Math.floor(totalMinutes / slotCount);
+      
+      for (let i = 0; i < slotCount; i++) {
+        const slotStart = openMinutes + (i * slotDuration);
+        const slotEnd = i === slotCount - 1 ? closeMinutes : slotStart + slotDuration;
+        
+        previewSlots.push({
+          label: slotLabels[i] || `Shift ${i + 1}`,
+          time: `${formatTime(minutesToTimeHelper(slotStart))} – ${formatTime(minutesToTimeHelper(slotEnd))}`,
+          staff: defaultRequiredStaff,
+        });
+      }
+    }
+  }
+
+  if (previewSlots.length === 0) {
+    return null;
+  }
+
+  // Calculate total staff needed per day
+  const totalStaffPerDay = previewSlots.reduce((sum, slot) => sum + slot.staff, 0);
+  
+  return (
+    <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg" data-testid="slot-preview">
+      <div className="flex items-center gap-2 mb-2">
+        <Calendar className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium text-primary">Preview: Daily Capacity</span>
+      </div>
+      
+      <div className="space-y-1.5">
+        {previewSlots.map((slot, i) => (
+          <div 
+            key={`preview-${i}`} 
+            className="flex items-center justify-between text-xs bg-background/50 rounded px-2 py-1.5"
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{slot.label}</span>
+              <span className="text-muted-foreground">{slot.time}</span>
+            </div>
+            <div className="flex items-center gap-1 text-primary">
+              <Users className="h-3 w-3" />
+              <span className="font-medium">{slot.staff} staff</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="mt-2 pt-2 border-t border-primary/20 flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">
+          {enabledDays.length} day{enabledDays.length !== 1 ? 's' : ''} enabled
+        </span>
+        <span className="font-medium text-primary">
+          {totalStaffPerDay} total staff/day × {enabledDays.length} days = {totalStaffPerDay * enabledDays.length} shifts/week
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Helper: Convert time string (HH:mm) to minutes since midnight */
+function timeToMinutesHelper(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+/** Helper: Convert minutes since midnight to time string (HH:mm) */
+function minutesToTimeHelper(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+
 export default function CalendarSettingsModal({
   isOpen,
   onClose,
@@ -112,6 +273,7 @@ export default function CalendarSettingsModal({
   onClear,
 }: CalendarSettingsModalProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [openingHours, setOpeningHours] = useState<OpeningHours>(
     initialSettings?.openingHours || DEFAULT_OPENING_HOURS
@@ -123,10 +285,32 @@ export default function CalendarSettingsModal({
     initialSettings?.defaultShiftLength || 4
   );
   const [isClearing, setIsClearing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Required staff count for preset patterns (full-day, half-day, thirds)
+  const [defaultRequiredStaff, setDefaultRequiredStaff] = useState<number>(
+    initialSettings?.defaultRequiredStaff || 1
+  );
+  
+  // Custom shift slots for 'custom' pattern
+  const [customSlots, setCustomSlots] = useState<CustomShiftSlot[]>(
+    initialSettings?.customSlots || []
+  );
   
   // Global hours for "Apply to All" feature
   const [globalOpen, setGlobalOpen] = useState('09:00');
   const [globalClose, setGlobalClose] = useState('18:00');
+  
+  // Fetch existing shift templates to pre-populate custom slots
+  const { data: existingTemplates = [] } = useQuery<ShiftTemplateApi[]>({
+    queryKey: ['shift-templates'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/shift-templates');
+      if (!res.ok) throw new Error('Failed to fetch templates');
+      return res.json();
+    },
+    enabled: !!user?.id && isOpen,
+  });
 
   // Reset form when modal opens with initial settings
   useEffect(() => {
@@ -134,6 +318,8 @@ export default function CalendarSettingsModal({
       setOpeningHours(initialSettings.openingHours);
       setShiftPattern(initialSettings.shiftPattern);
       setDefaultShiftLength(initialSettings.defaultShiftLength || 4);
+      setDefaultRequiredStaff(initialSettings.defaultRequiredStaff || 1);
+      setCustomSlots(initialSettings.customSlots || []);
       
       // Set global hours from first enabled day
       const firstEnabled = Object.values(initialSettings.openingHours).find(h => h.enabled);
@@ -143,6 +329,56 @@ export default function CalendarSettingsModal({
       }
     }
   }, [isOpen, initialSettings]);
+  
+  // Sync custom slots from existing templates when they load (for 'custom' pattern)
+  useEffect(() => {
+    if (isOpen && existingTemplates.length > 0 && shiftPattern === 'custom' && customSlots.length === 0) {
+      // Convert templates to CustomShiftSlot format (group by unique slot, not day)
+      // Templates are per-day, but for modal UI we show one entry per unique slot definition
+      const uniqueSlots = new Map<string, CustomShiftSlot>();
+      for (const t of existingTemplates) {
+        const key = `${t.label}-${t.startTime}-${t.endTime}`;
+        if (!uniqueSlots.has(key)) {
+          uniqueSlots.set(key, {
+            id: t.id,
+            label: t.label,
+            startTime: t.startTime,
+            endTime: t.endTime,
+            requiredStaff: t.requiredStaffCount,
+          });
+        }
+      }
+      if (uniqueSlots.size > 0) {
+        setCustomSlots(Array.from(uniqueSlots.values()));
+      }
+    }
+  }, [isOpen, existingTemplates, shiftPattern, customSlots.length]);
+  
+  // Custom slot management functions
+  const addCustomSlot = () => {
+    setCustomSlots(prev => [
+      ...prev,
+      {
+        clientId: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        label: 'Shift',
+        startTime: globalOpen,
+        endTime: globalClose,
+        requiredStaff: 1,
+      },
+    ]);
+  };
+  
+  const updateCustomSlot = (index: number, updates: Partial<CustomShiftSlot>) => {
+    setCustomSlots(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...updates };
+      return next;
+    });
+  };
+  
+  const removeCustomSlot = (index: number) => {
+    setCustomSlots(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleDayToggle = (day: string) => {
     setOpeningHours(prev => ({
@@ -211,7 +447,88 @@ export default function CalendarSettingsModal({
     }
   };
 
-  const handleSave = () => {
+  /** Generate shift slots based on pattern and opening hours */
+  const generateSlotsFromPattern = (
+    pattern: ShiftPattern,
+    hours: OpeningHours,
+    requiredStaff: number,
+    shiftLength?: number
+  ): Array<{ dayOfWeek: number; startTime: string; endTime: string; requiredStaffCount: number; label: string }> => {
+    const slots: Array<{ dayOfWeek: number; startTime: string; endTime: string; requiredStaffCount: number; label: string }> = [];
+    
+    // Map day keys to dayOfWeek numbers (0=Sun, 1=Mon, etc.)
+    const dayMapping: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+      thursday: 4, friday: 5, saturday: 6,
+    };
+    
+    for (const day of DAYS_OF_WEEK) {
+      const dayHours = hours[day.key];
+      if (!dayHours?.enabled) continue;
+      
+      const dayOfWeek = dayMapping[day.key];
+      const openMinutes = timeToMinutes(dayHours.open);
+      const closeMinutes = timeToMinutes(dayHours.close);
+      const totalMinutes = closeMinutes - openMinutes;
+      
+      if (totalMinutes <= 0) continue;
+      
+      let slotCount = 1;
+      let slotLabels = ['Full Day'];
+      
+      switch (pattern) {
+        case 'full-day':
+          slotCount = 1;
+          slotLabels = ['Full Day'];
+          break;
+        case 'half-day':
+          slotCount = 2;
+          slotLabels = ['Morning', 'Afternoon'];
+          break;
+        case 'thirds':
+          slotCount = 3;
+          slotLabels = ['Morning', 'Midday', 'Evening'];
+          break;
+        case 'custom':
+          // For custom, we use the customSlots directly
+          continue;
+        default:
+          slotCount = 1;
+      }
+      
+      const slotDuration = Math.floor(totalMinutes / slotCount);
+      
+      for (let i = 0; i < slotCount; i++) {
+        const slotStart = openMinutes + (i * slotDuration);
+        const slotEnd = i === slotCount - 1 ? closeMinutes : slotStart + slotDuration;
+        
+        slots.push({
+          dayOfWeek,
+          startTime: minutesToTime(slotStart),
+          endTime: minutesToTime(slotEnd),
+          requiredStaffCount: requiredStaff,
+          label: slotLabels[i] || `Shift ${i + 1}`,
+        });
+      }
+    }
+    
+    return slots;
+  };
+  
+  /** Convert time string (HH:mm) to minutes since midnight */
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  /** Convert minutes since midnight to time string (HH:mm) */
+  const minutesToTime = (minutes: number): string => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const handleSave = async () => {
     // Ensure all days are present in openingHours before validation
     const completeOpeningHours: OpeningHours = {
       monday: openingHours.monday || { open: '09:00', close: '18:00', enabled: false },
@@ -241,19 +558,91 @@ export default function CalendarSettingsModal({
       });
       return;
     }
+    
+    // Validate custom slots if using custom pattern
+    if (shiftPattern === 'custom' && customSlots.length === 0) {
+      toast({
+        title: "No shift slots defined",
+        description: "Please add at least one shift slot for the custom pattern.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    onSave({
-      openingHours: completeOpeningHours,
-      shiftPattern,
-      defaultShiftLength: shiftPattern === 'custom' ? defaultShiftLength : undefined,
-    });
+    setIsSaving(true);
+    
+    try {
+      // Generate shift templates based on pattern
+      let templatesToSave: Array<{ dayOfWeek: number; startTime: string; endTime: string; requiredStaffCount: number; label: string }> = [];
+      
+      if (shiftPattern === 'custom') {
+        // For custom pattern, create templates for each enabled day using customSlots
+        const dayMapping: Record<string, number> = {
+          sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+          thursday: 4, friday: 5, saturday: 6,
+        };
+        
+        for (const day of DAYS_OF_WEEK) {
+          const dayHours = completeOpeningHours[day.key];
+          if (!dayHours?.enabled) continue;
+          
+          for (const slot of customSlots) {
+            templatesToSave.push({
+              dayOfWeek: dayMapping[day.key],
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              requiredStaffCount: slot.requiredStaff,
+              label: slot.label.trim() || 'Shift',
+            });
+          }
+        }
+      } else {
+        // For preset patterns (full-day, half-day, thirds)
+        templatesToSave = generateSlotsFromPattern(
+          shiftPattern,
+          completeOpeningHours,
+          defaultRequiredStaff
+        );
+      }
+      
+      // Delete all existing templates first, then create new ones
+      // This is simpler than diffing and handles pattern changes cleanly
+      for (const template of existingTemplates) {
+        await apiRequest('DELETE', `/api/shift-templates/${template.id}`);
+      }
+      
+      // Create new templates
+      for (const template of templatesToSave) {
+        await apiRequest('POST', '/api/shift-templates', template);
+      }
+      
+      // Invalidate shift-templates cache
+      await queryClient.invalidateQueries({ queryKey: ['shift-templates'] });
+      
+      // Call the parent onSave with settings
+      onSave({
+        openingHours: completeOpeningHours,
+        shiftPattern,
+        defaultShiftLength: shiftPattern === 'custom' ? defaultShiftLength : undefined,
+        defaultRequiredStaff,
+        customSlots: shiftPattern === 'custom' ? customSlots : undefined,
+      });
 
-    toast({
-      title: "Settings saved",
-      description: "Your calendar settings have been updated.",
-    });
+      toast({
+        title: "Settings saved",
+        description: `Calendar settings and ${templatesToSave.length} shift template(s) have been updated.`,
+      });
 
-    onClose();
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: "Failed to save",
+        description: error?.message || "An error occurred while saving settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatTime = (time: string) => {
@@ -385,25 +774,162 @@ export default function CalendarSettingsModal({
               })}
             </div>
 
-            {/* Custom shift length input */}
-            {shiftPattern === 'custom' && (
-              <div className="flex items-center gap-2 mt-3 p-3 bg-muted/50 rounded-lg">
-                <Label htmlFor="shift-length" className="text-sm whitespace-nowrap">
-                  Shift length:
-                </Label>
-                <Input
-                  id="shift-length"
-                  type="number"
-                  min="1"
-                  max="12"
-                  step="0.5"
-                  value={defaultShiftLength}
-                  onChange={(e) => setDefaultShiftLength(parseFloat(e.target.value) || 4)}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">hours</span>
+            {/* Capacity input for preset patterns (not custom) - PROMINENT HEADCOUNT SECTION */}
+            {shiftPattern !== 'custom' && (
+              <div className="mt-4 p-5 bg-primary/10 border-2 border-primary/40 rounded-xl shadow-sm" data-testid="staff-required-section">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-primary/20 rounded-full">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <Label htmlFor="required-staff" className="text-lg font-bold text-primary">
+                      Staff Required Per Slot
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      How many staff do you need for each time slot?
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="required-staff"
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={defaultRequiredStaff}
+                    onChange={(e) => setDefaultRequiredStaff(parseInt(e.target.value, 10) || 1)}
+                    className="w-28 h-14 text-2xl font-bold text-center bg-primary/10 border-2 border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                    data-testid="required-staff-input"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-base font-semibold">
+                      staff per {shiftPattern === 'full-day' ? 'day' : 'slot'}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      × {shiftPattern === 'full-day' ? '1 slot' : shiftPattern === 'half-day' ? '2 slots' : '3 slots'}/day
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* Custom shift slots editor */}
+            {shiftPattern === 'custom' && (
+              <div className="space-y-4 mt-4 p-5 bg-primary/10 border-2 border-primary/40 rounded-xl shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-primary/20 rounded-full">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <Label className="text-lg font-bold text-primary">Custom Shift Slots</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Define your shift types with staff requirements
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={addCustomSlot}
+                    data-testid="add-custom-slot-btn"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Slot
+                  </Button>
+                </div>
+                
+                {customSlots.length === 0 ? (
+                  <div className="text-center py-6 bg-background/50 rounded-lg border border-dashed">
+                    <Users className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No slots defined. Click "Add Slot" to create shift templates.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {customSlots.map((slot, index) => (
+                      <div
+                        key={slot.id || slot.clientId || `slot-${index}`}
+                        className="p-3 border-2 border-border rounded-lg bg-card"
+                        data-testid={`custom-slot-${index}`}
+                      >
+                        {/* Row 1: Label and Delete */}
+                        <div className="flex items-center justify-between mb-2">
+                          <Input
+                            placeholder="Shift Label (e.g. Bar, Floor)"
+                            value={slot.label}
+                            onChange={(e) => updateCustomSlot(index, { label: e.target.value })}
+                            className="flex-1 font-medium"
+                            data-testid={`custom-slot-label-${index}`}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive ml-2"
+                            onClick={() => removeCustomSlot(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Row 2: Time range and Staff Required */}
+                        <div className="flex flex-wrap items-center gap-3">
+                          {/* Time range */}
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="time"
+                              value={slot.startTime}
+                              onChange={(e) => updateCustomSlot(index, { startTime: e.target.value })}
+                              className="w-28 text-sm"
+                            />
+                            <span className="text-muted-foreground">–</span>
+                            <Input
+                              type="time"
+                              value={slot.endTime}
+                              onChange={(e) => updateCustomSlot(index, { endTime: e.target.value })}
+                              className="w-28 text-sm"
+                            />
+                          </div>
+                          
+                          {/* PROMINENT Staff Required input - LARGE AND VISIBLE */}
+                          <div className="flex items-center gap-2 ml-auto bg-primary/20 px-4 py-2 rounded-lg border border-primary/30">
+                            <Users className="h-5 w-5 text-primary" />
+                            <span className="text-sm font-bold text-primary">Staff:</span>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="20"
+                              value={slot.requiredStaff}
+                              onChange={(e) => updateCustomSlot(index, { requiredStaff: parseInt(e.target.value, 10) || 1 })}
+                              className="w-20 h-12 text-xl font-bold text-center bg-primary/10 border-2 border-primary/50 focus:border-primary"
+                              data-testid={`custom-slot-required-${index}`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <p className="text-xs text-muted-foreground text-center pt-2 border-t">
+                  Each slot will be applied to all open days automatically.
+                </p>
+              </div>
+            )}
+
+            {/* Slot Preview - Shows what will be generated */}
+            <SlotPreview
+              pattern={shiftPattern}
+              openingHours={openingHours}
+              defaultRequiredStaff={defaultRequiredStaff}
+              customSlots={customSlots}
+              formatTime={formatTime}
+            />
           </div>
 
           <Separator />
@@ -455,12 +981,12 @@ export default function CalendarSettingsModal({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} className="gap-2">
-            <Save className="h-4 w-4" />
-            Save
+          <Button type="button" onClick={handleSave} className="gap-2" disabled={isSaving}>
+            <Save className={cn("h-4 w-4", isSaving && "animate-spin")} />
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>

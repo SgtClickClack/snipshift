@@ -127,20 +127,65 @@ export function ShiftBucketPill({ bucket, onClick, onAddStaff, className, canSho
     return result;
   }, [events]);
 
-  // Memoize derived state values
-  const { emptySlots, isFilled, isVacant, variantClass } = useMemo(() => {
+  // Memoize derived state values with status-based color coding
+  // Status interpretation:
+  // - 'confirmed'/'completed': Worker confirmed attendance -> Green
+  // - 'invited'/'pending'/'offered': Invitations sent, awaiting response -> Amber
+  // - 'open'/'draft'/'rejected'/'cancelled': Vacant or rejected -> Red
+  // - 'filled': All slots filled (legacy, treat as confirmed) -> Blue
+  const { emptySlots, isFilled, isVacant, bucketStatus, variantClass } = useMemo(() => {
     const empty = Math.max(0, requiredCount - staffWithCost.length);
     const filled = filledCount >= requiredCount;
     const vacant = filledCount === 0;
     
-    const variant = filled
-      ? 'bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800'
-      : vacant
-        ? 'bg-red-500/90 dark:bg-red-600/90 hover:bg-red-500 dark:hover:bg-red-600'
-        : 'bg-orange-500/90 dark:bg-orange-600/90 hover:bg-orange-500 dark:hover:bg-orange-600';
+    // Determine bucket status from events
+    // Check if any shifts have pending invitations or confirmed status
+    const confirmedCount = events.filter(ev => {
+      const status = ev.resource?.status;
+      return status === 'confirmed' || status === 'completed' || status === 'filled';
+    }).length;
     
-    return { emptySlots: empty, isFilled: filled, isVacant: vacant, variantClass: variant };
-  }, [filledCount, requiredCount, staffWithCost.length]);
+    const pendingInvitationCount = events.filter(ev => {
+      const status = ev.resource?.status;
+      return status === 'invited' || status === 'pending' || status === 'offered' || status === 'pending_invitation';
+    }).length;
+    
+    const rejectedOrVacantCount = events.filter(ev => {
+      const status = ev.resource?.status;
+      return status === 'rejected' || status === 'cancelled' || status === 'declined';
+    }).length;
+    
+    // Determine overall bucket status
+    let status: 'confirmed' | 'pending' | 'vacant' = 'vacant';
+    if (filled && confirmedCount >= requiredCount) {
+      status = 'confirmed';
+    } else if (pendingInvitationCount > 0 || (filledCount > 0 && filledCount < requiredCount)) {
+      status = 'pending';
+    } else if (vacant || rejectedOrVacantCount > 0 || empty > 0) {
+      status = 'vacant';
+    }
+    
+    // Color coding based on status:
+    // - Green (bg-green-500): 100% Confirmed - all slots filled with confirmed workers
+    // - Amber (bg-amber-500): Invitations Pending - some slots have pending invitations
+    // - Red (bg-red-500): Vacant/Rejected - slots are empty or have rejected applications + PULSE animation to alert owner
+    let variant: string;
+    switch (status) {
+      case 'confirmed':
+        variant = 'bg-green-500/90 dark:bg-green-600/90 hover:bg-green-500 dark:hover:bg-green-600 border-2 border-green-600 dark:border-green-500';
+        break;
+      case 'pending':
+        variant = 'bg-amber-500/90 dark:bg-amber-600/90 hover:bg-amber-500 dark:hover:bg-amber-600 border-2 border-amber-600 dark:border-amber-500';
+        break;
+      case 'vacant':
+      default:
+        // PULSE effect on RED buckets to alert owner of staffing risks
+        variant = 'bg-red-500/90 dark:bg-red-600/90 hover:bg-red-500 dark:hover:bg-red-600 border-2 border-red-600 dark:border-red-500 animate-pulse-subtle';
+        break;
+    }
+    
+    return { emptySlots: empty, isFilled: filled, isVacant: vacant, bucketStatus: status, variantClass: variant };
+  }, [filledCount, requiredCount, staffWithCost.length, events]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -157,7 +202,7 @@ export function ShiftBucketPill({ bucket, onClick, onAddStaff, className, canSho
           // Data attributes for E2E test stability - avoid text-based filtering
           data-filled-count={filledCount}
           data-required-count={requiredCount}
-          data-bucket-state={isFilled ? 'filled' : isVacant ? 'vacant' : 'partial'}
+          data-bucket-state={bucketStatus}
           className={cn(
             'shift-bucket-pill w-full h-full rounded-md cursor-pointer',
             'flex items-center gap-1.5 px-3 py-2 min-[768px]:px-2 min-[768px]:py-1',
@@ -177,11 +222,13 @@ export function ShiftBucketPill({ bucket, onClick, onAddStaff, className, canSho
         {open && (
           <PopoverContent
             // RESPONSIVE: Adaptive width for mobile/tablet with max-width to prevent overflow
-            className="w-[min(256px,calc(100vw-2rem))] sm:w-64 p-0 overflow-hidden"
+            // Uses collision boundary to ensure popover stays within viewport on all screen sizes
+            className="w-[min(256px,calc(100vw-2rem))] sm:w-64 p-0 overflow-hidden z-50"
             align={popoverAlign}
             side={popoverSide}
             sideOffset={8}
-            collisionPadding={16} // Ensure popover stays within viewport edges
+            collisionPadding={{ top: 16, bottom: 16, left: 16, right: 16 }} // Explicit padding all sides for mobile
+            avoidCollisions={true}
             onClick={(e) => e.stopPropagation()}
             asChild
             forceMount

@@ -34,6 +34,7 @@ import { normalizeParam, normalizeQueryOptional } from '../utils/request-params.
 import { normalizeRole } from '../utils/normalizeRole.js';
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
 import * as shiftGenerationService from '../services/shift-generation.service.js';
+import * as smartFillService from '../services/smart-fill.service.js';
 import { uploadProofImage } from '../middleware/upload.js';
 import { PAYMENT_CONFIG } from '../config/business.config.js';
 import admin from 'firebase-admin';
@@ -2959,6 +2960,253 @@ router.post('/smart-fill', authenticateUser, asyncHandler(async (req: Authentica
     });
     throw error;
   }
+}));
+
+// Invite A-Team: Generate shifts and assign favorite professionals automatically
+router.post('/invite-a-team', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const { startDate, endDate, defaultHourlyRate, defaultLocation, dryRun } = req.body;
+
+    // Validate dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      res.status(400).json({ message: 'Invalid date format' });
+      return;
+    }
+
+    if (start >= end) {
+      res.status(400).json({ message: 'startDate must be before endDate' });
+      return;
+    }
+
+    // Call smart fill service
+    const result = await smartFillService.smartFill(userId, {
+      startDate: start,
+      endDate: end,
+      defaultHourlyRate: defaultHourlyRate?.toString(),
+      defaultLocation,
+      dryRun: dryRun === true,
+    });
+
+    if (result.errors.length > 0 && result.shiftsCreated === 0) {
+      res.status(400).json({
+        success: false,
+        message: result.errors.join('; '),
+        errors: result.errors,
+      });
+      return;
+    }
+
+    // Send notifications for each assigned shift
+    if (!dryRun && result.assignmentDetails.length > 0) {
+      for (const detail of result.assignmentDetails) {
+        try {
+          await notificationsService.notifyProfessionalOfInvite(detail.professionalId, {
+            id: detail.shiftId,
+            title: detail.slotLabel,
+            startTime: detail.startTime,
+            endTime: detail.endTime,
+            location: defaultLocation || undefined,
+            hourlyRate: defaultHourlyRate?.toString() || '35.00',
+            employerId: userId,
+          });
+        } catch (error) {
+          console.error(`[POST /api/shifts/invite-a-team] Error sending notification to ${detail.professionalId}:`, error);
+        }
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      shiftsCreated: result.shiftsCreated,
+      shiftsAssigned: result.shiftsAssigned,
+      invitationsSent: result.invitationsSent,
+      message: `${result.shiftsCreated} shift(s) created, ${result.invitationsSent} invitation(s) sent to your A-Team`,
+      assignmentDetails: result.assignmentDetails.map(d => ({
+        ...d,
+        startTime: d.startTime.toISOString(),
+        endTime: d.endTime.toISOString(),
+      })),
+      errors: result.errors.length > 0 ? result.errors : undefined,
+    });
+  } catch (error: any) {
+    console.error('[POST /api/shifts/invite-a-team] Error:', {
+      message: error?.message,
+      code: error?.code,
+      detail: error?.detail,
+      stack: error?.stack,
+      body: req.body,
+    });
+    throw error;
+  }
+}));
+
+// Bulk accept all pending invitations (for staff)
+router.post('/invitations/accept-all', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { shiftIds } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Validate shiftIds if provided
+  if (shiftIds && (!Array.isArray(shiftIds) || shiftIds.length === 0)) {
+    res.status(400).json({ message: 'shiftIds must be a non-empty array if provided' });
+    return;
+  }
+
+  let accepted = 0;
+  const errors: string[] = [];
+
+  // Get all pending invitations for this user
+  let invitations: Array<{ invitation: any; shift: any }> = [];
+  try {
+    const allInvitations = await shiftInvitationsRepo.getPendingInvitationsWithShiftDetails(userId);
+    
+    // Filter by shiftIds if provided
+    invitations = shiftIds 
+      ? allInvitations.filter(({ shift }) => shiftIds.includes(shift.id))
+      : allInvitations;
+  } catch (error: any) {
+    console.error('[POST /invitations/accept-all] Failed to fetch invitations:', {
+      userId,
+      message: error?.message,
+    });
+    res.status(500).json({ message: 'Failed to fetch invitations' });
+    return;
+  }
+
+  if (invitations.length === 0) {
+    res.status(200).json({ accepted: 0, errors: [], message: 'No pending invitations to accept' });
+    return;
+  }
+
+  // Accept each invitation
+  for (const { invitation, shift } of invitations) {
+    try {
+      const result = await smartFillService.respondToInvitation(userId, shift.id, true);
+      
+      if (result.success) {
+        accepted++;
+      } else {
+        errors.push(`Shift ${shift.title}: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      errors.push(`Shift ${shift.title}: ${error?.message || 'Failed to accept'}`);
+    }
+  }
+
+  res.status(200).json({
+    accepted,
+    total: invitations.length,
+    errors,
+    message: accepted > 0 
+      ? `Successfully accepted ${accepted} shift${accepted !== 1 ? 's' : ''}` 
+      : 'No shifts could be accepted',
+  });
+}));
+
+// Get my invitations (for InvitationDashboard)
+router.get('/invitations/me', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const invitations = await shiftInvitationsRepo.getPendingInvitationsWithShiftDetails(userId);
+    
+    // Also get venue info for each shift's employer
+    const employerIds = [...new Set(invitations.map(({ shift }) => shift.employerId))];
+    const employerMap = await usersRepo.getUsersByIds(employerIds);
+    
+    // Format response for frontend
+    const formattedInvitations = invitations.map(({ invitation, shift }) => {
+      const employer = employerMap.get(shift.employerId);
+      return {
+        id: invitation.id,
+        shiftId: shift.id,
+        status: invitation.status,
+        createdAt: toISOStringSafe(invitation.createdAt),
+        shift: {
+          id: shift.id,
+          title: shift.title,
+          description: shift.description,
+          startTime: toISOStringSafe((shift as any).startTime),
+          endTime: toISOStringSafe((shift as any).endTime),
+          hourlyRate: shift.hourlyRate,
+          location: shift.location,
+          venue: employer ? {
+            name: employer.name || 'Unknown Venue',
+            avatarUrl: employer.avatarUrl,
+          } : undefined,
+        },
+      };
+    });
+
+    res.status(200).json(formattedInvitations);
+  } catch (error: any) {
+    console.error('[GET /invitations/me] Error:', {
+      userId,
+      message: error?.message,
+    });
+    res.status(500).json({ message: 'Failed to fetch invitations' });
+  }
+}));
+
+// Accept or decline a shift invitation (for staff)
+router.post('/invitations/:id/respond', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const invitationId = normalizeParam(req.params.id);
+  const { accept } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  if (typeof accept !== 'boolean') {
+    res.status(400).json({ message: 'accept must be a boolean' });
+    return;
+  }
+
+  // Get the invitation to find the shift ID
+  const invitation = await shiftInvitationsRepo.getShiftInvitationById(invitationId);
+  if (!invitation) {
+    res.status(404).json({ message: 'Invitation not found' });
+    return;
+  }
+
+  // Verify the invitation belongs to this user
+  if (invitation.professionalId !== userId) {
+    res.status(403).json({ message: 'This invitation is not for you' });
+    return;
+  }
+
+  const result = await smartFillService.respondToInvitation(userId, invitation.shiftId, accept);
+
+  if (!result.success) {
+    res.status(400).json({ message: result.error || 'Failed to respond to invitation' });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    message: accept ? 'Shift accepted! You are now assigned to this shift.' : 'Invitation declined.',
+  });
 }));
 
 // Accept a shift offer

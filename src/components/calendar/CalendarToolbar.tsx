@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronLeft, ChevronRight, Settings, Plus, Zap, DollarSign } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Settings, Plus, Zap, DollarSign, Users, Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { View } from "react-big-calendar";
 import { fetchRosterTotals } from "@/lib/api";
@@ -40,6 +40,9 @@ interface CalendarToolbarProps {
   onCreateAvailability?: () => void;
   // Auto-Fill Week from Templates (business mode only)
   onAutoFillClick?: () => void;
+  // Invite A-Team (business mode only) - bulk invite favorite staff
+  onInviteATeamClick?: () => void;
+  isInvitingATeam?: boolean;
   // Date range for roster totals (business mode only)
   dateRange?: { start: Date; end: Date } | null;
 }
@@ -67,6 +70,8 @@ export function CalendarToolbar({
   onStatusFilterChange,
   onCreateAvailability,
   onAutoFillClick,
+  onInviteATeamClick,
+  isInvitingATeam,
   dateRange,
 }: CalendarToolbarProps) {
   const { data: rosterTotals } = useQuery({
@@ -162,6 +167,26 @@ export function CalendarToolbar({
                       Beta
                     </span>
                   </DropdownMenuItem>
+                  {onInviteATeamClick && (
+                    <DropdownMenuItem
+                      onClick={onInviteATeamClick}
+                      disabled={isInvitingATeam}
+                      data-testid="invite-a-team-trigger"
+                      className="flex items-center gap-2"
+                    >
+                      {isInvitingATeam ? (
+                        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-yellow-500" />
+                      ) : (
+                        <Star className="h-4 w-4 shrink-0 text-yellow-500" />
+                      )}
+                      <span>{isInvitingATeam ? 'Sending Invitations...' : 'Invite A-Team'}</span>
+                      {!isInvitingATeam && (
+                        <span className="text-[10px] bg-green-500/20 text-green-600 dark:text-green-400 px-1.5 rounded font-medium shrink-0">
+                          Favorites
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -238,7 +263,7 @@ export function CalendarToolbar({
         </div>
 
         {/* Bottom row: Filter + Legend */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border/40">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-border/40">
           {/* Status Filter */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-muted-foreground">Status:</span>
@@ -255,19 +280,39 @@ export function CalendarToolbar({
             </Select>
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-emerald-500"></div>
-              <span className="text-muted-foreground">Confirmed</span>
+          {/* Legend - Capacity status traffic light indicators (MOBILE VISIBLE with horizontal scroll) */}
+          <div 
+            className="flex items-center gap-3 sm:gap-4 text-xs overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+            data-testid="status-legend"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div 
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-green-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
+              title="100% Confirmed — All required staff have confirmed attendance"
+            >
+              <div className="w-3.5 h-3.5 rounded bg-green-500 border-2 border-green-600 shrink-0"></div>
+              <span className="text-muted-foreground font-medium">100% Confirmed</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-yellow-500"></div>
-              <span className="text-muted-foreground">Open</span>
+            <div 
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-amber-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
+              title="Invitations Sent — Staff have been invited, awaiting confirmation"
+            >
+              <div className="w-3.5 h-3.5 rounded bg-amber-500 border-2 border-amber-600 shrink-0"></div>
+              <span className="text-muted-foreground font-medium">Invitations Sent</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-zinc-500"></div>
-              <span className="text-muted-foreground">Past</span>
+            <div 
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-red-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
+              title="Vacant (Action Required) — Open slots need to be filled or invitations have been declined"
+            >
+              <div className="w-3.5 h-3.5 rounded bg-red-500 border-2 border-red-600 shrink-0 animate-pulse-subtle"></div>
+              <span className="text-muted-foreground font-medium">Vacant</span>
+            </div>
+            <div 
+              className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-zinc-500/10 sm:bg-transparent sm:px-0 sm:py-0" 
+              title="Past — Completed or expired shifts"
+            >
+              <div className="w-3.5 h-3.5 rounded bg-zinc-500 border-2 border-zinc-600 shrink-0"></div>
+              <span className="text-muted-foreground font-medium">Past</span>
             </div>
           </div>
         </div>

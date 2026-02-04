@@ -37,15 +37,15 @@ function FAQItem({ question, answer, isOpen, onClick }: FAQItemProps) {
     <div className="border-b border-zinc-800">
       <button
         onClick={onClick}
-        className="w-full py-6 flex justify-between items-center text-left hover:text-[#BFFF00] transition-colors group"
+        className="w-full py-6 flex justify-between items-center text-left hover:text-[#BAFF39] transition-colors group"
         aria-expanded={isOpen}
       >
-        <span className="text-lg font-bold text-white group-hover:text-[#BFFF00]">{question}</span>
+        <span className="text-lg font-bold text-white group-hover:text-[#BAFF39]">{question}</span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          <ChevronDown className={`w-6 h-6 ${isOpen ? 'text-[#BFFF00]' : 'text-zinc-500'}`} />
+          <ChevronDown className={`w-6 h-6 ${isOpen ? 'text-[#BAFF39]' : 'text-zinc-500'}`} />
         </motion.div>
       </button>
       <AnimatePresence>

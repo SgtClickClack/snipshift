@@ -562,6 +562,42 @@ export async function clearAllShifts(): Promise<{
   }
 }
 
+export interface InviteATeamPayload {
+  startDate: string;
+  endDate: string;
+  defaultHourlyRate?: string | number;
+  defaultLocation?: string;
+}
+
+export interface InviteATeamResult {
+  success: boolean;
+  shiftsCreated: number;
+  shiftsAssigned: number;
+  invitationsSent: number;
+  message: string;
+  assignmentDetails?: Array<{
+    shiftId: string;
+    professionalId: string;
+    professionalName: string;
+    slotLabel: string;
+    startTime: string;
+    endTime: string;
+  }>;
+}
+
+/**
+ * Invite A-Team: Smart fill shifts with favorite professionals
+ * Generates shifts from templates and assigns favorite staff members automatically
+ */
+export async function inviteATeam(payload: InviteATeamPayload): Promise<InviteATeamResult> {
+  try {
+    const res = await apiRequest('POST', '/api/shifts/invite-a-team', payload);
+    return await res.json();
+  } catch (error) {
+    throw toApiError(error, 'inviteATeam');
+  }
+}
+
 export interface GenerateRosterPayload {
   startDate: string;
   endDate: string;
