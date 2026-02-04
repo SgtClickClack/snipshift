@@ -67,7 +67,7 @@ function combineDateAndTime(baseDate: Date, timeStr: string): Date {
  * (not already assigned to another shift that overlaps)
  */
 async function isProfessionalAvailable(
-  db: ReturnType<typeof getDb>,
+  db: NonNullable<ReturnType<typeof getDb>>,
   professionalId: string,
   slotStart: Date,
   slotEnd: Date
@@ -125,6 +125,10 @@ export async function smartFill(
   };
 
   const db = getDb();
+  if (!db) {
+    result.errors.push('Database connection not available');
+    return result;
+  }
   const hourlyRate = options.defaultHourlyRate ?? SHIFT_CONFIG.DEFAULT_HOURLY_RATE;
   const location = options.defaultLocation ?? '';
 
@@ -389,6 +393,9 @@ export async function sendInvitations(
   shiftIds?: string[]
 ): Promise<{ updated: number; errors: string[] }> {
   const db = getDb();
+  if (!db) {
+    return { updated: 0, errors: ['Database connection not available'] };
+  }
   const errors: string[] = [];
 
   try {
@@ -442,6 +449,9 @@ export async function respondToInvitation(
   accept: boolean
 ): Promise<{ success: boolean; error?: string }> {
   const db = getDb();
+  if (!db) {
+    return { success: false, error: 'Database connection not available' };
+  }
 
   try {
     // Get the shift
