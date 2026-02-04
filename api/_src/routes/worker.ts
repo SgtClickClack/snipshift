@@ -141,21 +141,19 @@ router.get('/recommendations', authenticateUser, asyncHandler(async (req: Authen
   const lngStr = normalizeQueryOptional(req.query.lng);
   const workerLng = lngStr ? parseFloat(lngStr) : null;
 
-  // If no coordinates provided, try to get from user profile
+  // If no coordinates provided, return empty recommendations (graceful fallback)
+  // This prevents 400 errors when geolocation is denied or unavailable
   const userLat = workerLat;
   const userLng = workerLng;
   
-  if (!userLat || !userLng) {
-    const user = await usersRepo.getUserById(userId);
-    // Note: User location might be stored as a string, would need geocoding
-    // For now, we'll require lat/lng in query params
-    if (!userLat || !userLng) {
-      res.status(400).json({ 
-        message: 'Location coordinates (lat, lng) are required for recommendations',
-        error: 'LOCATION_REQUIRED'
-      });
-      return;
-    }
+  if (!userLat || !userLng || isNaN(userLat) || isNaN(userLng)) {
+    console.log('[GET /api/worker/recommendations] No location provided, returning empty recommendations');
+    res.status(200).json({
+      recommendations: [],
+      count: 0,
+      message: 'Enable location services to see personalized shift recommendations near you',
+    });
+    return;
   }
 
   // Get all open shifts (exclude filled/completed)
@@ -298,6 +296,87 @@ router.get('/recommendations', authenticateUser, asyncHandler(async (req: Authen
     recommendations,
     count: recommendations.length,
   });
+}));
+
+/**
+ * GET /api/worker/waitlisted-shifts
+ * 
+ * Get shifts where the worker is on the waitlist (standby).
+ * Returns an empty array if the worker has no waitlisted shifts.
+ */
+router.get('/waitlisted-shifts', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    // Get waitlisted shifts for this worker
+    const waitlistedEntries = await shiftWaitlistRepo.getWaitlistEntriesByWorker(userId);
+
+    // If no waitlisted shifts, return empty array (graceful response)
+    if (!waitlistedEntries || waitlistedEntries.length === 0) {
+      res.status(200).json({
+        shifts: [],
+        count: 0,
+        message: 'No waitlisted shifts at the moment',
+      });
+      return;
+    }
+
+    // Get full shift details for each waitlist entry
+    const shiftsWithDetails = await Promise.all(
+      waitlistedEntries.map(async (entry) => {
+        const shift = await shiftsRepo.getShiftById(entry.shiftId);
+        if (!shift) return null;
+
+        // Get employer/venue details
+        const employer = await usersRepo.getUserById(shift.employerId);
+
+        return {
+          waitlistEntry: {
+            id: entry.id,
+            position: entry.position,
+            joinedAt: entry.createdAt?.toISOString() || new Date().toISOString(),
+            status: entry.status || 'active',
+          },
+          shift: {
+            id: shift.id,
+            title: shift.title,
+            description: shift.description,
+            startTime: shift.startTime.toISOString(),
+            endTime: shift.endTime.toISOString(),
+            hourlyRate: shift.hourlyRate.toString(),
+            location: shift.location,
+            status: shift.status,
+          },
+          venue: employer ? {
+            id: employer.id,
+            name: employer.name,
+            avatarUrl: employer.avatarUrl,
+          } : null,
+        };
+      })
+    );
+
+    // Filter out null entries (shifts that no longer exist)
+    const validShifts = shiftsWithDetails.filter((s): s is NonNullable<typeof s> => s !== null);
+
+    res.status(200).json({
+      shifts: validShifts,
+      count: validShifts.length,
+    });
+  } catch (error) {
+    console.error('[GET /api/worker/waitlisted-shifts] Error:', error);
+    // Return empty array on error (graceful degradation)
+    res.status(200).json({
+      shifts: [],
+      count: 0,
+      message: 'Unable to fetch waitlisted shifts',
+    });
+  }
 }));
 
 /**

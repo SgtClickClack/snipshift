@@ -310,30 +310,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const effectivelyOnboarding = currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection' || isOnboardingModeRef.current;
 
-    // PERFORMANCE PROGRESSIVE UNLOCK: Fetch user immediately, venue in background (non-blocking)
-    // User fetch is the critical path - venue data streams in without blocking navigation
-    console.log('[AuthContext] Starting progressive fetch: user (blocking) + venue (background)');
+    // PERFORMANCE PROGRESSIVE UNLOCK: Fetch user first, then conditionally fetch venue
+    // User fetch is the critical path - venue data is only needed for business/venue roles
+    console.log('[AuthContext] Starting user profile fetch');
     const fetchStartTime = Date.now();
     
-    // Start both fetches but DON'T await venue
-    const userPromise = fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
-    const venuePromise = fetch(`${getApiBase()}/api/venues/me`, {
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    }).then(res => {
-      if (res.ok) return res.json();
-      if (res.status === 404) return { __notFound: true };
-      if (res.status === 429) return { __rateLimited: true };
-      return null;
-    }).catch(() => null);
-
-    // CRITICAL: Only await user fetch - release navigation lock immediately after user resolves
-    const apiResponse = await userPromise;
+    // CRITICAL: Fetch user FIRST to determine role before fetching venue
+    const apiResponse = await fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
     const userFetchDuration = Date.now() - fetchStartTime;
     console.log('[AuthContext] User fetch completed (progressive unlock ready)', { durationMs: userFetchDuration });
+
+    // Determine if we need to fetch venue data based on user's role
+    const userRole = apiResponse?.user?.currentRole || apiResponse?.user?.role || '';
+    const userRoles = apiResponse?.user?.roles || [];
+    const isProfessionalRole = userRole.toLowerCase() === 'professional' || 
+      userRoles.some((r: string) => (r || '').toLowerCase() === 'professional');
+    const isVenueRole = ['business', 'venue', 'hub', 'owner'].includes(userRole.toLowerCase()) ||
+      userRoles.some((r: string) => ['business', 'venue', 'hub', 'owner'].includes((r || '').toLowerCase()));
+    
+    // Only start venue fetch for business/venue roles (NOT for professionals)
+    // This eliminates the 404 error when professionals log in
+    let venuePromise: Promise<any> = Promise.resolve(null);
+    if (isVenueRole && !isProfessionalRole) {
+      console.log('[AuthContext] User has venue role, fetching venue data');
+      venuePromise = fetch(`${getApiBase()}/api/venues/me`, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }).then(res => {
+        if (res.ok) return res.json();
+        if (res.status === 404) return { __notFound: true };
+        if (res.status === 429) return { __rateLimited: true };
+        return null;
+      }).catch(() => null);
+    } else {
+      console.log('[AuthContext] User is professional role, skipping venue fetch', { userRole, isProfessionalRole });
+    }
 
     // Venue data will be processed when it arrives (non-blocking)
     let venueData: any = null;

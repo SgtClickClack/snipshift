@@ -113,7 +113,7 @@ function RecommendedShiftCard({
 
         <div className="flex justify-between items-center gap-2">
           <div className="flex items-center gap-1">
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <DollarSign className="h-4 w-4 text-[#BAFF39]" />
             <span className="font-semibold">${hourlyRate.toFixed(2)}/hr</span>
             {hours && (
               <span className="text-xs text-muted-foreground">
@@ -132,7 +132,7 @@ function RecommendedShiftCard({
             <Button
               onClick={() => onApply(recommendation.id)}
               disabled={isApplying || hasApplied}
-              variant={hasApplied ? 'outline' : 'default'}
+              variant={hasApplied ? 'outline' : 'accent'}
               size="sm"
             >
               {isApplying ? (
@@ -165,9 +165,16 @@ export function RecommendedShifts({ className }: RecommendedShiftsProps) {
   const [appliedShiftIds, setAppliedShiftIds] = useState<Set<string>>(new Set());
   const [applyingShiftId, setApplyingShiftId] = useState<string | null>(null);
 
-  // Get user location
+  // Get user location with silent fallback
+  // If geolocation fails or is denied, the API returns empty recommendations gracefully
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (!navigator.geolocation) {
+      // Geolocation not supported - continue silently
+      return;
+    }
+
+    // Wrap in try-catch for additional safety
+    try {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
@@ -175,16 +182,20 @@ export function RecommendedShifts({ className }: RecommendedShiftsProps) {
             lng: position.coords.longitude,
           });
         },
-        (error) => {
-          console.warn('Failed to get user location:', error);
-          // Continue without location - API will handle it
+        () => {
+          // Silent fallback - geolocation denied or failed
+          // API will return empty recommendations which is handled gracefully
+          setUserLocation(null);
         },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000, // 5 minutes
+          enableHighAccuracy: false, // Use low accuracy for faster response
+          timeout: 5000, // Reduced timeout to avoid long waits
+          maximumAge: 600000, // 10 minutes cache
         }
       );
+    } catch {
+      // Catch any unexpected errors silently
+      setUserLocation(null);
     }
   }, []);
 

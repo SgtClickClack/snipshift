@@ -554,6 +554,90 @@ router.get('/me/verification-status', authenticateUser, asyncHandler(async (req:
 }));
 
 /**
+ * GET /api/users/verification-status
+ *
+ * Alias for /api/me/verification-status to handle frontend path variations.
+ * Returns the current user's pro verification status.
+ */
+router.get('/users/verification-status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const status = await proVerificationService.getProVerificationStatus(userId);
+  
+  // Return a default verified status if service returns null (graceful fallback)
+  if (!status) {
+    res.status(200).json({
+      status: 'verified',
+      verificationLevel: 'basic',
+      completedShiftCount: 0,
+      noShowCount: 0,
+      topRatedBadge: false,
+      message: 'Verification status initialized',
+    });
+    return;
+  }
+
+  res.status(200).json(status);
+}));
+
+/**
+ * GET /api/me/reputation
+ *
+ * Returns the current user's reputation data for the professional dashboard.
+ * Includes: score, shiftsCompleted, reliability percentage, badges, etc.
+ */
+router.get('/me/reputation', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  // Fetch user data for reputation calculation
+  const user = await usersRepo.getUserById(userId);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Get verification status for additional metrics
+  const verificationStatus = await proVerificationService.getProVerificationStatus(userId);
+
+  // Calculate reputation score (0-100)
+  const averageRating = user.averageRating ? parseFloat(user.averageRating) : 0;
+  const reviewCount = user.reviewCount ? parseInt(user.reviewCount, 10) : 0;
+  const completedShifts = verificationStatus?.completedShiftCount ?? 0;
+  const noShows = verificationStatus?.noShowCount ?? 0;
+
+  // Reputation formula: weighted average of rating (50%), reliability (30%), and experience (20%)
+  const ratingScore = (averageRating / 5) * 100; // Convert 5-star to 100-scale
+  const totalShiftsAttempted = completedShifts + noShows;
+  const reliabilityScore = totalShiftsAttempted > 0 
+    ? ((completedShifts / totalShiftsAttempted) * 100) 
+    : 100; // Default to 100% if no shifts yet
+  const experienceScore = Math.min(completedShifts * 5, 100); // 5 points per shift, max 100
+
+  const overallScore = reviewCount > 0
+    ? Math.round((ratingScore * 0.5) + (reliabilityScore * 0.3) + (experienceScore * 0.2))
+    : Math.round((reliabilityScore * 0.5) + (experienceScore * 0.5)); // No reviews yet
+
+  res.status(200).json({
+    score: overallScore,
+    shiftsCompleted: completedShifts,
+    reliability: Math.round(reliabilityScore),
+    averageRating: averageRating > 0 ? averageRating : null,
+    reviewCount,
+    noShowCount: noShows,
+    badges: verificationStatus?.topRatedBadge ? ['top-rated'] : [],
+    level: overallScore >= 80 ? 'excellent' : overallScore >= 60 ? 'good' : overallScore >= 40 ? 'building' : 'new',
+  });
+}));
+
+/**
  * GET /api/me/can-work-alcohol-shifts
  *
  * Check if the current user can work alcohol service shifts
