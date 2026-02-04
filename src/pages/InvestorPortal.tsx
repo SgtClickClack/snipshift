@@ -12,7 +12,7 @@
  * - Dark BG: #0a0a0a
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { 
@@ -28,11 +28,22 @@ import {
   Lock,
   ExternalLink,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Menu
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
+
+/** Navigation items for the investor portal */
+const NAV_ITEMS = [
+  { id: 'opportunity', label: 'Opportunity' },
+  { id: 'trinity', label: 'Trinity' },
+  { id: 'vault', label: 'Data Room' },
+  { id: 'investment', label: 'The Ask' },
+] as const;
+
+type SectionId = typeof NAV_ITEMS[number]['id'];
 
 /** Document metadata for the investor data room */
 interface DocumentItem {
@@ -207,8 +218,67 @@ HospoGo is positioned at the intersection of regulatory pressure, platform adopt
 
 export default function InvestorPortal() {
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
+  const [activeSection, setActiveSection] = useState<SectionId>('opportunity');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { toast } = useToast();
   const { user, hasUser } = useAuth();
+  
+  // Refs for section elements
+  const sectionRefs = useRef<Map<SectionId, HTMLElement | null>>(new Map());
+  
+  // Intersection Observer for active section tracking
+  useEffect(() => {
+    const observerOptions: IntersectionObserverInit = {
+      root: null, // viewport
+      rootMargin: '-20% 0px -60% 0px', // Trigger when section is 20% from top
+      threshold: 0,
+    };
+
+    const observerCallback: IntersectionObserverCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const sectionId = entry.target.id as SectionId;
+          setActiveSection(sectionId);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observe all sections
+    NAV_ITEMS.forEach(({ id }) => {
+      const element = document.getElementById(id);
+      if (element) {
+        sectionRefs.current.set(id, element);
+        observer.observe(element);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Close mobile menu on scroll
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    
+    const handleScroll = () => {
+      setMobileMenuOpen(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mobileMenuOpen]);
+
+  // Handle smooth scroll navigation
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, sectionId: SectionId) => {
+    e.preventDefault();
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActiveSection(sectionId);
+      setMobileMenuOpen(false); // Close mobile menu on nav click
+    }
+  }, []);
   
   // Determine dashboard path based on user role
   const getDashboardPath = () => {
@@ -238,25 +308,99 @@ export default function InvestorPortal() {
         className="min-h-screen text-white scroll-smooth selection:bg-[#BAFF39] selection:text-black bg-[var(--investor-bg)] font-sans"
       >
         {/* Navigation */}
-        <nav className="fixed w-full z-50 px-6 py-4 flex justify-between items-center backdrop-blur-md border-b border-white/5 bg-black/20">
+        <nav className="fixed w-full z-50 px-4 md:px-6 py-4 flex justify-between items-center backdrop-blur-md border-b border-white/5 bg-black/20">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-black tracking-tighter uppercase italic">
+            <span className="text-xl md:text-2xl font-black tracking-tighter uppercase italic">
               HOSPO<span className="text-[var(--brand-neon)]">GO</span>
             </span>
           </div>
+          
+          {/* Desktop Navigation */}
           <div className="hidden md:flex gap-8 text-[10px] font-bold tracking-[0.3em] uppercase">
-            <a href="#opportunity" className="hover:text-[#BAFF39] transition">Opportunity</a>
-            <a href="#trinity" className="hover:text-[#BAFF39] transition">Trinity</a>
-            <a href="#vault" className="hover:text-[#BAFF39] transition">Data Room</a>
-            <a href="#investment" className="hover:text-[#BAFF39] transition">The Ask</a>
+            {NAV_ITEMS.map(({ id, label }) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                onClick={(e) => handleNavClick(e, id)}
+                className={`relative py-2 transition-all duration-300 ${
+                  activeSection === id 
+                    ? 'text-[#BAFF39]' 
+                    : 'text-gray-500 hover:text-[#BAFF39]'
+                }`}
+              >
+                {label}
+                {/* Active indicator - neon underline with glow */}
+                <span 
+                  className={`absolute -bottom-1 left-0 right-0 h-0.5 bg-[#BAFF39] transition-all duration-300 ${
+                    activeSection === id 
+                      ? 'opacity-100 shadow-[0_0_8px_rgba(186,255,57,0.8)]' 
+                      : 'opacity-0'
+                  }`}
+                />
+                {/* Glow dot indicator */}
+                <span 
+                  className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#BAFF39] transition-all duration-300 ${
+                    activeSection === id 
+                      ? 'opacity-100 shadow-[0_0_6px_rgba(186,255,57,0.9)]' 
+                      : 'opacity-0'
+                  }`}
+                />
+              </a>
+            ))}
           </div>
+          
+          {/* Mobile Navigation */}
+          <div className="flex md:hidden items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg border border-white/10 hover:border-[#BAFF39]/50 transition-colors"
+              aria-label="Toggle navigation menu"
+            >
+              <Menu size={20} className={mobileMenuOpen ? 'text-[#BAFF39]' : 'text-gray-400'} />
+            </button>
+          </div>
+          
           <Button 
             onClick={handleRSVP}
-            className="rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] border-none bg-[var(--brand-neon)] text-black"
+            className="hidden sm:flex rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] border-none bg-[var(--brand-neon)] text-black"
           >
             RSVP Briefing
           </Button>
         </nav>
+        
+        {/* Mobile Executive Menu - Neon bordered dropdown */}
+        {mobileMenuOpen && (
+          <div className="fixed top-[72px] left-0 right-0 z-40 md:hidden px-4 py-3 bg-black/95 backdrop-blur-xl border-b border-[#BAFF39]/30 shadow-[0_8px_32px_rgba(186,255,57,0.1)]">
+            <div className="flex flex-col gap-1">
+              {NAV_ITEMS.map(({ id, label }) => (
+                <a
+                  key={id}
+                  href={`#${id}`}
+                  onClick={(e) => handleNavClick(e, id)}
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-bold tracking-[0.2em] uppercase transition-all duration-300 ${
+                    activeSection === id 
+                      ? 'bg-[#BAFF39]/10 text-[#BAFF39] border border-[#BAFF39]/30' 
+                      : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                  }`}
+                >
+                  <span>{label}</span>
+                  {activeSection === id && (
+                    <span className="w-2 h-2 rounded-full bg-[#BAFF39] shadow-[0_0_8px_rgba(186,255,57,0.8)]" />
+                  )}
+                </a>
+              ))}
+              <Button 
+                onClick={() => {
+                  handleRSVP();
+                  setMobileMenuOpen(false);
+                }}
+                className="mt-3 w-full rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] border-none bg-[var(--brand-neon)] text-black"
+              >
+                RSVP Briefing
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Back to Dashboard - Floating button for logged-in users */}
         {hasUser && (
@@ -271,7 +415,7 @@ export default function InvestorPortal() {
         )}
 
         {/* Hero Section */}
-        <section id="opportunity" className="relative min-h-screen flex flex-col justify-center items-center px-6 text-center overflow-hidden pt-20">
+        <section id="opportunity" className="relative min-h-screen flex flex-col justify-center items-center px-6 text-center overflow-hidden pt-20 scroll-mt-24">
           <div 
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full blur-[160px] opacity-10 pointer-events-none bg-glow-neon"
           />
@@ -303,7 +447,7 @@ export default function InvestorPortal() {
         </section>
 
         {/* Trinity Section */}
-        <section id="trinity" className="py-32 px-6 max-w-7xl mx-auto">
+        <section id="trinity" className="py-32 px-6 max-w-7xl mx-auto scroll-mt-24">
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-7xl font-black mb-6 uppercase italic leading-none">
               The <span className="text-[var(--brand-neon)]">Trinity</span>
@@ -350,7 +494,7 @@ export default function InvestorPortal() {
         </section>
 
         {/* Document Vault (Investor Data Room) */}
-        <section id="vault" className="py-32 px-6 max-w-7xl mx-auto">
+        <section id="vault" className="py-32 px-6 max-w-7xl mx-auto scroll-mt-24">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
             <div className="max-w-2xl">
               <h2 className="text-5xl md:text-7xl font-black mb-6 uppercase italic leading-none">
@@ -393,7 +537,7 @@ export default function InvestorPortal() {
         </section>
 
         {/* The Ask Section */}
-        <section id="investment" className="py-32 px-6 bg-[var(--brand-neon)]">
+        <section id="investment" className="py-32 px-6 bg-[var(--brand-neon)] scroll-mt-24">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-24 items-center">
             <div className="text-black">
               <h2 className="text-7xl md:text-9xl font-black mb-10 uppercase italic leading-[0.85] tracking-tighter">
