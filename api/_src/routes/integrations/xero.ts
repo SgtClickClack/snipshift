@@ -738,8 +738,8 @@ router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHand
     xeroTenantId: tokens.tenantId,
     payload: {
       calendarId,
-      periodStart,
-      periodEnd,
+      periodStart: toDateOnly(startDate),
+      periodEnd: toDateOnly(endDate),
       employeesAttempted: totalAttempted,
     },
     result: {
