@@ -476,14 +476,17 @@ function ProfessionalCalendarContent({
     }
   }, [getSettingsKey, user?.currentRole, toast]);
   
-  // Initial load: Fetch settings from database on mount
+  // Initial load: Fetch settings from database on mount - with mounted check to prevent state updates after unmount
   useEffect(() => {
+    let isMounted = true;
+    
     if (!user?.id || !isBusinessRole(user?.currentRole || '')) {
       setIsLoadingSettings(false);
       return;
     }
 
     const loadSettings = async () => {
+      if (!isMounted) return;
       setIsLoadingSettings(true);
       try {
         // Fetch venue operating hours
@@ -497,6 +500,9 @@ function ProfessionalCalendarContent({
         } catch (error) {
           console.error('[CALENDAR] Failed to fetch venue hours:', error);
         }
+
+        // Check if still mounted after async call
+        if (!isMounted) return;
 
         // Load from user.businessSettings (shift templates)
         let settings: CalendarSettings | null = null;
@@ -556,6 +562,9 @@ function ProfessionalCalendarContent({
           };
         }
 
+        // Check if still mounted before updating state
+        if (!isMounted) return;
+
         if (settings) {
           setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, settings) ? prev : settings));
           logger.debug('Calendar', '[CALENDAR] Settings loaded from database:', settings);
@@ -572,22 +581,30 @@ function ProfessionalCalendarContent({
       } catch (error) {
         console.error('[CALENDAR] Error loading settings:', error);
         // Fallback to localStorage on error
-        try {
-          const key = getSettingsKey();
-          const stored = localStorage.getItem(key);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
+        if (isMounted) {
+          try {
+            const key = getSettingsKey();
+            const stored = localStorage.getItem(key);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              setCalendarSettings((prev) => (areCalendarSettingsEqual(prev, parsed) ? prev : parsed));
+            }
+          } catch (localError) {
+            console.error('[CALENDAR] Failed to load from localStorage:', localError);
           }
-        } catch (localError) {
-          console.error('[CALENDAR] Failed to load from localStorage:', localError);
         }
       } finally {
-        setIsLoadingSettings(false);
+        if (isMounted) {
+          setIsLoadingSettings(false);
+        }
       }
     };
 
     loadSettings();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user?.id, user?.currentRole, user?.businessSettings, getSettingsKey, convertBusinessSettingsToCalendarSettings, areCalendarSettingsEqual]);
   
   // Listen for storage events and custom events to sync settings when they're updated from other components
@@ -1729,6 +1746,76 @@ function ProfessionalCalendarContent({
     []
   );
 
+  // HOOK ORDER FIX: Memoize event component to prevent React error #310
+  // This prevents the event component from being recreated on every render,
+  // which can cause inconsistent hook counts in child components like ShiftBucketPill
+  const customEventComponent = useCallback(
+    ({ event }: { event: CalendarEvent }) => {
+      // Bucket events: render ShiftBucketPill -> opens ShiftBucketManagementModal
+      if (event.resource?.type === 'bucket' && event.resource?.bucket) {
+        const bucket = event.resource.bucket;
+        return (
+          <ShiftBucketPill
+            bucket={bucket}
+            canShowCost={mode === 'business'}
+            mode={mode}
+            onClick={() => {
+              // Open Bucket Management Modal with full context
+              setSelectedBucketForManagement({
+                bucket,
+                label: bucket.label,
+                startTime: bucket.start,
+                endTime: bucket.end,
+                dateFormatted: format(bucket.start, 'EEEE, MMMM d, yyyy'),
+                filledCount: bucket.filledCount,
+                requiredCount: bucket.requiredCount,
+              });
+              setShowBucketManagementModal(true);
+            }}
+          />
+        );
+      }
+      // Use ShiftBlock for business mode, enhanced rendering for professional mode
+      if (mode === 'business') {
+        const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
+        const isRecurring = shift?.isRecurring || shift?.recurringSeriesId;
+        return (
+          <ShiftBlock
+            event={event}
+            onClick={() => handleSelectEvent(event)}
+            isRecurring={isRecurring}
+          />
+        );
+      }
+      // Enhanced event rendering for professional mode with status indicators
+      const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
+      const assignedStaff = shift?.assignedStaff || shift?.professional;
+      const isAssigned = !!assignedStaff;
+      const status = event.resource?.status || shift?.status || "DRAFT";
+      
+      return (
+        <div className="text-xs p-0.5">
+          <div className="font-semibold truncate">{event.title}</div>
+          <div className="flex items-center gap-1 opacity-90">
+            {isAssigned ? (
+              <span>👤 {assignedStaff?.name || assignedStaff?.displayName || "Assigned"}</span>
+            ) : (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") ? (
+              <span>Open</span>
+            ) : null}
+          </div>
+        </div>
+      );
+    },
+    [mode, handleSelectEvent]
+  );
+
+  // Memoize draggable accessor to prevent unnecessary re-renders
+  const draggableAccessor = useCallback((event: CalendarEvent) => {
+    // Allow dragging only if event is not in the past
+    const now = new Date();
+    return event.end >= now;
+  }, []);
+
   // Create event/availability mutation - uses shifts endpoint for availability slots
   const createEventMutation = useMutation({
     mutationFn: async (data: { title: string; start: Date; end: Date; description?: string; hourlyRate?: string; location?: string; professional?: Professional | null }) => {
@@ -2717,11 +2804,7 @@ function ProfessionalCalendarContent({
                             onEventResize={handleEventResize}
                             selectable
                             resizable
-                            draggableAccessor={(event: CalendarEvent) => {
-                              // Allow dragging only if event is not in the past
-                              const now = new Date();
-                              return event.end >= now;
-                            }}
+                            draggableAccessor={draggableAccessor}
                             eventPropGetter={eventStyleGetter}
                             min={new Date(2020, 0, 1, 0, 0, 0)}
                             max={new Date(2030, 11, 31, 23, 59, 59)}
@@ -2731,62 +2814,8 @@ function ProfessionalCalendarContent({
                             components={{
                               toolbar: customToolbar,
                               header: customHeader,
-                              event: ({ event }: { event: CalendarEvent }) => {
-                                // Bucket events: render ShiftBucketPill -> opens ShiftBucketManagementModal
-                                if (event.resource?.type === 'bucket' && event.resource?.bucket) {
-                                  const bucket = event.resource.bucket;
-                                  return (
-                                    <ShiftBucketPill
-                                      bucket={bucket}
-                                      canShowCost={mode === 'business'}
-                                      mode={mode}
-                                      onClick={() => {
-                                        // Open Bucket Management Modal with full context
-                                        setSelectedBucketForManagement({
-                                          bucket,
-                                          label: bucket.label,
-                                          startTime: bucket.start,
-                                          endTime: bucket.end,
-                                          dateFormatted: format(bucket.start, 'EEEE, MMMM d, yyyy'),
-                                          filledCount: bucket.filledCount,
-                                          requiredCount: bucket.requiredCount,
-                                        });
-                                        setShowBucketManagementModal(true);
-                                      }}
-                                    />
-                                  );
-                                }
-                                // Use ShiftBlock for business mode, enhanced rendering for professional mode
-                                if (mode === 'business') {
-                                  const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
-                                  const isRecurring = shift?.isRecurring || shift?.recurringSeriesId;
-                                  return (
-                                    <ShiftBlock
-                                      event={event}
-                                      onClick={() => handleSelectEvent(event)}
-                                      isRecurring={isRecurring}
-                                    />
-                                  );
-                                }
-                                // Enhanced event rendering for professional mode with status indicators
-                                const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
-                                const assignedStaff = shift?.assignedStaff || shift?.professional;
-                                const isAssigned = !!assignedStaff;
-                                const status = event.resource?.status || shift?.status || "DRAFT";
-                                
-                                return (
-                                  <div className="text-xs p-0.5">
-                                    <div className="font-semibold truncate">{event.title}</div>
-                                    <div className="flex items-center gap-1 opacity-90">
-                                      {isAssigned ? (
-                                        <span>ðŸ‘¤ {assignedStaff?.name || assignedStaff?.displayName || "Assigned"}</span>
-                                      ) : (status === "PUBLISHED" || status === "OPEN" || status === "invited" || status === "pending") ? (
-                                        <span>Open</span>
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                );
-                              },
+                              // HOOK ORDER FIX: Using memoized event component to prevent React error #310
+                              event: customEventComponent,
                             }}
                             tooltipAccessor={(event: CalendarEvent) => {
                               const shift = event.resource?.booking?.shift || event.resource?.booking?.job;
