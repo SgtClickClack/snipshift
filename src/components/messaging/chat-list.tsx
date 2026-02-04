@@ -112,7 +112,6 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
                     data-testid={`chat-item-${chat.id}`}
                   >
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={`/api/placeholder/40/40`} />
                       <AvatarFallback>
                         {getInitials(otherParticipant.name)}
                       </AvatarFallback>

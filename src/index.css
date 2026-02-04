@@ -44,6 +44,10 @@
     --warning-foreground: 0 0% 100%;
     --info: 210 100% 45%;
     --info-foreground: 0 0% 100%;
+    
+    /* Investor Portal specific */
+    --investor-bg: #0A0A0B;
+    --brand-neon: #BAFF39;
   }
 
   .dark {
@@ -92,13 +96,20 @@
   /* Samsung Internet Dark Mode Override Prevention */
   html {
     @apply bg-background text-foreground;
-    /* Tell browser to stop auto-adjusting colors */
-    forced-color-adjust: none !important;
+    /* Tell browser to stop auto-adjusting colors - use both prefixed and standard */
     -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
     
     overflow-x: hidden;
     width: 100%;
     position: relative;
+  }
+  
+  /* forced-color-adjust: Safari doesn't support, wrap in @supports */
+  @supports (forced-color-adjust: none) {
+    html {
+      forced-color-adjust: none !important;
+    }
   }
 
   /* Light mode specific styles for mobile */
@@ -113,13 +124,20 @@
     @apply bg-background text-foreground;
     color: hsl(var(--foreground)) !important;
     font-feature-settings: "rlig" 1, "calt" 1;
-    /* Tell browser to stop auto-adjusting colors */
-    forced-color-adjust: none !important;
+    /* Tell browser to stop auto-adjusting colors - use both prefixed and standard */
     -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
     background-color: hsl(var(--background)) !important;
     overflow-x: hidden;
     width: 100%;
     position: relative;
+  }
+  
+  /* forced-color-adjust for body: Safari doesn't support, wrap in @supports */
+  @supports (forced-color-adjust: none) {
+    body {
+      forced-color-adjust: none !important;
+    }
   }
 
   /* Light mode body background */
@@ -202,6 +220,45 @@
   /* Subtle pulse animation for vacant shift buckets - alerts owner of staffing risks */
   .animate-pulse-subtle {
     animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Touch scroll - iOS momentum scrolling */
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Image rendering - smooth anti-aliased images */
+  .img-render-smooth {
+    image-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  /* Blend mode - screen blend for overlays/effects */
+  .blend-screen {
+    mix-blend-mode: screen;
+  }
+  
+  /* Calendar minimum height */
+  .min-h-calendar {
+    min-height: 750px;
+  }
+  
+  /* Text shadow utilities for hero sections */
+  .text-shadow-hero {
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+  }
+  
+  .text-shadow-subtle {
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.8);
+  }
+  
+  .text-shadow-light {
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+  }
+  
+  /* Investor portal hero glow effect */
+  .bg-glow-neon {
+    background: radial-gradient(circle, var(--brand-neon) 0%, transparent 70%);
   }
 }
 

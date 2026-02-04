@@ -14,14 +14,10 @@ export function Footer() {
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-12 w-auto object-contain block antialiased drop-shadow-[0_0_10px_rgba(50,205,50,0.35)]"
+                className="h-12 w-auto object-contain block antialiased drop-shadow-[0_0_10px_rgba(50,205,50,0.35)] img-render-smooth"
                 loading="eager"
                 width={180}
                 height={48}
-                style={{
-                  imageRendering: 'auto',
-                  WebkitFontSmoothing: 'antialiased',
-                }}
               />
             </Link>
             <p className="text-sm text-muted-foreground dark:text-steel-400 mb-4">

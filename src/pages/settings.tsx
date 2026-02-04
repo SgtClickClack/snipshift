@@ -22,7 +22,8 @@ import {
   Calendar,
   Copy,
   Check,
-  Loader2
+  Loader2,
+  Star
 } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import BusinessSettings from '@/components/settings/business-settings';
@@ -34,8 +35,10 @@ import XeroEmployeeMapper from '@/components/settings/XeroEmployeeMapper';
 
 const XeroSyncManager = lazy(() => import('@/components/settings/XeroSyncManager'));
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 import { RSALocker } from '@/components/profile/RSALocker';
 import { GovernmentIDLocker } from '@/components/profile/GovernmentIDLocker';
 import {
@@ -52,7 +55,7 @@ import {
 import { mapRoleToApiRole, getDashboardRoute, AppRole } from '@/lib/roles';
 import { getCalendarSyncUrl } from '@/lib/api';
 
-type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business';
+type SettingsCategory = 'account' | 'security' | 'notifications' | 'verification' | 'business' | 'a-team';
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
@@ -282,12 +285,28 @@ export default function SettingsPage() {
   const isBusinessUser = user?.currentRole === 'hub' || user?.currentRole === 'business' || 
                          (user?.roles && (user.roles.includes('hub') || user.roles.includes('business')));
 
-  const categories: Array<{ id: SettingsCategory; label: string; icon: typeof User }> = [
+  // Fetch favorites count for A-Team badge
+  const { data: favoritesData } = useQuery({
+    queryKey: ['favorite-professionals'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/me');
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.favoriteProfessionals || [];
+    },
+    enabled: !!user?.id && isBusinessUser,
+  });
+  const favoritesCount = favoritesData?.length || 0;
+
+  const categories: Array<{ id: SettingsCategory; label: string; icon: typeof User; badge?: number }> = [
     { id: 'account', label: 'Account', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'verification', label: 'Verification', icon: Shield },
-    ...(isBusinessUser ? [{ id: 'business' as SettingsCategory, label: 'Business Settings', icon: Building2 }] : []),
+    ...(isBusinessUser ? [
+      { id: 'a-team' as SettingsCategory, label: 'A-Team', icon: Star, badge: favoritesCount },
+      { id: 'business' as SettingsCategory, label: 'Business Settings', icon: Building2 },
+    ] : []),
   ];
 
   // Load business settings from user profile
@@ -310,18 +329,46 @@ export default function SettingsPage() {
                 <nav className="space-y-2 md:space-y-1">
                   {categories.map((category) => {
                     const Icon = category.icon;
+                    const isATeam = category.id === 'a-team';
+                    // Show neon border when A-Team has 0 favorites (setup required)
+                    const needsSetup = isATeam && (category.badge === undefined || category.badge === 0);
                     return (
                       <button
                         key={category.id}
                         onClick={() => setActiveCategory(category.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-all ${
                           activeCategory === category.id
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            ? isATeam 
+                              ? 'bg-yellow-500 text-white'
+                              : 'bg-primary text-primary-foreground'
+                            : isATeam
+                              ? 'text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10'
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        } ${
+                          needsSetup && activeCategory !== category.id
+                            ? 'border-2 border-[#BAFF39] animate-pulse shadow-[0_0_8px_rgba(186,255,57,0.4)]'
+                            : ''
                         }`}
                       >
-                        <Icon className="h-5 w-5" />
-                        {category.label}
+                        <Icon className={`h-5 w-5 ${isATeam ? (activeCategory === category.id ? 'fill-current' : 'fill-yellow-500/30') : ''}`} />
+                        <span className="flex-1 text-left">{category.label}</span>
+                        {isATeam && needsSetup && activeCategory !== category.id && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-[#BAFF39]/20 text-[#BAFF39] rounded font-bold animate-pulse">
+                            Setup
+                          </span>
+                        )}
+                        {category.badge !== undefined && category.badge > 0 && (
+                          <Badge 
+                            variant="secondary" 
+                            className={`ml-auto ${
+                              activeCategory === category.id
+                                ? 'bg-white/20 text-white'
+                                : 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                            }`}
+                          >
+                            {category.badge}
+                          </Badge>
+                        )}
                       </button>
                     );
                   })}
@@ -826,10 +873,48 @@ export default function SettingsPage() {
               </Card>
             )}
 
+            {/* A-Team Section - Dedicated tab for favorites management */}
+            {activeCategory === 'a-team' && isBusinessUser && (
+              <div className="space-y-6">
+                {/* A-Team Info Banner */}
+                <Card className="border-2 border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 to-yellow-500/5">
+                  <CardContent className="py-6">
+                    <div className="flex items-start gap-4">
+                      <div className="shrink-0 p-3 bg-yellow-500/20 rounded-full">
+                        <Star className="h-8 w-8 text-yellow-600 dark:text-yellow-400 fill-yellow-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-yellow-700 dark:text-yellow-400 mb-2">
+                          Your A-Team
+                        </h2>
+                        <p className="text-muted-foreground">
+                          Mark your most reliable staff as favorites to quickly fill shifts. 
+                          Use "Invite A-Team" from the Calendar's Roster Tools to send bulk invitations 
+                          to your favorite workers.
+                        </p>
+                        {favoritesCount === 0 && (
+                          <p className="mt-3 text-sm text-amber-600 dark:text-amber-400 font-medium">
+                            No favorites yet! Click the star icon next to staff members below to build your A-Team.
+                          </p>
+                        )}
+                      </div>
+                      {favoritesCount > 0 && (
+                        <Badge className="shrink-0 bg-yellow-500 text-white text-lg px-3 py-1">
+                          {favoritesCount} member{favoritesCount !== 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Staff Favorites Component */}
+                <StaffFavourites />
+              </div>
+            )}
+
             {/* Business Settings Section */}
             {activeCategory === 'business' && isBusinessUser && (
               <div className="space-y-6">
-                <StaffFavourites />
                 <StaffPayRates />
                 <XeroIntegrationCard />
                 <XeroEmployeeMapper />

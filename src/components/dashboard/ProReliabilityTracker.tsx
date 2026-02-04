@@ -316,8 +316,8 @@ export function ProReliabilityTracker() {
             )}
           >
             <Icon 
-              className="h-6 w-6" 
-              style={{ color: state.color }}
+              className="h-6 w-6 [color:var(--dynamic-color)]" 
+              style={{ '--dynamic-color': state.color } as React.CSSProperties}
             />
           </div>
 
@@ -326,8 +326,8 @@ export function ProReliabilityTracker() {
             {/* Header Row */}
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h3 
-                className="text-lg font-bold"
-                style={{ color: state.color }}
+                className="text-lg font-bold [color:var(--dynamic-color)]"
+                style={{ '--dynamic-color': state.color } as React.CSSProperties}
               >
                 {state.label}
               </h3>

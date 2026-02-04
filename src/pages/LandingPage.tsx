@@ -151,8 +151,7 @@ export default function LandingPage() {
               <div className="max-w-2xl text-left">
                 {/* Headline with emphasis on "Never Quits" */}
                 <h2 
-                  className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.1] mb-6 text-white"
-                  style={{ textShadow: '2px 2px 10px rgba(0,0,0,0.8)' }}
+                  className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.1] mb-6 text-white text-shadow-hero"
                 >
                   The Roster That{" "}
                   <span className="relative inline-block">
@@ -167,14 +166,12 @@ export default function LandingPage() {
 
                 {/* Subheadline */}
                 <p 
-                  className="text-lg md:text-xl text-white max-w-lg mb-6 leading-relaxed font-medium"
-                  style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.8)' }}
+                  className="text-lg md:text-xl text-white max-w-lg mb-6 leading-relaxed font-medium text-shadow-subtle"
                 >
                   Instant coverage for venues. Instant work for staff. The marketplace that keeps your business moving.
                 </p>
                 <p 
-                  className="text-sm md:text-base text-white/90 max-w-lg mb-10"
-                  style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8)' }}
+                  className="text-sm md:text-base text-white/90 max-w-lg mb-10 text-shadow-light"
                 >
                   Seamlessly integrates with Xero and Stripe.
                 </p>

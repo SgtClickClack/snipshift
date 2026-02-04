@@ -226,7 +226,7 @@ export default function BillingSettings() {
                       {method.card && (
                         <>
                           <div className="font-medium capitalize">
-                            {method.card.brand} â€¢â€¢â€¢â€¢ {method.card.last4}
+                            {method.card.brand} •••• {method.card.last4}
                           </div>
                           <div className="text-sm text-steel-500">
                             Expires {method.card.exp_month}/{method.card.exp_year}

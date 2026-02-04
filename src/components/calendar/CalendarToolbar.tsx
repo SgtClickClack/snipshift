@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -58,6 +60,33 @@ function formatCurrency(amount: number, currency: string): string {
   } catch {
     return `$${amount.toFixed(2)}`;
   }
+}
+
+/**
+ * ManageATeamMenuItem - Navigates to Staff page with favorites filter
+ * Provides quick access when "No favorites configured" error occurs
+ */
+function ManageATeamMenuItem() {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    // Navigate to Staff page with favorites filter pre-applied
+    navigate('/venue/staff?filter=favorites');
+  };
+  
+  return (
+    <DropdownMenuItem
+      onClick={handleClick}
+      data-testid="manage-a-team-trigger"
+      className="flex items-center gap-2"
+    >
+      <Users className="h-4 w-4 shrink-0 text-primary" />
+      <span>Manage A-Team</span>
+      <span className="text-[10px] bg-primary/20 text-primary px-1.5 rounded font-medium shrink-0">
+        Settings
+      </span>
+    </DropdownMenuItem>
+  );
 }
 
 export function CalendarToolbar({
@@ -125,7 +154,7 @@ export function CalendarToolbar({
             {mode === 'business' && dateRange?.start && (
               <div
                 className={cn(
-                  "hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium",
+                  "hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#BAFF39]/10 dark:bg-[#BAFF39]/20 text-[#BAFF39] dark:text-[#BAFF39] text-sm font-medium",
                   "min-w-[180px]", // Reserved width to prevent CLS
                   !isSyncedToXero && rosterTotals && "animate-pulse"
                 )}
@@ -136,7 +165,7 @@ export function CalendarToolbar({
                 {rosterTotals !== undefined ? (
                   <span>Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}</span>
                 ) : (
-                  <Skeleton className="h-4 w-24 bg-emerald-500/20" />
+                  <Skeleton className="h-4 w-24 bg-[#BAFF39]/20" />
                 )}
               </div>
             )}
@@ -187,6 +216,8 @@ export function CalendarToolbar({
                       )}
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuSeparator />
+                  <ManageATeamMenuItem />
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -282,9 +313,8 @@ export function CalendarToolbar({
 
           {/* Legend - Capacity status traffic light indicators (MOBILE VISIBLE with horizontal scroll) */}
           <div 
-            className="flex items-center gap-3 sm:gap-4 text-xs overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+            className="flex items-center gap-3 sm:gap-4 text-xs overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent touch-scroll"
             data-testid="status-legend"
-            style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <div 
               className="flex items-center gap-1.5 cursor-help whitespace-nowrap shrink-0 px-2 py-1 rounded-md bg-green-500/10 sm:bg-transparent sm:px-0 sm:py-0" 

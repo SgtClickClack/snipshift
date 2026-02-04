@@ -184,7 +184,6 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
             </Button>
           )}
           <Avatar className="h-8 w-8">
-            <AvatarImage src={`/api/placeholder/32/32`} />
             <AvatarFallback className="text-xs">
               {getInitials(otherUser.name)}
             </AvatarFallback>
@@ -238,7 +237,6 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
                   >
                     {!isFromCurrentUser && (
                       <Avatar className="h-6 w-6 mt-1">
-                        <AvatarImage src={`/api/placeholder/24/24`} />
                         <AvatarFallback className="text-xs">
                           {getInitials(otherUser.name)}
                         </AvatarFallback>
@@ -286,7 +284,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
                     
                     {isFromCurrentUser && (
                       <Avatar className="h-6 w-6 mt-1">
-                        <AvatarImage src={`/api/placeholder/24/24`} />
+                        {(user as any).avatarUrl && <AvatarImage src={(user as any).avatarUrl} />}
                         <AvatarFallback className="text-xs">
                           {getInitials(user.displayName || user.email)}
                         </AvatarFallback>

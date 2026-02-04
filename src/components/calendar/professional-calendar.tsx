@@ -341,6 +341,7 @@ function ProfessionalCalendarContent({
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [autoFillPreview, setAutoFillPreview] = useState<{ estimatedCount: number; error?: string } | null>(null);
   const [isInvitingATeam, setIsInvitingATeam] = useState(false);
+  const [showEmptyFavoritesDialog, setShowEmptyFavoritesDialog] = useState(false);
   
   // Calendar settings - stored in localStorage
   const getSettingsKey = useCallback(() => {
@@ -1498,6 +1499,15 @@ function ProfessionalCalendarContent({
   const handleInviteATeamClick = useCallback(async () => {
     if (!dateRange || isInvitingATeam) return;
 
+    // PRE-FLIGHT CHECK: Verify user has favorites configured
+    // This prevents a 400 error and provides helpful guidance instead
+    const currentFavorites = user?.favoriteProfessionals || favoriteIds || [];
+    if (currentFavorites.length === 0) {
+      // Show helpful modal instead of hitting API with empty favorites
+      setShowEmptyFavoritesDialog(true);
+      return;
+    }
+
     setIsInvitingATeam(true);
     try {
       const result = await inviteATeam({
@@ -1530,7 +1540,7 @@ function ProfessionalCalendarContent({
     } finally {
       setIsInvitingATeam(false);
     }
-  }, [dateRange, isInvitingATeam, queryClient, toast]);
+  }, [dateRange, isInvitingATeam, queryClient, toast, user?.favoriteProfessionals, favoriteIds]);
 
   // Fetch preview when Auto-Fill modal opens
   useEffect(() => {
@@ -2538,18 +2548,15 @@ function ProfessionalCalendarContent({
             isInvitingATeam={isInvitingATeam}
             dateRange={dateRange}
           />
-          <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden" style={{ minHeight: '750px' }}>
+          <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden min-h-calendar">
             {isLoading ? (
               <div className="flex items-center justify-center h-full min-h-[600px]">
                 <div className="text-muted-foreground">Loading calendar...</div>
               </div>
             ) : (
               <div 
-                className="relative max-w-full min-w-0 overflow-x-auto" 
-                ref={calendarRef} 
-                style={{ 
-                  width: '100%',
-                }}
+                className="relative max-w-full min-w-0 overflow-x-auto w-full" 
+                ref={calendarRef}
               >
                 {/* Legend - Traffic Light System */}
                 <div className="flex gap-4 mb-4 text-sm text-zinc-400 flex-wrap">
@@ -3012,6 +3019,41 @@ function ProfessionalCalendarContent({
                 </AlertDialogAction>
               </>
             )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Empty Favorites Dialog - Pre-flight UX for Invite A-Team */}
+      <AlertDialog open={showEmptyFavoritesDialog} onOpenChange={setShowEmptyFavoritesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-[#BAFF39]" />
+              Enable A-Team Automation
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                <strong>A-Team Automation</strong> lets you fill shifts with one click by inviting your most reliable workers instantly.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                To unlock this feature, visit the Staff page and click the star icon next to your 
+                best performers. Once you've built your A-Team, you can auto-invite them whenever 
+                you need shifts filled — no more manual outreach.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowEmptyFavoritesDialog(false);
+                window.location.href = '/venue/staff?filter=favorites';
+              }}
+              className="bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-bold"
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Build My A-Team
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

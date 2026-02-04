@@ -93,8 +93,7 @@ export function ConfettiAnimation() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-50"
-      style={{ mixBlendMode: 'screen' }}
+      className="fixed inset-0 pointer-events-none z-50 blend-screen"
     />
   );
 }

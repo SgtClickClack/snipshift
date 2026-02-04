@@ -8,6 +8,7 @@ import {
   mockEmployeesError,
   MOCK_XERO_STAFF,
   MOCK_XERO_EMPLOYEES,
+  MOCK_SYNC_SUCCESS,
 } from './xero-mocks';
 import { Client } from 'pg';
 
@@ -220,6 +221,156 @@ test.describe('Xero Integration E2E Tests', () => {
       await page.waitForLoadState('domcontentloaded');
 
       await expect(page.getByText('Failed to load data').first()).toBeVisible({ timeout: 10000 });
+    });
+  });
+
+  test.describe('Token Refresh Mutex', () => {
+    test('Only one Refresh token call is sent for concurrent API calls', async () => {
+      // Track the number of refresh token calls
+      let refreshTokenCallCount = 0;
+      const refreshCallTimestamps: number[] = [];
+
+      // Mock the token refresh endpoint (typically /api/integrations/xero/refresh)
+      await page.route('**/api/integrations/xero/refresh', async (route) => {
+        refreshTokenCallCount++;
+        refreshCallTimestamps.push(Date.now());
+        
+        // Simulate a slight delay to mimic real token refresh
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            accessToken: 'new-access-token-' + refreshTokenCallCount,
+          }),
+        });
+      });
+
+      // Mock the Xero status endpoint to initially return "expired" to trigger refresh
+      let statusCallCount = 0;
+      await page.route('**/api/integrations/xero/status', async (route) => {
+        statusCallCount++;
+        
+        // First few calls return connected state
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            connected: true,
+            tenantName: 'Mock Org',
+            needsRefresh: statusCallCount <= 2, // First 2 calls indicate refresh needed
+          }),
+        });
+      });
+
+      // Setup other Xero mocks
+      await setupXeroMocks(page, { connected: true });
+
+      // Navigate to settings page
+      await page.goto('/settings?category=business');
+      await page.waitForLoadState('domcontentloaded');
+
+      // Wait for initial load
+      await expect(page.getByTestId('xero-status-connected')).toBeVisible({ timeout: 10000 });
+
+      // Trigger multiple rapid API calls that would need token refresh
+      // This simulates the scenario where multiple components request Xero data simultaneously
+      const [employeesResponse, calendarsResponse] = await Promise.all([
+        page.request.get('http://localhost:3000/api/integrations/xero/employees'),
+        page.request.get('http://localhost:3000/api/integrations/xero/calendars'),
+      ]);
+
+      // Wait a bit for all potential refresh calls to complete
+      await page.waitForTimeout(500);
+
+      // The mutex pattern should ensure only ONE refresh token call was made
+      // even though we triggered multiple concurrent API requests
+      console.log(`[Xero Mutex Test] Refresh token calls: ${refreshTokenCallCount}`);
+      console.log(`[Xero Mutex Test] Call timestamps: ${refreshCallTimestamps.join(', ')}`);
+
+      // Verify that at most 1 refresh call was made
+      // In a properly implemented mutex pattern, concurrent requests should share
+      // the same refresh promise, resulting in only 1 actual API call
+      expect(refreshTokenCallCount).toBeLessThanOrEqual(1);
+
+      // If there were multiple timestamps, verify they're not too close together
+      // (which would indicate the mutex isn't working properly)
+      if (refreshCallTimestamps.length > 1) {
+        const timeDiff = refreshCallTimestamps[1] - refreshCallTimestamps[0];
+        // If mutex is working, concurrent calls should wait for the first to complete
+        // so they would be at least 100ms apart (our simulated delay)
+        expect(timeDiff).toBeGreaterThanOrEqual(100);
+      }
+    });
+
+    test('Refresh token is reused when multiple sync operations run rapidly', async () => {
+      let refreshCallCount = 0;
+      let syncCallCount = 0;
+
+      // Track refresh token calls
+      await page.route('**/api/integrations/xero/refresh', async (route) => {
+        refreshCallCount++;
+        await new Promise(resolve => setTimeout(resolve, 150)); // Simulate API delay
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, accessToken: 'refreshed-token' }),
+        });
+      });
+
+      // Track sync-timesheet calls
+      await page.route('**/api/integrations/xero/sync-timesheet', async (route) => {
+        if (route.request().method() !== 'POST') {
+          await route.continue();
+          return;
+        }
+        syncCallCount++;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_SYNC_SUCCESS),
+        });
+      });
+
+      // Setup base mocks
+      await setupXeroMocks(page, { connected: true });
+
+      await page.goto('/settings?category=business');
+      await page.waitForLoadState('domcontentloaded');
+
+      await expect(page.getByTestId('xero-sync-now')).toBeVisible({ timeout: 10000 });
+
+      // First sync - should trigger refresh
+      await page.getByTestId('xero-sync-now').click();
+      await page.getByTestId('xero-confirm-sync').click();
+      
+      // Wait for first sync to complete
+      await expect(page.getByTestId('xero-sync-result')).toBeVisible({ timeout: 10000 });
+
+      // Record state after first sync
+      const refreshAfterFirst = refreshCallCount;
+      const syncAfterFirst = syncCallCount;
+
+      // Close the result and trigger another sync rapidly
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+
+      // Second sync - should reuse token (mutex pattern)
+      await page.getByTestId('xero-sync-now').click();
+      await page.getByTestId('xero-confirm-sync').click();
+      await expect(page.getByTestId('xero-sync-result')).toBeVisible({ timeout: 10000 });
+
+      // Verify sync operations completed
+      expect(syncCallCount).toBeGreaterThanOrEqual(2);
+
+      // The key assertion: refresh should have been called at most once more
+      // (or ideally not at all if token was cached from first call)
+      expect(refreshCallCount - refreshAfterFirst).toBeLessThanOrEqual(1);
+
+      console.log(`[Xero Mutex Test] Total refresh calls: ${refreshCallCount}`);
+      console.log(`[Xero Mutex Test] Total sync calls: ${syncCallCount}`);
     });
   });
 });

@@ -1,6 +1,7 @@
 /**
  * StaffPayRates - Business owners can set base hourly rate for staff members.
  * Used for roster costing. Staff must have been assigned to at least one shift.
+ * Also allows marking staff as favorites (A-Team) for quick access.
  */
 
 import { useState } from 'react';
@@ -11,8 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiRequest } from '@/lib/queryClient';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { DollarSign, Save, Loader2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DollarSign, Save, Loader2, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface StaffMember {
   id: string;
@@ -29,11 +31,19 @@ async function fetchStaffForEmployer(): Promise<StaffMember[]> {
   return Array.isArray(data) ? data : [];
 }
 
+async function fetchFavoriteProfessionals(): Promise<string[]> {
+  const res = await apiRequest('GET', '/api/me');
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.favoriteProfessionals || [];
+}
+
 export default function StaffPayRates() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [togglingFavoriteId, setTogglingFavoriteId] = useState<string | null>(null);
   const [rates, setRates] = useState<Record<string, string>>({});
 
   const { data: staff = [], isLoading } = useQuery({
@@ -41,6 +51,66 @@ export default function StaffPayRates() {
     queryFn: fetchStaffForEmployer,
     enabled: !!user?.id,
   });
+
+  // Fetch current favorites for star toggle
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favorite-professionals'],
+    queryFn: fetchFavoriteProfessionals,
+    enabled: !!user?.id,
+  });
+
+  // Mutation to toggle favorite status
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async ({ staffId, isFavorite }: { staffId: string; isFavorite: boolean }) => {
+      const currentFavorites = favorites || [];
+      let newFavorites: string[];
+      
+      if (isFavorite) {
+        newFavorites = [...currentFavorites, staffId];
+      } else {
+        newFavorites = currentFavorites.filter((id) => id !== staffId);
+      }
+
+      const res = await apiRequest('PATCH', '/api/me/settings', {
+        favoriteProfessionals: newFavorites,
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update favorites');
+      }
+
+      return { staffId, isFavorite, newFavorites };
+    },
+    onMutate: async ({ staffId }) => {
+      setTogglingFavoriteId(staffId);
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['favorite-professionals'], data.newFavorites);
+      toast({
+        title: data.isFavorite ? 'Added to A-Team' : 'Removed from A-Team',
+        description: data.isFavorite 
+          ? 'Staff member will be prioritized for Invite A-Team.' 
+          : 'Staff member removed from favorites.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to update',
+        description: error?.message || 'Could not update favorite status.',
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      setTogglingFavoriteId(null);
+    },
+  });
+
+  const handleToggleFavorite = (staffId: string, currentlyFavorite: boolean) => {
+    toggleFavoriteMutation.mutate({
+      staffId,
+      isFavorite: !currentlyFavorite,
+    });
+  };
 
   const handleRateChange = (staffId: string, value: string) => {
     setRates((prev) => ({ ...prev, [staffId]: value }));
@@ -112,12 +182,40 @@ export default function StaffPayRates() {
           <div className="space-y-4">
             {staff.map((s) => {
               const displayValue = rates[s.id] ?? (s.baseHourlyRate != null ? String(s.baseHourlyRate) : '');
+              const isFavorite = favorites.includes(s.id);
               return (
                 <div
                   key={s.id}
-                  className="flex items-center gap-4 p-3 border rounded-lg"
+                  className={cn(
+                    "flex items-center gap-4 p-3 border rounded-lg transition-colors",
+                    isFavorite && "bg-yellow-500/5 border-yellow-500/20"
+                  )}
                   data-testid={`staff-rate-row-${s.id}`}
                 >
+                  {/* Favorite Star Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => handleToggleFavorite(s.id, isFavorite)}
+                    disabled={togglingFavoriteId === s.id}
+                    title={isFavorite ? 'Remove from A-Team' : 'Add to A-Team'}
+                    data-testid={`staff-favorite-toggle-${s.id}`}
+                  >
+                    {togglingFavoriteId === s.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Star 
+                        className={cn(
+                          "h-4 w-4 transition-colors",
+                          isFavorite 
+                            ? "fill-[#BAFF39] text-[#BAFF39]" 
+                            : "text-gray-400 hover:text-[#BAFF39]"
+                        )} 
+                      />
+                    )}
+                  </Button>
+                  
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{s.name}</p>
                     {s.email && (

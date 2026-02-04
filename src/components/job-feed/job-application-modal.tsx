@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -308,10 +308,10 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-900 mb-2">Application Tips:</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>â€¢ Mention your relevant experience and skills</li>
-                  <li>â€¢ Highlight your availability for the scheduled date/time</li>
-                  <li>â€¢ Show enthusiasm for the opportunity</li>
-                  <li>â€¢ Keep it professional but personable</li>
+                  <li>• Mention your relevant experience and skills</li>
+                  <li>• Highlight your availability for the scheduled date/time</li>
+                  <li>• Show enthusiasm for the opportunity</li>
+                  <li>• Keep it professional but personable</li>
                 </ul>
               </div>
 

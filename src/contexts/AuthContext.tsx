@@ -221,13 +221,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [isNavigationLocked]);
 
-  // Safety timeout: force isNavigationLocked to false after 3s if API is hanging (prevents stuck skeleton)
-  const NAVIGATION_LOCK_TIMEOUT_MS = 3000;
+  // Safety timeout: force isNavigationLocked to false after 6s if API is hanging (prevents stuck skeleton)
+  // Increased from 3s to 6s to accommodate slower networks while optimizing parallel fetches
+  const NAVIGATION_LOCK_TIMEOUT_MS = 6000;
   useEffect(() => {
     if (!isNavigationLocked) return;
     const t = setTimeout(() => {
       setIsNavigationLocked(false);
-      console.warn('[AuthContext] Navigation lock safety timeout (3s) — forcing unlock');
+      console.warn('[AuthContext] Navigation lock safety timeout (6s) — forcing unlock');
     }, NAVIGATION_LOCK_TIMEOUT_MS);
     return () => clearTimeout(t);
   }, [isNavigationLocked]);
@@ -367,6 +368,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         firebaseUidMatch: userFirebaseUid === tokenFirebaseUid,
       });
       setUser(normalizedUser);
+
+      // PERFORMANCE OPTIMIZATION: Release navigation lock as soon as user profile is available
+      // This allows the UI to start rendering while venue data streams in as non-blocking update
+      // The redirect logic below will handle venue-missing cases after navigation is unlocked
+      setIsNavigationLocked(false);
 
       // Determine role and venue requirements
       const role = (apiUser.currentRole || apiUser.role || '').toLowerCase();

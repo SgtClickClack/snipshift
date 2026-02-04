@@ -1164,7 +1164,7 @@ export default function ProfessionalDigitalResume({
                           <p className="font-medium text-sm">{cert.type}</p>
                           <p className="text-xs text-muted-foreground">{cert.issuer}</p>
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(cert.date), 'MMM yyyy')} â€¢{' '}
+                            {format(new Date(cert.date), 'MMM yyyy')} •{' '}
                             <Badge
                               variant={
                                 cert.status === 'active'

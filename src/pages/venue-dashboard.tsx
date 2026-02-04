@@ -990,7 +990,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                       <div>
                         <h4 className="font-medium">{job.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {job.applicants?.length || 0} applications â€¢ Posted {formatDateSafe(job.createdAt, "MMM d")}
+                          {job.applicants?.length || 0} applications • Posted {formatDateSafe(job.createdAt, "MMM d")}
                         </p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -1072,7 +1072,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                           onClick={() => setShowForm(false)}
                           data-testid="button-close-job-form"
                         >
-                          âœ•
+                          ✕
                         </Button>
                       </div>
                     </CardHeader>

@@ -64,7 +64,7 @@ function PaymentModal({ content, isOpen, onClose, onSuccess }: PaymentModalProps
             <div>
               <label className="text-sm font-medium text-neutral-700">Card Number</label>
               <div className="mt-1 p-3 border rounded-lg bg-neutral-50 text-neutral-600">
-                â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ 4242
+                •••• •••• •••• 4242
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -38,7 +38,7 @@ function FAQItem({ question, answer, isOpen, onClick }: FAQItemProps) {
       <button
         onClick={onClick}
         className="w-full py-6 flex justify-between items-center text-left hover:text-[#BAFF39] transition-colors group"
-        aria-expanded={isOpen}
+        aria-expanded={isOpen ? "true" : "false"}
       >
         <span className="text-lg font-bold text-white group-hover:text-[#BAFF39]">{question}</span>
         <motion.div

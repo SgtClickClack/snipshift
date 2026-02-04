@@ -74,6 +74,7 @@ const NotificationsPage = lazy(() => import('@/pages/notifications'));
 const VenueDashboard = lazy(() => import('@/pages/venue-dashboard'));
 const VenueProfilePage = lazy(() => import('@/pages/venue-profile'));
 const VenueApplicationsPage = lazy(() => import('@/pages/venue-applications'));
+const StaffPage = lazy(() => import('@/pages/Staff'));
 const WorkerEarningsView = lazy(() => import('@/pages/worker-earnings'));
 const ShopDashboard = lazy(() => import('@/pages/shop-dashboard'));
 const ShopSchedulePage = lazy(() => import('@/pages/shop/schedule'));
@@ -497,6 +498,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
             <Suspense fallback={<PageLoadingFallback />}>
               <VenueApplicationsPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/venue/staff" element={
+          <ProtectedRoute allowedRoles={['hub', 'business', 'venue']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <StaffPage />
             </Suspense>
           </ProtectedRoute>
         } />

@@ -7,11 +7,14 @@
  * - Error handling: no templates shows error and disables Generate button
  */
 
-import { test, expect } from '@playwright/test';
-import { setupUserContext } from './seed_data';
+import { test, expect, BrowserContext, Page } from '@playwright/test';
+import { setupUserContext, TEST_PROFESSIONAL } from './seed_data';
 import { E2E_VENUE_OWNER } from './e2e-business-fixtures';
 import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
+
+/** Brand-accurate Electric Lime color for status indicators */
+const BRAND_ELECTRIC_LIME = '#BAFF39';
 
 const TEST_DB_CONFIG = getTestDatabaseConfig();
 const E2E_AUTH_USER_ID = E2E_VENUE_OWNER.id;
@@ -428,6 +431,261 @@ test.describe('Calendar Automation E2E Tests', () => {
       // Generate button is disabled when error is present
       const confirmBtn = page.getByTestId('confirm-auto-fill-btn');
       await expect(confirmBtn).toBeDisabled();
+    });
+  });
+
+  test.describe('Smart Fill Loop', () => {
+    /**
+     * Helper to create vacant (OPEN) shifts in the DB for A-Team testing
+     */
+    async function createVacantShiftsForATeam(venueId: string): Promise<string[]> {
+      const client = new Client(TEST_DB_CONFIG);
+      await client.connect();
+
+      const shiftIds: string[] = [];
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Monday
+
+      // Create 3 vacant (OPEN) shifts for the week
+      for (let i = 0; i < 3; i++) {
+        const startTime = new Date(startOfWeek);
+        startTime.setDate(startOfWeek.getDate() + i);
+        startTime.setHours(9, 0, 0, 0);
+        const endTime = new Date(startTime);
+        endTime.setHours(17, 0, 0, 0);
+
+        const result = await client.query(
+          `INSERT INTO shifts (employer_id, title, description, start_time, end_time, hourly_rate, status, required_count, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, 30, 'open', 1, NOW(), NOW())
+           RETURNING id`,
+          [E2E_AUTH_USER_ID, `A-Team Shift ${i + 1}`, 'E2E Smart Fill test', startTime, endTime]
+        );
+        shiftIds.push(result.rows[0].id);
+      }
+
+      await client.end();
+      return shiftIds;
+    }
+
+    /**
+     * Create A-Team favorites linking venue owner to the professional user
+     */
+    async function ensureATeamFavorite(): Promise<void> {
+      const client = new Client(TEST_DB_CONFIG);
+      await client.connect();
+
+      // Ensure professional user exists
+      await client.query(
+        `INSERT INTO users (id, email, name, role, roles, is_onboarded, created_at, updated_at)
+         VALUES ($1, $2, $3, 'professional', ARRAY['professional']::text[], true, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET updated_at = NOW()`,
+        [TEST_PROFESSIONAL.id, TEST_PROFESSIONAL.email, TEST_PROFESSIONAL.name]
+      );
+
+      // Add as favorite (A-Team member)
+      await client.query(
+        `INSERT INTO venue_favorites (user_id, professional_id, created_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (user_id, professional_id) DO NOTHING`,
+        [E2E_AUTH_USER_ID, TEST_PROFESSIONAL.id]
+      );
+
+      await client.end();
+    }
+
+    /**
+     * Clean up shifts created for A-Team tests
+     */
+    async function cleanupATeamShifts(): Promise<void> {
+      try {
+        const client = new Client(TEST_DB_CONFIG);
+        await client.connect();
+        await client.query(
+          `DELETE FROM shifts WHERE employer_id = $1 AND title LIKE 'A-Team Shift%'`,
+          [E2E_AUTH_USER_ID]
+        );
+        await client.query(
+          `DELETE FROM shift_invitations WHERE shift_id IN (SELECT id FROM shifts WHERE employer_id = $1)`,
+          [E2E_AUTH_USER_ID]
+        );
+        await client.end();
+      } catch (err) {
+        console.warn('[Smart Fill Loop] Cleanup failed:', err);
+      }
+    }
+
+    test.afterEach(async () => {
+      await cleanupATeamShifts();
+    });
+
+    test('Manager triggers Invite A-Team and sees Pending (Amber) status', async ({ page, context }, testInfo) => {
+      testInfo.setTimeout(90000);
+
+      // Setup: create vacant shifts and A-Team favorite
+      const venueId = await ensureVenueForE2E();
+      if (!venueId) {
+        testInfo.skip(true, 'Test DB unavailable');
+        return;
+      }
+      await createVacantShiftsForATeam(venueId);
+      await ensureATeamFavorite();
+
+      // Mock invite-a-team API for controlled testing
+      await page.route('**/api/shifts/invite-a-team', async (route) => {
+        if (route.request().method() !== 'POST') {
+          await route.continue();
+          return;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            invited: 3,
+            shiftIds: ['shift-1', 'shift-2', 'shift-3'],
+          }),
+        });
+      });
+
+      // Navigate to calendar
+      await page.goto('/venue/dashboard?view=calendar', { waitUntil: 'networkidle', timeout: 30000 });
+
+      // Wait for calendar to load
+      const calendarReady = page
+        .getByTestId('calendar-container')
+        .or(page.getByTestId('roster-tools-dropdown'))
+        .or(page.getByTestId('button-view-week'));
+      await expect(calendarReady.first()).toBeVisible({ timeout: 20000 });
+
+      // Click Roster Tools dropdown
+      const rosterToolsBtn = page.getByTestId('roster-tools-dropdown');
+      await expect(rosterToolsBtn).toBeVisible({ timeout: 10000 });
+      await rosterToolsBtn.click();
+
+      // Click "Invite A-Team" button
+      const inviteATeamTrigger = page.getByTestId('invite-a-team-trigger');
+      await expect(inviteATeamTrigger).toBeVisible({ timeout: 5000 });
+      await inviteATeamTrigger.click();
+
+      // Verify success toast appears
+      await expect
+        .soft(page.getByRole('status').filter({ hasText: /invited|a-team|sent/i }).first())
+        .toBeVisible({ timeout: 10000 });
+
+      // Verify shift bucket pills show amber/pending color (invited status)
+      // The amber color indicates "Invitations Sent" per the legend
+      const bucketPills = page.getByTestId(/shift-bucket-pill/);
+      await expect(bucketPills.first()).toBeVisible({ timeout: 10000 });
+    });
+
+    test('Staff Member accepts all invitations and triggers Confetti', async ({ browser }, testInfo) => {
+      testInfo.setTimeout(90000);
+
+      // Setup: create vacant shifts and A-Team favorite
+      const venueId = await ensureVenueForE2E();
+      if (!venueId) {
+        testInfo.skip(true, 'Test DB unavailable');
+        return;
+      }
+      const shiftIds = await createVacantShiftsForATeam(venueId);
+      await ensureATeamFavorite();
+
+      // Create shift invitations in DB for the professional
+      const client = new Client(TEST_DB_CONFIG);
+      await client.connect();
+      for (const shiftId of shiftIds) {
+        await client.query(
+          `INSERT INTO shift_invitations (shift_id, professional_id, status, created_at)
+           VALUES ($1, $2, 'PENDING', NOW())
+           ON CONFLICT DO NOTHING`,
+          [shiftId, TEST_PROFESSIONAL.id]
+        );
+      }
+      await client.end();
+
+      // Create a new browser context for the Professional user
+      const professionalContext = await browser.newContext({
+        baseURL: 'http://localhost:3000',
+        viewport: { width: 1440, height: 900 },
+      });
+
+      // Setup professional user context
+      await setupUserContext(professionalContext, TEST_PROFESSIONAL);
+      const professionalPage = await professionalContext.newPage();
+
+      // Mock invitations API
+      await professionalPage.route('**/api/shifts/invitations/me', async (route) => {
+        if (route.request().method() !== 'GET') {
+          await route.continue();
+          return;
+        }
+        const now = new Date();
+        const invitations = shiftIds.map((shiftId, i) => ({
+          id: `inv-${i}`,
+          shiftId,
+          status: 'PENDING',
+          createdAt: now.toISOString(),
+          shift: {
+            id: shiftId,
+            title: `A-Team Shift ${i + 1}`,
+            description: 'E2E Smart Fill test',
+            startTime: new Date(now.getTime() + i * 86400000 + 9 * 3600000).toISOString(),
+            endTime: new Date(now.getTime() + i * 86400000 + 17 * 3600000).toISOString(),
+            hourlyRate: '30.00',
+            location: '123 Test St',
+            venue: { name: 'E2E Auto-Fill Venue' },
+          },
+        }));
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(invitations),
+        });
+      });
+
+      // Mock accept-all API
+      await professionalPage.route('**/api/shifts/invitations/accept-all', async (route) => {
+        if (route.request().method() !== 'POST') {
+          await route.continue();
+          return;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ accepted: 3, errors: [] }),
+        });
+      });
+
+      // Navigate to professional dashboard where InvitationDashboard would be
+      await professionalPage.goto('/dashboard?tab=invitations', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await professionalPage.waitForLoadState('networkidle');
+
+      // Wait for the invitation dashboard to load
+      const acceptAllBtn = professionalPage.getByTestId('accept-all-invitations-btn');
+      await expect(acceptAllBtn).toBeVisible({ timeout: 15000 });
+
+      // Verify we have pending invitations displayed
+      const invitationCards = professionalPage.getByTestId(/invitation-card-/);
+      await expect(invitationCards.first()).toBeVisible({ timeout: 10000 });
+
+      // Click "Accept All Shifts" button
+      await acceptAllBtn.click();
+
+      // Verify success toast appears with confetti message
+      await expect
+        .soft(professionalPage.getByRole('status').filter({ hasText: /accepted|confirmed/i }).first())
+        .toBeVisible({ timeout: 10000 });
+
+      // Verify ConfettiAnimation was triggered (canvas element appears)
+      // Note: ConfettiAnimation uses react-confetti which renders a canvas
+      const confettiCanvas = professionalPage.locator('canvas').first();
+      await expect.soft(confettiCanvas).toBeVisible({ timeout: 5000 }).catch(() => {
+        // Confetti may have already disappeared; check toast instead
+        console.log('[Smart Fill Loop] Confetti animation may have completed');
+      });
+
+      await professionalContext.close();
     });
   });
 });

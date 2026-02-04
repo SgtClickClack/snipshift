@@ -800,7 +800,7 @@ function ProfessionalDashboardContent() {
                       </CardTitle>
                       {filteredJobs.length !== jobs.length && (
                         <div className="text-sm text-muted-foreground">
-                          Showing filtered results â€¢ <Button 
+                          Showing filtered results • <Button 
                             variant="link" 
                             className="p-0 h-auto text-sm" 
                             onClick={handleClearFilters}

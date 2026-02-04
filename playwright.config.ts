@@ -123,12 +123,15 @@ export default defineConfig({
         },
         {
           name: 'business-e2e',
-          testMatch: /(calendar-(automation|capacity)|roster-costing)\.spec\.ts/,
+          testMatch: /(calendar-(automation|capacity)|roster-costing|investor-portal)\.spec\.ts/,
           use: {
             ...devices['Desktop Chrome'],
             storageState: 'playwright/.auth/business-user.json',
             viewport: { width: 1440, height: 900 },
+            actionTimeout: 30000, // 30s timeout for parallel hydration logic
+            navigationTimeout: 30000, // 30s timeout for navigation
           },
+          timeout: 30000, // 30s per-test timeout for business-e2e tests
           dependencies: ['setup-business'],
         },
       ],

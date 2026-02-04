@@ -462,7 +462,7 @@ export default function EarningsPage() {
                               <span className="sr-only">Download invoice</span>
                             </Button>
                           ) : (
-                            <span className="text-muted-foreground text-sm">â€”</span>
+                            <span className="text-muted-foreground text-sm">—</span>
                           )}
                         </TableCell>
                       </TableRow>

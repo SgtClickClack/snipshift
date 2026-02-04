@@ -448,7 +448,7 @@ export default function SalonCreateJobPage() {
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {watchedValues.hourlyRate && totalHours > 0
-                              ? `$${watchedValues.hourlyRate}/hr Ã— ${totalHours}h`
+                              ? `$${watchedValues.hourlyRate}/hr × ${totalHours}h`
                               : 'Enter rate and hours'}
                           </p>
                         </div>
