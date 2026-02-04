@@ -207,7 +207,7 @@ export async function deleteWorkerAvailability(
       conditions = and(
         conditions,
         lte(workerAvailability.date, beforeDate)
-      );
+      )!;
     }
 
     const result = await db

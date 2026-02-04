@@ -131,7 +131,7 @@ test.describe('Financial Privacy: Business Owner View', () => {
     test.setTimeout(90000);
 
     // Mock roster-totals API for deterministic testing
-    await page.route('**/api/roster-totals*', async (route) => {
+    await page.route('**/api/venues/me/roster-totals*', async (route) => {
       if (route.request().method() !== 'GET') {
         await route.continue();
         return;
@@ -169,10 +169,15 @@ test.describe('Financial Privacy: Business Owner View', () => {
     await expect(wageCostPill).toContainText(/\$\d+(\.\d{2})?/);
 
     // ============================================
-    // ASSERTION: Pill has correct emerald styling (financial indicator)
+    // ASSERTION: Pill has correct brand styling (Electric Lime #BAFF39)
     // ============================================
     const pillClasses = await wageCostPill.getAttribute('class');
-    expect.soft(pillClasses).toContain('emerald');
+    const pillStyle = await wageCostPill.getAttribute('style');
+    const hasBrandStyling = 
+      pillClasses?.includes('brand-neon') ||
+      pillClasses?.includes('BAFF39') ||
+      pillStyle?.toLowerCase().includes('baff39');
+    expect.soft(hasBrandStyling).toBe(true);
   });
 
   test('Business Owner SEES individual shift costs in bucket expansion', async ({ page }) => {
@@ -493,7 +498,7 @@ test.describe('Financial Privacy: Dual Context Comparison', () => {
     test.setTimeout(120000);
 
     // Mock roster-totals for business user
-    await businessPage.route('**/api/roster-totals*', async (route) => {
+    await businessPage.route('**/api/venues/me/roster-totals*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
