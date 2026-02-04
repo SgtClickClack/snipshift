@@ -54,7 +54,8 @@ export function usePushNotifications() {
         });
 
       // Set up foreground message handler (safe: returns null on Firebase 400)
-      const unsubscribe = setupForegroundMessageHandler((payload) => {
+      // Now async to properly check browser support
+      setupForegroundMessageHandler((payload) => {
         logger.info('usePushNotifications', 'Foreground notification received:', payload);
         if (payload.notification) {
           toast({
@@ -63,11 +64,13 @@ export function usePushNotifications() {
             duration: 5000,
           });
         }
+      }).then((unsubscribe) => {
+        if (unsubscribe) {
+          unsubscribeRef.current = unsubscribe;
+        }
+      }).catch((error) => {
+        logger.warn('usePushNotifications', 'Foreground handler setup failed (non-fatal):', error);
       });
-
-      if (unsubscribe) {
-        unsubscribeRef.current = unsubscribe;
-      }
 
       // Cleanup on unmount
       return () => {

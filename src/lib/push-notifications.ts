@@ -10,17 +10,86 @@ import { logger } from './logger';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 
+// Cache for browser support check - prevents repeated async calls
+let messagingSupportedCache: boolean | null = null;
+let messagingInstance: Messaging | null = null;
+
+/**
+ * Check if Firebase Messaging is supported in this browser (cached for performance)
+ */
+async function checkMessagingSupport(): Promise<boolean> {
+  if (messagingSupportedCache !== null) {
+    return messagingSupportedCache;
+  }
+  
+  // Basic browser checks first (synchronous)
+  if (typeof window === 'undefined') {
+    messagingSupportedCache = false;
+    return false;
+  }
+  
+  if (!('serviceWorker' in navigator)) {
+    messagingSupportedCache = false;
+    return false;
+  }
+  
+  if (!('Notification' in window)) {
+    messagingSupportedCache = false;
+    return false;
+  }
+  
+  // E2E test environment check - skip messaging in tests
+  if (import.meta.env.VITE_E2E === '1' || import.meta.env.MODE === 'test') {
+    messagingSupportedCache = false;
+    return false;
+  }
+  
+  try {
+    messagingSupportedCache = await isSupported();
+    return messagingSupportedCache;
+  } catch (error) {
+    logger.warn('push-notifications', 'isSupported() check failed:', error);
+    messagingSupportedCache = false;
+    return false;
+  }
+}
+
 /**
  * Safe getter for Firebase Messaging. Never throws.
+ * Checks isSupported() before initializing to prevent "unsupported-browser" errors.
  * Firebase Installations can return 400 (e.g. project/sender mismatch); the app MUST still render.
  */
-function safeGetMessaging(): Messaging | null {
+async function safeGetMessagingAsync(): Promise<Messaging | null> {
+  // Return cached instance if available
+  if (messagingInstance) {
+    return messagingInstance;
+  }
+  
+  // Check support first
+  const supported = await checkMessagingSupport();
+  if (!supported) {
+    return null;
+  }
+  
   try {
-    return getMessaging(app);
+    messagingInstance = getMessaging(app);
+    return messagingInstance;
   } catch (error) {
     logger.warn('push-notifications', 'getMessaging failed (non-fatal, app will render):', error);
     return null;
   }
+}
+
+/**
+ * Synchronous getter - only returns if already initialized
+ * Use safeGetMessagingAsync() for first-time initialization
+ */
+function safeGetMessagingSync(): Messaging | null {
+  // Only return if we've already checked support and initialized
+  if (messagingSupportedCache === false) {
+    return null;
+  }
+  return messagingInstance;
 }
 
 /**
@@ -132,7 +201,7 @@ export async function getFCMToken(): Promise<string | null> {
     }
 
     // Initialize Firebase Messaging (safe: 400 from Installations must not crash app)
-    const messaging = safeGetMessaging();
+    const messaging = await safeGetMessagingAsync();
     if (!messaging) return null;
 
     const token = await getToken(messaging, {
@@ -230,12 +299,20 @@ function getDeviceId(): string {
 /**
  * Set up foreground message handler.
  * Safe: Firebase Installations 400 must not crash the app; returns null on failure.
+ * Now async to properly check browser support before initializing.
  */
-export function setupForegroundMessageHandler(
+export async function setupForegroundMessageHandler(
   onMessageReceived: (payload: any) => void
-): (() => void) | null {
+): Promise<(() => void) | null> {
   try {
-    const messaging = safeGetMessaging();
+    // Check support first to avoid "unsupported-browser" errors
+    const supported = await checkMessagingSupport();
+    if (!supported) {
+      logger.info('push-notifications', 'Messaging not supported, skipping foreground handler');
+      return null;
+    }
+    
+    const messaging = await safeGetMessagingAsync();
     if (!messaging) return null;
     
     const unsubscribe = onMessage(messaging, (payload) => {
@@ -280,7 +357,11 @@ export async function initializePushNotifications(userId: string): Promise<void>
  * or installations.delete() failures never crash the app or block logout.
  */
 export async function cleanupPushNotifications(): Promise<void> {
-  const messaging = safeGetMessaging();
+  // Check support first - no point trying to clean up if not supported
+  const supported = await checkMessagingSupport();
+  if (!supported) return;
+  
+  const messaging = await safeGetMessagingAsync();
   if (!messaging) return;
 
   try {

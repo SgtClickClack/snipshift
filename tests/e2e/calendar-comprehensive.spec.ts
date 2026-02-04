@@ -18,12 +18,12 @@
  */
 
 import { test, expect, E2E_VENUE_OWNER, E2E_PROFESSIONAL } from '../fixtures/hospogo-fixtures';
-
-// Core calendar functionality covered by calendar-lifecycle.spec.ts
-test.skip(() => true, 'Calendar comprehensive tests skipped - need complex seed data');
 import { Page, BrowserContext, Browser } from '@playwright/test';
 import { setupUserContext, TEST_PROFESSIONAL } from './seed_data';
 import { Client } from 'pg';
+
+// Core calendar functionality covered by calendar-lifecycle.spec.ts
+// SKIPPED: Complex dual-context test requires templates and invitation state.
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
 
 const TEST_DB_CONFIG = getTestDatabaseConfig();
@@ -208,6 +208,10 @@ async function cleanupTestData(): Promise<void> {
   }
 }
 
+// UNSKIPPED: Critical paths for investor briefing final verification
+// - Capacity Setup & Bucket Visualization
+// - Auto-Fill & Smart-Fill (A-Team) loop
+// - Financial RBAC (Costs visible to Business)
 test.describe('Business Owner: Capacity & Automation Workflow', () => {
   test.beforeEach(async ({ context, page }) => {
     const venueId = await ensureTestVenueWithCapacity(4);
@@ -444,6 +448,7 @@ test.describe('Business Owner: Capacity & Automation Workflow', () => {
   });
 });
 
+// UNSKIPPED: Staff "Accept All" with Confetti + Financial RBAC (Professional)
 test.describe('Professional: Staff Invitation & Acceptance', () => {
   let browser: Browser;
   let professionalContext: BrowserContext;
@@ -595,7 +600,7 @@ test.describe('Professional: Staff Invitation & Acceptance', () => {
   });
 });
 
-test.describe('Dual-Context: Full Roster Lifecycle', () => {
+test.describe.skip('Dual-Context: Full Roster Lifecycle', () => {
   let browser: Browser;
   let businessContext: BrowserContext;
   let professionalContext: BrowserContext;

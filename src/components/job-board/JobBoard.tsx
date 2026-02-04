@@ -175,15 +175,19 @@ export default function JobBoard() {
   const [applyingShiftId, setApplyingShiftId] = useState<string | null>(null);
   const [applicationStates, setApplicationStates] = useState<Map<string, ApplicationState>>(new Map());
 
-  // Get user location with HIGH ACCURACY GPS
+  // Get user location with HIGH ACCURACY GPS - with mounted check to prevent state updates after unmount
   useEffect(() => {
+    let isMounted = true;
+    
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+          if (isMounted) {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            });
+          }
         },
         () => {
           // Silently fail - location is optional
@@ -196,6 +200,10 @@ export default function JobBoard() {
         }
       );
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Fetch open shifts

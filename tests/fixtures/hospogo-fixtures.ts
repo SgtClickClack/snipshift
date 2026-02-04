@@ -23,48 +23,110 @@ import { E2E_VENUE_OWNER, E2E_PROFESSIONAL } from '../e2e/e2e-business-fixtures'
  * This enables full suite completion while maintaining error visibility.
  * 
  * Pattern: Non-blocking audit collection → Post-test manifest report
+ * 
+ * Enhanced for Error #310 diagnosis:
+ * - Tracks React hook order violations (Error #310, #300, etc.)
+ * - Pushes critical errors as test annotations for report visibility
+ * - Logs stack traces when available
  */
 interface ConsoleErrorCollector {
   errors: string[];
-  attach: (page: Page) => void;
+  criticalErrors: string[];
+  attach: (page: Page, testInfo: TestInfo) => void;
   report: (testName: string) => void;
+  hasCriticalErrors: () => boolean;
 }
 
 function createConsoleErrorCollector(): ConsoleErrorCollector {
   const errors: string[] = [];
+  const criticalErrors: string[] = [];
   
   return {
     errors,
-    attach: (page: Page) => {
+    criticalErrors,
+    attach: (page: Page, testInfo: TestInfo) => {
       page.on('console', (msg) => {
         if (msg.type() === 'error') {
           const text = msg.text();
-          // Collect critical errors for audit (React minified, uncaught exceptions)
-          if (
+          
+          // Detect React hook order violations and other critical errors
+          const isCritical = 
             text.includes('Minified React error') ||
             text.includes('Error #') ||
+            text.includes('Rendered fewer hooks') ||
+            text.includes('Rendered more hooks') ||
             text.includes('Uncaught Error') ||
-            text.includes('Unhandled Promise Rejection')
-          ) {
+            text.includes('Unhandled Promise Rejection') ||
+            text.includes('Cannot read properties of undefined') ||
+            text.includes('Cannot read properties of null');
+          
+          if (isCritical) {
+            criticalErrors.push(text);
             errors.push(`[CRITICAL] ${text}`);
+            
+            // Add as test annotation for visibility in test reports
+            testInfo.annotations.push({ 
+              type: 'Console Error', 
+              description: text.substring(0, 500) // Truncate for readability
+            });
+            
+            // Immediately log critical errors for real-time visibility
+            console.error('[E2E CRITICAL ERROR]:', text);
+            
+            // If it's a React hook error (#310), log additional diagnostic info
+            if (text.includes('Error #310') || text.includes('Rendered fewer hooks')) {
+              console.error('[HOOK ORDER VIOLATION] This indicates conditional hook calls or early returns before hooks.');
+              console.error('[DIAGNOSTIC] Check for: if (!user) return null; or similar patterns BEFORE hooks');
+            }
           } else {
-            // Also track non-critical errors (404s, network issues) for completeness
+            // Track non-critical errors (404s, network issues) for completeness
             errors.push(`[WARN] ${text}`);
           }
         }
       });
+      
+      // Also capture unhandled page errors
+      page.on('pageerror', (error) => {
+        const errorText = error.message || String(error);
+        criticalErrors.push(`[PAGE ERROR] ${errorText}`);
+        errors.push(`[PAGE ERROR] ${errorText}`);
+        testInfo.annotations.push({
+          type: 'Page Error',
+          description: errorText.substring(0, 500)
+        });
+        console.error('[E2E PAGE ERROR]:', errorText);
+      });
     },
     report: (testName: string) => {
-      if (errors.length > 0) {
-        console.log('\n' + '='.repeat(70));
-        console.log(`--- CONSOLE ERROR MANIFEST: ${testName} ---`);
-        console.log('='.repeat(70));
-        errors.forEach((err, idx) => {
+      console.log('\n' + '='.repeat(70));
+      console.log(`--- CONSOLE ERROR MANIFEST: ${testName} ---`);
+      console.log('='.repeat(70));
+      
+      if (criticalErrors.length > 0) {
+        console.log(`\n🚨 CRITICAL ERRORS (${criticalErrors.length}):`);
+        criticalErrors.forEach((err, idx) => {
           console.log(`  ${idx + 1}. ${err}`);
         });
-        console.log('='.repeat(70) + '\n');
       }
-    }
+      
+      const warnErrors = errors.filter(e => e.startsWith('[WARN]'));
+      if (warnErrors.length > 0) {
+        console.log(`\n⚠️  WARNING ERRORS (${warnErrors.length}):`);
+        warnErrors.slice(0, 10).forEach((err, idx) => {
+          console.log(`  ${idx + 1}. ${err.substring(0, 150)}...`);
+        });
+        if (warnErrors.length > 10) {
+          console.log(`  ... and ${warnErrors.length - 10} more warnings`);
+        }
+      }
+      
+      if (errors.length === 0) {
+        console.log('✅ No console errors detected');
+      }
+      
+      console.log('='.repeat(70) + '\n');
+    },
+    hasCriticalErrors: () => criticalErrors.length > 0
   };
 }
 
@@ -80,7 +142,7 @@ export const test = base.extend<HospoGoFixtures>({
   businessPage: async ({ page, context }, use, testInfo) => {
     // 0. Create console error collector for audit manifest
     const errorCollector = createConsoleErrorCollector();
-    errorCollector.attach(page);
+    errorCollector.attach(page, testInfo);
     
     // 1. Setup the E2E Auth Context (Bypassing Firebase/Redirects)
     await setupUserContext(context, E2E_VENUE_OWNER);
@@ -216,7 +278,7 @@ export const test = base.extend<HospoGoFixtures>({
   staffPage: async ({ page, context }, use, testInfo) => {
     // 0. Create console error collector for audit manifest
     const errorCollector = createConsoleErrorCollector();
-    errorCollector.attach(page);
+    errorCollector.attach(page, testInfo);
     
     // 1. Setup the E2E Auth Context
     await setupUserContext(context, E2E_PROFESSIONAL);

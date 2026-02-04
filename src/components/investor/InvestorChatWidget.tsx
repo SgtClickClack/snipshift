@@ -77,10 +77,11 @@ export default function InvestorChatWidget() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
   
-  // Focus input when chat opens
+  // Focus input when chat opens - with proper cleanup
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timeoutId = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [isOpen]);
   

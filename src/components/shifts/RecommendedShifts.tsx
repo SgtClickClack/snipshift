@@ -165,9 +165,11 @@ export function RecommendedShifts({ className }: RecommendedShiftsProps) {
   const [appliedShiftIds, setAppliedShiftIds] = useState<Set<string>>(new Set());
   const [applyingShiftId, setApplyingShiftId] = useState<string | null>(null);
 
-  // Get user location with silent fallback
+  // Get user location with silent fallback - with mounted check to prevent state updates after unmount
   // If geolocation fails or is denied, the API returns empty recommendations gracefully
   useEffect(() => {
+    let isMounted = true;
+    
     if (!navigator.geolocation) {
       // Geolocation not supported - continue silently
       return;
@@ -177,15 +179,19 @@ export function RecommendedShifts({ className }: RecommendedShiftsProps) {
     try {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+          if (isMounted) {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            });
+          }
         },
         () => {
           // Silent fallback - geolocation denied or failed
           // API will return empty recommendations which is handled gracefully
-          setUserLocation(null);
+          if (isMounted) {
+            setUserLocation(null);
+          }
         },
         {
           enableHighAccuracy: false, // Use low accuracy for faster response
@@ -195,8 +201,14 @@ export function RecommendedShifts({ className }: RecommendedShiftsProps) {
       );
     } catch {
       // Catch any unexpected errors silently
-      setUserLocation(null);
+      if (isMounted) {
+        setUserLocation(null);
+      }
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const { data: recommendationsData, isLoading, error } = useQuery({

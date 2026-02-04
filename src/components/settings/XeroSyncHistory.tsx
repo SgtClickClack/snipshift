@@ -174,14 +174,14 @@ export default function XeroSyncHistory() {
           </div>
         ) : history.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-6">
-            <div className="border-2 border-dashed border-[#BAFF39]/40 rounded-xl p-8 max-w-md w-full text-center bg-[#BAFF39]/5">
-              <ShieldCheck className="h-16 w-16 mx-auto mb-4 text-[#BAFF39]" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                System Audit: Ready
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Ready for first payroll cycle. No historical syncs detected in current session.
-              </p>
+          <div className="border-2 border-dashed border-[#BAFF39] rounded-xl p-8 max-w-md w-full text-center bg-[#BAFF39]/5">
+            <ShieldCheck className="h-16 w-16 mx-auto mb-4 text-[#BAFF39]" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              System Audit: Ready for first payroll cycle
+            </h3>
+            <p className="text-muted-foreground leading-relaxed">
+              No historical syncs detected. The Xero Handshake is configured and awaiting your first roster export.
+            </p>
               <div className="mt-6 pt-4 border-t border-border/30">
                 <p className="text-xs text-muted-foreground/70">
                   Xero Handshake configured • ATO-compliant audit trail enabled

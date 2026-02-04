@@ -42,13 +42,21 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
     refetchInterval: 2000, // Poll every 2 seconds for new messages
   });
 
-  // Mark messages as read when conversation is opened or messages change
+  // Mark messages as read when conversation is opened or messages change - with mounted check
   useEffect(() => {
+    let isMounted = true;
+    
     if (chatId && user && messages.length > 0) {
       messagingService.markMessagesAsRead(chatId, user.id).catch((error) => {
-        console.error('Failed to mark messages as read:', error);
+        if (isMounted) {
+          console.error('Failed to mark messages as read:', error);
+        }
       });
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [chatId, user, messages.length]);
 
   // Mutation for sending messages with optimistic updates

@@ -111,15 +111,18 @@ export function ShiftBucketManagementModal({
       .slice(0, 2);
   };
 
-  if (!bucket) return null;
-
-  const vacantSlots = Math.max(0, bucket.requiredCount - bucket.filledCount);
-  const isFullyStaffed = bucket.filledCount >= bucket.requiredCount;
-
-  // Extract assigned staff from bucket events
+  // HOOK ORDER FIX: Extract assigned staff from bucket events
+  // This useMemo MUST be called before any early returns to prevent React Error #310
+  // ("Rendered fewer hooks than expected"). Hooks must be called unconditionally
+  // and in the same order on every render.
   const assignedStaff = useMemo(() => {
+    // Handle null bucket case - return empty array
+    if (!bucket?.bucket?.events) {
+      return [];
+    }
+    
     const staff: Array<{ id: string; name: string; avatarUrl?: string }> = [];
-    for (const event of bucket.bucket.events || []) {
+    for (const event of bucket.bucket.events) {
       const shift = (event as any).resource?.booking?.shift || (event as any).resource?.booking?.job;
       const assigned = shift?.assignedStaff ?? shift?.assignments ?? shift?.professional;
       if (Array.isArray(assigned)) {
@@ -135,7 +138,13 @@ export function ShiftBucketManagementModal({
       }
     }
     return staff;
-  }, [bucket.bucket.events]);
+  }, [bucket?.bucket?.events]);
+
+  // Early return AFTER all hooks have been called
+  if (!bucket) return null;
+
+  const vacantSlots = Math.max(0, bucket.requiredCount - bucket.filledCount);
+  const isFullyStaffed = bucket.filledCount >= bucket.requiredCount;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>

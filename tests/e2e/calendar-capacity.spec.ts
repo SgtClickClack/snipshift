@@ -9,12 +9,11 @@
  */
 
 import { test, expect, E2E_VENUE_OWNER } from '../fixtures/hospogo-fixtures';
+import { setupUserContext } from './seed_data';
+import { Client } from 'pg';
 
 // SKIPPED: Calendar capacity tests require shift templates in DB.
 // Core calendar functionality covered by calendar-lifecycle.spec.ts
-test.skip(() => true, 'Calendar capacity tests skipped - need template seed data');
-import { setupUserContext } from './seed_data';
-import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
 
 const TEST_DB_CONFIG = getTestDatabaseConfig();
@@ -101,7 +100,8 @@ async function cleanupShiftTemplates(): Promise<void> {
   }
 }
 
-test.describe('Calendar Capacity E2E Tests', () => {
+// SKIPPED: Calendar capacity tests require shift templates in DB.
+test.describe.skip('Calendar Capacity E2E Tests', () => {
   test.beforeEach(async ({ context, page }) => {
     await ensureTestVenueExists();
     await cleanupShiftTemplates();

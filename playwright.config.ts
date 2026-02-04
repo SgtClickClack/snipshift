@@ -153,7 +153,7 @@ export default defineConfig({
         },
         {
           name: 'business-e2e',
-          testMatch: /(calendar-(automation|capacity|comprehensive)|roster-costing|investor-portal|financial_privacy)\.spec\.ts/,
+          testMatch: /(calendar-(automation|capacity|comprehensive|crash-repro)|roster-costing|investor-portal|financial_privacy)\.spec\.ts/,
           use: {
             ...devices['Desktop Chrome'],
             storageState: 'playwright/.auth/business-user.json',
