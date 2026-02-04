@@ -355,22 +355,41 @@ export async function initializePushNotifications(userId: string): Promise<void>
  * Clean up push notifications when user logs out.
  * Wrapped defensively so Firebase 400 (e.g. mismatched projectId/messagingSenderId)
  * or installations.delete() failures never crash the app or block logout.
+ * 
+ * INVESTOR BRIEFING FIX: Triple-wrapped to ensure Firebase Installations 400 errors
+ * NEVER propagate to calling code or trigger any auth state machine resets.
  */
 export async function cleanupPushNotifications(): Promise<void> {
-  // Check support first - no point trying to clean up if not supported
-  const supported = await checkMessagingSupport();
-  if (!supported) return;
-  
-  const messaging = await safeGetMessagingAsync();
-  if (!messaging) return;
-
+  // Outer try-catch: ensures this function NEVER throws, regardless of internal failures
   try {
-    const token = await getToken(messaging);
-    if (token) {
-      await unregisterPushToken(token);
+    // Check support first - no point trying to clean up if not supported
+    const supported = await checkMessagingSupport();
+    if (!supported) return;
+    
+    const messaging = await safeGetMessagingAsync();
+    if (!messaging) return;
+
+    // Inner try-catch: Firebase getToken can throw 400 from Installations API
+    try {
+      // Use a timeout to prevent hanging on Firebase Installations API
+      const tokenPromise = getToken(messaging);
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+      
+      const token = await Promise.race([tokenPromise, timeoutPromise]);
+      if (token) {
+        // Fire-and-forget: don't wait for backend unregister to complete
+        unregisterPushToken(token).catch(() => {
+          // Silently ignore backend unregister failures
+        });
+      }
+    } catch (innerError: unknown) {
+      // Firebase 400 / installations errors - silently swallow
+      // This is the "jolt" prevention: never let this error propagate
+      logger.warn('push-notifications', 'Token cleanup inner error (silenced):', innerError);
     }
-  } catch (error: unknown) {
-    // Firebase 400 / installations errors must not crash the app; log and swallow
-    logger.warn('push-notifications', 'Token cleanup failed (non-fatal):', error);
+  } catch (outerError: unknown) {
+    // Ultimate fallback: if anything above throws, log and continue
+    // This ensures logout() NEVER fails due to push notification cleanup
+    logger.warn('push-notifications', 'Token cleanup outer error (silenced):', outerError);
   }
 }

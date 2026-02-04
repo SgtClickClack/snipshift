@@ -209,6 +209,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // INVESTOR BRIEFING FIX: Strict once-per-mount guard to eliminate duplicate hydration
   // This ref ensures hydrateFromFirebaseUser only executes ONCE per component lifecycle
   const hydrationMountRef = useRef<boolean>(false);
+  
+  // INVESTOR BRIEFING FIX: Session integrity tracking to prevent ghost redirects
+  // If user was successfully authenticated in this session, don't redirect to /login
+  // on temporary null states during background refresh cycles
+  const sessionIntegrityRef = useRef<boolean>(false);
+  
+  // INVESTOR BRIEFING FIX: Navigation lock release guard
+  // Ensures setIsNavigationLocked(false) is called exactly ONCE to prevent state machine jolts
+  const navigationLockReleasedRef = useRef<boolean>(false);
+  
+  /** Safe navigation lock release - ensures it's only called once per auth cycle */
+  const releaseNavigationLock = useCallback(() => {
+    if (!navigationLockReleasedRef.current) {
+      navigationLockReleasedRef.current = true;
+      setIsNavigationLocked(false);
+    }
+  }, []);
 
   // Clear redirecting flag after pathname has settled (prevents flash of wrong route).
   // Mobile gets extra 200ms so processors have time to render the redirect without flashing.
@@ -231,14 +248,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Safety timeout: force isNavigationLocked to false after 3s if API is hanging (prevents stuck skeleton)
   // Reduced from 6s to 3s now that venue fetch is non-blocking (user profile is the only blocking call)
-    const NAVIGATION_LOCK_TIMEOUT_MS = 3000;
+  const NAVIGATION_LOCK_TIMEOUT_MS = 3000;
   useEffect(() => {
     if (!isNavigationLocked) return;
     const t = setTimeout(() => {
-      setIsNavigationLocked(false);
+      releaseNavigationLock();
     }, NAVIGATION_LOCK_TIMEOUT_MS);
     return () => clearTimeout(t);
-  }, [isNavigationLocked]);
+  }, [isNavigationLocked, releaseNavigationLock]);
 
   const login = useCallback((newUser: User) => {
     setUser(newUser);
@@ -249,6 +266,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('hospogo_auth_timestamp');
     }
+    
+    // INVESTOR BRIEFING FIX: Reset session integrity on explicit logout
+    // This allows future redirects to /login to work correctly after explicit logout
+    sessionIntegrityRef.current = false;
     
     // Cleanup push tokens in try/catch so a Firebase 400 never blocks or crashes logout
     try {
@@ -270,6 +291,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsVenueMissing(false);
       setIsVenueLoaded(false);
       venueCacheRef.current = null;
+      // Reset navigation lock guard for next auth cycle
+      navigationLockReleasedRef.current = false;
       // Always redirect to landing so user never stays on a protected page after sign-out
       navigate('/', { replace: true });
     }
@@ -298,7 +321,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
     if (currentPath.startsWith('/signup') || currentPath.startsWith('/onboarding')) {
-      setIsNavigationLocked(false);
+      releaseNavigationLock();
     }
 
     // Get token WITHOUT forced refresh to avoid 1-2s network call
@@ -394,7 +417,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (apiResponse.user === null && firebaseUser.uid) {
         isOnboardingModeRef.current = true;
         setIsRegistered(false);
-        setIsNavigationLocked(false);
+        releaseNavigationLock();
         setIsTransitioning(false);
         setIsVenueLoaded(true); // No venue needed for new users
         setIsSystemReady(true); // Auth complete (needs onboarding)
@@ -431,9 +454,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // PERFORMANCE FIX: Release navigation lock IMMEDIATELY after user profile resolves
       // This drops TTI from ~6s to <1s by not blocking on /api/venues/me
       // Venue data streams in as a non-blocking background update
-      setIsNavigationLocked(false);
+      releaseNavigationLock();
       setIsTransitioning(false);
       setIsSystemReady(true); // User profile is enough to mark system ready
+      
+      // INVESTOR BRIEFING FIX: Mark session as having valid authentication
+      // This prevents ghost redirects during background token refresh cycles
+      sessionIntegrityRef.current = true;
       
       // RESILIENCE: Track successful auth timestamp to prevent redirect during token refresh
       if (typeof window !== 'undefined') {
@@ -535,7 +562,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // DEDUPLICATION: Mark hydration as complete
     lastHydratedUidRef.current = firebaseUser.uid;
     isHydratingRef.current = false;
-  }, [navigate, location.pathname, user?.uid]);
+  }, [navigate, location.pathname, user?.uid, releaseNavigationLock]);
 
   const refreshUser = useCallback(async (): Promise<{ venueReady: boolean }> => {
     const firebaseUser = firebaseUserRef.current;
@@ -546,6 +573,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
     const isOnSignup = currentPath === '/signup';
     
+    // INVESTOR BRIEFING FIX: Skip refresh on investor portal to prevent ghost redirects
+    if (currentPath.startsWith('/investorportal')) {
+      return { venueReady: true }; // Investor portal doesn't need venue
+    }
+    
     if (isOnSignup) {
       return { venueReady: false };
     }
@@ -553,9 +585,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Clear onboarding mode flag if we're not on signup/onboarding route
     isOnboardingModeRef.current = false;
     
-    // Explicit refresh - reset deduplication to allow re-hydration
+    // Explicit refresh - reset deduplication and navigation lock guard to allow re-hydration
     isHydratingRef.current = false;
     lastHydratedUidRef.current = null;
+    navigationLockReleasedRef.current = false; // Allow lock to be released again after hydration
     
     setRedirecting(true);
     setIsTransitioning(true);
@@ -564,6 +597,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { venueReady: !isVenueMissingRef.current };
     } catch (error) {
       logger.error('AuthContext', 'refreshUser failed', error);
+      // INVESTOR BRIEFING FIX: On refresh failure, preserve session integrity
+      // Don't let a failed refresh kick out an authenticated user
       return { venueReady: false };
     } finally {
       setRedirecting(false);
@@ -578,14 +613,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const isOnSignupOrOnboarding = location.pathname.startsWith('/onboarding') || 
                                    location.pathname === '/signup' ||
                                    location.pathname === '/role-selection';
-    if (isOnSignupOrOnboarding) {
-      setIsNavigationLocked(false);
+    // INVESTOR BRIEFING FIX: Investor portal is also a "no-lock" zone
+    const isNeutralZone = location.pathname.startsWith('/investorportal');
+    if (isOnSignupOrOnboarding || isNeutralZone) {
+      releaseNavigationLock();
     }
     isOnboardingModeRef.current = isOnSignupOrOnboarding;
     if (location.pathname === '/signup') {
-      setIsNavigationLocked(false);
+      releaseNavigationLock();
     }
-  }, [location.pathname]);
+  }, [location.pathname, releaseNavigationLock]);
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
@@ -685,13 +722,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         setIsLoading(false);
-        setIsNavigationLocked(false);
+        releaseNavigationLock();
       } catch (error) {
         logger.error('AuthContext', 'Auth initialization failed', error);
         setUser(null);
         setToken(null);
         setIsLoading(false);
-        setIsNavigationLocked(false);
+        releaseNavigationLock();
         setIsSystemReady(true); // Error state - system ready for error handling
       }
     };
@@ -702,7 +739,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       if (unsub) unsub();
     };
-  }, [hydrateFromFirebaseUser, navigate]);
+  }, [hydrateFromFirebaseUser, navigate, releaseNavigationLock]);
 
   // Detect Firebase auth params in URL (apiKey, mode=signIn, etc.)
   // These indicate the user just completed popup auth and landed on home page
@@ -759,11 +796,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // NEUTRAL ZONE EARLY RETURN: Investor portal is a "no-redirect" zone
     // This must be the FIRST check to kill flicker before any auth logic runs
-    if (window.location.pathname.startsWith('/investorportal')) return;
+    if (typeof window === 'undefined') return;
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith('/investorportal')) return;
+    
+    // INVESTOR BRIEFING FIX: Session integrity check
+    // If navigation is locked OR we're on the investor portal, never redirect
+    if (isNavigationLocked) return;
     
     if (isLoading || !user) return;
 
-    const currentPath = window.location.pathname;
     if (currentPath !== '/login' && currentPath !== '/signup') return;
     if (currentPath === '/signup') return;
 
