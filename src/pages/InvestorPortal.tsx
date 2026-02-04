@@ -137,7 +137,7 @@ HospoGo is positioned at the intersection of regulatory pressure, platform adopt
     id: 'moat',
     title: "The Moat",
     subtitle: "Competitive Landscape & Differentiation",
-    icon: <Sparkles className="w-8 h-8" />,
+    icon: <ShieldCheck className="w-8 h-8" />,
     description: "A clinical analysis of our positioning against Deputy, Tanda, and Square. Why HospoGo wins the logistics layer.",
     content: `## Competitive Landscape & Moat Analysis
 
