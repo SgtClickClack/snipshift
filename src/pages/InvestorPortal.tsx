@@ -132,6 +132,73 @@ The "15-minute city" trend has permanently redirected hospitality spend to neigh
 - **Labor Shortage Crisis:** ABS data shows 67,000 unfilled hospitality roles nationally.
 
 HospoGo is positioned at the intersection of regulatory pressure, platform adoption, and labor scarcity—the perfect storm for rapid adoption.`
+  },
+  {
+    id: 'moat',
+    title: "The Moat",
+    subtitle: "Competitive Landscape & Differentiation",
+    icon: <Sparkles className="w-8 h-8" />,
+    description: "A clinical analysis of our positioning against Deputy, Tanda, and Square. Why HospoGo wins the logistics layer.",
+    content: `## Competitive Landscape & Moat Analysis
+
+### Executive Summary
+HospoGo operates in a market dominated by fragmented point solutions. Our integrated Trinity Architecture creates a defensible moat that incumbent competitors cannot replicate without fundamental platform rewrites.
+
+---
+
+### The Trinity Differentiation Matrix
+
+| Capability | Deputy | Tanda | Square | HospoGo |
+|------------|--------|-------|--------|---------|
+| **Compliance Vault** | ❌ Manual | ❌ Manual | ❌ None | ✅ Automated RSA/RCG API |
+| **Two-Sided Marketplace** | ❌ None | ❌ None | ⚠️ Limited | ✅ Vetted A-Team Pool |
+| **Financial Sync** | ⚠️ CSV Export | ⚠️ Manual Xero | ✅ Native POS | ✅ Real-time Xero Mutex |
+| **SMB Pricing** | ❌ $6+/user | ⚠️ $3.50/user | ⚠️ POS-locked | ✅ $2.50/user flat |
+| **Suburban Focus** | ❌ Enterprise | ❌ Mid-market | ⚠️ Retail-first | ✅ Hospo-native |
+
+---
+
+### Competitor Deep Dive
+
+**Deputy** — The Enterprise Giant
+- 2025 ARR: $180M+ (global)
+- Weakness: Pricing model ($6+/seat) excludes 78% of suburban SMB venues
+- Technical gap: No compliance automation, no labor marketplace
+- HospoGo advantage: 58% cheaper per-seat with integrated compliance
+
+**Tanda** — The Australian Incumbent  
+- 2025 ARR: $45M (ANZ-focused)
+- Weakness: No two-sided marketplace; Xero sync requires manual CSV
+- Technical gap: Time & attendance only—no shift filling or talent pool
+- HospoGo advantage: End-to-end logistics vs. single-feature solution
+
+**Square Shifts** — The POS Adjacency
+- Weakness: Requires Square POS ecosystem lock-in
+- Technical gap: No hospitality compliance (RSA/RCG), no financial sync
+- HospoGo advantage: POS-agnostic, compliance-first architecture
+
+---
+
+### The Switching Cost Moat
+
+Once a venue activates all three Trinity engines:
+1. **The Vault:** Staff credentials, expiry alerts, and audit trails become embedded
+2. **The Marketplace:** A-Team favorites and reputation scores create hiring gravity
+3. **The Engine:** Roster templates, financial history, and Xero mappings compound value
+
+**Result:** 94% retention projection after 90-day activation window.
+
+---
+
+### Why Now?
+
+Three regulatory and market catalysts converge in 2025-2026:
+
+1. **Fair Work Casual Conversion:** New compliance burden on venues—HospoGo automates it
+2. **Xero Partner Ecosystem Growth:** 400% increase in hospitality integrations since 2023
+3. **Labor Shortage Intensification:** ABS reports 67,000 unfilled hospo roles nationally
+
+HospoGo is positioned at the intersection of regulatory pressure, platform adoption, and labor scarcity. The window for market capture is 18-24 months before incumbents adapt.`
   }
 ];
 
@@ -273,7 +340,7 @@ export default function InvestorPortal() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {documents.map((doc) => (
               <div 
                 key={doc.id}

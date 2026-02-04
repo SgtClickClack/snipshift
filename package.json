@@ -146,6 +146,7 @@
     "nodemailer": "^7.0.12",
     "on-headers": "^1.1.0",
     "glob": "^13.0.0",
-    "brace-expansion": "^4.0.1"
+    "brace-expansion": "^4.0.1",
+    "fast-xml-parser": "^5.3.4"
   }
 }
