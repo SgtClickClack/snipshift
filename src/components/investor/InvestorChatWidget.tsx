@@ -153,9 +153,9 @@ export default function InvestorChatWidget() {
   
   return (
     <>
-      {/* Chat Widget Container */}
+      {/* Chat Widget Container - Positioned right-24 for feedback bubble clearance */}
       <div 
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${
+        className={`fixed bottom-20 sm:bottom-6 right-6 sm:right-24 z-40 transition-all duration-500 ${
           isOpen ? 'w-[400px] max-w-[calc(100vw-48px)]' : 'w-auto'
         }`}
       >

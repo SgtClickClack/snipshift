@@ -10,6 +10,15 @@
  * Brand Colors:
  * - Neon: #BAFF39 (brand-neon Tailwind class)
  * - Dark BG: #0a0a0a
+ * 
+ * Z-Index Hierarchy (coordinated with InvestorChatWidget):
+ * - Standard Content: z-0
+ * - Mobile Menu: z-40
+ * - AI Chat Widget: z-40 (InvestorChatWidget.tsx)
+ * - Navbar: z-50
+ * - Back to Dashboard: z-60
+ * - Document Modal: z-[100]
+ * - RSVP Modal: z-[110]
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -440,10 +449,11 @@ export default function InvestorPortal() {
 
         {/* Back to Dashboard - Floating button for logged-in users with brand neon glow */}
         {/* Hidden when document modal is open to prevent z-index bleed-through */}
+        {/* Z-Index: 60 - Above chat widget (40) but below navbar (50 is navbar, this floats independently) */}
         {hasUser && !selectedDoc && (
           <Link
             to={getDashboardPath()}
-            className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full bg-black/80 backdrop-blur-md border-2 border-[#BAFF39]/40 text-white text-xs font-bold uppercase tracking-widest hover:bg-black hover:border-[#BAFF39] transition-all duration-300 shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:shadow-[0_0_30px_rgba(186,255,57,0.5)] group"
+            className="fixed bottom-6 left-6 z-60 flex items-center gap-2 px-5 py-3 rounded-full bg-black/80 backdrop-blur-md border-2 border-[#BAFF39]/40 text-white text-xs font-bold uppercase tracking-widest hover:bg-black hover:border-[#BAFF39] transition-all duration-300 shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:shadow-[0_0_30px_rgba(186,255,57,0.5)] group"
             data-testid="back-to-dashboard-btn"
           >
             <ArrowLeft size={14} className="text-[#BAFF39] group-hover:-translate-x-1 transition-transform" />
