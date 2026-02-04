@@ -10,6 +10,11 @@ const TEST_DATABASE_URL = 'postgresql://postgres:test@localhost:5433/hospogo_tes
  * - Dev mode: Uses localhost:3000 with Firebase emulator/auth
  * - Production mode: Uses https://hospogo.com (set E2E_AUTH_MODE=production)
  * 
+ * Project Isolation:
+ * - chromium: General tests (excludes business/staff-specific tests)
+ * - business-e2e: Venue dashboard, calendar automation, roster costing (currentRole: 'business')
+ * - staff-e2e: Professional dashboard, invitations, acceptance flow (currentRole: 'professional')
+ * 
  * See https://playwright.dev/docs/test-configuration.
  */
 const useProductionAuth = process.env.E2E_AUTH_MODE === 'production';
@@ -94,7 +99,13 @@ export default defineConfig({
         {
           name: 'chromium',
           use: { ...devices['Desktop Chrome'] },
-          testIgnore: [/calendar-(automation|capacity)\.spec\.ts/, /auth-business\.setup\.ts/, /business-setup\.spec\.ts/],
+          testIgnore: [
+            /calendar-(automation|capacity|comprehensive)\.spec\.ts/,
+            /auth-(business|professional)\.setup\.ts/,
+            /business-setup\.spec\.ts/,
+            /financial_privacy\.spec\.ts/,
+            /staff-invitations\.spec\.ts/,
+          ],
         },
         {
           name: 'Mobile Chrome',
@@ -104,7 +115,13 @@ export default defineConfig({
             navigationTimeout: 45000, // Increase navigation timeout for mobile
           },
           retries: 2, // Retry mobile tests to handle server cold-starts
-          testIgnore: [/calendar-(automation|capacity)\.spec\.ts/, /auth-business\.setup\.ts/, /business-setup\.spec\.ts/],
+          testIgnore: [
+            /calendar-(automation|capacity|comprehensive)\.spec\.ts/,
+            /auth-(business|professional)\.setup\.ts/,
+            /business-setup\.spec\.ts/,
+            /financial_privacy\.spec\.ts/,
+            /staff-invitations\.spec\.ts/,
+          ],
         },
         {
           name: 'Mobile Safari',
@@ -114,16 +131,26 @@ export default defineConfig({
             actionTimeout: 45000, // Increase action timeout for mobile
           },
           retries: 2, // Retry mobile tests to handle server cold-starts
-          testIgnore: [/calendar-(automation|capacity)\.spec\.ts/, /auth-business\.setup\.ts/, /business-setup\.spec\.ts/],
+          testIgnore: [
+            /calendar-(automation|capacity|comprehensive)\.spec\.ts/,
+            /auth-(business|professional)\.setup\.ts/,
+            /business-setup\.spec\.ts/,
+            /financial_privacy\.spec\.ts/,
+            /staff-invitations\.spec\.ts/,
+          ],
         },
-        // Business E2E: venue dashboard tests with currentRole: 'business'
+        // ============================================
+        // BUSINESS E2E PROJECT (Isolated)
+        // ============================================
+        // Venue dashboard tests with currentRole: 'business'
+        // Includes: Calendar automation, capacity planning, roster costing, investor portal
         {
           name: 'setup-business',
           testMatch: /auth-business\.setup\.ts/,
         },
         {
           name: 'business-e2e',
-          testMatch: /(calendar-(automation|capacity)|roster-costing|investor-portal)\.spec\.ts/,
+          testMatch: /(calendar-(automation|capacity|comprehensive)|roster-costing|investor-portal|financial_privacy)\.spec\.ts/,
           use: {
             ...devices['Desktop Chrome'],
             storageState: 'playwright/.auth/business-user.json',
@@ -131,8 +158,30 @@ export default defineConfig({
             actionTimeout: 30000, // 30s timeout for parallel hydration logic
             navigationTimeout: 30000, // 30s timeout for navigation
           },
-          timeout: 30000, // 30s per-test timeout for business-e2e tests
+          timeout: 60000, // 60s per-test timeout for comprehensive calendar tests
           dependencies: ['setup-business'],
+        },
+        // ============================================
+        // STAFF E2E PROJECT (Isolated)
+        // ============================================
+        // Professional dashboard tests with currentRole: 'professional'
+        // Includes: Invitations, acceptance flow, staff calendar view
+        {
+          name: 'setup-professional',
+          testMatch: /auth-professional\.setup\.ts/,
+        },
+        {
+          name: 'staff-e2e',
+          testMatch: /staff-invitations\.spec\.ts/,
+          use: {
+            ...devices['Desktop Chrome'],
+            storageState: 'playwright/.auth/professional-user.json',
+            viewport: { width: 1440, height: 900 },
+            actionTimeout: 30000, // 30s timeout for parallel hydration logic
+            navigationTimeout: 30000, // 30s timeout for navigation
+          },
+          timeout: 60000, // 60s per-test timeout for staff acceptance tests
+          dependencies: ['setup-professional'],
         },
       ],
 

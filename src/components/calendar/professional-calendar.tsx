@@ -56,6 +56,7 @@ import { useNotification } from "@/contexts/NotificationContext";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import { ShiftBlock } from "./shift-block";
 import { ShiftBucketPill, type ShiftBucket } from "./ShiftBucketPill";
+import { ShiftBucketManagementModal, type BucketManagementData } from "./ShiftBucketManagementModal";
 import { AssignStaffModal, Professional } from "./assign-staff-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -329,6 +330,9 @@ function ProfessionalCalendarContent({
   const calendarRef = useRef<HTMLDivElement>(null);
   const [showAssignStaffModal, setShowAssignStaffModal] = useState(false);
   const [selectedShiftForAssignment, setSelectedShiftForAssignment] = useState<CalendarEvent | null>(null);
+  // Bucket Management Modal state
+  const [showBucketManagementModal, setShowBucketManagementModal] = useState(false);
+  const [selectedBucketForManagement, setSelectedBucketForManagement] = useState<BucketManagementData | null>(null);
   const [showSmartFillModal, setShowSmartFillModal] = useState(false);
   const [showFindProfessionalMode, setShowFindProfessionalMode] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [showRecurringDialog, setShowRecurringDialog] = useState(false);
@@ -2693,23 +2697,26 @@ function ProfessionalCalendarContent({
                               toolbar: customToolbar,
                               header: customHeader,
                               event: ({ event }: { event: CalendarEvent }) => {
-                                // Bucket events: render ShiftBucketPill
+                                // Bucket events: render ShiftBucketPill -> opens ShiftBucketManagementModal
                                 if (event.resource?.type === 'bucket' && event.resource?.bucket) {
+                                  const bucket = event.resource.bucket;
                                   return (
                                     <ShiftBucketPill
-                                      bucket={event.resource.bucket}
+                                      bucket={bucket}
                                       canShowCost={mode === 'business'}
                                       mode={mode}
-                                      onClick={() => handleSelectEvent(event)}
-                                      onAddStaff={(bucket) => {
-                                        const firstEvent = bucket.events[0];
-                                        if (firstEvent?.resource?.booking?.shift || firstEvent?.resource?.booking?.job) {
-                                          setSelectedShiftForAssignment(event as CalendarEvent);
-                                          setShowAssignStaffModal(true);
-                                        } else {
-                                          setSelectedUnassignedSlot({ start: bucket.start, end: bucket.end });
-                                          setShowShiftAssignmentModal(true);
-                                        }
+                                      onClick={() => {
+                                        // Open Bucket Management Modal with full context
+                                        setSelectedBucketForManagement({
+                                          bucket,
+                                          label: bucket.label,
+                                          startTime: bucket.start,
+                                          endTime: bucket.end,
+                                          dateFormatted: format(bucket.start, 'EEEE, MMMM d, yyyy'),
+                                          filledCount: bucket.filledCount,
+                                          requiredCount: bucket.requiredCount,
+                                        });
+                                        setShowBucketManagementModal(true);
                                       }}
                                     />
                                   );
@@ -3540,6 +3547,44 @@ function ProfessionalCalendarContent({
           favoriteProfessionals={favoriteProfessionals}
           allProfessionals={allProfessionals}
           isLoading={false}
+        />
+      )}
+
+      {/* Bucket Management Modal - Command Center for shift bucket actions */}
+      {mode === 'business' && (
+        <ShiftBucketManagementModal
+          isOpen={showBucketManagementModal}
+          onClose={() => {
+            setShowBucketManagementModal(false);
+            setSelectedBucketForManagement(null);
+          }}
+          bucket={selectedBucketForManagement}
+          favoriteProfessionals={favoriteProfessionals}
+          allProfessionals={allProfessionals}
+          onInviteATeam={async (bucket) => {
+            // Trigger A-Team invitation for this bucket's time range
+            await handleInviteATeamClick();
+          }}
+          onAssignProfessional={async (professional, bucket) => {
+            // Find or create a shift for this bucket and assign the professional
+            const firstEvent = bucket.events[0];
+            if (firstEvent?.resource?.booking?.shift || firstEvent?.resource?.booking?.job) {
+              const shift = firstEvent.resource?.booking?.shift || firstEvent.resource?.booking?.job;
+              if (shift?.id) {
+                inviteMutation.mutate({ shiftId: shift.id, workerId: professional.id });
+              }
+            } else {
+              // Create new shift and assign
+              setSelectedUnassignedSlot({ start: bucket.start, end: bucket.end });
+              setShowShiftAssignmentModal(true);
+            }
+          }}
+          onPostToMarketplace={async (bucket) => {
+            // Post shifts in this bucket to the job board
+            setSelectedUnassignedSlot({ start: bucket.start, end: bucket.end });
+            handlePostToJobBoard();
+          }}
+          isLoading={isInvitingATeam}
         />
       )}
     </div>
