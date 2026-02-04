@@ -2869,39 +2869,39 @@ function ProfessionalCalendarContent({
                   {format(selectedEvent.end, "h:mm a")}
                 </span>
               </div>
-              {(selectedEvent.resource.booking.job?.address ||
-                selectedEvent.resource.booking.shift?.location) && (
+              {(selectedEvent.resource.booking?.job?.address ||
+                selectedEvent.resource.booking?.shift?.location) && (
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {selectedEvent.resource.booking.job?.address ||
-                      selectedEvent.resource.booking.shift?.location}
+                    {selectedEvent.resource.booking?.job?.address ||
+                      selectedEvent.resource.booking?.shift?.location}
                   </span>
                 </div>
               )}
-              {(selectedEvent.resource.booking.job?.payRate ||
-                selectedEvent.resource.booking.shift?.hourlyRate) && (
+              {(selectedEvent.resource.booking?.job?.payRate ||
+                selectedEvent.resource.booking?.shift?.hourlyRate) && (
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <span>
                     $
-                    {selectedEvent.resource.booking.job?.payRate ||
-                      selectedEvent.resource.booking.shift?.hourlyRate}
-                    /{selectedEvent.resource.booking.job?.payType || "hour"}
+                    {selectedEvent.resource.booking?.job?.payRate ||
+                      selectedEvent.resource.booking?.shift?.hourlyRate}
+                    /{selectedEvent.resource.booking?.job?.payType || "hour"}
                   </span>
                 </div>
               )}
-              {selectedEvent.resource.booking.job?.description && (
+              {selectedEvent.resource.booking?.job?.description && (
                 <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    {selectedEvent.resource.booking.job.description}
+                    {selectedEvent.resource.booking?.job?.description}
                   </p>
                 </div>
               )}
               <div className="flex gap-2 pt-4">
-                {selectedEvent.resource.booking.job?.hubId && (
+                {selectedEvent.resource.booking?.job?.hubId && (
                   <StartChatButton
-                    otherUserId={selectedEvent.resource.booking.job.hubId}
+                    otherUserId={selectedEvent.resource.booking?.job?.hubId}
                     otherUserName="Employer"
                     otherUserRole="hub"
                     variant="outline"
