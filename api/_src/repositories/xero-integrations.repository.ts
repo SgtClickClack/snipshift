@@ -3,8 +3,8 @@
  * Database operations for Xero OAuth tokens and OAuth state (CSRF protection)
  */
 
-import { eq } from 'drizzle-orm';
-import { xeroIntegrations, xeroOauthState } from '../db/schema/xero-integrations.js';
+import { eq, desc } from 'drizzle-orm';
+import { xeroIntegrations, xeroOauthState, xeroAuditLog, type XeroAuditOperation } from '../db/schema/xero-integrations.js';
 import { getDb } from '../db/index.js';
 import { encrypt, decrypt } from '../lib/encryption.js';
 
@@ -200,4 +200,81 @@ export async function deleteXeroIntegration(userId: string): Promise<void> {
   if (!db) return;
 
   await db.delete(xeroIntegrations).where(eq(xeroIntegrations.userId, userId));
+}
+
+// ----- Audit Log Functions -----
+
+export interface CreateAuditLogInput {
+  userId: string;
+  operation: XeroAuditOperation;
+  xeroTenantId?: string;
+  payload?: Record<string, unknown>;
+  result?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+/**
+ * Log a Xero operation for audit purposes.
+ * Non-blocking - errors are logged but don't fail the main operation.
+ */
+export async function logXeroOperation(input: CreateAuditLogInput): Promise<void> {
+  const db = getDb();
+  if (!db) {
+    console.log('[XERO_AUDIT]', JSON.stringify(input));
+    return;
+  }
+
+  try {
+    await db.insert(xeroAuditLog).values({
+      userId: input.userId,
+      operation: input.operation,
+      xeroTenantId: input.xeroTenantId ?? null,
+      payload: input.payload ?? null,
+      result: input.result ?? null,
+      ipAddress: input.ipAddress ?? null,
+      userAgent: input.userAgent ?? null,
+    });
+  } catch (err) {
+    // Don't fail the main operation if audit logging fails
+    console.error('[XERO_AUDIT] Failed to log operation:', err);
+    // Still log to console as fallback
+    console.log('[XERO_AUDIT]', JSON.stringify(input));
+  }
+}
+
+/**
+ * Get audit log entries for a user (for admin/compliance views).
+ */
+export async function getXeroAuditLog(
+  userId: string,
+  limit = 50,
+  offset = 0
+): Promise<Array<{
+  id: string;
+  operation: string;
+  xeroTenantId: string | null;
+  payload: unknown;
+  result: unknown;
+  createdAt: Date;
+}>> {
+  const db = getDb();
+  if (!db) return [];
+
+  const rows = await db
+    .select({
+      id: xeroAuditLog.id,
+      operation: xeroAuditLog.operation,
+      xeroTenantId: xeroAuditLog.xeroTenantId,
+      payload: xeroAuditLog.payload,
+      result: xeroAuditLog.result,
+      createdAt: xeroAuditLog.createdAt,
+    })
+    .from(xeroAuditLog)
+    .where(eq(xeroAuditLog.userId, userId))
+    .orderBy(desc(xeroAuditLog.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return rows;
 }

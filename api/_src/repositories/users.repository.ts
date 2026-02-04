@@ -379,6 +379,53 @@ export async function getUserByFirebaseUid(firebaseUid: string): Promise<typeof 
 }
 
 /**
+ * OPTIMIZED: Get user by Firebase UID OR email in a single query.
+ * This reduces auth middleware latency by eliminating the sequential fallback pattern.
+ * 
+ * Priority: firebase_uid match takes precedence over email match.
+ */
+export async function getUserByFirebaseUidOrEmail(
+  firebaseUid: string,
+  email: string
+): Promise<typeof users.$inferSelect | null> {
+  const db = getDb();
+  if (!db) {
+    // Mock mode: check firebaseUid first, then email
+    const byUid = mockUsers.find((u) => u.firebaseUid === firebaseUid);
+    if (byUid) return normalizeUserRoles(byUid);
+    const byEmail = mockUsers.find((u) => u.email === email);
+    return byEmail ? normalizeUserRoles(byEmail) : null;
+  }
+
+  try {
+    // Single query with OR condition - Postgres will use indexes efficiently
+    const { or } = await import('drizzle-orm');
+    const results = await db
+      .select()
+      .from(users)
+      .where(or(eq(users.firebaseUid, firebaseUid), eq(users.email, email)))
+      .limit(2); // Limit 2 in case both match different rows
+
+    if (results.length === 0) return null;
+    
+    // If we got results, prefer the one with matching firebaseUid
+    const uidMatch = results.find((u) => u.firebaseUid === firebaseUid);
+    if (uidMatch) return normalizeUserRoles(uidMatch);
+    
+    // Fall back to email match
+    return normalizeUserRoles(results[0]);
+  } catch (error: any) {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    // If firebase_uid column doesn't exist, fall back to email-only query
+    if (error?.code === '42703' || (message.includes('firebase_uid') && message.includes('does not exist'))) {
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      return user ? normalizeUserRoles(user) : null;
+    }
+    throw error;
+  }
+}
+
+/**
  * Batch fetch users by IDs (optimized for N+1 prevention)
  * Returns a Map of userId -> user for O(1) lookups
  */

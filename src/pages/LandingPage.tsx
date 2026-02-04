@@ -194,7 +194,7 @@ export default function LandingPage() {
                     <Link to="/signup?role=professional" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="w-full sm:w-auto border-2 border-white text-white font-bold px-12 py-5 rounded-full hover:bg-white/5 transition-all duration-300 min-h-[44px]"
+                        className="w-full sm:w-auto border-2 border-white text-white font-bold px-10 py-5 rounded-full hover:bg-white/5 transition-all duration-300 min-h-[44px]"
                         data-testid="button-find-shifts"
                       >
                         Find Shifts

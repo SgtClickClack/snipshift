@@ -687,6 +687,7 @@ export async function createBatchShifts(
     status?: 'draft' | 'pending' | 'invited' | 'open' | 'filled' | 'completed' | 'confirmed' | 'cancelled' | 'pending_completion';
     location?: string;
     assigneeId?: string;
+    templateId?: string; // Links auto-generated shifts to their source template
   }>
 ): Promise<typeof shifts.$inferSelect[]> {
   const db = getDb();
@@ -715,6 +716,7 @@ export async function createBatchShifts(
               status: shiftData.status || 'draft',
               location: shiftData.location || null,
               assigneeId: shiftData.assigneeId || null,
+              templateId: shiftData.templateId || null, // Track source template for auto-generated shifts
               isRecurring: false,
               parentShiftId: null,
             })

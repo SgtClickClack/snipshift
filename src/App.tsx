@@ -98,7 +98,7 @@ const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
 
 function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   const location = useLocation();
-  const { isLoading, isRedirecting, isNavigationLocked } = useAuth();
+  const { isLoading, isRedirecting, isNavigationLocked, isSystemReady } = useAuth();
 
   // Performance check: if isNavigationLocked takes >2s to flip, optimize GET /api/venues/me
   const lockStartRef = useRef<number | null>(null);
@@ -124,9 +124,18 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   // Initialize push notifications when user is authenticated
   usePushNotifications();
 
-  // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished hydrateFromFirebaseUser (including venue 200/404 check)
-  // Guard: on onboarding/signup routes, always render content even if navigation lock is true.
+  // PERFORMANCE: Use isSystemReady for smooth splash-to-app transition
+  // This eliminates the skeleton flash by keeping HTML splash until auth + venue check complete
   const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || location.pathname === '/role-selection' || location.pathname === '/investorportal';
+  
+  // If system isn't ready yet and we haven't handled splash, render nothing (keep HTML splash)
+  // This prevents the skeleton flash during auth handshake
+  if (!isSystemReady && !splashHandled && !isBridgeRoute && !isSignupOrLandingOrOnboarding) {
+    return null;
+  }
+
+  // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished
+  // Guard: on onboarding/signup routes, always render content even if navigation lock is true.
   const effectiveNavigationLocked = isSignupOrLandingOrOnboarding ? false : isNavigationLocked;
   const shouldShowLockScreen = effectiveNavigationLocked && splashHandled && !isBridgeRoute;
   if (shouldShowLockScreen) {
@@ -134,7 +143,8 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   }
 
   // Show full-page loader while auth is settling OR a redirect is in progress (prevents route flash)
-  const showFullPageLoader = (isLoading || isRedirecting) && splashHandled && !isBridgeRoute;
+  // But only after system is ready (avoids double loading state)
+  const showFullPageLoader = (isLoading || isRedirecting) && splashHandled && !isBridgeRoute && isSystemReady;
   const shouldBypassLoading = location.pathname === '/signup';
   if (showFullPageLoader && !shouldBypassLoading) {
     return <LoadingScreen />;
@@ -653,15 +663,14 @@ function App() {
   const [splashHandled, setSplashHandled] = useState(htmlSplashRemoved);
 
   // Remove HTML splash screen when React mounts
-  // Track this so AppRoutes doesn't show duplicate LoadingScreen during overlap
+  // PERFORMANCE: Removed artificial 300ms delay - splash removal is now immediate
+  // The CSS fade transition still applies but doesn't block React rendering
   useEffect(() => {
     if (typeof window !== 'undefined' && window.removeSplash) {
       window.removeSplash();
-      // Mark splash as removed after the fade transition (300ms)
-      setTimeout(() => {
-        htmlSplashRemoved = true;
-        setSplashHandled(true);
-      }, 300);
+      // Mark splash as handled immediately - CSS handles the fade animation
+      htmlSplashRemoved = true;
+      setSplashHandled(true);
     } else {
       // No splash to remove, mark as handled immediately
       htmlSplashRemoved = true;

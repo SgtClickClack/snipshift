@@ -17,8 +17,26 @@ export const MOCK_XERO_CALENDARS = [
 ];
 
 export const MOCK_SYNC_SUCCESS = {
-  synced: [{ employeeId: 'staff-1', xeroEmployeeId: 'xero-emp-1', hours: 8, status: 'success' }],
-  failed: [] as Array<{ employeeId: string; reason: string }>,
+  status: 'success',
+  summary: 'Successfully synced 1 employee(s) (8.0 hours)',
+  totalAttempted: 1,
+  synced: [{ staffUserId: 'staff-1', staffName: 'Test Staff', xeroEmployeeId: 'xero-emp-1', hours: 8, status: 'success' }],
+  failed: [] as Array<{ staffUserId: string; staffName?: string; errorCode: string; userMessage: string; technicalDetails: string; isRecoverable: boolean }>,
+};
+
+export const MOCK_SYNC_PARTIAL = {
+  status: 'partial',
+  summary: 'Synced 1 of 2 employees. 1 failed.',
+  totalAttempted: 2,
+  synced: [{ staffUserId: 'staff-1', staffName: 'Test Staff', xeroEmployeeId: 'xero-emp-1', hours: 8, status: 'success' }],
+  failed: [{
+    staffUserId: 'staff-2',
+    staffName: 'Jane Worker',
+    errorCode: 'MISSING_XERO_ID',
+    userMessage: 'Missing Xero Employee Mapping',
+    technicalDetails: 'Staff member "Jane Worker" does not have a Xero Employee ID mapped. Go to Settings > Xero Integration to map this employee.',
+    isRecoverable: true,
+  }],
 };
 
 export interface XeroMockOptions {
@@ -196,6 +214,24 @@ export async function mockEmployeesError(page: Page): Promise<void> {
       status: 500,
       contentType: 'application/json',
       body: JSON.stringify({ message: 'Internal server error' }),
+    });
+  });
+}
+
+/**
+ * Override sync-timesheet to return partial success
+ * (Some employees synced, some failed)
+ */
+export async function mockSyncTimesheetPartial(page: Page): Promise<void> {
+  await page.route('**/api/integrations/xero/sync-timesheet', async (route) => {
+    if (route.request().method() !== 'POST') {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_SYNC_PARTIAL),
     });
   });
 }

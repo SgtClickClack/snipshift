@@ -2,6 +2,7 @@ import { QueryClient, QueryFunction, QueryCache, MutationCache } from "@tanstack
 import { auth } from "./firebase";
 import { toast } from "@/hooks/useToast";
 import { logger } from "@/lib/logger";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 async function throwIfResNotOk(res: Response, url?: string) {
   if (!res.ok) {
@@ -212,3 +213,93 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * Prefetch current user profile during auth handshake.
+ * This warms the cache so Dashboard can render instantly.
+ */
+export async function prefetchCurrentUser(idToken: string): Promise<void> {
+  const fullUrl = `${getApiBase()}/api/me`;
+  
+  await queryClient.prefetchQuery({
+    queryKey: [QUERY_KEYS.CURRENT_USER],
+    queryFn: async () => {
+      const res = await fetch(fullUrl, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes for auth data
+  });
+}
+
+/**
+ * Prefetch current venue during auth handshake.
+ * This warms the cache so VenueDashboard can render instantly.
+ */
+export async function prefetchCurrentVenue(idToken: string): Promise<void> {
+  const fullUrl = `${getApiBase()}/api/venues/me`;
+  
+  await queryClient.prefetchQuery({
+    queryKey: [QUERY_KEYS.CURRENT_VENUE],
+    queryFn: async () => {
+      const res = await fetch(fullUrl, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes for venue data
+  });
+}
+
+/**
+ * Prefetch both user and venue data in parallel.
+ * Call this as soon as Firebase user is detected.
+ */
+export async function prefetchAuthData(idToken: string): Promise<{
+  user: unknown;
+  venue: unknown;
+}> {
+  const userUrl = `${getApiBase()}/api/me`;
+  const venueUrl = `${getApiBase()}/api/venues/me`;
+  
+  const [userResult, venueResult] = await Promise.allSettled([
+    fetch(userUrl, {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    }).then(res => res.ok ? res.json() : null),
+    fetch(venueUrl, {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    }).then(res => res.ok ? res.json() : null),
+  ]);
+  
+  const user = userResult.status === 'fulfilled' ? userResult.value : null;
+  const venue = venueResult.status === 'fulfilled' ? venueResult.value : null;
+  
+  // Warm the cache with the results
+  if (user) {
+    queryClient.setQueryData([QUERY_KEYS.CURRENT_USER], user);
+  }
+  if (venue) {
+    queryClient.setQueryData([QUERY_KEYS.CURRENT_VENUE], venue);
+  }
+  
+  return { user, venue };
+}

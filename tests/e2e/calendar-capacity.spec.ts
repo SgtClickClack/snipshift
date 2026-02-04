@@ -246,11 +246,14 @@ test.describe('Calendar Capacity E2E Tests', () => {
         await weekViewBtn.click();
       }
 
-      // Find bucket pill - either by templateId (after we know it) or by text "0/3"
-      const pill = page.getByTestId(/shift-bucket-pill/).filter({ hasText: '0/3' }).first();
+      // Find bucket pill using data attributes (more stable than text-based filtering)
+      // data-filled-count="0" and data-required-count="3" added for E2E stability
+      const pill = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first();
       await expect(pill).toBeVisible({ timeout: 10000 });
 
-      // Verify Red (Vacant) - pill has red background class
+      // Verify Vacant state using data attribute (more stable than class matching)
+      await expect(pill).toHaveAttribute('data-bucket-state', 'vacant');
+      // Also verify red background class for visual confirmation
       await expect(pill).toHaveClass(/bg-red|red-500|red-600/);
     });
   });
@@ -284,7 +287,8 @@ test.describe('Calendar Capacity E2E Tests', () => {
         await weekViewBtn.click();
       }
 
-      const pill = page.getByTestId(/shift-bucket-pill/).filter({ hasText: '0/3' }).first();
+      // Use data attributes for stable selection (avoids text format changes)
+      const pill = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first();
       await expect(pill).toBeVisible({ timeout: 10000 });
 
       // Click pill to expand popover
@@ -351,7 +355,8 @@ test.describe('Calendar Capacity E2E Tests', () => {
         await weekViewBtn.click();
       }
 
-      const pill = page.getByTestId(/shift-bucket-pill/).filter({ hasText: '0/3' }).first();
+      // Use data attributes for stable selection
+      const pill = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first();
       await expect(pill).toBeVisible({ timeout: 10000 });
       await pill.click();
 
@@ -370,13 +375,13 @@ test.describe('Calendar Capacity E2E Tests', () => {
       await expect(assignBtn).toBeVisible({ timeout: 5000 });
       await assignBtn.click();
 
-      // Modal closes, pill should update to 1/3
-      await expect(page.getByTestId(/shift-bucket-pill/).filter({ hasText: '1/3' })).toBeVisible({
-        timeout: 10000,
-      });
+      // Modal closes, pill should update to 1/3 - use data attributes for stable selection
+      const updatedPill = page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="1"][data-required-count="3"]').first();
+      await expect(updatedPill).toBeVisible({ timeout: 10000 });
 
-      // Verify Orange (Partial)
-      const updatedPill = page.getByTestId(/shift-bucket-pill/).filter({ hasText: '1/3' }).first();
+      // Verify Partial state using data attribute (more stable than class matching)
+      await expect(updatedPill).toHaveAttribute('data-bucket-state', 'partial');
+      // Also verify orange background class for visual confirmation
       await expect(updatedPill).toHaveClass(/bg-orange|orange-500|orange-600/);
     });
   });
@@ -426,8 +431,9 @@ test.describe('Calendar Capacity E2E Tests', () => {
         await weekViewBtn.click();
       }
 
+      // Use data attributes for stable selection
       await expect(
-        page.getByTestId(/shift-bucket-pill/).filter({ hasText: '0/3' }).first()
+        page.locator('[data-testid^="shift-bucket-pill"][data-filled-count="0"][data-required-count="3"]').first()
       ).toBeVisible({ timeout: 10000 });
 
       // Go back to Settings and delete the template (trash icon)

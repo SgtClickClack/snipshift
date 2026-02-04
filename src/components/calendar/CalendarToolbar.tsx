@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { View } from "react-big-calendar";
 import { fetchRosterTotals } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
+import { QUERY_KEYS, QUERY_STALE_TIMES } from "@/lib/query-keys";
 
 type JobStatus = 'all' | 'pending' | 'confirmed' | 'completed';
 
@@ -74,13 +76,16 @@ export function CalendarToolbar({
     staleTime: 30_000, // 30s - avoid redundant refetches during calendar drag-and-drop
   });
 
+  // PERFORMANCE: Xero status rarely changes - use 5min staleTime to reduce API calls
   const { data: xeroStatus } = useQuery({
-    queryKey: ['xero-status'],
+    queryKey: [QUERY_KEYS.XERO_STATUS],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/integrations/xero/status');
       return res.json() as Promise<{ connected?: boolean }>;
     },
     enabled: mode === 'business',
+    staleTime: QUERY_STALE_TIMES.INTEGRATION_STATUS, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
   const isSyncedToXero = xeroStatus?.connected === true;
 
@@ -111,17 +116,23 @@ export function CalendarToolbar({
             )}
             
             {/* Financial Health indicator - Only show in business mode. Pulse when Xero disconnected (CTA for Lucas) */}
-            {mode === 'business' && rosterTotals !== undefined && (
+            {/* CLS FIX: Reserve space with skeleton while loading to prevent layout shift */}
+            {mode === 'business' && dateRange?.start && (
               <div
                 className={cn(
                   "hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium",
-                  !isSyncedToXero && "animate-pulse"
+                  "min-w-[180px]", // Reserved width to prevent CLS
+                  !isSyncedToXero && rosterTotals && "animate-pulse"
                 )}
                 data-testid="est-wage-cost"
                 title={isSyncedToXero ? "Estimated wage cost for visible period" : "Estimated wage cost — sync to Xero to export"}
               >
                 <DollarSign className="h-4 w-4 shrink-0" />
-                Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}
+                {rosterTotals !== undefined ? (
+                  <span>Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}</span>
+                ) : (
+                  <Skeleton className="h-4 w-24 bg-emerald-500/20" />
+                )}
               </div>
             )}
             {/* Roster Tools dropdown - Only show in business mode */}

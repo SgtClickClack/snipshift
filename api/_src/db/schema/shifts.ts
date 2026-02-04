@@ -1,6 +1,7 @@
 import { pgTable, uuid, varchar, text, decimal, timestamp, pgEnum, index, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 import { venues } from './venues.js';
+import { shiftTemplates } from './shift-templates.js';
 
 /**
  * Shift status enum
@@ -26,6 +27,9 @@ export const shifts = pgTable('shifts', {
   employerId: uuid('employer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   assigneeId: uuid('assignee_id').references(() => users.id, { onDelete: 'set null' }),
   role: varchar('role', { length: 64 }),
+  // Template ID for auto-generated shifts - allows tracking which template created this shift
+  // NULL for manually created shifts, set for auto-generated shifts
+  templateId: uuid('template_id').references(() => shiftTemplates.id, { onDelete: 'set null' }),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   startTime: timestamp('start_time').notNull(),
@@ -78,6 +82,9 @@ export const shifts = pgTable('shifts', {
   paymentIntentIdIdx: index('shifts_payment_intent_id_idx').on(table.paymentIntentId),
   latLngIdx: index('shifts_lat_lng_idx').on(table.lat, table.lng),
   deletedAtIdx: index('shifts_deleted_at_idx').on(table.deletedAt),
+  templateIdIdx: index('shifts_template_id_idx').on(table.templateId),
+  // Composite index for range queries with template filtering
+  employerStartEndIdx: index('shifts_employer_start_end_idx').on(table.employerId, table.startTime, table.endTime),
 }));
 
 /**

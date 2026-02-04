@@ -4,6 +4,7 @@ import {
   setupXeroMocks,
   mockSyncTimesheetError,
   mockSyncTimesheetLocked,
+  mockSyncTimesheetPartial,
   mockEmployeesError,
   MOCK_XERO_STAFF,
   MOCK_XERO_EMPLOYEES,
@@ -158,6 +159,30 @@ test.describe('Xero Integration E2E Tests', () => {
       await expect(syncResult).toBeVisible({ timeout: 5000 });
       await expect(syncResult.getByText(/1 employee\(s\) synced/)).toBeVisible();
       await expect(syncResult.getByText(/8\.0 hours/)).toBeVisible();
+    });
+  });
+
+  test.describe('Partial Success', () => {
+    test('Partial sync shows both success and failure details', async () => {
+      await setupXeroMocks(page, { connected: true });
+      await mockSyncTimesheetPartial(page);
+      await page.goto('/settings?category=business');
+      await page.waitForLoadState('domcontentloaded');
+
+      await expect(page.getByTestId('xero-sync-now')).toBeVisible({ timeout: 10000 });
+      await page.getByTestId('xero-sync-now').click();
+      await page.getByTestId('xero-confirm-sync').click();
+
+      // Verify partial success state - shows both synced and failed
+      const syncResult = page.getByTestId('xero-sync-result');
+      await expect(syncResult).toBeVisible({ timeout: 5000 });
+      
+      // Should show summary of partial success
+      await expect(syncResult.getByText(/synced 1 of 2/i)).toBeVisible();
+      
+      // Should show the failed employee with reason
+      await expect(syncResult.getByText(/missing xero/i)).toBeVisible();
+      await expect(syncResult.getByText(/jane worker/i)).toBeVisible();
     });
   });
 

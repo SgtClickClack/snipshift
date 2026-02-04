@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
+import { QUERY_KEYS, getShiftInvalidationKeys } from "@/lib/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/contexts/NotificationContext";
 import StartChatButton from "@/components/messaging/start-chat-button";
@@ -66,6 +67,7 @@ import {
   filterOverlappingSlots, 
   GeneratedShiftSlot 
 } from "@/utils/shift-slot-generator";
+import { groupEventsIntoBuckets, type BucketEvent } from "@/utils/shift-bucketing";
 import { AutoSlotAssignmentModal } from "./auto-slot-assignment-modal";
 import { fetchProfessionals, ProfessionalListItem, generateFromTemplates, previewGenerateFromTemplates } from "@/lib/api";
 import { ShiftAssignmentModal } from "./shift-assignment-modal";
@@ -1038,82 +1040,22 @@ function ProfessionalCalendarContent({
   }, [bookings, optimisticShifts, calendarSettings, mode, view, currentDate]);
 
   // Apply bucket grouping when shift templates exist (business mode)
+  // PERFORMANCE: Uses pre-indexed event map for O(1) day lookups
+  // Complexity reduced from O(days × templates × events) to O(days × templates + events)
   const eventsForDisplay = useMemo(() => {
     if (mode !== 'business' || !shiftTemplates?.length || !events?.length) {
       return events;
     }
     try {
-      let rangeStart: Date;
-      let rangeEnd: Date;
-      if (view === 'month') {
-        rangeStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        rangeEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      } else if (view === 'week') {
-        rangeStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-        rangeEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
-      } else {
-        rangeStart = new Date(currentDate);
-        rangeEnd = new Date(currentDate);
-      }
-      const getDayOfWeek = (d: Date) => d.getDay();
-      const assignedCount = (ev: CalendarEvent) => {
-        const shift = ev.resource?.booking?.shift || ev.resource?.booking?.job;
-        const raw = shift?.assignedStaff ?? shift?.assignments ?? shift?.professional;
-        const arr = Array.isArray(raw) ? raw : raw ? [raw] : [];
-        return arr.filter(Boolean).length;
-      };
-      const eventIdsInBuckets = new Set<string>();
-      const bucketEvents: CalendarEvent[] = [];
-      const d = new Date(rangeStart);
-      while (d <= rangeEnd) {
-        const dayOfWeek = getDayOfWeek(d);
-        const baseDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-        for (const t of shiftTemplates) {
-          if (t.dayOfWeek !== dayOfWeek) continue;
-          const [sh, sm] = t.startTime.split(':').map(Number);
-          const [eh, em] = t.endTime.split(':').map(Number);
-          const slotStart = new Date(baseDate);
-          slotStart.setHours(sh, sm, 0, 0);
-          const slotEnd = new Date(baseDate);
-          slotEnd.setHours(eh, em, 0, 0);
-          const matching = events.filter((ev) => {
-            if (eventIdsInBuckets.has(ev.id)) return false;
-            const evStart = ev.start instanceof Date ? ev.start : new Date(ev.start);
-            const evEnd = ev.end instanceof Date ? ev.end : new Date(ev.end);
-            if (!isSameDay(evStart, baseDate)) return false;
-            return (
-              evStart.getTime() === slotStart.getTime() && evEnd.getTime() === slotEnd.getTime()
-            ) || (
-              evStart.getTime() >= slotStart.getTime() && evEnd.getTime() <= slotEnd.getTime()
-            );
-          });
-          const filledCount = matching.reduce((sum, ev) => sum + assignedCount(ev), 0);
-          matching.forEach((ev) => eventIdsInBuckets.add(ev.id));
-          bucketEvents.push({
-            id: `bucket-${t.id}-${baseDate.getTime()}`,
-            title: `${t.label}: ${filledCount}/${t.requiredStaffCount}`,
-            start: slotStart,
-            end: slotEnd,
-            resource: {
-              type: 'bucket' as const,
-              status: filledCount >= t.requiredStaffCount ? 'confirmed' : filledCount > 0 ? 'pending' : 'unassigned',
-              bucket: {
-                key: `bucket-${t.id}-${baseDate.getTime()}`,
-                label: t.label,
-                filledCount,
-                requiredCount: t.requiredStaffCount,
-                events: matching,
-                start: slotStart,
-                end: slotEnd,
-                templateId: t.id,
-              } as ShiftBucket,
-            },
-          });
-        }
-        d.setDate(d.getDate() + 1);
-      }
-      const ungrouped = events.filter((ev) => !eventIdsInBuckets.has(ev.id));
-      return [...bucketEvents, ...ungrouped];
+      // Use optimized bucketing utility with pre-indexed event map
+      const { bucketEvents, ungroupedEvents } = groupEventsIntoBuckets(
+        events as BucketEvent[],
+        shiftTemplates,
+        { view, currentDate }
+      );
+      
+      // Merge bucket events with ungrouped events
+      return [...bucketEvents as CalendarEvent[], ...ungroupedEvents as CalendarEvent[]];
     } catch (err) {
       console.warn('[CALENDAR] Bucket transform error:', err);
       return events;
@@ -1517,9 +1459,10 @@ function ProfessionalCalendarContent({
 
       const result = await response.json();
 
-      // Invalidate queries to refresh the calendar
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
-      queryClient.invalidateQueries({ queryKey: ["shop-shifts"] });
+      // Invalidate queries to refresh the calendar using standardized keys
+      getShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: [key] })
+      );
 
       if (result.success) {
         toast({
@@ -1593,10 +1536,10 @@ function ProfessionalCalendarContent({
         defaultLocation: shiftFormData.location,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['employer-shifts'] });
+      // Invalidate all shift-related queries using standardized keys
+      getShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: [key] })
+      );
 
       setShowAutoFillModal(false);
       setAutoFillPreview(null);
@@ -1652,9 +1595,10 @@ function ProfessionalCalendarContent({
         }
       }
 
-      // Invalidate queries to refresh the calendar
-      queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      // Invalidate queries to refresh the calendar using standardized keys
+      getShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: [key] })
+      );
 
       toast({
         title: "Invites Sent",
@@ -1776,9 +1720,10 @@ function ProfessionalCalendarContent({
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
       
       // Invalidate both applications and shifts queries to refresh calendar (background refetch)
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
-      queryClient.invalidateQueries({ queryKey: ["shop-shifts"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
+      getShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: [key] })
+      );
       
       toast({
         title: mode === 'business' ? "Shift created" : "Event created",
@@ -1829,8 +1774,8 @@ function ProfessionalCalendarContent({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIFTS] });
       toast({
         title: "Event updated",
         description: "Shift has been rescheduled successfully",
@@ -1855,8 +1800,8 @@ function ProfessionalCalendarContent({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIFTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
       toast({
         title: "Staff invited",
         description: "An invitation has been sent to the selected professional",
@@ -1882,8 +1827,8 @@ function ProfessionalCalendarContent({
       return response.json();
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIFTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
       const count = variables.professionals.length;
       toast({
         title: `${count} professional${count > 1 ? 's' : ''} invited`,
@@ -1988,9 +1933,10 @@ function ProfessionalCalendarContent({
 
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
 
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
-      queryClient.invalidateQueries({ queryKey: ["shop-shifts"] });
+      // Invalidate queries using standardized keys
+      getShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: [key] })
+      );
 
       toast({
         title: "Shift created",
@@ -2094,9 +2040,10 @@ function ProfessionalCalendarContent({
 
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
 
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
-      queryClient.invalidateQueries({ queryKey: ["shop-shifts"] });
+      // Invalidate queries using standardized keys
+      getShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: [key] })
+      );
 
       toast({
         title: "Shift assigned",
@@ -2162,9 +2109,10 @@ function ProfessionalCalendarContent({
 
       setOptimisticShifts(prev => [...prev, optimisticEvent]);
 
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
-      queryClient.invalidateQueries({ queryKey: ["shop-shifts"] });
+      // Invalidate queries using standardized keys
+      getShiftInvalidationKeys().forEach(key => 
+        queryClient.invalidateQueries({ queryKey: [key] })
+      );
 
       toast({
         title: "Shift posted",

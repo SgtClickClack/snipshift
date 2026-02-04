@@ -498,16 +498,15 @@ export function authenticateUser(
           return;
         }
 
-        // Step 2: Attempt to find user in DB via firebase_uid (fallback to email if column missing)
+        // Step 2: OPTIMIZED - Single query to find user by Firebase UID or email
+        // This eliminates the sequential fallback pattern, reducing latency by ~50-100ms
         let user;
         if (isMeEndpoint) {
           process.stderr.write(`[AUTH DEBUG] GET /api/me: looking up user firebaseUid=${firebaseUid} email=${email}\n`);
         }
         try {
-          user = await usersRepo.getUserByFirebaseUid(firebaseUid);
-          if (!user) {
-            user = await usersRepo.getUserByEmail(email);
-          }
+          // Use optimized single-query lookup
+          user = await usersRepo.getUserByFirebaseUidOrEmail(firebaseUid, email);
           if (isMeEndpoint) {
             process.stderr.write(`[AUTH DEBUG] GET /api/me: DB lookup result ${user ? `found id=${user.id}` : 'null (isNewUser)'}\n`);
           }

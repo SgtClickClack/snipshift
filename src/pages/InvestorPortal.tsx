@@ -23,7 +23,7 @@ const logoUrl = '/hospogo-navbar-banner.png';
 
 /** Card styling - matches app's Landing page (bg-[#161616], border-zinc-800, brand-neon hover) */
 const portalCard =
-  'bg-[#161616] border border-zinc-800 rounded-3xl transition-all duration-300 ease-out hover:border-[#BFFF00]/50 hover:-translate-y-1';
+  'bg-[#161616] border border-zinc-800 rounded-3xl transition-all duration-300 ease-out hover:border-[#deff9a]/50 hover:-translate-y-1';
 
 export default function InvestorPortal() {
   const { toast } = useToast();
@@ -39,7 +39,7 @@ export default function InvestorPortal() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0a] text-[#f5f5f5] font-['Urbanist',sans-serif]">
+    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0a] text-[#f5f5f5] font-['Urbanist',sans-serif]" data-testid="investor-portal-page">
       <Helmet>
         <title>HospoGo | Private Investor Briefing</title>
         <meta name="description" content="Private investor briefing for HospoGo - The Future of Hospitality Logistics" />
@@ -57,22 +57,23 @@ export default function InvestorPortal() {
           />
         </Link>
         <div className="hidden md:flex gap-8 text-sm font-semibold tracking-wider uppercase">
-          <a href="#opportunity" className="hover:text-[#BFFF00] transition-colors">
+          <a href="#opportunity" className="hover:text-[#deff9a] transition-colors">
             Opportunity
           </a>
-          <a href="#trinity" className="hover:text-[#BFFF00] transition-colors">
+          <a href="#trinity" className="hover:text-[#deff9a] transition-colors">
             The Trinity
           </a>
-          <a href="#technical" className="hover:text-[#BFFF00] transition-colors">
+          <a href="#technical" className="hover:text-[#deff9a] transition-colors">
             Technical Audit
           </a>
-          <a href="#investment" className="hover:text-[#BFFF00] transition-colors">
+          <a href="#investment" className="hover:text-[#deff9a] transition-colors">
             The Ask
           </a>
         </div>
         <a
           href="#event"
-          className="bg-[#BFFF00] text-black px-6 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-opacity"
+          className="bg-[#deff9a] text-black px-6 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-opacity"
+          data-testid="button-rsvp-briefing"
         >
           RSVP BRIEFING
         </a>
@@ -80,11 +81,11 @@ export default function InvestorPortal() {
 
       {/* Hero Section */}
       <section className="min-h-screen flex flex-col justify-center items-center px-6 relative pt-20 bg-[radial-gradient(circle_at_center,rgba(191,255,0,0.08)_0%,transparent_70%)]">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#BFFF00] opacity-5 rounded-full blur-[120px]" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#deff9a] opacity-5 rounded-full blur-[120px]" />
         <div className="text-center max-w-4xl">
           <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-tight">
             The Future of <br />
-            <span className="text-[#BFFF00] [text-shadow:0_0_20px_rgba(191,255,0,0.4)]">
+            <span className="text-[#deff9a] [text-shadow:0_0_20px_rgba(191,255,0,0.4)]">
               Hospitality Logistics
             </span>
           </h1>
@@ -94,7 +95,7 @@ export default function InvestorPortal() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <div className={`${portalCard} px-6 sm:px-8 py-4 rounded-2xl flex items-center gap-3`}>
-              <span className="text-2xl sm:text-3xl font-bold text-[#BFFF00]">$168M</span>
+              <span className="text-2xl sm:text-3xl font-bold text-[#deff9a]">$168M</span>
               <span className="text-xs text-zinc-400 text-left uppercase font-bold tracking-widest leading-tight">
                 Australian
                 <br />
@@ -102,7 +103,7 @@ export default function InvestorPortal() {
               </span>
             </div>
             <div className={`${portalCard} px-6 sm:px-8 py-4 rounded-2xl flex items-center gap-3`}>
-              <span className="text-2xl sm:text-3xl font-bold text-[#BFFF00]">630+</span>
+              <span className="text-2xl sm:text-3xl font-bold text-[#deff9a]">630+</span>
               <span className="text-xs text-zinc-400 text-left uppercase font-bold tracking-widest leading-tight">
                 Audited R&D
                 <br />
@@ -110,7 +111,7 @@ export default function InvestorPortal() {
               </span>
             </div>
             <div className={`${portalCard} px-6 sm:px-8 py-4 rounded-2xl flex items-center gap-3`}>
-              <span className="text-2xl sm:text-3xl font-bold text-[#BFFF00]">100%</span>
+              <span className="text-2xl sm:text-3xl font-bold text-[#deff9a]">100%</span>
               <span className="text-xs text-zinc-400 text-left uppercase font-bold tracking-widest leading-tight">
                 E2E Test
                 <br />
@@ -127,7 +128,7 @@ export default function InvestorPortal() {
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           <div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 md:mb-8">
-              The <span className="text-[#BFFF00]">Suburban</span> Shift
+              The <span className="text-[#deff9a]">Suburban</span> Shift
             </h2>
             <p className="text-base md:text-lg text-zinc-400 mb-4 md:mb-6 leading-relaxed">
               Data from 2024-2025 shows a profound structural evolution. Suburban venues currently
@@ -141,14 +142,14 @@ export default function InvestorPortal() {
             </p>
             <div className="space-y-4">
               <div className="flex items-start gap-4">
-                <CheckCircle className="text-[#BFFF00] mt-1 h-5 w-5 flex-shrink-0" />
+                <CheckCircle className="text-[#deff9a] mt-1 h-5 w-5 flex-shrink-0" />
                 <div className="text-zinc-300">
                   <span className="font-bold text-white">Market Mandate:</span> 80% of venues plan a
                   tech upgrade in 2025/26.
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <CheckCircle className="text-[#BFFF00] mt-1 h-5 w-5 flex-shrink-0" />
+                <CheckCircle className="text-[#deff9a] mt-1 h-5 w-5 flex-shrink-0" />
                 <div className="text-zinc-300">
                   <span className="font-bold text-white">Efficiency Dividend:</span> 85% reduction in
                   roster-to-payroll admin time.
@@ -158,25 +159,25 @@ export default function InvestorPortal() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#BFFF00] text-2xl sm:text-3xl font-bold mb-2">6,141</h4>
+              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">6,141</h4>
               <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
                 Brisbane LGA Venues
               </p>
             </div>
             <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#BFFF00] text-2xl sm:text-3xl font-bold mb-2">3,231</h4>
+              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">3,231</h4>
               <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
                 Gold Coast Venues
               </p>
             </div>
             <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#BFFF00] text-2xl sm:text-3xl font-bold mb-2">$10M</h4>
+              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">$10M</h4>
               <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
                 Post-Money Val.
               </p>
             </div>
             <div className={`${portalCard} p-4 sm:p-6 rounded-3xl text-center`}>
-              <h4 className="text-[#BFFF00] text-2xl sm:text-3xl font-bold mb-2">10%</h4>
+              <h4 className="text-[#deff9a] text-2xl sm:text-3xl font-bold mb-2">10%</h4>
               <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
                 Equity Offered
               </p>
@@ -191,7 +192,7 @@ export default function InvestorPortal() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-              The HospoGo <span className="text-[#BFFF00]">Trinity</span>
+              The HospoGo <span className="text-[#deff9a]">Trinity</span>
             </h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
               One integrated ecosystem to eliminate administrative paralysis.
@@ -201,7 +202,7 @@ export default function InvestorPortal() {
             <div
               className={`${portalCard} p-8 md:p-10 rounded-[40px] relative overflow-hidden group`}
             >
-              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#BFFF00]/10 rounded-2xl flex items-center justify-center text-[#BFFF00] text-2xl md:text-3xl group-hover:bg-[#BFFF00] group-hover:text-black transition duration-500">
+              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#deff9a]/10 rounded-2xl flex items-center justify-center text-[#deff9a] text-2xl md:text-3xl group-hover:bg-[#deff9a] group-hover:text-black transition duration-500">
                 <Shield className="h-8 w-8" />
               </div>
               <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">The Vault</h3>
@@ -211,17 +212,17 @@ export default function InvestorPortal() {
               </p>
               <ul className="text-sm text-zinc-500 space-y-2">
                 <li className="flex items-center gap-2">
-                  <Plus className="text-[#BFFF00] h-4 w-4 flex-shrink-0" /> Auto-expiry alerts
+                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Auto-expiry alerts
                 </li>
                 <li className="flex items-center gap-2">
-                  <Plus className="text-[#BFFF00] h-4 w-4 flex-shrink-0" /> RSA/Licensing API Sync
+                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> RSA/Licensing API Sync
                 </li>
               </ul>
             </div>
             <div
               className={`${portalCard} p-8 md:p-10 rounded-[40px] relative overflow-hidden group`}
             >
-              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#BFFF00]/10 rounded-2xl flex items-center justify-center text-[#BFFF00] text-2xl md:text-3xl group-hover:bg-[#BFFF00] group-hover:text-black transition duration-500">
+              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#deff9a]/10 rounded-2xl flex items-center justify-center text-[#deff9a] text-2xl md:text-3xl group-hover:bg-[#deff9a] group-hover:text-black transition duration-500">
                 <Users className="h-8 w-8" />
               </div>
               <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">The Marketplace</h3>
@@ -231,17 +232,17 @@ export default function InvestorPortal() {
               </p>
               <ul className="text-sm text-zinc-500 space-y-2">
                 <li className="flex items-center gap-2">
-                  <Plus className="text-[#BFFF00] h-4 w-4 flex-shrink-0" /> Vetted Skill Profiles
+                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Vetted Skill Profiles
                 </li>
                 <li className="flex items-center gap-2">
-                  <Plus className="text-[#BFFF00] h-4 w-4 flex-shrink-0" /> Instant Shift Matching
+                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Instant Shift Matching
                 </li>
               </ul>
             </div>
             <div
               className={`${portalCard} p-8 md:p-10 rounded-[40px] relative overflow-hidden group`}
             >
-              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#BFFF00]/10 rounded-2xl flex items-center justify-center text-[#BFFF00] text-2xl md:text-3xl group-hover:bg-[#BFFF00] group-hover:text-black transition duration-500">
+              <div className="mb-6 md:mb-8 w-14 h-14 md:w-16 md:h-16 bg-[#deff9a]/10 rounded-2xl flex items-center justify-center text-[#deff9a] text-2xl md:text-3xl group-hover:bg-[#deff9a] group-hover:text-black transition duration-500">
                 <Cog className="h-8 w-8" />
               </div>
               <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">The Engine</h3>
@@ -251,10 +252,10 @@ export default function InvestorPortal() {
               </p>
               <ul className="text-sm text-zinc-500 space-y-2">
                 <li className="flex items-center gap-2">
-                  <Plus className="text-[#BFFF00] h-4 w-4 flex-shrink-0" /> Auto-Fill Logic
+                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> Auto-Fill Logic
                 </li>
                 <li className="flex items-center gap-2">
-                  <Plus className="text-[#BFFF00] h-4 w-4 flex-shrink-0" /> One-Click Xero Export
+                  <Plus className="text-[#deff9a] h-4 w-4 flex-shrink-0" /> One-Click Xero Export
                 </li>
               </ul>
             </div>
@@ -270,11 +271,11 @@ export default function InvestorPortal() {
             <Code className="h-24 w-24 md:h-36 md:w-36" />
           </div>
           <div className="max-w-3xl relative">
-            <span className="bg-[#BFFF00] text-black px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 inline-block">
+            <span className="bg-[#deff9a] text-black px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 inline-block">
               Technical Audit
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 md:mb-8">
-              Audited <span className="text-[#BFFF00]">Integrity</span>
+              Audited <span className="text-[#deff9a]">Integrity</span>
             </h2>
             <p className="text-lg md:text-xl text-zinc-400 mb-8 md:mb-10 leading-relaxed">
               Unlike &quot;conceptual&quot; startups, HospoGo is a verified technical asset. Our
@@ -282,7 +283,7 @@ export default function InvestorPortal() {
             </p>
             <div className="grid sm:grid-cols-2 gap-6 md:gap-8">
               <div className="flex gap-4">
-                <div className="text-[#BFFF00] text-2xl mt-1">
+                <div className="text-[#deff9a] text-2xl mt-1">
                   <FlaskConical className="h-6 w-6" />
                 </div>
                 <div>
@@ -293,7 +294,7 @@ export default function InvestorPortal() {
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="text-[#BFFF00] text-2xl mt-1">
+                <div className="text-[#deff9a] text-2xl mt-1">
                   <Lock className="h-6 w-6" />
                 </div>
                 <div>
@@ -304,7 +305,7 @@ export default function InvestorPortal() {
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="text-[#BFFF00] text-2xl mt-1">
+                <div className="text-[#deff9a] text-2xl mt-1">
                   <Zap className="h-6 w-6" />
                 </div>
                 <div>
@@ -315,7 +316,7 @@ export default function InvestorPortal() {
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="text-[#BFFF00] text-2xl mt-1">
+                <div className="text-[#deff9a] text-2xl mt-1">
                   <Layers className="h-6 w-6" />
                 </div>
                 <div>
@@ -332,7 +333,7 @@ export default function InvestorPortal() {
       </section>
 
       {/* Investment Section */}
-      <section id="investment" className="py-16 md:py-24 bg-[#BFFF00] text-black">
+      <section id="investment" className="py-16 md:py-24 bg-[#deff9a] text-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div>
@@ -368,7 +369,7 @@ export default function InvestorPortal() {
               <div className="absolute top-0 right-0 p-4 opacity-5 text-6xl md:text-8xl">
                 <PieChart className="h-20 w-20 md:h-32 md:w-32" />
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-[#BFFF00]">
+              <h3 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-[#deff9a]">
                 Use of Funds
               </h3>
               <div className="space-y-6 md:space-y-8">
@@ -378,7 +379,7 @@ export default function InvestorPortal() {
                     <span>40%</span>
                   </div>
                   <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#BFFF00] h-full w-[40%]" />
+                    <div className="bg-[#deff9a] h-full w-[40%]" />
                   </div>
                 </div>
                 <div>
@@ -387,7 +388,7 @@ export default function InvestorPortal() {
                     <span>35%</span>
                   </div>
                   <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#BFFF00] h-full w-[35%]" />
+                    <div className="bg-[#deff9a] h-full w-[35%]" />
                   </div>
                 </div>
                 <div>
@@ -396,7 +397,7 @@ export default function InvestorPortal() {
                     <span>25%</span>
                   </div>
                   <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#BFFF00] h-full w-[25%]" />
+                    <div className="bg-[#deff9a] h-full w-[25%]" />
                   </div>
                 </div>
               </div>
@@ -422,14 +423,14 @@ export default function InvestorPortal() {
         <div className={`${portalCard} p-8 md:p-10 rounded-[40px] mb-8 md:mb-12 text-left`}>
           <div className="grid md:grid-cols-2 gap-8 md:gap-10">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#BFFF00] mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#deff9a] mb-2">
                 Location
               </p>
               <p className="text-base md:text-lg font-bold">The Conference Room</p>
               <p className="text-zinc-500">Brisbane City, QLD</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#BFFF00] mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#deff9a] mb-2">
                 Live Demo
               </p>
               <p className="text-base md:text-lg font-bold">Trinity Engine & Xero Sync</p>
@@ -440,12 +441,13 @@ export default function InvestorPortal() {
         <Button
           onClick={handleConfirmAttendance}
           disabled={rsvpConfirmed}
-          className="bg-white text-black px-10 md:px-12 py-4 md:py-5 rounded-full font-black text-base md:text-lg hover:bg-[#BFFF00] transition duration-500 shadow-xl disabled:opacity-80"
+          className="bg-white text-black px-10 md:px-12 py-4 md:py-5 rounded-full font-black text-base md:text-lg hover:bg-[#deff9a] transition duration-500 shadow-xl disabled:opacity-80"
+          data-testid="button-confirm-attendance"
         >
           CONFIRM ATTENDANCE
         </Button>
         {rsvpConfirmed && (
-          <p className="mt-6 text-[#BFFF00] font-bold animate-pulse">
+          <p className="mt-6 text-[#deff9a] font-bold animate-pulse">
             Request Sent. Our team will finalize your access shortly.
           </p>
         )}
@@ -462,7 +464,7 @@ export default function InvestorPortal() {
             href="https://www.linkedin.com/company/hospogo"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#BFFF00] transition-colors"
+            className="hover:text-[#deff9a] transition-colors"
             aria-label="LinkedIn"
           >
             <Linkedin className="h-5 w-5" />
@@ -471,7 +473,7 @@ export default function InvestorPortal() {
             href="https://x.com/hospogo"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#BFFF00] transition-colors"
+            className="hover:text-[#deff9a] transition-colors"
             aria-label="X (Twitter)"
           >
             <svg
@@ -485,7 +487,7 @@ export default function InvestorPortal() {
           </a>
           <a
             href="mailto:info@hospogo.com"
-            className="hover:text-[#BFFF00] transition-colors"
+            className="hover:text-[#deff9a] transition-colors"
             aria-label="Email"
           >
             <Mail className="h-5 w-5" />

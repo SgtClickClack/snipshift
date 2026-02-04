@@ -126,30 +126,36 @@ export default function CapacityPlanner() {
       const toDelete = templates.filter((t) => !localSlots.some((s) => s.id === t.id));
       const toUpdate = localSlots.filter((s) => s.id);
 
-      for (const t of toDelete) {
-        await apiRequest('DELETE', `/api/shift-templates/${t.id}`);
-      }
-
-      for (const s of toCreate) {
-        await apiRequest('POST', '/api/shift-templates', {
-          dayOfWeek: s.dayOfWeek,
-          startTime: parseTimeToHHmm(s.startTime),
-          endTime: parseTimeToHHmm(s.endTime),
-          requiredStaffCount: Math.max(1, s.requiredStaffCount),
-          label: s.label.trim() || 'Shift',
-        });
-      }
-
-      for (const s of toUpdate) {
-        if (!s.id) continue;
-        await apiRequest('PUT', `/api/shift-templates/${s.id}`, {
-          dayOfWeek: s.dayOfWeek,
-          startTime: parseTimeToHHmm(s.startTime),
-          endTime: parseTimeToHHmm(s.endTime),
-          requiredStaffCount: Math.max(1, s.requiredStaffCount),
-          label: s.label.trim() || 'Shift',
-        });
-      }
+      // PERFORMANCE: Execute all API operations in parallel instead of sequentially
+      // All operations are independent: deletes don't affect creates or updates
+      await Promise.all([
+        // Delete templates in parallel
+        ...toDelete.map((t) => 
+          apiRequest('DELETE', `/api/shift-templates/${t.id}`)
+        ),
+        // Create new templates in parallel
+        ...toCreate.map((s) =>
+          apiRequest('POST', '/api/shift-templates', {
+            dayOfWeek: s.dayOfWeek,
+            startTime: parseTimeToHHmm(s.startTime),
+            endTime: parseTimeToHHmm(s.endTime),
+            requiredStaffCount: Math.max(1, s.requiredStaffCount),
+            label: s.label.trim() || 'Shift',
+          })
+        ),
+        // Update existing templates in parallel
+        ...toUpdate
+          .filter((s) => s.id) // Ensure we only update templates with IDs
+          .map((s) =>
+            apiRequest('PUT', `/api/shift-templates/${s.id}`, {
+              dayOfWeek: s.dayOfWeek,
+              startTime: parseTimeToHHmm(s.startTime),
+              endTime: parseTimeToHHmm(s.endTime),
+              requiredStaffCount: Math.max(1, s.requiredStaffCount),
+              label: s.label.trim() || 'Shift',
+            })
+          ),
+      ]);
 
       await queryClient.invalidateQueries({ queryKey: ['shift-templates'] });
       setHasChanges(false);

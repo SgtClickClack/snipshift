@@ -9,6 +9,37 @@ import { authenticateUser, AuthenticatedRequest, requireBusinessOwner } from '..
 import { asyncHandler } from '../../middleware/errorHandler.js';
 import * as xeroOauthService from '../../services/xero-oauth.service.js';
 import type { XeroTimesheetPayload } from '../../services/xero-oauth.service.js';
+import { mapXeroErrorToUserFriendly } from '../../services/xero-oauth.service.js';
+
+/**
+ * Partial Success Report for Xero Sync operations.
+ * UI can display each employee's sync status individually.
+ */
+export interface XeroSyncPartialReport {
+  /** Overall status: 'success' if all synced, 'partial' if some failed, 'failed' if all failed */
+  status: 'success' | 'partial' | 'failed';
+  /** Human-readable summary */
+  summary: string;
+  /** Total employees attempted */
+  totalAttempted: number;
+  /** Successfully synced employees */
+  synced: Array<{
+    staffUserId: string;
+    staffName?: string;
+    xeroEmployeeId: string;
+    hours: number;
+    status: 'success';
+  }>;
+  /** Failed employees with specific error details */
+  failed: Array<{
+    staffUserId: string;
+    staffName?: string;
+    errorCode: string;
+    userMessage: string;
+    technicalDetails: string;
+    isRecoverable: boolean;
+  }>;
+}
 import * as xeroRepo from '../../repositories/xero-integrations.repository.js';
 import * as usersRepo from '../../repositories/users.repository.js';
 import * as shiftsRepo from '../../repositories/shifts.repository.js';
@@ -17,20 +48,62 @@ const router = Router();
 
 const TOKEN_EXPIRY_BUFFER_MS = 60 * 1000; // Refresh if expiring within 1 min
 
+/**
+ * In-memory lock map to prevent race conditions during token refresh.
+ * Key: userId, Value: Promise that resolves when refresh completes.
+ * This ensures only one refresh attempt per user at a time.
+ */
+const tokenRefreshLocks = new Map<string, Promise<boolean>>();
+
+/**
+ * Get valid Xero tokens for a user, refreshing if necessary.
+ * Uses a lock mechanism to prevent race conditions where multiple
+ * concurrent requests could trigger simultaneous refresh attempts.
+ * Xero refresh tokens are single-use, so concurrent refreshes would fail.
+ */
 async function getValidTokens(userId: string): Promise<{ accessToken: string; tenantId: string } | null> {
+  // Check if a refresh is already in progress for this user
+  const existingRefresh = tokenRefreshLocks.get(userId);
+  if (existingRefresh) {
+    // Wait for the existing refresh to complete
+    await existingRefresh;
+    // After waiting, fetch the newly refreshed tokens
+    const freshTokens = await xeroRepo.getDecryptedTokens(userId);
+    if (!freshTokens) return null;
+    const integration = await xeroRepo.getXeroIntegrationByUserId(userId);
+    if (!integration) return null;
+    return { accessToken: freshTokens.accessToken, tenantId: integration.xeroTenantId };
+  }
+
   let tokens = await xeroRepo.getDecryptedTokens(userId);
   if (!tokens) return null;
 
   const expiresAt = tokens.expiresAt instanceof Date ? tokens.expiresAt : new Date(tokens.expiresAt);
   if (expiresAt.getTime() - TOKEN_EXPIRY_BUFFER_MS < Date.now()) {
+    // Create a refresh promise and store it in the lock map
+    const refreshPromise = (async (): Promise<boolean> => {
+      try {
+        const refreshed = await xeroOauthService.refreshAccessToken(tokens!.refreshToken);
+        const newExpiresAt = new Date(Date.now() + refreshed.expires_in * 1000);
+        await xeroRepo.updateTokens(userId, refreshed.access_token, refreshed.refresh_token, newExpiresAt);
+        tokens = { accessToken: refreshed.access_token, refreshToken: refreshed.refresh_token, expiresAt: newExpiresAt };
+        console.log('[XERO] Token refresh successful for user:', userId);
+        return true;
+      } catch (err) {
+        console.error('[XERO] Token refresh failed:', err);
+        return false;
+      }
+    })();
+
+    // Store the promise in the lock map
+    tokenRefreshLocks.set(userId, refreshPromise);
+
     try {
-      const refreshed = await xeroOauthService.refreshAccessToken(tokens.refreshToken);
-      const newExpiresAt = new Date(Date.now() + refreshed.expires_in * 1000);
-      await xeroRepo.updateTokens(userId, refreshed.access_token, refreshed.refresh_token, newExpiresAt);
-      tokens = { accessToken: refreshed.access_token, refreshToken: refreshed.refresh_token, expiresAt: newExpiresAt };
-    } catch (err) {
-      console.error('[XERO] Token refresh failed:', err);
-      return null;
+      const success = await refreshPromise;
+      if (!success) return null;
+    } finally {
+      // Always clean up the lock
+      tokenRefreshLocks.delete(userId);
     }
   }
 
@@ -157,6 +230,18 @@ router.get('/callback', asyncHandler(async (req, res) => {
       scope: tokens.scope,
     });
 
+    // Audit log: Connection established
+    await xeroRepo.logXeroOperation({
+      userId,
+      operation: 'CONNECT',
+      xeroTenantId: tenant.tenantId,
+      payload: {
+        tenantName: tenant.tenantName,
+        scopes: tokens.scope?.split(' ') ?? [],
+      },
+      result: { success: true },
+    });
+
     redirectToSettings({ xero: 'connected' });
   } catch (err) {
     console.error('[XERO] Callback error:', err);
@@ -198,7 +283,20 @@ router.delete('/', authenticateUser, asyncHandler(async (req: AuthenticatedReque
     return;
   }
 
+  // Get tenant ID before deletion for audit log
+  const integration = await xeroRepo.getXeroIntegrationByUserId(userId);
+  const tenantId = integration?.xeroTenantId;
+
   await xeroRepo.deleteXeroIntegration(userId);
+
+  // Audit log: Disconnection
+  await xeroRepo.logXeroOperation({
+    userId,
+    operation: 'DISCONNECT',
+    xeroTenantId: tenantId,
+    result: { success: true },
+  });
+
   res.status(200).json({ message: 'Xero disconnected' });
 }));
 
@@ -299,13 +397,37 @@ router.post('/map-employees', authenticateUser, requireBusinessOwner, asyncHandl
     }
   }
 
+  // Get tenant ID for audit log
+  const integration = await xeroRepo.getXeroIntegrationByUserId(userId);
+  const tenantId = integration?.xeroTenantId;
+
+  const auditEntries: Array<{ staffUserId: string; xeroEmployeeId: string | null; previousId: string | null }> = [];
+
   for (const m of mappings) {
+    // Get previous mapping for audit
+    const existingUser = await usersRepo.getUserById(m.userId);
+    const previousId = existingUser?.xeroEmployeeId ?? null;
+    
     await usersRepo.updateXeroEmployeeId(m.userId, m.xeroEmployeeId ?? null);
-    console.log('[XERO_MAP]', {
-      action: 'map_employee',
-      employerId: userId,
+    
+    auditEntries.push({
       staffUserId: m.userId,
-      xeroEmployeeId: m.xeroEmployeeId ?? 'cleared',
+      xeroEmployeeId: m.xeroEmployeeId ?? null,
+      previousId,
+    });
+
+    // Audit log: Employee mapping change
+    const operation = m.xeroEmployeeId ? 'MAP_EMPLOYEE' : 'UNMAP_EMPLOYEE';
+    await xeroRepo.logXeroOperation({
+      userId,
+      operation,
+      xeroTenantId: tenantId,
+      payload: {
+        staffUserId: m.userId,
+        xeroEmployeeId: m.xeroEmployeeId ?? null,
+        previousXeroEmployeeId: previousId,
+      },
+      result: { success: true },
     });
   }
 
@@ -389,8 +511,22 @@ router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHand
     return;
   }
 
-  const synced: Array<{ employeeId: string; xeroEmployeeId: string; hours: number; status: string }> = [];
-  const failed: Array<{ employeeId: string; reason: string }> = [];
+  // Enhanced tracking for partial success reporting
+  const synced: Array<{
+    staffUserId: string;
+    staffName?: string;
+    xeroEmployeeId: string;
+    hours: number;
+    status: 'success';
+  }> = [];
+  const failed: Array<{
+    staffUserId: string;
+    staffName?: string;
+    errorCode: string;
+    userMessage: string;
+    technicalDetails: string;
+    isRecoverable: boolean;
+  }> = [];
 
   try {
     const [calendars, payItems, shifts] = await Promise.all([
@@ -424,9 +560,25 @@ router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHand
     );
 
     const assigneeToXero = new Map<string, string>();
+    const staffNameMap = new Map<string, string>(); // For better error reporting
     for (const s of staffWithXero) {
-      if (s?.xeroEmployeeId) assigneeToXero.set(s.userId, s.xeroEmployeeId);
-      else if (s) failed.push({ employeeId: s.userId, reason: 'No Xero mapping' });
+      if (s?.xeroEmployeeId) {
+        assigneeToXero.set(s.userId, s.xeroEmployeeId);
+      } else if (s) {
+        // Get staff name for better error reporting
+        const staffUser = await usersRepo.getUserById(s.userId);
+        const staffName = staffUser?.name || staffUser?.email || s.userId;
+        staffNameMap.set(s.userId, staffName);
+        
+        failed.push({
+          staffUserId: s.userId,
+          staffName,
+          errorCode: 'MISSING_XERO_ID',
+          userMessage: 'Missing Xero Employee Mapping',
+          technicalDetails: `Staff member "${staffName}" does not have a Xero Employee ID mapped. Go to Settings > Xero Integration to map this employee.`,
+          isRecoverable: true,
+        });
+      }
     }
 
     const hoursByEmployee = new Map<string, Map<string, number>>();
@@ -470,38 +622,146 @@ router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHand
     }
 
     if (timesheets.length === 0) {
-      res.status(200).json({
-        message: 'No approved shifts with Xero mapping in date range',
+      const report: XeroSyncPartialReport = {
+        status: failed.length > 0 ? 'partial' : 'success',
+        summary: failed.length > 0 
+          ? `No shifts to sync. ${failed.length} employee${failed.length > 1 ? 's' : ''} missing Xero mapping.`
+          : 'No approved shifts with Xero mapping found in the selected date range.',
+        totalAttempted: failed.length,
         synced: [],
         failed,
-      });
+      };
+      res.status(200).json(report);
       return;
     }
 
-    await xeroOauthService.createTimesheet(tokens.accessToken, tokens.tenantId, timesheets);
-
+    // Process each timesheet individually for partial failure handling
+    // This ensures one employee's failure doesn't prevent others from syncing
     for (const ts of timesheets) {
       const totalHours = ts.TimesheetLines[0].NumberOfUnits.reduce((a, b) => a + b, 0);
       const staffEntry = staffWithXero.find((s) => s?.xeroEmployeeId === ts.EmployeeID);
-      synced.push({
-        employeeId: staffEntry?.userId ?? ts.EmployeeID,
-        xeroEmployeeId: ts.EmployeeID,
-        hours: totalHours,
-        status: 'success',
-      });
+      const staffUserId = staffEntry?.userId ?? ts.EmployeeID;
+      
+      // Get staff name for better error reporting
+      let staffName: string | undefined;
+      if (staffUserId && staffUserId !== ts.EmployeeID) {
+        const staffUser = await usersRepo.getUserById(staffUserId);
+        staffName = staffUser?.name || staffUser?.email;
+      }
+
+      try {
+        await xeroOauthService.createTimesheet(tokens.accessToken, tokens.tenantId, [ts]);
+        synced.push({
+          staffUserId,
+          staffName,
+          xeroEmployeeId: ts.EmployeeID,
+          hours: totalHours,
+          status: 'success',
+        });
+        console.log('[XERO_SYNC]', {
+          action: 'timesheet_created',
+          employerId: userId,
+          staffUserId,
+          staffName,
+          xeroEmployeeId: ts.EmployeeID,
+          hours: totalHours,
+          period: `${periodStart} to ${periodEnd}`,
+        });
+      } catch (err) {
+        // Use enhanced error mapping for user-friendly messages
+        const statusCode = (err as any)?.statusCode || 500;
+        const rawResponse = (err as any)?.rawResponse || (err instanceof Error ? err.message : 'Unknown error');
+        const errorMapping = mapXeroErrorToUserFriendly(statusCode, rawResponse);
+        
+        failed.push({
+          staffUserId,
+          staffName,
+          errorCode: errorMapping.code,
+          userMessage: errorMapping.userMessage,
+          technicalDetails: errorMapping.technicalDetails,
+          isRecoverable: errorMapping.isRecoverable,
+        });
+        console.error('[XERO_SYNC]', {
+          action: 'timesheet_failed',
+          employerId: userId,
+          staffUserId,
+          staffName,
+          xeroEmployeeId: ts.EmployeeID,
+          errorCode: errorMapping.code,
+          error: errorMapping.technicalDetails,
+        });
+      }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Sync failed';
     console.error('[XERO] Sync timesheet error:', err);
-    res.status(500).json({
-      message: msg,
+    
+    // Return PartialSuccessReport even on error
+    const report: XeroSyncPartialReport = {
+      status: synced.length > 0 ? 'partial' : 'failed',
+      summary: synced.length > 0 
+        ? `Partial sync: ${synced.length} succeeded before error. Error: ${msg}`
+        : `Sync failed: ${msg}`,
+      totalAttempted: synced.length + failed.length,
       synced,
       failed,
-    });
+    };
+    res.status(500).json(report);
     return;
   }
 
-  res.status(200).json({ synced, failed });
+  // Build PartialSuccessReport for clear UI feedback
+  const successCount = synced.length;
+  const failCount = failed.length;
+  const totalAttempted = successCount + failCount;
+  const totalHoursSynced = synced.reduce((sum, s) => sum + (s.hours ?? 0), 0);
+  
+  // Determine overall status
+  let status: 'success' | 'partial' | 'failed';
+  let summary: string;
+  
+  if (failCount === 0 && successCount > 0) {
+    status = 'success';
+    summary = `Successfully synced ${successCount} employee${successCount > 1 ? 's' : ''} (${totalHoursSynced.toFixed(1)} hours)`;
+  } else if (successCount === 0) {
+    status = 'failed';
+    summary = `Sync failed for all ${failCount} employee${failCount > 1 ? 's' : ''}`;
+  } else {
+    status = 'partial';
+    summary = `Synced ${successCount} of ${totalAttempted} employees. ${failCount} failed.`;
+  }
+  
+  // Audit log: Timesheet sync completion
+  await xeroRepo.logXeroOperation({
+    userId,
+    operation: successCount > 0 ? 'SYNC_TIMESHEET' : 'SYNC_TIMESHEET_FAILED',
+    xeroTenantId: tokens.tenantId,
+    payload: {
+      calendarId,
+      periodStart,
+      periodEnd,
+      employeesAttempted: totalAttempted,
+    },
+    result: {
+      success: successCount > 0,
+      syncedCount: successCount,
+      failedCount: failCount,
+      totalHours: totalHoursSynced,
+      syncedEmployees: synced.map(s => ({ staffId: s.staffUserId, xeroId: s.xeroEmployeeId, hours: s.hours })),
+      failedEmployees: failed.map(f => ({ staffId: f.staffUserId, errorCode: f.errorCode, reason: f.userMessage })),
+    },
+  });
+
+  // Return PartialSuccessReport
+  const report: XeroSyncPartialReport = {
+    status,
+    summary,
+    totalAttempted,
+    synced,
+    failed,
+  };
+  
+  res.status(200).json(report);
 }));
 
 export default router;

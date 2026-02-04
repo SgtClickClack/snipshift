@@ -35,6 +35,7 @@ import { normalizeRole } from '../utils/normalizeRole.js';
 import * as shiftMessagesRepo from '../repositories/shift-messages.repository.js';
 import * as shiftGenerationService from '../services/shift-generation.service.js';
 import { uploadProofImage } from '../middleware/upload.js';
+import { PAYMENT_CONFIG } from '../config/business.config.js';
 import admin from 'firebase-admin';
 import type { ErrorContext } from '../services/error-reporting.service.js';
 
@@ -2223,11 +2224,10 @@ router.post('/bulk-accept', authenticateUser, asyncHandler(async (req: Authentic
           commissionAmount = Math.round(shiftAmount * commissionRate);
         }
       } else {
-        // No subscription (Starter/free tier): apply $20 booking fee per shift
-        // Using $20 flat fee (2000 cents) as documented in pricing
-        const BOOKING_FEE_CENTS = 2000;
-        commissionAmount = BOOKING_FEE_CENTS;
-        console.log(`[SHIFTS] Applying $20 booking fee for employer ${shift.employerId} (no subscription)`);
+        // No subscription (Starter/free tier): apply flat booking fee per shift
+        // Fee amount configured via PAYMENT_CONFIG (default $20 = 2000 cents)
+        commissionAmount = PAYMENT_CONFIG.BOOKING_FEE_CENTS;
+        console.log(`[SHIFTS] Applying $${PAYMENT_CONFIG.BOOKING_FEE_CENTS / 100} booking fee for employer ${shift.employerId} (no subscription)`);
       }
       
       const barberAmount = shiftAmount - commissionAmount;

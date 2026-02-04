@@ -26,6 +26,7 @@ import { Clock, Save, Sun, Sunset, Moon, Calendar, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearAllShifts } from "@/lib/api";
+import { getCalendarInvalidationKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 export type ShiftPattern = 'full-day' | 'half-day' | 'thirds' | 'custom';
@@ -184,19 +185,13 @@ export default function CalendarSettingsModal({
         description: successMessage,
       });
       
-      // Invalidate and refetch all shift and job-related queries
+      // Invalidate and refetch all calendar-related queries using standardized keys
       // Use refetchType: 'all' to ensure data is refetched immediately
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['shop-schedule-shifts'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['/api/shifts'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['shop-shifts'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['bookings'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['/api/jobs'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['jobs'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['my-jobs'], refetchType: 'all' }),
-        // Also invalidate employer shifts query used by professional calendar
-        queryClient.invalidateQueries({ queryKey: ['employer-shifts'], refetchType: 'all' }),
-      ]);
+      await Promise.all(
+        getCalendarInvalidationKeys().map(key =>
+          queryClient.invalidateQueries({ queryKey: [key], refetchType: 'all' })
+        )
+      );
       
       // Force a small delay to ensure refetch completes before UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
