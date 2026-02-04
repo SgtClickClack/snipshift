@@ -419,11 +419,11 @@ export default function InvestorPortal() {
       >
         {/* Navigation */}
         <nav className="fixed w-full z-50 px-4 md:px-6 py-4 flex justify-between items-center backdrop-blur-md border-b border-white/5 bg-black/20">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <span className="text-2xl font-black tracking-tighter italic">
               HOSPO<span style={{ color: '#BAFF39' }}>GO</span>
             </span>
-          </div>
+          </Link>
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-8 text-[10px] font-bold tracking-[0.3em] uppercase">
@@ -704,9 +704,9 @@ export default function InvestorPortal() {
         {/* Footer */}
         <footer className="py-16 px-6 border-t border-white/5">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <span className="text-2xl font-black tracking-tighter italic">
+            <Link to="/" className="text-2xl font-black tracking-tighter italic hover:opacity-80 transition-opacity">
               HOSPO<span style={{ color: '#BAFF39' }}>GO</span>
-            </span>
+            </Link>
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
               <button
                 onClick={() => setShowFeedbackModal(true)}
