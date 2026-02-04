@@ -105,7 +105,7 @@ export function Footer() {
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
               <Link
                 to="/investorportal"
-                className="text-steel-400 hover:text-[#deff9a] transition-colors text-sm">
+                className="text-steel-400 hover:text-[#BFFF00] transition-colors text-sm">
                 Private Investor Briefing
               </Link>
               <a 

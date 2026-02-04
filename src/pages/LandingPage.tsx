@@ -204,7 +204,7 @@ export default function LandingPage() {
                     <Link to="/investorportal" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="w-full sm:w-auto border-2 border-[#deff9a]/20 text-[#deff9a] font-bold px-12 py-5 rounded-full hover:border-[#deff9a]/50 hover:shadow-[0_0_12px_rgba(222,255,154,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        className="w-full sm:w-auto border-2 border-[#BFFF00]/20 text-[#BFFF00] font-bold px-12 py-5 rounded-full hover:border-[#BFFF00]/50 hover:shadow-[0_0_12px_rgba(191,255,0,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
                         data-testid="button-investor-briefing"
                       >
                         <ChartLine className="h-4 w-4" />
@@ -227,7 +227,7 @@ export default function LandingPage() {
                     <Link to="/investorportal" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="w-full sm:w-auto border-2 border-[#deff9a]/20 text-[#deff9a] font-bold px-12 py-5 rounded-full hover:border-[#deff9a]/50 hover:shadow-[0_0_12px_rgba(222,255,154,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        className="w-full sm:w-auto border-2 border-[#BFFF00]/20 text-[#BFFF00] font-bold px-12 py-5 rounded-full hover:border-[#BFFF00]/50 hover:shadow-[0_0_12px_rgba(191,255,0,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
                         data-testid="button-investor-briefing"
                       >
                         <ChartLine className="h-4 w-4" />
