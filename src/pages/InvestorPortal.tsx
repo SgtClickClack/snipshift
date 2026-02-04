@@ -244,7 +244,7 @@ export default function InvestorPortal() {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user, hasUser } = useAuth();
+  const { user, hasFirebaseUser } = useAuth();
   
   // Handle feedback submission
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
@@ -482,9 +482,9 @@ export default function InvestorPortal() {
         )}
 
         {/* Back to Dashboard - Floating button for logged-in users with brand neon glow */}
-        {/* Hidden when document modal is open to prevent z-index bleed-through */}
-        {/* Z-Index: 60 - Above chat widget (40) but below navbar (50 is navbar, this floats independently) */}
-        {hasUser && !selectedDoc && (
+        {/* Uses hasFirebaseUser for faster auth resolution - no waiting for full profile load */}
+        {/* Z-Index: 60 - Floats above content, below modals (z-100+) */}
+        {hasFirebaseUser && (
           <Link
             to={getDashboardPath()}
             className="fixed bottom-6 left-6 z-60 flex items-center gap-2 px-5 py-3 rounded-full bg-black/80 backdrop-blur-md border-2 border-[#BAFF39]/40 text-white text-xs font-bold uppercase tracking-widest hover:bg-black hover:border-[#BAFF39] transition-all duration-300 shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:shadow-[0_0_30px_rgba(186,255,57,0.5)] group"
