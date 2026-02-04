@@ -303,30 +303,65 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const effectivelyOnboarding = currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection' || isOnboardingModeRef.current;
 
-    // PARALLEL FETCH with Promise.allSettled
-    // Launch BOTH /api/me and /api/venues/me simultaneously for faster load
-    
-    // Create both fetch promises upfront
-    const userFetchPromise = fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
-    const venueFetchPromise = fetch(`${getApiBase()}/api/venues/me`, {
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    }).then(res => {
-      if (res.ok) return res.json();
-      if (res.status === 404) return { __notFound: true };
-      if (res.status === 429) return { __rateLimited: true };
-      return null;
-    }).catch(() => null);
-    
-    // Execute BOTH in parallel
-    const [userResult, venueResult] = await Promise.allSettled([userFetchPromise, venueFetchPromise]);
-    
-    // Extract results
-    const apiResponse = userResult.status === 'fulfilled' ? userResult.value : null;
-    const venueData = venueResult.status === 'fulfilled' ? venueResult.value : null;
+    // PERFORMANCE OPTIMIZATION: Use single /api/bootstrap endpoint
+    // This returns both user and venue data in one request, cutting auth overhead in half
+    let apiResponse: AppUserResponse | null = null;
+    let venueData: any = null;
+
+    try {
+      const bootstrapStart = Date.now();
+      const bootstrapRes = await fetch(`${getApiBase()}/api/bootstrap`, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
+
+      if (bootstrapRes.ok) {
+        const bootstrapData = await bootstrapRes.json();
+        const bootstrapElapsed = Date.now() - bootstrapStart;
+        logger.info('AuthContext', `Bootstrap completed in ${bootstrapElapsed}ms`);
+        
+        // Map bootstrap response to existing format
+        if (bootstrapData.needsOnboarding) {
+          apiResponse = {
+            user: null,
+            firebaseUser: bootstrapData.firebaseUser,
+            needsOnboarding: true,
+          };
+        } else if (bootstrapData.user) {
+          apiResponse = { user: bootstrapData.user };
+          venueData = bootstrapData.venue || { __notFound: true };
+        }
+      } else if (bootstrapRes.status === 404) {
+        // User not found - needs onboarding
+        apiResponse = { user: null, needsOnboarding: true };
+      } else {
+        throw new Error(`Bootstrap failed with status ${bootstrapRes.status}`);
+      }
+    } catch (bootstrapErr) {
+      // Fallback: Use legacy parallel fetch if bootstrap fails
+      logger.warn('AuthContext', 'Bootstrap failed, falling back to parallel fetch', bootstrapErr);
+      
+      const userFetchPromise = fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
+      const venueFetchPromise = fetch(`${getApiBase()}/api/venues/me`, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }).then(res => {
+        if (res.ok) return res.json();
+        if (res.status === 404) return { __notFound: true };
+        if (res.status === 429) return { __rateLimited: true };
+        return null;
+      }).catch(() => null);
+      
+      const [userResult, venueResult] = await Promise.allSettled([userFetchPromise, venueFetchPromise]);
+      apiResponse = userResult.status === 'fulfilled' ? userResult.value : null;
+      venueData = venueResult.status === 'fulfilled' ? venueResult.value : null;
+    }
 
     // Determine if we need venue data based on user's role
     const userRole = apiResponse?.user?.currentRole || apiResponse?.user?.role || '';

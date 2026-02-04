@@ -250,6 +250,71 @@ router.get('/callback', asyncHandler(async (req, res) => {
 }));
 
 /**
+ * GET /api/integrations/xero/sync-history
+ * Returns recent sync history for audit trail display
+ */
+router.get('/sync-history', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+
+  // Fetch audit logs for SYNC_TIMESHEET operations
+  const auditLogs = await xeroRepo.getXeroAuditLog(userId, limit * 2, 0);
+  
+  // Filter and transform to sync history format
+  const syncHistory = auditLogs
+    .filter(log => log.operation === 'SYNC_TIMESHEET' || log.operation === 'SYNC_TIMESHEET_FAILED')
+    .slice(0, limit)
+    .map(log => {
+      const payload = log.payload as {
+        calendarId?: string;
+        periodStart?: string;
+        periodEnd?: string;
+        employeesAttempted?: number;
+      } | null;
+      const result = log.result as {
+        success?: boolean;
+        syncedCount?: number;
+        failedCount?: number;
+        totalHours?: number;
+      } | null;
+
+      // Determine status
+      let status: 'success' | 'partial' | 'failed' = 'failed';
+      const syncedCount = result?.syncedCount ?? 0;
+      const failedCount = result?.failedCount ?? 0;
+      
+      if (syncedCount > 0 && failedCount === 0) {
+        status = 'success';
+      } else if (syncedCount > 0 && failedCount > 0) {
+        status = 'partial';
+      }
+
+      return {
+        id: log.id,
+        syncedAt: log.createdAt.toISOString(),
+        status,
+        totalEmployees: payload?.employeesAttempted ?? (syncedCount + failedCount),
+        syncedEmployees: syncedCount,
+        failedEmployees: failedCount,
+        totalHours: result?.totalHours ?? 0,
+        calendarName: 'Payroll Calendar', // Calendar name not stored in audit log
+        dateRange: {
+          start: payload?.periodStart ?? '',
+          end: payload?.periodEnd ?? '',
+        },
+        auditLogUrl: `/admin/audit/xero/${log.id}`,
+      };
+    });
+
+  res.status(200).json(syncHistory);
+}));
+
+/**
  * GET /api/integrations/xero/status
  * Returns connection status for UI
  */

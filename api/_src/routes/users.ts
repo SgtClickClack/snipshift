@@ -17,7 +17,7 @@ import { getCorrelationId } from '../middleware/correlation-id.js';
 import { maskEmail } from '../utils/mask-contact.js';
 import { hasEmployerAssigneeRelationship } from '../repositories/shifts.repository.js';
 import { withTransaction } from '../db/transactions.js';
-import { createVenueInTransaction } from '../repositories/venues.repository.js';
+import { createVenueInTransaction, getVenueByUserId } from '../repositories/venues.repository.js';
 import { users, venues } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
@@ -526,6 +526,123 @@ router.get('/me', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (
       message: 'Internal server error',
       error: error?.message || 'Unknown error',
       stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
+  }
+}));
+
+/**
+ * GET /api/bootstrap
+ * 
+ * PERFORMANCE: Returns both user profile AND venue data in a single authenticated request.
+ * This cuts auth overhead in half (1 Firebase verification instead of 2) and reduces
+ * network round trips from 2 to 1.
+ * 
+ * Response shape:
+ * {
+ *   user: {...} | null,      // Full user profile (same as /api/me)
+ *   venue: {...} | null,     // Venue data if business user (same as /api/venues/me)
+ *   needsOnboarding: boolean
+ * }
+ */
+router.get('/bootstrap', rateLimitRegisterAndMe, authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const startTime = Date.now();
+  
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // New user: no DB profile yet
+    if (req.user.isNewUser || req.user.needsOnboarding || !req.user.id) {
+      res.status(200).json({
+        user: null,
+        venue: null,
+        needsOnboarding: true,
+        firebaseUser: req.user,
+      });
+      return;
+    }
+
+    const userId = req.user.id;
+    
+    // PARALLEL FETCH: Get user and venue data simultaneously
+    const [user, venue] = await Promise.all([
+      usersRepo.getUserById(userId),
+      getVenueByUserId(userId),
+    ]);
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const profileCompliance = await profilesRepo.getProfileCompliance(userId);
+    
+    // Determine if this is a venue role
+    const role = (user.role || '').toLowerCase();
+    const isVenueRole = ['business', 'venue', 'hub'].includes(role) ||
+      (user.roles || []).some((r: string) => ['business', 'venue', 'hub'].includes((r || '').toLowerCase()));
+
+    // Build response
+    const userResponse = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      displayName: user.name,
+      bio: user.bio,
+      phone: user.phone,
+      location: user.location,
+      avatarUrl: user.avatarUrl || null,
+      bannerUrl: user.bannerUrl || null,
+      rsaVerified: (user as any).rsaVerified ?? false,
+      rsaNotRequired: (user as any).rsaNotRequired ?? false,
+      rsaNumber: (user as any).rsaNumber ?? null,
+      rsaExpiry: (user as any).rsaExpiry ?? null,
+      rsaStateOfIssue: (user as any).rsaStateOfIssue ?? null,
+      rsaCertificateUrl: (user as any).rsaCertUrl ?? (user as any).rsaCertificateUrl ?? null,
+      profile: profileCompliance,
+      hospitalityRole: (user as any).hospitalityRole ?? null,
+      hourlyRatePreference: (user as any).hourlyRatePreference
+        ? parseFloat((user as any).hourlyRatePreference)
+        : null,
+      roles: user.roles || [user.role],
+      currentRole: user.role,
+      uid: req.user.uid,
+      averageRating: user.averageRating ? parseFloat(user.averageRating) : null,
+      reviewCount: user.reviewCount ? parseInt(user.reviewCount, 10) : 0,
+      isOnboarded: user.isOnboarded ?? false,
+      hasCompletedOnboarding: (user as any).hasCompletedOnboarding ?? false,
+      notificationPreferences: (user as any).notificationPreferences || null,
+      favoriteProfessionals: (user as any).favoriteProfessionals || [],
+    };
+
+    // Format venue response (only for venue roles)
+    const venueResponse = venue && isVenueRole ? {
+      id: venue.id,
+      userId: venue.userId,
+      venueName: venue.venueName,
+      liquorLicenseNumber: venue.liquorLicenseNumber,
+      address: venue.address,
+      operatingHours: venue.operatingHours,
+      status: venue.status,
+      createdAt: venue.createdAt.toISOString(),
+      updatedAt: venue.updatedAt.toISOString(),
+    } : null;
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[BOOTSTRAP] Completed in ${elapsed}ms - user: ${user.email}, venue: ${venue ? 'found' : 'none'}`);
+
+    res.status(200).json({
+      user: userResponse,
+      venue: venueResponse,
+      needsOnboarding: false,
+    });
+  } catch (error: any) {
+    console.error('[BOOTSTRAP ERROR]', error);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error?.message || 'Unknown error',
     });
   }
 }));
