@@ -14,6 +14,7 @@ import { SEO } from '@/components/seo/SEO';
 import { Building2, CreditCard, CheckCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import getStripe from '@/lib/stripe';
+import { safeGetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 // Initialize Stripe
 const stripePromise = getStripe();
@@ -180,8 +181,8 @@ export default function HubOnboardingPage() {
   useEffect(() => {
     if (isVerifyingUser) return; // Don't process until user is verified
     
-    const planPreference = sessionStorage.getItem('signupPlanPreference');
-    const trialMode = sessionStorage.getItem('signupTrialMode') === 'true';
+    const planPreference = safeGetItem('signupPlanPreference', true);
+    const trialMode = safeGetItem('signupTrialMode', true) === 'true';
     
     setIsTrialMode(trialMode);
 
@@ -316,7 +317,7 @@ export default function HubOnboardingPage() {
         // No payment needed (Starter tier): only go to dashboard once venue check passes
         clearSessionStorage();
         if (venueReady) {
-          navigate('/venue/dashboard', { replace: true });
+          navigate('/venue/dashboard?setup=complete', { replace: true });
         }
         // If !venueReady, stay on hub (e.g. 429/404); AuthContext keeps isVenueMissing true
       }
@@ -388,7 +389,7 @@ export default function HubOnboardingPage() {
 
       const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
       clearSessionStorage();
-      if (venueReady) navigate('/venue/dashboard', { replace: true });
+      if (venueReady) navigate('/venue/dashboard?setup=complete', { replace: true });
     } catch (error: any) {
       console.error('Subscription error:', error);
       toast({
@@ -398,16 +399,16 @@ export default function HubOnboardingPage() {
       });
       const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
       clearSessionStorage();
-      if (venueReady) navigate('/venue/dashboard', { replace: true });
+      if (venueReady) navigate('/venue/dashboard?setup=complete', { replace: true });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const clearSessionStorage = () => {
-    sessionStorage.removeItem('signupPlanPreference');
-    sessionStorage.removeItem('signupTrialMode');
-    sessionStorage.removeItem('signupRolePreference');
+    safeRemoveItem('signupPlanPreference', true);
+    safeRemoveItem('signupTrialMode', true);
+    safeRemoveItem('signupRolePreference', true);
   };
 
   const skipPayment = async () => {
@@ -418,7 +419,7 @@ export default function HubOnboardingPage() {
     });
     const { venueReady } = refreshUser ? await refreshUser() : { venueReady: false };
     clearSessionStorage();
-    if (venueReady) navigate('/venue/dashboard', { replace: true });
+    if (venueReady) navigate('/venue/dashboard?setup=complete', { replace: true });
   };
 
   // Determine total steps
@@ -536,29 +537,42 @@ export default function HubOnboardingPage() {
                 {currentStep === 2 && <CreditCard className="h-6 w-6 text-brand-dark" />}
                 {currentStep === 3 && <CheckCircle className="h-6 w-6 text-brand-dark" />}
               </div>
-              <CardTitle className="text-2xl text-gray-100 font-semibold">
-                {currentStep === 1 && 'Create Venue Profile'}
-                {currentStep === 2 && 'Add Payment Method'}
-                {currentStep === 3 && 'Setting Up Your Account'}
+              <CardTitle className="text-2xl text-gray-100 font-black tracking-tighter">
+                {currentStep === 1 && 'Welcome to The Foundry'}
+                {currentStep === 2 && 'Financial Integration'}
+                {currentStep === 3 && 'Activating Your Hospitality Engine'}
               </CardTitle>
-              <CardDescription>
-                {currentStep === 1 && 'Tell us about your business to start hiring pros'}
-                {currentStep === 2 && (
+              <CardDescription className="text-steel-300">
+                {currentStep === 1 && (
                   <>
-                    Add a payment method to start your {isTrialMode ? '14-day free trial' : 'subscription'}
+                    Build your venue identity and unlock the <span className="text-[#BAFF39] font-semibold">$149/month Logistics Platform Fee</span>
                     <br />
-                    <span className="text-xs text-steel-400">
-                      {isTrialMode && "You won't be charged until your trial ends"}
+                    <span className="text-xs text-steel-400 mt-1 block">
+                      One flat fee. No success taxes. No per-shift charges.
                     </span>
                   </>
                 )}
-                {currentStep === 3 && 'Almost there! We\'re activating your subscription...'}
+                {currentStep === 2 && (
+                  <>
+                    Connect your payment method to activate the Hospitality Engine
+                    <br />
+                    <span className="text-xs text-steel-400">
+                      {isTrialMode ? "14-day free trial - you won't be charged until it ends" : 'Secure payment processing via Stripe'}
+                    </span>
+                  </>
+                )}
+                {currentStep === 3 && (
+                  <>
+                    Almost there! Initializing your <span className="text-[#BAFF39]">Hospitality Engine</span>...
+                  </>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {/* Step 1: Venue Details */}
               {currentStep === 1 && (
                 <form onSubmit={handleVenueDetailsSubmit} className="space-y-6" noValidate>
+                  {/* Step 1: Venue Identity - High-fidelity Glassmorphism */}
                   <div className="space-y-2">
                     <Label htmlFor="venueName" className="text-steel-200 font-medium">Venue Name *</Label>
                     <Input
@@ -569,7 +583,7 @@ export default function HubOnboardingPage() {
                       onBlur={handleBlur}
                       placeholder="e.g. The Grand Hotel"
                       required
-                      className={`bg-card text-foreground placeholder:text-steel-500/80 focus-visible:ring-brand-neon focus-visible:border-brand-neon ${
+                      className={`bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-[#BAFF39] focus-visible:border-[#BAFF39] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] ${
                         getFieldError('venueName', formData.venueName, true) 
                           ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500' 
                           : ''
@@ -581,7 +595,7 @@ export default function HubOnboardingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="location" className="text-steel-200 font-medium">Location *</Label>
+                    <Label htmlFor="location" className="text-steel-200 font-medium">LGA / Location *</Label>
                     <LocationInput
                       value={formData.location}
                       onChange={(val) => {
@@ -602,9 +616,9 @@ export default function HubOnboardingPage() {
                           setBlurredFields(prev => new Set(prev).add('location'));
                         }
                       }}
-                      placeholder="Start typing a city or address..."
+                      placeholder="Start typing a Brisbane suburb or address..."
                       readyToLoadMaps={isAuthReady}
-                      className={`bg-card text-foreground placeholder:text-steel-500/80 ${
+                      className={`bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-[#BAFF39] focus-visible:border-[#BAFF39] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] ${
                         getFieldError('location', formData.location, true) 
                           ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500' 
                           : ''
@@ -613,7 +627,7 @@ export default function HubOnboardingPage() {
                     {getFieldError('location', formData.location, true) && (
                       <p className="text-xs text-red-400">{getFieldError('location', formData.location, true)}</p>
                     )}
-                    <p className="text-xs text-steel-500/80">
+                    <p className="text-xs text-steel-400">
                       Select a location from the suggestions as you type.
                     </p>
                   </div>
@@ -628,8 +642,17 @@ export default function HubOnboardingPage() {
                       onBlur={handleBlur}
                       placeholder="Briefly describe your venue..."
                       rows={4}
-                      className="bg-card text-foreground placeholder:text-steel-500/80"
+                      className="bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-steel-400 focus-visible:ring-[#BAFF39] focus-visible:border-[#BAFF39] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
                     />
+                  </div>
+
+                  {/* Step 2: Capacity Baseline Info */}
+                  <div className="p-4 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+                    <p className="text-sm text-steel-300">
+                      <span className="text-[#BAFF39] font-semibold">Next Step:</span> After creating your venue, you'll configure{' '}
+                      <span className="text-white font-medium">Capacity Templates</span> — the brain of your Hospitality Engine.
+                      These templates tell us how many staff you need for each shift type.
+                    </p>
                   </div>
 
                   <Button 

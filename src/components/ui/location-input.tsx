@@ -38,7 +38,7 @@ interface LocationInputProps {
   'data-testid'?: string;
 }
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 500;
 
 /**
  * Internal autocomplete using the new AutocompleteSuggestion API (Place Autocomplete Data).

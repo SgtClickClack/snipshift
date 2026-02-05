@@ -130,32 +130,38 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 
   // PERFORMANCE: Use isSystemReady for smooth splash-to-app transition
   // This eliminates the skeleton flash by keeping HTML splash until auth + venue check complete
-  const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || location.pathname === '/investorportal';
+  // PROGRESSIVE UNLOCK: /investorportal is a neutral zone - always render immediately for Rick
+  const isInvestorPortal = location.pathname === '/investorportal' || location.pathname.startsWith('/investorportal');
+  const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || isInvestorPortal;
   
   // If system isn't ready yet and we haven't handled splash, render nothing (keep HTML splash)
   // This prevents the skeleton flash during auth handshake
+  // PROGRESSIVE UNLOCK: /investorportal ALWAYS renders immediately - Rick should never wait 3s for Data Room
   if (!isSystemReady && !splashHandled && !isBridgeRoute && !isSignupOrLandingOrOnboarding) {
     return null;
   }
 
   // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished
   // Guard: on onboarding/signup routes, always render content even if navigation lock is true.
+  // PROGRESSIVE UNLOCK: /investorportal bypasses ALL loading guards - immediate render for investors
   const effectiveNavigationLocked = isSignupOrLandingOrOnboarding ? false : isNavigationLocked;
-  const shouldShowLockScreen = effectiveNavigationLocked && splashHandled && !isBridgeRoute;
+  const shouldShowLockScreen = effectiveNavigationLocked && splashHandled && !isBridgeRoute && !isInvestorPortal;
   if (shouldShowLockScreen) {
     return <LoadingScreen />;
   }
 
   // Show full-page loader while auth is settling OR a redirect is in progress (prevents route flash)
   // But only after system is ready (avoids double loading state)
+  // PROGRESSIVE UNLOCK: /investorportal NEVER shows loader - immediate render for investors
   const showFullPageLoader = (isLoading || isRedirecting) && splashHandled && !isBridgeRoute && isSystemReady;
-  const shouldBypassLoading = location.pathname === '/signup';
+  const shouldBypassLoading = location.pathname === '/signup' || isInvestorPortal;
   if (showFullPageLoader && !shouldBypassLoading) {
     return <LoadingScreen />;
   }
 
   // If still loading but HTML splash hasn't been removed yet, render nothing
-  if (isLoading && !splashHandled && !isBridgeRoute) {
+  // PROGRESSIVE UNLOCK: /investorportal bypasses all loading guards
+  if (isLoading && !splashHandled && !isBridgeRoute && !isInvestorPortal) {
     return null;
   }
   

@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, SkipForward, AlertCircle, Building2, User, Loader2, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SkipForward, AlertCircle, Building2, User, Loader2, Sparkles, ShieldAlert } from 'lucide-react';
 import { RSALocker } from '@/components/profile/RSALocker';
 import { GovernmentIDLocker } from '@/components/profile/GovernmentIDLocker';
 import PayoutSettings from '@/components/payments/payout-settings';
@@ -24,6 +24,7 @@ import { VenueProfileForm } from '@/components/onboarding/VenueProfileForm';
 import { ConfettiAnimation } from '@/components/onboarding/ConfettiAnimation';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { logger } from '@/lib/logger';
+import { safeGetItem, safeSetItem, safeRemoveItem, isLocalStorageAvailable, getStorageBlockedWarning } from '@/lib/safe-storage';
 
 const TOTAL_STEPS = 5;
 
@@ -332,24 +333,23 @@ function onboardingReducer(
   }
 }
 
-// Storage utility functions
+// Storage utility functions - using safe storage with memory fallback
 const saveToStorage = (payload: Omit<OnboardingStoragePayload, 'timestamp'>) => {
   if (typeof window === 'undefined') return;
-  try {
-    const storagePayload: OnboardingStoragePayload = {
-      ...payload,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(storagePayload));
-  } catch (error) {
-    console.error('[Onboarding] Failed to save to storage:', error);
+  const storagePayload: OnboardingStoragePayload = {
+    ...payload,
+    timestamp: Date.now(),
+  };
+  const saved = safeSetItem(STORAGE_KEY, JSON.stringify(storagePayload));
+  if (!saved) {
+    logger.debug('Onboarding', '[Onboarding] Storage blocked - using memory fallback');
   }
 };
 
 const loadFromStorage = (): OnboardingStoragePayload | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = safeGetItem(STORAGE_KEY);
     if (!stored) return null;
     
     const payload: OnboardingStoragePayload = JSON.parse(stored);
@@ -359,30 +359,22 @@ const loadFromStorage = (): OnboardingStoragePayload | null => {
     const age = now - payload.timestamp;
     if (age > STORAGE_TTL_MS) {
       logger.debug('Onboarding', '[Onboarding] Storage data expired, clearing...');
-      localStorage.removeItem(STORAGE_KEY);
+      safeRemoveItem(STORAGE_KEY);
       return null;
     }
     
     return payload;
   } catch (error) {
-    console.error('[Onboarding] Failed to load from storage:', error);
+    console.error('[Onboarding] Failed to parse storage data:', error);
     // Clear corrupted data
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Ignore cleanup errors
-    }
+    safeRemoveItem(STORAGE_KEY);
     return null;
   }
 };
 
 const clearStorage = () => {
   if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (error) {
-    console.error('[Onboarding] Failed to clear storage:', error);
-  }
+  safeRemoveItem(STORAGE_KEY);
 };
 
 export default function Onboarding() {
@@ -410,6 +402,16 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingStep, setIsSavingStep] = useState(false);
   const [isVerifyingUser, setIsVerifyingUser] = useState(true);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+
+  // Check for storage availability on mount
+  useEffect(() => {
+    const warning = getStorageBlockedWarning();
+    if (warning) {
+      setStorageWarning(warning);
+      logger.warn('Onboarding', '[Onboarding] Browser storage is blocked - using memory fallback');
+    }
+  }, []);
 
   const [formData, setFormData] = useState<StaffOnboardingData>(() => ({
     displayName: user?.displayName || user?.name || '',
@@ -517,12 +519,12 @@ export default function Onboarding() {
       return;
     }
     
-    const rolePreference = sessionStorage.getItem('signupRolePreference');
+    const rolePreference = safeGetItem('signupRolePreference', true);
     if (rolePreference === 'hub') {
-      sessionStorage.removeItem('signupRolePreference');
+      safeRemoveItem('signupRolePreference', true);
       navigate('/onboarding/hub', { replace: true });
     } else if (rolePreference === 'professional') {
-      sessionStorage.removeItem('signupRolePreference');
+      safeRemoveItem('signupRolePreference', true);
       dispatch({ type: 'INITIALIZE_FROM_SESSION', role: 'professional' });
     }
   }, [navigate, isVerifyingUser, userCurrentRole, userRolesKey, machineContext.stepIndex, dispatch]);
@@ -534,7 +536,7 @@ export default function Onboarding() {
     
     // Check if role was already saved (prevent duplicate API calls)
     const roleSaveKey = `role_saved_${user.id}_venue`;
-    if (sessionStorage.getItem(roleSaveKey)) return;
+    if (safeGetItem(roleSaveKey, true)) return;
     
     const saveVenueRole = async () => {
       try {
@@ -558,7 +560,7 @@ export default function Onboarding() {
         }
         
         // Mark as saved to prevent duplicate calls
-        sessionStorage.setItem(roleSaveKey, 'true');
+        safeSetItem(roleSaveKey, 'true', true);
         
         // Refresh user state to get updated role
         await refreshUser();
@@ -1024,16 +1026,20 @@ export default function Onboarding() {
       await refreshUser();
       
       // Clear onboarding-related sessionStorage keys
-      sessionStorage.removeItem('signupRolePreference');
-      sessionStorage.removeItem('onboardingState');
-      sessionStorage.removeItem('onboardingStep');
+      safeRemoveItem('signupRolePreference', true);
+      safeRemoveItem('onboardingState', true);
+      safeRemoveItem('onboardingStep', true);
       
       // Clear persistence storage
       clearStorage();
       
-      // Navigate to dashboard after successful profile creation and refresh
+      // CRITICAL: isOnboarded is now TRUE in the database (via hasCompletedOnboarding: true)
+      // Navigate to role-specific dashboard with setup=complete flag
       if (completionResponse.status === 201 || completionResponse.status === 200) {
-        navigate('/dashboard', { replace: true });
+        const targetPath = machineContext.selectedRole === 'venue' 
+          ? '/venue/dashboard?setup=complete' 
+          : '/dashboard?setup=complete';
+        navigate(targetPath, { replace: true });
       }
     } catch (error: unknown) {
       // Extract diagnostic message from API error response if available
@@ -1071,7 +1077,11 @@ export default function Onboarding() {
   };
 
   const handleGoToDashboard = () => {
-    navigate('/dashboard', { replace: true });
+    // Role-specific redirect with setup=complete flag
+    const targetPath = machineContext.selectedRole === 'venue' 
+      ? '/venue/dashboard?setup=complete' 
+      : '/dashboard?setup=complete';
+    navigate(targetPath, { replace: true });
   };
 
   const renderStep = () => {
@@ -1165,7 +1175,26 @@ export default function Onboarding() {
       case 'DOCUMENT_VERIFICATION':
         return (
           <div className="space-y-6">
-            <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Document Verification</h2><p className="text-gray-300">To accept shifts, you'll need to verify your identity and credentials.</p></div>
+            <div className="text-center">
+              <h2 className="text-2xl font-black tracking-tighter text-white mb-2">Welcome to The Vault</h2>
+              <p className="text-gray-300">Your credentials are protected with enterprise-grade security.</p>
+            </div>
+            
+            {/* Automated DVS Verification Banner */}
+            <div className="p-4 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#BAFF39]/20 p-2">
+                  <Sparkles className="h-4 w-4 text-[#BAFF39]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Automated DVS Verification</h3>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Your RSA certificate and Government ID are verified instantly via the Document Verification Service (DVS) API handshake. No manual review delays.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {!machineContext.documentsSkipped && (<div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"><div className="flex items-start gap-3"><div className="rounded-full bg-brand-neon/20 p-2 mt-0.5"><SkipForward className="h-4 w-4 text-brand-neon" /></div><div className="flex-1"><h3 className="font-medium text-white mb-1">Want to explore first?</h3><p className="text-sm text-gray-400 mb-3">Skip this step and upload your documents later from your profile settings.</p><Button type="button" variant="outline" onClick={() => dispatch({ type: 'SKIP_DOCUMENTS' })} className="border-zinc-600 hover:bg-zinc-700"><SkipForward className="h-4 w-4 mr-2" />Skip for now</Button></div></div></div>)}
             {machineContext.documentsSkipped ? (<div className="space-y-4"><Alert className="bg-green-900/30 border-green-500/50"><AlertCircle className="h-4 w-4 text-green-500" /><AlertDescription className="text-green-200">No problem! You can upload your documents anytime from <span className="font-semibold">Settings → Verification</span>.</AlertDescription></Alert><Button type="button" variant="ghost" onClick={() => dispatch({ type: 'UNSKIP_DOCUMENTS' })} className="w-full text-gray-400 hover:text-white">Changed your mind? Upload documents now</Button></div>) : (<div className="space-y-4"><div className="text-center py-2"><p className="text-sm text-gray-500">Or upload your documents now</p></div><RSALocker /><GovernmentIDLocker /></div>)}
           </div>
@@ -1212,7 +1241,23 @@ export default function Onboarding() {
         // Professional content
         return (
           <div className="space-y-6 pb-12 md:pb-0">
-            <div className="text-center"><h2 className="text-2xl font-bold text-white mb-2">Role & Experience</h2><p className="text-gray-300">Tell venues what kind of shifts you're looking for.</p></div>
+            <div className="text-center"><h2 className="text-2xl font-black tracking-tighter text-white mb-2">Role & Experience</h2><p className="text-gray-300">Tell venues what kind of shifts you're looking for.</p></div>
+            
+            {/* Clean Streak Reputation Policy */}
+            <div className="p-4 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#BAFF39]/20 p-2">
+                  <Sparkles className="h-4 w-4 text-[#BAFF39]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Clean Streak Redemption</h3>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Build your reputation with reliability. Complete <span className="text-[#BAFF39] font-medium">5 consecutive on-time shifts</span> to automatically remove any demerit strikes. Your reliability is your currency.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-4">
               <div className="space-y-2"><Label className="text-gray-300">Primary Role *</Label><Select value={formData.hospitalityRole} onValueChange={(value) => updateFormData({ hospitalityRole: value as HospitalityRole | '' })}><SelectTrigger aria-label="Primary Role" data-testid="onboarding-role"><SelectValue placeholder="Select a role" /></SelectTrigger><SelectContent>{HOSPITALITY_ROLES.map((role) => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select></div>
               <div className="space-y-2"><Label htmlFor="hourlyRatePreference" className="text-gray-300">Hourly Rate Preference (optional)</Label><Input id="hourlyRatePreference" inputMode="decimal" value={formData.hourlyRatePreference} onChange={(e) => updateFormData({ hourlyRatePreference: e.target.value })} placeholder="e.g. 38" data-testid="onboarding-rate" /></div>
@@ -1365,6 +1410,14 @@ export default function Onboarding() {
             </div>
             <div className="w-full bg-zinc-800 rounded-full h-2"><div className="bg-brand-neon h-2 rounded-full transition-all duration-300" style={{ width: `${progressPct}%` } as React.CSSProperties} /></div>
           </div>
+          {storageWarning && (
+            <Alert className="mb-4 bg-yellow-500/10 border-yellow-500/20">
+              <ShieldAlert className="h-4 w-4 text-yellow-500" />
+              <AlertDescription className="text-yellow-500 text-sm">
+                <strong>Privacy Mode Active:</strong> Your browser is blocking storage. Your progress will be saved temporarily but may be lost if you close this tab.
+              </AlertDescription>
+            </Alert>
+          )}
           <Card className="card-chrome bg-zinc-900 border border-zinc-800">
             <CardHeader><CardTitle className="text-center text-brand-neon animate-steady-hum">Welcome to HospoGo</CardTitle></CardHeader>
             <CardContent>

@@ -112,6 +112,45 @@ export async function getVenueByUserId(userId: string): Promise<Venue | null> {
 }
 
 /**
+ * PROGRESSIVE UNLOCK: Lean venue lookup for auth hydration
+ * Returns only essential fields needed for /api/venues/me during bootstrap
+ * Excludes heavy JSONB fields (operatingHours) to reduce query latency
+ * 
+ * @perf This query should execute in <50ms with idx_venues_user_id index
+ */
+export interface LeanVenue {
+  id: string;
+  userId: string;
+  venueName: string;
+  status: 'pending' | 'active';
+}
+
+export async function getVenueByUserIdLean(userId: string): Promise<LeanVenue | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
+
+  try {
+    const [venue] = await db
+      .select({
+        id: venues.id,
+        userId: venues.userId,
+        venueName: venues.venueName,
+        status: venues.status,
+      })
+      .from(venues)
+      .where(eq(venues.userId, userId))
+      .limit(1);
+
+    return venue as LeanVenue | null;
+  } catch (error) {
+    console.error('[VENUES REPO] Error getting lean venue by user ID:', error);
+    return null;
+  }
+}
+
+/**
  * Get venue by waitlist ID
  */
 export async function getVenueByWaitlistId(waitlistId: string): Promise<Venue | null> {

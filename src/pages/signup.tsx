@@ -16,6 +16,7 @@ import { auth } from "@/lib/firebase";
 import { trackSignup } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 import { getDashboardRoute } from "@/lib/roles";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -99,7 +100,7 @@ export default function SignupPage() {
   // If popup just completed auth, immediately redirect without showing signup UI
   useEffect(() => {
     try {
-      const bridgeData = localStorage.getItem('hospogo_auth_bridge');
+      const bridgeData = safeGetItem('hospogo_auth_bridge', false);
       if (!bridgeData) return;
 
       const parsed = JSON.parse(bridgeData) as { uid?: string; ts?: number };
@@ -109,7 +110,7 @@ export default function SignupPage() {
       const age = Date.now() - parsed.ts;
       if (age > 30000) {
         // Bridge is stale, clean it up
-        localStorage.removeItem('hospogo_auth_bridge');
+        safeRemoveItem('hospogo_auth_bridge', false);
         return;
       }
 
@@ -140,20 +141,20 @@ export default function SignupPage() {
     
     // Store role preference in sessionStorage to pass to onboarding
     if (roleParam && (roleParam === 'hub' || roleParam === 'professional')) {
-      sessionStorage.setItem('signupRolePreference', roleParam);
+      safeSetItem('signupRolePreference', roleParam, true);
     }
     
     // Handle plan selection from pricing page (Starter, Business, Enterprise)
     // Plan selection implies venue/hub role since pricing is for businesses
     if (planParam) {
-      sessionStorage.setItem('signupPlanPreference', planParam);
+      safeSetItem('signupPlanPreference', planParam, true);
       // If coming from pricing, default to hub role (business owner)
       if (!roleParam) {
-        sessionStorage.setItem('signupRolePreference', 'hub');
+        safeSetItem('signupRolePreference', 'hub', true);
       }
       // Store trial flag if present
       if (trialParam === 'true') {
-        sessionStorage.setItem('signupTrialMode', 'true');
+        safeSetItem('signupTrialMode', 'true', true);
       }
     }
   }, []);
@@ -381,11 +382,11 @@ export default function SignupPage() {
       });
 
       // Get role preference from sessionStorage if available
-      const rolePreference = sessionStorage.getItem('signupRolePreference');
+      const rolePreference = safeGetItem('signupRolePreference', true);
       const onboardingPath = rolePreference ? `/onboarding?role=${rolePreference}` : '/onboarding';
       
       // Clear the preference after using it
-      sessionStorage.removeItem('signupRolePreference');
+      safeRemoveItem('signupRolePreference', true);
 
       // Wait for AuthContext's onAuthStateChange listener to process
       // The listener will call /api/me to fetch the user profile

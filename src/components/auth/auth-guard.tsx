@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayoutSkeleton } from '@/components/loading/skeleton-loaders';
+import { safeGetItem } from '@/lib/safe-storage';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -22,10 +23,11 @@ export function AuthGuard({
 
   // Check for E2E mode test user (for Playwright tests)
   // Playwright storageState restores localStorage but not sessionStorage, so check both
+  // Use safe storage to handle blocked storage gracefully
   const isE2EMode = typeof window !== 'undefined' && 
-    (localStorage.getItem('E2E_MODE') === 'true' || import.meta.env.VITE_E2E === '1');
+    (safeGetItem('E2E_MODE', false) === 'true' || import.meta.env.VITE_E2E === '1');
   const hasE2ETestUser = isE2EMode && typeof window !== 'undefined' && 
-    !!(sessionStorage.getItem('hospogo_test_user') || localStorage.getItem('hospogo_test_user'));
+    !!(safeGetItem('hospogo_test_user', true) || safeGetItem('hospogo_test_user', false));
   const hasAuth = hasFirebaseUser || hasE2ETestUser;
 
   // DISABLED: Global Redirect Lockdown - AuthContext is the sole authority for redirects.

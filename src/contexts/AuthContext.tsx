@@ -2,11 +2,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
-import { browserLocalPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
+import { browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { cleanupPushNotifications } from '@/lib/push-notifications';
 import { prefetchAuthData, queryClient } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/lib/query-keys';
+import { safeGetItem, safeSetItem, safeRemoveItem, isLocalStorageAvailable } from '@/lib/safe-storage';
 
 export interface User {
   id?: string;
@@ -225,6 +226,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!navigationLockReleasedRef.current) {
       navigationLockReleasedRef.current = true;
       setIsNavigationLocked(false);
+      // PROGRESSIVE UNLOCK: End high-precision timer when lock is released
+      // Goal: Output should be < 500ms
+      console.timeEnd('Handshake-to-Unlock');
     }
   }, []);
 
@@ -264,9 +268,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = useCallback(async () => {
     // Clear auth timestamp immediately to allow redirect on explicit logout
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('hospogo_auth_timestamp');
-    }
+    safeRemoveItem('hospogo_auth_timestamp', true);
     
     // INVESTOR BRIEFING FIX: Reset session integrity on explicit logout
     // This allows future redirects to /login to work correctly after explicit logout
@@ -301,7 +303,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const hydrateFromFirebaseUser = useCallback(async (firebaseUser: FirebaseUser) => {
     // INVESTOR BRIEFING FIX: Strict once-per-mount guard + deduplication
-    // Prevents duplicate "/api/me" calls
+    // Prevents duplicate "/api/me" calls (the 4-5 redundant calls in console logs)
     if (hydrationMountRef.current && lastHydratedUidRef.current === firebaseUser.uid) {
       return;
     }
@@ -312,7 +314,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
     
-    // Mark hydration as started
+    // PROGRESSIVE UNLOCK: High-precision timer to verify TTI < 500ms
+    // Timer starts AFTER guard checks pass to avoid orphaned timers on deduplication
+    console.time('Handshake-to-Unlock');
+    
+    // Mark hydration as started - this ref prevents the duplicate calls
     isHydratingRef.current = true;
     hydrationMountRef.current = true;
 
@@ -474,9 +480,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       sessionIntegrityRef.current = true;
       
       // RESILIENCE: Track successful auth timestamp to prevent redirect during token refresh
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('hospogo_auth_timestamp', Date.now().toString());
-      }
+      safeSetItem('hospogo_auth_timestamp', Date.now().toString(), true);
 
       // Determine role and venue requirements
       const role = (apiUser.currentRole || apiUser.role || '').toLowerCase();
@@ -647,7 +651,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     let isInitialAuthCheck = true;
 
     // Minimalist: functional modular calls only.
-    setPersistence(auth, browserLocalPersistence).catch((error) => {
+    // Use in-memory persistence if localStorage is blocked (Tracking Prevention)
+    const persistence = isLocalStorageAvailable() ? browserLocalPersistence : inMemoryPersistence;
+    if (!isLocalStorageAvailable()) {
+      logger.warn('AuthContext', 'localStorage blocked - using in-memory persistence (session will not survive page refresh)');
+    }
+    setPersistence(auth, persistence).catch((error) => {
       logger.error('AuthContext', 'Failed to set Firebase persistence', error);
     });
 
@@ -655,13 +664,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initializeAuth = async () => {
       // E2E Bypass: Check for test user in sessionStorage (or localStorage when restored from Playwright storageState)
       if (typeof window !== 'undefined') {
-        const e2eUserStr = sessionStorage.getItem('hospogo_test_user') || localStorage.getItem('hospogo_test_user');
+        const e2eUserStr = safeGetItem('hospogo_test_user', true) || safeGetItem('hospogo_test_user', false);
         if (e2eUserStr) {
           try {
             const e2eUser = JSON.parse(e2eUserStr);
             
             // Apply Dashboard Phase override if needed
-            if (sessionStorage.getItem('E2E_DASHBOARD_PHASE')) {
+            if (safeGetItem('E2E_DASHBOARD_PHASE', true)) {
               e2eUser.hasCompletedOnboarding = true;
               e2eUser.isOnboarded = true;
             }
