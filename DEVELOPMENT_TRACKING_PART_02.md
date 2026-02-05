@@ -4675,3 +4675,28 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Reused existing deck layout primitives without adding new colors or fonts.
+
+---
+
+#### 2026-02-06: Fix Admin Gap Review Param Typing
+
+**Core Components**
+- Admin routes: `api/_src/routes/admin.ts`
+- Request param normalization: `api/_src/utils/request-params.ts`
+
+**Key Features**
+- Normalized `:id` param before building the Drizzle `eq()` filter for support intelligence gap reviews.
+- Eliminated `string | string[]` type mismatch during API `postinstall` TypeScript compilation.
+
+**Integration Points**
+- API endpoint: `POST /api/admin/support/intelligence-gaps/:id/mark-reviewed`
+- Build step: `api` `postinstall` (`tsc && node fix-imports.js`)
+
+**File Paths**
+- `api/_src/routes/admin.ts`
+
+**Next Priority Task**
+- Re-run the API `postinstall` compile step in CI/Vercel to confirm green build.
+
+**Code Organization & Quality**
+- Reused existing `normalizeParam` utility; no new patterns added.

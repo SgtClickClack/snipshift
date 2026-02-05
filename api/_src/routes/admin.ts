@@ -428,6 +428,8 @@ router.post('/support/intelligence-gaps/:id/mark-reviewed', asyncHandler(async (
   const reviewerId = validation.data.reviewerId;
   const reviewedBy = reviewerId && /^[0-9a-f-]{36}$/i.test(reviewerId) ? reviewerId : null;
 
+  const gapId = normalizeParam(req.params.id);
+
   try {
     const updated = await db
       .update(supportIntelligenceGaps)
@@ -435,7 +437,7 @@ router.post('/support/intelligence-gaps/:id/mark-reviewed', asyncHandler(async (
         reviewedAt: new Date(),
         reviewedBy,
       })
-      .where(eq(supportIntelligenceGaps.id, req.params.id))
+      .where(eq(supportIntelligenceGaps.id, gapId))
       .returning({ id: supportIntelligenceGaps.id });
 
     if (!updated.length) {

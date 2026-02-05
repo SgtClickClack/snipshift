@@ -8,6 +8,19 @@
 
 ---
 
+### Update: 2026-02-06 - Admin Gap Review Build Fix
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Normalized the `:id` param in the admin intelligence-gap review route before building the Drizzle `eq()` filter.
+- Resolved the TypeScript overload error (`string | string[]`) during the API `postinstall` compile step.
+
+**Impact:**
+- Vercel/API builds complete without the `TS2769` error in `api/_src/routes/admin.ts`.
+
+---
+
 ### Update: 2026-02-05 - CTO Dashboard Console Cleanup
 
 **Status:** ✅ **UPDATED**
