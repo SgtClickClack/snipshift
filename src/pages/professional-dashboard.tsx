@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import Confetti from 'react-confetti';
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -236,6 +237,34 @@ function ProfessionalDashboardContent() {
     skillsRequired: [],
     dateRange: "all"
   });
+  
+  // Setup complete confetti celebration
+  const [showSetupConfetti, setShowSetupConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 1200, height: typeof window !== 'undefined' ? window.innerHeight : 800 });
+  
+  // Handle setup=complete confetti trigger
+  useEffect(() => {
+    const setupComplete = searchParams.get('setup');
+    if (setupComplete === 'complete') {
+      setShowSetupConfetti(true);
+      // Remove the query param to prevent repeat triggers
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('setup');
+        return newParams;
+      });
+      // Auto-dismiss confetti after 5 seconds
+      const timer = setTimeout(() => setShowSetupConfetti(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, setSearchParams]);
+  
+  // Update window size for confetti
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Only fetch jobs when needed for jobs view or overview
   const shouldFetchJobs = activeView === 'jobs' || activeView === 'overview';
@@ -582,6 +611,19 @@ function ProfessionalDashboardContent() {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Pro Dashboard" />
       
+      {/* Setup Complete Confetti Celebration */}
+      {showSetupConfetti && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={300}
+          gravity={0.3}
+          colors={['#BAFF39', '#84cc16', '#22c55e', '#10b981', '#ffffff', '#fbbf24']}
+          confettiSource={{ x: windowSize.width / 2, y: windowSize.height / 3, w: 0, h: 0 }}
+        />
+      )}
+      
       {/* Banner/Profile Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <DashboardHeader
@@ -776,7 +818,7 @@ function ProfessionalDashboardContent() {
         <VerificationPendingBanner />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 scroll-pt-20">
         {/* Pro Reliability Tracker - Show at top of dashboard */}
         {activeView === 'overview' && (
           <div className="mb-6">

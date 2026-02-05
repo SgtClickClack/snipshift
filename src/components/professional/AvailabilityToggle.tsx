@@ -1,8 +1,8 @@
 /**
- * AvailabilityToggle - Mobile-Friendly 7-Day Availability Picker
+ * AvailabilityToggle - Mobile-Friendly 14-Day Availability Picker
  * 
  * Features:
- * - 7-day rolling horizontal scroller
+ * - 14-day rolling horizontal scroller (touch-friendly)
  * - Three time slots per day: Morning, Lunch, Dinner
  * - Tap to toggle availability for each slot
  * - Bulk saves to POST /api/me/availability
@@ -78,12 +78,12 @@ interface AvailabilityData {
   availability: DayAvailability[];
 }
 
-// Generate 7 days starting from today
-function generateNext7Days(): Date[] {
+// Generate 14 days starting from today (mobile-responsive touch scroller)
+function generateNext14Days(): Date[] {
   const days: Date[] = [];
   const today = startOfDay(new Date());
   
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 14; i++) {
     days.push(addDays(today, i));
   }
   
@@ -206,10 +206,10 @@ export function AvailabilityToggle({ className, onAvailabilityChange }: Availabi
   const queryClient = useQueryClient();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  // Generate 7 days
-  const days = generateNext7Days();
+  // Generate 14 days for availability picker
+  const days = generateNext14Days();
   
-  // Local availability state
+  // Local availability state for 14 days
   const [localAvailability, setLocalAvailability] = useState<Record<string, DayAvailability>>(() => {
     const initial: Record<string, DayAvailability> = {};
     days.forEach((date) => {

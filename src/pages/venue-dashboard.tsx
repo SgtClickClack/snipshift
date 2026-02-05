@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, Suspense } from "reac
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import Confetti from 'react-confetti';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isDemoMode, DEMO_USER, DEMO_JOBS, DEMO_APPLICATIONS, DEMO_STATS, DEMO_SHIFT_APPLICATIONS } from "@/lib/demo-data";
 import {
@@ -181,6 +182,34 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
     bannerUrl: ""
   });
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  
+  // Setup complete confetti celebration
+  const [showSetupConfetti, setShowSetupConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  
+  // Handle setup=complete confetti trigger
+  useEffect(() => {
+    const setupComplete = searchParams.get('setup');
+    if (setupComplete === 'complete') {
+      setShowSetupConfetti(true);
+      // Remove the query param to prevent repeat triggers
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('setup');
+        return newParams;
+      });
+      // Auto-dismiss confetti after 5 seconds
+      const timer = setTimeout(() => setShowSetupConfetti(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, setSearchParams]);
+  
+  // Update window size for confetti
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (user && !isEditingProfile) {
@@ -826,6 +855,19 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="Business Dashboard" />
       
+      {/* Setup Complete Confetti Celebration */}
+      {showSetupConfetti && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={300}
+          gravity={0.3}
+          colors={['#BAFF39', '#84cc16', '#22c55e', '#10b981', '#ffffff', '#fbbf24']}
+          confettiSource={{ x: windowSize.width / 2, y: windowSize.height / 3, w: 0, h: 0 }}
+        />
+      )}
+      
       {/* Banner/Profile Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <DashboardHeader
@@ -857,7 +899,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-foreground">Business Dashboard</h1>
+                <h1 className="text-2xl font-bold text-foreground">Logistics Engine</h1>
                 {/* Xero Status Pill - High visibility for investor demo */}
                 {isXeroConnected && (
                   <Badge 
@@ -990,7 +1032,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 scroll-pt-20">
         {/* Subscription and Stripe banners: vertical stack with gap so they don't overlap on small screens */}
         <div className="flex flex-col gap-4">
           {/* Onboarding Incomplete Banner - Shows when hub user has no active subscription */}

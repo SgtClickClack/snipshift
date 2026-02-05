@@ -55,6 +55,12 @@ function getFallbackKnowledge(): string {
 
 HospoGo is a hospitality logistics platform connecting venues with professionals.
 
+## Pricing (The Logistics Platform Fee)
+HospoGo operates on a simple $149/month **Logistics Platform Fee** model:
+- One flat fee for venues - no success taxes, no per-shift charges
+- Includes: Roster automation, Xero integration, compliance management, A-Team invitations
+- The term "Logistics Platform Fee" should ALWAYS be used (never "subscription" or "monthly fee")
+
 ## Key Features:
 - **Capacity Templates**: Pre-defined staffing patterns for automated rostering
 - **Invite A-Team**: Bulk invite favorite staff to fill shifts
@@ -630,6 +636,12 @@ The **Clean Streak** policy allows you to redeem strikes through consistent reli
 - 5-star peer-review loop between Venue Owners and Professionals
 - Rate each other after completed shifts
 - Ratings visible after 48-hour anonymous cool-down period
+
+**The Reliability Crown 👑:**
+- Awarded to professionals who maintain **0 strikes** AND complete **10+ shifts**
+- Displayed with a glowing Electric Lime crown icon on the Pro Dashboard
+- Signals "Elite Professional" status to venue owners
+- Unlocks priority visibility in Smart Fill/A-Team invitations
 
 See Section: "The Reputation Engine (Professionals)" in User Manual v3.1 for full details.
 

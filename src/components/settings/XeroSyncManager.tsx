@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/useToast';
+import Confetti from 'react-confetti';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -95,13 +96,21 @@ export default function XeroSyncManager() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
   const [showSuccessBurst, setShowSuccessBurst] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 1200, height: typeof window !== 'undefined' ? window.innerHeight : 800 });
 
   useEffect(() => {
     if (showSuccessBurst) {
-      const t = setTimeout(() => setShowSuccessBurst(false), 2000);
+      const t = setTimeout(() => setShowSuccessBurst(false), 3000);
       return () => clearTimeout(t);
     }
   }, [showSuccessBurst]);
+  
+  // Update window size for confetti
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -219,15 +228,27 @@ export default function XeroSyncManager() {
 
   return (
     <IntegrationErrorBoundary>
+      {/* Xero Sync Success Confetti Burst */}
       {showSuccessBurst && (
-        <div
-          className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
-          aria-hidden
-        >
-          <div className="animate-pulse rounded-full bg-emerald-500/30 p-8 scale-125">
-            <CheckCircle2 className="h-16 w-16 text-emerald-600 dark:text-emerald-400" />
+        <>
+          <Confetti
+            width={windowSize.width}
+            height={windowSize.height}
+            recycle={false}
+            numberOfPieces={150}
+            gravity={0.4}
+            colors={['#BAFF39', '#84cc16', '#13b5ea', '#ffffff', '#fbbf24']}
+            confettiSource={{ x: windowSize.width / 2, y: windowSize.height / 3, w: 0, h: 0 }}
+          />
+          <div
+            className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
+            aria-hidden
+          >
+            <div className="animate-pulse rounded-full bg-[#BAFF39]/30 p-8 scale-125">
+              <CheckCircle2 className="h-16 w-16 text-[#BAFF39]" />
+            </div>
           </div>
-        </div>
+        </>
       )}
       <Card>
         <CardHeader>

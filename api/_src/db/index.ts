@@ -22,6 +22,12 @@ export function getDb() {
   return drizzle(pool, { schema });
 }
 
+/**
+ * Pre-instantiated database instance for direct import
+ * Usage: import { db } from '../db/index.js'
+ */
+export const db = getDb();
+
 export * from './schema.js';
 export * from './connection.js';
 

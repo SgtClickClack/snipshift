@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp, FileCheck, Zap } from 'lucide-react';
+import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp, FileCheck, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MedicalCertificateUpload } from '@/components/appeals/MedicalCertificateUpload';
 import { fetchPriorityBoostStatus } from '@/lib/api';
@@ -331,6 +331,15 @@ export function ProReliabilityTracker() {
               >
                 {state.label}
               </h3>
+              {/* Glowing Electric Lime Crown for >95% reliability (0 strikes + 10+ shifts) */}
+              {strikes === 0 && completedShiftCount >= 10 && (
+                <div className="relative">
+                  <Crown 
+                    className="h-6 w-6 text-[#BAFF39] drop-shadow-[0_0_8px_rgba(186,255,57,0.8)] animate-pulse" 
+                    style={{ filter: 'drop-shadow(0 0 12px rgba(186,255,57,0.6))' }}
+                  />
+                </div>
+              )}
               {strikes === 0 && (
                 <div className="flex items-center gap-1 text-[#84cc16]">
                   <Star className="h-4 w-4 fill-current" />

@@ -81,6 +81,7 @@ const helpTopics = [
   { id: 'wage-calculation', title: 'Wage Cost Calculation Engine', category: 'technical', description: 'Formula, rounding rules, and superannuation handling', keywords: ['wage', 'calculation', 'formula', 'payroll', 'super', 'technical'] },
   { id: 'audit-trail', title: 'Audit Trail & Compliance Logs', category: 'technical', description: 'ATO STP requirements and data retention policies', keywords: ['audit', 'trail', 'ato', 'stp', 'compliance', 'logs', 'retention'] },
   { id: 'partial-success', title: 'Partial Success Handling', category: 'technical', description: 'Transaction isolation and rollback strategies', keywords: ['partial', 'success', 'transaction', 'rollback', 'isolation', 'error'] },
+  { id: 'xero-sync-history', title: 'Xero Sync History & Audit Trail', category: 'technical', description: 'Real-time sync logging with 7-year ATO retention and partial success tracking', keywords: ['xero', 'sync', 'history', 'audit', 'trail', 'retention', 'ato', 'lucas'] },
   
   // Strategic Roadmap (For Rick - Lead Analytics)
   { id: 'lead-tracker-overview', title: 'Lead Tracker System Overview', category: 'strategic', description: 'Pipeline stages, scoring, and campaign management', keywords: ['lead', 'tracker', 'pipeline', 'campaign', 'crm', 'sales'] },
