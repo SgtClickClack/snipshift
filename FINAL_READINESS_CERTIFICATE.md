@@ -1,6 +1,6 @@
 # HospoGo Final Readiness Certificate
 
-**Version:** 1.2.0  
+**Version:** 1.5.0  
 **Date:** 2026-02-05  
 **Status:** **ALL SYSTEMS GO**
 
@@ -71,9 +71,9 @@ HospoGo has completed comprehensive system hardening and is certified ready for 
 
 ---
 
-## 5. Onboarding Gate & Support
+## 5. Onboarding & Support
 
-**Status:** **HARDENED & ACTIVE**
+**Status:** **ELITE & SELF-HEALING**
 
 | Component | Status | Notes |
 |-----------|--------|-------|
@@ -82,12 +82,16 @@ HospoGo has completed comprehensive system hardening and is certified ready for 
 | InvestorChatWidget Position | ✅ Verified | right-24, z-40 - clear of system widgets |
 | SupportChatWidget Position | ✅ Updated | right-8 - visually distinct from Investor Bot |
 | AI Terminology | ✅ Verified | "Logistics Platform Fee" enforced in investor service |
+| Reputation Redemption (Clean Streak) | ✅ Documented | Fully grounded in User Manual v3.1 |
+| High-Velocity Logistics | ✅ Documented | Standby Mode + Running Late button grounded |
 
 **Hardening Summary:**
 - Firebase Installations 400 errors no longer disrupt session state
 - Support bot only appears for fully onboarded users
 - Investor and Support bots positioned for visual distinction
 - Both AI services grounded with consistent brand terminology
+- **Reputation Redemption logic (Clean Streak) fully documented and grounded**
+- **High-Velocity Logistics (Standby, Running Late) fully documented and grounded**
 
 ---
 
@@ -153,11 +157,13 @@ This certificate confirms that HospoGo is ready for investor demonstrations with
 - ✅ Stable authentication and role-based access
 - ✅ Functional Xero integration with audit trail
 - ✅ AI Executive Agent grounded in strategic data
-- ✅ **Onboarding Gate & Support HARDENED**
+- ✅ **Onboarding & Support ELITE & SELF-HEALING**
 - ✅ Polished UI without visual glitches
 - ✅ Critical E2E paths validated
 - ✅ **Error #310 Hook Integrity Verified**
 - ✅ **Firebase Installations Layer Silenced**
+- ✅ **Reputation Redemption (Clean Streak) Grounded**
+- ✅ **High-Velocity Logistics (Standby, Running Late) Grounded**
 
 **Certified By:** Automated QA Pipeline + Manual Review  
 **Valid Until:** Next major deployment

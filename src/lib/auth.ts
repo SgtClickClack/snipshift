@@ -172,7 +172,7 @@ export async function signInWithGoogleDevAware() {
     // and the calling components (e.g. GoogleAuthButton). Avoid hard reloads here
     // to prevent redirect loops and preserve SPA state.
     if (user && typeof window !== 'undefined') {
-      console.log('[Auth] Popup auth complete, triggering failsafe navigation to /dashboard');
+      console.log('[Auth] Popup auth complete, navigation handled by GoogleAuthButton → /onboarding');
       // Intentionally no hard redirect here; navigation is handled upstream.
     }
     

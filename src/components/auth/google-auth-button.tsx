@@ -165,11 +165,11 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         logger.debug('GoogleAuthButton', 'refreshUser failed, navigating to dashboard', refreshError);
       }
       
-      // Step 5: Immediate navigation to dashboard after popup success
-      // This forces navigation inside the popup promise resolution, bypassing bounce tracking
-      // AuthContext's onAuthStateChanged will handle the final redirect based on onboarding status
-      logger.debug('GoogleAuthButton', 'Popup auth successful, navigating to dashboard');
-      navigate('/dashboard', { replace: true });
+      // Step 5: Navigate to onboarding after popup success
+      // INVESTOR BRIEFING FIX: New users must go through onboarding - never bypass to dashboard
+      // AuthContext will redirect onboarded users from /onboarding to the appropriate dashboard
+      logger.debug('GoogleAuthButton', 'Popup auth successful, navigating to onboarding');
+      navigate('/onboarding', { replace: true });
       
       // Call onSuccess if provided (for custom handling)
       if (onSuccess) {

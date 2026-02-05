@@ -30,6 +30,7 @@ import { xeroIntegrations, xeroOauthState } from './schema/xero-integrations.js'
 import { failedEmails } from './schema/failed-emails.js';
 import { shiftTemplates } from './schema/shift-templates.js';
 import { workerAvailability } from './schema/worker-availability.js';
+import { supportIntelligenceGaps } from './schema/support-intelligence-gaps.js';
 
 // Define paymentStatusEnum locally for drizzle-kit compatibility (references same DB enum)
 // This avoids ESM import resolution issues with drizzle-kit
@@ -71,7 +72,8 @@ export {
   xeroOauthState,
   failedEmails,
   shiftTemplates,
-  workerAvailability
+  workerAvailability,
+  supportIntelligenceGaps
 };
 
 /**

@@ -3,11 +3,18 @@
  * 
  * Provides AI-powered support assistance using Gemini 2.5 Flash
  * Grounded in the user manual for accurate, contextual responses.
+ * 
+ * Features Knowledge Telemetry to track intelligence gaps:
+ * - Logs queries triggering "Foundry R&D phase" fallback
+ * - Tracks low-confidence responses for CTO review
+ * - Enables continuous improvement of the knowledge base
  */
 
 import { GoogleGenerativeAI, GenerativeModel, ChatSession, Content } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as path from 'path';
+import { db } from '../db/index.js';
+import { supportIntelligenceGaps } from '../db/schema.js';
 
 // Session storage for conversation continuity
 const sessions: Map<string, ChatSession> = new Map();
@@ -91,6 +98,40 @@ When answering questions:
 3. **If a feature is NOT in the manual**: You MUST state: "That feature is currently in the Foundry R&D phase; please contact the CTO for a technical brief."
 4. **Never invent features**: Only describe functionality documented in the manual
 
+## ⭐ PRIORITY: STEP-BY-STEP UI GUIDANCE ⭐
+**This is your PRIMARY response pattern.** Every answer MUST include precise navigation instructions:
+
+### Always Tell Users EXACTLY Where to Click
+❌ WRONG: "You can find this in settings"
+✅ RIGHT: "Go to **Sidebar** → **Settings** → **Business** → **Operating Hours**"
+
+❌ WRONG: "Check your Xero integration"  
+✅ RIGHT: "Navigate to **Settings** → **Integrations** → **Xero** → look for the green 'Connected' indicator"
+
+❌ WRONG: "Use the A-Team feature"
+✅ RIGHT: "Click the **Roster Tools** button (top-right of calendar) → Select **Invite A-Team**"
+
+### UI Navigation Format Standard
+Always use this exact format for navigation paths:
+- **Sidebar** → **Settings** → **Business** → **[Tab Name]**
+- **Calendar View** → **Roster Tools** (button) → **[Action]**
+- **Venue** → **Staff** → Click staff name → **[Section]**
+
+### Visual Cue Descriptions
+Include visual elements to help users identify UI components:
+- Button colors: "the green **Save** button", "the Electric Lime **Sync Now** button"
+- Icons: "the ⭐ Star icon next to their name"
+- Status indicators: "look for the 🟢 green checkmark"
+- Locations: "in the top-right corner", "in the sidebar", "in the modal popup"
+
+### Numbered Step Format (Required for Multi-Step Tasks)
+For any task requiring 2+ steps, use numbered lists:
+1. Navigate to **Settings** → **Integrations**
+2. Click the **Connect to Xero** button (blue, top-right)
+3. Sign in to your Xero account when prompted
+4. Select your Xero Organisation from the dropdown
+5. Look for the **Connected** status indicator (green checkmark)
+
 ## Response Guidelines
 1. **Be Specific**: Reference exact menu paths (e.g., "Navigate to Settings → Integrations → Xero")
 2. **Cite Your Source**: Always mention the manual section (e.g., "As detailed in 'The A-Team & Smart Fill' section...")
@@ -100,6 +141,9 @@ When answering questions:
 6. **Know Your Limits**: If asked about something outside HospoGo (e.g., general Xero help), acknowledge and redirect
 
 ## Key Manual Sections to Reference
+- **The Golden Paths (Outcomes)**: Scenario-based step-by-step guidance for common tasks
+- **The Logic Behind the Engine**: Plain-English explanations of Mutex Locking and Suburban Loyalty
+- **Troubleshooting FAQ**: Common questions with exact navigation steps
 - **The Financial Engine (Xero Sync)**: Mutex-locking, Partial Success Reports, troubleshooting
 - **The A-Team & Smart Fill**: Availability logic (14-day window), Status Legend (Red/Amber/Green)
 - **The Vault (Compliance)**: DVS Handshake for RSA verification, 30-day expiry alerts
@@ -121,9 +165,10 @@ When answering questions:
 
 ## Response Format
 - Keep responses concise but complete
+- **Always include precise UI navigation paths**
 - **Always include the manual section reference**
-- Use bullet points for multiple steps
-- Bold important actions or menu items
+- Use numbered lists for multi-step tasks
+- Bold important actions, menu items, and buttons
 - End with a helpful follow-up question or offer when appropriate`;
 }
 
@@ -206,6 +251,18 @@ function classifyQuestion(query: string): string {
   if (lowerQuery.includes('accept all') || lowerQuery.includes('auto-accept')) {
     return 'accept_all';
   }
+  // Reputation Engine
+  if (lowerQuery.includes('demerit') || lowerQuery.includes('strike') || lowerQuery.includes('clean streak') ||
+      lowerQuery.includes('shadow-ban') || lowerQuery.includes('shadow ban') || lowerQuery.includes('reputation') ||
+      lowerQuery.includes('rating') || lowerQuery.includes('review') || lowerQuery.includes('star')) {
+    return 'reputation';
+  }
+  // High-Velocity Logistics (Standby & Running Late)
+  if (lowerQuery.includes('standby') || lowerQuery.includes('stand by') || lowerQuery.includes('running late') ||
+      lowerQuery.includes('late button') || lowerQuery.includes('gap shift') || lowerQuery.includes('emergency shift') ||
+      lowerQuery.includes('premium rate') || lowerQuery.includes('eta')) {
+    return 'high_velocity';
+  }
   // Scheduling
   if (lowerQuery.includes('calendar') || lowerQuery.includes('schedule') || lowerQuery.includes('shift') || lowerQuery.includes('roster')) {
     return 'scheduling';
@@ -231,6 +288,8 @@ export interface SupportQueryResponse {
   questionType: string;
   sessionId: string;
   success: boolean;
+  /** Indicates if this response triggered an intelligence gap log */
+  intelligenceGapLogged?: boolean;
 }
 
 export interface SupportQueryRequest {
@@ -244,7 +303,119 @@ export interface SupportQueryRequest {
 }
 
 /**
+ * Intelligence Gap Detection Patterns
+ * 
+ * These patterns identify responses where the AI couldn't provide a confident answer.
+ * Used to trigger logging for CTO review and knowledge base improvement.
+ */
+const INTELLIGENCE_GAP_PATTERNS = {
+  // Direct fallback triggers
+  foundryFallback: [
+    'Foundry R&D phase',
+    'currently in the Foundry',
+    'contact the CTO for a technical brief',
+    'in development phase',
+    'feature is not yet available',
+    'not currently documented',
+  ],
+  // Low confidence indicators
+  lowConfidence: [
+    "I'm not entirely sure",
+    "I don't have specific information",
+    "This isn't covered in the manual",
+    "I couldn't find details about",
+    "outside the scope of the documentation",
+    "please contact support",
+    "I apologize, but I'm unable",
+    "I don't have access to information about",
+  ],
+  // Unknown feature requests
+  unknownFeature: [
+    "doesn't exist in HospoGo",
+    "not a feature of HospoGo",
+    "HospoGo doesn't currently support",
+    "not available in the platform",
+  ],
+};
+
+type GapType = 'foundry_fallback' | 'low_confidence' | 'unknown_feature' | 'api_failure';
+
+/**
+ * Detect if a response indicates an intelligence gap
+ */
+function detectIntelligenceGap(response: string): { isGap: boolean; gapType: GapType | null } {
+  const responseLower = response.toLowerCase();
+  
+  // Check for Foundry R&D fallback
+  for (const pattern of INTELLIGENCE_GAP_PATTERNS.foundryFallback) {
+    if (responseLower.includes(pattern.toLowerCase())) {
+      return { isGap: true, gapType: 'foundry_fallback' };
+    }
+  }
+  
+  // Check for low confidence indicators
+  for (const pattern of INTELLIGENCE_GAP_PATTERNS.lowConfidence) {
+    if (responseLower.includes(pattern.toLowerCase())) {
+      return { isGap: true, gapType: 'low_confidence' };
+    }
+  }
+  
+  // Check for unknown feature responses
+  for (const pattern of INTELLIGENCE_GAP_PATTERNS.unknownFeature) {
+    if (responseLower.includes(pattern.toLowerCase())) {
+      return { isGap: true, gapType: 'unknown_feature' };
+    }
+  }
+  
+  return { isGap: false, gapType: null };
+}
+
+/**
+ * Log an intelligence gap to the database for CTO review
+ * 
+ * This function runs asynchronously and doesn't block the response.
+ * Failures are logged but don't affect the user experience.
+ */
+async function logIntelligenceGap(params: {
+  query: string;
+  questionType: string;
+  sessionId: string;
+  userRole?: string;
+  currentPage?: string;
+  aiResponse: string;
+  gapType: GapType;
+  wasAnswered: boolean;
+}): Promise<void> {
+  try {
+    await db.insert(supportIntelligenceGaps).values({
+      query: params.query,
+      questionType: params.questionType,
+      sessionId: params.sessionId,
+      userRole: params.userRole || 'unknown',
+      currentPage: params.currentPage,
+      aiResponse: params.aiResponse,
+      gapType: params.gapType,
+      wasAnswered: params.wasAnswered ? new Date() : null,
+    });
+    
+    console.log('[AI Support] Intelligence gap logged:', {
+      gapType: params.gapType,
+      questionType: params.questionType,
+      queryPreview: params.query.substring(0, 50) + '...',
+    });
+  } catch (error) {
+    // Don't throw - logging failures shouldn't break the user experience
+    console.error('[AI Support] Failed to log intelligence gap:', error);
+  }
+}
+
+/**
  * Process a support query and return an AI-generated response
+ * 
+ * Features Knowledge Telemetry:
+ * - Detects low-confidence responses and "Foundry R&D" fallbacks
+ * - Logs intelligence gaps for CTO review
+ * - Enables continuous knowledge base improvement
  */
 export async function processQuery(request: SupportQueryRequest): Promise<SupportQueryResponse> {
   const { query, sessionId: providedSessionId, userRole = 'unknown', context } = request;
@@ -257,11 +428,24 @@ export async function processQuery(request: SupportQueryRequest): Promise<Suppor
   const model = getGeminiModel();
   
   if (!model) {
+    // Log API failure as intelligence gap (we couldn't help the user)
+    logIntelligenceGap({
+      query,
+      questionType,
+      sessionId,
+      userRole,
+      currentPage: context?.currentPage,
+      aiResponse: 'API unavailable - fallback response provided',
+      gapType: 'api_failure',
+      wasAnswered: false,
+    }).catch(() => {}); // Fire and forget
+    
     return {
       answer: "I apologize, but I'm currently unable to process your request. Please try again in a moment, or contact our support team at support@hospogo.com for immediate assistance.",
       questionType,
       sessionId,
       success: false,
+      intelligenceGapLogged: true,
     };
   }
   
@@ -285,10 +469,33 @@ export async function processQuery(request: SupportQueryRequest): Promise<Suppor
     const response = result.response;
     const answer = response.text();
     
+    // === KNOWLEDGE TELEMETRY ===
+    // Detect if this response indicates an intelligence gap
+    const { isGap, gapType } = detectIntelligenceGap(answer);
+    let intelligenceGapLogged = false;
+    
+    if (isGap && gapType) {
+      // Log the gap asynchronously (don't block response)
+      logIntelligenceGap({
+        query,
+        questionType,
+        sessionId,
+        userRole,
+        currentPage: context?.currentPage,
+        aiResponse: answer,
+        gapType,
+        wasAnswered: gapType === 'low_confidence', // Low confidence still provided an answer
+      }).catch(() => {}); // Fire and forget
+      
+      intelligenceGapLogged = true;
+    }
+    
     console.log('[AI Support] Query processed:', {
       questionType,
       queryLength: query.length,
       responseLength: answer.length,
+      intelligenceGapDetected: isGap,
+      gapType: gapType || 'none',
     });
     
     return {
@@ -296,6 +503,7 @@ export async function processQuery(request: SupportQueryRequest): Promise<Suppor
       questionType,
       sessionId,
       success: true,
+      intelligenceGapLogged,
     };
   } catch (error: any) {
     console.error('[AI Support] Error processing query:', error);
@@ -303,11 +511,24 @@ export async function processQuery(request: SupportQueryRequest): Promise<Suppor
     // Provide a helpful fallback response
     const fallbackAnswer = getFallbackResponse(query, questionType);
     
+    // Log API/processing failure
+    logIntelligenceGap({
+      query,
+      questionType,
+      sessionId,
+      userRole,
+      currentPage: context?.currentPage,
+      aiResponse: `Error: ${error.message || 'Unknown error'} - Fallback provided`,
+      gapType: 'api_failure',
+      wasAnswered: false,
+    }).catch(() => {}); // Fire and forget
+    
     return {
       answer: fallbackAnswer,
       questionType,
       sessionId,
       success: false,
+      intelligenceGapLogged: true,
     };
   }
 }
@@ -391,6 +612,51 @@ For Accept All feature (Professionals):
 
 Need more help? Contact support@hospogo.com`,
     
+    reputation: `**Section: The Reputation Engine (Professionals) - User Manual v3.1**
+
+**Demerit Strikes:**
+- 1 strike is automatically issued for cancellations within 4 hours of shift start
+- 3 strikes result in a **7-day Marketplace Shadow-Ban** (you won't appear in Smart Fill)
+- Check your strikes at **Profile** → **Reputation**
+
+**How to Remove a Demerit Strike (Clean Streak):**
+The **Clean Streak** policy allows you to redeem strikes through consistent reliability:
+1. Complete **5 consecutive "Confirmed & On-Time" shifts**
+2. Each shift must be: Accepted, worked, and clocked in within 10 minutes
+3. After 5 qualifying shifts, **1 active demerit strike is automatically removed**
+4. Track your progress at **Profile** → **Reputation** → **Clean Streak Progress**
+
+**Rating System:**
+- 5-star peer-review loop between Venue Owners and Professionals
+- Rate each other after completed shifts
+- Ratings visible after 48-hour anonymous cool-down period
+
+See Section: "The Reputation Engine (Professionals)" in User Manual v3.1 for full details.
+
+Need more help? Contact support@hospogo.com`,
+    
+    high_velocity: `**Section: High-Velocity Logistics - User Manual v3.1**
+
+**Standby Mode:**
+Toggle Standby to become top-of-list for emergency "Gap Shifts" with premium rates.
+1. Go to **Profile** → **Availability**
+2. Toggle **Standby Mode** ON (⚡ icon)
+3. Set your Standby window duration
+4. Receive priority notifications for urgent fills (10-25% premium rates)
+
+**Running Late Button:**
+If you're delayed, use this to notify the Venue Manager with your live ETA:
+1. Navigate to **Profile** → **Active Shift**
+2. Click **"I'm Running Late"** button
+3. Select reason and confirm your Updated ETA
+4. System sends automated SMS/Push to Venue Manager with your ETA
+
+**Grace Period:** Delays ≤10 minutes with notice = No penalty
+
+See Section: "High-Velocity Logistics" in User Manual v3.1 for full details.
+
+Need more help? Contact support@hospogo.com`,
+    
     scheduling: `**Section: Rostering & Calendar**
 
 For Calendar & Scheduling:
@@ -444,4 +710,96 @@ export function clearSession(sessionId: string): void {
  */
 export function getActiveSessionCount(): number {
   return sessions.size;
+}
+
+/**
+ * Get intelligence gaps for CTO dashboard
+ * 
+ * Fetches unreviewed intelligence gaps for analysis and knowledge base improvement.
+ */
+export async function getIntelligenceGaps(options?: {
+  limit?: number;
+  gapType?: GapType;
+  includeReviewed?: boolean;
+}): Promise<{
+  gaps: Array<{
+    id: string;
+    query: string;
+    timestamp: Date;
+    wasAnswered: boolean;
+    questionType: string | null;
+    gapType: string;
+    aiResponse: string | null;
+  }>;
+  totalCount: number;
+}> {
+  const { limit = 50, gapType, includeReviewed = false } = options || {};
+  
+  try {
+    const { eq, isNull, desc, count } = await import('drizzle-orm');
+    
+    // Build query conditions
+    let query = db.select().from(supportIntelligenceGaps);
+    
+    // Add filters
+    const conditions: any[] = [];
+    if (!includeReviewed) {
+      conditions.push(isNull(supportIntelligenceGaps.reviewedAt));
+    }
+    if (gapType) {
+      conditions.push(eq(supportIntelligenceGaps.gapType, gapType));
+    }
+    
+    // Execute query with filters
+    const gaps = await db
+      .select()
+      .from(supportIntelligenceGaps)
+      .where(conditions.length > 0 ? conditions[0] : undefined)
+      .orderBy(desc(supportIntelligenceGaps.timestamp))
+      .limit(limit);
+    
+    // Get total count
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(supportIntelligenceGaps)
+      .where(conditions.length > 0 ? conditions[0] : undefined);
+    
+    return {
+      gaps: gaps.map(g => ({
+        id: g.id,
+        query: g.query,
+        timestamp: g.timestamp,
+        wasAnswered: g.wasAnswered !== null,
+        questionType: g.questionType,
+        gapType: g.gapType,
+        aiResponse: g.aiResponse,
+      })),
+      totalCount: countResult?.count || 0,
+    };
+  } catch (error) {
+    console.error('[AI Support] Error fetching intelligence gaps:', error);
+    throw error;
+  }
+}
+
+/**
+ * Mark an intelligence gap as reviewed
+ */
+export async function markGapReviewed(gapId: string, reviewerId: string): Promise<void> {
+  try {
+    const { eq } = await import('drizzle-orm');
+    
+    await db
+      .update(supportIntelligenceGaps)
+      .set({
+        reviewedAt: new Date(),
+        reviewedBy: reviewerId,
+      })
+      .where(eq(supportIntelligenceGaps.id, gapId));
+    
+    console.log('[AI Support] Intelligence gap marked as reviewed:', gapId);
+  } catch (error) {
+    console.error('[AI Support] Error marking gap as reviewed:', error);
+    throw error;
+  }
 }

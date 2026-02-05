@@ -19,11 +19,23 @@ import {
   Sparkles,
   FileText,
   Shield,
+  ShieldCheck,
   Star,
   Zap,
   HelpCircle,
   MessageCircleQuestion,
-  ExternalLink
+  ExternalLink,
+  Calculator,
+  TrendingUp,
+  BarChart3,
+  Database,
+  Lock,
+  FileCode,
+  Target,
+  Rocket,
+  PieChart,
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,6 +73,36 @@ const helpTopics = [
   { id: 'accept-all', title: 'Accept All Feature', category: 'account', description: 'Auto-accept shifts from trusted venues', keywords: ['accept', 'all', 'auto', 'trusted', 'venue'] },
   { id: 'earnings', title: 'Viewing Your Earnings', category: 'account', description: 'Track payments and earnings history', keywords: ['earnings', 'payment', 'money', 'history', 'income'] },
   { id: 'messages', title: 'Messaging & Communication', category: 'account', description: 'In-app messaging and conversations', keywords: ['message', 'chat', 'communication', 'conversation'] },
+  
+  // Technical Documentation (For Lucas - Accounting Specs)
+  { id: 'mutex-technical', title: 'Mutex Locking Deep Dive', category: 'technical', description: 'Technical specification of the double-sync prevention mechanism', keywords: ['mutex', 'lock', 'race condition', 'technical', 'sync', 'concurrent'] },
+  { id: 'xero-api-spec', title: 'Xero API Integration Spec', category: 'technical', description: 'OAuth flow, timesheet export format, and error handling', keywords: ['xero', 'api', 'oauth', 'integration', 'specification', 'technical'] },
+  { id: 'financial-ledger', title: 'Financial Ledger Architecture', category: 'technical', description: 'Database schema and transaction recording methodology', keywords: ['ledger', 'financial', 'database', 'schema', 'accounting', 'audit'] },
+  { id: 'wage-calculation', title: 'Wage Cost Calculation Engine', category: 'technical', description: 'Formula, rounding rules, and superannuation handling', keywords: ['wage', 'calculation', 'formula', 'payroll', 'super', 'technical'] },
+  { id: 'audit-trail', title: 'Audit Trail & Compliance Logs', category: 'technical', description: 'ATO STP requirements and data retention policies', keywords: ['audit', 'trail', 'ato', 'stp', 'compliance', 'logs', 'retention'] },
+  { id: 'partial-success', title: 'Partial Success Handling', category: 'technical', description: 'Transaction isolation and rollback strategies', keywords: ['partial', 'success', 'transaction', 'rollback', 'isolation', 'error'] },
+  
+  // Strategic Roadmap (For Rick - Lead Analytics)
+  { id: 'lead-tracker-overview', title: 'Lead Tracker System Overview', category: 'strategic', description: 'Pipeline stages, scoring, and campaign management', keywords: ['lead', 'tracker', 'pipeline', 'campaign', 'crm', 'sales'] },
+  { id: 'arr-calculation', title: 'ARR Calculation Methodology', category: 'strategic', description: 'Projected vs confirmed ARR, probability weighting', keywords: ['arr', 'revenue', 'calculation', 'projection', 'probability'] },
+  { id: 'brisbane-100', title: 'Brisbane 100 Campaign Playbook', category: 'strategic', description: 'Strategy, targets, and execution framework', keywords: ['brisbane', '100', 'campaign', 'playbook', 'strategy', 'target'] },
+  { id: 'suburban-loyalty', title: 'Suburban Loyalty Analytics', category: 'strategic', description: 'Distance-based acceptance rates and retention data', keywords: ['suburban', 'loyalty', 'analytics', 'distance', 'retention', 'data'] },
+  { id: 'smart-fill-metrics', title: 'Smart Fill Performance Metrics', category: 'strategic', description: 'Fill rates, response times, and A-Team utilization', keywords: ['smart', 'fill', 'metrics', 'performance', 'analytics', 'utilization'] },
+  { id: 'market-expansion', title: 'Market Expansion Roadmap', category: 'strategic', description: 'City-by-city rollout strategy and success criteria', keywords: ['expansion', 'roadmap', 'market', 'city', 'rollout', 'growth'] },
+  
+  // Reputation & Conduct (For Professionals - Supply Side)
+  { id: 'demerit-strikes', title: 'Demerit Strikes Explained', category: 'reputation', description: '1 strike for cancellations within 4 hours, 3 strikes = 7-day shadow-ban', keywords: ['demerit', 'strike', 'cancel', 'cancellation', 'penalty', 'shadow', 'ban'] },
+  { id: 'clean-streak', title: 'Clean Streak Redemption', category: 'reputation', description: 'Complete 5 consecutive on-time shifts to remove 1 strike', keywords: ['clean', 'streak', 'redemption', 'remove', 'strike', 'reliable', 'on-time'] },
+  { id: 'rating-system', title: '5-Star Rating System', category: 'reputation', description: 'Peer-review loop between Venue Owners and Professionals', keywords: ['rating', 'star', 'review', 'feedback', 'peer', 'score'] },
+  { id: 'shadow-ban-recovery', title: 'Recovering from Shadow-Ban', category: 'reputation', description: 'What happens during and after a 7-day marketplace restriction', keywords: ['shadow', 'ban', 'recovery', 'marketplace', 'restriction', 'visibility'] },
+  { id: 'reputation-profile', title: 'Your Reputation Profile', category: 'reputation', description: 'View strikes, ratings, and Clean Streak progress', keywords: ['reputation', 'profile', 'strikes', 'ratings', 'progress', 'status'] },
+  
+  // Standby & Emergencies (For Professionals - High-Velocity)
+  { id: 'standby-mode', title: 'Activating Standby Mode', category: 'standby', description: 'Toggle to become top-of-list for emergency Gap Shifts', keywords: ['standby', 'mode', 'emergency', 'gap', 'shift', 'priority', 'toggle'] },
+  { id: 'premium-rates', title: 'Premium Rate Structure', category: 'standby', description: 'Earn 10-25% extra on urgent shift fills', keywords: ['premium', 'rate', 'extra', 'bonus', 'urgent', 'pay', 'earning'] },
+  { id: 'running-late', title: 'I\'m Running Late Button', category: 'standby', description: 'Notify venue manager with live ETA via Profile > Active Shift', keywords: ['running', 'late', 'eta', 'notify', 'delay', 'button', 'active'] },
+  { id: 'gap-shift-filling', title: 'Gap Shift Priority Logic', category: 'standby', description: 'How Standby professionals are selected for emergency fills', keywords: ['gap', 'shift', 'priority', 'selection', 'emergency', 'fill', 'logic'] },
+  { id: 'grace-period', title: 'Late Arrival Grace Period', category: 'standby', description: 'Policy for delays with vs without notice', keywords: ['grace', 'period', 'late', 'arrival', 'notice', 'policy', 'penalty'] },
 ];
 
 const categories = [
@@ -99,6 +141,46 @@ const categories = [
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/30',
+  },
+  {
+    id: 'technical',
+    title: 'Technical Documentation',
+    description: 'For accounting specs & system architecture',
+    icon: FileCode,
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-500/30',
+    badge: 'For Lucas',
+  },
+  {
+    id: 'strategic',
+    title: 'Strategic Roadmap',
+    description: 'Lead analytics & growth metrics',
+    icon: TrendingUp,
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/10',
+    borderColor: 'border-rose-500/30',
+    badge: 'For Rick',
+  },
+  {
+    id: 'reputation',
+    title: 'Reputation & Conduct',
+    description: 'Demerit strikes, Clean Streak & ratings',
+    icon: ShieldCheck,
+    color: 'text-[#BAFF39]',
+    bgColor: 'bg-[#BAFF39]/10',
+    borderColor: 'border-[#BAFF39]/30',
+    badge: 'For Professionals',
+  },
+  {
+    id: 'standby',
+    title: 'Standby & Emergencies',
+    description: 'Gap shifts, premium rates & Running Late',
+    icon: Zap,
+    color: 'text-[#BAFF39]',
+    bgColor: 'bg-[#BAFF39]/10',
+    borderColor: 'border-[#BAFF39]/30',
+    badge: 'For Professionals',
   },
 ];
 
@@ -340,9 +422,16 @@ export default function HelpCenter() {
                         <div className={`p-3 rounded-xl ${category.bgColor}`}>
                           <category.icon className={`h-6 w-6 ${category.color}`} />
                         </div>
-                        <Badge variant="secondary" className="text-xs">
-                          {topicCount} articles
-                        </Badge>
+                        <div className="flex flex-col items-end gap-1">
+                          {('badge' in category && category.badge) && (
+                            <Badge className="text-xs bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30">
+                              {category.badge}
+                            </Badge>
+                          )}
+                          <Badge variant="secondary" className="text-xs">
+                            {topicCount} articles
+                          </Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
