@@ -97,9 +97,26 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
+ * FOUNDER ACCESS WHITELIST (Backend)
+ * 
+ * Hardcoded founder emails for god-mode access during investor demos.
+ * This ensures Rick can access admin endpoints even if ADMIN_EMAILS env var
+ * is not configured or if the 'admin' role isn't in the database.
+ * 
+ * Mirrors: src/lib/roles.ts FOUNDER_EMAILS constant
+ */
+const FOUNDER_EMAILS = [
+  'rick@hospogo.com',
+  'rick@snipshift.com.au',
+];
+
+/**
  * Admin authorization middleware
- * Checks if user has admin role or is in the admin email list
+ * Checks if user has admin role, is in the admin email list, OR is a founder
  * MUST be used after authenticateUser middleware
+ * 
+ * INVESTOR BRIEFING FIX: Added hardcoded founder email bypass to prevent
+ * 403 errors during demos if the admin role isn't explicitly assigned.
  */
 export function requireAdmin(
   req: AuthenticatedRequest,
@@ -118,7 +135,11 @@ export function requireAdmin(
   const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
   const isAdminEmail = adminEmails.includes(req.user.email);
 
-  if (!isAdminRole && !isAdminEmail) {
+  // FOUNDER ACCESS OVERRIDE: Hardcoded bypass for founder emails
+  // This ensures Rick can access /api/admin/* endpoints during investor demos
+  const isFounder = FOUNDER_EMAILS.includes(req.user.email);
+
+  if (!isAdminRole && !isAdminEmail && !isFounder) {
     res.status(403).json({ message: 'Forbidden: Admin access required' });
     return;
   }

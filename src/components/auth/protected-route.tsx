@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { isBusinessRole } from '@/lib/roles';
+import { isBusinessRole, isFounderEmail } from '@/lib/roles';
 
 // INVESTOR BRIEFING FIX: Removed 'brand' and 'trainer' roles - system only knows Venue Owner and Professional
 interface ProtectedRouteProps {
@@ -75,6 +75,11 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
   }
 
   if (allowedRoles && allowedRoles.length > 0) {
+    // FOUNDER ACCESS OVERRIDE: Founders bypass all role checks for admin routes
+    // This ensures Rick can access CTO Dashboard during investor demos
+    // even if the 'admin' role isn't explicitly assigned in the database
+    const isFounder = isFounderEmail(user?.email);
+    
     const hasAllowedRole = allowedRoles.some(role => {
       // INVESTOR BRIEFING FIX: Removed 'brand' from business-type role check
       // For business-type roles, use isBusinessRole helper
@@ -84,7 +89,8 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
       return userRole === role || userRoles.includes(role);
     });
 
-    if (!hasAllowedRole) {
+    // Allow access if user is founder OR has required role
+    if (!isFounder && !hasAllowedRole) {
       return <Navigate to="/unauthorized" replace />;
     }
   }

@@ -2,6 +2,29 @@
 // System now only knows about 'Venue Owner' (Engine/hub/business) and 'Professional' (Staff)
 export type AppRole = 'hub' | 'professional' | 'admin' | 'client' | 'business';
 
+/**
+ * FOUNDER ACCESS WHITELIST
+ * 
+ * These email addresses have god-mode access across the platform.
+ * Used by: ProtectedRoute, Navbar CEO Insights, requireAdmin middleware.
+ * 
+ * Purpose: Ensures Rick can access all admin/CEO features during investor demos
+ * even if the 'admin' role hasn't been explicitly assigned in the database.
+ */
+export const FOUNDER_EMAILS = [
+  'rick@hospogo.com',
+  'rick@snipshift.com.au',
+] as const;
+
+/**
+ * Check if an email belongs to a founder account.
+ * Used for CEO/admin access bypass across the application.
+ */
+export function isFounderEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return FOUNDER_EMAILS.includes(email as typeof FOUNDER_EMAILS[number]);
+}
+
 export const roleToRoute: Record<AppRole, string> = {
   hub: '/venue/dashboard', // Aligned with business - both use /venue/dashboard
   business: '/venue/dashboard', // Primary URL for business role users

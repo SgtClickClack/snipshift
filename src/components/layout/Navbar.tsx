@@ -25,7 +25,7 @@ import {
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
-import { AppRole, isBusinessRole } from "@/lib/roles";
+import { AppRole, isBusinessRole, isFounderEmail } from "@/lib/roles";
 import { InstallButton } from "@/components/pwa/install-button";
 const logoUrl = '/hospogo-navbar-banner.png';
 
@@ -246,8 +246,8 @@ export default function Navbar() {
                           </Link>
                         </DropdownMenuItem>
                       )}
-                      {/* CEO Insights Section - Only visible to Rick (Founder Access) */}
-                      {(user.email === 'rick@hospogo.com' || user.email === 'rick@snipshift.com.au') && (
+                      {/* CEO Insights Section - Only visible to Founders (centralized whitelist) */}
+                      {isFounderEmail(user.email) && (
                         <>
                           <DropdownMenuSeparator className="bg-steel-600" />
                           <DropdownMenuLabel className="text-xs text-[#BAFF39] font-semibold flex items-center gap-2">
