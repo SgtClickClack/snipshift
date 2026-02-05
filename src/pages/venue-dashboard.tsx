@@ -139,7 +139,7 @@ const XeroLogo = ({ className = "h-4 w-4" }: { className?: string }) => (
 );
 
 function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
-  const { user: authUser, refreshUser } = useAuth();
+  const { user: authUser, refreshUser, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   
   // Xero integration status

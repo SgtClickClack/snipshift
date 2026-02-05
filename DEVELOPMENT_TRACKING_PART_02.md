@@ -4779,3 +4779,26 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Reused existing auth readiness flags; no new patterns or abstractions introduced.
+
+---
+
+#### 2026-02-06: Fix Venue Dashboard isSystemReady Reference Error
+
+**Core Components**
+- Venue dashboard: `src/pages/venue-dashboard.tsx`
+
+**Key Features**
+- Added missing auth state destructures in `VenueDashboardContent` to prevent `ReferenceError: isSystemReady is not defined` at runtime.
+- Ensured venue data queries stay gated behind `isSystemReady`, `hasFirebaseUser`, and `isAuthLoading` within the content scope.
+
+**Integration Points**
+- Auth context: `useAuth()` provides `isSystemReady`, `hasFirebaseUser`, `isLoading`
+
+**File Paths**
+- `src/pages/venue-dashboard.tsx`
+
+**Next Priority Task**
+- Refresh the venue dashboard and confirm the console no longer reports `isSystemReady` reference errors.
+
+**Code Organization & Quality**
+- Scoped fix to the dashboard content hook destructure without changing behavior elsewhere.
