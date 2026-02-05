@@ -370,7 +370,6 @@ export const getQueryFn: <T>(options: {
       }
     }
 
-    const url = queryKey.join("/") as string;
     const fullUrl = url.startsWith('http') ? url : `${getApiBase()}${url.startsWith('/') ? '' : '/'}${url}`;
     const res = await fetch(fullUrl, {
       credentials: "include",
