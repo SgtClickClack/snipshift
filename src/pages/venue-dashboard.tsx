@@ -1995,11 +1995,11 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       </Dialog>
       
       {/* CEO SECRET DOOR: ARCHITECT PORTAL - Only visible to julian.g.roberts@gmail.com */}
-      {/* Floating action button to access CTO Dashboard directly from Logistics Engine */}
+      {/* Positioned bottom-left adjacent to ENGINE STATUS ticker, z-50 to stay above footer but below chat modal */}
       {user?.email?.toLowerCase() === 'julian.g.roberts@gmail.com' && (
         <button
           onClick={() => navigate('/admin/cto-dashboard')}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full 
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full 
                      bg-zinc-950/90 backdrop-blur-xl border-2 border-[#CCFF00]/60
                      shadow-[0_0_30px_rgba(204,255,0,0.4),_inset_0_0_20px_rgba(204,255,0,0.1)]
                      hover:shadow-[0_0_40px_rgba(204,255,0,0.6),_inset_0_0_30px_rgba(204,255,0,0.15)]

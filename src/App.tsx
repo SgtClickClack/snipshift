@@ -139,12 +139,21 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
   // PROGRESSIVE UNLOCK: /investorportal is a neutral zone - always render immediately for Rick
   const isInvestorPortal = location.pathname === '/investorportal' || location.pathname.startsWith('/investorportal');
   const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || isInvestorPortal;
+  // AUTH GATE: Public routes that should NEVER block on auth (no API calls needed)
+  const isPublicRoute = location.pathname === '/' || location.pathname === '/status' || location.pathname === '/waitlist' || isInvestorPortal;
   
-  // If system isn't ready yet and we haven't handled splash, render nothing (keep HTML splash)
-  // This prevents the skeleton flash during auth handshake
-  // PROGRESSIVE UNLOCK: /investorportal ALWAYS renders immediately - Rick should never wait 3s for Data Room
-  if (!isSystemReady && !splashHandled && !isBridgeRoute && !isSignupOrLandingOrOnboarding) {
-    return null;
+  // STRICT HYDRATION GATE: Block ALL page content until Firebase handshake completes
+  // This prevents the "401 storm" by ensuring no API calls fire before auth token is ready
+  // Exceptions:
+  //   - Public routes (landing, status, waitlist, investor portal) - no auth needed
+  //   - Auth bridge route - handles its own auth flow
+  //   - Signup/onboarding routes - allowed to render immediately for UX
+  if (!isSystemReady && !isPublicRoute && !isBridgeRoute && !isSignupOrLandingOrOnboarding) {
+    // Keep HTML splash if not yet removed, otherwise show React loading screen
+    if (!splashHandled) {
+      return null;
+    }
+    return <LoadingScreen />;
   }
 
   // GLOBAL REDIRECT LOCKDOWN: Block router from mounting ANY route until AuthContext has finished

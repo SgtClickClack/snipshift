@@ -636,15 +636,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         
         // Determine target path immediately (don't wait for venue)
-        const targetPath = isVenueRole ? '/venue/dashboard' : '/dashboard';
+        // FOUNDER OVERRIDE: Founders should NEVER be redirected to /venue/dashboard
+        // Their target is /admin/cto-dashboard (accessed via ARCHITECT PORTAL button)
+        const targetPath = isFounder ? '/admin/cto-dashboard' : (isVenueRole ? '/venue/dashboard' : '/dashboard');
         
         // Neutral route check: allow investor portal to remain visible
+        // FIX: Use currentPath consistently (not location.pathname) to avoid React Router race conditions
         if (isNeutralRoute(currentPath)) {
           setIsVenueLoaded(true);
           setRedirecting(false);
-        } else if (location.pathname !== targetPath) {
-          setRedirecting(true);
-          navigate(targetPath, { replace: true });
+        } else if (currentPath !== targetPath && !currentPath.startsWith('/admin')) {
+          // Don't redirect founders who are already on any /admin/* route
+          if (isFounder) {
+            setRedirecting(false);
+          } else {
+            setRedirecting(true);
+            navigate(targetPath, { replace: true });
+          }
         } else {
           setRedirecting(false);
         }
