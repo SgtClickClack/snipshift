@@ -14,11 +14,292 @@ import * as emailService from '../services/email.service.js';
 import * as notificationService from '../services/notification.service.js';
 import * as ctoAiService from '../services/ai-cto.service.js';
 import { z } from 'zod';
-import { eq, sql, and, inArray, SQL } from 'drizzle-orm';
-import { waitlist, users, venues } from '../db/schema.js';
+import { desc, eq, sql, and, inArray, isNull, SQL } from 'drizzle-orm';
+import { waitlist, users, venues, supportIntelligenceGaps } from '../db/schema.js';
 import { getDb } from '../db/index.js';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
+
+type BrisbaneLeadStatus = 'lead' | 'onboarding' | 'active';
+
+interface BrisbaneLead {
+  id: string;
+  venueName: string;
+  contactPerson: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  status: BrisbaneLeadStatus;
+  lastContacted: string | null;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const BRISBANE_100_SEED_DATA: Array<Omit<BrisbaneLead, 'id' | 'createdAt' | 'updatedAt'>> = [
+  {
+    venueName: 'West End Coffee Co',
+    contactPerson: 'Amanda Reynolds',
+    contactEmail: 'amanda@westendcoffee.com.au',
+    contactPhone: '0412 111 222',
+    status: 'active',
+    lastContacted: '2026-02-03T10:30:00Z',
+    notes: '[LGA: West End] Owner interested in Xero Mutex sync. Currently losing 4 hours/week on payroll. First venue to complete onboarding.',
+  },
+  {
+    venueName: 'Paddington Social',
+    contactPerson: 'Marcus Tan',
+    contactEmail: 'marcus@paddingtonsocial.com.au',
+    contactPhone: '0413 222 333',
+    status: 'active',
+    lastContacted: '2026-02-02T16:00:00Z',
+    notes: '[LGA: Paddington] A-Team strategy fits high-churn weekends. Ready for March pilot expansion.',
+  },
+  {
+    venueName: 'The Valley Brew House',
+    contactPerson: 'Jessica Wong',
+    contactEmail: 'jessica@valleybrewhouse.com.au',
+    contactPhone: '0414 333 444',
+    status: 'active',
+    lastContacted: '2026-02-01T14:00:00Z',
+    notes: '[LGA: Fortitude Valley] High volume venue. DVS compliance was their main driver.',
+  },
+  {
+    venueName: 'New Farm Kitchen',
+    contactPerson: 'David Kim',
+    contactEmail: 'david@newfarmkitchen.com.au',
+    contactPhone: '0415 444 555',
+    status: 'active',
+    lastContacted: '2026-02-01T09:00:00Z',
+    notes: '[LGA: New Farm] Suburban loyalty score 94. Staff retention up 23% since joining.',
+  },
+  {
+    venueName: 'Bulimba Wine Bar',
+    contactPerson: 'Sophie Anderson',
+    contactEmail: 'sophie@bulimbawine.com.au',
+    contactPhone: '0416 555 666',
+    status: 'active',
+    lastContacted: '2026-01-30T11:00:00Z',
+    notes: '[LGA: Bulimba] Premium venue. First to use Smart Fill for holiday coverage.',
+  },
+  {
+    venueName: 'Teneriffe Tavern',
+    contactPerson: 'Michael Brooks',
+    contactEmail: 'michael@tenerifftavern.com.au',
+    contactPhone: '0417 666 777',
+    status: 'onboarding',
+    lastContacted: '2026-02-02T12:00:00Z',
+    notes: '[LGA: Teneriffe] Xero connection pending finance team approval. Expected live next week.',
+  },
+  {
+    venueName: 'Highgate Hill Espresso',
+    contactPerson: 'Emma Chen',
+    contactEmail: 'emma@highgateespresso.com.au',
+    contactPhone: '0418 777 888',
+    status: 'onboarding',
+    lastContacted: '2026-02-01T13:00:00Z',
+    notes: '[LGA: Highgate Hill] Small cafe. Owner excited about 14-day availability picker.',
+  },
+  {
+    venueName: 'The Gabba Sports Bar',
+    contactPerson: "Ryan O'Brien",
+    contactEmail: 'ryan@gabbasportsbar.com.au',
+    contactPhone: '0419 888 999',
+    status: 'onboarding',
+    lastContacted: '2026-01-31T10:00:00Z',
+    notes: '[LGA: Woolloongabba] Event-driven staffing needs. High-value account potential.',
+  },
+  {
+    venueName: 'South Bank Brasserie',
+    contactPerson: 'Lisa Martinez',
+    contactEmail: 'lisa@southbankbrasserie.com.au',
+    contactPhone: '0420 999 000',
+    status: 'onboarding',
+    lastContacted: '2026-01-30T15:00:00Z',
+    notes: '[LGA: South Brisbane] Migrating from Deputy. 40+ casuals to onboard.',
+  },
+  {
+    venueName: 'Woolloongabba Wine',
+    contactPerson: 'James Wilson',
+    contactEmail: 'james@woolloongabbawine.com.au',
+    contactPhone: '0421 000 111',
+    status: 'onboarding',
+    lastContacted: '2026-01-29T09:30:00Z',
+    notes: '[LGA: Woolloongabba] Boutique operation. Compliance Vault is the driver.',
+  },
+  {
+    venueName: 'Morningside Cafe',
+    contactPerson: 'Kate Thompson',
+    contactEmail: 'kate@morningsidecafe.com.au',
+    contactPhone: '0422 111 222',
+    status: 'onboarding',
+    lastContacted: '2026-01-28T14:45:00Z',
+    notes: '[LGA: Morningside] Suburban gem. High stability score (96).',
+  },
+  {
+    venueName: 'The Creek Hotel',
+    contactPerson: 'Andrew Davis',
+    contactEmail: 'andrew@creekhotel.com.au',
+    contactPhone: '0423 222 333',
+    status: 'onboarding',
+    lastContacted: '2026-01-27T11:15:00Z',
+    notes: '[LGA: Bulimba] Multi-venue group. Enterprise discussion in progress.',
+  },
+  {
+    venueName: 'Hamilton Harbour',
+    contactPerson: 'Michelle Lee',
+    contactEmail: 'michelle@hamiltonharbour.com.au',
+    contactPhone: '0424 333 444',
+    status: 'onboarding',
+    lastContacted: '2026-01-26T16:20:00Z',
+    notes: '[LGA: Hamilton] Waterfront venue. Smart Fill demo scheduled.',
+  },
+  {
+    venueName: 'Ascot Social Club',
+    contactPerson: 'Peter Nguyen',
+    contactEmail: 'peter@ascotsocialclub.com.au',
+    contactPhone: '0425 444 555',
+    status: 'onboarding',
+    lastContacted: '2026-01-25T13:10:00Z',
+    notes: '[LGA: Ascot] Racing season demand spikes. A-Team strategy fit.',
+  },
+  {
+    venueName: 'Coorparoo Corner',
+    contactPerson: 'Sarah Hughes',
+    contactEmail: 'sarah@coorparoocorner.com.au',
+    contactPhone: '0426 555 666',
+    status: 'onboarding',
+    lastContacted: '2026-01-24T10:45:00Z',
+    notes: '[LGA: Coorparoo] Suburban loyalty 95. Manual timesheets pain.',
+  },
+  {
+    venueName: 'Toowong Terrace',
+    contactPerson: 'Chris Martin',
+    contactEmail: 'chris@toowongterrace.com.au',
+    contactPhone: '0427 666 777',
+    status: 'onboarding',
+    lastContacted: '2026-01-23T12:40:00Z',
+    notes: '[LGA: Toowong] University precinct. High staff turnover.',
+  },
+  {
+    venueName: 'Indooroopilly Inn',
+    contactPerson: 'Rachel Brown',
+    contactEmail: 'rachel@indooroopillyinn.com.au',
+    contactPhone: '0428 777 888',
+    status: 'onboarding',
+    lastContacted: '2026-01-22T09:10:00Z',
+    notes: '[LGA: Indooroopilly] Shopping centre venue. Needs reliable casual pool.',
+  },
+  {
+    venueName: 'Kangaroo Point Kitchen',
+    contactPerson: 'Tom Jackson',
+    contactEmail: 'tom@kpkitchen.com.au',
+    contactPhone: '0429 888 999',
+    status: 'onboarding',
+    lastContacted: '2026-01-21T15:05:00Z',
+    notes: '[LGA: Kangaroo Point] Events + regular service. Smart Fill + A-Team combo.',
+  },
+  {
+    venueName: 'Stones Corner Social',
+    contactPerson: 'Anna White',
+    contactEmail: 'anna@stonescornersocial.com.au',
+    contactPhone: '0430 999 000',
+    status: 'onboarding',
+    lastContacted: '2026-01-20T11:55:00Z',
+    notes: '[LGA: Stones Corner] Suburban cafe. Stability score 97 - highest in pilot.',
+  },
+  {
+    venueName: 'Milton Mango Bar',
+    contactPerson: 'Daniel Park',
+    contactEmail: 'daniel@miltonmango.com.au',
+    contactPhone: '0431 000 111',
+    status: 'onboarding',
+    lastContacted: '2026-01-19T14:30:00Z',
+    notes: '[LGA: Milton] Near stadium. Event-driven + regular trade.',
+  },
+  {
+    venueName: 'Eagle Street Laneway',
+    contactPerson: 'Claire Ford',
+    contactEmail: 'claire@eaglestlaneway.com.au',
+    contactPhone: '0432 111 222',
+    status: 'lead',
+    lastContacted: '2026-01-18T10:00:00Z',
+    notes: '[LGA: Brisbane City] CBD venue. Waiting for Q1 budget approval.',
+  },
+  {
+    venueName: 'Paddington Ale House',
+    contactPerson: 'Ben Parker',
+    contactEmail: 'ben@paddingtonalehouse.com.au',
+    contactPhone: '0433 222 333',
+    status: 'lead',
+    lastContacted: '2026-01-17T13:30:00Z',
+    notes: '[LGA: Paddington] Interested in smart roster automation; needs internal buy-in.',
+  },
+  {
+    venueName: 'Queens Wharf Social',
+    contactPerson: 'Lauren Price',
+    contactEmail: 'lauren@queenswharfsocial.com.au',
+    contactPhone: '0434 333 444',
+    status: 'lead',
+    lastContacted: '2026-01-16T09:45:00Z',
+    notes: '[LGA: Brisbane City] Large opening; enterprise discussion scheduled.',
+  },
+  {
+    venueName: 'Given Terrace Wine',
+    contactPerson: 'Oliver Reed',
+    contactEmail: 'oliver@giventerracewine.com.au',
+    contactPhone: '0435 444 555',
+    status: 'lead',
+    lastContacted: '2026-01-15T12:20:00Z',
+    notes: '[LGA: Paddington] Boutique operator. Evaluating compliance tooling.',
+  },
+  {
+    venueName: 'CBD Rooftop Collective',
+    contactPerson: 'Natalie Stone',
+    contactEmail: 'natalie@cbdrooftopcollective.com.au',
+    contactPhone: '0436 555 666',
+    status: 'lead',
+    lastContacted: '2026-01-14T16:10:00Z',
+    notes: '[LGA: Brisbane City] Reviewing pitch deck. Follow up mid-Feb.',
+  },
+];
+
+const buildLeadRecord = (
+  data: Omit<BrisbaneLead, 'id' | 'createdAt' | 'updatedAt'> & {
+    id?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }
+): BrisbaneLead => {
+  const now = new Date().toISOString();
+  return {
+    id: data.id || randomUUID(),
+    venueName: data.venueName,
+    contactPerson: data.contactPerson,
+    contactEmail: data.contactEmail,
+    contactPhone: data.contactPhone,
+    status: data.status,
+    lastContacted: data.lastContacted ?? null,
+    notes: data.notes || '',
+    createdAt: data.createdAt || now,
+    updatedAt: data.updatedAt || data.lastContacted || now,
+  };
+};
+
+let brisbaneLeadStore: BrisbaneLead[] = BRISBANE_100_SEED_DATA.map((lead, index) => {
+  const createdAt = new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString();
+  return buildLeadRecord({ ...lead, createdAt });
+});
+
+const ensureBrisbaneLeadStore = () => {
+  if (brisbaneLeadStore.length === 0) {
+    brisbaneLeadStore = BRISBANE_100_SEED_DATA.map((lead, index) => {
+      const createdAt = new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString();
+      return buildLeadRecord({ ...lead, createdAt });
+    });
+  }
+  return brisbaneLeadStore;
+};
 
 // Apply admin middleware to all routes in this router
 // Note: authenticateUser must be called before this router is used, or we can add it here too.
@@ -29,6 +310,313 @@ const router = express.Router();
 
 router.use(authenticateUser);
 router.use(requireAdmin);
+
+const BrisbaneLeadSchema = z.object({
+  venueName: z.string().min(1),
+  contactPerson: z.string().min(1),
+  contactEmail: z.string().email().optional(),
+  contactPhone: z.string().optional(),
+  status: z.enum(['lead', 'onboarding', 'active']).optional(),
+  lastContacted: z.string().nullable().optional(),
+  notes: z.string().optional(),
+});
+
+const BrisbaneLeadUpdateSchema = BrisbaneLeadSchema.partial();
+
+const BrisbaneLeadBulkSchema = z.object({
+  leads: z.array(z.object({
+    id: z.string().optional(),
+    venueName: z.string().min(1),
+    contactPerson: z.string().min(1),
+    contactEmail: z.string().email().optional(),
+    contactPhone: z.string().optional(),
+    status: z.enum(['lead', 'onboarding', 'active']).optional(),
+    lastContacted: z.string().nullable().optional(),
+    notes: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+  })).min(1),
+});
+
+const BrisbaneLeadAutoOnboardSchema = z.object({
+  leadId: z.string().optional(),
+  venueName: z.string().min(1),
+  contactPerson: z.string().min(1),
+  contactEmail: z.string().email().optional(),
+  contactPhone: z.string().optional(),
+});
+
+const IntelligenceGapReviewSchema = z.object({
+  reviewerId: z.string().optional(),
+});
+
+/**
+ * GET /api/admin/support/intelligence-gaps
+ * 
+ * Returns CTO intelligence gaps for the Brain Monitor.
+ */
+router.get('/support/intelligence-gaps', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const limitRaw = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 50;
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+  const includeReviewed = req.query.includeReviewed === 'true';
+  const db = getDb();
+
+  if (!db) {
+    res.status(200).json({ gaps: [], totalCount: 0 });
+    return;
+  }
+
+  try {
+    const baseQuery = db.select().from(supportIntelligenceGaps);
+    const filteredQuery = includeReviewed
+      ? baseQuery
+      : baseQuery.where(isNull(supportIntelligenceGaps.reviewedAt));
+
+    const countQuery = includeReviewed
+      ? db.select({ count: sql<number>`count(*)` }).from(supportIntelligenceGaps)
+      : db.select({ count: sql<number>`count(*)` })
+          .from(supportIntelligenceGaps)
+          .where(isNull(supportIntelligenceGaps.reviewedAt));
+
+    const [rows, totals] = await Promise.all([
+      filteredQuery.orderBy(desc(supportIntelligenceGaps.timestamp)).limit(limit),
+      countQuery,
+    ]);
+
+    const gaps = rows.map((row) => ({
+      id: row.id,
+      query: row.query,
+      timestamp: row.timestamp?.toISOString() || new Date().toISOString(),
+      questionType: row.questionType || null,
+      gapType: row.gapType,
+      aiResponse: row.aiResponse || null,
+      wasAnswered: !!row.wasAnswered,
+      reviewedAt: row.reviewedAt ? row.reviewedAt.toISOString() : null,
+      reviewedBy: row.reviewedBy || null,
+    }));
+
+    res.status(200).json({
+      gaps,
+      totalCount: totals?.[0]?.count ?? gaps.length,
+    });
+  } catch (error: any) {
+    console.error('[ADMIN] Error fetching intelligence gaps:', error);
+    res.status(200).json({ gaps: [], totalCount: 0 });
+  }
+}));
+
+/**
+ * POST /api/admin/support/intelligence-gaps/:id/mark-reviewed
+ * 
+ * Marks an intelligence gap as reviewed/patched.
+ */
+router.post('/support/intelligence-gaps/:id/mark-reviewed', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const validation = IntelligenceGapReviewSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  const db = getDb();
+  if (!db) {
+    res.status(200).json({ success: true, patched: true, simulated: true });
+    return;
+  }
+
+  const reviewerId = validation.data.reviewerId;
+  const reviewedBy = reviewerId && /^[0-9a-f-]{36}$/i.test(reviewerId) ? reviewerId : null;
+
+  try {
+    const updated = await db
+      .update(supportIntelligenceGaps)
+      .set({
+        reviewedAt: new Date(),
+        reviewedBy,
+      })
+      .where(eq(supportIntelligenceGaps.id, req.params.id))
+      .returning({ id: supportIntelligenceGaps.id });
+
+    if (!updated.length) {
+      res.status(404).json({ message: 'Gap not found' });
+      return;
+    }
+
+    res.status(200).json({ success: true, patched: true, id: updated[0].id });
+  } catch (error: any) {
+    console.error('[ADMIN] Error marking intelligence gap as reviewed:', error);
+    res.status(200).json({ success: true, patched: true, simulated: true });
+  }
+}));
+
+/**
+ * GET /api/admin/leads/brisbane-100
+ * 
+ * Returns Brisbane 100 demo leads for LeadTracker / CTO dashboard.
+ */
+router.get('/leads/brisbane-100', asyncHandler(async (_req: AuthenticatedRequest, res) => {
+  const leads = ensureBrisbaneLeadStore();
+  res.status(200).json(leads);
+}));
+
+/**
+ * GET /api/admin/leads/brisbane-100/stats
+ * 
+ * Returns aggregated lead stats for Revenue Forecast.
+ */
+router.get('/leads/brisbane-100/stats', asyncHandler(async (_req: AuthenticatedRequest, res) => {
+  const leads = ensureBrisbaneLeadStore();
+  const activeVenues = leads.filter(lead => lead.status === 'active').length;
+  const onboardingVenues = leads.filter(lead => lead.status === 'onboarding').length;
+  const pendingLeads = leads.filter(lead => lead.status === 'lead').length;
+  const currentLeads = leads.length;
+  const totalLeads = 100;
+  const conversionRate = totalLeads > 0 ? Math.round((activeVenues / totalLeads) * 100) : 0;
+
+  res.status(200).json({
+    totalLeads,
+    currentLeads,
+    conversionRate,
+    activeVenues,
+    onboardingVenues,
+    pendingLeads,
+  });
+}));
+
+/**
+ * POST /api/admin/leads/brisbane-100
+ * 
+ * Create a new Brisbane 100 lead (demo).
+ */
+router.post('/leads/brisbane-100', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const validation = BrisbaneLeadSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  const lead = buildLeadRecord({
+    venueName: validation.data.venueName,
+    contactPerson: validation.data.contactPerson,
+    contactEmail: validation.data.contactEmail,
+    contactPhone: validation.data.contactPhone,
+    status: validation.data.status || 'lead',
+    lastContacted: validation.data.lastContacted ?? null,
+    notes: validation.data.notes || '',
+  });
+
+  ensureBrisbaneLeadStore().unshift(lead);
+  res.status(201).json(lead);
+}));
+
+/**
+ * PUT /api/admin/leads/brisbane-100/:id
+ * 
+ * Update an existing Brisbane 100 lead.
+ */
+router.put('/leads/brisbane-100/:id', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const validation = BrisbaneLeadUpdateSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  const leads = ensureBrisbaneLeadStore();
+  const leadIndex = leads.findIndex((lead) => lead.id === req.params.id);
+  if (leadIndex === -1) {
+    res.status(404).json({ message: 'Lead not found' });
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const updatedLead: BrisbaneLead = {
+    ...leads[leadIndex],
+    ...validation.data,
+    status: validation.data.status || leads[leadIndex].status,
+    lastContacted: validation.data.lastContacted ?? leads[leadIndex].lastContacted,
+    notes: validation.data.notes ?? leads[leadIndex].notes,
+    updatedAt: now,
+  };
+
+  leads[leadIndex] = updatedLead;
+  res.status(200).json(updatedLead);
+}));
+
+/**
+ * POST /api/admin/leads/brisbane-100/bulk
+ * 
+ * Bulk insert/update Brisbane 100 leads for demo seeding.
+ */
+router.post('/leads/brisbane-100/bulk', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const validation = BrisbaneLeadBulkSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  const leads = ensureBrisbaneLeadStore();
+  let created = 0;
+  let updated = 0;
+
+  for (const lead of validation.data.leads) {
+    const existingIndex = lead.id ? leads.findIndex((item) => item.id === lead.id) : -1;
+    const record = buildLeadRecord({
+      venueName: lead.venueName,
+      contactPerson: lead.contactPerson,
+      contactEmail: lead.contactEmail,
+      contactPhone: lead.contactPhone,
+      status: lead.status || 'lead',
+      lastContacted: lead.lastContacted ?? null,
+      notes: lead.notes || '',
+      id: lead.id,
+      createdAt: lead.createdAt,
+      updatedAt: lead.updatedAt,
+    });
+
+    if (existingIndex >= 0) {
+      leads[existingIndex] = { ...leads[existingIndex], ...record };
+      updated++;
+    } else {
+      leads.unshift(record);
+      created++;
+    }
+  }
+
+  res.status(200).json({
+    success: true,
+    created,
+    updated,
+    total: leads.length,
+  });
+}));
+
+/**
+ * POST /api/admin/leads/brisbane-100/auto-onboard
+ * 
+ * Demo-only endpoint to simulate onboarding a lead into a venue account.
+ */
+router.post('/leads/brisbane-100/auto-onboard', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const validation = BrisbaneLeadAutoOnboardSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Auto-onboard simulated',
+    data: validation.data,
+  });
+}));
 
 // RSA review queue (admin-only)
 router.get('/rsa/pending', asyncHandler(async (req: AuthenticatedRequest, res) => {

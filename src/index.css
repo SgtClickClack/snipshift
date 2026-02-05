@@ -1336,6 +1336,12 @@ button[data-variant="refined-glow"]:hover {
   font-weight: 900 !important;
 }
 
+/* Utility: explicit Urbanist 900 for headings/buttons */
+.font-urbanist-900 {
+  font-family: 'Urbanist', sans-serif !important;
+  font-weight: 900 !important;
+}
+
 /* ARR and revenue figures - always Urbanist 900 */
 .arr-value,
 .revenue-metric,

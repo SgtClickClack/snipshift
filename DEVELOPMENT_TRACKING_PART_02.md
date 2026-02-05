@@ -1,3 +1,37 @@
+#### 2026-02-05: CTO Dashboard Console Cleanup & Chat Bubble Offset
+
+**Core Components**
+- `src/components/admin/OmniChat.tsx`
+- `src/components/layout/Navbar.tsx`
+- `src/hooks/useNotifications.ts`
+- `api/_src/routes/admin.ts`
+- `index.html`
+
+**Key Features**
+- Offset the CTO OmniChat trigger on desktop to avoid overlap with the support bubble.
+- Added admin endpoints for Brisbane 100 leads and intelligence gaps to stop 404s and support demo flows.
+- Tightened auth gating for unread-count and notifications polling to reduce early 401s.
+- Removed unused brand icon preload and added Apple touch icon + safer viewport/meta text sizing.
+
+**Integration Points**
+- Admin API: `GET /api/admin/leads/brisbane-100`, `GET /api/admin/leads/brisbane-100/stats`, `POST /api/admin/leads/brisbane-100`, `PUT /api/admin/leads/brisbane-100/:id`, `POST /api/admin/leads/brisbane-100/bulk`, `POST /api/admin/leads/brisbane-100/auto-onboard`
+- Admin API: `GET /api/admin/support/intelligence-gaps`, `POST /api/admin/support/intelligence-gaps/:id/mark-reviewed`
+- Navbar/notifications queries gated by `isSystemReady` + `isLoading`
+
+**File Paths**
+- `src/components/admin/OmniChat.tsx`
+- `src/components/layout/Navbar.tsx`
+- `src/hooks/useNotifications.ts`
+- `api/_src/routes/admin.ts`
+- `index.html`
+
+**Next Priority Task**
+- Verify CTO dashboard console is clean in production.
+
+**Code Organization & Quality**
+- Kept demo lead storage isolated to admin routes; no new frontend patterns introduced.
+
+---
 #### 2026-02-03: Restore Signup Flow (New Firebase Users Unblocked)
 
 **Core Components**
@@ -4561,3 +4595,83 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Reused existing auth and routing patterns; new styling is isolated to a single CSS utility class.
+
+---
+
+#### 2026-02-05: Boardroom Briefing Mode (CTO Deck Overlay)
+
+**Core Components**
+- Briefing overlay: `src/components/admin/BriefingOverlay.tsx`
+- CTO dashboard header: `src/pages/admin/CTODashboard.tsx`
+- Typography utilities: `src/index.css`
+
+**Key Features**
+- Built a full-screen Boardroom Briefing overlay with a 10-slide investor narrative and Framer Motion slide transitions.
+- Implemented keyboard navigation (←/→ + Esc) and UI arrow controls with a blur-backed, Electric Lime-styled presentation shell.
+- Added a "BOARDROOM MODE" refined-glow button in the CTO Dashboard header, restricted to `julian.g.roberts@gmail.com`.
+- Created an Urbanist 900 utility class to keep the boardroom typography consistent without inline styles.
+
+**Integration Points**
+- CTO Dashboard header button opens the overlay; overlay closes on Esc or close control.
+- Framer Motion `AnimatePresence` handles slide transitions without page reloads.
+
+**File Paths**
+- `src/components/admin/BriefingOverlay.tsx`
+- `src/pages/admin/CTODashboard.tsx`
+- `src/index.css`
+
+**Next Priority Task**
+- Review boardroom slide copy on a projector and tighten phrasing if needed.
+
+**Code Organization & Quality**
+- Kept overlay logic isolated to a single admin component and reused existing button variants/styles.
+
+---
+
+#### 2026-02-05: Boardroom Slides HTML Refactor (12-Slide Pitch Mode)
+
+**Core Components**
+- Presentation deck: `hospogo_presentation_slides.html`
+
+**Key Features**
+- Rebuilt the HTML deck to a 12-slide narrative with Urbanist 900 italic headings and strict Electric Lime / Deep Black palette.
+- Added scroll-snap transitions, pitch-mode typography scaling, and neon metric glow support via `.pitch-mode-active`.
+- Implemented glass-card walkthrough placeholders on slides 4, 5, 6, and 8, plus the Stability Pulse animation and DVS-ID JetBrains Mono string.
+- Added a live Pipeline Forecaster slider (10% → 50%) that recalculates ARR in real time.
+- Replaced “subscription” language with “Logistics Platform Fee” and synced valuation to $94,500 audited R&D value.
+
+**Integration Points**
+- Slide 11 saturation slider updates ARR in real time via inline script.
+- Pitch mode applies when `.pitch-mode-active` is present on the document.
+
+**File Paths**
+- `hospogo_presentation_slides.html`
+
+**Next Priority Task**
+- Verify the 12-slide deck in full-screen projector mode and adjust pacing if needed.
+
+**Code Organization & Quality**
+- Kept the deck self-contained with explicit CSS and minimal scripting for live metrics.
+
+---
+
+#### 2026-02-05: Market Data Sync (Investor Deck Metrics)
+
+**Core Components**
+- Presentation deck: `hospogo_presentation_slides.html`
+
+**Key Features**
+- Synced Brisbane venue count (6,141), SME density (95%), and Australia TAM ($168,072,000) into the deck.
+- Aligned the Scale Flywheel slide with the national TAM and Logistics Platform Fee framing.
+
+**Integration Points**
+- Deck metrics updated in Slide 2 and Slide 10 copy blocks.
+
+**File Paths**
+- `hospogo_presentation_slides.html`
+
+**Next Priority Task**
+- Validate the deck flow in full-screen mode and confirm the live slider pacing.
+
+**Code Organization & Quality**
+- Reused existing deck layout primitives without adding new colors or fonts.

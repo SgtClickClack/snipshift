@@ -8,6 +8,63 @@
 
 ---
 
+### Update: 2026-02-05 - CTO Dashboard Console Cleanup
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added admin endpoints for Brisbane 100 leads and intelligence gaps to eliminate 404s on CTO surfaces.
+- Offset CTO OmniChat trigger to avoid overlap with the support bubble.
+- Tightened auth gating on unread-count and notifications polling to reduce early 401s.
+- Cleaned head metadata (Apple touch icon, viewport, text-size-adjust) and removed unused brand-icon preload.
+
+**Impact:**
+- CTO dashboard renders cleanly with fewer console errors and no floating bubble overlap.
+
+---
+
+### Update: 2026-02-05 - Boardroom Briefing Mode (CTO Deck)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added a full-screen Boardroom Briefing overlay with a 10-slide investor narrative and Framer Motion transitions.
+- Implemented keyboard navigation (←/→ + Esc) and arrow controls for slide progression.
+- Added a "BOARDROOM MODE" refined-glow button in the CTO Dashboard header, restricted to `julian.g.roberts@gmail.com`.
+
+**Impact:**
+- CTO Dashboard now launches a native boardroom presentation deck for investor briefings.
+
+---
+
+### Update: 2026-02-05 - Presentation Slides HTML Refactor (12 Slides)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Refactored `hospogo_presentation_slides.html` into a 12-slide narrative with Urbanist 900 italic headings and strict Electric Lime / Deep Black palette.
+- Added scroll-snap transitions, pitch-mode typography scaling, and neon metric glow support.
+- Added glass-card walkthrough placeholders (slides 4, 5, 6, 8), Stability Pulse animation, and DVS-ID JetBrains Mono string.
+- Implemented a live Pipeline Forecaster slider (10% → 50%) that recalculates ARR in real time.
+
+**Impact:**
+- The HTML deck now matches the boardroom narrative and supports live investor walkthroughs.
+
+---
+
+### Update: 2026-02-05 - Market Data Sync (Investor Deck)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added Brisbane venue count (6,141), SME density (95%), and Australia TAM ($168,072,000) to the deck.
+- Aligned Scale Flywheel messaging with national TAM and Logistics Platform Fee framing.
+
+**Impact:**
+- Deck metrics now match the market research brief for the investor narrative.
+
+---
+
 ### Update: 2026-02-03 - Auth Onboarding Stabilization (No Redirect Loops)
 
 **Status:** ✅ **UPDATED**

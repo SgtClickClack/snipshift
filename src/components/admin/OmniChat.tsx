@@ -218,8 +218,9 @@ export default function OmniChat() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <button
-            className="fixed bottom-6 right-6 z-40 p-4 rounded-full bg-zinc-900 border-2 border-[#BAFF39]/50 shadow-[0_0_30px_rgba(186,255,57,0.3)] hover:shadow-[0_0_40px_rgba(186,255,57,0.5)] transition-all duration-300 group"
+            className="fixed bottom-6 right-6 sm:right-24 z-40 p-4 rounded-full bg-zinc-900 border-2 border-[#BAFF39]/50 shadow-[0_0_30px_rgba(186,255,57,0.3)] hover:shadow-[0_0_40px_rgba(186,255,57,0.5)] transition-all duration-300 group"
             data-testid="omnichat-trigger"
+            title="Open HospoGo Architect"
           >
             <Brain className="h-6 w-6 text-[#BAFF39] group-hover:scale-110 transition-transform" />
             <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#BAFF39] animate-pulse" />

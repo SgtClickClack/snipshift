@@ -77,7 +77,7 @@ export default function Navbar() {
   const { data: unreadData } = useQuery({
     queryKey: ['/api/conversations/unread-count'],
     queryFn: fetchUnreadCount,
-    enabled: !!user && isSystemReady,
+    enabled: !!user && isSystemReady && !isLoading,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
@@ -85,7 +85,7 @@ export default function Navbar() {
 
   // Prefetch conversations on hover over Messages button
   const handleMessagesHover = () => {
-    if (user?.id) {
+    if (user?.id && isSystemReady && !isLoading) {
       // Prefetch conversations in the background before user clicks
       queryClient.prefetchQuery({
         queryKey: ['/api/conversations'],

@@ -6,619 +6,508 @@
   <title>HospoGo Investor Presentation 2026</title>
   <meta name="robots" content="noindex, nofollow">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,900;1,900&family=JetBrains+Mono:wght@600;700&display=swap');
+
     :root {
       --brand-neon: #BAFF39;
       --bg-dark: #0a0a0a;
-      --text-primary: #ffffff;
-      --text-secondary: #9ca3af;
-      --border-subtle: rgba(255,255,255,0.08);
     }
-    
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     html {
       scroll-snap-type: y mandatory;
       scroll-behavior: smooth;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg-dark);
-      color: var(--text-primary);
+    }
+
+    body {
+      font-family: 'Urbanist', sans-serif;
+      font-weight: 900;
+      background: var(--bg-dark);
+      color: var(--brand-neon);
       line-height: 1.4;
     }
-    
-    /* Slide Container */
+
     .slide {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 48px;
+      padding: 56px;
       scroll-snap-align: start;
       position: relative;
-      overflow: hidden;
+      background: var(--bg-dark);
     }
-    
+
     .slide-content {
       max-width: 1200px;
       width: 100%;
       z-index: 1;
     }
-    
-    /* Logo */
+
     .logo {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 900;
       font-style: italic;
       letter-spacing: -0.02em;
       position: absolute;
-      top: 32px;
+      top: 28px;
       left: 48px;
     }
-    
+
     .logo span {
       color: var(--brand-neon);
     }
-    
-    /* Slide Number */
+
     .slide-number {
       position: absolute;
-      bottom: 32px;
+      bottom: 28px;
       right: 48px;
       font-size: 12px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      letter-spacing: 0.1em;
+      letter-spacing: 0.2em;
     }
-    
-    /* Typography */
+
     h1 {
-      font-size: clamp(48px, 8vw, 100px);
+      font-size: clamp(60px, 9vw, 120px);
       font-weight: 900;
       font-style: italic;
       letter-spacing: -0.05em;
       line-height: 0.9;
       text-transform: uppercase;
     }
-    
-    h1 .highlight {
-      color: var(--brand-neon);
-    }
-    
+
     h2 {
-      font-size: clamp(36px, 5vw, 64px);
+      font-size: clamp(40px, 6vw, 84px);
       font-weight: 900;
+      font-style: italic;
+      letter-spacing: -0.05em;
+      line-height: 0.95;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      max-width: 720px;
+      margin-top: 16px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .glass-card {
+      border: 2px solid var(--brand-neon);
+      border-radius: 28px;
+      padding: 28px;
+      background: var(--bg-dark);
+      box-shadow: 0 0 30px var(--brand-neon);
+    }
+
+    .label {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .metric {
+      font-size: clamp(40px, 6vw, 80px);
       font-style: italic;
       letter-spacing: -0.04em;
-      line-height: 1;
-      margin-bottom: 24px;
+      margin: 12px 0;
     }
-    
-    h2 .highlight {
-      color: var(--brand-neon);
-    }
-    
-    p.subtitle {
-      font-size: 20px;
-      color: var(--text-secondary);
-      max-width: 600px;
-    }
-    
-    /* Glow Background */
-    .glow {
-      position: absolute;
-      width: 500px;
-      height: 500px;
-      background: var(--brand-neon);
-      border-radius: 50%;
-      filter: blur(200px);
-      opacity: 0.06;
-      pointer-events: none;
-    }
-    
-    /* Cards */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 24px;
-      margin-top: 48px;
-    }
-    
-    .card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border-subtle);
-      border-radius: 24px;
-      padding: 32px;
-    }
-    
-    .card.highlight {
-      border-color: var(--brand-neon);
-      background: rgba(186,255,57,0.03);
-    }
-    
-    .card-stat {
-      font-size: 48px;
-      font-weight: 900;
-      font-style: italic;
-      color: var(--brand-neon);
-      margin-bottom: 8px;
-    }
-    
-    .card-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--text-secondary);
-    }
-    
-    /* AU Venues Card - Logistics Gap */
-    .au-venues-card {
-      grid-column: 1 / -1;
-      background: linear-gradient(135deg, rgba(186,255,57,0.08), rgba(186,255,57,0.02));
-      border: 2px solid var(--brand-neon);
-      border-radius: 32px;
-      padding: 48px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 32px;
-    }
-    
-    .au-venues-card .badge {
-      background: rgba(0,0,0,0.5);
-      color: var(--brand-neon);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.2em;
-      padding: 8px 16px;
-      border-radius: 20px;
-      margin-bottom: 16px;
-    }
-    
-    .au-venues-card .stat {
-      font-size: 72px;
-      font-weight: 900;
-      font-style: italic;
-      color: var(--brand-neon);
-    }
-    
-    .au-venues-card .label {
-      font-size: 14px;
-      color: var(--text-secondary);
-      max-width: 400px;
-    }
-    
-    /* Trinity Grid */
-    .trinity-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      margin-top: 48px;
-    }
-    
-    @media (max-width: 900px) {
-      .trinity-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    .trinity-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border-subtle);
-      border-radius: 32px;
-      padding: 40px;
-      text-align: center;
-    }
-    
-    .trinity-card:hover {
-      border-color: var(--brand-neon);
-    }
-    
-    .trinity-card .icon {
-      font-size: 48px;
-      margin-bottom: 24px;
-    }
-    
-    .trinity-card h3 {
+
+    .metric-small {
       font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 8px;
+      font-style: italic;
     }
-    
-    .trinity-card .subtitle {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--brand-neon);
-    }
-    
-    /* Investment Slide */
-    .investment-slide {
+
+    .stability-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
       background: var(--brand-neon);
+      animation: stabilityPulse 2.5s ease-in-out infinite;
+      box-shadow: 0 0 20px var(--brand-neon);
     }
-    
-    .investment-slide h2 {
-      color: #000;
-    }
-    
-    .investment-slide p.subtitle {
-      color: rgba(0,0,0,0.7);
-    }
-    
-    .investment-slide .logo {
-      color: #000;
-    }
-    
-    .investment-slide .logo span {
-      color: #000;
-    }
-    
-    .investment-slide .slide-number {
-      color: rgba(0,0,0,0.5);
-    }
-    
-    .investment-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      margin-top: 48px;
-    }
-    
-    @media (max-width: 768px) {
-      .investment-grid {
-        grid-template-columns: 1fr;
+
+    @keyframes stabilityPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.3);
+        opacity: 0.7;
       }
     }
-    
-    .term-list {
-      list-style: none;
-    }
-    
-    .term-list li {
-      display: flex;
-      justify-content: space-between;
-      padding: 16px 0;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      color: #000;
-    }
-    
-    .term-list .value {
-      font-weight: 900;
-      font-size: 20px;
-    }
-    
-    .allocation-card {
-      background: #000;
-      border-radius: 32px;
-      padding: 40px;
-    }
-    
-    .allocation-card h3 {
-      color: var(--brand-neon);
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 32px;
-    }
-    
-    .allocation-bar {
-      margin-bottom: 20px;
-    }
-    
-    .allocation-bar .header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-    
-    .allocation-bar .label {
-      color: var(--text-secondary);
-    }
-    
-    .allocation-bar .percent {
-      color: var(--brand-neon);
-    }
-    
-    .allocation-bar .track {
-      height: 6px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    
-    .allocation-bar .fill {
-      height: 100%;
-      background: var(--brand-neon);
-    }
-    
-    /* Roadmap Timeline */
-    .roadmap-timeline {
-      display: flex;
-      gap: 24px;
-      margin-top: 48px;
-      overflow-x: auto;
-      padding-bottom: 16px;
-    }
-    
-    .roadmap-item {
-      flex: 0 0 240px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border-subtle);
-      border-radius: 24px;
-      padding: 32px;
-    }
-    
-    .roadmap-item.current {
-      border-color: var(--brand-neon);
-    }
-    
-    .roadmap-item .quarter {
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
+
+    .dvs-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
       letter-spacing: 0.2em;
-      color: var(--brand-neon);
-      margin-bottom: 12px;
+      padding: 12px 16px;
+      border: 2px solid var(--brand-neon);
+      border-radius: 18px;
+      display: inline-block;
     }
-    
-    .roadmap-item h4 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-    
-    .roadmap-item .licenses {
-      font-size: 32px;
-      font-weight: 900;
-      font-style: italic;
-      color: var(--brand-neon);
-    }
-    
-    .roadmap-item .licenses-label {
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-secondary);
-    }
-    
-    /* CTA Slide */
-    .cta-slide {
-      text-align: center;
-    }
-    
-    .cta-slide h2 {
-      font-size: clamp(48px, 8vw, 100px);
-      margin-bottom: 32px;
-    }
-    
-    .cta-details {
+
+    .iframe-shell {
+      border: 2px solid var(--brand-neon);
+      border-radius: 28px;
+      padding: 20px;
+      background: var(--bg-dark);
       display: flex;
-      justify-content: center;
-      gap: 48px;
-      margin-top: 48px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 320px;
     }
-    
-    .cta-detail {
-      text-align: center;
-    }
-    
-    .cta-detail .icon {
-      font-size: 32px;
-      margin-bottom: 16px;
-    }
-    
-    .cta-detail .label {
-      font-size: 10px;
-      font-weight: 700;
+
+    .iframe-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
     }
-    
-    .cta-detail .value {
-      font-size: 18px;
-      font-weight: 700;
+
+    .pill {
+      border: 2px solid var(--brand-neon);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+    }
+
+    .pitch-mode-active h1,
+    .pitch-mode-active h2 {
+      font-size: 12rem;
+    }
+
+    .pitch-mode-active .metric,
+    .pitch-mode-active .metric-small,
+    .pitch-mode-active .neon-metric {
+      text-shadow: 0 0 30px var(--brand-neon);
+    }
+
+    .slider {
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--brand-neon);
     }
   </style>
 </head>
 <body>
-
-  <!-- SLIDE 1: Title -->
+  <!-- SLIDE 1: Genesis -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="glow" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
-    <div class="slide-content" style="text-align: center;">
-      <h1>The <span class="highlight">Logistics</span> Engine</h1>
-      <p class="subtitle" style="margin: 32px auto 0;">Solving Australia's hospitality workforce crisis through integrated compliance, talent matching, and financial sync.</p>
+    <div class="slide-content">
+      <h1>Genesis</h1>
+      <p class="subtitle">From Dojo Pool to HospoGo B2B — the marketplace pivoted into the logistics operating system for hospitality.</p>
+      <div class="grid grid-2">
+        <div class="glass-card">
+          <div class="label">Insight</div>
+          <div class="metric-small">The gap was logistics, not supply.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Outcome</div>
+          <div class="metric-small">HospoGo becomes the logistics engine for venues.</div>
+        </div>
+      </div>
     </div>
-    <div class="slide-number">01 / 06</div>
+    <div class="slide-number">01 / 12</div>
   </section>
 
-  <!-- SLIDE 2: The Problem - Logistics Gap -->
+  <!-- SLIDE 2: Brisbane 100 Strategy -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="glow" style="top: 20%; right: -10%;"></div>
     <div class="slide-content">
-      <h2>The <span class="highlight">Logistics Gap</span></h2>
-      <p class="subtitle">78% of neighborhood venues operate with fragmented systems. No integrated solution exists.</p>
-      
-      <div class="card-grid">
-        <div class="card">
-          <div class="card-stat">📱</div>
-          <div class="card-label">WhatsApp Scheduling</div>
+      <h2>Brisbane 100 Strategy</h2>
+      <p class="subtitle">Pilot market engineered for predictable ARR validation with a single Logistics Platform Fee.</p>
+      <div class="grid grid-3">
+        <div class="glass-card">
+          <div class="label">Baseline ARR</div>
+          <div class="metric">$178,800</div>
+          <div class="metric-small">100 venues × Logistics Platform Fee × 12</div>
         </div>
-        <div class="card">
-          <div class="card-stat">📋</div>
-          <div class="card-label">Paper Timesheets</div>
+        <div class="glass-card">
+          <div class="label">Brisbane LGA</div>
+          <div class="metric">6,141</div>
+          <div class="metric-small">Hospitality venues in 2024.</div>
         </div>
-        <div class="card">
-          <div class="card-stat">📂</div>
-          <div class="card-label">Spreadsheet Compliance</div>
-        </div>
-        
-        <!-- AU Venues Card - Logistics Gap Highlight -->
-        <div class="au-venues-card">
-          <div>
-            <div class="badge">LOGISTICS GAP</div>
-            <div class="stat">94,000</div>
-            <div class="label">Australian venues underserved by enterprise logistics tools. The $168M opportunity.</div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Suburban Shift</div>
-            <div style="font-size: 32px; font-weight: 900; color: var(--brand-neon);">+18%</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Foot Traffic Growth</div>
-          </div>
+        <div class="glass-card">
+          <div class="label">SME Density</div>
+          <div class="metric">95%</div>
+          <div class="metric-small">Tourism businesses under 20 employees.</div>
         </div>
       </div>
     </div>
-    <div class="slide-number">02 / 06</div>
+    <div class="slide-number">02 / 12</div>
   </section>
 
-  <!-- SLIDE 3: The Solution - Trinity -->
+  <!-- SLIDE 3: Secret Sauce -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="glow" style="bottom: 10%; left: 10%;"></div>
     <div class="slide-content">
-      <h2>The <span class="highlight">Trinity</span> Architecture</h2>
-      <p class="subtitle">Three integrated engines. One logistics platform.</p>
-      
-      <div class="trinity-grid">
-        <div class="trinity-card">
-          <div class="icon">🛡️</div>
-          <h3>The Vault</h3>
-          <div class="subtitle">Compliance Engine</div>
+      <h2>Secret Sauce</h2>
+      <p class="subtitle">Suburban Loyalty Index + Xero Mutex logic form the operational moat.</p>
+      <div class="grid grid-2">
+        <div class="glass-card">
+          <div class="label">Stability Pulse</div>
+          <div class="metric-small">Neighborhood stability drives 92–98 loyalty scores.</div>
+          <div style="margin-top: 20px; display: flex; align-items: center; gap: 16px;">
+            <div class="stability-dot"></div>
+            <div class="metric-small">4.6% higher retention vs CBD.</div>
+          </div>
         </div>
-        <div class="trinity-card">
-          <div class="icon">🎯</div>
-          <h3>The Marketplace</h3>
-          <div class="subtitle">Talent Engine</div>
-        </div>
-        <div class="trinity-card">
-          <div class="icon">⚡</div>
-          <h3>The Engine</h3>
-          <div class="subtitle">Logistics Core</div>
+        <div class="glass-card">
+          <div class="label">Xero Mutex</div>
+          <div class="metric-small">Exactly-once payroll sync with SHA-256 reconciliation.</div>
+          <div class="metric-small" style="margin-top: 12px;">30s advisory lock → zero double-pay risk.</div>
         </div>
       </div>
     </div>
-    <div class="slide-number">03 / 06</div>
+    <div class="slide-number">03 / 12</div>
   </section>
 
-  <!-- SLIDE 4: The Ask - $1.0M Raise -->
-  <section class="slide investment-slide">
-    <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h2>The <span style="background:#000;color:#BAFF39;padding:0 16px;border-radius:20px;">$1.0M</span> Raise</h2>
-      <p class="subtitle">Funding the Logistics Expansion roadmap from Brisbane to national rollout.</p>
-      
-      <div class="investment-grid">
-        <ul class="term-list">
-          <li><span>Raise Amount</span><span class="value">$1,000,000</span></li>
-          <li><span>Post-Money Valuation</span><span class="value">$10M</span></li>
-          <li><span>Equity Offered</span><span class="value">10.0%</span></li>
-          <li><span>Instrument</span><span class="value">SAFE</span></li>
-          <li><span>Development Audit</span><span class="value">$94,500 / 630 Hours</span></li>
-        </ul>
-        
-        <div class="allocation-card">
-          <h3>Resource Allocation</h3>
-          <div class="allocation-bar">
-            <div class="header"><span class="label">Sales & Marketing</span><span class="percent">60%</span></div>
-            <div class="track"><div class="fill" style="width: 60%;"></div></div>
-          </div>
-          <div class="allocation-bar">
-            <div class="header"><span class="label">Engineering & R&D</span><span class="percent">30%</span></div>
-            <div class="track"><div class="fill" style="width: 30%;"></div></div>
-          </div>
-          <div class="allocation-bar">
-            <div class="header"><span class="label">Operations & Legal</span><span class="percent">10%</span></div>
-            <div class="track"><div class="fill" style="width: 10%;"></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="slide-number">04 / 06</div>
-  </section>
-
-  <!-- SLIDE 5: Roadmap - Logistics Expansion -->
+  <!-- SLIDE 4: App Walkthrough -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="glow" style="top: 50%; right: 0;"></div>
     <div class="slide-content">
-      <h2><span class="highlight">Logistics</span> Expansion</h2>
-      <p class="subtitle">From Brisbane 100 to national rollout in 12 months.</p>
-      
-      <div class="roadmap-timeline">
-        <div class="roadmap-item current">
-          <div class="quarter">Q1 2026</div>
-          <h4>Brisbane 100</h4>
-          <div class="licenses">50</div>
-          <div class="licenses-label">Active Platform Licenses</div>
+      <h2>App Walkthrough</h2>
+      <p class="subtitle">Logistics Engine command view (live UI container).</p>
+      <div class="iframe-shell">
+        <div class="iframe-header">
+          <span>Logistics Engine</span>
+          <span>Calendar Ops</span>
         </div>
-        <div class="roadmap-item">
-          <div class="quarter">Q2 2026</div>
-          <h4>Gold Coast</h4>
-          <div class="licenses">100</div>
-          <div class="licenses-label">Active Platform Licenses</div>
-        </div>
-        <div class="roadmap-item">
-          <div class="quarter">Q3 2026</div>
-          <h4>SEQ Saturation</h4>
-          <div class="licenses">200</div>
-          <div class="licenses-label">Active Platform Licenses</div>
-        </div>
-        <div class="roadmap-item">
-          <div class="quarter">Q4 2026</div>
-          <h4>National & Series A</h4>
-          <div class="licenses">500</div>
-          <div class="licenses-label">Active Platform Licenses</div>
+        <div class="grid grid-2">
+          <div class="glass-card">
+            <div class="label">Smart Fill</div>
+            <div class="metric-small">Auto-populates shifts using loyalty data.</div>
+          </div>
+          <div class="glass-card">
+            <div class="label">Live Sync</div>
+            <div class="metric-small">5s dopamine refresh loop during briefing.</div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="slide-number">05 / 06</div>
+    <div class="slide-number">04 / 12</div>
   </section>
 
-  <!-- SLIDE 6: CTA -->
-  <section class="slide cta-slide">
+  <!-- SLIDE 5: App Walkthrough -->
+  <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="glow" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
     <div class="slide-content">
-      <h2>Join the <span class="highlight">Seed</span></h2>
-      <p class="subtitle" style="margin: 0 auto;">Brisbane Investor Briefing</p>
-      
-      <div class="cta-details">
-        <div class="cta-detail">
-          <div class="icon">📅</div>
-          <div class="label">Date</div>
-          <div class="value">February 28, 2026</div>
+      <h2>App Walkthrough</h2>
+      <p class="subtitle">Operational revenue and mutex controls (live UI container).</p>
+      <div class="iframe-shell">
+        <div class="iframe-header">
+          <span>Revenue Engine</span>
+          <span>Mutex Integrity</span>
         </div>
-        <div class="cta-detail">
-          <div class="icon">⏰</div>
-          <div class="label">Time</div>
-          <div class="value">6:00 PM AEST</div>
-        </div>
-        <div class="cta-detail">
-          <div class="icon">📍</div>
-          <div class="label">Location</div>
-          <div class="value">Brisbane CBD</div>
+        <div class="grid grid-2">
+          <div class="glass-card">
+            <div class="label">Projected ARR</div>
+            <div class="metric">$1.5M</div>
+            <div class="metric-small">Real-time pipeline metric.</div>
+          </div>
+          <div class="glass-card">
+            <div class="label">Xero Sync</div>
+            <div class="metric-small">Atomic ledger updates with audit trail.</div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="slide-number">06 / 06</div>
+    <div class="slide-number">05 / 12</div>
   </section>
 
+  <!-- SLIDE 6: Vault -->
+  <section class="slide">
+    <div class="logo">HOSPO<span>GO</span></div>
+    <div class="slide-content">
+      <h2>Vault Verification</h2>
+      <p class="subtitle">Government-grade DVS verification with immutable audit ID.</p>
+      <div class="iframe-shell">
+        <div class="iframe-header">
+          <span>Compliance Vault</span>
+          <span>DVS Handshake</span>
+        </div>
+        <div class="glass-card">
+          <div class="label">DVS-ID</div>
+          <div class="dvs-id">DVS-RSA-K8H9J2-ABC123</div>
+          <div class="metric-small" style="margin-top: 16px;">Cryptographic proof of compliance.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">06 / 12</div>
+  </section>
+
+  <!-- SLIDE 7: Financials -->
+  <section class="slide">
+    <div class="logo">HOSPO<span>GO</span></div>
+    <div class="slide-content">
+      <h2>Financials</h2>
+      <p class="subtitle">Live ARR metrics and Reliability Crown signal strength.</p>
+      <div class="grid grid-2">
+        <div class="glass-card">
+          <div class="label">Committed ARR</div>
+          <div class="metric neon-metric">$178,800</div>
+          <div class="metric-small">Active + Onboarding venues.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Reliability Crown</div>
+          <div class="metric-small">0 strikes + 10+ shifts = elite ranking.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">07 / 12</div>
+  </section>
+
+  <!-- SLIDE 8: App Walkthrough -->
+  <section class="slide">
+    <div class="logo">HOSPO<span>GO</span></div>
+    <div class="slide-content">
+      <h2>Self-Healing Intelligence</h2>
+      <p class="subtitle">Brain Monitor logs every gap and patches the system live.</p>
+      <div class="iframe-shell">
+        <div class="iframe-header">
+          <span>CTO Brain Monitor</span>
+          <span>Self-Healing Loop</span>
+        </div>
+        <div class="grid grid-2">
+          <div class="glass-card">
+            <div class="label">Gap Logged</div>
+            <div class="metric-small">Unknown feature requests captured instantly.</div>
+          </div>
+          <div class="glass-card">
+            <div class="label">Manual Patch</div>
+            <div class="metric-small">CTO marks resolved → system learns.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">08 / 12</div>
+  </section>
+
+  <!-- SLIDE 9: Network Resilience -->
+  <section class="slide">
+    <div class="logo">HOSPO<span>GO</span></div>
+    <div class="slide-content">
+      <h2>Network Resilience</h2>
+      <p class="subtitle">Session recovery, offline empathy, and continuity for boardroom demos.</p>
+      <div class="grid grid-3">
+        <div class="glass-card">
+          <div class="label">Hydration Gate</div>
+          <div class="metric-small">Blocks auth storms and 401 loops.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Local Mode</div>
+          <div class="metric-small">Engine holds state when Wi-Fi flickers.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Session Heartbeat</div>
+          <div class="metric-small">20-minute token refresh during briefing.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">09 / 12</div>
+  </section>
+
+  <!-- SLIDE 10: Scale Flywheel -->
+  <section class="slide">
+    <div class="logo">HOSPO<span>GO</span></div>
+    <div class="slide-content">
+      <h2>Scale Flywheel</h2>
+      <p class="subtitle">Brisbane → National replication with compounding data advantage.</p>
+      <div class="grid grid-2">
+        <div class="glass-card">
+          <div class="label">Pilot Playbook</div>
+          <div class="metric-small">Repeatable go-to-market in every LGA.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Australia TAM</div>
+          <div class="metric">$168,072,000</div>
+          <div class="metric-small">94,000 core venues × Logistics Platform Fee × 12.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">10 / 12</div>
+  </section>
+
+  <!-- SLIDE 11: Pipeline Forecaster -->
+  <section class="slide">
+    <div class="logo">HOSPO<span>GO</span></div>
+    <div class="slide-content">
+      <h2>Pipeline Forecaster</h2>
+      <p class="subtitle">Move the saturation slider (10% → 50%) and watch ARR jump in real time.</p>
+      <div class="glass-card">
+        <div class="label">Brisbane Pilot Saturation</div>
+        <div class="metric" id="saturation-output">10%</div>
+        <input class="slider" type="range" id="saturation-slider" min="10" max="50" step="5" value="10" />
+        <div class="metric neon-metric" id="arr-output">$178,800</div>
+        <div class="metric-small">100 venues × Logistics Platform Fee × 12</div>
+      </div>
+    </div>
+    <div class="slide-number">11 / 12</div>
+  </section>
+
+  <!-- SLIDE 12: Valuation -->
+  <section class="slide">
+    <div class="logo">HOSPO<span>GO</span></div>
+    <div class="slide-content">
+      <h2>Valuation Sync</h2>
+      <p class="subtitle">Audited R&D value anchors the $10M valuation with proof-of-execution.</p>
+      <div class="grid grid-2">
+        <div class="glass-card">
+          <div class="label">Audited R&D Value</div>
+          <div class="metric">$94,500</div>
+          <div class="metric-small">630 hours audited engineering output.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Close</div>
+          <div class="metric-small">The logistics engine is live. The boardroom is ready.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">12 / 12</div>
+  </section>
+
+  <script>
+    const slider = document.getElementById('saturation-slider');
+    const saturationOutput = document.getElementById('saturation-output');
+    const arrOutput = document.getElementById('arr-output');
+
+    const updateARR = () => {
+      const saturation = Number(slider.value);
+      const arr = Math.round((saturation / 100) * 100 * 149 * 12);
+      saturationOutput.textContent = `${saturation}%`;
+      arrOutput.textContent = `$${arr.toLocaleString()}`;
+    };
+
+    slider.addEventListener('input', updateARR);
+    updateARR();
+  </script>
 </body>
 </html>

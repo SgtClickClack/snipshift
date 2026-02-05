@@ -50,6 +50,7 @@ import { Slider } from '@/components/ui/slider';
 import { useToast, TOAST_DURATION } from '@/hooks/useToast';
 import { formatDateSafe } from '@/utils/date-formatter';
 import OmniChat from '@/components/admin/OmniChat';
+import BriefingOverlay from '@/components/admin/BriefingOverlay';
 import {
   Brain,
   Cpu,
@@ -226,6 +227,7 @@ function CTODashboardInner() {
   const [optimisticallyPatchedIds, setOptimisticallyPatchedIds] = useState<Set<string>>(new Set());
   const [isBriefingGuideOpen, setIsBriefingGuideOpen] = useState(false);
   const [isMobileHandshakeOpen, setIsMobileHandshakeOpen] = useState(false);
+  const [isBoardroomModeOpen, setIsBoardroomModeOpen] = useState(false);
   
   // MARKET SATURATION FORECASTER - Brisbane Pilot projection slider
   // Shows Rick how easily the $10M valuation is justified by capturing a fraction of the market
@@ -237,6 +239,7 @@ function CTODashboardInner() {
   const isCEO = normalizedEmail === 'julian.g.roberts@gmail.com';
   const isAdmin = user?.roles?.includes('admin');
   const hasAccess = isCEO || isAdmin;
+  const isBoardroomModeAllowed = normalizedEmail === 'julian.g.roberts@gmail.com';
 
   // FOUNDRY RESET SWITCH - Reset Demo Environment for investor demo practice
   // Purpose: Allows Rick to practice the "Accept All" loop multiple times without manual database cleaning
@@ -552,6 +555,15 @@ function CTODashboardInner() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {isBoardroomModeAllowed && (
+              <Button
+                variant="refined-glow"
+                onClick={() => setIsBoardroomModeOpen(true)}
+                className="tracking-widest text-xs shadow-[0_0_18px_rgba(204,255,0,0.25)] font-urbanist-900"
+              >
+                BOARDROOM MODE
+              </Button>
+            )}
             {/* FOUNDRY RESET SWITCH - CEO/Admin only */}
             {/* Purpose: Allows Rick to practice the "Accept All" loop multiple times */}
             {(isCEO || isAdmin) && (
@@ -1696,6 +1708,10 @@ function CTODashboardInner() {
       
       {/* OmniChat - HospoGo Architect (God-Mode AI) */}
       <OmniChat />
+      <BriefingOverlay
+        isOpen={isBoardroomModeOpen}
+        onClose={() => setIsBoardroomModeOpen(false)}
+      />
     </div>
   );
 }
