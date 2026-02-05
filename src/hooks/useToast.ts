@@ -8,11 +8,21 @@ import type {
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
+// INVESTOR BRIEFING: Toast Duration Constants
+// Standard toast: 3 seconds (quick feedback)
+// Mission Critical toast: 8 seconds (gives investors time to read important messages)
+export const TOAST_DURATION = {
+  STANDARD: 3000,        // 3 seconds - quick feedback
+  MISSION_CRITICAL: 8000, // 8 seconds - important notifications (Shift Confirmations, Xero Success, Foundry messages)
+  PERSISTENT: 0,          // 0 means toast stays until dismissed
+} as const;
+
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number // Duration in ms before auto-dismiss
 }
 
 const actionTypes = {
@@ -139,7 +149,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast({ duration = TOAST_DURATION.STANDARD, ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -153,6 +163,7 @@ function toast({ ...props }: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
+      duration,
       id,
       open: true,
       onOpenChange: (open) => {
@@ -161,11 +172,36 @@ function toast({ ...props }: Toast) {
     },
   })
 
+  // Auto-dismiss after duration (if not persistent)
+  if (duration > 0) {
+    setTimeout(() => {
+      dismiss()
+    }, duration)
+  }
+
   return {
     id: id,
     dismiss,
     update,
   }
+}
+
+/**
+ * INVESTOR BRIEFING: Mission Critical Toast
+ * 
+ * Purpose: For "Mission Critical" notifications like:
+ * - Shift Confirmations (Accept All success)
+ * - Xero Sync Success
+ * - Foundry Initialized messages
+ * - Any notification investors need time to read on the big screen
+ * 
+ * Duration: 8 seconds (vs 3 seconds for standard toasts)
+ */
+function toastMissionCritical(props: Omit<Toast, 'duration'>) {
+  return toast({
+    ...props,
+    duration: TOAST_DURATION.MISSION_CRITICAL,
+  })
 }
 
 function useToast() {
@@ -188,4 +224,4 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+export { useToast, toast, toastMissionCritical }

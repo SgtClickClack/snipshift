@@ -456,6 +456,13 @@ function DVSCertificateModal({ document, isOpen, onClose, documentUrl }: DVSCert
             Close Certificate
           </Button>
         </div>
+        
+        {/* HOSPO-GO Branding Footer */}
+        <div className="pt-3 mt-4 border-t border-zinc-800 flex justify-center">
+          <span className="text-[10px] text-zinc-600 tracking-wider">
+            Verified by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span> Compliance Engine
+          </span>
+        </div>
       </DialogContent>
     </Dialog>
   );

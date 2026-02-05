@@ -358,6 +358,21 @@ router.get('/status', authenticateUser, asyncHandler(async (req: AuthenticatedRe
 /**
  * DELETE /api/integrations/xero
  * Disconnect Xero integration
+ * 
+ * INVESTOR BRIEFING: DISCONNECT RESILIENCE
+ * This endpoint ONLY revokes Xero OAuth tokens from xero_integrations table.
+ * It PRESERVES the xero_employee_id mappings on individual user profiles.
+ * 
+ * PURPOSE: Lucas can demo "Disconnecting and Reconnecting" without losing
+ * all the staff mapping data he just configured. When Xero is reconnected,
+ * existing employee mappings are immediately functional again.
+ * 
+ * WHAT IS CLEARED:
+ * - xero_integrations row (OAuth tokens, tenant ID)
+ * 
+ * WHAT IS PRESERVED:
+ * - users.xero_employee_id (staff-to-Xero-employee mappings)
+ * - xero_audit_log (historical sync records for compliance)
  */
 router.delete('/', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
@@ -370,14 +385,19 @@ router.delete('/', authenticateUser, asyncHandler(async (req: AuthenticatedReque
   const integration = await xeroRepo.getXeroIntegrationByUserId(userId);
   const tenantId = integration?.xeroTenantId;
 
+  // DISCONNECT RESILIENCE: Only delete OAuth tokens, NOT employee mappings
+  // users.xero_employee_id values are intentionally preserved for quick reconnection
   await xeroRepo.deleteXeroIntegration(userId);
 
-  // Audit log: Disconnection
+  // Audit log: Disconnection (mappings preserved)
   await xeroRepo.logXeroOperation({
     userId,
     operation: 'DISCONNECT',
     xeroTenantId: tenantId,
-    result: { success: true },
+    result: { 
+      success: true,
+      mappingsPreserved: true, // Document that employee mappings survive disconnect
+    },
   });
 
   res.status(200).json({ message: 'Xero disconnected' });

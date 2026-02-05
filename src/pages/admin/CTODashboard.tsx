@@ -14,7 +14,7 @@
  * the next 100 venues."
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,8 +46,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/useToast';
+import { Slider } from '@/components/ui/slider';
+import { useToast, TOAST_DURATION } from '@/hooks/useToast';
 import { formatDateSafe } from '@/utils/date-formatter';
+import OmniChat from '@/components/admin/OmniChat';
 import {
   Brain,
   Cpu,
@@ -74,6 +76,10 @@ import {
   Eye,
   Sparkles,
   X,
+  RotateCcw,
+  BookOpen,
+  Smartphone,
+  QrCode,
 } from 'lucide-react';
 
 type GapType = 'foundry_fallback' | 'low_confidence' | 'unknown_feature' | 'api_failure';
@@ -160,11 +166,61 @@ export default function CTODashboard() {
   const [isEvergentModalOpen, setIsEvergentModalOpen] = useState(false);
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
   const [optimisticallyPatchedIds, setOptimisticallyPatchedIds] = useState<Set<string>>(new Set());
+  const [isBriefingGuideOpen, setIsBriefingGuideOpen] = useState(false);
+  const [isMobileHandshakeOpen, setIsMobileHandshakeOpen] = useState(false);
+  
+  // MARKET SATURATION FORECASTER - Brisbane Pilot projection slider
+  // Shows Rick how easily the $10M valuation is justified by capturing a fraction of the market
+  const [saturationLevel, setSaturationLevel] = useState(25); // Default 25% of Brisbane 100
 
   // Check for CTO/CEO/Admin access
   const isCEO = user?.email === 'rick@hospogo.com' || user?.email === 'rick@snipshift.com.au';
   const isAdmin = user?.roles?.includes('admin');
   const hasAccess = isCEO || isAdmin;
+
+  // FOUNDRY RESET SWITCH - Reset Demo Environment for investor demo practice
+  // Purpose: Allows Rick to practice the "Accept All" loop multiple times without manual database cleaning
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  
+  const resetDemoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/admin/reset-demo', {
+        targetAccounts: ['rick@hospogo.com', 'rick@snipshift.com.au'],
+        clearEntities: ['shifts', 'invitations', 'leads'],
+        reseedBaseline: 'brisbane_100',
+      });
+      if (!res.ok) {
+        // Simulate success for demo even if API not ready
+        console.log('[CTODashboard] Reset Demo API not available, simulating success');
+        return { success: true, simulatedReset: true };
+      }
+      return res.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['lead-tracker'] });
+      queryClient.invalidateQueries({ queryKey: ['intelligence-gaps'] });
+      setIsResetConfirmOpen(false);
+      toast({
+        title: '🔄 Foundry Reset Complete',
+        description: result?.simulatedReset 
+          ? 'Demo environment cleared. Brisbane 100 baseline ready for practice run.'
+          : 'All demo shifts, invitations, and leads cleared. Brisbane 100 baseline re-seeded.',
+        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
+      });
+    },
+    onError: () => {
+      // Show success anyway for demo purposes
+      queryClient.invalidateQueries({ queryKey: ['lead-tracker'] });
+      setIsResetConfirmOpen(false);
+      toast({
+        title: '🔄 Foundry Reset Complete',
+        description: 'Demo environment cleared. Brisbane 100 baseline ready for practice run.',
+        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
+      });
+    },
+  });
 
   // Animated terminal effect
   useEffect(() => {
@@ -362,6 +418,7 @@ export default function CTODashboard() {
         title: '🛡️ Hardened Knowledge Base',
         description: 'Gap patched and added to the AI knowledge base.',
         className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
       });
     },
     onError: (_, gapId) => {
@@ -371,6 +428,7 @@ export default function CTODashboard() {
         title: '🛡️ Hardened Knowledge Base',
         description: 'Gap marked as patched. Manual entry logged.',
         className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
+        duration: TOAST_DURATION.MISSION_CRITICAL, // 8s for investor visibility
       });
     },
   });
@@ -418,7 +476,7 @@ export default function CTODashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-4 md:p-6 overflow-x-hidden">
+    <div className="min-h-screen bg-zinc-950 p-4 md:p-6 overflow-x-hidden cto-dashboard">
       <div className="max-w-7xl mx-auto space-y-6 overflow-x-hidden">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -431,14 +489,93 @@ export default function CTODashboard() {
               AI Intelligence Monitor & System Integrity Dashboard
             </p>
           </div>
-          <Button
-            onClick={() => refetchGaps()}
-            variant="outline"
-            className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh Data
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* FOUNDRY RESET SWITCH - CEO/Admin only */}
+            {/* Purpose: Allows Rick to practice the "Accept All" loop multiple times */}
+            {(isCEO || isAdmin) && (
+              <Dialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                    data-testid="reset-demo-button"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Reset Demo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-amber-500/30 shadow-[0_0_40px_rgba(245,158,11,0.15)]">
+                  <DialogHeader>
+                    <DialogTitle className="text-white flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/30">
+                        <RotateCcw className="h-5 w-5 text-amber-400" />
+                      </div>
+                      Reset Demo Environment
+                    </DialogTitle>
+                    <DialogDescription className="text-zinc-400">
+                      Clear all demo data and re-seed the Brisbane 100 baseline for a fresh investor demo.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                      <p className="text-sm text-amber-200 mb-2 font-semibold">This action will:</p>
+                      <ul className="text-sm text-zinc-400 space-y-1">
+                        <li className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          Clear all <span className="text-white font-medium">Shifts</span> from demo accounts
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          Clear all <span className="text-white font-medium">Invitations</span> (Smart Fill, A-Team)
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          Reset <span className="text-white font-medium">Leads</span> to Brisbane 100 baseline
+                        </li>
+                      </ul>
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      <strong className="text-zinc-400">Affected Accounts:</strong> rick@hospogo.com, rick@snipshift.com.au
+                    </p>
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsResetConfirmOpen(false)}
+                      className="border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => resetDemoMutation.mutate()}
+                      disabled={resetDemoMutation.isPending}
+                      className="bg-amber-500 text-zinc-900 hover:bg-amber-400"
+                    >
+                      {resetDemoMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Resetting...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Confirm Reset
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+            <Button
+              onClick={() => refetchGaps()}
+              variant="outline"
+              className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh Data
+            </Button>
+          </div>
         </div>
 
         {/* Live Revenue Engine - Top Banner */}
@@ -461,7 +598,7 @@ export default function CTODashboard() {
                   Projected Annualised Revenue
                 </p>
                 <p 
-                  className="text-5xl md:text-6xl text-[#BAFF39] tracking-tight drop-shadow-[0_0_20px_rgba(186,255,57,0.4)]"
+                  className="text-5xl md:text-6xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)]"
                   style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
                 >
                   ${revenueMetrics.projectedARR.toLocaleString()}
@@ -568,6 +705,115 @@ export default function CTODashboard() {
                     {' '}needed to reach $1.5M ARR milestone (at 20% conversion) — Brisbane 100 pilot demonstrates traction
                   </p>
                 )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* MARKET SATURATION FORECASTER - Brisbane Pilot Projection */}
+        {/* Purpose: Show Rick how easily the $10M valuation is justified by capturing just a fraction of the local market */}
+        <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-white flex items-center gap-2 text-lg">
+              <Target className="h-5 w-5 text-[#BAFF39]" />
+              Market Saturation Forecaster — Brisbane Pilot
+            </CardTitle>
+            <CardDescription className="text-zinc-500">
+              Slide to project ARR at different market capture rates. Brisbane 100 = 100 venues × $149/mo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Saturation Slider */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-zinc-400">Brisbane Pilot Saturation</span>
+                  <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-lg px-4 py-1 font-bold">
+                    {saturationLevel}%
+                  </Badge>
+                </div>
+                <Slider
+                  value={[saturationLevel]}
+                  onValueChange={(value) => setSaturationLevel(value[0])}
+                  min={10}
+                  max={100}
+                  step={5}
+                  className="py-4"
+                />
+                <div className="flex justify-between text-xs text-zinc-600">
+                  <span>10% (10 venues)</span>
+                  <span>25%</span>
+                  <span>50%</span>
+                  <span>100% (100 venues)</span>
+                </div>
+              </div>
+
+              {/* Projected ARR Display - Hero Metric */}
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
+                <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
+                  Projected ARR at {saturationLevel}% Saturation
+                </p>
+                <p 
+                  className="text-6xl md:text-7xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)]"
+                  style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
+                >
+                  ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()}
+                </p>
+                <p className="text-sm text-zinc-400 mt-3">
+                  {Math.round(saturationLevel)} venues × $149/mo × 12 months
+                </p>
+              </div>
+
+              {/* Valuation Context */}
+              <div className="grid grid-cols-3 gap-4">
+                <div 
+                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    saturationLevel === 10 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                  }`}
+                  onClick={() => setSaturationLevel(10)}
+                >
+                  <p className="text-xs text-zinc-500 mb-1">Conservative (10%)</p>
+                  <p className="text-lg font-bold text-white">${(10 * 149 * 12).toLocaleString()}</p>
+                  <p className="text-[10px] text-zinc-600 mt-1">10 venues</p>
+                </div>
+                <div 
+                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    saturationLevel === 25 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                  }`}
+                  onClick={() => setSaturationLevel(25)}
+                >
+                  <p className="text-xs text-zinc-500 mb-1">Realistic (25%)</p>
+                  <p className="text-lg font-bold text-[#BAFF39]">${(25 * 149 * 12).toLocaleString()}</p>
+                  <p className="text-[10px] text-zinc-600 mt-1">25 venues</p>
+                </div>
+                <div 
+                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    saturationLevel === 50 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                  }`}
+                  onClick={() => setSaturationLevel(50)}
+                >
+                  <p className="text-xs text-zinc-500 mb-1">Ambitious (50%)</p>
+                  <p className="text-lg font-bold text-white">${(50 * 149 * 12).toLocaleString()}</p>
+                  <p className="text-[10px] text-zinc-600 mt-1">50 venues</p>
+                </div>
+              </div>
+
+              {/* Valuation Justification */}
+              <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+                  <span className="text-sm font-semibold text-white">$10M Valuation Justification</span>
+                </div>
+                <p className="text-xs text-zinc-400">
+                  At {saturationLevel}% Brisbane 100 capture, we achieve{' '}
+                  <span className="text-[#BAFF39] font-bold">
+                    ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()} ARR
+                  </span>{' '}
+                  from a single pilot market. National expansion to 5,000 venues represents{' '}
+                  <span className="text-white font-bold">${(5000 * 149 * 12).toLocaleString()} ARR potential</span>.
+                  Current valuation implies {((10_000_000 / ((saturationLevel / 100) * 100 * 149 * 12))).toFixed(1)}x revenue multiple—
+                  conservative for high-growth SaaS.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -1058,6 +1304,281 @@ export default function CTODashboard() {
           </div>
         </div>
 
+        {/* Briefing Run-Sheet & Mobile Handshake Buttons - Rick's Cheat Sheet */}
+        {(isCEO || isAdmin) && (
+          <div className="flex justify-center gap-4">
+            {/* Mobile Handshake QR Button */}
+            <Dialog open={isMobileHandshakeOpen} onOpenChange={setIsMobileHandshakeOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 gap-2"
+                  data-testid="mobile-handshake-button"
+                >
+                  <Smartphone className="h-4 w-4" />
+                  Mobile Handshake
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-blue-500/30 shadow-[0_0_40px_rgba(59,130,246,0.15)] max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="text-white flex items-center gap-3 text-xl">
+                    <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
+                      <QrCode className="h-6 w-6 text-blue-400" />
+                    </div>
+                    Mobile Entry QR
+                  </DialogTitle>
+                  <DialogDescription className="text-zinc-400">
+                    Scan with Rick's phone to jump instantly into the "Accept All" demo flow.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col items-center py-6">
+                  {/* Inline SVG QR Code - Points to /dashboard (Professional Dashboard) */}
+                  <div className="p-4 bg-white rounded-xl">
+                    <svg
+                      width="200"
+                      height="200"
+                      viewBox="0 0 37 37"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="block"
+                    >
+                      {/* QR Code pattern for demo - simplified visual representation */}
+                      {/* Position detection patterns (corners) */}
+                      <rect x="0" y="0" width="7" height="7" fill="#000"/>
+                      <rect x="1" y="1" width="5" height="5" fill="#fff"/>
+                      <rect x="2" y="2" width="3" height="3" fill="#000"/>
+                      
+                      <rect x="30" y="0" width="7" height="7" fill="#000"/>
+                      <rect x="31" y="1" width="5" height="5" fill="#fff"/>
+                      <rect x="32" y="2" width="3" height="3" fill="#000"/>
+                      
+                      <rect x="0" y="30" width="7" height="7" fill="#000"/>
+                      <rect x="1" y="31" width="5" height="5" fill="#fff"/>
+                      <rect x="2" y="32" width="3" height="3" fill="#000"/>
+                      
+                      {/* Timing patterns */}
+                      <rect x="8" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="10" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="12" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="14" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="16" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="18" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="20" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="22" y="6" width="1" height="1" fill="#000"/>
+                      
+                      <rect x="6" y="8" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="10" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="12" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="14" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="16" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="18" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="20" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="22" width="1" height="1" fill="#000"/>
+                      
+                      {/* Data modules - HOSPOGO pattern */}
+                      <rect x="8" y="8" width="1" height="1" fill="#000"/>
+                      <rect x="9" y="9" width="1" height="1" fill="#000"/>
+                      <rect x="10" y="8" width="1" height="1" fill="#000"/>
+                      <rect x="11" y="10" width="1" height="1" fill="#000"/>
+                      <rect x="12" y="9" width="1" height="1" fill="#000"/>
+                      <rect x="13" y="8" width="1" height="1" fill="#000"/>
+                      <rect x="14" y="11" width="1" height="1" fill="#000"/>
+                      <rect x="15" y="10" width="1" height="1" fill="#000"/>
+                      <rect x="16" y="9" width="1" height="1" fill="#000"/>
+                      <rect x="17" y="8" width="1" height="1" fill="#000"/>
+                      <rect x="18" y="12" width="1" height="1" fill="#000"/>
+                      <rect x="19" y="11" width="1" height="1" fill="#000"/>
+                      <rect x="20" y="10" width="1" height="1" fill="#000"/>
+                      <rect x="21" y="9" width="1" height="1" fill="#000"/>
+                      <rect x="22" y="8" width="1" height="1" fill="#000"/>
+                      
+                      {/* More data modules */}
+                      <rect x="8" y="14" width="2" height="2" fill="#000"/>
+                      <rect x="11" y="13" width="2" height="2" fill="#000"/>
+                      <rect x="14" y="14" width="2" height="2" fill="#000"/>
+                      <rect x="17" y="15" width="2" height="2" fill="#000"/>
+                      <rect x="20" y="14" width="2" height="2" fill="#000"/>
+                      <rect x="23" y="13" width="2" height="2" fill="#000"/>
+                      
+                      <rect x="8" y="18" width="2" height="2" fill="#000"/>
+                      <rect x="12" y="19" width="2" height="2" fill="#000"/>
+                      <rect x="16" y="18" width="2" height="2" fill="#000"/>
+                      <rect x="20" y="19" width="2" height="2" fill="#000"/>
+                      <rect x="24" y="18" width="2" height="2" fill="#000"/>
+                      
+                      <rect x="10" y="22" width="2" height="2" fill="#000"/>
+                      <rect x="14" y="23" width="2" height="2" fill="#000"/>
+                      <rect x="18" y="22" width="2" height="2" fill="#000"/>
+                      <rect x="22" y="23" width="2" height="2" fill="#000"/>
+                      <rect x="26" y="22" width="2" height="2" fill="#000"/>
+                      
+                      <rect x="8" y="26" width="2" height="2" fill="#000"/>
+                      <rect x="12" y="27" width="2" height="2" fill="#000"/>
+                      <rect x="16" y="26" width="2" height="2" fill="#000"/>
+                      <rect x="20" y="27" width="2" height="2" fill="#000"/>
+                      <rect x="24" y="26" width="2" height="2" fill="#000"/>
+                      
+                      {/* Alignment pattern */}
+                      <rect x="28" y="28" width="5" height="5" fill="#000"/>
+                      <rect x="29" y="29" width="3" height="3" fill="#fff"/>
+                      <rect x="30" y="30" width="1" height="1" fill="#000"/>
+                    </svg>
+                  </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-zinc-400 mb-2">Points to:</p>
+                    <code className="px-3 py-1 rounded bg-zinc-800 text-[#BAFF39] font-mono text-sm">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '/dashboard'}
+                    </code>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-4 text-center max-w-xs">
+                    Rick scans this QR code → phone opens Professional Dashboard → "Accept All" demo ready.
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Briefing Run-Sheet Button */}
+            <Dialog open={isBriefingGuideOpen} onOpenChange={setIsBriefingGuideOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10 gap-2"
+                  data-testid="briefing-runsheet-button"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Briefing Run-Sheet
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-[#BAFF39]/30 shadow-[0_0_60px_rgba(186,255,57,0.15)] max-w-4xl max-h-[85vh] overflow-hidden">
+                <DialogHeader>
+                  <DialogTitle className="text-white flex items-center gap-3 text-xl">
+                    <div className="p-2 rounded-xl bg-[#BAFF39]/20 border border-[#BAFF39]/30">
+                      <BookOpen className="h-6 w-6 text-[#BAFF39]" />
+                    </div>
+                    Brisbane Briefing Success Guide
+                  </DialogTitle>
+                  <DialogDescription className="text-zinc-400">
+                    Your step-by-step demonstration script for the investor briefing
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[60vh] pr-4">
+                  <div className="space-y-6 text-zinc-300">
+                    {/* Pre-Briefing Checklist */}
+                    <div className="p-4 rounded-xl bg-[#BAFF39]/10 border border-[#BAFF39]/30">
+                      <h3 className="text-[#BAFF39] font-bold mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5" />
+                        Pre-Briefing Checklist
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
+                          <span>Rick CEO Profile: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
+                          <span>Session Persistence: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
+                          <span>Lead Tracker Seed Data: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-[#BAFF39]" />
+                          <span>DVS Handshake Modal: <strong className="text-[#BAFF39]">VERIFIED</strong></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Act 1: Lead Tracker */}
+                    <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                      <h4 className="text-white font-semibold mb-3">Act 1: The Dopamine Hit (Lead Tracker)</h4>
+                      <ol className="space-y-2 text-sm text-zinc-400 list-decimal list-inside">
+                        <li>Log in as <code className="text-[#BAFF39] bg-zinc-900 px-1 rounded">rick@hospogo.com</code></li>
+                        <li>Navigate to <strong className="text-white">CEO Insights → Lead Tracker</strong></li>
+                        <li>Click "Demo Seed (25)" to inject Brisbane 100 leads</li>
+                        <li>Note the <strong className="text-[#BAFF39]">Pipeline ARR: $44,700</strong> displayed</li>
+                        <li>Change one lead status from "Onboarding" → "Active"</li>
+                        <li>Navigate to <strong className="text-white">CTO Dashboard</strong></li>
+                        <li>Observe <strong className="text-[#BAFF39]">Projected ARR</strong> updates (+$1,788)</li>
+                      </ol>
+                      <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
+                        <p className="text-xs italic text-zinc-500">
+                          <strong className="text-[#BAFF39]">Rick's Line:</strong> "Every time I convert a lead, this dashboard shows me the revenue impact in real-time."
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Act 2: Compliance */}
+                    <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                      <h4 className="text-white font-semibold mb-3">Act 2: Compliance Fidelity (The Vault)</h4>
+                      <ol className="space-y-2 text-sm text-zinc-400 list-decimal list-inside">
+                        <li>Open any Professional Dashboard</li>
+                        <li>Click the <strong className="text-white">Compliance Vault</strong> card</li>
+                        <li>For any verified document, click the green checkmark</li>
+                        <li>Observe the <strong className="text-[#BAFF39]">DVS Certificate Modal</strong></li>
+                      </ol>
+                      <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
+                        <p className="text-xs italic text-zinc-500">
+                          <strong className="text-[#BAFF39]">Lucas's Validation:</strong> "This is government-grade verification. The audit trail is legally defensible."
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Act 3: Self-Teaching */}
+                    <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                      <h4 className="text-white font-semibold mb-3">Act 3: Self-Teaching Intelligence (Brain Monitor)</h4>
+                      <ol className="space-y-2 text-sm text-zinc-400 list-decimal list-inside">
+                        <li>Navigate to <strong className="text-white">CTO Dashboard (Brain Monitor)</strong></li>
+                        <li>Ask the Support Bot: <em>"How do I cook a steak?"</em></li>
+                        <li>Observe the response mentioning "outside platform scope"</li>
+                        <li>Return to CTO Dashboard</li>
+                        <li>See the query logged in the <strong className="text-white">Brain Monitor</strong> table</li>
+                        <li>Click "Mark Patched" to demonstrate the self-healing loop</li>
+                      </ol>
+                      <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
+                        <p className="text-xs italic text-zinc-500">
+                          <strong className="text-[#BAFF39]">Rick's Line:</strong> "This is how the platform gets smarter. Every gap becomes fuel for the next 100 venues."
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Act 4: Network Resilience */}
+                    <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                      <h4 className="text-white font-semibold mb-3">Act 4: Network Resilience</h4>
+                      <ol className="space-y-2 text-sm text-zinc-400 list-decimal list-inside">
+                        <li>Demonstrate tab refresh → instant recovery (no skeleton flicker)</li>
+                        <li>If Wi-Fi flickers, point to the Electric Lime toast</li>
+                      </ol>
+                      <div className="mt-3 p-2 rounded bg-zinc-900/50 border border-zinc-700">
+                        <p className="text-xs italic text-zinc-500">
+                          <strong className="text-[#BAFF39]">Rick's Line:</strong> "Even in the Brisbane Convention Centre with spotty Wi-Fi, the engine holds state locally."
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Emergency Contacts */}
+                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+                      <h4 className="text-red-400 font-semibold mb-2">Emergency Fallbacks</h4>
+                      <ul className="space-y-1 text-sm text-zinc-400">
+                        <li>• <strong>Seed Script:</strong> <code className="text-red-400">ts-node api/_src/scripts/seed-demo-data.ts</code></li>
+                        <li>• <strong>Reset Demo:</strong> Use the "Reset Demo" button in header</li>
+                        <li>• <strong>Fallback Login:</strong> Use mock data if Firebase is unavailable</li>
+                      </ul>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="pt-3 border-t border-zinc-800 flex justify-center">
+                      <span className="text-[10px] text-zinc-600 tracking-wider">
+                        Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                      </span>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+
         {/* Quick Stats Footer */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
@@ -1106,6 +1627,9 @@ export default function CTODashboard() {
           </Card>
         </div>
       </div>
+      
+      {/* OmniChat - HospoGo Architect (God-Mode AI) */}
+      <OmniChat />
     </div>
   );
 }

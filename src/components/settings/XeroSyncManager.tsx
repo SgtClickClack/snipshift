@@ -427,25 +427,33 @@ export default function XeroSyncManager() {
       </Card>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
+        <DialogContent className="bg-zinc-900 border-zinc-700">
           <DialogHeader>
-            <DialogTitle>Confirm Sync</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Confirm Sync</DialogTitle>
+            <DialogDescription className="text-zinc-400">
               You are about to sync timesheets to Xero for {startDate} to {endDate}. Approved and completed shifts
               will be pushed as draft timesheets. Employees without a Xero mapping will be skipped.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isSyncing}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmSync} disabled={isSyncing} className="gap-2" data-testid="xero-confirm-sync">
-              {isSyncing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : null}
-              Confirm Sync
-            </Button>
+          <DialogFooter className="flex-col gap-4 sm:flex-row">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isSyncing} className="flex-1 sm:flex-none border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmSync} disabled={isSyncing} className="flex-1 sm:flex-none gap-2 bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90" data-testid="xero-confirm-sync">
+                {isSyncing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                Confirm Sync
+              </Button>
+            </div>
           </DialogFooter>
+          {/* HOSPO-GO Branding Footer */}
+          <div className="pt-3 border-t border-zinc-800 flex justify-center">
+            <span className="text-[10px] text-zinc-600 tracking-wider">
+              Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+            </span>
+          </div>
         </DialogContent>
       </Dialog>
 

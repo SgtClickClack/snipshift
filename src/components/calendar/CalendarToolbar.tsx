@@ -23,6 +23,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { View } from "react-big-calendar";
 import { fetchRosterTotals } from "@/lib/api";
@@ -205,23 +210,97 @@ export function CalendarToolbar({
             
             {/* Financial Health indicator - Only show in business mode. Pulse when Xero disconnected (CTA for Lucas) */}
             {/* CLS FIX: Reserve space with skeleton while loading to prevent layout shift */}
+            {/* XERO CALCULATION PROOF: Click for breakdown - Lucas's financial due diligence feature */}
             {mode === 'business' && dateRange?.start && (
               <div className="hidden sm:flex items-center gap-1">
-                <div
-                  className={cn(
-                    "flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#BAFF39]/10 dark:bg-[#BAFF39]/20 text-[#BAFF39] dark:text-[#BAFF39] text-sm font-medium",
-                    "min-w-[180px]", // Reserved width to prevent CLS
-                    !isSyncedToXero && rosterTotals && "animate-pulse"
-                  )}
-                  data-testid="est-wage-cost"
-                >
-                  <DollarSign className="h-4 w-4 shrink-0" />
-                  {rosterTotals !== undefined ? (
-                    <span>Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}</span>
-                  ) : (
-                    <Skeleton className="h-4 w-24 bg-[#BAFF39]/20" />
-                  )}
-                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#BAFF39]/10 dark:bg-[#BAFF39]/20 text-[#BAFF39] dark:text-[#BAFF39] text-sm font-medium",
+                        "min-w-[180px]", // Reserved width to prevent CLS
+                        "hover:bg-[#BAFF39]/20 hover:shadow-[0_0_10px_rgba(186,255,57,0.2)] transition-all cursor-pointer",
+                        !isSyncedToXero && rosterTotals && "animate-pulse"
+                      )}
+                      data-testid="est-wage-cost"
+                    >
+                      <DollarSign className="h-4 w-4 shrink-0" />
+                      {rosterTotals !== undefined ? (
+                        <span>Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}</span>
+                      ) : (
+                        <Skeleton className="h-4 w-24 bg-[#BAFF39]/20" />
+                      )}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    side="bottom" 
+                    align="end"
+                    className="w-[320px] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_20px_rgba(186,255,57,0.15)] p-0"
+                  >
+                    <div className="p-4 space-y-4">
+                      {/* Header */}
+                      <div className="flex items-center gap-2 pb-2 border-b border-zinc-700">
+                        <DollarSign className="h-5 w-5 text-[#BAFF39]" />
+                        <span className="font-bold text-white">Wage Cost Breakdown</span>
+                      </div>
+                      
+                      {rosterTotals ? (
+                        <>
+                          {/* Calculation Proof Table */}
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center py-1.5 border-b border-zinc-800">
+                              <span className="text-zinc-400 text-sm">Total Hours</span>
+                              <span className="font-mono font-bold text-white">{rosterTotals.totalHours?.toFixed(1) || '0.0'}h</span>
+                            </div>
+                            <div className="flex justify-between items-center py-1.5 border-b border-zinc-800">
+                              <span className="text-zinc-400 text-sm">Base Rates (Avg)</span>
+                              <span className="font-mono font-bold text-white">
+                                {formatCurrency(rosterTotals.totalHours ? (rosterTotals.totalCost * 0.85) / rosterTotals.totalHours : 0, rosterTotals.currency)}/hr
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center py-1.5 border-b border-zinc-800">
+                              <span className="text-zinc-400 text-sm">Projected Super (11.5%)</span>
+                              <span className="font-mono text-zinc-300">
+                                {formatCurrency(rosterTotals.totalCost * 0.115, rosterTotals.currency)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center py-1.5 border-b border-zinc-800">
+                              <span className="text-zinc-400 text-sm">Payroll Tax Est. (4.75%)</span>
+                              <span className="font-mono text-zinc-300">
+                                {formatCurrency(rosterTotals.totalCost * 0.0475, rosterTotals.currency)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Total */}
+                          <div className="flex justify-between items-center pt-2 border-t border-[#BAFF39]/30">
+                            <span className="font-bold text-white">Total Estimated</span>
+                            <span className="font-mono font-black text-xl text-[#BAFF39]">
+                              {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}
+                            </span>
+                          </div>
+                          
+                          {/* Footer Note */}
+                          <p className="text-[10px] text-zinc-500 leading-tight">
+                            Based on confirmed shifts only. Actual costs may vary with penalty rates, leave loading, and WorkCover.
+                            {!isSyncedToXero && ' Connect Xero for precise payroll export.'}
+                          </p>
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-center py-4">
+                          <Skeleton className="h-4 w-32 bg-zinc-700" />
+                        </div>
+                      )}
+                      
+                      {/* HOSPO-GO Branding Footer */}
+                      <div className="pt-2 border-t border-zinc-800 flex justify-center">
+                        <span className="text-[10px] text-zinc-600 tracking-wider">
+                          Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                        </span>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 {/* Contextual Help Tooltip */}
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -235,7 +314,7 @@ export function CalendarToolbar({
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[280px] text-xs">
                     <p className="font-medium mb-1">Estimated Wage Cost</p>
-                    <p>Calculated from confirmed shift hours × staff hourly rates for the visible calendar period. {!isSyncedToXero && 'Connect Xero to export timesheets for payroll.'}</p>
+                    <p>Click the pill for calculation breakdown. Calculated from confirmed shift hours × staff hourly rates. {!isSyncedToXero && 'Connect Xero to export timesheets for payroll.'}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>

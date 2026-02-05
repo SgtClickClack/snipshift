@@ -12,8 +12,9 @@ import * as waitlistRepo from '../repositories/waitlist.repository.js';
 import * as venuesRepo from '../repositories/venues.repository.js';
 import * as emailService from '../services/email.service.js';
 import * as notificationService from '../services/notification.service.js';
+import * as ctoAiService from '../services/ai-cto.service.js';
 import { z } from 'zod';
-import { eq, sql, and, inArray } from 'drizzle-orm';
+import { eq, sql, and, inArray, SQL } from 'drizzle-orm';
 import { waitlist, users, venues } from '../db/schema.js';
 import { getDb } from '../db/index.js';
 
@@ -828,6 +829,295 @@ router.patch('/waitlist/:id/status', asyncHandler(async (req: AuthenticatedReque
       message: error?.message || 'Failed to update waitlist status'
     });
   }
+}));
+
+/**
+ * POST /api/admin/reset-demo
+ * 
+ * Reset Demo Environment for investor demo practice.
+ * - Clears all Shifts, Invitations, and WorkerAvailability records for test venue
+ * - Resets LeadTracker statuses back to baseline (5 Active, 15 Onboarding)
+ * - Re-seeds Rick Cavanagh professional profile with 10 completed shifts for Reliability Crown
+ * 
+ * Purpose: Allows Rick's "Reset" button to work during live practice.
+ */
+const ResetDemoSchema = z.object({
+  targetAccounts: z.array(z.string().email()).optional(),
+  clearEntities: z.array(z.enum(['shifts', 'invitations', 'leads', 'availability', 'intelligence_gaps'])).optional(),
+  reseedBaseline: z.string().optional(),
+  resetSaturationTo: z.number().min(10).max(100).optional(), // Default 25% for investor demo
+});
+
+router.post('/reset-demo', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const validation = ResetDemoSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  const db = getDb();
+  if (!db) {
+    res.status(500).json({ error: 'Database connection unavailable' });
+    return;
+  }
+
+  const { 
+    targetAccounts = ['rick@hospogo.com', 'rick@snipshift.com.au'], 
+    clearEntities = ['shifts', 'invitations', 'leads', 'intelligence_gaps'],
+    resetSaturationTo = 25, // Default 25% for investor demo baseline
+  } = validation.data;
+
+  console.log('[ADMIN] Reset Demo initiated by:', req.user?.email);
+  console.log('[ADMIN] Target accounts:', targetAccounts);
+  console.log('[ADMIN] Clear entities:', clearEntities);
+  console.log('[ADMIN] Saturation Forecaster reset to:', resetSaturationTo + '%');
+
+  try {
+    // Get user IDs for target accounts
+    const targetUsers = await db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(inArray(users.email, targetAccounts));
+
+    const targetUserIds = targetUsers.map(u => u.id);
+    console.log('[ADMIN] Found target user IDs:', targetUserIds.length);
+
+    let shiftsCleared = 0;
+    let invitationsCleared = 0;
+    let availabilityCleared = 0;
+    let leadsReset = 0;
+    let intelligenceGapsCleared = 0;
+
+    // 1. Clear Shifts for target accounts
+    if (clearEntities.includes('shifts') && targetUserIds.length > 0) {
+      // Clear shifts where user is the employer (venue owner)
+      const shiftsResult = await db.execute(sql`
+        DELETE FROM shifts 
+        WHERE employer_id IN (${sql.join(targetUserIds.map(id => sql`${id}`), sql`, `)})
+        OR assignee_id IN (${sql.join(targetUserIds.map(id => sql`${id}`), sql`, `)})
+      `);
+      shiftsCleared = (shiftsResult as any).rowCount || 0;
+      console.log('[ADMIN] Shifts cleared:', shiftsCleared);
+    }
+
+    // 2. Clear Shift Invitations
+    if (clearEntities.includes('invitations') && targetUserIds.length > 0) {
+      const invitationsResult = await db.execute(sql`
+        DELETE FROM shift_invitations 
+        WHERE professional_id IN (${sql.join(targetUserIds.map(id => sql`${id}`), sql`, `)})
+      `);
+      invitationsCleared = (invitationsResult as any).rowCount || 0;
+      console.log('[ADMIN] Invitations cleared:', invitationsCleared);
+    }
+
+    // 3. Clear Worker Availability
+    if (clearEntities.includes('availability') && targetUserIds.length > 0) {
+      const availabilityResult = await db.execute(sql`
+        DELETE FROM worker_availability 
+        WHERE user_id IN (${sql.join(targetUserIds.map(id => sql`${id}`), sql`, `)})
+      `);
+      availabilityCleared = (availabilityResult as any).rowCount || 0;
+      console.log('[ADMIN] Availability cleared:', availabilityCleared);
+    }
+
+    // 4. Clear Support Intelligence Gaps table (Self-Healing AI demo reset)
+    // PURPOSE: Allows Rick to show the "Self-Healing" AI loop starting from a clean slate
+    if (clearEntities.includes('intelligence_gaps')) {
+      try {
+        const intelligenceGapsResult = await db.execute(sql`
+          DELETE FROM support_intelligence_gaps
+          WHERE reviewed_at IS NULL
+        `);
+        intelligenceGapsCleared = (intelligenceGapsResult as any).rowCount || 0;
+        console.log('[ADMIN] Intelligence gaps cleared:', intelligenceGapsCleared);
+      } catch (err) {
+        // Table may not exist in all environments - continue gracefully
+        console.log('[ADMIN] Intelligence gaps table not found or empty, skipping');
+        intelligenceGapsCleared = 0;
+      }
+    }
+
+    // 5. Reset LeadTracker statuses to baseline (5 Active, 15 Onboarding)
+    if (clearEntities.includes('leads')) {
+      // Note: Leads are stored in client-side state for demo purposes
+      // This is a no-op at the database level but signals the frontend to reset
+      leadsReset = 20; // 5 Active + 15 Onboarding baseline
+      console.log('[ADMIN] Lead statuses marked for reset to baseline');
+    }
+
+    // 5. Re-seed Rick's professional profile with 10 completed shifts for Reliability Crown
+    // Find or create Rick's professional profile
+    const rickUser = targetUsers.find(u => u.email === 'rick@hospogo.com');
+    if (rickUser) {
+      // Ensure Rick has 10 completed shifts (for Reliability Crown eligibility)
+      // The Reliability Crown requires: 0 strikes AND 10+ completed shifts
+      await db.execute(sql`
+        UPDATE profiles 
+        SET 
+          completed_shifts = 10,
+          reliability_score = 100,
+          no_show_count = 0,
+          cancellation_count = 0,
+          updated_at = NOW()
+        WHERE user_id = ${rickUser.id}
+      `);
+      console.log('[ADMIN] Rick profile re-seeded with 10 completed shifts for Reliability Crown');
+
+      // 6. POST RESET AUDIT HYDRATION: Inject one historical "Mock Xero Sync" into xero_audit_log
+      // Purpose: Ensures Lucas can see the **Xero Trace** and **Audit Trail** functionality
+      // without running a real sync - provides immediate demo value after reset
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      await db.execute(sql`
+        INSERT INTO xero_audit_log (user_id, operation, xero_tenant_id, payload, result, created_at)
+        VALUES (
+          ${rickUser.id},
+          'SYNC_TIMESHEET',
+          'demo-tenant-brisbane-foundry',
+          ${JSON.stringify({
+            calendarId: 'demo-calendar-weekly',
+            calendarName: 'Weekly Pay Calendar',
+            dateRange: {
+              start: '2026-02-03',
+              end: '2026-02-09'
+            },
+            totalEmployees: 8,
+            totalHours: 142.5
+          })}::jsonb,
+          ${JSON.stringify({
+            status: 'SUCCESS',
+            syncedEmployees: 8,
+            failedEmployees: 0,
+            totalHours: 142.5,
+            mutexId: 'mutex-demo-' + Date.now(),
+            xeroTimesheetIds: [
+              'TS-DEMO-001', 'TS-DEMO-002', 'TS-DEMO-003', 'TS-DEMO-004',
+              'TS-DEMO-005', 'TS-DEMO-006', 'TS-DEMO-007', 'TS-DEMO-008'
+            ],
+            checksum: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+          })}::jsonb,
+          ${twoHoursAgo}::timestamp
+        )
+        ON CONFLICT DO NOTHING
+      `);
+      console.log('[ADMIN] Mock Xero sync audit log entry injected (2 hours ago, 142.5 hours, SUCCESS)');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Demo environment reset successfully',
+      summary: {
+        shiftsCleared,
+        invitationsCleared,
+        availabilityCleared,
+        leadsReset,
+        intelligenceGapsCleared,
+        reliabilityCrownActive: true,
+        // SATURATION FORECASTER: Signal frontend to reset slider to this value
+        // Purpose: Shows Rick the "Self-Healing" AI loop from a clean slate
+        saturationForecasterReset: resetSaturationTo,
+      },
+      timestamp: new Date().toISOString(),
+    });
+
+  } catch (error: any) {
+    console.error('[ADMIN] Error resetting demo environment:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error?.message || 'Failed to reset demo environment',
+    });
+  }
+}));
+
+/**
+ * POST /api/admin/chat
+ * 
+ * HospoGo Architect - Omniscient CTO Bot
+ * God-Mode Gemini chatbot with full access to technical and business DNA.
+ * 
+ * Body: { query: string, sessionId?: string, mode?: 'concise' | 'detailed' | 'introspective' }
+ * 
+ * Features:
+ * - Full codebase knowledge via CTO Knowledge Bridge
+ * - Introspective Analysis (explains unfamiliar code)
+ * - Business logic documentation (A-Team, Reliability Crown, Suburban Loyalty)
+ * - System metrics explanation
+ */
+const CTOChatSchema = z.object({
+  query: z.string().min(1, 'Query is required').max(5000, 'Query too long'),
+  sessionId: z.string().optional(),
+  mode: z.enum(['concise', 'detailed', 'introspective']).optional().default('detailed'),
+});
+
+router.post('/chat', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const validation = CTOChatSchema.safeParse(req.body);
+  if (!validation.success) {
+    res.status(400).json({
+      message: 'Validation error: ' + validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+    });
+    return;
+  }
+
+  const { query, sessionId, mode } = validation.data;
+
+  console.log('[ADMIN] CTO Chat request from:', req.user?.email, {
+    queryLength: query.length,
+    mode,
+    hasSession: !!sessionId,
+  });
+
+  try {
+    const response = await ctoAiService.processCTOQuery({
+      query,
+      sessionId,
+      mode,
+    });
+
+    res.status(200).json({
+      answer: response.answer,
+      queryType: response.queryType,
+      sessionId: response.sessionId,
+      success: response.success,
+      responseTimeMs: response.responseTimeMs,
+    });
+  } catch (error: any) {
+    console.error('[ADMIN] CTO Chat error:', error);
+    res.status(500).json({
+      message: 'Error processing CTO query',
+      error: error?.message || 'Unknown error',
+    });
+  }
+}));
+
+/**
+ * DELETE /api/admin/chat/:sessionId
+ * 
+ * Clear a CTO chat session to start fresh.
+ */
+router.delete('/chat/:sessionId', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const sessionId = normalizeParam(req.params.sessionId);
+  
+  ctoAiService.clearCTOSession(sessionId);
+  
+  res.status(200).json({
+    message: 'Session cleared',
+    sessionId,
+  });
+}));
+
+/**
+ * GET /api/admin/chat/stats
+ * 
+ * Get CTO chat session statistics.
+ */
+router.get('/chat/stats', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const activeSessionCount = ctoAiService.getActiveCTOSessionCount();
+  
+  res.status(200).json({
+    activeSessionCount,
+    timestamp: new Date().toISOString(),
+  });
 }));
 
 export default router;

@@ -48,6 +48,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/useToast';
 import { formatDateSafe } from '@/utils/date-formatter';
+import { cn } from '@/lib/utils';
 import { 
   Users, 
   Plus, 
@@ -67,8 +68,18 @@ import {
   Rocket,
   PartyPopper,
   Download,
-  BarChart3
+  BarChart3,
+  Eye,
+  EyeOff,
+  Brain,
+  Info
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 import Confetti from 'react-confetti';
 
 type LeadStatus = 'lead' | 'onboarding' | 'active';
@@ -414,6 +425,35 @@ const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string; bgColor:
 // Offline buffer key for localStorage persistence
 const OFFLINE_BUFFER_KEY = 'hospogo_lead_tracker_offline_buffer';
 
+/**
+ * PRESENTATION MODE MASKING - Privacy utility for investor demos
+ * Masks text while preserving first character and word structure
+ * Example: "Amanda Reynolds" → "A***** R*******"
+ * Example: "0412 111 222" → "0*** *** ***"
+ */
+function maskForPresentation(text: string | undefined | null, type: 'name' | 'phone' | 'email' = 'name'): string {
+  if (!text) return '—';
+  
+  if (type === 'phone') {
+    // Mask phone numbers: "0412 345 678" → "0*** *** ***"
+    return text.replace(/\d/g, (match, index) => index === 0 ? match : '*').replace(/(\*+)/g, (m) => m.slice(0, 3) + ' ').trim();
+  }
+  
+  if (type === 'email') {
+    // Mask emails: "amanda@venue.com" → "a*****@v****.com"
+    const [local, domain] = text.split('@');
+    if (!domain) return text[0] + '*'.repeat(text.length - 1);
+    const [domainName, ...tld] = domain.split('.');
+    return `${local[0]}${'*'.repeat(local.length - 1)}@${domainName[0]}${'*'.repeat(domainName.length - 1)}.${tld.join('.')}`;
+  }
+  
+  // Mask names: "West End Coffee Co" → "W*** E** C***** C*"
+  return text.split(' ').map(word => {
+    if (word.length <= 1) return word;
+    return word[0] + '*'.repeat(word.length - 1);
+  }).join(' ');
+}
+
 // Helper to save data to offline buffer
 function saveToOfflineBuffer(data: { type: 'add' | 'edit' | 'bulk'; payload: any }) {
   try {
@@ -453,6 +493,18 @@ export default function LeadTracker() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [autoOnboardingLead, setAutoOnboardingLead] = useState<Lead | null>(null);
+  
+  /**
+   * PRESENTATION MODE - Privacy Toggle for Investor Demos
+   * 
+   * When ON: Masks venue contact names and phone numbers
+   * Purpose: Rick can demo to investors/partners without exposing Brisbane 100 lead details
+   * 
+   * Example: "West End Coffee Co" → "W*** E** C***** C*"
+   * Example: "Amanda Reynolds" → "A***** R*******"
+   * Example: "0412 111 222" → "0*** *** ***"
+   */
+  const [presentationMode, setPresentationMode] = useState(false);
 
   // OFFLINE RESILIENCE: Sync buffered data when coming back online
   const syncOfflineBuffer = useCallback(async () => {
@@ -805,10 +857,11 @@ export default function LeadTracker() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lead-tracker'] });
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000);
+      setTimeout(() => setShowConfetti(false), 6000);
       toast({
-        title: '🎉 Venue Activated!',
-        description: `${autoOnboardingLead?.venueName} is now live on HospoGo. Owner account created.`,
+        title: '🏭 Foundry Initialized',
+        description: `${autoOnboardingLead?.venueName} is now a Platform Licensee.`,
+        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
       });
       setAutoOnboardingLead(null);
     },
@@ -816,10 +869,11 @@ export default function LeadTracker() {
       // Show success anyway for demo purposes
       queryClient.invalidateQueries({ queryKey: ['lead-tracker'] });
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000);
+      setTimeout(() => setShowConfetti(false), 6000);
       toast({
-        title: '🎉 Venue Activated!',
-        description: `${autoOnboardingLead?.venueName} is now live on HospoGo.`,
+        title: '🏭 Foundry Initialized',
+        description: `${autoOnboardingLead?.venueName} is now a Platform Licensee.`,
+        className: 'border-[#BAFF39]/50 bg-[#BAFF39]/10',
       });
       setAutoOnboardingLead(null);
     },
@@ -998,6 +1052,83 @@ export default function LeadTracker() {
     // UNKNOWN - NEUTRAL (70-80)
     return 70 + Math.floor(hash * 10);
   };
+  
+  /**
+   * Get loyalty score classification for tooltip display
+   */
+  const getLoyaltyClassification = (score: number): { tier: string; color: string; description: string } => {
+    if (score >= 90) {
+      return {
+        tier: 'Elite',
+        color: 'text-[#BAFF39]',
+        description: 'Predictable demand, high retention, neighborhood anchor'
+      };
+    }
+    if (score >= 70) {
+      return {
+        tier: 'Stable',
+        color: 'text-blue-400',
+        description: 'Mixed demand patterns, moderate retention'
+      };
+    }
+    return {
+      tier: 'Variable',
+      color: 'text-amber-400',
+      description: 'Event-driven, high turnover, CBD dynamics'
+    };
+  };
+  
+  /**
+   * STABILITY PULSE - Animated visualization for Suburban Loyalty
+   * 
+   * Suburban LGAs: Steady, slow Electric Lime pulse (predictable demand)
+   * CBD LGAs: Faster, variable Amber pulse (event-driven volatility)
+   * 
+   * Purpose: Visually demonstrate the "Predictability" logic to Lucas without showing code.
+   */
+  const StabilityPulse = ({ score, lga }: { score: number; lga: string | null }) => {
+    const isSuburban = score >= 90; // High loyalty = suburban
+    const isCBD = score < 70; // Low loyalty = CBD
+    
+    // Generate animation speed based on score
+    // Suburban: slow, steady pulse (2-3s)
+    // CBD: fast, variable pulse (0.5-1s)
+    const animationDuration = isSuburban ? '2.5s' : isCBD ? '0.8s' : '1.5s';
+    const pulseColor = isSuburban ? '#BAFF39' : isCBD ? '#F59E0B' : '#60A5FA';
+    const glowIntensity = isSuburban ? '0.6' : isCBD ? '0.4' : '0.5';
+    
+    return (
+      <div 
+        className="relative flex items-center gap-1.5"
+        title={`${lga || 'Unknown'} LGA - ${isSuburban ? 'Steady suburban demand' : isCBD ? 'Variable CBD demand' : 'Mixed demand'}`}
+      >
+        {/* Pulsing dot */}
+        <span 
+          className="inline-block w-2 h-2 rounded-full"
+          style={{
+            backgroundColor: pulseColor,
+            boxShadow: `0 0 8px rgba(${isSuburban ? '186, 255, 57' : isCBD ? '245, 158, 11' : '96, 165, 250'}, ${glowIntensity})`,
+            animation: `stabilityPulse ${animationDuration} ease-in-out infinite`,
+          }}
+        />
+        {/* Sparkline bar visualization */}
+        <div className="flex items-end gap-[2px] h-3">
+          {[0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 1.0].map((height, i) => (
+            <span
+              key={i}
+              className="inline-block w-[2px] rounded-sm"
+              style={{
+                height: `${height * 12}px`,
+                backgroundColor: pulseColor,
+                opacity: isSuburban ? 0.8 : 0.4 + (i * 0.1),
+                animation: isCBD ? `sparklineWave ${0.3 + (i * 0.1)}s ease-in-out infinite alternate` : 'none',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const downloadGrowthReport = () => {
     // Generate CSV header
@@ -1119,16 +1250,18 @@ export default function LeadTracker() {
 
   return (
     <div className="min-h-screen bg-zinc-950 p-4 md:p-6">
-      {/* Electric Lime Confetti for successful auto-onboard */}
+      {/* Electric Lime Confetti for successful auto-onboard - FULL SCREEN DOPAMINE BURST */}
       {showConfetti && (
         <Confetti
           width={window.innerWidth}
           height={window.innerHeight}
           recycle={false}
-          numberOfPieces={300}
-          colors={['#BAFF39', '#8FD629', '#FFFFFF', '#2DD4BF', '#22C55E']}
-          confettiSource={{ x: window.innerWidth / 2, y: window.innerHeight / 3, w: 0, h: 0 }}
-          tweenDuration={5000}
+          numberOfPieces={500}
+          colors={['#BAFF39', '#8FD629', '#FFFFFF', '#2DD4BF', '#22C55E', '#A3E635']}
+          confettiSource={{ x: window.innerWidth / 2, y: window.innerHeight / 4, w: 100, h: 0 }}
+          tweenDuration={6000}
+          gravity={0.15}
+          style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, pointerEvents: 'none' }}
         />
       )}
       <div className="max-w-7xl mx-auto space-y-6">
@@ -1143,7 +1276,34 @@ export default function LeadTracker() {
               Track and manage pilot venue partnerships
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            {/* PRESENTATION MODE TOGGLE - For investor/partner demos */}
+            <div 
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200",
+                presentationMode 
+                  ? "bg-[#BAFF39]/20 border border-[#BAFF39]/50" 
+                  : "bg-zinc-800/50 border border-zinc-700/50"
+              )}
+              data-testid="presentation-mode-toggle"
+            >
+              {presentationMode ? (
+                <EyeOff className="h-4 w-4 text-[#BAFF39]" />
+              ) : (
+                <Eye className="h-4 w-4 text-zinc-400" />
+              )}
+              <span className={cn(
+                "text-sm font-medium",
+                presentationMode ? "text-[#BAFF39]" : "text-zinc-400"
+              )}>
+                Presentation
+              </span>
+              <Switch
+                checked={presentationMode}
+                onCheckedChange={setPresentationMode}
+                className="data-[state=checked]:bg-[#BAFF39]"
+              />
+            </div>
             {/* GROWTH ADVISORY: Download Report Button - For Lucas/Investors */}
             <Button
               onClick={downloadGrowthReport}
@@ -1258,37 +1418,45 @@ export default function LeadTracker() {
                     </div>
                   )}
                 </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsBulkImportOpen(false);
-                      setBulkImportText('');
-                      setBulkImportPreview([]);
-                      setBulkImportErrors([]);
-                    }}
-                    className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleBulkImport}
-                    disabled={bulkImportPreview.length === 0 || bulkImportErrors.length > 0 || bulkImportMutation.isPending}
-                    className="bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90"
-                  >
-                    {bulkImportMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Import {bulkImportPreview.length} Leads
-                      </>
-                    )}
-                  </Button>
+                <DialogFooter className="flex-col gap-4 sm:flex-row">
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsBulkImportOpen(false);
+                        setBulkImportText('');
+                        setBulkImportPreview([]);
+                        setBulkImportErrors([]);
+                      }}
+                      className="flex-1 sm:flex-none border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleBulkImport}
+                      disabled={bulkImportPreview.length === 0 || bulkImportErrors.length > 0 || bulkImportMutation.isPending}
+                      className="flex-1 sm:flex-none bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90"
+                    >
+                      {bulkImportMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Import {bulkImportPreview.length} Leads
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </DialogFooter>
+                {/* HOSPO-GO Branding Footer */}
+                <div className="pt-3 border-t border-zinc-800 flex justify-center">
+                  <span className="text-[10px] text-zinc-600 tracking-wider">
+                    Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                  </span>
+                </div>
               </DialogContent>
             </Dialog>
 
@@ -1386,33 +1554,41 @@ export default function LeadTracker() {
                   />
                 </div>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsAddDialogOpen(false);
-                    setEditingLead(null);
-                    resetForm();
-                  }}
-                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={saveMutation.isPending}
-                  className="bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90"
-                >
-                  {saveMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    editingLead ? 'Update Lead' : 'Add Lead'
-                  )}
-                </Button>
+              <DialogFooter className="flex-col gap-4 sm:flex-row">
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsAddDialogOpen(false);
+                      setEditingLead(null);
+                      resetForm();
+                    }}
+                    className="flex-1 sm:flex-none border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saveMutation.isPending}
+                    className="flex-1 sm:flex-none bg-[#BAFF39] text-zinc-900 hover:bg-[#BAFF39]/90"
+                  >
+                    {saveMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingLead ? 'Update Lead' : 'Add Lead'
+                    )}
+                  </Button>
+                </div>
               </DialogFooter>
+              {/* HOSPO-GO Branding Footer */}
+              <div className="pt-3 border-t border-zinc-800 flex justify-center">
+                <span className="text-[10px] text-zinc-600 tracking-wider">
+                  Powered by <span className="font-black italic">HOSPO<span className="text-[#BAFF39]">GO</span></span>
+                </span>
+              </div>
             </DialogContent>
           </Dialog>
           </div>
@@ -1575,6 +1751,40 @@ export default function LeadTracker() {
                         <TableHead className="text-zinc-400">Venue Name</TableHead>
                         <TableHead className="text-zinc-400">Contact Person</TableHead>
                         <TableHead className="text-zinc-400">Status</TableHead>
+                        <TableHead className="text-zinc-400">
+                          {/* SUBURBAN LOYALTY SCORE - Investor Intelligence */}
+                          <div className="flex items-center gap-1.5">
+                            <Brain className="h-3.5 w-3.5 text-[#BAFF39]" />
+                            <span>Loyalty</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button className="p-0.5 rounded hover:bg-zinc-700/50" aria-label="Loyalty Score Algorithm Info">
+                                  <Info className="h-3 w-3 text-zinc-500 hover:text-[#BAFF39]" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent 
+                                side="bottom" 
+                                className="max-w-[320px] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
+                              >
+                                <div className="p-2">
+                                  <p className="font-bold text-[#BAFF39] mb-2 flex items-center gap-1.5">
+                                    <Brain className="h-4 w-4" />
+                                    Neighborhood Stability Index
+                                  </p>
+                                  <p className="text-xs text-zinc-300 mb-2">
+                                    <strong>Algorithm:</strong> Neighborhood Stability Index
+                                  </p>
+                                  <p className="text-xs text-zinc-400 mb-2">
+                                    <strong>Weights:</strong> Predictable labor demand, staff retention rates (+4.6%), and local foot traffic consistency.
+                                  </p>
+                                  <div className="text-[10px] text-zinc-500 border-t border-zinc-700 pt-2 mt-2">
+                                    Suburban LGAs: 92-98 | CBD LGAs: 45-65
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TableHead>
                         <TableHead className="text-zinc-400">Projected ARR</TableHead>
                         <TableHead className="text-zinc-400">Last Contacted</TableHead>
                         <TableHead className="text-zinc-400">Notes</TableHead>
@@ -1584,6 +1794,10 @@ export default function LeadTracker() {
                     <TableBody>
                       {filteredLeads.map((lead: Lead) => {
                       const statusConfig = STATUS_CONFIG[lead.status];
+                      const loyaltyScore = generateSuburbanLoyaltyScore(lead);
+                      const loyaltyClass = getLoyaltyClassification(loyaltyScore);
+                      const lga = extractLgaFromLead(lead);
+                      
                       return (
                         <TableRow 
                           key={lead.id} 
@@ -1593,18 +1807,18 @@ export default function LeadTracker() {
                           <TableCell className="font-medium text-white">
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4 text-zinc-500" />
-                              {lead.venueName}
+                              {presentationMode ? maskForPresentation(lead.venueName) : lead.venueName}
                             </div>
                           </TableCell>
                           <TableCell className="text-zinc-300">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span>{lead.contactPerson}</span>
+                                <span>{presentationMode ? maskForPresentation(lead.contactPerson) : lead.contactPerson}</span>
                               </div>
                               {lead.contactPhone && (
                                 <div className="flex items-center gap-1 text-xs text-zinc-500">
                                   <Phone className="h-3 w-3" />
-                                  {lead.contactPhone}
+                                  {presentationMode ? maskForPresentation(lead.contactPhone, 'phone') : lead.contactPhone}
                                 </div>
                               )}
                             </div>
@@ -1616,6 +1830,70 @@ export default function LeadTracker() {
                             >
                               {statusConfig.label}
                             </Badge>
+                          </TableCell>
+                          {/* SUBURBAN LOYALTY SCORE with Algorithm Tooltip + Stability Pulse */}
+                          <TableCell>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div 
+                                  className={cn(
+                                    "flex items-center gap-2 cursor-help px-2 py-1 rounded-md w-fit",
+                                    loyaltyScore >= 90 ? "bg-[#BAFF39]/10" : loyaltyScore >= 70 ? "bg-blue-500/10" : "bg-amber-500/10"
+                                  )}
+                                  data-testid={`loyalty-score-${lead.id}`}
+                                >
+                                  {/* Stability Pulse Visualization */}
+                                  <StabilityPulse score={loyaltyScore} lga={lga} />
+                                  <span className={cn("font-bold", loyaltyClass.color)}>
+                                    {loyaltyScore}
+                                  </span>
+                                  <span className="text-[10px] text-zinc-500 hidden sm:inline">
+                                    {loyaltyClass.tier}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent 
+                                side="right" 
+                                className="max-w-[340px] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
+                              >
+                                <div className="p-3 space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <Brain className="h-5 w-5 text-[#BAFF39]" />
+                                    <span className="font-bold text-white">Suburban Loyalty Score</span>
+                                  </div>
+                                  
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-zinc-400 text-xs">Score:</span>
+                                      <span className={cn("font-bold text-lg", loyaltyClass.color)}>{loyaltyScore}/100</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-zinc-400 text-xs">Tier:</span>
+                                      <span className={cn("font-medium", loyaltyClass.color)}>{loyaltyClass.tier}</span>
+                                    </div>
+                                    {lga && (
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-zinc-400 text-xs">LGA:</span>
+                                        <span className="text-white text-xs">{lga}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="border-t border-zinc-700 pt-2">
+                                    <p className="text-xs text-zinc-300 mb-1">
+                                      <strong className="text-[#BAFF39]">Algorithm:</strong> Neighborhood Stability Index
+                                    </p>
+                                    <p className="text-xs text-zinc-400">
+                                      <strong>Weights:</strong> Predictable labor demand, staff retention rates (+4.6%), and local foot traffic consistency.
+                                    </p>
+                                  </div>
+                                  
+                                  <div className="text-[10px] text-zinc-500 border-t border-zinc-700 pt-2">
+                                    {loyaltyClass.description}
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
                           </TableCell>
                           <TableCell>
                             {/* Projected ARR: $149 x 12 for active/onboarding, $0 for leads */}

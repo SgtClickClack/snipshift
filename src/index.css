@@ -1079,3 +1079,185 @@ button:active, a:active, [role="button"]:active {
     max-height: none !important;
   }
 }
+
+/* ================================================
+   EXECUTIVE PITCH MODE
+   High-visibility readability for boardroom projectors
+   ================================================ */
+
+/* Pitch Mode Active - Global Enhancements */
+.pitch-mode-active {
+  /* Increase base font size by 2px for projector readability */
+  font-size: calc(100% + 2px);
+}
+
+/* Electric Lime (#BAFF39) text glow effect */
+.pitch-mode-active .text-\[\#BAFF39\],
+.pitch-mode-active [class*="text-brand-neon"],
+.pitch-mode-active [class*="text-lime"],
+.pitch-mode-active [style*="color: rgb(186, 255, 57)"],
+.pitch-mode-active [style*="color: #BAFF39"] {
+  text-shadow: 0 0 15px rgba(186, 255, 57, 0.5), 0 0 30px rgba(186, 255, 57, 0.3);
+}
+
+/* Enhance dashboard cards for presentation */
+.pitch-mode-active .card,
+.pitch-mode-active [class*="Card"] {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide non-essential elements for clean presentation */
+.pitch-mode-active [data-pitch-hide="true"],
+.pitch-mode-active .pitch-hide {
+  display: none !important;
+}
+
+/* Maximize content whitespace */
+.pitch-mode-active footer:not(.pitch-keep),
+.pitch-mode-active aside:not(.pitch-keep) {
+  opacity: 0.3;
+}
+
+/* Boost important metrics visibility */
+.pitch-mode-active [class*="text-4xl"],
+.pitch-mode-active [class*="text-5xl"],
+.pitch-mode-active [class*="text-6xl"],
+.pitch-mode-active [class*="text-7xl"] {
+  font-size: calc(100% + 4px);
+  letter-spacing: -0.02em;
+}
+
+/* Enhanced Electric Lime badges */
+.pitch-mode-active .bg-\[\#BAFF39\],
+.pitch-mode-active [class*="bg-brand-neon"] {
+  box-shadow: 0 0 20px rgba(186, 255, 57, 0.4);
+}
+
+/* Pitch Mode Active Indicator (pulsing border on active cards) */
+.pitch-mode-active .pitch-highlight {
+  border-color: rgba(186, 255, 57, 0.5) !important;
+  box-shadow: 0 0 30px rgba(186, 255, 57, 0.2);
+  animation: pitch-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pitch-pulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(186, 255, 57, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(186, 255, 57, 0.4);
+  }
+}
+
+/* ================================================
+   STABILITY PULSE - Suburban Loyalty Visualization
+   ================================================ */
+
+@keyframes stabilityPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+@keyframes sparklineWave {
+  0% {
+    transform: scaleY(0.6);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+/* ================================================
+   PITCH MODE - SLIDER ENHANCEMENTS
+   Executive "Frictionless" control for tablet touch
+   ================================================ */
+
+/* Saturation Forecaster slider - extra large thumb for pitch mode */
+.pitch-mode-active [data-radix-slider-thumb],
+.pitch-mode-active [role="slider"] {
+  width: 32px !important;
+  height: 32px !important;
+  transform: scale(1.4) !important;
+  box-shadow: 0 0 20px rgba(186, 255, 57, 0.5), 0 0 40px rgba(186, 255, 57, 0.3) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.pitch-mode-active [data-radix-slider-thumb]:hover,
+.pitch-mode-active [role="slider"]:hover {
+  transform: scale(1.6) !important;
+  box-shadow: 0 0 30px rgba(186, 255, 57, 0.7), 0 0 60px rgba(186, 255, 57, 0.4) !important;
+}
+
+/* Slider track - thicker for touch */
+.pitch-mode-active [data-radix-slider-track],
+.pitch-mode-active .slider-track {
+  height: 12px !important;
+}
+
+.pitch-mode-active [data-radix-slider-range] {
+  background: linear-gradient(90deg, rgba(186, 255, 57, 0.8) 0%, rgba(186, 255, 57, 1) 100%) !important;
+  box-shadow: 0 0 10px rgba(186, 255, 57, 0.4) !important;
+}
+
+/* ================================================
+   TYPOGRAPHY NORMALIZATION
+   Premium "Foundry" look for investor demo
+   ================================================ */
+
+/* Dashboard metrics - Urbanist 900 for all large numbers */
+/* These rules apply globally to ensure consistent typography */
+.metric-value,
+[data-metric="true"],
+.dashboard-metric {
+  font-family: 'Urbanist', sans-serif !important;
+  font-weight: 900 !important;
+}
+
+/* ARR and revenue figures - always Urbanist 900 */
+.arr-value,
+.revenue-metric,
+[class*="tracking-tighter"][class*="text-[#BAFF39]"] {
+  font-family: 'Urbanist', sans-serif !important;
+  font-weight: 900 !important;
+}
+
+/* Pitch mode enhancements - amplified metrics */
+.pitch-mode-active .metric-value,
+.pitch-mode-active [data-metric="true"],
+.pitch-mode-active [class*="text-4xl"],
+.pitch-mode-active [class*="text-5xl"],
+.pitch-mode-active [class*="text-6xl"],
+.pitch-mode-active [class*="text-7xl"] {
+  font-family: 'Urbanist', sans-serif !important;
+  font-weight: 900 !important;
+}
+
+/* Primary action buttons - uppercase tracking-widest for premium feel */
+.btn-foundry,
+.pitch-mode-active .btn-primary,
+.pitch-mode-active button[class*="bg-[#BAFF39]"],
+.pitch-mode-active button[class*="bg-primary"] {
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-weight: 700 !important;
+}
+
+/* CTO Dashboard buttons - always premium style */
+.cto-dashboard button[class*="bg-[#BAFF39]"],
+.cto-dashboard button[class*="text-[#BAFF39]"] {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Lead Tracker action buttons */
+.lead-tracker button[class*="bg-[#BAFF39]"] {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

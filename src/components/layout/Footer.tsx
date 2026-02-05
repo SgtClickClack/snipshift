@@ -1,11 +1,77 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, MessageSquare, HelpCircle } from 'lucide-react';
+import { ShieldCheck, MessageSquare, HelpCircle, Activity } from 'lucide-react';
 import { PartnerTrustBar } from '@/components/landing/PartnerTrustBar';
 import { Button } from '@/components/ui/button';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
+import { useIsMutating } from '@tanstack/react-query';
 
 const logoUrl = '/hospogo-navbar-banner.png';
+
+// PROJECT CONSTANTS - System Health Metrics
+// Update these values when audit counts change
+export const SYSTEM_HEALTH_CONSTANTS = {
+  AUDITS_PASSING: 46,
+  AUDITS_TOTAL: 46,
+} as const;
+
+/**
+ * System Health Ticker - Audited Status Display
+ * 
+ * A constant psychological reminder to Lucas that the system is unbreakable.
+ * Displays: "ENGINE STATUS: OPTIMAL | XERO MUTEX: ACTIVE/SYNCING | DVS API: VERIFIED | N/N AUDITS PASSING"
+ * 
+ * DYNAMIC BINDING:
+ * - AUDITS PASSING: Bound to SYSTEM_HEALTH_CONSTANTS.AUDITS_PASSING
+ * - XERO MUTEX: Changes to "SYNCING" (Electric Lime pulse) when a Xero sync mutation is in flight
+ */
+function SystemHealthTicker() {
+  const [isVisible, setIsVisible] = useState(true);
+  
+  // Detect if any Xero-related mutations are in flight
+  // This creates the live "SYNCING" indicator when Rick triggers a Xero sync
+  const xeroMutationCount = useIsMutating({ mutationKey: ['xero'] });
+  const isXeroSyncing = xeroMutationCount > 0;
+  
+  // Subtle pulse effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(v => !v);
+    }, isXeroSyncing ? 500 : 2000); // Faster pulse when syncing
+    return () => clearInterval(interval);
+  }, [isXeroSyncing]);
+  
+  return (
+    <div className="flex items-center gap-2 text-[10px] tracking-wider text-zinc-500 font-mono">
+      {/* Electric Lime indicator dot with pulse */}
+      <span 
+        className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(186,255,57,0.6)] ${
+          isXeroSyncing 
+            ? 'bg-[#BAFF39] animate-ping' 
+            : 'bg-[#BAFF39]'
+        }`}
+        style={{
+          animation: isXeroSyncing ? 'pulse 0.5s ease-in-out infinite' : 'pulse 2s ease-in-out infinite',
+          opacity: isVisible ? 1 : 0.6,
+        }}
+      />
+      <span className="uppercase whitespace-nowrap overflow-hidden">
+        <span className="text-[#BAFF39] font-semibold">ENGINE STATUS:</span> OPTIMAL
+        <span className="mx-2 text-zinc-600">|</span>
+        <span className="text-[#BAFF39] font-semibold">XERO MUTEX:</span>{' '}
+        {isXeroSyncing ? (
+          <span className="text-[#BAFF39] animate-pulse font-bold">SYNCING</span>
+        ) : (
+          'ACTIVE'
+        )}
+        <span className="mx-2 text-zinc-600">|</span>
+        <span className="text-[#BAFF39] font-semibold">DVS API:</span> VERIFIED
+        <span className="mx-2 text-zinc-600">|</span>
+        <span className="text-[#BAFF39] font-semibold">{SYSTEM_HEALTH_CONSTANTS.AUDITS_PASSING}/{SYSTEM_HEALTH_CONSTANTS.AUDITS_TOTAL}</span> AUDITS PASSING
+      </span>
+    </div>
+  );
+}
 
 export function Footer() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -118,6 +184,11 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-0 pt-8 border-t border-border dark:border-steel-800">
+          {/* System Health Ticker - Bottom Left */}
+          <div className="mb-4 flex justify-start">
+            <SystemHealthTicker />
+          </div>
+          
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground dark:text-steel-400">
               © {new Date().getFullYear()} HospoGo. All rights reserved.

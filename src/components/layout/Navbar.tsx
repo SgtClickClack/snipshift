@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown, HelpCircle, Cpu } from "lucide-react";
+import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown, HelpCircle, Cpu, Monitor } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -43,6 +44,32 @@ export default function Navbar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const verification = useVerificationStatus({ enableRedirect: false, protectedPaths: [] });
+  
+  // EXECUTIVE PITCH MODE - High-visibility readability for boardroom projectors
+  // Toggle applies global CSS class for enhanced visibility
+  const [isPitchMode, setIsPitchMode] = useState(() => {
+    // Persist pitch mode state in sessionStorage
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('hospogo_pitch_mode') === 'true';
+    }
+    return false;
+  });
+  
+  // Apply pitch mode class to body element
+  useEffect(() => {
+    if (isPitchMode) {
+      document.body.classList.add('pitch-mode-active');
+      sessionStorage.setItem('hospogo_pitch_mode', 'true');
+    } else {
+      document.body.classList.remove('pitch-mode-active');
+      sessionStorage.setItem('hospogo_pitch_mode', 'false');
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      document.body.classList.remove('pitch-mode-active');
+    };
+  }, [isPitchMode]);
   
   // Fetch unread message count
   const { data: unreadData } = useQuery({
@@ -101,13 +128,13 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16 xs:h-20 min-w-0">
           <Link
             to={!user ? "/" : "/dashboard"}
-            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink min-w-0 bg-transparent"
+            className="flex items-center cursor-pointer flex-shrink min-w-0 bg-transparent group"
           >
-            <div className="bg-transparent">
+            <div className="bg-transparent transition-transform duration-200 ease-out group-hover:scale-105">
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-10 xs:h-12 md:h-14 w-auto max-w-[140px] xs:max-w-[180px] sm:max-w-none object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)]"
+                className="h-10 xs:h-12 md:h-14 w-auto max-w-[140px] xs:max-w-[180px] sm:max-w-none object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)] transition-all duration-200 group-hover:drop-shadow-[0_0_20px_rgba(186,255,57,0.6)]"
                 loading="eager"
                 width={360}
                 height={56}
@@ -252,6 +279,27 @@ export default function Navbar() {
                               <Cpu className="mr-2 h-4 w-4 text-[#BAFF39] drop-shadow-[0_0_4px_rgba(186,255,57,0.6)]" />
                               <span>CTO Dashboard (Brain Monitor)</span>
                             </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-steel-600" />
+                          {/* PITCH MODE TOGGLE - Boardroom projector enhancement */}
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setIsPitchMode(!isPitchMode);
+                            }}
+                            className={`focus:bg-steel-700 focus:text-white cursor-pointer ${
+                              isPitchMode ? 'bg-[#BAFF39]/10' : ''
+                            }`}
+                            data-testid="pitch-mode-toggle"
+                          >
+                            <Monitor className={`mr-2 h-4 w-4 ${
+                              isPitchMode 
+                                ? 'text-[#BAFF39] drop-shadow-[0_0_6px_rgba(186,255,57,0.8)]' 
+                                : 'text-zinc-400'
+                            }`} />
+                            <span className={isPitchMode ? 'text-[#BAFF39]' : ''}>
+                              Pitch Mode {isPitchMode ? '(ON)' : '(OFF)'}
+                            </span>
                           </DropdownMenuItem>
                         </>
                       )}

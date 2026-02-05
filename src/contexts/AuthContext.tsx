@@ -957,6 +957,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user, isLoading]);
 
+  // INVESTOR BRIEFING FIX: Session Heartbeat for Admin/Venue Routes
+  // Purpose: Refresh Firebase token every 20 minutes on admin/venue routes
+  // to ensure Rick never hits a "Session Expired" 401 redirect during investor briefing
+  const SESSION_HEARTBEAT_INTERVAL_MS = 20 * 60 * 1000; // 20 minutes
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!firebaseUser) return;
+    
+    const currentPath = window.location.pathname;
+    const isAdminOrVenueRoute = 
+      currentPath.startsWith('/admin') ||
+      currentPath.startsWith('/venue') ||
+      currentPath.startsWith('/ceo') ||
+      currentPath.includes('/dashboard');
+    
+    // Only enable heartbeat on admin/venue routes during active session
+    if (!isAdminOrVenueRoute) return;
+    
+    logger.info('AuthContext', 'Briefing Continuity heartbeat enabled for admin/venue route');
+    
+    const refreshSessionToken = async () => {
+      try {
+        const currentFirebaseUser = firebaseUserRef.current;
+        if (!currentFirebaseUser) return;
+        
+        // Force refresh the token to extend session validity
+        const freshToken = await currentFirebaseUser.getIdToken(/* forceRefresh */ true);
+        setToken(freshToken);
+        logger.info('AuthContext', 'Session heartbeat: Token refreshed successfully');
+      } catch (error) {
+        logger.warn('AuthContext', 'Session heartbeat: Token refresh failed (non-critical)', error);
+        // Don't logout on heartbeat failure - just log and continue
+        // The user's session may still be valid
+      }
+    };
+    
+    // Set up interval for token refresh
+    const heartbeatInterval = setInterval(refreshSessionToken, SESSION_HEARTBEAT_INTERVAL_MS);
+    
+    // Also refresh immediately on route mount for initial briefing protection
+    refreshSessionToken();
+    
+    return () => {
+      clearInterval(heartbeatInterval);
+    };
+  }, [firebaseUser, location.pathname]);
+
   const value = useMemo<AuthContextType>(
     () => ({
       user,
