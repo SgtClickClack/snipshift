@@ -74,11 +74,8 @@ export default function SupportChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // ONBOARDING GATE: Only render when user is authenticated AND has completed onboarding
-  // This ensures support is only available to users who have a valid session state
-  if (!user || user.isOnboarded !== true) {
-    return null;
-  }
+  // HOOK ORDER FIX: All hooks MUST be called before any conditional returns
+  // This prevents React Error #310 ("Rendered fewer hooks than expected")
   
   // Scroll to bottom when messages change
   const scrollToBottom = useCallback(() => {
@@ -96,6 +93,10 @@ export default function SupportChatWidget() {
       return () => clearTimeout(timeoutId);
     }
   }, [isOpen]);
+  
+  // ONBOARDING GATE: Only render when user is authenticated AND has completed onboarding
+  // This check is AFTER all hooks to maintain consistent hook count across renders
+  const shouldRender = user && user.isOnboarded === true;
   
   // Query mutation
   const queryMutation = useMutation({
@@ -183,6 +184,11 @@ export default function SupportChatWidget() {
       },
     ]);
   }, [sessionId]);
+  
+  // Early return AFTER all hooks have been called - maintains consistent hook count
+  if (!shouldRender) {
+    return null;
+  }
   
   return (
     <>
