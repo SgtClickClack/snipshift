@@ -43,9 +43,10 @@ router.post('/query', authenticateUser, asyncHandler(async (req: AuthenticatedRe
   }
   
   // Determine user role from auth context
-  const userRole = req.user?.roles?.includes('business') || req.user?.roles?.includes('hub') || req.user?.roles?.includes('venue')
+  const role = req.user?.role;
+  const userRole = role === 'business' || role === 'hub' || role === 'venue'
     ? 'venue' as const
-    : req.user?.roles?.includes('professional')
+    : role === 'professional'
     ? 'professional' as const
     : 'unknown' as const;
   
