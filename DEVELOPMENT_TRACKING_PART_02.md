@@ -4523,3 +4523,41 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Scoped change to UI toast wrapper; no behavioral changes in feature logic.
+
+---
+
+#### 2026-02-05: Auth Gate Hardening + Visual Consistency + Resilience Tests
+
+**Core Components**
+- Auth gating: `src/App.tsx`
+- Protected routing: `src/components/auth/protected-route.tsx`
+- Calendar UI: `src/components/calendar/professional-calendar.tsx`
+- Job feed UI: `src/pages/job-feed.tsx`
+- Venue dashboard: `src/pages/venue-dashboard.tsx`
+- Resilience tests: `tests/resilience.spec.ts`
+
+**Key Features**
+- **AuthGate hardening:** Blocks app rendering until `isSystemReady` and user resolution are complete to prevent early background fetch storms.
+- **Grace period redirect guard:** 500ms grace window in `ProtectedRoute` to avoid premature `/login` redirects during Firebase handshake.
+- **Glassmorphic visuals:** Added reusable `.glassmorphic-card` styling and applied to Jobs + Calendar cards for brand consistency.
+- **Architect portal anchor:** Fixed CTA positioning to a stable bottom-left anchor above the footer ticker.
+- **Resilience coverage:** Added Playwright resilience suite for auth storm detection, redirect stability, and visual consistency checks.
+
+**Integration Points**
+- Playwright E2E: `npx playwright test tests/resilience.spec.ts`
+- Auth readiness gating in `AuthProvider` / routing stack
+
+**File Paths**
+- `src/App.tsx`
+- `src/components/auth/protected-route.tsx`
+- `src/components/calendar/professional-calendar.tsx`
+- `src/index.css`
+- `src/pages/job-feed.tsx`
+- `src/pages/venue-dashboard.tsx`
+- `tests/resilience.spec.ts`
+
+**Next Priority Task**
+- Run the resilience suite and verify no early `/api/*` calls before auth resolution.
+
+**Code Organization & Quality**
+- Reused existing auth and routing patterns; new styling is isolated to a single CSS utility class.

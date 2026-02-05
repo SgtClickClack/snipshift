@@ -2003,16 +2003,21 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       </Dialog>
       
       {/* CEO SECRET DOOR: ARCHITECT PORTAL - Only visible to julian.g.roberts@gmail.com */}
-      {/* VISUAL FIDELITY: Repositioned bottom-left with 'Subtle Pulse' style */}
+      {/* HOSPOGO_CORE_SYSTEM_RECOVERY: Anchored at bottom:80px, left:20px above footer ticker */}
       {/* No solid background, Electric Lime outline, small pulsing dot - sophisticated/premium feel */}
       {user?.email?.toLowerCase() === 'julian.g.roberts@gmail.com' && (
         <button
           onClick={() => navigate('/admin/cto-dashboard')}
-          className="fixed bottom-20 left-6 z-40 flex items-center gap-3 px-4 py-2.5 rounded-lg 
+          className="fixed z-40 flex items-center gap-3 px-4 py-2.5 rounded-lg 
                      bg-transparent border border-[#CCFF00]/50
                      hover:border-[#CCFF00] hover:shadow-[0_0_15px_rgba(204,255,0,0.2)]
                      transition-all duration-300 cursor-pointer group"
-          style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 600 }}
+          style={{ 
+            fontFamily: 'Urbanist, sans-serif', 
+            fontWeight: 600,
+            bottom: '80px',
+            left: '20px'
+          }}
           data-testid="architect-portal-button"
         >
           {/* Subtle Pulse Dot - Small pulsing indicator */}

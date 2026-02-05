@@ -2657,7 +2657,7 @@ function ProfessionalCalendarContent({
     <div className="w-full h-full">
       {/* Main Calendar Area - Full Width */}
       <div className="w-full" data-testid="calendar-container">
-        <Card className="w-full flex flex-col bg-background">
+        <Card className="glassmorphic-card w-full flex flex-col bg-background">
           <CalendarToolbar
             mode={mode}
             view={view}

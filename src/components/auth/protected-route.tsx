@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -14,19 +14,60 @@ interface ProtectedRouteProps {
 /**
  * ProtectedRoute - Guards authenticated routes with proper loading states.
  * 
+ * HOSPOGO_CORE_SYSTEM_RECOVERY: Added 500ms Grace Period
+ * 
  * PERFORMANCE: Uses isSystemReady to ensure both Firebase AND Postgres profile
  * are fully hydrated before rendering children. This prevents:
  * - Flash of unauthenticated content
  * - Flash of loading skeletons
  * - Hydration waterfall delays
  * 
+ * GRACE PERIOD: When auth is in a "loading" state, we wait 500ms before
+ * making any redirect decisions. This prevents premature redirects to /login
+ * during the Firebase auth handshake window.
+ * 
  * Shows LoadingScreen while auth is transitioning to prevent content flash.
- * Redirects to /login if user is not authenticated.
+ * Redirects to /login if user is not authenticated AFTER grace period expires.
  * Checks role requirements if specified.
  */
 export function ProtectedRoute({ children, requiredRole, allowedRoles }: ProtectedRouteProps) {
   const { user, isLoading, isTransitioning, hasFirebaseUser, isSystemReady } = useAuth();
   const location = useLocation();
+  
+  // GRACE PERIOD: Track whether we've waited long enough to make redirect decisions
+  // This prevents seeing 'loading' as 'not authenticated' during Firebase handshake
+  const [gracePeriodExpired, setGracePeriodExpired] = useState(false);
+  const graceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  useEffect(() => {
+    // Start grace period timer when component mounts or when loading state changes
+    if (isLoading || isTransitioning || !isSystemReady) {
+      // Reset grace period when auth is still loading
+      setGracePeriodExpired(false);
+      
+      // Clear any existing timer
+      if (graceTimerRef.current) {
+        clearTimeout(graceTimerRef.current);
+      }
+      
+      // Set new 500ms grace period timer
+      graceTimerRef.current = setTimeout(() => {
+        setGracePeriodExpired(true);
+      }, 500);
+    } else {
+      // Auth is ready - grace period is effectively expired (no need to wait)
+      setGracePeriodExpired(true);
+      if (graceTimerRef.current) {
+        clearTimeout(graceTimerRef.current);
+      }
+    }
+    
+    return () => {
+      if (graceTimerRef.current) {
+        clearTimeout(graceTimerRef.current);
+      }
+    };
+  }, [isLoading, isTransitioning, isSystemReady]);
 
   // Check for E2E mode test user
   const isE2EMode = typeof window !== 'undefined' && 
@@ -43,6 +84,12 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
     if (!hasE2ETestUser) {
       return <LoadingScreen />;
     }
+  }
+
+  // GRACE PERIOD CHECK: Don't redirect during the 500ms grace period
+  // This gives Firebase time to complete its auth handshake
+  if (!gracePeriodExpired) {
+    return <LoadingScreen />;
   }
 
   // Not authenticated - redirect to login

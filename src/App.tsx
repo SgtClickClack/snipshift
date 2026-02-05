@@ -772,22 +772,25 @@ function HydrationSplash() {
 }
 
 /**
- * FINAL_HOSPOGO_STABILIZATION_PUSH: Top-Level Hydration Gate
+ * HOSPOGO_CORE_SYSTEM_RECOVERY: AuthGate (formerly HydrationGate)
  * 
  * This component wraps ALL app content (including Analytics, Stripe, Xero integrations)
- * and blocks rendering until Firebase auth handshake is complete.
+ * and blocks rendering until Firebase auth handshake is FULLY complete.
  * 
  * The gate checks:
  * 1. isSystemReady - true when Firebase + user profile + venue check are complete
- * 2. !isLoading (isAuthLoading) - true when auth state has settled
+ * 2. user !== undefined - ensures the user object has been resolved (either to a user or null)
+ * 
+ * CRITICAL: This prevents background "storms" because page components (Jobs, Calendar)
+ * won't even exist in the DOM until the auth token is verified.
  * 
  * Public routes (landing, status, waitlist, investor portal) bypass the gate.
  */
-function HydrationGate({ children, splashHandled }: { children: React.ReactNode; splashHandled: boolean }) {
-  const { isSystemReady, isLoading } = useAuth();
+function AuthGate({ children, splashHandled }: { children: React.ReactNode; splashHandled: boolean }) {
+  const { isSystemReady, isLoading, user } = useAuth();
   const location = useLocation();
   
-  // Public routes that NEVER need auth - bypass the hydration gate entirely
+  // Public routes that NEVER need auth - bypass the auth gate entirely
   const isPublicRoute = 
     location.pathname === '/' || 
     location.pathname === '/status' || 
@@ -798,11 +801,15 @@ function HydrationGate({ children, splashHandled }: { children: React.ReactNode;
     location.pathname === '/forgot-password' ||
     location.pathname.startsWith('/onboarding');
   
-  // HYDRATION SHIELD: Block ALL content during the Firebase handshake window
+  // AUTH GATE: Block ALL content until BOTH conditions are met:
+  // 1. isSystemReady === true (Firebase + profile hydration complete)
+  // 2. user !== undefined (user object resolved - could be null for logged out, or User for logged in)
   // This prevents Stripe, Xero, Analytics, Chat widgets from firing 401 errors
-  const isHandshakeInProgress = !isSystemReady && isLoading;
+  // and stops Jobs/Calendar components from even mounting until auth is verified
+  const isAuthPending = !isSystemReady || user === undefined;
+  const isHandshakeInProgress = isAuthPending && isLoading;
   
-  if (isHandshakeInProgress && !isPublicRoute && splashHandled) {
+  if ((isHandshakeInProgress || isAuthPending) && !isPublicRoute && splashHandled) {
     return <HydrationSplash />;
   }
   
@@ -839,9 +846,9 @@ function App() {
               <TooltipProvider>
                 <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                   <AuthProvider>
-                    {/* FINAL_HOSPOGO_STABILIZATION_PUSH: Top-level hydration gate */}
-                    {/* This wraps ALL content and shows Electric Lime splash during auth handshake */}
-                    <HydrationGate splashHandled={splashHandled}>
+                    {/* HOSPOGO_CORE_SYSTEM_RECOVERY: Top-level auth gate */}
+                    {/* This wraps ALL content and shows Electric Lime splash until isSystemReady && user !== undefined */}
+                    <AuthGate splashHandled={splashHandled}>
                       <PusherProvider>
                         <NotificationProvider>
                           <RouteProgressBar />
@@ -860,7 +867,7 @@ function App() {
                           <SpeedInsights />
                         </NotificationProvider>
                       </PusherProvider>
-                    </HydrationGate>
+                    </AuthGate>
                   </AuthProvider>
                 </Router>
               </TooltipProvider>

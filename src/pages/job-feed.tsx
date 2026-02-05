@@ -591,7 +591,7 @@ export default function JobFeedPage() {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <div className="bg-card rounded-lg border shadow-sm p-6 min-h-[600px]">
+            <div className="glassmorphic-card bg-card rounded-lg border shadow-sm p-6 min-h-[600px]">
               {isLoading || shifts === undefined ? (
                 <JobCardSkeleton count={6} />
               ) : viewMode === 'list' ? (

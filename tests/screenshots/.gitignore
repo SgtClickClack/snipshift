@@ -1,0 +1,4 @@
+# Ignore all screenshots - generated during test runs
+*.png
+*.jpg
+*.jpeg

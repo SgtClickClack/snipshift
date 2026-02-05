@@ -1246,6 +1246,29 @@ button[data-variant="refined-glow"]:hover {
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
+/* GLASSMORPHIC-CARD - Premium transparent card for Jobs/Calendar pages */
+/* Matches Overview page visual consistency */
+.glassmorphic-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(204, 255, 0, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glassmorphic-card:hover {
+  border-color: rgba(204, 255, 0, 0.15) !important;
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05),
+    0 0 20px rgba(204, 255, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
 /* SUBTLE PULSE - Architect Portal / Admin buttons */
 /* No solid background, Electric Lime outline, small pulsing dot */
 .btn-subtle-pulse {
