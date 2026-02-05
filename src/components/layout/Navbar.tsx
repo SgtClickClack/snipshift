@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown } from "lucide-react";
+import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown, HelpCircle } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -194,6 +194,10 @@ export default function Navbar() {
                          <Settings className="mr-2 h-4 w-4" />
                          <span>Settings</span>
                       </DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-steel-700 focus:text-white cursor-pointer" onClick={() => navigate('/help')}>
+                         <HelpCircle className="mr-2 h-4 w-4" />
+                         <span>Help & Support</span>
+                      </DropdownMenuItem>
                       {(user.roles || []).includes('admin') && (
                         <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
                           <Link to="/admin">
@@ -317,6 +321,16 @@ export default function Navbar() {
                              </div>
                            );
                          })()}
+
+                         {/* Help & Support Link */}
+                        <SheetClose asChild>
+                          <Link to="/help">
+                            <Button variant="ghost" className="w-full justify-start text-foreground dark:text-steel-100 hover:bg-muted dark:hover:bg-steel-800">
+                              <HelpCircle className="h-4 w-4 mr-2" />
+                              Help & Support
+                            </Button>
+                          </Link>
+                        </SheetClose>
 
                          {/* Install App Button */}
                          <div className="px-2 py-2">

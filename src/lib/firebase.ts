@@ -1,6 +1,7 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { getInstallations, getToken } from 'firebase/installations';
 
 const getEnv = (key: keyof ImportMetaEnv) => {
   const value = import.meta.env[key];
@@ -167,3 +168,36 @@ export const storage = new Proxy({} as FirebaseStorage, {
 // Immediately kick off lazy initialization
 // This runs after the module is loaded but doesn't block rendering
 initializeFirebase();
+
+/**
+ * Silently initialize Firebase Installations for background services.
+ * Wrapped in robust error handling to prevent 400 errors from disrupting session state.
+ * Common 400 errors occur during token refresh on certain network conditions.
+ */
+async function initInstallationsLayer(): Promise<void> {
+  try {
+    const firebaseApp = getApp();
+    const installations = getInstallations(firebaseApp);
+    
+    // Attempt to get token - this validates the installations layer
+    await getToken(installations, /* forceRefresh */ false);
+  } catch (error: unknown) {
+    // Gracefully handle 400 errors from Firebase Installations
+    // These are non-critical background errors that shouldn't affect user session
+    const errorCode = (error as { code?: string })?.code;
+    const errorStatus = (error as { status?: number })?.status;
+    
+    if (errorStatus === 400 || errorCode?.includes('400')) {
+      console.log('[firebase] System: Installations Layer Backgrounded.');
+    } else {
+      // Log other errors at warn level - still non-blocking
+      console.warn('[firebase] Installations layer initialization deferred:', error);
+    }
+  }
+}
+
+// Kick off installations layer after main Firebase init completes
+// This is non-blocking and will silently handle any 400 errors
+initializeFirebase().then(() => {
+  initInstallationsLayer();
+});

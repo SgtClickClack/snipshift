@@ -18,6 +18,7 @@ import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';
+import SupportChatWidget from '@/components/support/SupportChatWidget';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { PwaUpdateHandler } from '@/components/pwa/pwa-update-handler';
 import { RouteProgressBar } from '@/components/ui/route-progress-bar';
@@ -43,6 +44,9 @@ const RoleSelectionPage = lazy(() => import('@/pages/role-selection'));
 const OnboardingPage = lazy(() => import('@/pages/Onboarding'));
 const HubOnboardingPage = lazy(() => import('@/pages/onboarding/hub'));
 const ProfessionalOnboardingPage = lazy(() => import('@/pages/onboarding/professional'));
+
+// Help & Support pages
+const HelpCenterPage = lazy(() => import('@/pages/HelpCenter'));
 
 // Legal & Company pages - lazy load (less critical)
 const TermsPage = lazy(() => import('@/pages/legal/terms'));
@@ -315,6 +319,15 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           <Suspense fallback={<PageLoadingFallback />}>
             <VenueGuidePage />
           </Suspense>
+        } />
+
+        {/* Help & Support */}
+        <Route path="/help" element={
+          <AuthGuard>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <HelpCenterPage />
+            </Suspense>
+          </AuthGuard>
         } />
 
         {/* Protected dashboard routes */}
@@ -709,6 +722,7 @@ function App() {
                         <AppRoutes splashHandled={splashHandled} />
                         <TutorialOverlay />
                         <FeedbackWidget />
+                        <SupportChatWidget />
                         <InstallPrompt />
                         <PwaUpdateHandler />
                         <Analytics />

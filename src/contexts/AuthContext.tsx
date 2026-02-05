@@ -422,6 +422,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsVenueLoaded(true); // No venue needed for new users
         setIsSystemReady(true); // Auth complete (needs onboarding)
         setUser(null);
+        
+        // ONBOARDING REDIRECT LOCKDOWN: New users MUST go to role-selection/onboarding
+        // This guards against the signup redirect bypass where Firebase auth exists but no DB profile
+        const needsOnboardingRedirect = apiResponse.needsOnboarding === true;
+        if (needsOnboardingRedirect && !isOnboardingRoute(currentPath) && !isNeutralRoute(currentPath)) {
+          setRedirecting(true);
+          navigate('/role-selection', { replace: true });
+        }
+        
         // DEDUPLICATION: Mark hydration as complete
         lastHydratedUidRef.current = firebaseUser.uid;
         isHydratingRef.current = false;
@@ -533,6 +542,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           lastHydratedUidRef.current = firebaseUser.uid;
           isHydratingRef.current = false;
           return;
+        }
+        
+        // ONBOARDING LOCKDOWN: User has DB profile but isOnboarded=false - redirect to role-selection/onboarding
+        // This catches users who started signup but didn't complete the flow
+        if (!isOnboardingRoute(currentPath) && !isNeutralRoute(currentPath)) {
+          setRedirecting(true);
+          navigate('/role-selection', { replace: true });
         }
       }
       

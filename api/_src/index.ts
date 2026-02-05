@@ -74,6 +74,7 @@ import cronFinancialReconcileRouter from './routes/cron/financial-reconcile.js';
 import settlementsRouter from './routes/settlements.js';
 import xeroRouter from './routes/integrations/xero.js';
 import investorsRouter from './routes/investors.js';
+import supportRouter from './routes/support.js';
 import * as notificationService from './services/notification.service.js';
 import * as emailService from './services/email.service.js';
 import { initializePusher } from './services/pusher.service.js';
@@ -247,6 +248,7 @@ app.use('/api/cron', cronFinancialReconcileRouter);
 app.use('/api/settlements', settlementsRouter);
 app.use('/api/integrations/xero', xeroRouter);
 app.use('/api/investors', investorsRouter);
+app.use('/api/support', supportRouter);
 
 // Aliases for backward compatibility
 app.use('/api/training-content', trainingRouter); // Alias for /api/training/content if needed, or just route logic

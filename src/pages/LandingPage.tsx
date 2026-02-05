@@ -132,12 +132,12 @@ export default function LandingPage() {
               )}
 
               {hasUser && user && (
-                <Link to={getDashboardRoute(user.currentRole)}>
+                <Link to={user.isOnboarded === true ? getDashboardRoute(user.currentRole) : '/onboarding'}>
                   <Button
                     variant="ghost"
                     className="border-2 border-white text-white px-8 py-3 rounded-full font-bold backdrop-blur-sm hover:bg-white/5 transition-all"
                   >
-                    Dashboard
+                    {user.isOnboarded === true ? 'Dashboard' : 'Complete Setup'}
                   </Button>
                 </Link>
               )}
@@ -213,12 +213,16 @@ export default function LandingPage() {
 
                 {hasUser && user && (
                   <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
-                    <Link to={getDashboardRoute(user.currentRole)} className="w-full sm:w-auto">
+                    {/* ONBOARDING-AWARE CTA: Show "Complete Setup" if user hasn't completed onboarding */}
+                    <Link 
+                      to={user.isOnboarded === true ? getDashboardRoute(user.currentRole) : '/onboarding'} 
+                      className="w-full sm:w-auto"
+                    >
                       <Button
                         className="w-full sm:w-auto bg-[#BAFF39] text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
-                        data-testid="button-go-to-dashboard"
+                        data-testid={user.isOnboarded === true ? "button-go-to-dashboard" : "button-complete-setup"}
                       >
-                        Go to Dashboard
+                        {user.isOnboarded === true ? 'Go to Dashboard' : 'Complete Setup'}
                       </Button>
                     </Link>
                     <Link to="/investorportal" className="w-full sm:w-auto">

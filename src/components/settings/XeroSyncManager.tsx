@@ -21,7 +21,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { IntegrationErrorBoundary } from '@/components/common/IntegrationErrorBoundary';
 import { apiRequest } from '@/lib/queryClient';
-import { RefreshCw, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { RefreshCw, Loader2, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import XeroSyncHistory from './XeroSyncHistory';
 
 interface XeroCalendar {
@@ -229,6 +234,22 @@ export default function XeroSyncManager() {
           <CardTitle className="flex items-center gap-2">
             <RefreshCw className="h-5 w-5" />
             Manual Sync
+            {/* Contextual Help Tooltip for Mutex Sync */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  className="p-1 rounded-full hover:bg-muted transition-colors"
+                  title="Learn about mutex sync protection"
+                  aria-label="Help: Mutex sync explanation"
+                >
+                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-[#BAFF39]" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[300px] text-xs">
+                <p className="font-medium mb-1">Mutex Sync Protection</p>
+                <p>Concurrent sync requests are queued to prevent duplicate timesheet entries. The system automatically handles retries and rolls back on failures to maintain data integrity between HospoGo and Xero.</p>
+              </TooltipContent>
+            </Tooltip>
           </CardTitle>
           <CardDescription>
             Push approved and completed shifts to Xero Payroll as timesheets. Select a payroll calendar and date range, then sync.

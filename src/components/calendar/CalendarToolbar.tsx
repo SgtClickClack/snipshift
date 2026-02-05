@@ -17,7 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronLeft, ChevronRight, Settings, Plus, Zap, DollarSign, Users, Star, Loader2, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Settings, Plus, Zap, DollarSign, Users, Star, Loader2, RefreshCw, HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { View } from "react-big-calendar";
 import { fetchRosterTotals } from "@/lib/api";
@@ -201,21 +206,38 @@ export function CalendarToolbar({
             {/* Financial Health indicator - Only show in business mode. Pulse when Xero disconnected (CTA for Lucas) */}
             {/* CLS FIX: Reserve space with skeleton while loading to prevent layout shift */}
             {mode === 'business' && dateRange?.start && (
-              <div
-                className={cn(
-                  "hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#BAFF39]/10 dark:bg-[#BAFF39]/20 text-[#BAFF39] dark:text-[#BAFF39] text-sm font-medium",
-                  "min-w-[180px]", // Reserved width to prevent CLS
-                  !isSyncedToXero && rosterTotals && "animate-pulse"
-                )}
-                data-testid="est-wage-cost"
-                title={isSyncedToXero ? "Estimated wage cost for visible period" : "Estimated wage cost — sync to Xero to export"}
-              >
-                <DollarSign className="h-4 w-4 shrink-0" />
-                {rosterTotals !== undefined ? (
-                  <span>Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}</span>
-                ) : (
-                  <Skeleton className="h-4 w-24 bg-[#BAFF39]/20" />
-                )}
+              <div className="hidden sm:flex items-center gap-1">
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#BAFF39]/10 dark:bg-[#BAFF39]/20 text-[#BAFF39] dark:text-[#BAFF39] text-sm font-medium",
+                    "min-w-[180px]", // Reserved width to prevent CLS
+                    !isSyncedToXero && rosterTotals && "animate-pulse"
+                  )}
+                  data-testid="est-wage-cost"
+                >
+                  <DollarSign className="h-4 w-4 shrink-0" />
+                  {rosterTotals !== undefined ? (
+                    <span>Est. Wage Cost: {formatCurrency(rosterTotals.totalCost, rosterTotals.currency)}</span>
+                  ) : (
+                    <Skeleton className="h-4 w-24 bg-[#BAFF39]/20" />
+                  )}
+                </div>
+                {/* Contextual Help Tooltip */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                      title="Learn about estimated wage cost"
+                      aria-label="Help: Estimated wage cost explanation"
+                    >
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-[#BAFF39]" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[280px] text-xs">
+                    <p className="font-medium mb-1">Estimated Wage Cost</p>
+                    <p>Calculated from confirmed shift hours × staff hourly rates for the visible calendar period. {!isSyncedToXero && 'Connect Xero to export timesheets for payroll.'}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             )}
             {/* Roster Tools dropdown - Only show in business mode */}

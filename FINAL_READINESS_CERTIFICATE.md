@@ -1,8 +1,8 @@
 # HospoGo Final Readiness Certificate
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Date:** 2026-02-05  
-**Status:** **MISSION READY**
+**Status:** **ALL SYSTEMS GO**
 
 ---
 
@@ -71,7 +71,27 @@ HospoGo has completed comprehensive system hardening and is certified ready for 
 
 ---
 
-## 5. UI/UX Polish
+## 5. Onboarding Gate & Support
+
+**Status:** **HARDENED & ACTIVE**
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Firebase Installations Layer | ✅ Silenced | 400 errors caught and backgrounded |
+| SupportChatWidget Gate | ✅ Hardened | Requires user authenticated + isOnboarded |
+| InvestorChatWidget Position | ✅ Verified | right-24, z-40 - clear of system widgets |
+| SupportChatWidget Position | ✅ Updated | right-8 - visually distinct from Investor Bot |
+| AI Terminology | ✅ Verified | "Logistics Platform Fee" enforced in investor service |
+
+**Hardening Summary:**
+- Firebase Installations 400 errors no longer disrupt session state
+- Support bot only appears for fully onboarded users
+- Investor and Support bots positioned for visual distinction
+- Both AI services grounded with consistent brand terminology
+
+---
+
+## 6. UI/UX Polish
 
 **Status:** **DEMO POLISHED**
 
@@ -84,7 +104,7 @@ HospoGo has completed comprehensive system hardening and is certified ready for 
 
 ---
 
-## 6. E2E Test Coverage
+## 7. E2E Test Coverage
 
 **Status:** **MISSION READY - All Critical Paths Verified**
 
@@ -113,7 +133,7 @@ HospoGo has completed comprehensive system hardening and is certified ready for 
 
 ---
 
-## 7. Security Certification
+## 8. Security Certification
 
 | Measure | Status |
 |---------|--------|
@@ -122,6 +142,7 @@ HospoGo has completed comprehensive system hardening and is certified ready for 
 | CORS Policy | ✅ Strict |
 | Input Sanitization | ✅ Active |
 | AI Prompt Injection Guard | ✅ Tested |
+| Firebase Installations Layer | ✅ Hardened |
 
 ---
 
@@ -132,9 +153,11 @@ This certificate confirms that HospoGo is ready for investor demonstrations with
 - ✅ Stable authentication and role-based access
 - ✅ Functional Xero integration with audit trail
 - ✅ AI Executive Agent grounded in strategic data
+- ✅ **Onboarding Gate & Support HARDENED**
 - ✅ Polished UI without visual glitches
 - ✅ Critical E2E paths validated
 - ✅ **Error #310 Hook Integrity Verified**
+- ✅ **Firebase Installations Layer Silenced**
 
 **Certified By:** Automated QA Pipeline + Manual Review  
 **Valid Until:** Next major deployment
