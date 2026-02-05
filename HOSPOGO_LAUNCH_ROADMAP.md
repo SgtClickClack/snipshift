@@ -21,6 +21,34 @@
 
 ---
 
+### Update: 2026-02-06 - Investor Briefing Visual Narrative Lockdown
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Overwrote the investor deck HTML with a high-fidelity visual narrative focused on “Chaotic Venue → Automated Profit Center.”
+- Replaced technical language with human-first phrasing (Digital Bouncer, Unbreakable Payroll, Instant-On Speed).
+- Added FontAwesome 6.5.1 pictogram anchors, a persistent Live Telemetry integrity gauge, and a CSS Trinity circuit diagram.
+- Inserted a JetBrains Mono Live Handshake terminal receipt for Xero trace proof and a $1.5M ARR visual slider close.
+
+**Impact:**
+- The presentation now reads as a live, visual story of transformation with continuous telemetry and proof-of-code cues.
+
+---
+
+### Update: 2026-02-06 - Auth-Gated Query Hardening (401 Cleanup)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added auth readiness guards (`isSystemReady`, `hasFirebaseUser`, `!isAuthLoading`) across notifications, dashboards, Stripe Connect, Xero status/history, staff tools, and calendar settings.
+- Prevented API calls from firing before Firebase token hydration on cold reloads.
+
+**Impact:**
+- Removes early 401 console noise for `/api/notifications`, `/api/conversations/unread-count`, `/api/analytics/dashboard`, `/api/stripe-connect/account/status`, `/api/integrations/xero/*`, and `/api/shifts/shop/*`.
+
+---
+
 ### Update: 2026-02-05 - CTO Dashboard Console Cleanup
 
 **Status:** ✅ **UPDATED**

@@ -13,6 +13,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -179,6 +180,9 @@ function generateXeroHandshakePayload(entry: SyncHistoryEntry): object {
 }
 
 export default function XeroSyncHistory() {
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
+  const canFetchHistory = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   // State for trace modal
   const [traceModalEntry, setTraceModalEntry] = useState<SyncHistoryEntry | null>(null);
 
@@ -194,6 +198,7 @@ export default function XeroSyncHistory() {
         return MOCK_HISTORY;
       }
     },
+    enabled: canFetchHistory,
     staleTime: 30000, // 30 seconds
   });
 

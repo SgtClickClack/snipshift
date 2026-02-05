@@ -40,7 +40,7 @@ async function prefetchConversations(): Promise<unknown> {
 }
 
 export default function Navbar() {
-  const { user, logout, hasUser, isLoading, isSystemReady } = useAuth();
+  const { user, logout, hasUser, isLoading, isSystemReady, hasFirebaseUser } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const verification = useVerificationStatus({ enableRedirect: false, protectedPaths: [] });
@@ -77,7 +77,7 @@ export default function Navbar() {
   const { data: unreadData } = useQuery({
     queryKey: ['/api/conversations/unread-count'],
     queryFn: fetchUnreadCount,
-    enabled: !!user && isSystemReady && !isLoading,
+    enabled: !!user && isSystemReady && hasFirebaseUser && !isLoading,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
@@ -85,7 +85,7 @@ export default function Navbar() {
 
   // Prefetch conversations on hover over Messages button
   const handleMessagesHover = () => {
-    if (user?.id && isSystemReady && !isLoading) {
+    if (user?.id && isSystemReady && hasFirebaseUser && !isLoading) {
       // Prefetch conversations in the background before user clicks
       queryClient.prefetchQuery({
         queryKey: ['/api/conversations'],

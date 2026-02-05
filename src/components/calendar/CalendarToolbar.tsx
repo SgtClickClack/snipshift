@@ -33,6 +33,7 @@ import { View } from "react-big-calendar";
 import { fetchRosterTotals } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
 import { QUERY_KEYS, QUERY_STALE_TIMES } from "@/lib/query-keys";
+import { useAuth } from "@/contexts/AuthContext";
 
 type JobStatus = 'all' | 'pending' | 'confirmed' | 'completed';
 
@@ -162,10 +163,13 @@ export function CalendarToolbar({
   isInvitingATeam,
   dateRange,
 }: CalendarToolbarProps) {
+  const { isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
+  const canFetchCalendarData = isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   const { data: rosterTotals } = useQuery({
     queryKey: ['roster-totals', dateRange?.start?.toISOString(), dateRange?.end?.toISOString()],
     queryFn: () => fetchRosterTotals(dateRange!.start, dateRange!.end),
-    enabled: mode === 'business' && !!dateRange?.start && !!dateRange?.end,
+    enabled: mode === 'business' && !!dateRange?.start && !!dateRange?.end && canFetchCalendarData,
     staleTime: 30_000, // 30s - avoid redundant refetches during calendar drag-and-drop
   });
 
@@ -176,7 +180,7 @@ export function CalendarToolbar({
       const res = await apiRequest('GET', '/api/integrations/xero/status');
       return res.json() as Promise<{ connected?: boolean }>;
     },
-    enabled: mode === 'business',
+    enabled: mode === 'business' && canFetchCalendarData,
     staleTime: QUERY_STALE_TIMES.INTEGRATION_STATUS, // 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });

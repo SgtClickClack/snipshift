@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/useToast';
+import { useAuth } from '@/contexts/AuthContext';
 import Confetti from 'react-confetti';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -86,6 +87,7 @@ function mapXeroErrorToUserMessage(raw: string): string {
 
 export default function XeroSyncManager() {
   const { toast } = useToast();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const [xeroConnected, setXeroConnected] = useState(false);
   const [calendars, setCalendars] = useState<XeroCalendar[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('');
@@ -112,7 +114,10 @@ export default function XeroSyncManager() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const canCheckStatus = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   useEffect(() => {
+    if (!canCheckStatus) return;
     let cancelled = false;
     apiRequest('GET', '/api/integrations/xero/status')
       .then((r) => r.json())
@@ -125,10 +130,10 @@ export default function XeroSyncManager() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [canCheckStatus]);
 
   const fetchCalendars = useCallback(async () => {
-    if (!xeroConnected) return;
+    if (!xeroConnected || !canCheckStatus) return;
     setIsLoadingCalendars(true);
     try {
       const res = await apiRequest('GET', '/api/integrations/xero/calendars');
@@ -147,7 +152,7 @@ export default function XeroSyncManager() {
     } finally {
       setIsLoadingCalendars(false);
     }
-  }, [xeroConnected, toast]);
+  }, [xeroConnected, canCheckStatus, toast]);
 
   useEffect(() => {
     fetchCalendars();

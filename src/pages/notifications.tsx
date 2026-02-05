@@ -88,7 +88,7 @@ function getNotificationBadge(type: Notification['type']) {
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
-  const { user, isSystemReady } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const queryClient = useQueryClient();
 
   // PERF FIX: Wait for isSystemReady (Firebase token + user profile) before API calls
@@ -96,7 +96,7 @@ export default function NotificationsPage() {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: () => fetchNotifications(100),
-    enabled: !!user?.id && isSystemReady,
+    enabled: !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading,
   });
 
   const markAsReadMutation = useMutation({

@@ -51,12 +51,13 @@ async function fetchFavoriteProfessionals(): Promise<string[]> {
 }
 
 export default function StaffPage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, isSystemReady, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const canFetchStaff = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
   
   // URL-based filter for favorites (used by "Manage A-Team" shortcut)
   const showFavoritesOnly = searchParams.get('filter') === 'favorites';
@@ -74,14 +75,14 @@ export default function StaffPage() {
   const { data: staff = [], isLoading: isLoadingStaff } = useQuery({
     queryKey: ['venue-staff'],
     queryFn: fetchStaffForEmployer,
-    enabled: !!user?.id,
+    enabled: canFetchStaff,
   });
 
   // Fetch current favorites
   const { data: favorites = [], isLoading: isLoadingFavorites } = useQuery({
     queryKey: ['favorite-professionals'],
     queryFn: fetchFavoriteProfessionals,
-    enabled: !!user?.id,
+    enabled: canFetchStaff,
   });
 
   // Mutation to toggle favorite status with OPTIMISTIC UI

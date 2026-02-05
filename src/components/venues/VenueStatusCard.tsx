@@ -28,13 +28,14 @@ interface VenueData {
  * data immediately without making API calls.
  */
 export function VenueStatusCard() {
-  const { user } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // DEMO MODE: Return demo venue data immediately
   const demoMode = isDemoMode();
+  const canFetchVenue = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
 
   // Check for onboarding completion callback
   React.useEffect(() => {
@@ -84,7 +85,7 @@ export function VenueStatusCard() {
         throw err;
       }
     },
-    enabled: demoMode || (!!user?.id && !!user?.roles?.includes('venue_owner') && (user.currentRole === 'hub' || user.currentRole === 'business')),
+    enabled: demoMode || (canFetchVenue && !!user?.roles?.includes('venue_owner') && (user.currentRole === 'hub' || user.currentRole === 'business')),
     staleTime: demoMode ? Infinity : 2 * 60 * 1000, // Demo mode: never refetch
     refetchInterval: demoMode ? false : 30 * 1000, // Demo mode: no refetch
     retry: (failureCount, error) => {

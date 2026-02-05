@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -83,9 +83,10 @@ interface EarningsDashboardProps {
 }
 
 export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashboardProps) {
-  const { user } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const canFetchFinancials = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
 
   // Fetch balance - with longer staleTime to prevent excessive requests
   const { data: balanceData, isLoading: isLoadingBalance } = useQuery<BalanceData>({
@@ -94,7 +95,7 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
       const res = await apiRequest('GET', `/api/payments/balance/${user?.id}`);
       return res.json();
     },
-    enabled: !!user?.id,
+    enabled: canFetchFinancials,
     staleTime: 2 * 60 * 1000, // Data fresh for 2 minutes
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 30 seconds
     refetchOnWindowFocus: false, // Don't refetch on tab focus
@@ -107,7 +108,7 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
       const res = await apiRequest('GET', `/api/payments/history/${user?.id}`);
       return res.json();
     },
-    enabled: !!user?.id,
+    enabled: canFetchFinancials,
     staleTime: 5 * 60 * 1000, // Data fresh for 5 minutes
     refetchOnWindowFocus: false,
   });
@@ -156,7 +157,7 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
       const res = await apiRequest('GET', '/api/stripe-connect/account/status');
       return res.json();
     },
-    enabled: !!user?.id,
+    enabled: canFetchFinancials,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -171,7 +172,7 @@ export default function EarningsDashboard({ onNavigateToPayouts }: EarningsDashb
       }
       return res.json();
     },
-    enabled: !!user?.id && stripeAccountStatus?.hasAccount === true,
+    enabled: canFetchFinancials && stripeAccountStatus?.hasAccount === true,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: false, // Don't retry on 404
   });

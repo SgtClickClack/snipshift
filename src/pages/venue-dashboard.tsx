@@ -89,7 +89,7 @@ const VenueDashboardSkeleton = () => (
 );
 
 export default function VenueDashboard() {
-  const { user, isLoading: isAuthLoading, isSystemReady, isVenueMissing } = useAuth();
+  const { user, isLoading: isAuthLoading, isSystemReady, isVenueMissing, hasFirebaseUser } = useAuth();
   const navigate = useNavigate();
   // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
   // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
@@ -292,6 +292,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   };
 
   // Data integrity: detect "ghost dashboard" — onboarded but no venue record (404 from /api/venues/me)
+  const canFetchVenueData = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   const { data: venueMe, isLoading: isLoadingVenue, isFetched: isVenueFetched } = useQuery({
     queryKey: ['venue-status', user?.id],
     queryFn: async () => {
@@ -304,7 +306,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         throw err;
       }
     },
-    enabled: !demoMode && !!user?.id,
+    enabled: !demoMode && canFetchVenueData,
     staleTime: 2 * 60 * 1000,
     retry: (_, error) => !(error instanceof Error && error.message.includes('404:')),
     throwOnError: false,
@@ -321,7 +323,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       }
       return res.json();
     },
-    enabled: !demoMode && !!user?.id && (user.currentRole === 'hub' || user.currentRole === 'business'),
+    enabled: !demoMode && canFetchVenueData && (user.currentRole === 'hub' || user.currentRole === 'business'),
     staleTime: 5 * 60 * 1000,
   });
   const isStripeComplete = stripeAccountStatus?.onboardingComplete && stripeAccountStatus?.chargesEnabled;
@@ -777,7 +779,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       const res = await apiRequest("GET", "/api/analytics/dashboard");
       return res.json();
     },
-    enabled: demoMode || !!user,
+    enabled: demoMode || canFetchVenueData,
     staleTime: demoMode ? Infinity : undefined,
   });
 
@@ -798,7 +800,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         return { unreadCount: 0 };
       }
     },
-    enabled: demoMode || (!!user && !!venueId),
+    enabled: demoMode || (canFetchVenueData && !!venueId),
     // DOPAMINE SYNC: 5s refresh for investor demo - calendar stats update in real-time
     refetchInterval: 5000,
     staleTime: demoMode ? Infinity : undefined,

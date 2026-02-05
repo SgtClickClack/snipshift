@@ -19,7 +19,7 @@ function transformNotification(apiNotif: APINotification): any {
 }
 
 export function useNotifications() {
-  const { user, isSystemReady, isLoading } = useAuth();
+  const { user, isSystemReady, isLoading, hasFirebaseUser } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -38,7 +38,7 @@ export function useNotifications() {
         return [];
       }
     },
-    enabled: !!user?.id && isSystemReady && !isLoading,
+    enabled: !!user?.id && isSystemReady && hasFirebaseUser && !isLoading,
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: false, // Don't retry on error
     refetchOnWindowFocus: false, // Don't refetch on window focus to avoid unnecessary requests

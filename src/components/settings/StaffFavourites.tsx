@@ -40,23 +40,24 @@ async function fetchFavoriteProfessionals(): Promise<string[]> {
 }
 
 export default function StaffFavourites() {
-  const { user } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const canFetchStaff = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
 
   // Fetch staff who have worked for this venue
   const { data: staff = [], isLoading: isLoadingStaff } = useQuery({
     queryKey: ['venue-staff'],
     queryFn: fetchStaffForEmployer,
-    enabled: !!user?.id,
+    enabled: canFetchStaff,
   });
 
   // Fetch current favorites
   const { data: favorites = [], isLoading: isLoadingFavorites } = useQuery({
     queryKey: ['favorite-professionals'],
     queryFn: fetchFavoriteProfessionals,
-    enabled: !!user?.id,
+    enabled: canFetchStaff,
   });
 
   // Mutation to toggle favorite status

@@ -1,3 +1,34 @@
+#### 2026-02-06: Investor Briefing Visual Narrative Lockdown
+
+**Core Components**
+- `hospogo_presentation_slides.html`
+
+**Key Features**
+- Overwrote the investor deck with a high-fidelity visual narrative focused on “Chaotic Venue → Automated Profit Center.”
+- Replaced technical phrasing with human-first language (Digital Bouncer, Unbreakable Payroll, Instant-On Speed).
+- Added FontAwesome 6.5.1 pictogram anchors (shield, lightning, calculator, microchip) on every slide.
+- Implemented a persistent “Live Telemetry” integrity gauge with pulse dot and audited value.
+- Built a CSS-driven Trinity circuit diagram with a rotating core icon on Slide 3.
+- Added a JetBrains Mono “Live Handshake” terminal receipt for Xero trace proof on Slide 4.
+- Expanded pitch-mode scaling to amplify cards and contrast for boardroom projection.
+- Closed with a $1.5M ARR visual slider for the roadmap finale.
+
+**Integration Points**
+- Presentation HTML: `hospogo_presentation_slides.html`
+- FontAwesome 6.5.1 CDN (icons)
+- Slider script for ARR ramp (visual roadmap control)
+
+**File Paths**
+- `hospogo_presentation_slides.html`
+
+**Next Priority Task**
+- Verify slide rendering and pacing in a browser presentation run-through.
+
+**Code Organization & Quality**
+- Kept all styles encapsulated within the single HTML deck for clean deployment.
+
+---
+
 #### 2026-02-05: CTO Dashboard Console Cleanup & Chat Bubble Offset
 
 **Core Components**
@@ -4700,3 +4731,51 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Reused existing `normalizeParam` utility; no new patterns added.
+
+---
+
+#### 2026-02-06: Auth-Gated Query Hardening (401 Cleanup)
+
+**Core Components**
+- Auth readiness usage: `src/contexts/AuthContext.tsx` (consumed)
+- Notifications: `src/hooks/useNotifications.ts`, `src/pages/notifications.tsx`, `src/components/layout/Navbar.tsx`
+- Dashboards: `src/pages/venue-dashboard.tsx`, `src/pages/professional-dashboard.tsx`, `src/pages/shop-dashboard.tsx`
+- Xero integrations: `src/hooks/useXeroStatus.ts`, `src/components/settings/XeroSyncManager.tsx`, `src/components/settings/XeroSyncHistory.tsx`, `src/components/settings/XeroIntegrationCard.tsx`, `src/components/settings/XeroEmployeeMapper.tsx`, `src/components/calendar/CalendarToolbar.tsx`
+- Stripe payouts: `src/components/payments/StripeConnectBanner.tsx`, `src/components/payments/payout-settings.tsx`, `src/components/payments/earnings-dashboard.tsx`
+- Venue/Staff tools: `src/components/venues/VenueStatusCard.tsx`, `src/components/settings/StaffFavourites.tsx`, `src/components/settings/StaffPayRates.tsx`, `src/pages/Staff.tsx`, `src/components/calendar/professional-calendar.tsx`
+
+**Key Features**
+- Added `isSystemReady` + `hasFirebaseUser` + `isAuthLoading` guards to prevent API calls before Firebase token hydration.
+- Eliminated early 401s on cold reload for notifications, dashboards, Stripe Connect, Xero status/history, and shop shift queries.
+- Kept demo-mode and existing fallbacks intact to avoid breaking investor flows.
+
+**Integration Points**
+- API endpoints: `/api/notifications`, `/api/conversations/unread-count`, `/api/analytics/dashboard`, `/api/venues/me`, `/api/stripe-connect/account/status`, `/api/integrations/xero/*`, `/api/shifts/shop/:id`, `/api/shifts/messages/unread-count`, `/api/venues/me/staff`.
+
+**File Paths**
+- `src/hooks/useNotifications.ts`
+- `src/pages/notifications.tsx`
+- `src/components/layout/Navbar.tsx`
+- `src/pages/venue-dashboard.tsx`
+- `src/pages/professional-dashboard.tsx`
+- `src/pages/shop-dashboard.tsx`
+- `src/hooks/useXeroStatus.ts`
+- `src/components/settings/XeroSyncManager.tsx`
+- `src/components/settings/XeroSyncHistory.tsx`
+- `src/components/settings/XeroIntegrationCard.tsx`
+- `src/components/settings/XeroEmployeeMapper.tsx`
+- `src/components/calendar/CalendarToolbar.tsx`
+- `src/components/payments/StripeConnectBanner.tsx`
+- `src/components/payments/payout-settings.tsx`
+- `src/components/payments/earnings-dashboard.tsx`
+- `src/components/venues/VenueStatusCard.tsx`
+- `src/components/settings/StaffFavourites.tsx`
+- `src/components/settings/StaffPayRates.tsx`
+- `src/pages/Staff.tsx`
+- `src/components/calendar/professional-calendar.tsx`
+
+**Next Priority Task**
+- Cold-reload the venue dashboard in prod to confirm 401 console noise is gone.
+
+**Code Organization & Quality**
+- Reused existing auth readiness flags; no new patterns or abstractions introduced.

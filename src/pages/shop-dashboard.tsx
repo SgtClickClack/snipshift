@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ import PendingReviewNotification from "@/components/shifts/pending-review-notifi
 import BillingSettings from "@/components/payments/billing-settings";
 
 export default function ShopDashboard() {
-  const { user } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -44,9 +44,11 @@ export default function ShopDashboard() {
     pay: "",
   });
 
+  const canFetchShifts = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   const { data: shifts = [], isLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts/shop", user?.id],
-    enabled: !!user?.id,
+    enabled: canFetchShifts,
   });
 
   const updateStatusMutation = useMutation({

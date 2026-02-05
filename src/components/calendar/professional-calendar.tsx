@@ -304,7 +304,7 @@ function ProfessionalCalendarContent({
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { addNotification } = useNotification();
   const [currentDate, setCurrentDate] = useState<Date>(() => {
     const date = new Date();
@@ -480,7 +480,7 @@ function ProfessionalCalendarContent({
   useEffect(() => {
     let isMounted = true;
     
-    if (!user?.id || !isBusinessRole(user?.currentRole || '')) {
+    if (!user?.id || !isBusinessRole(user?.currentRole || '') || !isSystemReady || isAuthLoading || !hasFirebaseUser) {
       setIsLoadingSettings(false);
       return;
     }

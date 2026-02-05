@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HospoGo Investor Presentation 2026</title>
+  <title>HospoGo Investor Briefing</title>
   <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,900;1,900&family=JetBrains+Mono:wght@600;700&display=swap');
 
     :root {
       --brand-neon: #BAFF39;
       --bg-dark: #0a0a0a;
+      --bg-deep: #060606;
+      --glass: rgba(10, 10, 10, 0.7);
+      --text-muted: rgba(186, 255, 57, 0.7);
     }
 
     * {
@@ -27,10 +31,28 @@
 
     body {
       font-family: 'Urbanist', sans-serif;
-      font-weight: 900;
+      font-weight: 500;
       background: var(--bg-dark);
       color: var(--brand-neon);
       line-height: 1.4;
+    }
+
+    h1, h2, h3 {
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: -0.05em;
+    }
+
+    h1 {
+      font-size: clamp(56px, 8.5vw, 120px);
+      line-height: 0.92;
+    }
+
+    h2 {
+      font-size: clamp(38px, 6vw, 88px);
+      line-height: 0.95;
+      margin-bottom: 20px;
     }
 
     .slide {
@@ -39,16 +61,23 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 56px;
+      padding: 64px;
       scroll-snap-align: start;
       position: relative;
-      background: var(--bg-dark);
+      background: radial-gradient(circle at top right, rgba(186, 255, 57, 0.08), transparent 60%), var(--bg-dark);
     }
 
     .slide-content {
       max-width: 1200px;
       width: 100%;
       z-index: 1;
+    }
+
+    .layout-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: 48px;
+      align-items: center;
     }
 
     .logo {
@@ -73,137 +102,248 @@
       letter-spacing: 0.2em;
     }
 
-    h1 {
-      font-size: clamp(60px, 9vw, 120px);
-      font-weight: 900;
-      font-style: italic;
-      letter-spacing: -0.05em;
-      line-height: 0.9;
-      text-transform: uppercase;
-    }
-
-    h2 {
-      font-size: clamp(40px, 6vw, 84px);
-      font-weight: 900;
-      font-style: italic;
-      letter-spacing: -0.05em;
-      line-height: 0.95;
-      margin-bottom: 24px;
-      text-transform: uppercase;
-    }
-
     .subtitle {
       font-size: 20px;
-      max-width: 720px;
+      max-width: 760px;
+      color: var(--text-muted);
       margin-top: 16px;
     }
 
     .grid {
       display: grid;
       gap: 24px;
-      margin-top: 40px;
+      margin-top: 32px;
     }
 
     .grid-2 {
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 
     .grid-3 {
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 
     .glass-card {
-      border: 2px solid var(--brand-neon);
+      border: 1px solid rgba(186, 255, 57, 0.4);
       border-radius: 28px;
       padding: 28px;
-      background: var(--bg-dark);
-      box-shadow: 0 0 30px var(--brand-neon);
+      background: var(--glass);
+      box-shadow: 0 0 24px rgba(186, 255, 57, 0.15);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
     }
 
     .label {
       font-size: 12px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
+      color: rgba(186, 255, 57, 0.6);
     }
 
     .metric {
-      font-size: clamp(40px, 6vw, 80px);
+      font-size: clamp(36px, 5.5vw, 80px);
       font-style: italic;
       letter-spacing: -0.04em;
       margin: 12px 0;
     }
 
     .metric-small {
-      font-size: 24px;
+      font-size: 22px;
       font-style: italic;
     }
 
-    .stability-dot {
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      background: var(--brand-neon);
-      animation: stabilityPulse 2.5s ease-in-out infinite;
-      box-shadow: 0 0 20px var(--brand-neon);
-    }
-
-    @keyframes stabilityPulse {
-      0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      50% {
-        transform: scale(1.3);
-        opacity: 0.7;
-      }
-    }
-
-    .dvs-id {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      letter-spacing: 0.2em;
-      padding: 12px 16px;
-      border: 2px solid var(--brand-neon);
-      border-radius: 18px;
-      display: inline-block;
-    }
-
-    .iframe-shell {
-      border: 2px solid var(--brand-neon);
-      border-radius: 28px;
-      padding: 20px;
-      background: var(--bg-dark);
+    .hero-graphic {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      min-height: 320px;
+      align-items: center;
+      gap: 18px;
     }
 
-    .iframe-header {
+    .hero-icon {
+      width: 180px;
+      height: 180px;
+      border-radius: 40px;
+      border: 2px solid rgba(186, 255, 57, 0.4);
       display: flex;
-      justify-content: space-between;
+      align-items: center;
+      justify-content: center;
+      font-size: 86px;
+      color: var(--brand-neon);
+      box-shadow: 0 0 30px rgba(186, 255, 57, 0.2);
+      background: rgba(10, 10, 10, 0.6);
+    }
+
+    .hero-caption {
+      font-size: 16px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(186, 255, 57, 0.7);
+    }
+
+    .pictogram {
+      font-size: 28px;
+      color: var(--brand-neon);
+      margin-bottom: 12px;
+    }
+
+    .integrity-gauge {
+      position: fixed;
+      top: 28px;
+      right: 36px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      background: rgba(10, 10, 10, 0.7);
+      border: 1px solid rgba(186, 255, 57, 0.4);
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(186, 255, 57, 0.25);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      z-index: 10;
+    }
+
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--brand-neon);
+      box-shadow: 0 0 12px rgba(186, 255, 57, 0.9);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .gauge-title {
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(186, 255, 57, 0.65);
+    }
+
+    .gauge-status {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .gauge-audit {
+      font-size: 11px;
+      color: rgba(186, 255, 57, 0.7);
+    }
+
+    .circuit-wrap {
+      display: grid;
+      place-items: center;
+      margin-top: 32px;
+    }
+
+    .circuit-ring {
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      border: 2px dashed rgba(186, 255, 57, 0.4);
+      position: relative;
+    }
+
+    .circuit-node {
+      position: absolute;
+      width: 120px;
+      text-align: center;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+    }
+
+    .node-top {
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .node-bottom {
+      bottom: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .node-left {
+      top: 50%;
+      left: -28px;
+      transform: translateY(-50%);
+    }
+
+    .node-right {
+      top: 50%;
+      right: -28px;
+      transform: translateY(-50%);
+    }
+
+    .circuit-node span {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: rgba(186, 255, 57, 0.7);
+    }
+
+    .circuit-core {
+      position: absolute;
+      inset: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      height: 160px;
+      border-radius: 32px;
+      border: 2px solid rgba(186, 255, 57, 0.6);
+      display: grid;
+      place-items: center;
+      background: rgba(10, 10, 10, 0.8);
+      box-shadow: 0 0 26px rgba(186, 255, 57, 0.25);
+    }
+
+    .core-icon {
+      font-size: 48px;
+      color: var(--brand-neon);
+      animation: coreSpin 6s linear infinite;
+    }
+
+    .core-label {
       font-size: 12px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
+      margin-top: 8px;
     }
 
-    .pill {
-      border: 2px solid var(--brand-neon);
-      border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 12px;
-      letter-spacing: 0.2em;
+    .terminal {
+      border: 1px solid rgba(186, 255, 57, 0.4);
+      border-radius: 24px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: rgba(186, 255, 57, 0.9);
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+      min-height: 220px;
     }
 
-    .pitch-mode-active h1,
-    .pitch-mode-active h2 {
-      font-size: 12rem;
+    .terminal-line {
+      margin-bottom: 10px;
+      letter-spacing: 0.12em;
     }
 
-    .pitch-mode-active .metric,
-    .pitch-mode-active .metric-small,
-    .pitch-mode-active .neon-metric {
-      text-shadow: 0 0 30px var(--brand-neon);
+    .pulse-ring {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 2px solid rgba(186, 255, 57, 0.6);
+      position: relative;
+      animation: pulseRing 2.6s ease-in-out infinite;
+      box-shadow: 0 0 26px rgba(186, 255, 57, 0.2);
+    }
+
+    .pulse-ring::after {
+      content: '';
+      position: absolute;
+      inset: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(186, 255, 57, 0.4);
     }
 
     .slider {
@@ -215,280 +355,341 @@
       width: 100%;
       accent-color: var(--brand-neon);
     }
+
+    .pitch-mode-active h1,
+    .pitch-mode-active h2 {
+      font-size: 12rem;
+    }
+
+    .pitch-mode-active .glass-card {
+      transform: scale(1.03);
+      border-color: rgba(186, 255, 57, 0.8);
+      box-shadow: 0 0 40px rgba(186, 255, 57, 0.35);
+      background: rgba(5, 5, 5, 0.8);
+    }
+
+    .pitch-mode-active .hero-icon {
+      transform: scale(1.08);
+      box-shadow: 0 0 40px rgba(186, 255, 57, 0.35);
+    }
+
+    .pitch-mode-active .metric,
+    .pitch-mode-active .metric-small {
+      text-shadow: 0 0 24px rgba(186, 255, 57, 0.6);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+
+    @keyframes pulseRing {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+    }
+
+    @keyframes coreSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 960px) {
+      .layout-split {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-graphic {
+        margin-top: 24px;
+      }
+
+      .integrity-gauge {
+        right: 16px;
+        top: 16px;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- SLIDE 1: Genesis -->
+  <div class="integrity-gauge">
+    <span class="pulse-dot"></span>
+    <div>
+      <div class="gauge-title">Live Telemetry</div>
+      <div class="gauge-status">Engine Status: Live &amp; Optimal</div>
+      <div class="gauge-audit">Audited Value: $94,500 AUD</div>
+    </div>
+  </div>
+
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h1>Genesis</h1>
-      <p class="subtitle">From Dojo Pool to HospoGo B2B — the marketplace pivoted into the logistics operating system for hospitality.</p>
-      <div class="grid grid-2">
-        <div class="glass-card">
-          <div class="label">Insight</div>
-          <div class="metric-small">The gap was logistics, not supply.</div>
+    <div class="slide-content layout-split">
+      <div>
+        <div class="label">The Hook</div>
+        <h1>Chaotic Venue → Automated Profit Center</h1>
+        <p class="subtitle">We take a venue in chaos and flip it into a system that runs itself. Simple, fast, and profitable.</p>
+        <div class="grid grid-2">
+          <div class="glass-card">
+            <div class="label">Chaotic Venue</div>
+            <div class="metric-small">Roster gaps. Late payroll. Endless chasing.</div>
+          </div>
+          <div class="glass-card">
+            <div class="label">Automated Profit Center</div>
+            <div class="metric-small">Shifts fill themselves. Payroll locks clean. Revenue climbs.</div>
+          </div>
         </div>
-        <div class="glass-card">
-          <div class="label">Outcome</div>
-          <div class="metric-small">HospoGo becomes the logistics engine for venues.</div>
-        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="hero-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="hero-caption">Instant-On Speed</div>
       </div>
     </div>
     <div class="slide-number">01 / 12</div>
   </section>
 
-  <!-- SLIDE 2: Brisbane 100 Strategy -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
     <div class="slide-content">
-      <h2>Brisbane 100 Strategy</h2>
-      <p class="subtitle">Pilot market engineered for predictable ARR validation with a single Logistics Platform Fee.</p>
-      <div class="grid grid-3">
+      <div class="label">The Walkthrough</div>
+      <h2>Show, Don’t Tell</h2>
+      <p class="subtitle">Four anchors. One story. Every slide is a living system, not a diagram.</p>
+      <div class="grid grid-2">
         <div class="glass-card">
-          <div class="label">Baseline ARR</div>
-          <div class="metric">$178,800</div>
-          <div class="metric-small">100 venues × Logistics Platform Fee × 12</div>
+          <div class="pictogram"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="label">The Digital Bouncer</div>
+          <div class="metric-small">The system checks IDs so you don’t have to.</div>
         </div>
         <div class="glass-card">
-          <div class="label">Brisbane LGA</div>
-          <div class="metric">6,141</div>
-          <div class="metric-small">Hospitality venues in 2024.</div>
+          <div class="pictogram"><i class="fa-solid fa-calculator"></i></div>
+          <div class="label">Unbreakable Payroll</div>
+          <div class="metric-small">Mathematically impossible to pay staff twice.</div>
         </div>
         <div class="glass-card">
-          <div class="label">SME Density</div>
-          <div class="metric">95%</div>
-          <div class="metric-small">Tourism businesses under 20 employees.</div>
+          <div class="pictogram"><i class="fa-solid fa-bolt"></i></div>
+          <div class="label">Instant-On Speed</div>
+          <div class="metric-small">No loading screens, just results.</div>
+        </div>
+        <div class="glass-card">
+          <div class="pictogram"><i class="fa-solid fa-microchip"></i></div>
+          <div class="label">The Engine</div>
+          <div class="metric-small">Smart Fill runs the floor in real time.</div>
         </div>
       </div>
     </div>
     <div class="slide-number">02 / 12</div>
   </section>
 
-  <!-- SLIDE 3: Secret Sauce -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
     <div class="slide-content">
-      <h2>Secret Sauce</h2>
-      <p class="subtitle">Suburban Loyalty Index + Xero Mutex logic form the operational moat.</p>
-      <div class="grid grid-2">
-        <div class="glass-card">
-          <div class="label">Stability Pulse</div>
-          <div class="metric-small">Neighborhood stability drives 92–98 loyalty scores.</div>
-          <div style="margin-top: 20px; display: flex; align-items: center; gap: 16px;">
-            <div class="stability-dot"></div>
-            <div class="metric-small">4.6% higher retention vs CBD.</div>
+      <div class="label">The Trinity</div>
+      <h2>HOSPOGO CORE</h2>
+      <p class="subtitle">Three circuits feed one engine. It never sleeps. It just runs.</p>
+      <div class="circuit-wrap">
+        <div class="circuit-ring">
+          <div class="circuit-node node-top">
+            Vault
+            <span>Digital Bouncer</span>
           </div>
-        </div>
-        <div class="glass-card">
-          <div class="label">Xero Mutex</div>
-          <div class="metric-small">Exactly-once payroll sync with SHA-256 reconciliation.</div>
-          <div class="metric-small" style="margin-top: 12px;">30s advisory lock → zero double-pay risk.</div>
+          <div class="circuit-node node-bottom">
+            Payroll
+            <span>Unbreakable Ledger</span>
+          </div>
+          <div class="circuit-node node-left">
+            Speed
+            <span>Instant-On</span>
+          </div>
+          <div class="circuit-node node-right">
+            Smart Fill
+            <span>Live Engine</span>
+          </div>
+          <div class="circuit-core">
+            <div>
+              <div class="core-icon"><i class="fa-solid fa-microchip"></i></div>
+              <div class="core-label">HOSPOGO CORE</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
     <div class="slide-number">03 / 12</div>
   </section>
 
-  <!-- SLIDE 4: App Walkthrough -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h2>App Walkthrough</h2>
-      <p class="subtitle">Logistics Engine command view (live UI container).</p>
-      <div class="iframe-shell">
-        <div class="iframe-header">
-          <span>Logistics Engine</span>
-          <span>Calendar Ops</span>
+    <div class="slide-content layout-split">
+      <div>
+        <div class="label">The Proof</div>
+        <h2>The Receipt of Truth</h2>
+        <p class="subtitle">Live handshake. Live code. No smoke. This is the Xero trace in black and white.</p>
+        <div class="terminal">
+          <div class="terminal-line">[HANDSHAKE] DVS_AUTH → VERIFIED</div>
+          <div class="terminal-line">[XERO_SYNC] LOCK_ID: MUTEX-3F9A1</div>
+          <div class="terminal-line">[LEDGER] SHA256: 8f2d-4c9b-9a1c-5d0f</div>
+          <div class="terminal-line">[PAYROLL] EXACTLY-ONCE: TRUE</div>
+          <div class="terminal-line">[AUDIT] TRACE_ID: ATO-2026-02-06</div>
+          <div class="terminal-line">[STATUS] RECEIPT: VALID</div>
         </div>
-        <div class="grid grid-2">
-          <div class="glass-card">
-            <div class="label">Smart Fill</div>
-            <div class="metric-small">Auto-populates shifts using loyalty data.</div>
-          </div>
-          <div class="glass-card">
-            <div class="label">Live Sync</div>
-            <div class="metric-small">5s dopamine refresh loop during briefing.</div>
-          </div>
-        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="hero-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="hero-caption">Live Handshake</div>
       </div>
     </div>
     <div class="slide-number">04 / 12</div>
   </section>
 
-  <!-- SLIDE 5: App Walkthrough -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h2>App Walkthrough</h2>
-      <p class="subtitle">Operational revenue and mutex controls (live UI container).</p>
-      <div class="iframe-shell">
-        <div class="iframe-header">
-          <span>Revenue Engine</span>
-          <span>Mutex Integrity</span>
+    <div class="slide-content layout-split">
+      <div>
+        <div class="label">The Vault</div>
+        <h2>The Digital Bouncer</h2>
+        <p class="subtitle">The system checks IDs automatically. No clipboards. No guesswork.</p>
+        <div class="glass-card">
+          <div class="metric-small">Government-grade checks, always on, always recorded.</div>
         </div>
-        <div class="grid grid-2">
-          <div class="glass-card">
-            <div class="label">Projected ARR</div>
-            <div class="metric">$1.5M</div>
-            <div class="metric-small">Real-time pipeline metric.</div>
-          </div>
-          <div class="glass-card">
-            <div class="label">Xero Sync</div>
-            <div class="metric-small">Atomic ledger updates with audit trail.</div>
-          </div>
-        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="hero-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="hero-caption">Vault Security</div>
       </div>
     </div>
     <div class="slide-number">05 / 12</div>
   </section>
 
-  <!-- SLIDE 6: Vault -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h2>Vault Verification</h2>
-      <p class="subtitle">Government-grade DVS verification with immutable audit ID.</p>
-      <div class="iframe-shell">
-        <div class="iframe-header">
-          <span>Compliance Vault</span>
-          <span>DVS Handshake</span>
-        </div>
+    <div class="slide-content layout-split">
+      <div>
+        <div class="label">Payroll</div>
+        <h2>Unbreakable Payroll</h2>
+        <p class="subtitle">It is mathematically impossible to pay staff twice.</p>
         <div class="glass-card">
-          <div class="label">DVS-ID</div>
-          <div class="dvs-id">DVS-RSA-K8H9J2-ABC123</div>
-          <div class="metric-small" style="margin-top: 16px;">Cryptographic proof of compliance.</div>
+          <div class="metric-small">Every shift is locked, reconciled, and auditable.</div>
         </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="hero-icon"><i class="fa-solid fa-calculator"></i></div>
+        <div class="hero-caption">Exact Ledger</div>
       </div>
     </div>
     <div class="slide-number">06 / 12</div>
   </section>
 
-  <!-- SLIDE 7: Financials -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h2>Financials</h2>
-      <p class="subtitle">Live ARR metrics and Reliability Crown signal strength.</p>
-      <div class="grid grid-2">
+    <div class="slide-content layout-split">
+      <div>
+        <div class="label">Speed</div>
+        <h2>Instant-On Speed</h2>
+        <p class="subtitle">No loading screens. No friction. Just results on demand.</p>
         <div class="glass-card">
-          <div class="label">Committed ARR</div>
-          <div class="metric neon-metric">$178,800</div>
-          <div class="metric-small">Active + Onboarding venues.</div>
+          <div class="metric-small">The venue sees updates in seconds, not minutes.</div>
         </div>
-        <div class="glass-card">
-          <div class="label">Reliability Crown</div>
-          <div class="metric-small">0 strikes + 10+ shifts = elite ranking.</div>
-        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="hero-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="hero-caption">Instant-On</div>
       </div>
     </div>
     <div class="slide-number">07 / 12</div>
   </section>
 
-  <!-- SLIDE 8: App Walkthrough -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h2>Self-Healing Intelligence</h2>
-      <p class="subtitle">Brain Monitor logs every gap and patches the system live.</p>
-      <div class="iframe-shell">
-        <div class="iframe-header">
-          <span>CTO Brain Monitor</span>
-          <span>Self-Healing Loop</span>
+    <div class="slide-content layout-split">
+      <div>
+        <div class="label">Smart Fill</div>
+        <h2>The Engine Is Idling</h2>
+        <p class="subtitle">Smart Fill keeps the floor staffed without a single phone call.</p>
+        <div class="glass-card">
+          <div class="metric-small">It predicts, fills, and confirms in the background.</div>
         </div>
-        <div class="grid grid-2">
-          <div class="glass-card">
-            <div class="label">Gap Logged</div>
-            <div class="metric-small">Unknown feature requests captured instantly.</div>
-          </div>
-          <div class="glass-card">
-            <div class="label">Manual Patch</div>
-            <div class="metric-small">CTO marks resolved → system learns.</div>
-          </div>
-        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="hero-icon"><i class="fa-solid fa-microchip"></i></div>
+        <div class="hero-caption">Core Engine</div>
       </div>
     </div>
     <div class="slide-number">08 / 12</div>
   </section>
 
-  <!-- SLIDE 9: Network Resilience -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
-    <div class="slide-content">
-      <h2>Network Resilience</h2>
-      <p class="subtitle">Session recovery, offline empathy, and continuity for boardroom demos.</p>
-      <div class="grid grid-3">
+    <div class="slide-content layout-split">
+      <div>
+        <div class="label">Suburban Loyalty</div>
+        <h2>The Pulse</h2>
+        <p class="subtitle">Suburbs stay loyal. The data proves it every day.</p>
         <div class="glass-card">
-          <div class="label">Hydration Gate</div>
-          <div class="metric-small">Blocks auth storms and 401 loops.</div>
+          <div class="metric-small">Retention climbs because the engine targets stable demand.</div>
         </div>
-        <div class="glass-card">
-          <div class="label">Local Mode</div>
-          <div class="metric-small">Engine holds state when Wi-Fi flickers.</div>
-        </div>
-        <div class="glass-card">
-          <div class="label">Session Heartbeat</div>
-          <div class="metric-small">20-minute token refresh during briefing.</div>
-        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="pulse-ring"></div>
+        <div class="hero-caption">Loyalty Pulse</div>
       </div>
     </div>
     <div class="slide-number">09 / 12</div>
   </section>
 
-  <!-- SLIDE 10: Scale Flywheel -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
     <div class="slide-content">
-      <h2>Scale Flywheel</h2>
-      <p class="subtitle">Brisbane → National replication with compounding data advantage.</p>
-      <div class="grid grid-2">
+      <div class="label">Live Telemetry</div>
+      <h2>Everything is Alive</h2>
+      <p class="subtitle">What you are seeing is live, audited code in motion. Not a mock-up.</p>
+      <div class="grid grid-3">
         <div class="glass-card">
-          <div class="label">Pilot Playbook</div>
-          <div class="metric-small">Repeatable go-to-market in every LGA.</div>
+          <div class="label">System Status</div>
+          <div class="metric-small">Optimal. Always watching. Always reporting.</div>
         </div>
         <div class="glass-card">
-          <div class="label">Australia TAM</div>
-          <div class="metric">$168,072,000</div>
-          <div class="metric-small">94,000 core venues × Logistics Platform Fee × 12.</div>
+          <div class="label">Audit Trail</div>
+          <div class="metric-small">Every action leaves a trace you can verify.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Trust Layer</div>
+          <div class="metric-small">Security and compliance stay locked.</div>
         </div>
       </div>
     </div>
     <div class="slide-number">10 / 12</div>
   </section>
 
-  <!-- SLIDE 11: Pipeline Forecaster -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
     <div class="slide-content">
-      <h2>Pipeline Forecaster</h2>
-      <p class="subtitle">Move the saturation slider (10% → 50%) and watch ARR jump in real time.</p>
-      <div class="glass-card">
-        <div class="label">Brisbane Pilot Saturation</div>
-        <div class="metric" id="saturation-output">10%</div>
-        <input class="slider" type="range" id="saturation-slider" min="10" max="50" step="5" value="10" />
-        <div class="metric neon-metric" id="arr-output">$178,800</div>
-        <div class="metric-small">100 venues × Logistics Platform Fee × 12</div>
+      <div class="label">The Close</div>
+      <h2>Revenue That Compounds</h2>
+      <p class="subtitle">The platform converts chaos into predictable, repeatable ARR.</p>
+      <div class="grid grid-2">
+        <div class="glass-card">
+          <div class="label">Audited Value</div>
+          <div class="metric">$94,500</div>
+          <div class="metric-small">Proof of execution in real engineering hours.</div>
+        </div>
+        <div class="glass-card">
+          <div class="label">Platform Fee</div>
+          <div class="metric">$149</div>
+          <div class="metric-small">Monthly per venue. Clean and repeatable.</div>
+        </div>
       </div>
     </div>
     <div class="slide-number">11 / 12</div>
   </section>
 
-  <!-- SLIDE 12: Valuation -->
   <section class="slide">
     <div class="logo">HOSPO<span>GO</span></div>
     <div class="slide-content">
-      <h2>Valuation Sync</h2>
-      <p class="subtitle">Audited R&D value anchors the $10M valuation with proof-of-execution.</p>
-      <div class="grid grid-2">
-        <div class="glass-card">
-          <div class="label">Audited R&D Value</div>
-          <div class="metric">$94,500</div>
-          <div class="metric-small">630 hours audited engineering output.</div>
-        </div>
-        <div class="glass-card">
-          <div class="label">Close</div>
-          <div class="metric-small">The logistics engine is live. The boardroom is ready.</div>
-        </div>
+      <div class="label">Roadmap</div>
+      <h2>$1.5M ARR Visual Slider</h2>
+      <p class="subtitle">Move the bar. Watch the engine scale from pilot to $1.5M ARR.</p>
+      <div class="glass-card">
+        <div class="label">ARR Ramp</div>
+        <div class="metric" id="saturation-output">25%</div>
+        <input class="slider" type="range" id="saturation-slider" min="10" max="100" step="5" value="25" title="ARR Ramp Slider">
+        <div class="metric" id="arr-output">$375,000</div>
+        <div class="metric-small">Full potential at 100% = $1,500,000 ARR</div>
       </div>
     </div>
     <div class="slide-number">12 / 12</div>
@@ -501,7 +702,7 @@
 
     const updateARR = () => {
       const saturation = Number(slider.value);
-      const arr = Math.round((saturation / 100) * 100 * 149 * 12);
+      const arr = Math.round((saturation / 100) * 1500000);
       saturationOutput.textContent = `${saturation}%`;
       arrOutput.textContent = `$${arr.toLocaleString()}`;
     };

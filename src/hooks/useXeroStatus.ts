@@ -13,6 +13,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { QUERY_KEYS, QUERY_STALE_TIMES } from '@/lib/query-keys';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface XeroStatus {
   connected: boolean;
@@ -74,6 +75,9 @@ const MOCK_RECENT_SYNC_LOGS: XeroSyncLog[] = [
  * Hook to get Xero connection status and payroll readiness
  */
 export function useXeroStatus() {
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
+  const canFetchStatus = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.XERO_STATUS],
     queryFn: async (): Promise<XeroStatus> => {
@@ -111,6 +115,7 @@ export function useXeroStatus() {
         };
       }
     },
+    enabled: canFetchStatus,
     staleTime: QUERY_STALE_TIMES.INTEGRATION_STATUS,
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -130,6 +135,9 @@ export function useXeroStatus() {
  * Hook to get recent Xero sync logs for activity feed
  */
 export function useXeroSyncLogs(limit: number = 3) {
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
+  const canFetchLogs = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   const { data, isLoading } = useQuery({
     queryKey: ['xero-sync-logs-recent', limit],
     queryFn: async (): Promise<XeroSyncLog[]> => {
@@ -142,6 +150,7 @@ export function useXeroSyncLogs(limit: number = 3) {
         return MOCK_RECENT_SYNC_LOGS;
       }
     },
+    enabled: canFetchLogs,
     staleTime: 60 * 1000, // 1 minute
   });
 

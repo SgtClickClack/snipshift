@@ -5,10 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { IntegrationErrorBoundary } from '@/components/common/IntegrationErrorBoundary';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 import { Link2, Loader2, Unlink } from 'lucide-react';
 
 export default function XeroIntegrationCard() {
   const { toast } = useToast();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [status, setStatus] = useState<{ connected: boolean; tenantName?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +18,8 @@ export default function XeroIntegrationCard() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   useEffect(() => {
+    const canFetchStatus = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+    if (!canFetchStatus) return;
     let cancelled = false;
     async function fetchStatus() {
       try {
@@ -30,7 +34,7 @@ export default function XeroIntegrationCard() {
     }
     fetchStatus();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.id, isSystemReady, hasFirebaseUser, isAuthLoading]);
 
   useEffect(() => {
     const xeroParam = searchParams.get('xero');

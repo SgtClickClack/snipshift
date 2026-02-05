@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,11 @@ import { useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 
 export default function PayoutSettings() {
-  const { user } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const canFetchStatus = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
 
   // Check for onboarding completion callback
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function PayoutSettings() {
       const res = await apiRequest('GET', '/api/stripe-connect/account/status');
       return res.json();
     },
-    enabled: !!user?.id,
+    enabled: canFetchStatus,
   });
 
   const createAccountMutation = useMutation({

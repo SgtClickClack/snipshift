@@ -215,7 +215,7 @@ export default function ProfessionalDashboard() {
 }
 
 function ProfessionalDashboardContent() {
-  const { user } = useAuth();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -664,6 +664,8 @@ function ProfessionalDashboardContent() {
     }
   };
 
+  const canFetchDashboard = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   // Only fetch dashboard stats when on overview
   const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -671,7 +673,7 @@ function ProfessionalDashboardContent() {
       const res = await apiRequest("GET", "/api/analytics/dashboard");
       return res.json();
     },
-    enabled: !!user && activeView === 'overview',
+    enabled: canFetchDashboard && activeView === 'overview',
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -682,7 +684,7 @@ function ProfessionalDashboardContent() {
       const res = await apiRequest("GET", "/api/shifts/messages/unread-count");
       return res.json();
     },
-    enabled: !!user,
+    enabled: canFetchDashboard,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 

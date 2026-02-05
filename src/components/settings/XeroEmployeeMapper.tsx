@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { IntegrationErrorBoundary } from '@/components/common/IntegrationErrorBoundary';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 import { Users, Loader2, Save, Search, Filter } from 'lucide-react';
 
 interface XeroEmployee {
@@ -35,6 +36,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function XeroEmployeeMapper() {
   const { toast } = useToast();
+  const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
   const [xeroConnected, setXeroConnected] = useState(false);
   const [employees, setEmployees] = useState<XeroEmployee[]>([]);
   const [staff, setStaff] = useState<HospoGoStaff[]>([]);
@@ -48,8 +50,10 @@ export default function XeroEmployeeMapper() {
   const [showUnmappedOnly, setShowUnmappedOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const canFetchStatus = !!user?.id && isSystemReady && hasFirebaseUser && !isAuthLoading;
+
   const fetchData = useCallback(async () => {
-    if (!xeroConnected) return;
+    if (!xeroConnected || !canFetchStatus) return;
     setIsLoading(true);
     try {
       const [empRes, staffRes] = await Promise.all([
@@ -75,16 +79,17 @@ export default function XeroEmployeeMapper() {
       setIsLoading(false);
       setHasLoaded(true);
     }
-  }, [xeroConnected, toast]);
+  }, [xeroConnected, canFetchStatus, toast]);
 
   useEffect(() => {
+    if (!canFetchStatus) return;
     let cancelled = false;
     apiRequest('GET', '/api/integrations/xero/status')
       .then((r) => r.json())
       .then((d) => { if (!cancelled) setXeroConnected(d.connected === true); })
       .catch(() => { if (!cancelled) setXeroConnected(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [canFetchStatus]);
 
   useEffect(() => {
     fetchData();
