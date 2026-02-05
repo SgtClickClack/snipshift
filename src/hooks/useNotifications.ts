@@ -19,11 +19,13 @@ function transformNotification(apiNotif: APINotification): any {
 }
 
 export function useNotifications() {
-  const { user } = useAuth();
+  const { user, isSystemReady } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Fetch notifications from API
+  // PERF FIX: Wait for isSystemReady (Firebase token + user profile) before API calls
+  // This prevents 401 errors when user is restored from sessionStorage cache before auth completes
   const { data: apiNotifications = [], isLoading } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
@@ -36,7 +38,7 @@ export function useNotifications() {
         return [];
       }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && isSystemReady,
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: false, // Don't retry on error
     refetchOnWindowFocus: false, // Don't refetch on window focus to avoid unnecessary requests

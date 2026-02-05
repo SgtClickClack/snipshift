@@ -40,7 +40,7 @@ async function prefetchConversations(): Promise<unknown> {
 }
 
 export default function Navbar() {
-  const { user, logout, hasUser, isLoading } = useAuth();
+  const { user, logout, hasUser, isLoading, isSystemReady } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const verification = useVerificationStatus({ enableRedirect: false, protectedPaths: [] });
@@ -72,10 +72,12 @@ export default function Navbar() {
   }, [isPitchMode]);
   
   // Fetch unread message count
+  // PERF FIX: Wait for isSystemReady (Firebase token + user profile) before API calls
+  // This prevents 401 errors when user is restored from sessionStorage cache before auth completes
   const { data: unreadData } = useQuery({
     queryKey: ['/api/conversations/unread-count'],
     queryFn: fetchUnreadCount,
-    enabled: !!user,
+    enabled: !!user && isSystemReady,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
