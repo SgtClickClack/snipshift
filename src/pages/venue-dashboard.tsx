@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { isBusinessRole } from "@/lib/roles";
 import { useXeroStatus, useXeroSyncLogs } from "@/hooks/useXeroStatus";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle, AlertTriangle, ArrowRight, ShieldCheck, Settings } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle, AlertTriangle, ArrowRight, ShieldCheck, Settings, Brain } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -1993,6 +1993,26 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* CEO SECRET DOOR: ARCHITECT PORTAL - Only visible to julian.g.roberts@gmail.com */}
+      {/* Floating action button to access CTO Dashboard directly from Logistics Engine */}
+      {user?.email?.toLowerCase() === 'julian.g.roberts@gmail.com' && (
+        <button
+          onClick={() => navigate('/admin/cto-dashboard')}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full 
+                     bg-zinc-950/90 backdrop-blur-xl border-2 border-[#CCFF00]/60
+                     shadow-[0_0_30px_rgba(204,255,0,0.4),_inset_0_0_20px_rgba(204,255,0,0.1)]
+                     hover:shadow-[0_0_40px_rgba(204,255,0,0.6),_inset_0_0_30px_rgba(204,255,0,0.15)]
+                     hover:scale-105 transition-all duration-300 cursor-pointer group"
+          style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}
+          data-testid="architect-portal-button"
+        >
+          <Brain className="h-5 w-5 text-[#CCFF00] group-hover:animate-pulse drop-shadow-[0_0_8px_rgba(204,255,0,0.8)]" />
+          <span className="text-[#CCFF00] text-sm tracking-wider uppercase drop-shadow-[0_0_4px_rgba(204,255,0,0.6)]">
+            ARCHITECT PORTAL
+          </span>
+        </button>
+      )}
     </div>
   );
 }

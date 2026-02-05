@@ -156,7 +156,65 @@ const AUDIT_HISTORY = [
 // ARR Milestone target for Pilot Revenue Progress
 const ARR_MILESTONE_TARGET = 1_500_000; // $1.5M ARR milestone
 
+/**
+ * STRICT HYDRATION SHIELD - Loading State Component
+ * 
+ * Displayed while Auth Handshake is in progress.
+ * Prevents child components from mounting until authentication is 100% verified.
+ */
+function CTODashboardLoadingState() {
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <Card className="max-w-md w-full bg-black/40 backdrop-blur-xl border border-[#BAFF39]/30 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+        <CardContent className="pt-6 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#BAFF39]/20 flex items-center justify-center animate-pulse">
+            <Brain className="h-8 w-8 text-[#BAFF39]" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Establishing Secure Connection</h2>
+          <p className="text-zinc-400 text-sm">
+            Verifying authentication handshake...
+          </p>
+          <div className="mt-4 flex justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-[#BAFF39]" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * STRICT HYDRATION SHIELD - Wrapper Component
+ * 
+ * This wrapper gates the inner dashboard, ensuring ALL hooks in the inner component
+ * are only initialized AFTER the Auth Handshake is 100% complete.
+ * 
+ * Pattern: The outer component checks auth state and renders a loading state if needed.
+ * The inner component contains all the hooks and business logic.
+ */
 export default function CTODashboard() {
+  const { isLoading: isAuthLoading, isSystemReady } = useAuth();
+  
+  // ============================================================================
+  // STRICT HYDRATION SHIELD - LAYOUT LEVEL GATE
+  // Block ALL component mounting until Auth Handshake is 100% verified.
+  // This prevents child components from initializing their fetch hooks.
+  // ============================================================================
+  if (!isSystemReady || isAuthLoading) {
+    return <CTODashboardLoadingState />;
+  }
+  
+  // Auth is verified - render the full dashboard
+  return <CTODashboardInner />;
+}
+
+/**
+ * Inner Dashboard Component
+ * 
+ * This component is ONLY rendered after isSystemReady === true.
+ * All hooks are safely initialized because auth is guaranteed complete.
+ */
+function CTODashboardInner() {
   const { user, isLoading: isAuthLoading, isSystemReady } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

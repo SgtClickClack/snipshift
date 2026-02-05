@@ -5,9 +5,10 @@ import { auth } from '@/lib/firebase';
 import { browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { cleanupPushNotifications } from '@/lib/push-notifications';
-import { prefetchAuthData, queryClient, reset401Backoff } from '@/lib/queryClient';
+import { prefetchAuthData, queryClient, reset401Backoff, startAuthHandshake, completeAuthHandshake } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { safeGetItem, safeSetItem, safeRemoveItem, isLocalStorageAvailable } from '@/lib/safe-storage';
+import { isFounderEmail } from '@/lib/roles';
 
 export interface User {
   id?: string;
@@ -238,7 +239,65 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   // PERFORMANCE: isSystemReady = Firebase ready + user profile resolved + venue check done
   // TAB RECOVERY: If cached, start ready immediately
-  const [isSystemReady, setIsSystemReady] = useState(!!cachedSession.user);
+  const [isSystemReadyRaw, setIsSystemReadyRaw] = useState(!!cachedSession.user);
+  
+  // ============================================================================
+  // DEBOUNCE AUTH STATE: 200ms debounce on isSystemReady transitions
+  // Purpose: Prevent brief "flickers" in Firebase connection status from triggering
+  // full component re-render loops. This ensures stable UI during auth handshake.
+  // ============================================================================
+  const [isSystemReady, setIsSystemReadyDebounced] = useState(!!cachedSession.user);
+  const systemReadyDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const SYSTEM_READY_DEBOUNCE_MS = 200;
+  
+  // Debounced setter for isSystemReady
+  // - Immediately sets to `false` (block quickly when auth drops)
+  // - Debounces setting to `true` by 200ms (wait for stability before unlocking)
+  // - Also signals API interceptor stall state via queryClient
+  const setIsSystemReady = useCallback((value: boolean) => {
+    setIsSystemReadyRaw(value);
+    
+    // Clear any pending debounce
+    if (systemReadyDebounceRef.current) {
+      clearTimeout(systemReadyDebounceRef.current);
+      systemReadyDebounceRef.current = null;
+    }
+    
+    if (value === false) {
+      // Immediately set to false - block quickly when auth state becomes uncertain
+      setIsSystemReadyDebounced(false);
+      // Signal API interceptor to start stalling requests
+      startAuthHandshake();
+    } else {
+      // Debounce setting to true - wait 200ms for stability before unlocking
+      systemReadyDebounceRef.current = setTimeout(() => {
+        setIsSystemReadyDebounced(true);
+        // Signal API interceptor that handshake is complete - release stalled requests
+        completeAuthHandshake();
+        systemReadyDebounceRef.current = null;
+      }, SYSTEM_READY_DEBOUNCE_MS);
+    }
+  }, []);
+  
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (systemReadyDebounceRef.current) {
+        clearTimeout(systemReadyDebounceRef.current);
+      }
+    };
+  }, []);
+  
+  // Signal API interceptor on initial mount with cached session
+  // If we have a cached user, the system is ready immediately
+  useEffect(() => {
+    if (cachedSession.user) {
+      // We have a cached session - signal handshake complete immediately
+      completeAuthHandshake();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only on mount
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -557,6 +616,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // NEUTRAL ZONE EARLY RETURN: Investor portal is a "no-redirect" zone
         const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
         if (currentPath.startsWith('/investorportal')) {
+          setIsVenueLoaded(true);
+          setRedirecting(false);
+          lastHydratedUidRef.current = firebaseUser.uid;
+          isHydratingRef.current = false;
+          return;
+        }
+        
+        // CEO ADMIN ACCESS: Founders can access /admin/* routes regardless of their database role
+        // This prevents redirect loop where CEO with 'business' role gets bounced to /venue/dashboard
+        // Must be checked BEFORE the targetPath redirect logic fires
+        const isFounder = isFounderEmail(apiUser.email);
+        if (isFounder && currentPath.startsWith('/admin')) {
           setIsVenueLoaded(true);
           setRedirecting(false);
           lastHydratedUidRef.current = firebaseUser.uid;

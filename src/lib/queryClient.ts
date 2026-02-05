@@ -5,6 +5,105 @@ import { logger } from "@/lib/logger";
 import { QUERY_KEYS } from "@/lib/query-keys";
 
 /**
+ * ============================================================================
+ * AUTH HANDSHAKE STALL - Request Interception Layer
+ * ============================================================================
+ * 
+ * Purpose: STALL requests (return a pending promise) instead of returning 401
+ * if the Auth Handshake is currently in progress.
+ * 
+ * This prevents components from receiving 401 errors during the brief window
+ * when Firebase is establishing the session but hasn't yet provided a valid token.
+ */
+
+interface HandshakeState {
+  /** True when auth handshake is in progress */
+  isInProgress: boolean;
+  /** Promise that resolves when handshake completes */
+  completionPromise: Promise<void> | null;
+  /** Function to resolve the completion promise */
+  resolveCompletion: (() => void) | null;
+  /** Timeout for maximum stall duration (prevent infinite waits) */
+  stallTimeout: NodeJS.Timeout | null;
+}
+
+const AUTH_HANDSHAKE_STATE: HandshakeState = {
+  isInProgress: true, // Start as true - assume handshake in progress on load
+  completionPromise: null,
+  resolveCompletion: null,
+  stallTimeout: null,
+};
+
+/** Maximum time to stall a request waiting for auth handshake (ms) */
+const MAX_HANDSHAKE_STALL_MS = 5000;
+
+/**
+ * Signal that auth handshake has started.
+ * Subsequent API requests will be stalled until completeAuthHandshake is called.
+ */
+export function startAuthHandshake(): void {
+  if (AUTH_HANDSHAKE_STATE.isInProgress) return; // Already in progress
+  
+  AUTH_HANDSHAKE_STATE.isInProgress = true;
+  AUTH_HANDSHAKE_STATE.completionPromise = new Promise((resolve) => {
+    AUTH_HANDSHAKE_STATE.resolveCompletion = resolve;
+  });
+  
+  logger.info('queryClient', 'Auth handshake started - API requests will be stalled');
+  
+  // Safety timeout to prevent infinite stalls
+  AUTH_HANDSHAKE_STATE.stallTimeout = setTimeout(() => {
+    logger.warn('queryClient', `Auth handshake stall timeout (${MAX_HANDSHAKE_STALL_MS}ms) - releasing requests`);
+    completeAuthHandshake();
+  }, MAX_HANDSHAKE_STALL_MS);
+}
+
+/**
+ * Signal that auth handshake has completed.
+ * Any stalled requests will now proceed.
+ */
+export function completeAuthHandshake(): void {
+  if (!AUTH_HANDSHAKE_STATE.isInProgress) return; // Already completed
+  
+  AUTH_HANDSHAKE_STATE.isInProgress = false;
+  
+  // Clear safety timeout
+  if (AUTH_HANDSHAKE_STATE.stallTimeout) {
+    clearTimeout(AUTH_HANDSHAKE_STATE.stallTimeout);
+    AUTH_HANDSHAKE_STATE.stallTimeout = null;
+  }
+  
+  // Resolve any waiting requests
+  if (AUTH_HANDSHAKE_STATE.resolveCompletion) {
+    AUTH_HANDSHAKE_STATE.resolveCompletion();
+    AUTH_HANDSHAKE_STATE.resolveCompletion = null;
+  }
+  AUTH_HANDSHAKE_STATE.completionPromise = null;
+  
+  logger.info('queryClient', 'Auth handshake completed - API requests released');
+}
+
+/**
+ * Check if auth handshake is in progress
+ */
+export function isAuthHandshakeInProgress(): boolean {
+  return AUTH_HANDSHAKE_STATE.isInProgress;
+}
+
+/**
+ * Wait for auth handshake to complete (if in progress).
+ * Returns immediately if handshake is already complete.
+ */
+async function waitForAuthHandshake(): Promise<void> {
+  if (!AUTH_HANDSHAKE_STATE.isInProgress) return;
+  if (AUTH_HANDSHAKE_STATE.completionPromise) {
+    logger.debug('queryClient', 'Request stalled - waiting for auth handshake');
+    await AUTH_HANDSHAKE_STATE.completionPromise;
+    logger.debug('queryClient', 'Request released - auth handshake complete');
+  }
+}
+
+/**
  * AUTH REHYDRATION FIX: 401 Backoff Circuit Breaker
  * 
  * Prevents recursive "nuts" behavior when 401s are received during the initial
@@ -163,6 +262,21 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // ============================================================================
+  // AXIOS INTERCEPTOR STALL: Wait for auth handshake before making request
+  // This prevents 401 errors during the brief Firebase session establishment window
+  // ============================================================================
+  
+  // Skip stall for auth-related endpoints that are PART of the handshake
+  const isAuthEndpoint = url.includes('/api/me') || 
+                         url.includes('/api/bootstrap') || 
+                         url.includes('/api/auth/');
+  
+  if (!isAuthEndpoint && isAuthHandshakeInProgress()) {
+    logger.debug('apiRequest', `Stalling request to ${url} - auth handshake in progress`);
+    await waitForAuthHandshake();
+  }
+  
   const isSafe = method.toUpperCase() === 'GET' || method.toUpperCase() === 'HEAD' || method.toUpperCase() === 'OPTIONS';
   const fullUrl = url.startsWith('http') ? url : `${getApiBase()}${url.startsWith('/') ? '' : '/'}${url}`;
 
@@ -214,6 +328,20 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // ============================================================================
+    // AXIOS INTERCEPTOR STALL: Wait for auth handshake before making request
+    // This prevents 401 errors during the brief Firebase session establishment window
+    // ============================================================================
+    const url = queryKey.join("/") as string;
+    const isAuthEndpoint = url.includes('/api/me') || 
+                           url.includes('/api/bootstrap') || 
+                           url.includes('/api/auth/');
+    
+    if (!isAuthEndpoint && isAuthHandshakeInProgress()) {
+      logger.debug('getQueryFn', `Stalling query to ${url} - auth handshake in progress`);
+      await waitForAuthHandshake();
+    }
+    
     // AUTH REHYDRATION FIX: Skip request if in 401 backoff mode
     if (isIn401Backoff()) {
       logger.warn("getQueryFn", "Request suppressed due to 401 backoff");
