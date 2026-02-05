@@ -14,6 +14,37 @@ const isDev = import.meta.env.DEV;
 const debugEnabled =
   isDev || String(import.meta.env.VITE_DEBUG_LOGS).toLowerCase() === 'true';
 
+/**
+ * AUTH REHYDRATION FIX: Handshake 401 paths to filter from console noise
+ * These endpoints naturally return 401 during the initial Firebase handshake phase.
+ */
+const HANDSHAKE_401_PATTERNS = [
+  '/api/me',
+  '/api/bootstrap',
+  '/api/notifications',
+  '/api/conversations/unread-count',
+  'Auth backoff',
+  'handshake 401',
+  'isHandshake401',
+];
+
+/**
+ * Check if the log message contains a handshake 401 pattern that should be filtered
+ */
+function isHandshake401Log(args: LogArgs): boolean {
+  const message = args.map(arg => 
+    typeof arg === 'string' ? arg : 
+    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+  ).join(' ');
+  
+  // Only filter if it's a 401 AND matches a handshake pattern
+  if (!message.includes('401')) return false;
+  
+  return HANDSHAKE_401_PATTERNS.some(pattern => 
+    message.toLowerCase().includes(pattern.toLowerCase())
+  );
+}
+
 export const logger = {
   debug(scope: string | undefined, ...args: LogArgs) {
     if (!debugEnabled) return;
@@ -27,9 +58,20 @@ export const logger = {
   warn(scope: string | undefined, ...args: LogArgs) {
     // Keep warn logs dev-only by default to avoid production noise.
     if (!isDev) return;
+    // AUTH REHYDRATION FIX: Filter handshake 401 warnings in production
+    if (isHandshake401Log(args)) return;
     console.warn(getPrefix('WARN', scope), ...args);
   },
   error(scope: string | undefined, ...args: LogArgs) {
+    // AUTH REHYDRATION FIX: Filter handshake 401 errors to reduce noise during deployment
+    // These are expected during the initial Firebase handshake phase
+    if (isHandshake401Log(args)) {
+      // In dev mode, log as debug instead of filtering completely
+      if (isDev && debugEnabled) {
+        console.debug(getPrefix('DEBUG', scope), '[Filtered handshake 401]', ...args);
+      }
+      return;
+    }
     // Errors should surface in all environments.
     console.error(getPrefix('ERROR', scope), ...args);
   },

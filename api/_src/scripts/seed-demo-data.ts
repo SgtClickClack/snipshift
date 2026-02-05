@@ -2,7 +2,7 @@
  * Demo Data Seeding Script - Executive Profiles & Flagship Venue
  * 
  * Seeds the database with:
- * - Rick Cavanagh (CEO) admin profile
+ * - Admin profile
  * - Brisbane Foundry flagship venue association
  * 
  * Usage:
@@ -20,12 +20,12 @@ if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
 }
 
 // Executive profile data
-const RICK_CEO_PROFILE = {
-  email: 'rick@hospogo.com',
-  name: 'Rick Cavanagh (CEO)',
+const ADMIN_PROFILE = {
+  email: 'julian.g.roberts@gmail.com',
+  name: 'Julian Roberts (Admin)',
   role: 'admin',
   currentRole: 'admin',
-  firebaseUid: 'rick-ceo-demo-uid', // Placeholder - will be overwritten on first Firebase auth
+  firebaseUid: 'admin-demo-uid', // Placeholder - will be overwritten on first Firebase auth
   avatarUrl: null,
   isOnboarded: true,
   onboardingCompletedAt: new Date().toISOString(),
@@ -58,18 +58,18 @@ async function seedDemoData() {
   try {
     await client.query('BEGIN');
 
-    // 1. Upsert Rick CEO profile
-    console.log('👤 Seeding Rick Cavanagh (CEO) profile...');
-    const existingRick = await client.query(
+    // 1. Upsert Admin profile
+    console.log('👤 Seeding Admin profile...');
+    const existingAdmin = await client.query(
       'SELECT id FROM users WHERE email = $1',
-      [RICK_CEO_PROFILE.email]
+      [ADMIN_PROFILE.email]
     );
 
-    let rickUserId: string;
+    let adminUserId: string;
     
-    if (existingRick.rows.length > 0) {
+    if (existingAdmin.rows.length > 0) {
       // Update existing
-      rickUserId = existingRick.rows[0].id;
+      adminUserId = existingAdmin.rows[0].id;
       await client.query(
         `UPDATE users SET 
           name = $1, 
@@ -80,15 +80,15 @@ async function seedDemoData() {
           "updatedAt" = NOW()
         WHERE email = $6`,
         [
-          RICK_CEO_PROFILE.name,
-          RICK_CEO_PROFILE.role,
-          RICK_CEO_PROFILE.currentRole,
-          RICK_CEO_PROFILE.isOnboarded,
-          RICK_CEO_PROFILE.onboardingCompletedAt,
-          RICK_CEO_PROFILE.email,
+          ADMIN_PROFILE.name,
+          ADMIN_PROFILE.role,
+          ADMIN_PROFILE.currentRole,
+          ADMIN_PROFILE.isOnboarded,
+          ADMIN_PROFILE.onboardingCompletedAt,
+          ADMIN_PROFILE.email,
         ]
       );
-      console.log('   ✅ Updated existing Rick profile');
+      console.log('   ✅ Updated existing Admin profile');
     } else {
       // Insert new
       const insertResult = await client.query(
@@ -96,17 +96,17 @@ async function seedDemoData() {
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
         RETURNING id`,
         [
-          RICK_CEO_PROFILE.email,
-          RICK_CEO_PROFILE.name,
-          RICK_CEO_PROFILE.role,
-          RICK_CEO_PROFILE.currentRole,
-          RICK_CEO_PROFILE.firebaseUid,
-          RICK_CEO_PROFILE.isOnboarded,
-          RICK_CEO_PROFILE.onboardingCompletedAt,
+          ADMIN_PROFILE.email,
+          ADMIN_PROFILE.name,
+          ADMIN_PROFILE.role,
+          ADMIN_PROFILE.currentRole,
+          ADMIN_PROFILE.firebaseUid,
+          ADMIN_PROFILE.isOnboarded,
+          ADMIN_PROFILE.onboardingCompletedAt,
         ]
       );
-      rickUserId = insertResult.rows[0].id;
-      console.log('   ✅ Created new Rick profile');
+      adminUserId = insertResult.rows[0].id;
+      console.log('   ✅ Created new Admin profile');
     }
 
     // 2. Upsert Brisbane Foundry venue
@@ -163,13 +163,13 @@ async function seedDemoData() {
       console.log('   ✅ Created new Brisbane Foundry venue');
     }
 
-    // 3. Associate Rick with Brisbane Foundry
-    console.log('🔗 Associating Rick with Brisbane Foundry...');
+    // 3. Associate Admin with Brisbane Foundry
+    console.log('🔗 Associating Admin with Brisbane Foundry...');
     await client.query(
       `UPDATE users SET "venueId" = $1 WHERE id = $2`,
-      [venueId, rickUserId]
+      [venueId, adminUserId]
     );
-    console.log('   ✅ Rick Cavanagh is now owner of Brisbane Foundry');
+    console.log('   ✅ Admin is now owner of Brisbane Foundry');
 
     await client.query('COMMIT');
     
@@ -179,9 +179,9 @@ async function seedDemoData() {
     console.log('═══════════════════════════════════════════════════════════');
     console.log('');
     console.log('  👤 CEO Profile:');
-    console.log(`     Email: ${RICK_CEO_PROFILE.email}`);
-    console.log(`     Name:  ${RICK_CEO_PROFILE.name}`);
-    console.log(`     Role:  ${RICK_CEO_PROFILE.role}`);
+    console.log(`     Email: ${ADMIN_PROFILE.email}`);
+    console.log(`     Name:  ${ADMIN_PROFILE.name}`);
+    console.log(`     Role:  ${ADMIN_PROFILE.role}`);
     console.log('');
     console.log('  🏢 Flagship Venue:');
     console.log(`     Name:    ${BRISBANE_FOUNDRY_VENUE.name}`);
@@ -205,7 +205,7 @@ async function seedDemoData() {
 /**
  * BRISBANE 100 - High-Fidelity CRM Lead Data
  * 
- * Realistic notes for investor demo - shows Rick "Managing the Pipeline"
+ * Realistic notes for investor demo - shows "Managing the Pipeline"
  * Each lead has context about their pain points and where they are in the journey.
  */
 const BRISBANE_100_DEMO_LEADS = [

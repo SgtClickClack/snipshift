@@ -8,21 +8,23 @@ export type AppRole = 'hub' | 'professional' | 'admin' | 'client' | 'business';
  * These email addresses have god-mode access across the platform.
  * Used by: ProtectedRoute, Navbar CEO Insights, requireAdmin middleware.
  * 
- * Purpose: Ensures Rick can access all admin/CEO features during investor demos
+ * Purpose: Ensures the designated admin can access all admin/CEO features
  * even if the 'admin' role hasn't been explicitly assigned in the database.
  */
 export const FOUNDER_EMAILS = [
-  'rick@hospogo.com',
-  'rick@snipshift.com.au',
+  'julian.g.roberts@gmail.com',
 ] as const;
 
 /**
  * Check if an email belongs to a founder account.
  * Used for CEO/admin access bypass across the application.
+ * 
+ * SECURITY FIX: Case-insensitive comparison to handle Firebase email normalization inconsistencies.
  */
 export function isFounderEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  return FOUNDER_EMAILS.includes(email as typeof FOUNDER_EMAILS[number]);
+  const normalizedEmail = email.toLowerCase().trim();
+  return FOUNDER_EMAILS.some(e => e.toLowerCase() === normalizedEmail);
 }
 
 export const roleToRoute: Record<AppRole, string> = {

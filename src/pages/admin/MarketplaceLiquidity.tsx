@@ -249,7 +249,9 @@ export default function MarketplaceLiquidity() {
   const { user } = useAuth();
   
   // Check for CEO/Admin access
-  const isCEO = user?.email === 'rick@hospogo.com' || user?.email === 'rick@snipshift.com.au';
+  // SECURITY FIX: Case-insensitive email comparison to handle Firebase normalization inconsistencies
+  const normalizedEmail = (user?.email || '').toLowerCase().trim();
+  const isCEO = normalizedEmail === 'julian.g.roberts@gmail.com';
   const isAdmin = user?.roles?.includes('admin');
   const hasAccess = isCEO || isAdmin;
 

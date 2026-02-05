@@ -5,7 +5,7 @@ import { auth } from '@/lib/firebase';
 import { browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { cleanupPushNotifications } from '@/lib/push-notifications';
-import { prefetchAuthData, queryClient } from '@/lib/queryClient';
+import { prefetchAuthData, queryClient, reset401Backoff } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { safeGetItem, safeSetItem, safeRemoveItem, isLocalStorageAvailable } from '@/lib/safe-storage';
 
@@ -538,6 +538,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // RESILIENCE: Track successful auth timestamp to prevent redirect during token refresh
       safeSetItem('hospogo_auth_timestamp', Date.now().toString(), true);
+      
+      // AUTH REHYDRATION FIX: Reset 401 backoff on successful auth
+      reset401Backoff();
 
       // Determine role and venue requirements
       const role = (apiUser.currentRole || apiUser.role || '').toLowerCase();

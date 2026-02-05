@@ -157,7 +157,7 @@ const AUDIT_HISTORY = [
 const ARR_MILESTONE_TARGET = 1_500_000; // $1.5M ARR milestone
 
 export default function CTODashboard() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading, isSystemReady } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -174,7 +174,9 @@ export default function CTODashboard() {
   const [saturationLevel, setSaturationLevel] = useState(25); // Default 25% of Brisbane 100
 
   // Check for CTO/CEO/Admin access
-  const isCEO = user?.email === 'rick@hospogo.com' || user?.email === 'rick@snipshift.com.au';
+  // SECURITY FIX: Case-insensitive email comparison to handle Firebase normalization inconsistencies
+  const normalizedEmail = (user?.email || '').toLowerCase().trim();
+  const isCEO = normalizedEmail === 'julian.g.roberts@gmail.com';
   const isAdmin = user?.roles?.includes('admin');
   const hasAccess = isCEO || isAdmin;
 
@@ -185,7 +187,7 @@ export default function CTODashboard() {
   const resetDemoMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest('POST', '/api/admin/reset-demo', {
-        targetAccounts: ['rick@hospogo.com', 'rick@snipshift.com.au'],
+        targetAccounts: ['julian.g.roberts@gmail.com'],
         clearEntities: ['shifts', 'invitations', 'leads'],
         reseedBaseline: 'brisbane_100',
       });
@@ -240,6 +242,7 @@ export default function CTODashboard() {
   }, [hasAccess]);
 
   // Fetch intelligence gaps
+  // AUTH REHYDRATION FIX: Wait for isSystemReady to prevent 401s during Firebase handshake
   const { data: gapsData, isLoading: isLoadingGaps, refetch: refetchGaps } = useQuery({
     queryKey: ['intelligence-gaps', gapFilter],
     queryFn: async () => {
@@ -302,10 +305,11 @@ export default function CTODashboard() {
         };
       }
     },
-    enabled: hasAccess,
+    enabled: hasAccess && isSystemReady && !isAuthLoading,
   });
 
   // Fetch leads for revenue calculation
+  // AUTH REHYDRATION FIX: Wait for isSystemReady to prevent 401s during Firebase handshake
   const { data: leads = [] } = useQuery({
     queryKey: ['lead-tracker'],
     queryFn: async () => {
@@ -345,7 +349,7 @@ export default function CTODashboard() {
         ] as Lead[];
       }
     },
-    enabled: hasAccess,
+    enabled: hasAccess && isSystemReady && !isAuthLoading,
   });
 
   // Calculate revenue metrics
@@ -535,7 +539,7 @@ export default function CTODashboard() {
                       </ul>
                     </div>
                     <p className="text-xs text-zinc-500">
-                      <strong className="text-zinc-400">Affected Accounts:</strong> rick@hospogo.com, rick@snipshift.com.au
+                      <strong className="text-zinc-400">Affected Accounts:</strong> julian.g.roberts@gmail.com
                     </p>
                   </div>
                   <div className="flex gap-3 justify-end">
@@ -1493,7 +1497,7 @@ export default function CTODashboard() {
                     <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
                       <h4 className="text-white font-semibold mb-3">Act 1: The Dopamine Hit (Lead Tracker)</h4>
                       <ol className="space-y-2 text-sm text-zinc-400 list-decimal list-inside">
-                        <li>Log in as <code className="text-[#BAFF39] bg-zinc-900 px-1 rounded">rick@hospogo.com</code></li>
+                        <li>Log in as <code className="text-[#BAFF39] bg-zinc-900 px-1 rounded">julian.g.roberts@gmail.com</code></li>
                         <li>Navigate to <strong className="text-white">CEO Insights → Lead Tracker</strong></li>
                         <li>Click "Demo Seed (25)" to inject Brisbane 100 leads</li>
                         <li>Note the <strong className="text-[#BAFF39]">Pipeline ARR: $44,700</strong> displayed</li>

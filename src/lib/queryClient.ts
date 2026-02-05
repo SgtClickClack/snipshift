@@ -4,12 +4,96 @@ import { toast } from "@/hooks/useToast";
 import { logger } from "@/lib/logger";
 import { QUERY_KEYS } from "@/lib/query-keys";
 
+/**
+ * AUTH REHYDRATION FIX: 401 Backoff Circuit Breaker
+ * 
+ * Prevents recursive "nuts" behavior when 401s are received during the initial
+ * Firebase/Handshake phase. If multiple 401s occur within a short window,
+ * subsequent requests are delayed to allow auth to stabilize.
+ */
+const AUTH_BACKOFF_STATE = {
+  consecutive401Count: 0,
+  lastErrorTime: 0,
+  isInBackoff: false,
+  backoffUntil: 0,
+};
+
+const AUTH_BACKOFF_CONFIG = {
+  /** Time window to track consecutive 401s (ms) */
+  WINDOW_MS: 5000,
+  /** Max 401s before triggering backoff */
+  MAX_CONSECUTIVE_401S: 3,
+  /** Initial backoff duration (ms) */
+  INITIAL_BACKOFF_MS: 1000,
+  /** Max backoff duration (ms) */
+  MAX_BACKOFF_MS: 5000,
+};
+
+/**
+ * Track a 401 error and determine if we should back off
+ * @returns true if request should be retried, false if in backoff mode
+ */
+function track401AndShouldRetry(): boolean {
+  const now = Date.now();
+  
+  // Reset counter if window has expired
+  if (now - AUTH_BACKOFF_STATE.lastErrorTime > AUTH_BACKOFF_CONFIG.WINDOW_MS) {
+    AUTH_BACKOFF_STATE.consecutive401Count = 0;
+    AUTH_BACKOFF_STATE.isInBackoff = false;
+  }
+  
+  // Check if we're currently in backoff
+  if (AUTH_BACKOFF_STATE.isInBackoff && now < AUTH_BACKOFF_STATE.backoffUntil) {
+    logger.warn('queryClient', `401 Backoff: Suppressing request (${AUTH_BACKOFF_STATE.backoffUntil - now}ms remaining)`);
+    return false;
+  }
+  
+  // Track this 401
+  AUTH_BACKOFF_STATE.consecutive401Count++;
+  AUTH_BACKOFF_STATE.lastErrorTime = now;
+  
+  // Trigger backoff if threshold exceeded
+  if (AUTH_BACKOFF_STATE.consecutive401Count >= AUTH_BACKOFF_CONFIG.MAX_CONSECUTIVE_401S) {
+    const backoffMs = Math.min(
+      AUTH_BACKOFF_CONFIG.INITIAL_BACKOFF_MS * Math.pow(2, AUTH_BACKOFF_STATE.consecutive401Count - AUTH_BACKOFF_CONFIG.MAX_CONSECUTIVE_401S),
+      AUTH_BACKOFF_CONFIG.MAX_BACKOFF_MS
+    );
+    AUTH_BACKOFF_STATE.isInBackoff = true;
+    AUTH_BACKOFF_STATE.backoffUntil = now + backoffMs;
+    logger.warn('queryClient', `401 Backoff: Circuit breaker triggered, backing off for ${backoffMs}ms`);
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Reset the 401 backoff state (call after successful auth)
+ */
+export function reset401Backoff(): void {
+  AUTH_BACKOFF_STATE.consecutive401Count = 0;
+  AUTH_BACKOFF_STATE.lastErrorTime = 0;
+  AUTH_BACKOFF_STATE.isInBackoff = false;
+  AUTH_BACKOFF_STATE.backoffUntil = 0;
+}
+
+/**
+ * Check if we're currently in 401 backoff mode
+ */
+export function isIn401Backoff(): boolean {
+  if (!AUTH_BACKOFF_STATE.isInBackoff) return false;
+  return Date.now() < AUTH_BACKOFF_STATE.backoffUntil;
+}
+
 async function throwIfResNotOk(res: Response, url?: string) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     
     // Handle 401 errors gracefully for specific endpoints
     if (res.status === 401 && url && typeof window !== 'undefined') {
+      // AUTH REHYDRATION FIX: Track 401s and trigger backoff if too many occur
+      const shouldRetry = track401AndShouldRetry();
+      
       // Extract pathname from URL (handles both relative and absolute URLs)
       let urlPath: string;
       try {
@@ -20,8 +104,16 @@ async function throwIfResNotOk(res: Response, url?: string) {
         urlPath = url.startsWith('/') ? url : `/${url}`;
       }
       
-      // For /api/auth/me and /api/notifications, don't throw - just clear token and let UI handle it
-      if (urlPath === '/api/auth/me' || urlPath === '/api/me' || urlPath === '/api/notifications' || urlPath.startsWith('/api/notifications')) {
+      // Mark this as a handshake 401 if it's during the initial auth phase
+      const isHandshake401 = urlPath === '/api/auth/me' || 
+                             urlPath === '/api/me' || 
+                             urlPath === '/api/bootstrap' ||
+                             urlPath === '/api/notifications' || 
+                             urlPath.startsWith('/api/notifications') ||
+                             urlPath === '/api/conversations/unread-count';
+      
+      // For handshake endpoints, don't throw - just clear token and let UI handle it
+      if (isHandshake401) {
         // Clear any stored tokens
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
@@ -32,6 +124,7 @@ async function throwIfResNotOk(res: Response, url?: string) {
         const error = new Error(`${res.status}: ${text}`);
         (error as any).isAuthError = true;
         (error as any).shouldNotReload = true;
+        (error as any).isHandshake401 = true; // Mark for Sentry filtering
         throw error;
       }
       
@@ -40,6 +133,15 @@ async function throwIfResNotOk(res: Response, url?: string) {
         localStorage.removeItem('token');
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+      }
+      
+      // If we're in backoff mode, throw a special suppressed error
+      if (!shouldRetry) {
+        const error = new Error(`401: Auth backoff in progress - request suppressed`);
+        (error as any).isAuthError = true;
+        (error as any).shouldNotReload = true;
+        (error as any).isSuppressed = true;
+        throw error;
       }
     }
     
@@ -112,6 +214,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // AUTH REHYDRATION FIX: Skip request if in 401 backoff mode
+    if (isIn401Backoff()) {
+      logger.warn("getQueryFn", "Request suppressed due to 401 backoff");
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
+      const error = new Error("401: Auth backoff in progress - request suppressed");
+      (error as any).isAuthError = true;
+      (error as any).shouldNotReload = true;
+      (error as any).isSuppressed = true;
+      throw error;
+    }
+    
     const headers: Record<string, string> = {};
     
     // E2E mode: always use mock-test-token (overrides cached Firebase session)
@@ -135,6 +250,9 @@ export const getQueryFn: <T>(options: {
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      // AUTH REHYDRATION FIX: Track 401 for backoff
+      track401AndShouldRetry();
+      
       // Clear tokens for 401s
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
@@ -154,6 +272,16 @@ const queryCache = new QueryCache({
     // Don't show toast for auth errors that shouldn't reload - let UI handle gracefully
     if (error instanceof Error && (error as any).shouldNotReload) {
       // Silently handle - AuthContext will update state
+      return;
+    }
+    
+    // AUTH REHYDRATION FIX: Silently ignore suppressed backoff errors
+    if (error instanceof Error && (error as any).isSuppressed) {
+      return;
+    }
+    
+    // AUTH REHYDRATION FIX: Silently ignore handshake 401s (initial auth phase)
+    if (error instanceof Error && (error as any).isHandshake401) {
       return;
     }
     
@@ -180,6 +308,16 @@ const mutationCache = new MutationCache({
   onError: (error) => {
     // Don't show toast for auth errors that shouldn't reload
     if (error instanceof Error && (error as any).shouldNotReload) {
+      return;
+    }
+    
+    // AUTH REHYDRATION FIX: Silently ignore suppressed backoff errors
+    if (error instanceof Error && (error as any).isSuppressed) {
+      return;
+    }
+    
+    // AUTH REHYDRATION FIX: Silently ignore handshake 401s (initial auth phase)
+    if (error instanceof Error && (error as any).isHandshake401) {
       return;
     }
     

@@ -41,6 +41,15 @@ export interface ErrorReportingService {
  */
 class ConsoleErrorReporting implements ErrorReportingService {
   async captureError(report: ErrorReport): Promise<void> {
+    // AUTH REHYDRATION FIX: Filter out handshake 401 errors from console noise
+    if (isHandshake401Error(report.error, report.context)) {
+      // Optionally log at debug level for troubleshooting
+      if (process.env.DEBUG_AUTH === 'true') {
+        console.debug('[ERROR_REPORTING] Filtered handshake 401:', report.message);
+      }
+      return;
+    }
+    
     const logLevel = report.severity === 'critical' ? 'error' : report.severity;
     const logMethod = (logLevel === 'warning' ? console.warn : logLevel === 'error' ? console.error : logLevel === 'info' ? console.info : console.log) || console.error;
     
@@ -84,6 +93,60 @@ class ConsoleErrorReporting implements ErrorReportingService {
 }
 
 /**
+ * AUTH REHYDRATION FIX: Handshake 401 Detection
+ * 
+ * These paths are expected to return 401 during the initial Firebase handshake phase.
+ * Filter them from Sentry to avoid noise during every deployment.
+ */
+const HANDSHAKE_401_PATHS = [
+  '/api/me',
+  '/api/auth/me',
+  '/api/bootstrap',
+  '/api/notifications',
+  '/api/conversations/unread-count',
+  '/api/integrations/xero/sync-history',
+  '/api/admin/support/intelligence-gaps',
+  '/api/admin/leads/brisbane-100',
+  '/api/admin/chat',
+];
+
+/**
+ * Check if an error is a handshake 401 that should be filtered from Sentry
+ */
+export function isHandshake401Error(error: Error | unknown, context?: ErrorContext): boolean {
+  if (!error) return false;
+  
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
+  // Check for 401 status code in message
+  if (!errorMessage.includes('401')) return false;
+  
+  // Check if it's explicitly marked as a handshake 401
+  if (error instanceof Error && (error as any).isHandshake401) {
+    return true;
+  }
+  
+  // Check if the path is a known handshake endpoint
+  const path = context?.path || '';
+  if (HANDSHAKE_401_PATHS.some(p => path.includes(p) || path.startsWith(p))) {
+    return true;
+  }
+  
+  // Check for specific handshake-related message patterns
+  const handshakePatterns = [
+    'Auth backoff in progress',
+    'Firebase handshake',
+    'Token refresh',
+    'Session expired',
+    'initial auth',
+  ];
+  
+  return handshakePatterns.some(pattern => 
+    errorMessage.toLowerCase().includes(pattern.toLowerCase())
+  );
+}
+
+/**
  * Sentry Error Reporting Implementation
  * 
  * To use Sentry, install: npm install @sentry/node
@@ -105,6 +168,30 @@ class SentryErrorReporting implements ErrorReportingService {
       environment: process.env.NODE_ENV || 'production',
       tracesSampleRate: 0.1, // 10% of transactions for performance monitoring
       beforeSend(event, hint) {
+        // AUTH REHYDRATION FIX: Filter out handshake 401 errors
+        // These are expected during initial Firebase/auth handshake phase
+        const exception = hint.originalException;
+        if (exception instanceof Error) {
+          // Check if it's a handshake 401
+          if (isHandshake401Error(exception)) {
+            console.log('[Sentry] Filtering handshake 401:', exception.message);
+            return null; // Drop the event
+          }
+        }
+        
+        // Also check for 401 errors in the exception chain
+        if (event.exception?.values?.some(e => 
+          e.value?.includes('401') && (
+            e.value?.includes('/api/me') ||
+            e.value?.includes('/api/bootstrap') ||
+            e.value?.includes('/api/notifications') ||
+            e.value?.includes('Auth backoff')
+          )
+        )) {
+          console.log('[Sentry] Filtering 401 event based on exception values');
+          return null;
+        }
+        
         // Add correlation ID to Sentry context
         if (hint.originalException?.correlationId) {
           event.tags = { ...event.tags, correlationId: hint.originalException.correlationId };

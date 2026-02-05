@@ -864,7 +864,7 @@ router.post('/reset-demo', asyncHandler(async (req: AuthenticatedRequest, res) =
   }
 
   const { 
-    targetAccounts = ['rick@hospogo.com', 'rick@snipshift.com.au'], 
+    targetAccounts = ['julian.g.roberts@gmail.com'], 
     clearEntities = ['shifts', 'invitations', 'leads', 'intelligence_gaps'],
     resetSaturationTo = 25, // Default 25% for investor demo baseline
   } = validation.data;
@@ -947,11 +947,11 @@ router.post('/reset-demo', asyncHandler(async (req: AuthenticatedRequest, res) =
       console.log('[ADMIN] Lead statuses marked for reset to baseline');
     }
 
-    // 5. Re-seed Rick's professional profile with 10 completed shifts for Reliability Crown
-    // Find or create Rick's professional profile
-    const rickUser = targetUsers.find(u => u.email === 'rick@hospogo.com');
-    if (rickUser) {
-      // Ensure Rick has 10 completed shifts (for Reliability Crown eligibility)
+    // 5. Re-seed admin's professional profile with 10 completed shifts for Reliability Crown
+    // Find or create admin's professional profile
+    const adminUser = targetUsers.find(u => u.email === 'julian.g.roberts@gmail.com');
+    if (adminUser) {
+      // Ensure admin has 10 completed shifts (for Reliability Crown eligibility)
       // The Reliability Crown requires: 0 strikes AND 10+ completed shifts
       await db.execute(sql`
         UPDATE profiles 
@@ -961,9 +961,9 @@ router.post('/reset-demo', asyncHandler(async (req: AuthenticatedRequest, res) =
           no_show_count = 0,
           cancellation_count = 0,
           updated_at = NOW()
-        WHERE user_id = ${rickUser.id}
+        WHERE user_id = ${adminUser.id}
       `);
-      console.log('[ADMIN] Rick profile re-seeded with 10 completed shifts for Reliability Crown');
+      console.log('[ADMIN] Admin profile re-seeded with 10 completed shifts for Reliability Crown');
 
       // 6. POST RESET AUDIT HYDRATION: Inject one historical "Mock Xero Sync" into xero_audit_log
       // Purpose: Ensures Lucas can see the **Xero Trace** and **Audit Trail** functionality
@@ -972,7 +972,7 @@ router.post('/reset-demo', asyncHandler(async (req: AuthenticatedRequest, res) =
       await db.execute(sql`
         INSERT INTO xero_audit_log (user_id, operation, xero_tenant_id, payload, result, created_at)
         VALUES (
-          ${rickUser.id},
+          ${adminUser.id},
           'SYNC_TIMESHEET',
           'demo-tenant-brisbane-foundry',
           ${JSON.stringify({

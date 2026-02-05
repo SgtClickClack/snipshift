@@ -99,15 +99,17 @@ export interface AuthenticatedRequest extends Request {
 /**
  * FOUNDER ACCESS WHITELIST (Backend)
  * 
- * Hardcoded founder emails for god-mode access during investor demos.
- * This ensures Rick can access admin endpoints even if ADMIN_EMAILS env var
+ * Hardcoded founder emails for god-mode access.
+ * This ensures the designated admin can access admin endpoints even if ADMIN_EMAILS env var
  * is not configured or if the 'admin' role isn't in the database.
  * 
  * Mirrors: src/lib/roles.ts FOUNDER_EMAILS constant
+ * 
+ * SECURITY FIX: All email comparisons are case-insensitive (.toLowerCase())
+ * to handle Firebase email normalization inconsistencies.
  */
 const FOUNDER_EMAILS = [
-  'rick@hospogo.com',
-  'rick@snipshift.com.au',
+  'julian.g.roberts@gmail.com',
 ];
 
 /**
@@ -131,15 +133,44 @@ export function requireAdmin(
   // Check if user has admin role
   const isAdminRole = req.user.role === 'admin';
 
-  // Check if user email is in admin email list (from env)
-  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
-  const isAdminEmail = adminEmails.includes(req.user.email);
+  // SECURITY FIX: Normalize email to lowercase for case-insensitive comparison
+  // Firebase may return emails with inconsistent casing (e.g., "Rick@hospogo.com" vs "rick@hospogo.com")
+  const normalizedEmail = (req.user.email || '').toLowerCase().trim();
 
-  // FOUNDER ACCESS OVERRIDE: Hardcoded bypass for founder emails
+  // AUTH DEBUGGER: Log incoming email vs expected whitelist for investor demo troubleshooting
+  // This helps catch any future mismatches during the Brisbane briefing
+  const adminEmailsRaw = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(e => e.length > 0);
+  console.warn('[AUTH DEBUG - ADMIN CHECK]', {
+    incomingEmail: req.user.email,
+    normalizedEmail,
+    expectedWhitelist: adminEmailsRaw,
+    founderEmails: FOUNDER_EMAILS,
+    userRole: req.user.role,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Check if user email is in admin email list (from env) - case-insensitive
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim())
+    .filter(e => e.length > 0);
+  const isAdminEmail = adminEmails.some(email => email.toLowerCase() === normalizedEmail);
+
+  // FOUNDER ACCESS OVERRIDE: Hardcoded bypass for founder emails (case-insensitive)
   // This ensures Rick can access /api/admin/* endpoints during investor demos
-  const isFounder = FOUNDER_EMAILS.includes(req.user.email);
+  const isFounder = FOUNDER_EMAILS.some(e => e.toLowerCase() === normalizedEmail);
 
   if (!isAdminRole && !isAdminEmail && !isFounder) {
+    // Log access denial for debugging (helps identify email mismatch issues)
+    console.log('[AUTH] Admin access denied:', {
+      email: normalizedEmail,
+      role: req.user.role,
+      isAdminRole,
+      isAdminEmail,
+      isFounder,
+      founderEmailsCheck: FOUNDER_EMAILS.map(e => e.toLowerCase()),
+      adminEmailsConfig: adminEmails,
+    });
     res.status(403).json({ message: 'Forbidden: Admin access required' });
     return;
   }
