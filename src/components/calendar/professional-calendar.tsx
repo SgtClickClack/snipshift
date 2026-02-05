@@ -3596,18 +3596,18 @@ function ProfessionalCalendarContent({
         />
       )}
 
-      {/* Shift Assignment Modal */}
-      {mode === 'business' && selectedUnassignedSlot && (
+      {/* Shift Assignment Modal - HOOK ORDER FIX: Always render, use isOpen to control visibility */}
+      {mode === 'business' && (
         <ShiftAssignmentModal
-          isOpen={showShiftAssignmentModal}
+          isOpen={showShiftAssignmentModal && !!selectedUnassignedSlot}
           onClose={() => {
             setShowShiftAssignmentModal(false);
             setSelectedUnassignedSlot(null);
           }}
           onAssign={handleShiftAssignment}
           onPostToJobBoard={handlePostToJobBoard}
-          start={selectedUnassignedSlot.start}
-          end={selectedUnassignedSlot.end}
+          start={selectedUnassignedSlot?.start ?? new Date()}
+          end={selectedUnassignedSlot?.end ?? new Date()}
           favoriteProfessionals={favoriteProfessionals}
           allProfessionals={allProfessionals}
           isLoading={false}
