@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown, HelpCircle } from "lucide-react";
+import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown, HelpCircle, Cpu } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -97,17 +97,17 @@ export default function Navbar() {
 
   return (
     <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[50] pt-safe overflow-x-hidden w-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="flex justify-between items-center h-20 min-w-0">
+      <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex justify-between items-center h-16 xs:h-20 min-w-0">
           <Link
             to={!user ? "/" : "/dashboard"}
-            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 min-w-0 bg-transparent"
+            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink min-w-0 bg-transparent"
           >
             <div className="bg-transparent">
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-12 md:h-14 w-auto object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)]"
+                className="h-10 xs:h-12 md:h-14 w-auto max-w-[140px] xs:max-w-[180px] sm:max-w-none object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)]"
                 loading="eager"
                 width={360}
                 height={56}
@@ -115,7 +115,7 @@ export default function Navbar() {
             </div>
           </Link>
           
-          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 flex-shrink-0 min-w-0">
+          <div className="flex items-center space-x-0.5 xs:space-x-1 sm:space-x-2 md:space-x-4 flex-shrink-0 min-w-0">
             {user ? (
               <>
                 {/* Desktop Menu Items */}
@@ -225,7 +225,9 @@ export default function Navbar() {
                           <DropdownMenuSeparator className="bg-steel-600" />
                           <DropdownMenuLabel className="text-xs text-[#BAFF39] font-semibold flex items-center gap-2">
                             <Crown className="h-3.5 w-3.5 text-[#BAFF39] drop-shadow-[0_0_4px_rgba(186,255,57,0.6)]" />
-                            CEO Insights
+                            <span>
+                              Hospo<span className="italic font-black">GO</span> CEO Insights
+                            </span>
                           </DropdownMenuLabel>
                           <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
                             <Link to="/admin/lead-tracker">
@@ -243,6 +245,12 @@ export default function Navbar() {
                             <Link to="/admin/revenue">
                               <DollarSign className="mr-2 h-4 w-4 text-[#BAFF39]" />
                               <span>Revenue Forecast</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild className="focus:bg-steel-700 focus:text-white cursor-pointer">
+                            <Link to="/admin/cto-dashboard">
+                              <Cpu className="mr-2 h-4 w-4 text-[#BAFF39] drop-shadow-[0_0_4px_rgba(186,255,57,0.6)]" />
+                              <span>CTO Dashboard (Brain Monitor)</span>
                             </Link>
                           </DropdownMenuItem>
                         </>

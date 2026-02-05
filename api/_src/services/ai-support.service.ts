@@ -393,6 +393,10 @@ async function logIntelligenceGap(params: {
   wasAnswered: boolean;
 }): Promise<void> {
   try {
+    if (!db) {
+      console.warn('[AI Support] Database not available, skipping intelligence gap logging');
+      return;
+    }
     await db.insert(supportIntelligenceGaps).values({
       query: params.query,
       questionType: params.questionType,
@@ -748,6 +752,9 @@ export async function getIntelligenceGaps(options?: {
   const { limit = 50, gapType, includeReviewed = false } = options || {};
   
   try {
+    if (!db) {
+      throw new Error('Database not available');
+    }
     const { eq, isNull, desc, count } = await import('drizzle-orm');
     
     // Build query conditions
@@ -799,6 +806,9 @@ export async function getIntelligenceGaps(options?: {
  */
 export async function markGapReviewed(gapId: string, reviewerId: string): Promise<void> {
   try {
+    if (!db) {
+      throw new Error('Database not available');
+    }
     const { eq } = await import('drizzle-orm');
     
     await db

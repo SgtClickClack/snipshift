@@ -165,6 +165,17 @@ export default function XeroSyncHistory() {
             </div>
           </div>
         </div>
+        
+        {/* LUCAS'S REQUIREMENT: "Last Audited by Engine" timestamp for investor confidence */}
+        {history.length > 0 && (
+          <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-[#BAFF39]/10 border border-[#BAFF39]/30">
+            <ShieldCheck className="h-4 w-4 text-[#BAFF39]" />
+            <span className="text-xs font-medium text-[#BAFF39]">Last Audited by Engine:</span>
+            <span className="text-xs text-foreground">
+              {formatDateSafe(history[0].syncedAt, 'MMMM d, yyyy', 'Never')} at {formatDateSafe(history[0].syncedAt, 'h:mm a', '')}
+            </span>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (

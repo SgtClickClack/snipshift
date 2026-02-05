@@ -19,6 +19,14 @@ export default {
         "2xl": "1400px",
       },
     },
+    screens: {
+      'xs': '375px', // iPhone SE and similar - prevents text wrapping on ultra-small screens
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",
@@ -135,6 +143,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       boxShadow: {
         "neon-realistic":

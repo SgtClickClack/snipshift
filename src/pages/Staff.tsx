@@ -323,31 +323,36 @@ export default function StaffPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : filteredStaff.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <div className="text-center py-12 px-4">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-[#BAFF39]/10 flex items-center justify-center mb-4">
+                  <Users className="h-8 w-8 text-[#BAFF39]" />
+                </div>
                 {showFavoritesOnly ? (
                   <>
-                    <p className="text-lg font-medium mb-2">No favorites yet</p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Click the star icon on staff members to add them to your A-Team.
+                    <p className="text-lg font-semibold mb-2">Your A-Team Roster is Empty</p>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                      Build your dream team. Click the star icon on staff members to add them to your A-Team for priority shift invitations.
                     </p>
-                    <Button variant="outline" onClick={toggleFavoritesFilter}>
+                    <Button 
+                      onClick={toggleFavoritesFilter}
+                      className="bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
+                    >
                       <Filter className="h-4 w-4 mr-2" />
                       Show All Staff
                     </Button>
                   </>
                 ) : searchQuery ? (
                   <>
-                    <p className="text-lg font-medium mb-2">No matches found</p>
+                    <p className="text-lg font-semibold mb-2">No Matches Found</p>
                     <p className="text-sm text-muted-foreground">
-                      Try a different search term.
+                      Try a different search term or clear the filter.
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-lg font-medium mb-2">No staff yet</p>
-                    <p className="text-sm text-muted-foreground">
-                      When professionals complete shifts for you, they'll appear here.
+                    <p className="text-lg font-semibold mb-2">The Engine is Warming Up</p>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      Your staff roster will populate as professionals complete shifts at your venue. Post your first shift to get the wheels turning.
                     </p>
                   </>
                 )}

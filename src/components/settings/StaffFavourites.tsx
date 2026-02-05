@@ -156,10 +156,13 @@ export default function StaffFavourites() {
             Loading staff...
           </div>
         ) : staff.length === 0 ? (
-          <div className="text-center py-8">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">
-              No staff yet. When professionals complete shifts for you, they'll appear here.
+          <div className="text-center py-8 px-4">
+            <div className="mx-auto w-14 h-14 rounded-xl bg-[#BAFF39]/10 flex items-center justify-center mb-3">
+              <Users className="h-7 w-7 text-[#BAFF39]" />
+            </div>
+            <p className="text-base font-semibold mb-1">The A-Team Awaits</p>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+              Your star players will appear here once professionals complete shifts at your venue. Post a shift to start building your team.
             </p>
           </div>
         ) : (

@@ -330,6 +330,9 @@ router.get('/sync-history', authenticateUser, asyncHandler(async (req: Authentic
 /**
  * GET /api/integrations/xero/status
  * Returns connection status for UI
+ * 
+ * SECURITY AUDIT: xeroTenantId is NEVER exposed in response
+ * Only the human-readable tenantName is returned
  */
 router.get('/status', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
@@ -344,9 +347,11 @@ router.get('/status', authenticateUser, asyncHandler(async (req: AuthenticatedRe
     return;
   }
 
+  // FINANCIAL PII MASKING: Never expose xeroTenantId in API response
+  // Only return the human-readable tenantName, or a generic label if unavailable
   res.status(200).json({
     connected: true,
-    tenantName: integration.xeroTenantName ?? integration.xeroTenantId,
+    tenantName: integration.xeroTenantName || 'Xero Organization',
   });
 }));
 
@@ -639,8 +644,58 @@ router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHand
 
     const assigneeToXero = new Map<string, string>();
     const staffNameMap = new Map<string, string>(); // For better error reporting
+    
+    // DATA HYGIENE: Fetch Xero employees to detect "Orphaned Employee" scenario
+    // This proactively identifies staff mapped to archived/deleted Xero employees
+    const xeroEmployees = await xeroOauthService.getEmployees(tokens.accessToken, tokens.tenantId);
+    const activeXeroEmployeeIds = new Set(
+      xeroEmployees
+        .filter(e => e.Status === 'ACTIVE' || !e.Status) // Include employees without status (default active)
+        .map(e => e.EmployeeID)
+    );
+    const archivedXeroEmployeeIds = new Set(
+      xeroEmployees
+        .filter(e => e.Status === 'TERMINATED' || e.Status === 'INACTIVE')
+        .map(e => e.EmployeeID)
+    );
+    
     for (const s of staffWithXero) {
       if (s?.xeroEmployeeId) {
+        // DATA HYGIENE: Check if the mapped Xero employee has been archived
+        // This catches the "Orphaned Employee" scenario proactively
+        if (archivedXeroEmployeeIds.has(s.xeroEmployeeId)) {
+          const staffUser = await usersRepo.getUserById(s.userId);
+          const staffName = staffUser?.name || staffUser?.email || s.userId;
+          const xeroEmployee = xeroEmployees.find(e => e.EmployeeID === s.xeroEmployeeId);
+          const xeroName = xeroEmployee ? `${xeroEmployee.FirstName ?? ''} ${xeroEmployee.LastName ?? ''}`.trim() : 'Unknown';
+          
+          failed.push({
+            staffUserId: s.userId,
+            staffName,
+            errorCode: 'XERO_ID_MISMATCH_EMPLOYEE_ARCHIVED',
+            userMessage: 'Xero ID Mismatch: Employee Archived',
+            technicalDetails: `Staff member "${staffName}" is mapped to Xero employee "${xeroName}" which has been archived/terminated in Xero. Reactivate the employee in Xero Payroll, or update the mapping in Settings > Xero Integration.`,
+            isRecoverable: true,
+          });
+          continue; // Skip this employee, don't add to assigneeToXero
+        }
+        
+        // Check if Xero employee ID doesn't exist at all (deleted entirely)
+        if (!activeXeroEmployeeIds.has(s.xeroEmployeeId) && !archivedXeroEmployeeIds.has(s.xeroEmployeeId)) {
+          const staffUser = await usersRepo.getUserById(s.userId);
+          const staffName = staffUser?.name || staffUser?.email || s.userId;
+          
+          failed.push({
+            staffUserId: s.userId,
+            staffName,
+            errorCode: 'XERO_ID_MISMATCH_EMPLOYEE_ARCHIVED',
+            userMessage: 'Xero ID Mismatch: Employee Archived',
+            technicalDetails: `Staff member "${staffName}" is mapped to Xero Employee ID "${s.xeroEmployeeId}" which no longer exists in Xero. The employee may have been deleted. Update the mapping in Settings > Xero Integration.`,
+            isRecoverable: true,
+          });
+          continue;
+        }
+        
         assigneeToXero.set(s.userId, s.xeroEmployeeId);
       } else if (s) {
         // Get staff name for better error reporting
@@ -659,6 +714,18 @@ router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHand
       }
     }
 
+    /**
+     * PARTIAL SHIFT HANDLING (Lucas's Accounting Requirement)
+     * 
+     * Shifts crossing midnight are split into TWO distinct ledger entries
+     * to ensure correct pay period allocation. This prevents the common
+     * accounting pain point where midnight-spanning shifts appear in the
+     * wrong pay period.
+     * 
+     * Example: 10PM-2AM shift becomes:
+     *   - Day 1: 10PM-12AM (2 hours)
+     *   - Day 2: 12AM-2AM (2 hours)
+     */
     const hoursByEmployee = new Map<string, Map<string, number>>();
     for (const shift of shifts) {
       const aid = shift.assigneeId;
@@ -672,9 +739,36 @@ router.post('/sync-timesheet', authenticateUser, requireBusinessOwner, asyncHand
 
       const start = shift.startTime instanceof Date ? shift.startTime : new Date(shift.startTime);
       const end = shift.endTime instanceof Date ? shift.endTime : new Date(shift.endTime);
-      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      const dateKey = start.toISOString().slice(0, 10);
-      byDate.set(dateKey, (byDate.get(dateKey) ?? 0) + hours);
+      
+      // Check if shift crosses midnight (end date different from start date)
+      const startDateKey = start.toISOString().slice(0, 10);
+      const endDateKey = end.toISOString().slice(0, 10);
+      
+      if (startDateKey !== endDateKey) {
+        // PARTIAL SHIFT: Split into two ledger entries at midnight
+        const midnight = new Date(start);
+        midnight.setDate(midnight.getDate() + 1);
+        midnight.setHours(0, 0, 0, 0);
+        
+        // Hours before midnight (Day 1)
+        const hoursDay1 = (midnight.getTime() - start.getTime()) / (1000 * 60 * 60);
+        byDate.set(startDateKey, (byDate.get(startDateKey) ?? 0) + hoursDay1);
+        
+        // Hours after midnight (Day 2)
+        const hoursDay2 = (end.getTime() - midnight.getTime()) / (1000 * 60 * 60);
+        byDate.set(endDateKey, (byDate.get(endDateKey) ?? 0) + hoursDay2);
+        
+        console.log('[XERO_SYNC] Partial shift split:', {
+          shiftId: shift.id,
+          employeeId: aid,
+          day1: { date: startDateKey, hours: hoursDay1.toFixed(2) },
+          day2: { date: endDateKey, hours: hoursDay2.toFixed(2) },
+        });
+      } else {
+        // Standard shift within single day
+        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        byDate.set(startDateKey, (byDate.get(startDateKey) ?? 0) + hours);
+      }
     }
 
     const periodStart = toDateOnly(startDate);

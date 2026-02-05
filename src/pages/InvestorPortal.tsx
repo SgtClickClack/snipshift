@@ -21,7 +21,7 @@
  * - RSVP Modal: z-[110]
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -51,7 +51,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
-import InvestorChatWidget from "@/components/investor/InvestorChatWidget";
+
+// PERFORMANCE: Lazy-load Investor Bot to improve FCP (Target: < 0.8s)
+const InvestorChatWidget = lazy(() => import("@/components/investor/InvestorChatWidget"));
 
 /** Navigation items for the investor portal */
 const NAV_ITEMS = [
@@ -562,7 +564,7 @@ export default function InvestorPortal() {
         {/* Trinity Section */}
         <section id="trinity" className="py-32 px-6 max-w-7xl mx-auto scroll-mt-24">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-7xl font-black mb-6 uppercase italic leading-none tracking-[-0.05em]">
+            <h2 className="text-5xl md:text-7xl font-black mb-6 uppercase italic leading-none tracking-[-0.05em]" style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}>
               The <span className="text-[var(--brand-neon)]">Trinity</span>
             </h2>
             <p className="text-gray-500 text-xl leading-relaxed max-w-2xl mx-auto">
@@ -784,7 +786,12 @@ export default function InvestorPortal() {
         `}</style>
 
         {/* AI Investor Chat Widget - Hidden when document viewer is open */}
-        {!selectedDoc && <InvestorChatWidget />}
+        {/* PERFORMANCE: Lazy-loaded after primary UI is interactive */}
+        {!selectedDoc && (
+          <Suspense fallback={null}>
+            <InvestorChatWidget />
+          </Suspense>
+        )}
 
         {/* Executive RSVP Confirmation Modal */}
         {showRSVPModal && (

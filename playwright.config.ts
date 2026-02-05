@@ -153,7 +153,7 @@ export default defineConfig({
         },
         {
           name: 'business-e2e',
-          testMatch: /(calendar-(automation|capacity|comprehensive|crash-repro)|roster-costing|investor-portal|financial_privacy)\.spec\.ts/,
+          testMatch: /(calendar-(automation|capacity|comprehensive|crash-repro)|roster-costing|investor-portal|financial_privacy|chaos-audit)\.spec\.ts/,
           use: {
             ...devices['Desktop Chrome'],
             storageState: 'playwright/.auth/business-user.json',
@@ -175,7 +175,7 @@ export default defineConfig({
         },
         {
           name: 'staff-e2e',
-          testMatch: /staff-invitations\.spec\.ts/,
+          testMatch: /(staff-invitations|chaos-audit)\.spec\.ts/,
           use: {
             ...devices['Desktop Chrome'],
             storageState: 'playwright/.auth/professional-user.json',

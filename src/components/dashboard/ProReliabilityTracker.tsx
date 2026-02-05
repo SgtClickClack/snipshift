@@ -91,7 +91,7 @@ function SuspensionCountdown({ suspendedUntil }: { suspendedUntil: string }) {
   if (isExpired) {
     return (
       <div className="text-center">
-        <p className="text-emerald-500 text-lg font-semibold">Suspension period has ended!</p>
+        <p className="text-[#BAFF39] text-lg font-semibold">Suspension period has ended!</p>
         <p className="text-muted-foreground text-sm mt-1">Refresh the page to access your account.</p>
       </div>
     );
@@ -218,7 +218,7 @@ function SuspensionOverlay({ suspendedUntil, lastShiftId }: { suspendedUntil: st
   );
 }
 
-// Strike recovery progress bar
+// Strike recovery progress bar - "Clean Streak" Reputation Redemption
 function StrikeRecoveryProgress({ 
   recoveryProgress, 
   strikes,
@@ -233,20 +233,59 @@ function StrikeRecoveryProgress({
 
   return (
     <div className="mt-4 pt-4 border-t border-border/50">
-      <div className="flex items-center justify-between text-sm mb-2">
-        <span className="text-muted-foreground flex items-center gap-1.5">
-          <TrendingUp className="h-3.5 w-3.5" />
-          Strike Recovery Progress
+      {/* Clean Streak Header */}
+      <div className="flex items-center justify-between text-sm mb-3">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+            {/* Glow effect */}
+            <div className="absolute inset-0 blur-sm bg-[#BAFF39]/30 rounded-full" />
+          </div>
+          <span className="font-semibold text-[#BAFF39]">Clean Streak</span>
+        </div>
+        <span className="font-bold text-white bg-[#BAFF39]/20 px-2 py-0.5 rounded-full text-xs">
+          {recoveryProgress} / 5 shifts
         </span>
-        <span className="font-medium">{recoveryProgress}/5 shifts</span>
       </div>
-      <Progress 
-        value={progress} 
-        className="h-2 bg-muted/50" 
-      />
-      <p className="text-xs text-muted-foreground mt-2">
-        Complete {shiftsRemaining} more shift{shiftsRemaining !== 1 ? 's' : ''} with 4.5+ stars to remove a strike.
-      </p>
+
+      {/* Electric Lime Progress Bar */}
+      <div className="relative">
+        <Progress 
+          value={progress} 
+          className="h-3 bg-zinc-800/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-[#84cc16] [&>div]:to-[#BAFF39] [&>div]:shadow-[0_0_10px_rgba(186,255,57,0.5)]" 
+        />
+        {/* Progress markers */}
+        <div className="absolute top-0 left-0 right-0 h-full flex justify-between px-0.5 pointer-events-none">
+          {[1, 2, 3, 4, 5].map((marker) => (
+            <div 
+              key={marker}
+              className={cn(
+                "w-0.5 h-full",
+                marker <= recoveryProgress ? "bg-transparent" : "bg-zinc-700/50"
+              )}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Motivational Message */}
+      <div className="mt-3 p-2 rounded-lg bg-[#BAFF39]/5 border border-[#BAFF39]/20">
+        <p className="text-xs text-center">
+          {shiftsRemaining === 0 ? (
+            <span className="text-[#BAFF39] font-medium">
+              🎉 You've earned strike removal! It will be applied after admin review.
+            </span>
+          ) : shiftsRemaining === 1 ? (
+            <span className="text-[#BAFF39]">
+              <span className="font-semibold">Almost there!</span> Complete 1 more shift with 4.5+ stars to remove a strike.
+            </span>
+          ) : (
+            <span className="text-muted-foreground">
+              Complete <span className="text-[#BAFF39] font-semibold">{shiftsRemaining}</span> more shifts with 4.5+ stars to remove a strike.
+            </span>
+          )}
+        </p>
+      </div>
     </div>
   );
 }

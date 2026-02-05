@@ -89,7 +89,7 @@ const VenueDashboardSkeleton = () => (
 );
 
 export default function VenueDashboard() {
-  const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading, isVenueMissing } = useAuth();
+  const { user, isLoading: isAuthLoading, isSystemReady, isVenueMissing } = useAuth();
   const navigate = useNavigate();
   // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
   // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
@@ -103,8 +103,15 @@ export default function VenueDashboard() {
     return <VenueDashboardContent demoMode={true} />;
   }
 
-  // Auth/role not ready: show skeleton (never a blank screen)
-  if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
+  // PERFORMANCE: Show skeleton only until system is ready AND we can verify role
+  // isSystemReady = Firebase + user profile + venue check complete
+  // This ensures we don't block on non-existent isRoleLoading flag
+  if (isAuthLoading || !isSystemReady) {
+    return <VenueDashboardSkeleton />;
+  }
+
+  // User loaded but wrong role - brief skeleton while redirect happens
+  if (!hasValidRole) {
     return <VenueDashboardSkeleton />;
   }
 
@@ -389,7 +396,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
     },
     enabled: demoMode || !!user?.id,
     staleTime: demoMode ? Infinity : undefined,
-    refetchInterval: demoMode ? false : undefined,
+    // DOPAMINE SYNC: 5s refresh for investor demo - live calendar updates on mobile Accept All
+    refetchInterval: 5000,
   });
 
   // Memoize bookings transformation to prevent unnecessary Calendar re-renders
@@ -791,7 +799,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       }
     },
     enabled: demoMode || (!!user && !!venueId),
-    refetchInterval: demoMode ? false : 30000, // Don't refetch in demo mode
+    // DOPAMINE SYNC: 5s refresh for investor demo - calendar stats update in real-time
+    refetchInterval: 5000,
     staleTime: demoMode ? Infinity : undefined,
     retry: false,
     fallbackData: { unreadCount: 0 },
@@ -852,7 +861,9 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden" data-testid="venue-dashboard-loaded">
+      {/* PERFORMANCE: Route signal for E2E - confirms dashboard-specific content is ready */}
+      <div data-testid="route-loaded-signal" aria-hidden="true" style={{ display: 'none' }} />
       <SEO title="Business Dashboard" />
       
       {/* Setup Complete Confetti Celebration */}
@@ -899,7 +910,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-foreground">Logistics Engine</h1>
+                <h1 className="text-2xl font-black tracking-tighter text-foreground" style={{ fontFamily: 'Urbanist, sans-serif' }}>Logistics Engine</h1>
                 {/* Xero Status Pill - High visibility for investor demo */}
                 {isXeroConnected && (
                   <Badge 
@@ -1371,12 +1382,15 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                     ) : jobs.filter(job => statusFilter === 'all' || job.status === statusFilter).length === 0 ? (
                       <EmptyState
                         icon={Briefcase}
-                        title={statusFilter === 'all' ? "No posted shifts" : `No ${statusFilter} jobs found`}
-                        description={statusFilter === 'all' ? "You haven't posted any shifts yet. Create your first job posting to start attracting professionals." : `No ${statusFilter} jobs match your current filter.`}
+                        title={statusFilter === 'all' ? "The Engine is Idling" : `No ${statusFilter} shifts found`}
+                        description={statusFilter === 'all' 
+                          ? "Your venue is ready for action. Post your first shift to ignite the roster and connect with verified professionals in your area."
+                          : `No ${statusFilter} shifts match your current filter. Try adjusting filters or create a new shift.`}
                         action={statusFilter === 'all' ? {
-                          label: "Post Your First Job",
+                          label: "Post Your First Shift",
                           onClick: () => setShowForm(true),
-                          variant: "outline"
+                          variant: "default",
+                          className: "bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
                         } : undefined}
                       />
                     ) : (
@@ -1681,8 +1695,14 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                 ) : applications.length === 0 ? (
                   <EmptyState
                     icon={Users}
-                    title="No active applications"
-                    description="When professionals apply to your jobs, they will appear here. Make sure your job postings are clear and attractive to get more applications."
+                    title="The Talent Pipeline is Clear"
+                    description="Your roster awaits its first candidate. Once you post shifts, verified professionals will start applying. Your A-Team is just a click away."
+                    action={{
+                      label: "Post a Shift to Attract Talent",
+                      onClick: () => setActiveView('jobs'),
+                      variant: "default",
+                      className: "bg-[#BAFF39] hover:bg-[#BAFF39]/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
+                    }}
                   />
                 ) : (
                   <div className="space-y-4">

@@ -184,14 +184,14 @@ export function MedicalCertificateUpload({
   // Success state
   if (uploadStatus === 'success') {
     return (
-      <Card className="border-emerald-500/50 bg-emerald-500/10">
+      <Card className="border-[#BAFF39]/50 bg-[#BAFF39]/10">
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+            <div className="mx-auto w-16 h-16 rounded-full bg-[#BAFF39]/20 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-[#BAFF39]" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-emerald-500">Certificate Verified!</h3>
+              <h3 className="text-xl font-semibold text-[#BAFF39]">Certificate Verified!</h3>
               <p className="text-muted-foreground mt-1">
                 Your suspension has been lifted and strikes reduced.
               </p>

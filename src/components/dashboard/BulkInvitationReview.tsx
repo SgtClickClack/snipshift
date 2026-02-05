@@ -26,17 +26,17 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Confetti celebration component
+// Confetti celebration component - GPU-accelerated for smooth mobile performance
 function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: number }) {
   if (!show) return null;
   
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
-      {/* Confetti particles */}
+    <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden">
+      {/* Confetti particles - GPU accelerated with will-change */}
       {Array.from({ length: 50 }).map((_, i) => (
         <div
           key={i}
-          className="absolute animate-confetti"
+          className="absolute animate-confetti will-change-transform"
           style={{
             left: `${Math.random() * 100}%`,
             animationDelay: `${Math.random() * 0.5}s`,
@@ -45,6 +45,7 @@ function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: numb
             width: `${8 + Math.random() * 8}px`,
             height: `${8 + Math.random() * 8}px`,
             borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            willChange: 'transform, opacity',
           }}
         />
       ))}
@@ -52,7 +53,7 @@ function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: numb
       {/* Success message overlay */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto animate-in fade-in duration-300">
         <div className="text-center p-8 max-w-md mx-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#BAFF39]/20 mb-6 animate-bounce">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#BAFF39]/20 mb-6 animate-bounce will-change-transform">
             <PartyPopper className="w-10 h-10 text-[#BAFF39]" />
           </div>
           <h2 className="text-3xl font-black text-white mb-3 flex items-center justify-center gap-2">
@@ -74,11 +75,13 @@ function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: numb
       
       <style>{`
         @keyframes confetti {
-          0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+          0% { transform: translateY(-10vh) rotate(0deg) translateZ(0); opacity: 1; }
+          100% { transform: translateY(110vh) rotate(720deg) translateZ(0); opacity: 0; }
         }
         .animate-confetti {
           animation: confetti linear forwards;
+          transform: translateZ(0);
+          backface-visibility: hidden;
         }
       `}</style>
     </div>
@@ -157,7 +160,8 @@ export function BulkInvitationReview() {
       const res = await apiRequest('GET', '/api/shifts/invitations/pending');
       return res.json();
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    // DOPAMINE SYNC: 5s refresh for investor demo - live status updates on Accept All loop
+    refetchInterval: 5000,
   });
 
   // Calculate total earnings for selected shifts

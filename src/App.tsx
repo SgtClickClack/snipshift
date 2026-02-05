@@ -17,7 +17,11 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
-import SupportChatWidget from '@/components/support/SupportChatWidget';
+import OfflineNotification from '@/components/common/OfflineNotification';
+
+// PERFORMANCE: Lazy-load Support Bot to improve FCP/LCP (Target: < 0.8s)
+// These widgets load AFTER primary UI is interactive
+const SupportChatWidget = lazy(() => import('@/components/support/SupportChatWidget'));
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { PwaUpdateHandler } from '@/components/pwa/pwa-update-handler';
 import { RouteProgressBar } from '@/components/ui/route-progress-bar';
@@ -95,6 +99,8 @@ const SettingsPage = lazy(() => import('@/pages/settings'));
 const AdminDashboard = lazy(() => import('@/pages/admin/dashboard'));
 const AdminLeadsPage = lazy(() => import('@/pages/admin/Leads'));
 const AdminHealthPage = lazy(() => import('@/pages/admin/health'));
+const LeadTracker = lazy(() => import('@/pages/admin/LeadTracker'));
+const CTODashboard = lazy(() => import('@/pages/admin/CTODashboard'));
 
 const NotificationDemo = lazy(() => import('@/components/notifications/notification-demo'));
 const DesignSystemShowcase = lazy(() => import('@/components/demo/design-system-showcase').then(module => ({ default: module.DesignSystemShowcase })));
@@ -170,6 +176,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
       {!hideNavbar && <Navbar />}
       <div className="flex-grow w-full max-w-full overflow-x-hidden">
         <Routes>
+        {/* PERFORMANCE: Route loaded signal for E2E tests - placed at top so it renders early */}
         {/* Public routes */}
         {/* IMPORTANT: Landing must remain fully public (no auth guard / no protected route wrapper). */}
         <Route path="/" element={<LandingPage />} />
@@ -556,6 +563,23 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
             </Suspense>
           </ProtectedRoute>
         } />
+
+        {/* CEO Insights - Lead Tracker & CTO Dashboard */}
+        <Route path="/admin/lead-tracker" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <LeadTracker />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin/cto-dashboard" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <CTODashboard />
+            </Suspense>
+          </ProtectedRoute>
+        } />
         
         <Route path="/profile" element={
           <ProtectedRoute>
@@ -652,6 +676,8 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
         {/* Catch all - 404 */}
         <Route path="*" element={<NotFound />} />
         </Routes>
+        {/* PERFORMANCE: Route loaded signal for E2E tests - stable element that signals route is interactive */}
+        <div data-testid="route-loaded-signal" aria-hidden="true" style={{ display: 'none' }} />
       </div>
       {!hideFooter && <Footer />}
     </div>
@@ -700,7 +726,11 @@ function App() {
                         <NotificationToast />
                         <AppRoutes splashHandled={splashHandled} />
                         <TutorialOverlay />
-                        <SupportChatWidget />
+                        {/* PERFORMANCE: Support Bot lazy-loads after primary UI is interactive */}
+                        <Suspense fallback={null}>
+                          <SupportChatWidget />
+                        </Suspense>
+                        <OfflineNotification />
                         <InstallPrompt />
                         <PwaUpdateHandler />
                         <Analytics />

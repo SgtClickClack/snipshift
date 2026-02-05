@@ -95,7 +95,8 @@ router.get('/me/applications', authenticateUser, asyncHandler(async (req: Authen
 }));
 
 // Get staff list for current venue (business only - for pay rate management)
-// AUDIT: baseHourlyRate is only returned when requester has business/hub role (isBusiness check below)
+// AUDIT: baseHourlyRate is ONLY returned when requester has business/hub role (isBusiness check below)
+// SECURITY: This endpoint is BLOCKED for professionals - they cannot see venue financial data
 router.get('/me/staff', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   if (!userId) {
@@ -105,7 +106,10 @@ router.get('/me/staff', authenticateUser, asyncHandler(async (req: Authenticated
 
   const role = (req.user as any)?.role ?? (req.user as any)?.roles?.[0];
   const isBusiness = role === 'business' || role === 'hub' || (Array.isArray((req.user as any)?.roles) && ((req.user as any).roles as string[]).includes('business'));
-  if (!isBusiness) {
+  
+  // FINANCIAL PII GUARD: Block professionals from accessing ANY staff financial data
+  // This prevents savvy staff from inspecting Network tab to see venue pay rates
+  if (!isBusiness || role === 'professional') {
     res.status(403).json({ message: 'Staff list is only available for business users' });
     return;
   }
@@ -120,12 +124,15 @@ router.get('/me/staff', authenticateUser, asyncHandler(async (req: Authenticated
     staffIds.map(async (id) => {
       const u = await usersRepo.getUserById(id);
       if (!u) return null;
+      
+      // DEFENSIVE FILTERING: Only include financial fields for verified business users
+      // baseHourlyRate is the staff member's rate set by this venue
       return {
         id: u.id,
         name: u.name,
         email: u.email,
-        baseHourlyRate: u.baseHourlyRate ? Number(u.baseHourlyRate) : null,
-        currency: u.currency || 'AUD',
+        baseHourlyRate: isBusiness ? (u.baseHourlyRate ? Number(u.baseHourlyRate) : null) : null,
+        currency: isBusiness ? (u.currency || 'AUD') : null,
       };
     })
   );

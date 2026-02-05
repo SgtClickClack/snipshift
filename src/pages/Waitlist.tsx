@@ -163,7 +163,7 @@ export const WaitlistPage = () => {
                     (role === 'venue' && (!managerEmail || !venueName)) ||
                     (role === 'staff' && (!fullName || !mobileNumber))
                   }
-                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all transform hover:scale-[1.02] disabled:transform-none"
+                  className="w-full bg-[#BAFF39] hover:bg-[#BAFF39]/90 disabled:bg-slate-700 disabled:cursor-not-allowed text-black font-black italic py-3 rounded-lg transition-all transform hover:scale-[1.02] disabled:transform-none shadow-[0_0_20px_rgba(186,255,57,0.4)] hover:shadow-[0_0_30px_rgba(186,255,57,0.6)]"
                 >
                   {isSubmitting ? 'Submitting...' : 'Secure Early Access'}
                 </button>

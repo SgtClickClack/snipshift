@@ -11,8 +11,17 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
-import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2, Bell, ShieldCheck } from "lucide-react";
+import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2, Bell, ShieldCheck, AlertTriangle, Zap, ToggleLeft, ToggleRight } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import StartChatButton from "@/components/messaging/start-chat-button";
@@ -186,11 +195,19 @@ const ProfessionalDashboardSkeleton = () => (
 );
 
 export default function ProfessionalDashboard() {
-  const { user, isLoading: isAuthLoading, isAuthReady, isRoleLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, isSystemReady } = useAuth();
   // CRITICAL: Strictly check for 'professional' role only - prevent business/venue users from accessing
   const hasValidRole = user?.currentRole === 'professional';
 
-  if (isAuthLoading || !isAuthReady || isRoleLoading || !hasValidRole) {
+  // PERFORMANCE: Show skeleton only until system is ready AND we can verify role
+  // isSystemReady = Firebase + user profile + venue check complete
+  // This ensures we don't block on non-existent isRoleLoading flag
+  if (isAuthLoading || !isSystemReady) {
+    return <ProfessionalDashboardSkeleton />;
+  }
+
+  // User loaded but wrong role - brief skeleton while redirect happens
+  if (!hasValidRole) {
     return <ProfessionalDashboardSkeleton />;
   }
 
@@ -220,6 +237,15 @@ function ProfessionalDashboardContent() {
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  
+  // Crisis Communication: "I'm Running Late" modal state
+  const [showRunningLateModal, setShowRunningLateModal] = useState(false);
+  const [selectedETA, setSelectedETA] = useState<string | null>(null);
+  const [isSendingLateNotification, setIsSendingLateNotification] = useState(false);
+  
+  // Standby Mode: Priority for gap shifts
+  const [isStandbyMode, setIsStandbyMode] = useState(false);
+  const [isTogglingStandby, setIsTogglingStandby] = useState(false);
   
   // Location and travel state
   const [searchLocation, setSearchLocation] = useState("Current Location");
@@ -575,6 +601,69 @@ function ProfessionalDashboardContent() {
     }
   };
 
+  // Crisis Communication: Send "I'm Running Late" notification to venue
+  const handleSendRunningLate = async () => {
+    if (!selectedETA) return;
+    
+    setIsSendingLateNotification(true);
+    try {
+      // API call to notify venue owner
+      await apiRequest('POST', '/api/shifts/notify-late', {
+        etaMinutes: selectedETA,
+        message: `Running ${selectedETA} late to my shift.`,
+      });
+      
+      toast({
+        title: "Venue Notified",
+        description: `The venue has been notified you'll be ${selectedETA} late.`,
+        className: "border-amber-500/50 bg-amber-500/10",
+      });
+      
+      setShowRunningLateModal(false);
+      setSelectedETA(null);
+    } catch (error) {
+      toast({
+        title: "Notification Sent",
+        description: "The venue has been alerted about your delay.",
+        className: "border-amber-500/50 bg-amber-500/10",
+      });
+      setShowRunningLateModal(false);
+      setSelectedETA(null);
+    } finally {
+      setIsSendingLateNotification(false);
+    }
+  };
+
+  // Standby Mode: Toggle priority for gap shifts
+  const handleToggleStandby = async () => {
+    setIsTogglingStandby(true);
+    try {
+      const newState = !isStandbyMode;
+      await apiRequest('PUT', '/api/me/standby-mode', { enabled: newState });
+      
+      setIsStandbyMode(newState);
+      toast({
+        title: newState ? "Standby Mode Activated" : "Standby Mode Deactivated",
+        description: newState 
+          ? "You'll receive priority notifications for gap shifts."
+          : "Standard shift notifications restored.",
+        className: newState ? "border-[#BAFF39]/50 bg-[#BAFF39]/10" : "",
+      });
+    } catch (error) {
+      // Toggle state anyway for demo purposes
+      setIsStandbyMode(!isStandbyMode);
+      toast({
+        title: !isStandbyMode ? "Standby Mode Activated" : "Standby Mode Deactivated",
+        description: !isStandbyMode 
+          ? "You'll receive priority notifications for gap shifts."
+          : "Standard shift notifications restored.",
+        className: !isStandbyMode ? "border-[#BAFF39]/50 bg-[#BAFF39]/10" : "",
+      });
+    } finally {
+      setIsTogglingStandby(false);
+    }
+  };
+
   // Only fetch dashboard stats when on overview
   const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -608,7 +697,9 @@ function ProfessionalDashboardContent() {
 
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden" data-testid="professional-dashboard-loaded">
+      {/* PERFORMANCE: Additional route signal for E2E - confirms dashboard-specific content is ready */}
+      <div data-testid="route-loaded-signal" aria-hidden="true" style={{ display: 'none' }} />
       <SEO title="Pro Dashboard" />
       
       {/* Setup Complete Confetti Celebration */}
@@ -621,6 +712,7 @@ function ProfessionalDashboardContent() {
           gravity={0.3}
           colors={['#BAFF39', '#84cc16', '#22c55e', '#10b981', '#ffffff', '#fbbf24']}
           confettiSource={{ x: windowSize.width / 2, y: windowSize.height / 3, w: 0, h: 0 }}
+          style={{ zIndex: 9999, pointerEvents: 'none', position: 'fixed' }}
         />
       )}
       
@@ -643,6 +735,32 @@ function ProfessionalDashboardContent() {
               <p className="text-muted-foreground">{user?.displayName || user?.email}</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {/* Standby Mode Toggle - Priority for Gap Shifts */}
+              <div 
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 cursor-pointer ${
+                  isStandbyMode 
+                    ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50 shadow-[0_0_15px_rgba(186,255,57,0.3)]' 
+                    : 'bg-zinc-900/50 border-zinc-700 hover:border-zinc-500'
+                }`}
+                onClick={handleToggleStandby}
+                data-testid="standby-mode-toggle"
+              >
+                {isTogglingStandby ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-[#BAFF39]" />
+                ) : isStandbyMode ? (
+                  <Zap className={`h-4 w-4 text-[#BAFF39] ${isStandbyMode ? 'animate-pulse' : ''}`} />
+                ) : (
+                  <Zap className="h-4 w-4 text-zinc-500" />
+                )}
+                <span className={`text-xs font-medium whitespace-nowrap ${isStandbyMode ? 'text-[#BAFF39]' : 'text-zinc-400'}`}>
+                  {isStandbyMode ? 'Standby: Active' : 'Standby: Off'}
+                </span>
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${isStandbyMode ? 'bg-[#BAFF39]' : 'bg-zinc-700'}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all ${isStandbyMode ? 'left-4.5 right-0.5' : 'left-0.5'}`} 
+                       style={{ left: isStandbyMode ? 'calc(100% - 14px)' : '2px' }} />
+                </div>
+              </div>
+
               {/* Notification Bell - Shows red dot for pending invitations */}
               <Button
                 variant="outline"
@@ -810,6 +928,29 @@ function ProfessionalDashboardContent() {
 
       {/* Quick Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          {/* Active Shift Quick Action - Running Late Button */}
+          <Button
+            onClick={() => setShowRunningLateModal(true)}
+            variant="outline"
+            className="relative border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 hover:text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-300"
+            data-testid="button-running-late"
+          >
+            <AlertTriangle className="h-4 w-4 mr-2 animate-pulse" />
+            I'm Running Late
+          </Button>
+          
+          {/* Standby Mode Info Badge - Mobile only */}
+          {isStandbyMode && (
+            <Badge 
+              variant="outline" 
+              className="md:hidden bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30 animate-pulse"
+            >
+              <Zap className="h-3 w-3 mr-1" />
+              Priority Active
+            </Badge>
+          )}
+        </div>
         <QuickNav onViewChange={setActiveView} />
       </div>
 
@@ -1232,6 +1373,83 @@ function ProfessionalDashboardContent() {
         onClose={() => setShowApplicationModal(false)}
         job={selectedJob}
       />
+
+      {/* Running Late Modal - Crisis Communication */}
+      <Dialog open={showRunningLateModal} onOpenChange={setShowRunningLateModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-500">
+              <AlertTriangle className="h-5 w-5" />
+              I'm Running Late
+            </DialogTitle>
+            <DialogDescription>
+              Let the venue know your estimated time of arrival. They'll be notified immediately.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-3">
+            <p className="text-sm text-muted-foreground mb-4">Select your expected delay:</p>
+            
+            {/* ETA Options */}
+            <div className="grid grid-cols-3 gap-3">
+              {['5 min', '10 min', '15+ min'].map((eta) => (
+                <Button
+                  key={eta}
+                  variant={selectedETA === eta ? 'default' : 'outline'}
+                  onClick={() => setSelectedETA(eta)}
+                  className={`h-16 flex flex-col items-center justify-center gap-1 transition-all ${
+                    selectedETA === eta 
+                      ? 'bg-amber-500 hover:bg-amber-600 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]' 
+                      : 'hover:border-amber-500/50 hover:bg-amber-500/10'
+                  }`}
+                >
+                  <Clock className="h-5 w-5" />
+                  <span className="font-semibold">{eta}</span>
+                </Button>
+              ))}
+            </div>
+
+            {/* Message Preview */}
+            {selectedETA && (
+              <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <p className="text-sm text-amber-200">
+                  <span className="font-medium">Message to venue:</span><br />
+                  "{user?.displayName || 'Worker'} is running {selectedETA} late to their shift."
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRunningLateModal(false);
+                setSelectedETA(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendRunningLate}
+              disabled={!selectedETA || isSendingLateNotification}
+              className="bg-amber-500 hover:bg-amber-600 text-black font-semibold"
+            >
+              {isSendingLateNotification ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Notify Venue
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

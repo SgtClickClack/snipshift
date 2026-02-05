@@ -156,13 +156,16 @@ export function mapXeroErrorToUserFriendly(
     };
   }
   
-  // Employee archived or not found
+  // Employee archived or not found - "The Orphaned Employee" scenario
+  // DATA HYGIENE: Specific error for when HospoGo staff member maps to archived Xero employee
   if ((lower.includes('employee') && lower.includes('not found')) || 
-      (lower.includes('employee') && lower.includes('archived'))) {
+      (lower.includes('employee') && lower.includes('archived')) ||
+      (lower.includes('employee') && lower.includes('terminated')) ||
+      (lower.includes('employeeid') && lower.includes('invalid'))) {
     return {
-      code: 'EMPLOYEE_ARCHIVED',
-      userMessage: 'Employee Record Archived in Xero',
-      technicalDetails: 'The employee has been archived or removed from Xero Payroll. Please reactivate them or update the mapping.',
+      code: 'XERO_ID_MISMATCH_EMPLOYEE_ARCHIVED',
+      userMessage: 'Xero ID Mismatch: Employee Archived',
+      technicalDetails: 'This staff member exists in HospoGo but has been deleted/archived in Xero. Please reactivate the employee in Xero Payroll, or update the mapping in Settings > Xero Integration to point to an active employee record.',
       isRecoverable: true,
     };
   }

@@ -175,21 +175,70 @@ async function fetchAppUser(
   return attemptFetch(idToken);
 }
 
+// SESSION PERSISTENCE: Storage keys for tab recovery
+const SESSION_CACHE_USER_KEY = 'hospogo_session_user';
+const SESSION_CACHE_VENUE_KEY = 'hospogo_session_venue';
+
+/**
+ * TAB RECOVERY: Restore cached session from sessionStorage immediately on mount.
+ * This eliminates the "Skeleton Flicker" by mounting with cached data while
+ * background hydration verifies the token.
+ */
+function getCachedSession(): { user: User | null; venue: unknown | null } {
+  if (typeof window === 'undefined') return { user: null, venue: null };
+  try {
+    const userStr = sessionStorage.getItem(SESSION_CACHE_USER_KEY);
+    const venueStr = sessionStorage.getItem(SESSION_CACHE_VENUE_KEY);
+    return {
+      user: userStr ? JSON.parse(userStr) : null,
+      venue: venueStr ? JSON.parse(venueStr) : null,
+    };
+  } catch {
+    return { user: null, venue: null };
+  }
+}
+
+/**
+ * TAB RECOVERY: Cache session data to sessionStorage for instant recovery.
+ */
+function cacheSession(user: User | null, venue?: unknown) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (user) {
+      sessionStorage.setItem(SESSION_CACHE_USER_KEY, JSON.stringify(user));
+    } else {
+      sessionStorage.removeItem(SESSION_CACHE_USER_KEY);
+    }
+    if (venue !== undefined) {
+      if (venue) {
+        sessionStorage.setItem(SESSION_CACHE_VENUE_KEY, JSON.stringify(venue));
+      } else {
+        sessionStorage.removeItem(SESSION_CACHE_VENUE_KEY);
+      }
+    }
+  } catch {
+    // Silent fail on storage quota exceeded
+  }
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  // TAB RECOVERY: Initialize from cached session for instant mount
+  const cachedSession = getCachedSession();
+  const [user, setUser] = useState<User | null>(cachedSession.user);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // TAB RECOVERY: If we have cached user, start with loading=false for instant render
+  const [isLoading, setIsLoading] = useState(!cachedSession.user);
   const [isRedirecting, setRedirecting] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(true); // True during entire auth handshake
-  const [isNavigationLocked, setIsNavigationLocked] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(!cachedSession.user); // Skip transition if cached
+  const [isNavigationLocked, setIsNavigationLocked] = useState(!cachedSession.user); // Skip lock if cached
   const [isRegistered, setIsRegistered] = useState(true);
   const [isVenueMissing, setIsVenueMissing] = useState(false);
   /** PROGRESSIVE UNLOCK: True when venue data fetch has completed (success or failure). Non-blocking for navigation. */
-  const [isVenueLoaded, setIsVenueLoaded] = useState(false);
+  const [isVenueLoaded, setIsVenueLoaded] = useState(!!cachedSession.venue);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   // PERFORMANCE: isSystemReady = Firebase ready + user profile resolved + venue check done
-  // This provides a stable flag for splash-to-app transitions (no skeleton flicker)
-  const [isSystemReady, setIsSystemReady] = useState(false);
+  // TAB RECOVERY: If cached, start ready immediately
+  const [isSystemReady, setIsSystemReady] = useState(!!cachedSession.user);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -264,11 +313,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = useCallback((newUser: User) => {
     setUser(newUser);
+    // TAB RECOVERY: Cache user for instant recovery on refresh
+    cacheSession(newUser);
   }, []);
 
   const logout = useCallback(async () => {
     // Clear auth timestamp immediately to allow redirect on explicit logout
     safeRemoveItem('hospogo_auth_timestamp', true);
+    
+    // TAB RECOVERY: Clear cached session on logout
+    cacheSession(null, null);
     
     // INVESTOR BRIEFING FIX: Reset session integrity on explicit logout
     // This allows future redirects to /login to work correctly after explicit logout
@@ -467,6 +521,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasCompletedOnboarding: isOnboarded,
       };
       setUser(normalizedUser);
+      
+      // TAB RECOVERY: Cache user immediately for instant recovery on refresh
+      cacheSession(normalizedUser, venueData && !venueData.__notFound ? venueData : null);
 
       // PERFORMANCE FIX: Release navigation lock IMMEDIATELY after user profile resolves
       // This drops TTI from ~6s to <1s by not blocking on /api/venues/me

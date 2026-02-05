@@ -74,14 +74,14 @@ const helpTopics = [
   { id: 'earnings', title: 'Viewing Your Earnings', category: 'account', description: 'Track payments and earnings history', keywords: ['earnings', 'payment', 'money', 'history', 'income'] },
   { id: 'messages', title: 'Messaging & Communication', category: 'account', description: 'In-app messaging and conversations', keywords: ['message', 'chat', 'communication', 'conversation'] },
   
-  // Technical Documentation (For Lucas - Accounting Specs)
-  { id: 'mutex-technical', title: 'Mutex Locking Deep Dive', category: 'technical', description: 'Technical specification of the double-sync prevention mechanism', keywords: ['mutex', 'lock', 'race condition', 'technical', 'sync', 'concurrent'] },
-  { id: 'xero-api-spec', title: 'Xero API Integration Spec', category: 'technical', description: 'OAuth flow, timesheet export format, and error handling', keywords: ['xero', 'api', 'oauth', 'integration', 'specification', 'technical'] },
-  { id: 'financial-ledger', title: 'Financial Ledger Architecture', category: 'technical', description: 'Database schema and transaction recording methodology', keywords: ['ledger', 'financial', 'database', 'schema', 'accounting', 'audit'] },
-  { id: 'wage-calculation', title: 'Wage Cost Calculation Engine', category: 'technical', description: 'Formula, rounding rules, and superannuation handling', keywords: ['wage', 'calculation', 'formula', 'payroll', 'super', 'technical'] },
-  { id: 'audit-trail', title: 'Audit Trail & Compliance Logs', category: 'technical', description: 'ATO STP requirements and data retention policies', keywords: ['audit', 'trail', 'ato', 'stp', 'compliance', 'logs', 'retention'] },
-  { id: 'partial-success', title: 'Partial Success Handling', category: 'technical', description: 'Transaction isolation and rollback strategies', keywords: ['partial', 'success', 'transaction', 'rollback', 'isolation', 'error'] },
-  { id: 'xero-sync-history', title: 'Xero Sync History & Audit Trail', category: 'technical', description: 'Real-time sync logging with 7-year ATO retention and partial success tracking', keywords: ['xero', 'sync', 'history', 'audit', 'trail', 'retention', 'ato', 'lucas'] },
+  // Technical Documentation (For Lucas - Accounting Specs / Architectural White Papers)
+  { id: 'mutex-technical', title: 'Mutex Locking Deep Dive', category: 'technical', description: 'Distributed lock acquisition via PostgreSQL advisory locks prevents double-sync race conditions. Lock TTL: 30s with automatic release on process termination. Guarantees exactly-once timesheet delivery to Xero.', keywords: ['mutex', 'lock', 'race condition', 'technical', 'sync', 'concurrent', 'advisory', 'postgresql', 'distributed'] },
+  { id: 'xero-api-spec', title: 'Xero API Integration Spec', category: 'technical', description: 'OAuth 2.0 PKCE flow with secure token refresh. Timesheet export follows Xero Payroll AU schema with employee mapping validation. Exponential backoff on 429/503 responses.', keywords: ['xero', 'api', 'oauth', 'integration', 'specification', 'technical', 'pkce'] },
+  { id: 'financial-ledger', title: '1:1 Financial Ledger Handshake', category: 'technical', description: 'Every timesheet sync creates an immutable ledger entry with SHA-256 hash of payload. Bidirectional reconciliation ensures HospoGo hours === Xero hours. ATO-compliant audit trail with 7-year retention.', keywords: ['ledger', 'financial', 'database', 'schema', 'accounting', 'audit', 'handshake', 'sha256', 'reconciliation', 'immutable'] },
+  { id: 'wage-calculation', title: 'Wage Cost Calculation Engine', category: 'technical', description: 'Real-time wage projection using Award-compliant rates. Superannuation calculated at 11.5% (2024-25 rate). Rounding follows ATO guidelines: nearest cent, banker\'s rounding on .5.', keywords: ['wage', 'calculation', 'formula', 'payroll', 'super', 'technical', 'award', 'superannuation'] },
+  { id: 'audit-trail', title: 'Audit Trail & Compliance Logs', category: 'technical', description: 'STP Phase 2 ready logging. Every mutation recorded with actor, timestamp, and diff. Immutable append-only log with cryptographic chain. 7-year retention as per ATO requirements.', keywords: ['audit', 'trail', 'ato', 'stp', 'compliance', 'logs', 'retention', 'immutable', 'cryptographic'] },
+  { id: 'partial-success', title: 'Partial Success Handling', category: 'technical', description: 'Transaction isolation via PostgreSQL SERIALIZABLE mode. Partial sync failures trigger per-employee rollback with detailed error logging. Automatic retry queue for recoverable failures.', keywords: ['partial', 'success', 'transaction', 'rollback', 'isolation', 'error', 'serializable', 'retry'] },
+  { id: 'xero-sync-history', title: 'Xero Sync History & Audit Trail', category: 'technical', description: 'Real-time sync logging with 7-year ATO retention. Each sync operation logged with: timestamp, employee count, total hours, success/failure status, and Xero response hash.', keywords: ['xero', 'sync', 'history', 'audit', 'trail', 'retention', 'ato', 'lucas'] },
   
   // Strategic Roadmap (For Rick - Lead Analytics)
   { id: 'lead-tracker-overview', title: 'Lead Tracker System Overview', category: 'strategic', description: 'Pipeline stages, scoring, and campaign management', keywords: ['lead', 'tracker', 'pipeline', 'campaign', 'crm', 'sales'] },
@@ -112,9 +112,9 @@ const categories = [
     title: 'Getting Started',
     description: 'New to HospoGo? Start here',
     icon: BookOpen,
-    color: 'text-emerald-400',
-    bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/30',
+    color: 'text-[#BAFF39]',
+    bgColor: 'bg-[#BAFF39]/10',
+    borderColor: 'border-[#BAFF39]/30',
   },
   {
     id: 'rostering',

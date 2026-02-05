@@ -39,8 +39,9 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
   const endTime = shift.endTime ? parseISO(shift.endTime) : null;
   const hourlyRate = parseFloat(shift.hourlyRate || '0');
   
-  // Check if shift is urgent (starts within 24 hours)
-  const isUrgent = startTime ? differenceInHours(startTime, new Date()) <= 24 && differenceInHours(startTime, new Date()) > 0 : false;
+  // Check if shift is urgent (starts within 12 hours)
+  // INVESTOR BRIEFING: Reduced from 24h to 12h for higher urgency signaling
+  const isUrgent = startTime ? differenceInHours(startTime, new Date()) <= 12 && differenceInHours(startTime, new Date()) > 0 : false;
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'Date TBD';
