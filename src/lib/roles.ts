@@ -1,13 +1,13 @@
-export type AppRole = 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'client' | 'business';
+// INVESTOR BRIEFING FIX: Removed 'brand' and 'trainer' roles
+// System now only knows about 'Venue Owner' (Engine/hub/business) and 'Professional' (Staff)
+export type AppRole = 'hub' | 'professional' | 'admin' | 'client' | 'business';
 
 export const roleToRoute: Record<AppRole, string> = {
   hub: '/venue/dashboard', // Aligned with business - both use /venue/dashboard
   business: '/venue/dashboard', // Primary URL for business role users
   professional: '/professional-dashboard',
-  brand: '/brand-dashboard',
-  trainer: '/trainer-dashboard',
   admin: '/admin',
-  client: '/role-selection'
+  client: '/onboarding' // INVESTOR BRIEFING FIX: Changed from /role-selection to /onboarding
 };
 
 export function getDashboardRoute(role: AppRole | undefined | null): string {
@@ -28,9 +28,9 @@ export function hasRole(roles: AppRole[] | undefined | null, role: AppRole): boo
  * Rules:
  * - 'venue' → 'business' (legacy alias, normalized to business)
  * - 'hub' → 'business' (business owner role)
- * - 'brand' → 'business' (brand/company role)
  * - All other roles map to themselves
  * 
+ * INVESTOR BRIEFING FIX: Removed 'brand' and 'trainer' role mappings
  * CRITICAL: This function ensures BOTH 'venue' and 'hub' map to 'business' to prevent
  * access denied errors due to terminology mismatches.
  */
@@ -39,12 +39,12 @@ export function normalizeVenueToBusiness(role: string | null | undefined): AppRo
   const normalized = role.toLowerCase();
   
   // Map venue-related roles to business (CRITICAL: both 'venue' and 'hub' must map to 'business')
-  if (normalized === 'venue' || normalized === 'hub' || normalized === 'brand') {
+  if (normalized === 'venue' || normalized === 'hub') {
     return 'business';
   }
   
-  // Return valid roles as-is
-  if (['professional', 'business', 'admin', 'trainer', 'client'].includes(normalized)) {
+  // Return valid roles as-is (INVESTOR BRIEFING FIX: removed 'trainer')
+  if (['professional', 'business', 'admin', 'client'].includes(normalized)) {
     return normalized as AppRole;
   }
   
@@ -52,31 +52,30 @@ export function normalizeVenueToBusiness(role: string | null | undefined): AppRo
 }
 
 /**
- * Checks if a role is equivalent to 'business' (including venue, hub, brand aliases).
+ * Checks if a role is equivalent to 'business' (including venue, hub aliases).
+ * INVESTOR BRIEFING FIX: Removed 'brand' from business role check
  * Used for permission checks where business/venue/hub should be treated the same.
  */
 export function isBusinessRole(role: string | null | undefined): boolean {
   if (!role) return false;
   const normalized = role.toLowerCase();
-  return normalized === 'business' || normalized === 'venue' || normalized === 'hub' || normalized === 'brand';
+  return normalized === 'business' || normalized === 'venue' || normalized === 'hub';
 }
 
 /**
  * Maps frontend roles to backend API role values.
- * The backend API only accepts: 'professional', 'business', 'admin', 'trainer'
+ * INVESTOR BRIEFING FIX: Backend API now only accepts: 'professional', 'business', 'admin'
  * 
  * Uses centralized normalizeVenueToBusiness for consistency.
  */
-export function mapRoleToApiRole(frontendRole: AppRole): 'professional' | 'business' | 'admin' | 'trainer' {
+export function mapRoleToApiRole(frontendRole: AppRole): 'professional' | 'business' | 'admin' {
   const normalized = normalizeVenueToBusiness(frontendRole);
   if (!normalized) return 'professional';
   
-  const roleMapping: Record<AppRole, 'professional' | 'business' | 'admin' | 'trainer'> = {
+  const roleMapping: Record<AppRole, 'professional' | 'business' | 'admin'> = {
     'hub': 'business',
-    'brand': 'business',
     'business': 'business',
     'professional': 'professional',
-    'trainer': 'trainer',
     'admin': 'admin',
     'client': 'professional', // Default fallback
   };

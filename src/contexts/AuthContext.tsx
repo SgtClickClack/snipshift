@@ -61,7 +61,8 @@ function getApiBase(): string {
 
 /** Paths where user is already in onboarding flow; do not redirect to /onboarding if already here */
 function isOnboardingRoute(path: string): boolean {
-  return path.startsWith('/onboarding') || path === '/role-selection';
+  // INVESTOR BRIEFING FIX: /role-selection removed - all onboarding flows through /onboarding
+  return path.startsWith('/onboarding');
 }
 
 /** Neutral routes: pages that should NOT trigger auth-based redirects (e.g. investor portal) */
@@ -329,7 +330,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const idToken = await firebaseUser.getIdToken(/* forceRefresh */ false);
     setToken(idToken);
 
-    const effectivelyOnboarding = currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection' || isOnboardingModeRef.current;
+    // INVESTOR BRIEFING FIX: /role-selection removed from onboarding paths
+    const effectivelyOnboarding = currentPath.startsWith('/onboarding') || currentPath === '/signup' || isOnboardingModeRef.current;
 
     // PERFORMANCE OPTIMIZATION: Use single /api/bootstrap endpoint
     // This returns both user and venue data in one request, cutting auth overhead in half
@@ -423,12 +425,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsSystemReady(true); // Auth complete (needs onboarding)
         setUser(null);
         
-        // ONBOARDING REDIRECT LOCKDOWN: New users MUST go to role-selection/onboarding
+        // INVESTOR BRIEFING FIX: New users MUST go to /onboarding - the modern gateway
         // This guards against the signup redirect bypass where Firebase auth exists but no DB profile
         const needsOnboardingRedirect = apiResponse.needsOnboarding === true;
         if (needsOnboardingRedirect && !isOnboardingRoute(currentPath) && !isNeutralRoute(currentPath)) {
           setRedirecting(true);
-          navigate('/role-selection', { replace: true });
+          navigate('/onboarding', { replace: true });
         }
         
         // DEDUPLICATION: Mark hydration as complete
@@ -544,11 +546,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return;
         }
         
-        // ONBOARDING LOCKDOWN: User has DB profile but isOnboarded=false - redirect to role-selection/onboarding
+        // INVESTOR BRIEFING FIX: User has DB profile but isOnboarded=false - redirect to /onboarding
         // This catches users who started signup but didn't complete the flow
         if (!isOnboardingRoute(currentPath) && !isNeutralRoute(currentPath)) {
           setRedirecting(true);
-          navigate('/role-selection', { replace: true });
+          navigate('/onboarding', { replace: true });
         }
       }
       
@@ -565,7 +567,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     } else {
       // No profile: new user or still registering
-      if (currentPath.startsWith('/onboarding') || currentPath === '/signup' || currentPath === '/role-selection') {
+      // INVESTOR BRIEFING FIX: /role-selection removed from onboarding paths
+      if (currentPath.startsWith('/onboarding') || currentPath === '/signup') {
         isOnboardingModeRef.current = true;
       }
       setIsRegistered(false);
@@ -624,11 +627,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Track pathname changes to keep onboarding mode flag in sync
   // This ensures we suppress fetches / treat 401 as expected when still in registration flow.
-  // Include /role-selection so 401 from /api/me during role choice is not treated as "auth failed".
+  // INVESTOR BRIEFING FIX: /role-selection removed - all onboarding flows through /onboarding
   useEffect(() => {
     const isOnSignupOrOnboarding = location.pathname.startsWith('/onboarding') || 
-                                   location.pathname === '/signup' ||
-                                   location.pathname === '/role-selection';
+                                   location.pathname === '/signup';
     // INVESTOR BRIEFING FIX: Investor portal is also a "no-lock" zone
     const isNeutralZone = location.pathname.startsWith('/investorportal');
     if (isOnSignupOrOnboarding || isNeutralZone) {
@@ -692,7 +694,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setFirebaseUser(firebaseUser);
 
             // Early unlock: on signup/onboarding, don't block UI on /api/me — show form immediately
-            if (path === '/signup' || path.startsWith('/onboarding') || path === '/role-selection') {
+            // INVESTOR BRIEFING FIX: /role-selection removed - now redirects to /onboarding
+            if (path === '/signup' || path.startsWith('/onboarding')) {
               setIsNavigationLocked(false);
             }
 

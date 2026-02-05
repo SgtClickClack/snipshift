@@ -27,7 +27,7 @@ export default function HomePage() {
     
     try {
       // Update user role via API (this adds the role to their account)
-      await apiRequest("POST", "/api/users/onboarding/complete", {
+      await apiRequest("POST", "/api/onboarding/complete", {
         role,
         displayName: user?.name ?? user?.email ?? "User",
         phone: (user as { phone?: string })?.phone ?? "",
@@ -43,12 +43,11 @@ export default function HomePage() {
         description: `${role} role added to your account. Taking you to your ${role} dashboard.`,
       });
 
+      // INVESTOR BRIEFING FIX: Only Venue Owner (hub) and Professional roles remain
       // Redirect to dashboard for this role
-      const dashboardMap = {
+      const dashboardMap: Record<string, string> = {
         hub: '/venue/dashboard',
-        professional: '/professional-dashboard',
-        brand: '/brand-dashboard',
-        trainer: '/trainer-dashboard'
+        professional: '/professional-dashboard'
       };
       
       const targetDashboard = dashboardMap[role];

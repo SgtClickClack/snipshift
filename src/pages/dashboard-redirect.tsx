@@ -23,5 +23,6 @@ export default function DashboardRedirect() {
     return <Navigate to={getDashboardRoute(user.currentRole)} replace />;
   }
 
-  return <Navigate to="/role-selection" replace />;
+  // INVESTOR BRIEFING FIX: Redirect to /onboarding instead of /role-selection
+  return <Navigate to="/onboarding" replace />;
 }

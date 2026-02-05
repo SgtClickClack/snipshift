@@ -62,7 +62,7 @@ export default function ProfessionalOnboardingPage() {
         await auth.currentUser.getIdToken(true);
       }
 
-      const response = await apiRequest('POST', '/api/users/onboarding/complete', {
+      const response = await apiRequest('POST', '/api/onboarding/complete', {
         role: 'professional',
         displayName: formData.displayName,
         phone: (user as { phone?: string })?.phone ?? '',

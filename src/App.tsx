@@ -40,7 +40,7 @@ import { OAuthCallback } from '@/pages/oauth-callback';
 import NotFound from '@/pages/not-found';
 
 // Onboarding pages - lazy load (behind auth wall)
-const RoleSelectionPage = lazy(() => import('@/pages/role-selection'));
+// PURGED: RoleSelectionPage lazy import removed - /role-selection now redirects to /onboarding
 const OnboardingPage = lazy(() => import('@/pages/Onboarding'));
 const HubOnboardingPage = lazy(() => import('@/pages/onboarding/hub'));
 const ProfessionalOnboardingPage = lazy(() => import('@/pages/onboarding/professional'));
@@ -83,8 +83,8 @@ const WorkerEarningsView = lazy(() => import('@/pages/worker-earnings'));
 const ShopDashboard = lazy(() => import('@/pages/shop-dashboard'));
 const ShopSchedulePage = lazy(() => import('@/pages/shop/schedule'));
 const ProfessionalDashboard = lazy(() => import('@/pages/professional-dashboard'));
-const BrandDashboard = lazy(() => import('@/pages/brand-dashboard'));
-const TrainerDashboard = lazy(() => import('@/pages/trainer-dashboard'));
+// PURGED: BrandDashboard and TrainerDashboard removed per Investor Briefing Lockdown
+// System now only knows about 'Venue Owner' (Engine) and 'Professional' (Staff)
 // Feature pages - lazy load for better performance
 const ProfilePage = lazy(() => import('@/pages/profile'));
 const WalletPage = lazy(() => import('@/pages/wallet'));
@@ -124,14 +124,14 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
 
   const isBridgeRoute = location.pathname === '/auth/bridge';
   const hideNavbar = location.pathname === '/onboarding' || location.pathname === '/' || location.pathname === '/investorportal' || isBridgeRoute;
-  const hideFooter = ['/onboarding', '/login', '/signup', '/role-selection', '/onboarding/role-selection', '/forgot-password', '/auth/bridge', '/investorportal'].includes(location.pathname);
+  const hideFooter = ['/onboarding', '/login', '/signup', '/forgot-password', '/auth/bridge', '/investorportal'].includes(location.pathname);
 
   // Initialize push notifications when user is authenticated
   usePushNotifications();
 
   // PERFORMANCE: Use isSystemReady for smooth splash-to-app transition
   // This eliminates the skeleton flash by keeping HTML splash until auth + venue check complete
-  const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || location.pathname === '/role-selection' || location.pathname === '/investorportal';
+  const isSignupOrLandingOrOnboarding = location.pathname === '/signup' || location.pathname === '/' || location.pathname.startsWith('/onboarding') || location.pathname === '/investorportal';
   
   // If system isn't ready yet and we haven't handled splash, render nothing (keep HTML splash)
   // This prevents the skeleton flash during auth handshake
@@ -214,21 +214,9 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </Suspense>
         } />
 
-        <Route path="/role-selection" element={
-          <AuthGuard requireAuth={true}>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <RoleSelectionPage />
-            </Suspense>
-          </AuthGuard>
-        } />
-
-        <Route path="/onboarding/role-selection" element={
-          <AuthGuard requireAuth={true}>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <RoleSelectionPage />
-            </Suspense>
-          </AuthGuard>
-        } />
+        {/* INVESTOR BRIEFING LOCKDOWN: /role-selection redirects to /onboarding - the modern gateway */}
+        <Route path="/role-selection" element={<Navigate to="/onboarding" replace />} />
+        <Route path="/onboarding/role-selection" element={<Navigate to="/onboarding" replace />} />
 
         <Route path="/onboarding" element={
           <AuthGuard requireAuth={true}>
@@ -478,21 +466,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
           </ProtectedRoute>
         } />
 
-        <Route path="/brand-dashboard" element={
-          <ProtectedRoute requiredRole="brand">
-            <Suspense fallback={<PageLoadingFallback />}>
-              <BrandDashboard />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/trainer-dashboard" element={
-          <ProtectedRoute requiredRole="trainer">
-            <Suspense fallback={<PageLoadingFallback />}>
-              <TrainerDashboard />
-            </Suspense>
-          </ProtectedRoute>
-        } />
+        {/* PURGED: /brand-dashboard and /trainer-dashboard routes removed per Investor Briefing Lockdown */}
 
         <Route path="/venue-dashboard" element={
           <Navigate to="/venue/dashboard" replace />

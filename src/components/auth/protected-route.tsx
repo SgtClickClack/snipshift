@@ -4,10 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { isBusinessRole } from '@/lib/roles';
 
+// INVESTOR BRIEFING FIX: Removed 'brand' and 'trainer' roles - system only knows Venue Owner and Professional
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business' | 'venue';
-  allowedRoles?: Array<'hub' | 'professional' | 'brand' | 'trainer' | 'admin' | 'business' | 'venue'>;
+  requiredRole?: 'hub' | 'professional' | 'admin' | 'business' | 'venue';
+  allowedRoles?: Array<'hub' | 'professional' | 'admin' | 'business' | 'venue'>;
 }
 
 /**
@@ -62,8 +63,9 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
   const userRoles = user.roles || [userRole];
 
   if (requiredRole) {
+    // INVESTOR BRIEFING FIX: Removed 'brand' from business-type role check
     // For business-type roles, use isBusinessRole helper for consistency
-    if (['hub', 'business', 'venue', 'brand'].includes(requiredRole)) {
+    if (['hub', 'business', 'venue'].includes(requiredRole)) {
       if (!isBusinessRole(userRole) && !userRoles.some(r => isBusinessRole(r))) {
         return <Navigate to="/unauthorized" replace />;
       }
@@ -74,8 +76,9 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
 
   if (allowedRoles && allowedRoles.length > 0) {
     const hasAllowedRole = allowedRoles.some(role => {
+      // INVESTOR BRIEFING FIX: Removed 'brand' from business-type role check
       // For business-type roles, use isBusinessRole helper
-      if (['hub', 'business', 'venue', 'brand'].includes(role)) {
+      if (['hub', 'business', 'venue'].includes(role)) {
         return isBusinessRole(userRole) || userRoles.some(r => isBusinessRole(r));
       }
       return userRole === role || userRoles.includes(role);

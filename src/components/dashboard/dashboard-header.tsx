@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
@@ -10,21 +10,19 @@ import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { apiRequest } from "@/lib/queryClient";
-import { updateBusinessProfile, updateUserProfile } from "@/lib/api";
+// INVESTOR BRIEFING FIX: Removed updateUserProfile import - brand/trainer dashboards removed
+import { updateBusinessProfile } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
 
+// INVESTOR BRIEFING FIX: Removed isBrand and isTrainer props - no longer needed
 interface DashboardHeaderProps {
   // New API props
   /** User object - if provided, extracts bannerImage and profileImage from user */
   user?: User | null;
   /** Business object - if provided, extracts bannerImage and profileImage from business */
   business?: any | null;
-  /** Whether this is a brand dashboard (affects upload endpoint) */
-  isBrand?: boolean;
-  /** Whether this is a trainer dashboard (affects upload endpoint) */
-  isTrainer?: boolean;
   
   // Legacy API props (for backward compatibility)
   /** Banner image URL */
@@ -72,8 +70,6 @@ export default function DashboardHeader({
   // New API props
   user,
   business,
-  isBrand = false,
-  isTrainer = false,
   // Legacy API props
   bannerImage: legacyBannerImage,
   profileImage: legacyProfileImage,
@@ -92,9 +88,8 @@ export default function DashboardHeader({
   const bannerImage = user?.bannerUrl || user?.bannerImage || business?.bannerUrl || business?.bannerImage || legacyBannerImage;
   const profileImage = user?.avatarUrl || user?.photoURL || business?.avatarUrl || business?.logoUrl || business?.profileImage || legacyProfileImage;
   
-  // Determine editable state: new API takes precedence (isBrand/isTrainer means always editable)
-  // Otherwise use legacy editable prop (defaults to false)
-  const editable = isBrand || isTrainer || legacyEditable || false;
+  // INVESTOR BRIEFING FIX: Removed isBrand/isTrainer conditional - use legacy editable prop
+  const editable = legacyEditable || false;
   const { isCompressing: isCompressingBanner, handleImageSelect: handleBannerImageSelect } = useImageUpload();
   const { isCompressing: isCompressingLogo, handleImageSelect: handleLogoImageSelect } = useImageUpload();
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -348,9 +343,8 @@ export default function DashboardHeader({
 
       // Now save to database in the background (don't await before showing UI)
       try {
-        // Use updateUserProfile for brands/trainers, updateBusinessProfile for businesses
-        const updateFunction = (isBrand || isTrainer) ? updateUserProfile : updateBusinessProfile;
-        const responseData = await updateFunction({
+        // INVESTOR BRIEFING FIX: Always use updateBusinessProfile (brand/trainer dashboards removed)
+        const responseData = await updateBusinessProfile({
           bannerUrl: downloadURL,
         });
 
@@ -555,9 +549,8 @@ export default function DashboardHeader({
 
       // Now save to database in the background (don't await before showing UI)
       try {
-        // Use updateUserProfile for brands/trainers, updateBusinessProfile for businesses
-        const updateFunction = (isBrand || isTrainer) ? updateUserProfile : updateBusinessProfile;
-        const responseData = await updateFunction({
+        // INVESTOR BRIEFING FIX: Always use updateBusinessProfile (brand/trainer dashboards removed)
+        const responseData = await updateBusinessProfile({
           avatarUrl: downloadURL,
         });
 
