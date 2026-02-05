@@ -879,8 +879,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         />
       )}
       
-      {/* Banner/Profile Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Banner/Profile Header - MOBILE FIX: Reduced padding on mobile */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <DashboardHeader
           bannerImage={user?.bannerUrl || user?.bannerImage}
           profileImage={user?.avatarUrl || user?.photoURL || user?.profileImageURL || user?.profileImage}
@@ -904,13 +904,14 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         />
       </div>
 
-      {/* Dashboard Header */}
+      {/* Dashboard Header - MOBILE FIX: Reduced padding on mobile */}
       <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-black tracking-tighter text-foreground" style={{ fontFamily: 'Urbanist, sans-serif' }}>Logistics Engine</h1>
+                {/* TYPOGRAPHY REFINEMENT: Urbanist 900 for main title */}
+                <h1 className="text-xl sm:text-2xl tracking-tighter text-foreground" style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}>Logistics Engine</h1>
                 {/* Xero Status Pill - High visibility for investor demo */}
                 {isXeroConnected && (
                   <Badge 
@@ -923,40 +924,46 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                   </Badge>
                 )}
               </div>
-              <p className="text-muted-foreground">{user.displayName || user.email}</p>
+              {/* TYPOGRAPHY REFINEMENT: Urbanist 500 for secondary labels */}
+              <p className="text-muted-foreground text-sm" style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 500 }}>{user.displayName || user.email}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <TutorialTrigger />
-              {/* Xero Quick Link Button */}
-              {isXeroConnected && (
-                <Button
-                  variant="outline"
+            {/* VISUAL FIDELITY: Unified header action group - cleaner hierarchy */}
+            <div className="flex items-center gap-2">
+              {/* Secondary Actions - Grouped together with subtle styling */}
+              <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+                <TutorialTrigger />
+                {isXeroConnected && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-zinc-400 hover:text-[#CCFF00] hover:bg-white/5"
+                    onClick={() => navigate('/settings?category=integrations')}
+                    data-testid="button-xero-quick-link"
+                  >
+                    <XeroLogo className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button 
+                  id="messages-btn"
+                  variant="ghost"
                   size="sm"
-                  className="border-[#BAFF39]/50 text-[#BAFF39] hover:bg-[#BAFF39]/10 hover:border-[#BAFF39]"
-                  onClick={() => navigate('/settings?category=integrations')}
-                  data-testid="button-xero-quick-link"
+                  onClick={() => handleQuickAction('open-messages')}
+                  className="h-8 px-2 text-zinc-400 hover:text-white hover:bg-white/5"
+                  data-testid="button-open-messages"
                 >
-                  <XeroLogo className="mr-1.5 h-4 w-4" />
-                  Xero Sync
+                  <MessageSquare className="h-4 w-4" />
                 </Button>
-              )}
-              <Button 
-                id="messages-btn"
-                onClick={() => handleQuickAction('open-messages')}
-                className="bg-gradient-to-r from-steel-700 to-steel-800 hover:from-steel-800 hover:to-steel-900 text-white shadow-md hover:shadow-lg transition-all duration-200"
-                data-testid="button-open-messages"
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Messages
-              </Button>
+              </div>
+              {/* Primary Action - Refined Glow style */}
               <Button 
                 id="post-job-btn"
                 onClick={() => handleQuickAction('post-job')}
-                variant="accent"
-                className="shadow-neon-realistic"
+                variant="refined-glow"
+                size="sm"
+                className="h-9"
                 data-testid="button-post-job"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-1.5 h-4 w-4" />
                 Post New Job
               </Button>
             </div>
@@ -1043,7 +1050,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 scroll-pt-20">
+      {/* MOBILE FIX: Reduced vertical padding on mobile */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 scroll-pt-20">
         {/* Subscription and Stripe banners: vertical stack with gap so they don't overlap on small screens */}
         <div className="flex flex-col gap-4">
           {/* Onboarding Incomplete Banner - Shows when hub user has no active subscription */}
@@ -1995,20 +2003,25 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       </Dialog>
       
       {/* CEO SECRET DOOR: ARCHITECT PORTAL - Only visible to julian.g.roberts@gmail.com */}
-      {/* Positioned bottom-left adjacent to ENGINE STATUS ticker, z-50 to stay above footer but below chat modal */}
+      {/* VISUAL FIDELITY: Repositioned bottom-left with 'Subtle Pulse' style */}
+      {/* No solid background, Electric Lime outline, small pulsing dot - sophisticated/premium feel */}
       {user?.email?.toLowerCase() === 'julian.g.roberts@gmail.com' && (
         <button
           onClick={() => navigate('/admin/cto-dashboard')}
-          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full 
-                     bg-zinc-950/90 backdrop-blur-xl border-2 border-[#CCFF00]/60
-                     shadow-[0_0_30px_rgba(204,255,0,0.4),_inset_0_0_20px_rgba(204,255,0,0.1)]
-                     hover:shadow-[0_0_40px_rgba(204,255,0,0.6),_inset_0_0_30px_rgba(204,255,0,0.15)]
-                     hover:scale-105 transition-all duration-300 cursor-pointer group"
-          style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}
+          className="fixed bottom-20 left-6 z-40 flex items-center gap-3 px-4 py-2.5 rounded-lg 
+                     bg-transparent border border-[#CCFF00]/50
+                     hover:border-[#CCFF00] hover:shadow-[0_0_15px_rgba(204,255,0,0.2)]
+                     transition-all duration-300 cursor-pointer group"
+          style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 600 }}
           data-testid="architect-portal-button"
         >
-          <Brain className="h-5 w-5 text-[#CCFF00] group-hover:animate-pulse drop-shadow-[0_0_8px_rgba(204,255,0,0.8)]" />
-          <span className="text-[#CCFF00] text-sm tracking-wider uppercase drop-shadow-[0_0_4px_rgba(204,255,0,0.6)]">
+          {/* Subtle Pulse Dot - Small pulsing indicator */}
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#CCFF00] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#CCFF00] shadow-[0_0_6px_rgba(204,255,0,0.8)]"></span>
+          </span>
+          <Brain className="h-4 w-4 text-[#CCFF00]/80 group-hover:text-[#CCFF00] transition-colors" />
+          <span className="text-[#CCFF00]/80 text-xs tracking-wider uppercase group-hover:text-[#CCFF00] transition-colors">
             ARCHITECT PORTAL
           </span>
         </button>

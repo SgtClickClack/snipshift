@@ -50,6 +50,14 @@ class ConsoleErrorReporting implements ErrorReportingService {
       return;
     }
     
+    // FINAL_HOSPOGO_STABILIZATION_PUSH: Filter Firebase background hiccups
+    if (isFirebaseBackgroundHiccup(report.error, report.context)) {
+      if (process.env.DEBUG_AUTH === 'true') {
+        console.debug('[ERROR_REPORTING] Filtered Firebase hiccup:', report.message);
+      }
+      return;
+    }
+    
     const logLevel = report.severity === 'critical' ? 'error' : report.severity;
     const logMethod = (logLevel === 'warning' ? console.warn : logLevel === 'error' ? console.error : logLevel === 'info' ? console.info : console.log) || console.error;
     
@@ -111,6 +119,20 @@ const HANDSHAKE_401_PATHS = [
 ];
 
 /**
+ * FINAL_HOSPOGO_STABILIZATION_PUSH: Firebase Background Hiccup Detection
+ * 
+ * These are confirmed non-critical 400 'Bad Request' errors from Firebase infrastructure
+ * (specifically firebaseinstallations.googleapis.com) that occur during normal operation.
+ * Filter them from Sentry to avoid noise.
+ */
+const FIREBASE_BACKGROUND_HICCUP_PATTERNS = [
+  'firebaseinstallations.googleapis.com',
+  'firebase-installations',
+  'Firebase Installation',
+  'installations.firebaseapp.com',
+];
+
+/**
  * Check if an error is a handshake 401 that should be filtered from Sentry
  */
 export function isHandshake401Error(error: Error | unknown, context?: ErrorContext): boolean {
@@ -147,6 +169,31 @@ export function isHandshake401Error(error: Error | unknown, context?: ErrorConte
 }
 
 /**
+ * FINAL_HOSPOGO_STABILIZATION_PUSH: Check if error is a Firebase background hiccup
+ * 
+ * Filters 400 'Bad Request' errors from firebaseinstallations.googleapis.com
+ * These are confirmed non-critical background hiccups that should not pollute Sentry.
+ */
+export function isFirebaseBackgroundHiccup(error: Error | unknown, context?: ErrorContext): boolean {
+  if (!error) return false;
+  
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorString = errorMessage.toLowerCase();
+  
+  // Check for 400 status code or 'bad request' in message
+  const is400Error = errorString.includes('400') || errorString.includes('bad request');
+  if (!is400Error) return false;
+  
+  // Check if it matches Firebase installations patterns
+  const path = context?.path || '';
+  const fullContext = `${errorMessage} ${path}`.toLowerCase();
+  
+  return FIREBASE_BACKGROUND_HICCUP_PATTERNS.some(pattern => 
+    fullContext.includes(pattern.toLowerCase())
+  );
+}
+
+/**
  * Sentry Error Reporting Implementation
  * 
  * To use Sentry, install: npm install @sentry/node
@@ -177,6 +224,12 @@ class SentryErrorReporting implements ErrorReportingService {
             console.log('[Sentry] Filtering handshake 401:', exception.message);
             return null; // Drop the event
           }
+          
+          // FINAL_HOSPOGO_STABILIZATION_PUSH: Filter Firebase background hiccups
+          if (isFirebaseBackgroundHiccup(exception)) {
+            console.log('[Sentry] Filtering Firebase hiccup:', exception.message);
+            return null; // Drop the event
+          }
         }
         
         // Also check for 401 errors in the exception chain
@@ -189,6 +242,15 @@ class SentryErrorReporting implements ErrorReportingService {
           )
         )) {
           console.log('[Sentry] Filtering 401 event based on exception values');
+          return null;
+        }
+        
+        // FINAL_HOSPOGO_STABILIZATION_PUSH: Filter Firebase installation errors from event values
+        if (event.exception?.values?.some(e => 
+          (e.value?.includes('400') || e.value?.toLowerCase().includes('bad request')) &&
+          e.value?.toLowerCase().includes('firebaseinstallations')
+        )) {
+          console.log('[Sentry] Filtering Firebase installation error based on exception values');
           return null;
         }
         

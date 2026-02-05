@@ -992,6 +992,7 @@ button:active, a:active, [role="button"]:active {
   /* Remove glassmorphism effects */
   .backdrop-blur,
   [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
   
@@ -1203,6 +1204,99 @@ button:active, a:active, [role="button"]:active {
 .pitch-mode-active [data-radix-slider-range] {
   background: linear-gradient(90deg, rgba(186, 255, 57, 0.8) 0%, rgba(186, 255, 57, 1) 100%) !important;
   box-shadow: 0 0 10px rgba(186, 255, 57, 0.4) !important;
+}
+
+/* ================================================
+   HOSPOGO VISUAL FIDELITY OVERHAUL
+   Transform UI from 'intense/cluttered' to 'sophisticated/premium'
+   ================================================ */
+
+/* REFINED GLOW - Primary Button Style */
+/* Transparent bg, Electric Lime border, subtle text-shadow */
+/* Hover: Scale 1.02x with soft outer glow (box-shadow: 0 0 15px rgba(204, 255, 0, 0.3)) */
+.btn-refined-glow,
+button[data-variant="refined-glow"] {
+  background: transparent !important;
+  border: 1px solid #CCFF00 !important;
+  color: #CCFF00 !important;
+  text-shadow: 0 0 8px rgba(204, 255, 0, 0.4);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-refined-glow:hover,
+button[data-variant="refined-glow"]:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(204, 255, 0, 0.3);
+}
+
+/* GLASSMORPHISM - Premium card backgrounds */
+/* bg-white/5 + backdrop-blur-md for sophisticated look */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.glass-card-dark {
+  background: rgba(0, 0, 0, 0.4) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* SUBTLE PULSE - Architect Portal / Admin buttons */
+/* No solid background, Electric Lime outline, small pulsing dot */
+.btn-subtle-pulse {
+  background: transparent !important;
+  border: 1px solid #CCFF00 !important;
+  color: #CCFF00 !important;
+  position: relative;
+}
+
+.btn-subtle-pulse::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #CCFF00;
+  border-radius: 50%;
+  animation: subtlePulse 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(204, 255, 0, 0.6);
+}
+
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
+/* COMPACT STAT CARDS - Reduced size for cleaner overview */
+.stat-card-compact {
+  padding: 1rem !important;
+}
+
+.stat-card-compact .stat-value {
+  font-size: 1.75rem !important;
+  line-height: 1.2 !important;
+}
+
+.stat-card-compact .stat-icon-wrapper {
+  padding: 0.5rem !important;
+}
+
+.stat-card-compact .stat-icon-wrapper svg {
+  width: 1rem !important;
+  height: 1rem !important;
 }
 
 /* ================================================

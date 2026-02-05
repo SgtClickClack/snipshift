@@ -176,8 +176,8 @@ export default function InvestorChatWidget() {
         Feedback button relocated to Footer.tsx - no longer a floating FAB.
       */}
       <div 
-        className={`fixed bottom-20 sm:bottom-6 right-24 z-40 transition-all duration-500 ${
-          isOpen ? 'w-[400px] max-w-[calc(100vw-48px)]' : 'w-auto'
+        className={`fixed bottom-20 sm:bottom-6 right-4 sm:right-24 z-40 transition-all duration-500 ${
+          isOpen ? 'w-[calc(100vw-32px)] sm:w-[400px] sm:max-w-[calc(100vw-48px)]' : 'w-auto'
         }`}
       >
         {/* Expanded Chat Panel */}

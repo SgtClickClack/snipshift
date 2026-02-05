@@ -29,6 +29,37 @@ const HANDSHAKE_401_PATTERNS = [
 ];
 
 /**
+ * FINAL_HOSPOGO_STABILIZATION_PUSH: Firebase background hiccups to filter
+ * These are confirmed non-critical 400 errors from Firebase infrastructure
+ * that occur during normal operation and should not pollute console/Sentry.
+ */
+const FIREBASE_BACKGROUND_HICCUP_PATTERNS = [
+  'firebaseinstallations.googleapis.com',
+  'firebase-installations',
+  'Firebase Installation',
+  'installations.firebaseapp.com',
+];
+
+/**
+ * Check if the log message contains a Firebase background hiccup that should be filtered
+ */
+function isFirebaseBackgroundHiccup(args: LogArgs): boolean {
+  const message = args.map(arg => 
+    typeof arg === 'string' ? arg : 
+    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+  ).join(' ');
+  
+  // Filter 400 Bad Request from firebaseinstallations.googleapis.com
+  if (message.includes('400') || message.toLowerCase().includes('bad request')) {
+    return FIREBASE_BACKGROUND_HICCUP_PATTERNS.some(pattern => 
+      message.toLowerCase().includes(pattern.toLowerCase())
+    );
+  }
+  
+  return false;
+}
+
+/**
  * Check if the log message contains a handshake 401 pattern that should be filtered
  */
 function isHandshake401Log(args: LogArgs): boolean {
@@ -60,6 +91,8 @@ export const logger = {
     if (!isDev) return;
     // AUTH REHYDRATION FIX: Filter handshake 401 warnings in production
     if (isHandshake401Log(args)) return;
+    // FINAL_HOSPOGO_STABILIZATION_PUSH: Filter Firebase background hiccups
+    if (isFirebaseBackgroundHiccup(args)) return;
     console.warn(getPrefix('WARN', scope), ...args);
   },
   error(scope: string | undefined, ...args: LogArgs) {
@@ -69,6 +102,14 @@ export const logger = {
       // In dev mode, log as debug instead of filtering completely
       if (isDev && debugEnabled) {
         console.debug(getPrefix('DEBUG', scope), '[Filtered handshake 401]', ...args);
+      }
+      return;
+    }
+    // FINAL_HOSPOGO_STABILIZATION_PUSH: Filter Firebase background hiccups (400 Bad Request)
+    // These are confirmed non-critical errors from firebaseinstallations.googleapis.com
+    if (isFirebaseBackgroundHiccup(args)) {
+      if (isDev && debugEnabled) {
+        console.debug(getPrefix('DEBUG', scope), '[Filtered Firebase hiccup]', ...args);
       }
       return;
     }

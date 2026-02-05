@@ -652,15 +652,16 @@ function CTODashboardInner() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* MOBILE FIX: Stack metrics vertically on mobile, 2x2 on tablet, 4-col on desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Projected Annualised Revenue - Hero Metric */}
               {/* TYPOGRAPHY: Urbanist 900 italic for investor impact */}
-              <div className="col-span-2 p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border border-[#BAFF39]/30">
+              <div className="sm:col-span-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border border-[#BAFF39]/30">
                 <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-1">
                   Projected Annualised Revenue
                 </p>
                 <p 
-                  className="text-5xl md:text-6xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)]"
+                  className="text-3xl sm:text-5xl lg:text-6xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)]"
                   style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
                 >
                   ${revenueMetrics.projectedARR.toLocaleString()}
@@ -811,12 +812,12 @@ function CTODashboardInner() {
               </div>
 
               {/* Projected ARR Display - Hero Metric */}
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
+              <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
                 <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
                   Projected ARR at {saturationLevel}% Saturation
                 </p>
                 <p 
-                  className="text-6xl md:text-7xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)]"
+                  className="text-4xl sm:text-6xl lg:text-7xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)]"
                   style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
                 >
                   ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()}
@@ -826,8 +827,8 @@ function CTODashboardInner() {
                 </p>
               </div>
 
-              {/* Valuation Context */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* Valuation Context - MOBILE FIX: Stack on mobile, 3-col on tablet+ */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div 
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     saturationLevel === 10 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
@@ -929,18 +930,20 @@ function CTODashboardInner() {
                   <p className="text-zinc-600 text-sm mt-1">The AI is performing well!</p>
                 </div>
               ) : (
-                <ScrollArea className="h-[400px] overflow-x-hidden">
-                  <Table className="min-w-0">
-                    <TableHeader className="sticky top-0 bg-zinc-900/95 backdrop-blur-sm z-10">
-                      <TableRow className="border-zinc-800 hover:bg-transparent">
-                        {/* 13" LAPTOP FIX: Optimized column widths to prevent overlap */}
-                        <TableHead className="text-zinc-400 w-[35%] min-w-[150px]">User Query</TableHead>
-                        <TableHead className="text-zinc-400 min-w-[100px] hidden md:table-cell">Timestamp</TableHead>
-                        <TableHead className="text-zinc-400 min-w-[100px]">Gap Type</TableHead>
-                        <TableHead className="text-zinc-400 min-w-[80px] hidden lg:table-cell">Status</TableHead>
-                        <TableHead className="text-zinc-400 text-right min-w-[100px] sticky right-0 bg-zinc-900/95">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                <ScrollArea className="h-[400px]">
+                  {/* MOBILE FIX: Allow horizontal scroll on small screens, hide overflow on larger */}
+                  <div className="overflow-x-auto sm:overflow-x-hidden">
+                    <Table className="min-w-[500px] sm:min-w-0">
+                      <TableHeader className="sticky top-0 bg-zinc-900/95 backdrop-blur-sm z-10">
+                        <TableRow className="border-zinc-800 hover:bg-transparent">
+                          {/* MOBILE FIX: Removed min-w constraints, use responsive visibility */}
+                          <TableHead className="text-zinc-400 w-[40%]">User Query</TableHead>
+                          <TableHead className="text-zinc-400 hidden md:table-cell">Timestamp</TableHead>
+                          <TableHead className="text-zinc-400">Gap Type</TableHead>
+                          <TableHead className="text-zinc-400 hidden lg:table-cell">Status</TableHead>
+                          <TableHead className="text-zinc-400 text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {filteredGaps.map((gap: IntelligenceGap) => {
                         const gapConfig = GAP_TYPE_CONFIG[gap.gapType];
@@ -1000,8 +1003,8 @@ function CTODashboardInner() {
                                 </Badge>
                               )}
                             </TableCell>
-                            {/* Action - sticky on right to prevent overlap */}
-                            <TableCell className="text-right sticky right-0 bg-zinc-800/80 backdrop-blur-sm">
+                            {/* Action */}
+                            <TableCell className="text-right">
                               {!isPatched && (
                                 <Button
                                   size="sm"
@@ -1023,8 +1026,9 @@ function CTODashboardInner() {
                           </TableRow>
                         );
                       })}
-                    </TableBody>
-                  </Table>
+                      </TableBody>
+                    </Table>
+                  </div>
                 </ScrollArea>
               )}
             </CardContent>

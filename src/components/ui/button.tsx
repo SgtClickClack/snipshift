@@ -25,6 +25,11 @@ const buttonVariants = cva(
           "bg-brand-neon text-brand-dark font-bold shadow-neon-realistic hover:bg-brand-neon/90 hover:-translate-y-0.5 border border-brand-neon/40 hover:shadow-[0_0_5px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.7),0_0_40px_rgba(186,255,57,0.4)]",
         charcoal: "bg-gradient-to-b from-steel-800 to-steel-900 border-2 border-steel-700 text-white font-semibold hover:from-steel-700 hover:to-steel-800 hover:-translate-y-0.5 shadow-lg",
         steel: "bg-gradient-to-b from-steel-400 to-steel-500 border border-steel-600 text-white hover:from-steel-300 hover:to-steel-400 hover:-translate-y-0.5 shadow-md",
+        // REFINED GLOW - Sophisticated/Premium Electric Lime style
+        // Transparent bg, 1px Electric Lime border, subtle text-shadow
+        // Hover: Scale 1.02x with soft outer glow
+        "refined-glow":
+          "bg-transparent border border-[#CCFF00] text-[#CCFF00] font-semibold hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(204,255,0,0.3)] [text-shadow:0_0_8px_rgba(204,255,0,0.4)]",
       },
       size: {
         default: "h-11 px-4 py-2",

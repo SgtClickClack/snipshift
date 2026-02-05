@@ -699,6 +699,117 @@ import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 // Track if HTML splash has been removed (shared between App and AppRoutes)
 let htmlSplashRemoved = false;
 
+/**
+ * FINAL_HOSPOGO_STABILIZATION_PUSH: Electric Lime Hydration Splash
+ * 
+ * Full-screen branded splash shown during the ~1148ms Firebase handshake window.
+ * This prevents ALL nested components (Stripe, Xero, Analytics, Chat widgets) from
+ * even attempting to render or fetch data, eliminating 401 console errors entirely.
+ */
+function HydrationSplash() {
+  return (
+    <div 
+      className="fixed inset-0 z-[10000] flex flex-col items-center justify-center"
+      style={{ 
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f1f0a 100%)',
+      }}
+      data-testid="hydration-splash"
+      aria-hidden="true"
+    >
+      {/* HospoGo Logo with Electric Lime Glow */}
+      <div className="flex flex-col items-center justify-center">
+        <div 
+          className="text-5xl md:text-7xl font-black tracking-tight mb-4"
+          style={{ 
+            fontFamily: 'Urbanist, sans-serif',
+            color: '#CCFF00',
+            textShadow: '0 0 40px rgba(204, 255, 0, 0.6), 0 0 80px rgba(204, 255, 0, 0.3)',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          HospoGo
+        </div>
+        
+        {/* Electric Lime Pulse Ring */}
+        <div className="relative w-16 h-16 mt-6">
+          <div 
+            className="absolute inset-0 rounded-full animate-ping"
+            style={{ 
+              backgroundColor: 'rgba(204, 255, 0, 0.2)',
+              animationDuration: '1.5s',
+            }}
+          />
+          <div 
+            className="absolute inset-2 rounded-full animate-pulse"
+            style={{ 
+              backgroundColor: 'rgba(204, 255, 0, 0.4)',
+              boxShadow: '0 0 20px rgba(204, 255, 0, 0.5)',
+            }}
+          />
+          <div 
+            className="absolute inset-4 rounded-full"
+            style={{ 
+              backgroundColor: '#CCFF00',
+              boxShadow: '0 0 30px rgba(204, 255, 0, 0.8)',
+            }}
+          />
+        </div>
+        
+        {/* Loading Text */}
+        <div 
+          className="mt-8 text-sm tracking-widest uppercase"
+          style={{ 
+            color: 'rgba(204, 255, 0, 0.7)',
+            fontFamily: 'Urbanist, sans-serif',
+            fontWeight: 500,
+          }}
+        >
+          Initializing Engine...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * FINAL_HOSPOGO_STABILIZATION_PUSH: Top-Level Hydration Gate
+ * 
+ * This component wraps ALL app content (including Analytics, Stripe, Xero integrations)
+ * and blocks rendering until Firebase auth handshake is complete.
+ * 
+ * The gate checks:
+ * 1. isSystemReady - true when Firebase + user profile + venue check are complete
+ * 2. !isLoading (isAuthLoading) - true when auth state has settled
+ * 
+ * Public routes (landing, status, waitlist, investor portal) bypass the gate.
+ */
+function HydrationGate({ children, splashHandled }: { children: React.ReactNode; splashHandled: boolean }) {
+  const { isSystemReady, isLoading } = useAuth();
+  const location = useLocation();
+  
+  // Public routes that NEVER need auth - bypass the hydration gate entirely
+  const isPublicRoute = 
+    location.pathname === '/' || 
+    location.pathname === '/status' || 
+    location.pathname === '/waitlist' ||
+    location.pathname.startsWith('/investorportal') ||
+    location.pathname === '/login' ||
+    location.pathname === '/signup' ||
+    location.pathname === '/forgot-password' ||
+    location.pathname.startsWith('/onboarding');
+  
+  // HYDRATION SHIELD: Block ALL content during the Firebase handshake window
+  // This prevents Stripe, Xero, Analytics, Chat widgets from firing 401 errors
+  const isHandshakeInProgress = !isSystemReady && isLoading;
+  
+  if (isHandshakeInProgress && !isPublicRoute && splashHandled) {
+    return <HydrationSplash />;
+  }
+  
+  // Once auth is ready (or on public routes), render all children
+  return <>{children}</>;
+}
+
 function App() {
   const [splashHandled, setSplashHandled] = useState(htmlSplashRemoved);
 
@@ -728,24 +839,28 @@ function App() {
               <TooltipProvider>
                 <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                   <AuthProvider>
-                    <PusherProvider>
-                      <NotificationProvider>
-                        <RouteProgressBar />
-                        <Toaster />
-                        <NotificationToast />
-                        <AppRoutes splashHandled={splashHandled} />
-                        <TutorialOverlay />
-                        {/* PERFORMANCE: Support Bot lazy-loads after primary UI is interactive */}
-                        <Suspense fallback={null}>
-                          <SupportChatWidget />
-                        </Suspense>
-                        <OfflineNotification />
-                        <InstallPrompt />
-                        <PwaUpdateHandler />
-                        <Analytics />
-                        <SpeedInsights />
-                      </NotificationProvider>
-                    </PusherProvider>
+                    {/* FINAL_HOSPOGO_STABILIZATION_PUSH: Top-level hydration gate */}
+                    {/* This wraps ALL content and shows Electric Lime splash during auth handshake */}
+                    <HydrationGate splashHandled={splashHandled}>
+                      <PusherProvider>
+                        <NotificationProvider>
+                          <RouteProgressBar />
+                          <Toaster />
+                          <NotificationToast />
+                          <AppRoutes splashHandled={splashHandled} />
+                          <TutorialOverlay />
+                          {/* PERFORMANCE: Support Bot lazy-loads after primary UI is interactive */}
+                          <Suspense fallback={null}>
+                            <SupportChatWidget />
+                          </Suspense>
+                          <OfflineNotification />
+                          <InstallPrompt />
+                          <PwaUpdateHandler />
+                          <Analytics />
+                          <SpeedInsights />
+                        </NotificationProvider>
+                      </PusherProvider>
+                    </HydrationGate>
                   </AuthProvider>
                 </Router>
               </TooltipProvider>
