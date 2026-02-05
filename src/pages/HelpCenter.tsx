@@ -362,7 +362,7 @@ export default function HelpCenter() {
               })}
             </div>
             
-            {/* AI Support CTA */}
+            {/* AI Support CTA - Primary Chat Trigger */}
             <Card className="bg-gradient-to-r from-[#BAFF39]/5 to-[#BAFF39]/10 border-[#BAFF39]/30">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -376,9 +376,13 @@ export default function HelpCenter() {
                     <p className="text-muted-foreground mb-4">
                       Our AI Support Specialist is available 24/7 to answer your questions instantly.
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Look for the <span className="text-[#BAFF39] font-medium">support bubble</span> in the bottom right corner of your dashboard.
-                    </p>
+                    <Button
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-support-chat'))}
+                      className="bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90 shadow-[0_0_15px_rgba(186,255,57,0.3)] hover:shadow-[0_0_25px_rgba(186,255,57,0.5)] transition-all"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Chat with AI Support
+                    </Button>
                   </div>
                 </div>
               </CardContent>

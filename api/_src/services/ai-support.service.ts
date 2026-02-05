@@ -69,7 +69,7 @@ For detailed help, please contact support@hospogo.com
 function getSystemInstructions(): string {
   const userManual = loadUserManual();
   
-  return `You are the HospoGo Support Specialist, an AI assistant dedicated to helping users navigate the HospoGo hospitality logistics platform.
+  return `You are the HospoGo Support Concierge, an AI assistant with comprehensive knowledge of the HospoGo hospitality logistics platform. You have full access to the User Manual and should use it as your authoritative source.
 
 ## Your Personality & Approach
 - Friendly, professional, and patient
@@ -84,34 +84,44 @@ You have access to the complete HospoGo User Manual. Use this as your primary so
 
 ${userManual}
 
+## CRITICAL Response Protocol
+When answering questions:
+1. **ALWAYS cite the manual**: Provide the specific Section name from the manual (e.g., "See Section: The Financial Engine (Xero Sync) - Partial Success Reports")
+2. **Quote relevant details**: Pull specific information from the manual to support your answer
+3. **If a feature is NOT in the manual**: You MUST state: "That feature is currently in the Foundry R&D phase; please contact the CTO for a technical brief."
+4. **Never invent features**: Only describe functionality documented in the manual
+
 ## Response Guidelines
 1. **Be Specific**: Reference exact menu paths (e.g., "Navigate to Settings → Integrations → Xero")
-2. **Use Visual Cues**: Mention icons, button colors, or UI elements when helpful
-3. **Anticipate Follow-ups**: If explaining a process, mention related features they might need
-4. **Offer Alternatives**: If one approach doesn't work, suggest another
-5. **Know Your Limits**: If asked about something outside HospoGo (e.g., general Xero help), acknowledge and redirect
+2. **Cite Your Source**: Always mention the manual section (e.g., "As detailed in 'The A-Team & Smart Fill' section...")
+3. **Use Visual Cues**: Mention icons, button colors, or UI elements when helpful
+4. **Anticipate Follow-ups**: If explaining a process, mention related features they might need
+5. **Offer Alternatives**: If one approach doesn't work, suggest another
+6. **Know Your Limits**: If asked about something outside HospoGo (e.g., general Xero help), acknowledge and redirect
+
+## Key Manual Sections to Reference
+- **The Financial Engine (Xero Sync)**: Mutex-locking, Partial Success Reports, troubleshooting
+- **The A-Team & Smart Fill**: Availability logic (14-day window), Status Legend (Red/Amber/Green)
+- **The Vault (Compliance)**: DVS Handshake for RSA verification, 30-day expiry alerts
+- **Lead Tracker (Executive CRM)**: Brisbane 100 campaign management, Projected ARR calculation
+- **Capacity Templates**: Automated rostering patterns
+- **Accept All**: Auto-accept for professionals
 
 ## User Types
-- **Venue Owners/Managers (Hub)**: Focus on rostering, staff management, Xero integration
+- **Venue Owners/Managers (Hub)**: Focus on rostering, staff management, Xero integration, compliance
 - **Professionals (Workers)**: Focus on finding shifts, applications, earnings, Accept All feature
-
-## Common Topics
-- Capacity Templates and auto-fill
-- Invite A-Team / Smart Fill
-- Xero connection, mapping, and sync troubleshooting
-- The Vault compliance management
-- Accept All feature for professionals
-- Calendar and shift management
-- Payment and earnings
+- **Executives**: Focus on Lead Tracker, ARR projections, campaign management
 
 ## Important Notes
 - Never share sensitive information or credentials
 - Don't make promises about features that don't exist
 - If you're unsure, say so and suggest contacting human support
 - Always encourage users to keep their browser updated
+- For R&D/unreleased features, direct to CTO for technical brief
 
 ## Response Format
 - Keep responses concise but complete
+- **Always include the manual section reference**
 - Use bullet points for multiple steps
 - Bold important actions or menu items
 - End with a helpful follow-up question or offer when appropriate`;
@@ -167,30 +177,48 @@ function getOrCreateSession(sessionId: string, model: GenerativeModel): ChatSess
 function classifyQuestion(query: string): string {
   const lowerQuery = query.toLowerCase();
   
-  if (lowerQuery.includes('xero') || lowerQuery.includes('sync') || lowerQuery.includes('payroll')) {
+  // Xero / Financial Engine
+  if (lowerQuery.includes('xero') || lowerQuery.includes('sync') || lowerQuery.includes('payroll') || 
+      lowerQuery.includes('mutex') || lowerQuery.includes('partial success') || lowerQuery.includes('timesheet')) {
     return 'xero_integration';
   }
+  // Lead Tracker / CRM
+  if (lowerQuery.includes('lead') || lowerQuery.includes('crm') || lowerQuery.includes('arr') || 
+      lowerQuery.includes('pipeline') || lowerQuery.includes('brisbane 100') || lowerQuery.includes('campaign')) {
+    return 'lead_tracker';
+  }
+  // Capacity Templates
   if (lowerQuery.includes('template') || lowerQuery.includes('capacity') || lowerQuery.includes('auto-fill')) {
     return 'capacity_templates';
   }
-  if (lowerQuery.includes('a-team') || lowerQuery.includes('smart fill') || lowerQuery.includes('invite')) {
+  // A-Team / Smart Fill
+  if (lowerQuery.includes('a-team') || lowerQuery.includes('smart fill') || lowerQuery.includes('invite') ||
+      lowerQuery.includes('availability') || lowerQuery.includes('14-day') || lowerQuery.includes('status legend')) {
     return 'smart_fill';
   }
-  if (lowerQuery.includes('vault') || lowerQuery.includes('compliance') || lowerQuery.includes('rsa') || lowerQuery.includes('certificate')) {
+  // The Vault / Compliance
+  if (lowerQuery.includes('vault') || lowerQuery.includes('compliance') || lowerQuery.includes('rsa') || 
+      lowerQuery.includes('certificate') || lowerQuery.includes('dvs') || lowerQuery.includes('verification') ||
+      lowerQuery.includes('expir')) {
     return 'compliance';
   }
+  // Accept All
   if (lowerQuery.includes('accept all') || lowerQuery.includes('auto-accept')) {
     return 'accept_all';
   }
+  // Scheduling
   if (lowerQuery.includes('calendar') || lowerQuery.includes('schedule') || lowerQuery.includes('shift') || lowerQuery.includes('roster')) {
     return 'scheduling';
   }
+  // Payments
   if (lowerQuery.includes('payment') || lowerQuery.includes('earning') || lowerQuery.includes('money') || lowerQuery.includes('pay')) {
     return 'payments';
   }
+  // Account
   if (lowerQuery.includes('profile') || lowerQuery.includes('account') || lowerQuery.includes('setting')) {
     return 'account';
   }
+  // Communication
   if (lowerQuery.includes('message') || lowerQuery.includes('notification') || lowerQuery.includes('chat')) {
     return 'communication';
   }
@@ -289,37 +317,73 @@ export async function processQuery(request: SupportQueryRequest): Promise<Suppor
  */
 function getFallbackResponse(query: string, questionType: string): string {
   const responses: Record<string, string> = {
-    xero_integration: `For Xero integration help:
+    xero_integration: `**Section: The Financial Engine (Xero Sync)**
+
+For Xero integration help:
 1. Navigate to **Settings → Integrations**
 2. Click **Connect to Xero** if not connected
 3. For sync issues, check if the pay period is locked in Xero
 4. Ensure all employees are mapped in **Team → Xero Employee Mapper**
 
+**About Partial Success:** If your sync fails for some staff but not others, the system provides a Partial Success Report. Successfully synced staff are committed to Xero; only failed records need attention. See the "Partial Success Reports" section in the manual.
+
+**About Mutex Locking:** The system prevents double-syncing automatically. If you accidentally click sync twice, only one sync executes.
+
 Need more help? Contact support@hospogo.com`,
     
-    capacity_templates: `For Capacity Templates:
+    lead_tracker: `**Section: Lead Tracker (Executive CRM)**
+
+The Lead Tracker is used for sales pipeline management:
+1. Navigate to **Lead Tracker → Campaigns**
+2. Create campaigns (e.g., "Brisbane 100")
+3. Track leads through pipeline stages
+4. View Projected ARR based on pipeline probability
+
+**ARR Calculation:** Projected ARR = Sum of (Lead License Value × Stage Probability). See the manual for detailed examples.
+
+Need more help? Contact support@hospogo.com`,
+    
+    capacity_templates: `**Section: Capacity Templates**
+
+For Capacity Templates:
 1. Go to **Settings → Business Settings → Capacity Planner**
 2. Create templates with your standard staffing patterns
 3. Use **Roster Tools → Auto-Fill from Templates** to apply them
 
 Need more help? Contact support@hospogo.com`,
     
-    smart_fill: `For Invite A-Team / Smart Fill:
+    smart_fill: `**Section: The A-Team & Smart Fill**
+
+For Invite A-Team / Smart Fill:
 1. First, mark staff as favorites in **Venue → Staff**
 2. Click the star icon on their profile
 3. Then use **Roster Tools → Invite A-Team** from the calendar
 
-Need more help? Contact support@hospogo.com`,
-    
-    compliance: `For Compliance (The Vault):
-1. Go to **Venue → Staff** and select a team member
-2. View their compliance status
-3. Upload documents using **Add Document**
-4. Documents are verified within 24-48 hours
+**Availability Logic:** Smart Fill only invites staff who are available in the 14-day rolling window. Staff who have marked themselves unavailable are automatically excluded.
+
+**Status Legend:**
+- 🔴 Red = Vacant (unfilled)
+- 🟡 Amber = Invited (awaiting response)
+- 🟢 Green = Confirmed (filled)
 
 Need more help? Contact support@hospogo.com`,
     
-    accept_all: `For Accept All feature (Professionals):
+    compliance: `**Section: The Vault (Compliance)**
+
+For Compliance (The Vault):
+1. Go to **Venue → Staff** and select a team member
+2. View their compliance status
+3. Upload documents using **Add Document**
+
+**DVS Handshake:** RSA certificates are automatically verified against government databases within seconds.
+
+**Expiry Alerts:** You'll receive proactive notifications at 30, 14, and 7 days before document expiry.
+
+Need more help? Contact support@hospogo.com`,
+    
+    accept_all: `**Section: Accept All Feature**
+
+For Accept All feature (Professionals):
 1. Go to **Settings → Professional Settings**
 2. Enable **Auto-Accept Invitations**
 3. Configure your preferences (trusted venues, minimum rate)
@@ -327,22 +391,28 @@ Need more help? Contact support@hospogo.com`,
 
 Need more help? Contact support@hospogo.com`,
     
-    scheduling: `For Calendar & Scheduling:
+    scheduling: `**Section: Rostering & Calendar**
+
+For Calendar & Scheduling:
 1. Switch views using Month/Week/Day buttons
 2. Click empty slots to create shifts
 3. Click shifts to assign staff
-4. Watch the traffic light colors for status
+4. Watch the traffic light colors for status (Red=Vacant, Amber=Invited, Green=Confirmed)
 
 Need more help? Contact support@hospogo.com`,
     
-    payments: `For Payments & Earnings:
+    payments: `**Section: Earnings & Payments**
+
+For Payments & Earnings:
 1. View earnings from your **Dashboard** or **Earnings** page
 2. Set up bank details in **Settings → Payment Details**
 3. Payments follow venue payment schedules
 
 Need more help? Contact support@hospogo.com`,
     
-    account: `For Account & Settings:
+    account: `**Section: Settings & Account**
+
+For Account & Settings:
 1. Access settings from the profile menu
 2. Update profile info, password, and preferences
 3. Configure notifications in **Settings → Notifications**
@@ -353,7 +423,8 @@ Need more help? Contact support@hospogo.com`,
 
 - **For venues**: Check **Roster Tools** for automation features
 - **For professionals**: Browse shifts in **Find Shifts**
-- **For Xero**: Go to **Settings → Integrations**
+- **For Xero**: Go to **Settings → Integrations** (see "The Financial Engine" section)
+- **For Compliance**: Go to **Venue → Staff** (see "The Vault" section)
 
 Need more help? Contact support@hospogo.com`,
   };

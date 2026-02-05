@@ -17,7 +17,6 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TutorialOverlay } from '@/components/onboarding/tutorial-overlay';
-import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import SupportChatWidget from '@/components/support/SupportChatWidget';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { PwaUpdateHandler } from '@/components/pwa/pwa-update-handler';
@@ -695,7 +694,6 @@ function App() {
                         <NotificationToast />
                         <AppRoutes splashHandled={splashHandled} />
                         <TutorialOverlay />
-                        <FeedbackWidget />
                         <SupportChatWidget />
                         <InstallPrompt />
                         <PwaUpdateHandler />

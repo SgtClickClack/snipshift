@@ -1,27 +1,32 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ShieldCheck } from 'lucide-react';
 
 const faqs = [
   {
-    question: "Is there a lock-in contract?",
-    answer: "No. All HospoGo plans are month-to-month. You can upgrade, downgrade, or cancel at any time directly from your dashboard."
+    question: "What is the HospoGo Trinity?",
+    answer: "Our platform integrates three specialized logistics layers: **The Vault** (Automated Compliance), **The Market** (Vetted Labor), and **The Engine** (Rostering & Xero Sync).",
+    icon: null
   },
   {
-    question: "How do you vet your staff?",
-    answer: "Every 'Pro' undergoes a manual profile review. We verify relevant certifications (like RSA) and use a community-driven rating system to ensure high standards."
+    question: "How are staff verified?",
+    answer: "HospoGo utilizes **The Vault**, a cryptographic identity layer that performs real-time DVS (Document Verification Service) API handshakes. Compliance is gated by the engine automatically; we have eliminated the need for manual profile reviews.",
+    icon: 'shield'
   },
   {
-    question: "What happens if a staff member doesn't show up?",
-    answer: "We have a zero-tolerance no-show policy. Our Smart-Fill technology instantly alerts nearby Pros, and your booking fee for that shift is automatically waived."
+    question: "What is the Logistics Platform Fee?",
+    answer: "HospoGo is a flat **$149/month** fee. We do not believe in 'Success Taxes'—your price stays the same regardless of how many staff you manage or how much you grow.",
+    icon: null
   },
   {
-    question: "How fast can I find staff for an emergency shift?",
-    answer: "Most emergency shifts are claimed within 60 minutes. Our platform is designed for the high-speed reality of the hospitality industry."
+    question: "Does this replace my current payroll software?",
+    answer: "No. We provide a 1:1 Mutex-locked handshake with **Xero Payroll AU**. We handle the logistics and cost-tracking; Xero handles the final disbursements, ensuring 100% financial accuracy.",
+    icon: null
   },
   {
-    question: "Are there any fees for staff?",
-    answer: "No. The Professional plan for staff is Free Forever. You keep 100% of your hourly rate. We charge venues a Logistics Platform Fee to keep the platform running."
+    question: "What is Suburban Loyalty?",
+    answer: "Our research shows suburban venues retain **4.6% higher customer loyalty** than CBD counterparts. HospoGo is optimized for these high-stability 'Neighborhood Locals' that require consistent, reliable staffing.",
+    icon: null
   }
 ];
 
@@ -30,17 +35,32 @@ interface FAQItemProps {
   answer: string;
   isOpen: boolean;
   onClick: () => void;
+  icon?: 'shield' | null;
 }
 
-function FAQItem({ question, answer, isOpen, onClick }: FAQItemProps) {
+// Render markdown-style bold text (**text**) as <strong> elements
+function renderAnswer(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="text-white font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
+function FAQItem({ question, answer, isOpen, onClick, icon }: FAQItemProps) {
   return (
-    <div className="border-b border-zinc-800">
+    <div className={`border-b transition-colors ${isOpen ? 'border-[#BAFF39]' : 'border-zinc-800'}`}>
       <button
         onClick={onClick}
         className="w-full py-6 flex justify-between items-center text-left hover:text-[#BAFF39] transition-colors group"
-        aria-expanded={isOpen ? "true" : "false"}
+        aria-expanded={isOpen}
       >
-        <span className="text-lg font-bold text-white group-hover:text-[#BAFF39]">{question}</span>
+        <span className={`text-lg font-bold flex items-center gap-2 ${isOpen ? 'text-[#BAFF39]' : 'text-white'} group-hover:text-[#BAFF39]`}>
+          {icon === 'shield' && <ShieldCheck className="w-5 h-5 text-[#BAFF39]" />}
+          {question}
+        </span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
@@ -58,7 +78,7 @@ function FAQItem({ question, answer, isOpen, onClick }: FAQItemProps) {
             className="overflow-hidden"
           >
             <p className="pb-6 text-zinc-400 leading-relaxed max-w-2xl">
-              {answer}
+              {renderAnswer(answer)}
             </p>
           </motion.div>
         )}
@@ -71,11 +91,11 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="bg-black py-24 px-6">
+    <section className="bg-black py-24 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-black text-white mb-4">Got Questions?</h2>
-          <p className="text-zinc-500">Everything you need to know about HospoGo.</p>
+          <h2 className="text-4xl font-black tracking-tighter text-white mb-4">The Foundry FAQ</h2>
+          <p className="text-zinc-500">Understand the architecture behind HospoGo.</p>
         </div>
         <div className="space-y-2">
           {faqs.map((faq, index) => (
@@ -85,6 +105,7 @@ export default function FAQSection() {
               answer={faq.answer}
               isOpen={openIndex === index}
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              icon={faq.icon}
             />
           ))}
         </div>

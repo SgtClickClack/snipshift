@@ -30,7 +30,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 /** Chat message type */
 interface ChatMessage {
@@ -59,6 +59,7 @@ const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).substri
 
 export default function SupportChatWidget() {
   const { user } = useAuth();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -94,9 +95,20 @@ export default function SupportChatWidget() {
     }
   }, [isOpen]);
   
+  // Listen for custom event to open chat from Help Center or other components
+  useEffect(() => {
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener('open-support-chat', handleOpenChat);
+    return () => window.removeEventListener('open-support-chat', handleOpenChat);
+  }, []);
+  
+  // BOT ISOLATION: Support bot is NEVER shown on Investor Portal
+  // Investors should only see the Foundry Executive Agent (InvestorChatWidget)
+  const isInvestorPortal = location.pathname.startsWith('/investorportal');
+  
   // ONBOARDING GATE: Only render when user is authenticated AND has completed onboarding
   // This check is AFTER all hooks to maintain consistent hook count across renders
-  const shouldRender = user && user.isOnboarded === true;
+  const shouldRender = user && user.isOnboarded === true && !isInvestorPortal;
   
   // Query mutation
   const queryMutation = useMutation({
@@ -193,7 +205,17 @@ export default function SupportChatWidget() {
   return (
     <>
       {/* Chat Widget Container */}
-      {/* POSITIONING: right-8 for main support bubble - visually distinct from Investor Bot (right-24) */}
+      {/* 
+        POSITIONING: right-8 for main support bubble
+        Z-INDEX HIERARCHY (coordinated with InvestorChatWidget & Navbar):
+        - Base UI: z-0
+        - Chat Bubbles: z-40 (this widget + InvestorChatWidget)
+        - Navbar: z-50
+        - Modals/Overlays: z-100+
+        
+        Note: InvestorChatWidget uses right-24 to avoid overlap when both render on InvestorPortal.
+        Feedback button relocated to Footer.tsx - no longer a floating FAB.
+      */}
       <div 
         className={`fixed bottom-20 sm:bottom-6 right-8 z-40 transition-all duration-500 ${
           isOpen ? 'w-[380px] max-w-[calc(100vw-48px)]' : 'w-auto'

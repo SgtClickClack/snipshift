@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, MessageSquare, HelpCircle } from 'lucide-react';
 import { PartnerTrustBar } from '@/components/landing/PartnerTrustBar';
+import { Button } from '@/components/ui/button';
+import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 
 const logoUrl = '/hospogo-navbar-banner.png';
 
 export function Footer() {
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
   return (
     <footer className="bg-background dark:bg-steel-900 border-t-2 border-border dark:border-steel-800 text-muted-foreground dark:text-steel-300 pb-safe w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
@@ -65,9 +70,9 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Legal Links */}
+          {/* Legal & Support Links */}
           <div>
-            <h3 className="text-foreground dark:text-white font-semibold mb-4 text-sm uppercase tracking-wider">Legal</h3>
+            <h3 className="text-foreground dark:text-white font-semibold mb-4 text-sm uppercase tracking-wider">Legal & Support</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/terms" className="text-steel-400 hover:text-white transition-colors text-sm">
@@ -83,6 +88,24 @@ export function Footer() {
                 <Link to="/sitemap" className="text-steel-400 hover:text-white transition-colors text-sm">
                   Sitemap
                 </Link>
+              </li>
+              <li>
+                <Link to="/help" className="text-steel-400 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                  <HelpCircle size={14} />
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFeedbackOpen(true)}
+                  className="p-0 h-auto text-steel-400 hover:text-[#BAFF39] transition-colors text-sm flex items-center gap-1.5 font-normal"
+                  data-testid="button-open-feedback-footer"
+                >
+                  <MessageSquare size={14} />
+                  Send Feedback
+                </Button>
               </li>
             </ul>
           </div>
@@ -132,6 +155,9 @@ export function Footer() {
           </div>
         </div>
       </div>
+
+      {/* Feedback Modal */}
+      <FeedbackWidget isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </footer>
   );
 }

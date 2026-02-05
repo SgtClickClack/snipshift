@@ -15,6 +15,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'react-router-dom';
 import { 
   MessageCircle, 
   X, 
@@ -53,6 +54,7 @@ const QUICK_QUESTIONS: QuickQuestion[] = [
 const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
 export default function InvestorChatWidget() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -152,10 +154,27 @@ export default function InvestorChatWidget() {
     }
   }, [handleSend]);
   
+  // BOT ISOLATION: Investor bot is ONLY shown on Investor Portal
+  // This is a safety check - component is only rendered in InvestorPortal.tsx anyway
+  // Ensures capital-raising agent never appears on venue/staff pages
+  if (!location.pathname.startsWith('/investorportal')) {
+    return null;
+  }
+  
   return (
     <>
       {/* Chat Widget Container - Primary floating CTA for investor queries */}
-      {/* POSITIONING: right-24 (96px) keeps AI Liaison left of system feedback bubble */}
+      {/* 
+        POSITIONING: right-24 (96px) - offset from SupportChatWidget (right-8)
+        Z-INDEX HIERARCHY (coordinated with SupportChatWidget & Navbar):
+        - Base UI: z-0
+        - Chat Bubbles: z-40 (this widget + SupportChatWidget)
+        - Navbar: z-50
+        - Modals/Data Room: z-100+
+        
+        Note: SupportChatWidget uses right-8 to avoid overlap when both render on InvestorPortal.
+        Feedback button relocated to Footer.tsx - no longer a floating FAB.
+      */}
       <div 
         className={`fixed bottom-20 sm:bottom-6 right-24 z-40 transition-all duration-500 ${
           isOpen ? 'w-[400px] max-w-[calc(100vw-48px)]' : 'w-auto'

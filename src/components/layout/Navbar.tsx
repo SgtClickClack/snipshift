@@ -155,6 +155,19 @@ export default function Navbar() {
                   </Button>
                 </Link>
 
+                {/* Help Center - Quick Access */}
+                <Link to="/help" className="flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-navbar-foreground hover:text-[#BAFF39] hover:bg-[#BAFF39]/10 relative flex-shrink-0 transition-all duration-300 group"
+                    title="Help Center"
+                    data-testid="button-help-navbar"
+                  >
+                    <HelpCircle className="h-4 w-4 group-hover:drop-shadow-[0_0_8px_rgba(186,255,57,0.6)] transition-all" />
+                  </Button>
+                </Link>
+
                 {/* User Profile Dropdown - Visible on all screens */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
