@@ -8,6 +8,20 @@
 
 ---
 
+### Update: 2026-02-06 - Infrastructure Priority Lockdown (Proxy Loop Fix v1.0.8)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Replaced `vercel.json` with priority-first rewrites so `/__/auth` and `/api` bypass SPA fallback.
+- Pointed `/api/:path*` to `https://api.hospogo.com/:path*` to prevent proxy loops.
+- Bumped app version to `1.0.8`.
+
+**Impact:**
+- Firebase auth proxy and API routing take precedence over the SPA catch-all in Vercel Edge.
+
+---
+
 ### Update: 2026-02-06 - Phase 1 Debt Cleanup (Knip)
 
 **Status:** ✅ **UPDATED**

@@ -6078,3 +6078,29 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Code Organization & Quality**
 - Reduced onboarding page size by moving step UI, screens, and persistence helpers to dedicated modules.
+
+---
+
+#### 2026-02-06: Infrastructure Priority Lockdown – Fix Proxy Loop v1.0.8
+
+**Core Components**
+- Vercel routing config: `vercel.json`
+- Package metadata: `package.json`
+
+**Key Features**
+- Replaced `vercel.json` with priority-first rewrites to ensure Firebase auth and API routes bypass the SPA fallback.
+- Updated API rewrite destination to `https://api.hospogo.com/:path*` to stop proxy loops.
+- Bumped app version to `1.0.8` for the release.
+
+**Integration Points**
+- Vercel rewrites: `/__/auth/:path*` → Firebase, `/api/:path*` → API, SPA fallback last.
+
+**File Paths**
+- `vercel.json`
+- `package.json`
+
+**Next Priority Task**
+- Verify Google OAuth popup routes through `/__/auth` in production after deploy.
+
+**Code Organization & Quality**
+- Config-only change; no runtime code paths altered.

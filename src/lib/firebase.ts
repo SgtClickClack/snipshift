@@ -24,7 +24,7 @@ const getEnv = (key: keyof ImportMetaEnv) => {
 function buildConfig() {
   return {
     apiKey: getEnv('VITE_FIREBASE_API_KEY'),
-    authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN'),
+    authDomain: 'hospogo.com',
     projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
     storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
     messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
@@ -293,11 +293,6 @@ async function initInstallationsLayer(): Promise<string | null> {
     
     // Return null (mock token) instead of throwing
     return null;
-  } finally {
-    // Ensure boot sequence always continues, even on 400 error
-    if (typeof window !== 'undefined') {
-      window.__firebase_installations_failed = true;
-    }
   }
 }
 

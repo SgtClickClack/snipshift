@@ -720,7 +720,7 @@ function HydrationSplash() {
           style={{ 
             fontFamily: 'Urbanist, sans-serif',
             color: 'hsl(var(--primary))',
-            textShadow: '0 0 40px hsl(var(--primary) / 0.6), 0 0 80px hsl(var(--primary) / 0.3)',
+            textShadow: '0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.15)',
             letterSpacing: '-0.02em',
           }}
         >
@@ -732,22 +732,22 @@ function HydrationSplash() {
           <div 
             className="absolute inset-0 rounded-full animate-ping"
             style={{ 
-              backgroundColor: 'rgba(204, 255, 0, 0.2)',
+              backgroundColor: 'hsl(var(--primary) / 0.15)',
               animationDuration: '1.5s',
             }}
           />
           <div 
             className="absolute inset-2 rounded-full animate-pulse"
             style={{ 
-              backgroundColor: 'rgba(204, 255, 0, 0.4)',
-              boxShadow: '0 0 20px rgba(204, 255, 0, 0.5)',
+              backgroundColor: 'hsl(var(--primary) / 0.25)',
+              boxShadow: '0 0 20px hsl(var(--primary) / 0.25)',
             }}
           />
           <div 
             className="absolute inset-4 rounded-full"
             style={{ 
               backgroundColor: 'hsl(var(--primary))',
-              boxShadow: '0 0 30px hsl(var(--primary) / 0.8)',
+              boxShadow: '0 0 30px hsl(var(--primary) / 0.4)',
             }}
           />
         </div>
@@ -756,7 +756,7 @@ function HydrationSplash() {
         <div 
           className="mt-8 text-sm tracking-widest uppercase"
           style={{ 
-            color: 'rgba(204, 255, 0, 0.7)',
+            color: 'hsl(var(--primary) / 0.5)',
             fontFamily: 'Urbanist, sans-serif',
             fontWeight: 500,
           }}
