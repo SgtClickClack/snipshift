@@ -15,6 +15,10 @@ if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
   dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 }
 
+// Pipe console.log to Google Cloud Logging when GOOGLE_CLOUD_PROJECT is set
+import { initConsoleToGoogleCloud } from './lib/console-to-google-cloud.js';
+initConsoleToGoogleCloud();
+
 // Import express-async-errors FIRST to catch async errors automatically
 import 'express-async-errors';
 
@@ -2440,6 +2444,20 @@ app.use((req, res, next) => {
   res.status(404);
   next(new Error(`Endpoint not found: ${req.method} ${req.path}`));
 });
+
+// Google Cloud Error Reporting middleware (reports uncaught errors to Error Reporting)
+// Lazy-loaded: dynamic import avoids "Cannot access 'ts' before initialization" in Vercel bundle
+(async () => {
+  try {
+    const { getErrorReportingClient } = await import('./lib/google-cloud.js');
+    const gcpErrorClient = await getErrorReportingClient();
+    if (gcpErrorClient?.express) {
+      app.use(gcpErrorClient.express);
+    }
+  } catch {
+    // Silently skip GCP Error Reporting if unavailable
+  }
+})();
 
 // Apply error handling middleware (must be last)
 app.use(errorHandler);

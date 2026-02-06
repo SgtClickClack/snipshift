@@ -1,9 +1,15 @@
 /**
  * Error Reporting Service
- * 
- * Provides centralized error logging to external services (Sentry, LogSnag, etc.)
+ *
+ * Provides centralized error logging to external services (Google Cloud, Sentry, LogSnag, etc.)
  * Supports correlation IDs for request tracing
  */
+
+import {
+  isGoogleCloudEnabled,
+  reportErrorToGoogleCloud,
+  writeLogToGoogleCloud,
+} from '../lib/google-cloud.js';
 
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
 
@@ -97,6 +103,71 @@ class ConsoleErrorReporting implements ErrorReportingService {
 
   clearUser(): void {
     // No-op for console reporting
+  }
+}
+
+/**
+ * Google Cloud Error Reporting + Logging implementation
+ * Pipes errors to Error Reporting and Logs Explorer when GOOGLE_CLOUD_PROJECT is set
+ */
+class GoogleCloudErrorReporting implements ErrorReportingService {
+  private consoleFallback = new ConsoleErrorReporting();
+
+  async captureError(report: ErrorReport): Promise<void> {
+    // Filter handshake 401 and Firebase hiccups (same as console)
+    if (isHandshake401Error(report.error, report.context)) {
+      if (process.env.DEBUG_AUTH === 'true') {
+        console.debug('[ERROR_REPORTING] Filtered handshake 401:', report.message);
+      }
+      return;
+    }
+    if (isFirebaseBackgroundHiccup(report.error, report.context)) {
+      if (process.env.DEBUG_AUTH === 'true') {
+        console.debug('[ERROR_REPORTING] Filtered Firebase hiccup:', report.message);
+      }
+      return;
+    }
+
+    // Always log to console
+    await this.consoleFallback.captureError(report);
+
+    // Pipe to Google Cloud when enabled
+    if (isGoogleCloudEnabled()) {
+      const errorToReport = report.error || new Error(report.message);
+      await reportErrorToGoogleCloud(errorToReport);
+
+      const severityMap = {
+        info: 'INFO' as const,
+        warning: 'WARNING' as const,
+        error: 'ERROR' as const,
+        critical: 'ERROR' as const,
+      };
+      const gcpSeverity = severityMap[report.severity];
+      await writeLogToGoogleCloud(gcpSeverity, report.message, {
+        severity: report.severity,
+        correlationId: report.context?.correlationId,
+        userId: report.context?.userId,
+        path: report.context?.path,
+        method: report.context?.method,
+        ...report.context?.metadata,
+        ...(report.error && {
+          errorMessage: report.error.message,
+          errorName: report.error.name,
+        }),
+      });
+    }
+  }
+
+  async captureMessage(message: string, severity: ErrorSeverity, context?: ErrorContext): Promise<void> {
+    await this.captureError({ message, severity, context });
+  }
+
+  setUser(_userId: string, _email?: string): void {
+    // Google Cloud Error Reporting doesn't require explicit user context
+  }
+
+  clearUser(): void {
+    // No-op
   }
 }
 
@@ -390,6 +461,12 @@ let errorReportingService: ErrorReportingService | null = null;
 
 export function getErrorReportingService(): ErrorReportingService {
   if (errorReportingService) {
+    return errorReportingService;
+  }
+
+  // Google Cloud (Error Reporting + Logging) - preferred when deployed to GCP
+  if (isGoogleCloudEnabled()) {
+    errorReportingService = new GoogleCloudErrorReporting();
     return errorReportingService;
   }
 
