@@ -132,6 +132,15 @@ export default defineConfig(({ mode }) => ({
   // VITE_* environment variables are automatically exposed via import.meta.env
   // See src/config/env.ts for centralized access to these variables
   optimizeDeps: {
+    // Exclude Node-only packages that cause TDZ 'ts' ReferenceError when bundled for browser
+    exclude: [
+      'firebase-admin',
+      '@google-cloud/storage',
+      '@google-cloud/logging',
+      '@google-cloud/error-reporting',
+      'moment',
+      'moment-timezone',
+    ],
     include: [
       'react',
       'react-dom',
@@ -166,7 +175,6 @@ export default defineConfig(({ mode }) => ({
       'framer-motion',
       // recharts: excluded from pre-bundle - lazy-loaded by earnings, VenueAnalyticsDashboard, etc.
     ],
-    exclude: ['moment', 'moment-timezone'], // Exclude moment from bundling since we use date-fns
     force: true, // Force dependency pre-bundling
   },
   server: {
@@ -262,7 +270,9 @@ export default defineConfig(({ mode }) => ({
             }
             
             // Firebase and animation - separate from React to reduce core chunk size
-            if (id.includes('firebase')) return 'vendor-firebase';
+            // CRITICAL: Exclude firebase-admin (Node-only) - it pulls in @google-cloud/* which causes
+            // TDZ ReferenceError 'ts' in app-admin bundle. Only bundle firebase (client SDK).
+            if (id.includes('firebase') && !id.includes('firebase-admin')) return 'vendor-firebase';
             if (id.includes('framer-motion')) return 'vendor-animation';
             
             // Everything else - let Rollup optimize
