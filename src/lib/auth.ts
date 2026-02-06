@@ -71,11 +71,11 @@ export async function getGoogleProvider() {
 }
 
 /**
- * Local-dev focused Google sign-in:
- * - Uses popup with resilient handling for COOP (Cross-Origin-Opener-Policy) issues
+ * Google sign-in with same-origin popup flow:
+ * - Uses popup with hospogo.com authDomain (same-origin with COOP policy)
  * - Falls back to redirect flow if popup is blocked or fails
- * - COOP only affects window.closed detection, not the actual auth result
- * - Auth completes via postMessage/iframe even with COOP blocking
+ * - COOP same-origin-allow-popups allows seamless popup communication
+ * - Auth completes cleanly without cross-origin restrictions
  */
 export async function signInWithGoogleLocalDevPopup() {
   await maybeResetFirebaseSession();

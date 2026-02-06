@@ -19,8 +19,8 @@ const getEnv = (key: keyof ImportMetaEnv) => {
 // must match this project exactly; mismatches cause Firebase 400 errors (e.g. on token cleanup).
 // 
 // COOP Resolution Complete: same-origin-allow-popups is set in vercel.json and vite.config.ts.
-// The Firebase default authDomain is required for popup auth (not a custom domain).
-// The console warning about window.closed is cosmetic — auth completes via postMessage.
+// Auth domain now uses hospogo.com (same-origin) for popup auth.
+// Popup flow works seamlessly with same-origin COOP policy.
 function buildConfig() {
   return {
     apiKey: getEnv('VITE_FIREBASE_API_KEY'),

@@ -1198,7 +1198,7 @@ button:active, a:active, [role="button"]:active {
 .pitch-mode-active [class*="text-lime"],
 .pitch-mode-active [style*="color: hsl(var(--primary))"],
 .pitch-mode-active [style*="color: rgb(186, 255, 57)"] {
-  text-shadow: 0 0 15px hsl(var(--primary) / 0.5), 0 0 30px hsl(var(--primary) / 0.3);
+  text-shadow: 0 0 15px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.15);
 }
 
 /* Enhance dashboard cards for presentation */
@@ -1231,22 +1231,22 @@ button:active, a:active, [role="button"]:active {
 /* Enhanced brand primary badges for pitch mode */
 .pitch-mode-active .bg-primary,
 .pitch-mode-active [class*="bg-brand-neon"] {
-  box-shadow: 0 0 20px hsl(var(--primary) / 0.4);
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.25);
 }
 
 /* Pitch Mode Active Indicator (pulsing border on active cards) */
 .pitch-mode-active .pitch-highlight {
   border-color: hsl(var(--primary) / 0.5) !important;
-  box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+  box-shadow: 0 0 30px hsl(var(--primary) / 0.12);
   animation: pitch-pulse 2s ease-in-out infinite;
 }
 
 @keyframes pitch-pulse {
   0%, 100% {
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.12);
   }
   50% {
-    box-shadow: 0 0 50px hsl(var(--primary) / 0.4);
+    box-shadow: 0 0 50px hsl(var(--primary) / 0.25);
   }
 }
 
