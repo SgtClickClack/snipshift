@@ -37,6 +37,8 @@
     "dev:db:reset": "docker-compose -f docker-compose.dev.yml down -v"
   },
   "dependencies": {
+    "@google-cloud/error-reporting": "^3.0.5",
+    "@google-cloud/logging": "^11.2.1",
     "@google/generative-ai": "^0.24.1",
     "@react-email/components": "^1.0.6",
     "@react-email/render": "^2.0.4",
@@ -81,6 +83,7 @@
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.17",
     "drizzle-kit": "^0.31.8",
+    "madge": "^8.0.0",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",

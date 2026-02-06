@@ -8,14 +8,15 @@ import { Router } from 'express';
 import multer from 'multer';
 import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { errorReporting } from '../services/error-reporting.service.js';
 import * as reputationService from '../lib/reputation-service.js';
 import * as ocrService from '../services/ocr.service.js';
 import * as usersRepo from '../repositories/users.repository.js';
 import * as shiftsRepo from '../repositories/shifts.repository.js';
 import { getDb } from '../db/index.js';
-import { getStorage } from 'firebase-admin/storage';
-import admin from 'firebase-admin';
-
+// CRITICAL: firebase-admin/storage pulls in @google-cloud/storage which causes
+// "ReferenceError: Cannot access 'ts' before initialization" (TDZ) when Vercel's
+// bundler flattens the module graph. Use dynamic import() inside handlers instead.
 const router = Router();
 
 // Configure multer for memory storage (files will be in req.files as buffers)
@@ -110,9 +111,10 @@ router.post(
 
     const isSuspended = user.suspendedUntil && new Date(user.suspendedUntil) > new Date();
 
-    // Upload certificate to Firebase Storage
+    // Upload certificate to Firebase Storage (dynamic import avoids TDZ in Vercel bundle)
     let certificateUrl: string;
     try {
+      const { getStorage } = await import('firebase-admin/storage');
       const bucket = getStorage().bucket();
       const timestamp = Date.now();
       const fileExtension = file.mimetype === 'application/pdf' ? 'pdf' : 
@@ -140,6 +142,11 @@ router.post(
 
       console.log(`[APPEALS] Certificate uploaded for user ${userId} (signed URL generated)`);
     } catch (error: any) {
+      await errorReporting.captureError('[APPEALS] Failed to upload certificate', error, {
+        path: req.path,
+        method: req.method,
+        metadata: { userId },
+      });
       console.error('[APPEALS] Failed to upload certificate:', error);
       res.status(500).json({ 
         message: 'Failed to upload certificate: ' + (error.message || 'Unknown error') 
@@ -332,10 +339,16 @@ async function flagForAdminReview(
         },
       });
     } catch (notifError) {
+      await errorReporting.captureError('[APPEALS] Failed to send appeal notification', notifError as Error, {
+        metadata: { userId, shiftId },
+      });
       console.error('[APPEALS] Failed to send appeal notification:', notifError);
     }
 
   } catch (error) {
+    await errorReporting.captureError('[APPEALS] Error flagging for admin review', error as Error, {
+      metadata: { userId, shiftId },
+    });
     console.error('[APPEALS] Error flagging for admin review:', error);
   }
 }

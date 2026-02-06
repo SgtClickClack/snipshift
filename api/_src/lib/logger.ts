@@ -3,7 +3,11 @@
  *
  * Goal: eliminate scattered `console.log/info/warn` usage while keeping
  * intentional, environment-aware logs available for operations/debugging.
+ *
+ * When GOOGLE_CLOUD_PROJECT is set, initConsoleToGoogleCloud() patches console
+ * so all console output (including from this logger) is captured in Logs Explorer.
  */
+
 type LogArgs = readonly unknown[];
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
