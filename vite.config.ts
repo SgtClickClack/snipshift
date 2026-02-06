@@ -270,9 +270,10 @@ export default defineConfig(({ mode }) => ({
             }
             
             // Firebase and animation - separate from React to reduce core chunk size
-            // CRITICAL: Exclude firebase-admin (Node-only) - it pulls in @google-cloud/* which causes
-            // TDZ ReferenceError 'ts' in app-admin bundle. Only bundle firebase (client SDK).
-            if (id.includes('firebase') && !id.includes('firebase-admin')) return 'vendor-firebase';
+            // NOTE: firebase-admin is not in package.json, so no need to exclude it here.
+            // See FORENSIC_REPORT_TS_ERROR.md for details on 'ts' ReferenceError (caused by
+            // circular chunk deps, not firebase-admin).
+            if (id.includes('firebase')) return 'vendor-firebase';
             if (id.includes('framer-motion')) return 'vendor-animation';
             
             // Everything else - let Rollup optimize
@@ -280,7 +281,15 @@ export default defineConfig(({ mode }) => ({
             return undefined;
           }
 
-          // 2. Application-level splitting (Domain Decoupling)
+          // 2. Shared Components - Extract ONLY UI components, not heavy features
+          // Prevents circular dependencies while keeping shared chunk size reasonable
+          // See FORENSIC_REPORT_TS_ERROR.md for details on 'ts' ReferenceError fix
+          if (id.includes('/src/components/ui/')) {
+            // Only basic UI components (buttons, dialogs, cards, etc.)
+            return 'app-shared-ui';
+          }
+
+          // 3. Application-level splitting (Domain Decoupling)
           // Be very specific with paths to avoid cross-chunk dependencies
           // IMPORTANT: Onboarding pages/components must stay in main chunk
           const srcPath = id.split('/src/pages/')[1];
