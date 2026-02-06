@@ -920,13 +920,13 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                   <MessageSquare className="h-4 w-4" />
                 </Button>
               </div>
-              {/* Primary Action - Refined Glow style */}
+              {/* Primary Action - Standardized bg-primary for desaturated aesthetic */}
               <Button 
                 id="post-job-btn"
                 onClick={() => handleQuickAction('post-job')}
-                variant="refined-glow"
+                variant="default"
                 size="sm"
-                className="h-9"
+                className="h-9 bg-primary hover:bg-primary/90"
                 data-testid="button-post-job"
               >
                 <Plus className="mr-1.5 h-4 w-4" />

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-import { VitePWA } from 'vite-plugin-pwa';
+// NUCLEAR PWA CLEANUP: VitePWA plugin temporarily removed to clear MIME type errors and cache loops
+// import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path';
 
@@ -17,14 +18,15 @@ export default defineConfig(({ mode }) => ({
       // Ensure React is properly transformed and available
       jsxRuntime: 'automatic',
     }),
-    VitePWA({
+    // NUCLEAR PWA CLEANUP: VitePWA plugin temporarily disabled
+    /* VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['brand-logo.png', 'brand-wordmark.png', 'brand-icon.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg'],
       manifest: {
         name: 'HospoGo',
         short_name: 'HospoGo',
         description: 'HospoGo connects hospitality staff with venues for flexible shift work. Find shifts or fill rosters fast.',
-        theme_color: '#0f172a',
+        theme_color: '#0f172b', // Incremented to trigger mandatory PWA update / cache flush
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
@@ -46,7 +48,8 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,webp}'],
+        // Cleared during transition to ensure no assets precached; forces fresh fetch
+        globPatterns: [],
         // Exclude large files from precaching
         globIgnores: [
           '**/hospogoappicon.png',      // 7.66 MB - too large for precache
@@ -126,7 +129,7 @@ export default defineConfig(({ mode }) => ({
       devOptions: {
         enabled: false, // Disable in dev to avoid service worker conflicts
       },
-    }),
+    }), */
     visualizer({ open: true, filename: 'bundle-stats.html' }),
   ],
   // VITE_* environment variables are automatically exposed via import.meta.env

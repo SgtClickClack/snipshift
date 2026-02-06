@@ -833,6 +833,20 @@ function App() {
     }
   }, []);
 
+  // NUCLEAR PWA CLEANUP: Unregister all service workers to clear cache loops
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(reg => {
+          console.log('[PWA Cleanup] Unregistering service worker:', reg);
+          reg.unregister();
+        });
+      }).catch(err => {
+        console.error('[PWA Cleanup] Failed to unregister service workers:', err);
+      });
+    }
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="hospogo-ui-theme">
       <GlobalErrorBoundary>

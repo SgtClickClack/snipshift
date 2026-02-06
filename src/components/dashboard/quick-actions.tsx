@@ -59,7 +59,7 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
             icon: Plus,
             action: 'post-job',
             variant: 'default' as const,
-            className: 'bg-primary hover:bg-primary/90'
+            className: 'bg-primary text-primary-foreground hover:bg-primary/90'
           },
           {
             title: 'View Applications',
@@ -189,7 +189,7 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
               
               const buttonClasses = `group h-auto p-4 flex flex-col items-start text-left shadow-md hover:shadow-lg transition-all duration-200 w-full block no-underline ${
                   action.variant === 'default' 
-                    ? 'bg-brand-neon text-brand-dark shadow-neon-realistic hover:bg-brand-neon/90'
+                    ? 'bg-primary text-primary-foreground shadow-neon-realistic hover:bg-primary/90'
                     : 'bg-gradient-to-r from-steel-600 to-steel-700 hover:from-steel-700 hover:to-steel-800 text-white'
                 } ${action.className || ''}`;
 
