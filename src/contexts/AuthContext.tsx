@@ -350,6 +350,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Ensures setIsNavigationLocked(false) is called exactly ONCE to prevent state machine jolts
   const navigationLockReleasedRef = useRef<boolean>(false);
   const handshakeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handshakeTimerEndedRef = useRef<boolean>(false);
   
   /** Safe navigation lock release - ensures it's only called once per auth cycle */
   const releaseNavigationLock = useCallback(() => {
@@ -358,7 +359,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsNavigationLocked(false);
       // PROGRESSIVE UNLOCK: End high-precision timer when lock is released
       // Goal: Output should be < 500ms
-      console.timeEnd('Handshake-to-Unlock');
+      if (!handshakeTimerEndedRef.current) {
+        handshakeTimerEndedRef.current = true;
+        console.timeEnd('Handshake-to-Unlock');
+      }
       // Clear the safety timeout if it exists
       if (handshakeTimeoutRef.current) {
         clearTimeout(handshakeTimeoutRef.current);
@@ -461,11 +465,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // PROGRESSIVE UNLOCK: High-precision timer to verify TTI < 500ms
     // Timer starts AFTER guard checks pass to avoid orphaned timers on deduplication
     console.time('Handshake-to-Unlock');
+    handshakeTimerEndedRef.current = false; // Reset flag for new hydration cycle
     
     // Safety timeout: Ensure timer ends after 1.5 seconds if Firebase fails to respond
     // Reduced from 3s to 1.5s for snappier dashboard feel when Firebase lags
     handshakeTimeoutRef.current = setTimeout(() => {
-      console.timeEnd('Handshake-to-Unlock');
+      if (!handshakeTimerEndedRef.current) {
+        handshakeTimerEndedRef.current = true;
+        console.timeEnd('Handshake-to-Unlock');
+      }
       handshakeTimeoutRef.current = null;
     }, 1500);
     
@@ -849,6 +857,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
             
             console.time('Handshake-to-Unlock');
+            handshakeTimerEndedRef.current = false; // Reset flag for E2E mode
             setUser(e2eUser);
             setToken('mock-e2e-token'); // So pages that check token (e.g. role-selection) don't stay on loader
             setIsRegistered(true);

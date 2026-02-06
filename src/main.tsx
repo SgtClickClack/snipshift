@@ -15,12 +15,16 @@ try {
     // New deployment detected — clear stale caches
     console.debug('[PWA] New build detected, clearing stale caches');
     if ('caches' in window) {
-      caches.keys().then(names => names.forEach(name => caches.delete(name)));
+      caches.keys().then(names => names.forEach(name => {
+        try { caches.delete(name); } catch { /* cache already cleared */ }
+      })).catch(() => { /* caches API unavailable */ });
     }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => 
-        regs.forEach(r => r.unregister())
-      );
+        regs.forEach(r => {
+          try { r.unregister(); } catch { /* SW in invalid state — selfDestroying already handled it */ }
+        })
+      ).catch(() => { /* getRegistrations unavailable */ });
     }
     // Clear ONLY the chunk-related session flag, NOT all storage
     sessionStorage.removeItem('chunk_load_error_reload');
