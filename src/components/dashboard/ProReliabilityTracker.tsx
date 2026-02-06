@@ -382,7 +382,7 @@ export function ProReliabilityTracker() {
                   <div className="relative">
                     <Crown 
                       className="h-6 w-6 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)] animate-pulse" 
-                      style={{ filter: 'drop-shadow(0 0 12px rgba(186,255,57,0.6))' }}
+                      style={{ filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.6))' }}
                     />
                   </div>
                 )}

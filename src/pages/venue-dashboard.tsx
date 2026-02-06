@@ -1212,7 +1212,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                 </div>
                 <Button 
                   onClick={() => setShowForm(true)}
-                  className="bg-primary hover:bg-blue-700"
+                  className="bg-primary hover:bg-primary/90"
                   data-testid="button-show-job-form"
                 >
                   <Plus className="mr-2 h-4 w-4" />

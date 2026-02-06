@@ -336,7 +336,7 @@ export default function StaffPage() {
                     </p>
                     <Button 
                       onClick={toggleFavoritesFilter}
-                      className="bg-primary hover:bg-primary/90 text-black font-semibold shadow-[0_0_15px_rgba(186,255,57,0.3)]"
+                      className="bg-primary hover:bg-primary/90 text-black font-semibold shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
                     >
                       <Filter className="h-4 w-4 mr-2" />
                       Show All Staff

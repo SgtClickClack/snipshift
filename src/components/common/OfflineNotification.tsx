@@ -74,8 +74,8 @@ export function OfflineNotification({ className }: OfflineNotificationProps) {
         <div 
           className="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm border"
           style={{ 
-            backgroundColor: 'rgba(186, 255, 57, 0.95)', 
-            borderColor: 'rgba(186, 255, 57, 0.6)',
+            backgroundColor: 'hsl(var(--primary) / 0.95)',
+            borderColor: 'hsl(var(--primary) / 0.6)',
             color: '#0a0a0a'
           }}
         >
@@ -95,8 +95,8 @@ export function OfflineNotification({ className }: OfflineNotificationProps) {
         <div 
           className="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm border"
           style={{ 
-            backgroundColor: 'rgba(186, 255, 57, 0.95)', 
-            borderColor: 'rgba(186, 255, 57, 0.6)',
+            backgroundColor: 'hsl(var(--primary) / 0.95)',
+            borderColor: 'hsl(var(--primary) / 0.6)',
             color: '#0a0a0a'
           }}
         >

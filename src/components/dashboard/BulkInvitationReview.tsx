@@ -75,7 +75,7 @@ function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: numb
           <p className="text-lg text-white/80 mb-4">
             You just locked in
           </p>
-          <div className="inline-block px-6 py-3 rounded-2xl bg-primary text-black font-black text-2xl shadow-[0_0_30px_rgba(186,255,57,0.5)]">
+          <div className="inline-block px-6 py-3 rounded-2xl bg-primary text-black font-black text-2xl shadow-[0_0_30px_hsl(var(--primary)/0.5)]">
             ${earnings.toFixed(2)}
           </div>
           <p className="text-sm text-white/60 mt-3">
@@ -608,7 +608,7 @@ export function BulkInvitationReview() {
                 disabled={selectedIds.size === 0 || bulkAcceptMutation.isPending}
                 className={cn(
                   "relative overflow-hidden transition-all duration-300",
-                  selectedIds.size > 0 && "bg-primary hover:bg-primary/90 text-black shadow-[0_0_20px_rgba(186,255,57,0.4)]"
+                  selectedIds.size > 0 && "bg-primary hover:bg-primary/90 text-black shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
                 )}
               >
                 {bulkAcceptMutation.isPending ? (

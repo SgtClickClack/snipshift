@@ -182,7 +182,7 @@ export default function InvestorChatWidget() {
         {/* Expanded Chat Panel */}
         {isOpen && (
           <div 
-            className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-[0_8px_60px_rgba(186,255,57,0.15)] overflow-hidden flex flex-col"
+            className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-[0_8px_60px_hsl(var(--primary)/0.15)] overflow-hidden flex flex-col"
             style={{ 
               height: 'min(600px, calc(100vh - 120px))',
               animation: 'chatSlideIn 0.3s ease-out',
@@ -331,7 +331,7 @@ export default function InvestorChatWidget() {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="group relative w-16 h-16 rounded-full bg-primary text-black flex items-center justify-center shadow-[0_4px_30px_rgba(186,255,57,0.4)] hover:shadow-[0_4px_40px_rgba(186,255,57,0.6)] transition-all duration-300 hover:scale-105"
+            className="group relative w-16 h-16 rounded-full bg-primary text-black flex items-center justify-center shadow-[0_4px_30px_hsl(var(--primary)/0.4)] hover:shadow-[0_4px_40px_hsl(var(--primary)/0.6)] transition-all duration-300 hover:scale-105"
             aria-label="Open chat"
             style={{ animation: 'chatButtonPulse 2s ease-in-out infinite' }}
           >
@@ -360,10 +360,10 @@ export default function InvestorChatWidget() {
         
         @keyframes chatButtonPulse {
           0%, 100% {
-            box-shadow: 0 4px 30px rgba(186, 255, 57, 0.4);
+            box-shadow: 0 4px 30px hsl(var(--primary) / 0.4);
           }
           50% {
-            box-shadow: 0 4px 40px rgba(186, 255, 57, 0.6);
+            box-shadow: 0 4px 40px hsl(var(--primary) / 0.6);
           }
         }
         

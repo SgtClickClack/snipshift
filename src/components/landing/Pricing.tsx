@@ -153,7 +153,7 @@ export default function Pricing() {
                 ) : plan.cta === "Start 14-Day Free Trial" ? (
                   <Link to="/signup?plan=business&trial=true" className="w-full" data-testid="business-trial-cta">
                     <Button
-                      className="w-full font-black py-4 rounded-full bg-primary text-black hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300"
+                      className="w-full font-black py-4 rounded-full bg-primary text-black hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] transition-all duration-300"
                       data-testid="business-trial-button"
                     >
                       {plan.cta}

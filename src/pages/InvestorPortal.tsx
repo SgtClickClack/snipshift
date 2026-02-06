@@ -468,7 +468,7 @@ export default function InvestorPortal() {
                 <span 
                   className={`absolute -bottom-1 left-0 right-0 h-0.5 bg-primary transition-all duration-300 ${
                     activeSection === id 
-                      ? 'opacity-100 shadow-[0_0_8px_rgba(186,255,57,0.8)]' 
+                      ? 'opacity-100 shadow-[0_0_8px_hsl(var(--primary)/0.8)]' 
                       : 'opacity-0'
                   }`}
                 />
@@ -476,7 +476,7 @@ export default function InvestorPortal() {
                 <span 
                   className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary transition-all duration-300 ${
                     activeSection === id 
-                      ? 'opacity-100 shadow-[0_0_6px_rgba(186,255,57,0.9)]' 
+                      ? 'opacity-100 shadow-[0_0_6px_hsl(var(--primary)/0.9)]' 
                       : 'opacity-0'
                   }`}
                 />
@@ -497,7 +497,7 @@ export default function InvestorPortal() {
           
           <Button 
             onClick={handleRSVP}
-            className="hidden sm:flex rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] border-none bg-[var(--brand-neon)] text-black"
+            className="hidden sm:flex rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_hsl(var(--primary)/0.4)] border-none bg-[var(--brand-neon)] text-black"
           >
             RSVP Briefing
           </Button>
@@ -529,7 +529,7 @@ export default function InvestorPortal() {
                   handleRSVP();
                   setMobileMenuOpen(false);
                 }}
-                className="mt-3 w-full rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] border-none bg-[var(--brand-neon)] text-black"
+                className="mt-3 w-full rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:shadow-[0_0_30px_hsl(var(--primary)/0.4)] border-none bg-[var(--brand-neon)] text-black"
               >
                 RSVP Briefing
               </Button>

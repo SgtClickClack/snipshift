@@ -17,8 +17,7 @@ import { E2E_VENUE_OWNER } from './e2e-business-fixtures';
 import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
 
-/** Brand-accurate Electric Lime color for UI elements */
-const BRAND_ELECTRIC_LIME = '#BAFF39';
+/** Brand primary - uses theme token hsl(var(--primary)) */
 
 const TEST_DB_CONFIG = getTestDatabaseConfig();
 const E2E_AUTH_USER_ID = E2E_VENUE_OWNER.id;
@@ -282,13 +281,13 @@ test.describe('Financial RBAC E2E Tests', () => {
       // Verify it contains a dollar value
       await expect(wageCostPill).toContainText(/\$\d+(\.\d{2})?/);
 
-      // Verify the brand color styling (Electric Lime #BAFF39)
+      // Verify the brand color styling (primary / brand-neon theme tokens)
       const pillClasses = await wageCostPill.getAttribute('class');
       const pillStyle = await wageCostPill.getAttribute('style');
       const hasBrandStyling = 
         pillClasses?.includes('brand-neon') ||
-        pillClasses?.includes('BAFF39') ||
-        pillStyle?.toLowerCase().includes('baff39');
+        pillClasses?.includes('primary') ||
+        pillStyle?.toLowerCase().includes('hsl(var(--primary)');
       expect(hasBrandStyling).toBe(true);
     });
 

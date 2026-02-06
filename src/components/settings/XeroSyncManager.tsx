@@ -387,7 +387,7 @@ export default function XeroSyncManager() {
                         {lastResult.failed.map((failed, idx) => (
                           <div 
                             key={failed.employeeId || idx}
-                            className="flex items-center justify-between p-2 rounded-md bg-primary/10 border-2 border-primary/40 shadow-[0_0_8px_rgba(186,255,57,0.15)]"
+                            className="flex items-center justify-between p-2 rounded-md bg-primary/10 border-2 border-primary/40 shadow-[0_0_8px_hsl(var(--primary)/0.15)]"
                             data-testid={`xero-failed-row-${failed.employeeId}`}
                           >
                             <div className="flex items-center gap-2">

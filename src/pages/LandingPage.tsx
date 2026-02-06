@@ -181,7 +181,7 @@ export default function LandingPage() {
                   <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
                     <Link to="/signup?role=hub" className="w-full sm:w-auto">
                       <Button
-                        className="w-full sm:w-auto bg-primary text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
+                        className="w-full sm:w-auto bg-primary text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] transition-all duration-300 min-h-[44px]"
                         data-testid="button-find-staff"
                       >
                         FIND STAFF
@@ -201,7 +201,7 @@ export default function LandingPage() {
                     <Link to="/investorportal" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="w-full sm:w-auto border-2 border-primary/20 text-primary font-bold px-12 py-5 rounded-full hover:border-primary/50 hover:shadow-[0_0_12px_rgba(186,255,57,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        className="w-full sm:w-auto border-2 border-primary/20 text-primary font-bold px-12 py-5 rounded-full hover:border-primary/50 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
                         data-testid="button-investor-briefing"
                       >
                         <ChartLine className="h-4 w-4" />
@@ -219,7 +219,7 @@ export default function LandingPage() {
                       className="w-full sm:w-auto"
                     >
                       <Button
-                        className="w-full sm:w-auto bg-primary text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
+                        className="w-full sm:w-auto bg-primary text-black font-black px-12 py-5 rounded-full hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] transition-all duration-300 min-h-[44px]"
                         data-testid={user.isOnboarded === true ? "button-go-to-dashboard" : "button-complete-setup"}
                       >
                         {user.isOnboarded === true ? 'Go to Dashboard' : 'Complete Setup'}
@@ -228,7 +228,7 @@ export default function LandingPage() {
                     <Link to="/investorportal" className="w-full sm:w-auto">
                       <Button
                         variant="ghost"
-                        className="w-full sm:w-auto border-2 border-primary/20 text-primary font-bold px-12 py-5 rounded-full hover:border-primary/50 hover:shadow-[0_0_12px_rgba(186,255,57,0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
+                        className="w-full sm:w-auto border-2 border-primary/20 text-primary font-bold px-12 py-5 rounded-full hover:border-primary/50 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all duration-300 min-h-[44px] flex items-center gap-2"
                         data-testid="button-investor-briefing"
                       >
                         <ChartLine className="h-4 w-4" />
@@ -356,7 +356,7 @@ export default function LandingPage() {
                   </ul>
                   {!hasUser && !isLoading && (
                     <Link to="/signup?role=hub">
-                      <Button className="w-full bg-primary text-black font-black py-4 rounded-full hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300">
+                      <Button className="w-full bg-primary text-black font-black py-4 rounded-full hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] transition-all duration-300">
                         Get Started as Venue
                       </Button>
                     </Link>
@@ -441,7 +441,7 @@ export default function LandingPage() {
                 <Link to="/signup?role=hub" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto h-auto bg-primary text-black px-10 py-4 rounded-full font-black text-lg hover:shadow-[0_0_20px_rgba(186,255,57,0.4)] transition-all duration-300 min-h-[44px]"
+                    className="w-full sm:w-auto h-auto bg-primary text-black px-10 py-4 rounded-full font-black text-lg hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] transition-all duration-300 min-h-[44px]"
                     data-testid="button-join-venue"
                   >
                     Venue Sign Up

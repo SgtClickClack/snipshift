@@ -45,7 +45,7 @@ function SystemHealthTicker() {
     <div className="flex items-center gap-2 text-[10px] tracking-wider text-zinc-500 font-mono">
       {/* Electric Lime indicator dot with pulse */}
       <span 
-        className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(186,255,57,0.6)] ${
+        className={`w-2 h-2 rounded-full shadow-[0_0_8px_hsl(var(--primary)/0.6)] ${
           isXeroSyncing 
             ? 'bg-primary animate-ping' 
             : 'bg-primary'

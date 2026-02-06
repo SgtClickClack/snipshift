@@ -173,14 +173,14 @@ test.describe.skip('Financial Privacy: Business Owner View', () => {
     await expect(wageCostPill).toContainText(/\$\d+(\.\d{2})?/);
 
     // ============================================
-    // ASSERTION: Pill has correct brand styling (Electric Lime #BAFF39)
+    // ASSERTION: Pill has correct brand styling (primary / brand-neon theme tokens)
     // ============================================
     const pillClasses = await wageCostPill.getAttribute('class');
     const pillStyle = await wageCostPill.getAttribute('style');
     const hasBrandStyling = 
       pillClasses?.includes('brand-neon') ||
-      pillClasses?.includes('BAFF39') ||
-      pillStyle?.toLowerCase().includes('baff39');
+      pillClasses?.includes('primary') ||
+      pillStyle?.toLowerCase().includes('hsl(var(--primary)');
     expect.soft(hasBrandStyling).toBe(true);
   });
 

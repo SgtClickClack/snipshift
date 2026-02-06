@@ -33,7 +33,7 @@ export function TechHealthDiagram() {
   classDef core fill:#0f172a,stroke:#10b981,color:#e2e8f0,stroke-width:1px;
   classDef system fill:#1f2937,stroke:#94a3b8,color:#e2e8f0,stroke-width:1px;
   classDef highlight fill:#0b2f24,stroke:#10b981,color:#10b981,stroke-width:2px;
-  classDef trinity fill:#0b2f24,stroke:#baff39,color:#baff39,stroke-width:2px;
+  classDef trinity fill:#0b2f24,stroke:hsl(var(--primary)),color:hsl(var(--primary)),stroke-width:2px;
 
   class B,C,D,E core;
   class F,G,H,I system;
@@ -80,7 +80,7 @@ export function TechHealthDiagram() {
         if (trinityNode) {
           trinityNode.setAttribute(
             'style',
-            'filter: drop-shadow(0 0 6px rgba(186, 255, 57, 0.6));'
+            'filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6));'
           );
         }
 

@@ -357,17 +357,17 @@ test.describe('VISUAL_CONSISTENCY_CRAWL', () => {
     });
     
     // ASSERTION: No elements should use forbidden lime/green classes
-    // HospoGo brand uses Electric Lime (#BAFF39) not Tailwind's lime-500
+    // HospoGo brand uses primary theme token, not Tailwind's lime-500
     expect(
       forbiddenLimeElements,
       `Found ${forbiddenLimeElements} elements with 'bg-lime-500' class. ` +
-      `HospoGo brand should use Electric Lime (#BAFF39) instead.`
+      `HospoGo brand should use primary/brand-neon instead.`
     ).toBe(0);
     
     expect(
       forbiddenGreenElements,
       `Found ${forbiddenGreenElements} elements with 'bg-green-400' class. ` +
-      `HospoGo brand should use Electric Lime (#BAFF39) instead.`
+      `HospoGo brand should use primary/brand-neon instead.`
     ).toBe(0);
   });
   
@@ -454,7 +454,6 @@ test.describe('VISUAL_CONSISTENCY_CRAWL', () => {
     const primaryButtons = await page.locator(
       'button[class*="primary"], ' +
       'a[class*="primary"], ' +
-      'button[class*="bg-\\[#BAFF39\\]"], ' +
       'button[class*="bg-neon"], ' +
       '[class*="refined-glow"]'
     ).all();
@@ -462,17 +461,15 @@ test.describe('VISUAL_CONSISTENCY_CRAWL', () => {
     console.log('=== BUTTON STYLING AUDIT ===');
     console.log('Primary buttons found:', primaryButtons.length);
     
-    // Check each primary button for Electric Lime styling
-    const electricLimeButtons = await page.locator(
-      '[class*="BAFF39"], ' +
-      '[class*="baff39"], ' +
+    // Check each primary button for brand styling (primary / brand-neon / refined-glow)
+    const brandStyledButtons = await page.locator(
+      '[class*="primary"], ' +
       '[class*="neon"], ' +
-      '[class*="lime"], ' +
-      '[style*="BAFF39"], ' +
-      '[style*="baff39"]'
+      '[class*="refined-glow"], ' +
+      '[style*="hsl(var(--primary)"]'
     ).count();
     
-    console.log('Electric Lime styled elements:', electricLimeButtons);
+    console.log('Brand styled elements:', brandStyledButtons);
     
     // Take screenshot of landing page buttons
     await page.screenshot({ 
@@ -480,13 +477,13 @@ test.describe('VISUAL_CONSISTENCY_CRAWL', () => {
       fullPage: false 
     });
     
-    // ASSERTION: Should have at least one Electric Lime styled element
+    // ASSERTION: Should have at least one brand-styled element
     // if there are primary buttons on the page
     if (primaryButtons.length > 0) {
       expect(
-        electricLimeButtons,
-        'Expected primary buttons to use Electric Lime (#BAFF39) styling. ' +
-        'No Electric Lime elements found.'
+        brandStyledButtons,
+        'Expected primary buttons to use primary/brand-neon styling. ' +
+        'No brand-styled elements found.'
       ).toBeGreaterThan(0);
     }
   });

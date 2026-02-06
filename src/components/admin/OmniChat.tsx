@@ -217,7 +217,7 @@ export default function OmniChat() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <button
-            className="fixed bottom-6 right-6 sm:right-24 z-[var(--z-floating)] p-4 rounded-full bg-zinc-900 border-2 border-primary/50 shadow-[0_0_30px_rgba(186,255,57,0.3)] hover:shadow-[0_0_40px_rgba(186,255,57,0.5)] transition-all duration-300 group"
+            className="fixed bottom-6 right-6 sm:right-24 z-[var(--z-floating)] p-4 rounded-full bg-zinc-900 border-2 border-primary/50 shadow-[0_0_30px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.5)] transition-all duration-300 group"
             data-testid="omnichat-trigger"
             title="Open HospoGo Architect"
           >
@@ -227,7 +227,7 @@ export default function OmniChat() {
         </DialogTrigger>
 
         <DialogContent 
-          className={`bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_60px_rgba(186,255,57,0.15)] p-0 gap-0 transition-all duration-300 ${
+          className={`bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_60px_hsl(var(--primary)/0.15)] p-0 gap-0 transition-all duration-300 ${
             isExpanded 
               ? 'max-w-4xl h-[85vh]' 
               : 'max-w-xl h-[600px]'

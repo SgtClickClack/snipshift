@@ -54,7 +54,7 @@ export const OnboardingCompletionScreen = ({
                   onClick={onGoToDashboard}
                   variant="accent"
                   size="lg"
-                  className="shadow-neon-realistic hover:shadow-[0_0_20px_rgba(186,255,57,1),0_0_40px_rgba(186,255,57,0.8),0_0_60px_rgba(186,255,57,0.6)] transition-all duration-300 text-lg px-8 py-6"
+                  className="shadow-neon-realistic hover:shadow-[0_0_20px_hsl(var(--primary)),0_0_40px_hsl(var(--primary)/0.8),0_0_60px_hsl(var(--primary)/0.6)] transition-all duration-300 text-lg px-8 py-6"
                   data-testid="onboarding-go-to-dashboard"
                 >
                   Enter Dashboard

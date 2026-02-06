@@ -426,7 +426,7 @@ export default function InvitationDashboard() {
             <Button
               onClick={handleAcceptAll}
               disabled={isAcceptingAll}
-              className="w-full bg-brand-neon text-brand-dark py-6 rounded-2xl font-black text-lg uppercase tracking-widest shadow-[0_0_20px_rgba(186,255,57,0.3)] hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(186,255,57,0.4)] transition-all active:scale-95"
+              className="w-full bg-brand-neon text-brand-dark py-6 rounded-2xl font-black text-lg uppercase tracking-widest shadow-[0_0_20px_hsl(var(--primary)/0.3)] hover:scale-[1.02] hover:shadow-[0_0_30px_hsl(var(--primary)/0.4)] transition-all active:scale-95"
               data-testid="accept-all-invitations-btn"
             >
               {isAcceptingAll ? (

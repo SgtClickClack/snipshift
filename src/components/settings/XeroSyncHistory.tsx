@@ -386,7 +386,7 @@ export default function XeroSyncHistory() {
 
       {/* RAW LEDGER PREVIEW MODAL - Xero Handshake Trace for Lucas's due diligence */}
       <Dialog open={!!traceModalEntry} onOpenChange={(open) => !open && setTraceModalEntry(null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh] bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+        <DialogContent className="max-w-3xl max-h-[85vh] bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-white">
               <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
@@ -429,7 +429,7 @@ export default function XeroSyncHistory() {
                         // Highlight SHA-256 hash strings with Electric Lime background
                         .replace(
                           /"sha256:[a-f0-9]+"/g,
-                          (match) => `<span class="sha256-highlight" style="background: rgba(186, 255, 57, 0.15); border: 1px solid rgba(186, 255, 57, 0.3); border-radius: 4px; padding: 1px 4px; color: hsl(var(--primary)); font-weight: 600; text-shadow: 0 0 10px rgba(186, 255, 57, 0.4);">${match}</span>`
+                          (match) => `<span class="sha256-highlight" style="background: hsl(var(--primary) / 0.15); border: 1px solid hsl(var(--primary) / 0.3); border-radius: 4px; padding: 1px 4px; color: hsl(var(--primary)); font-weight: 600; text-shadow: 0 0 10px hsl(var(--primary) / 0.4);">${match}</span>`
                         )
                         // Highlight algorithm field
                         .replace(

@@ -166,7 +166,7 @@ const ARR_MILESTONE_TARGET = 1_500_000; // $1.5M ARR milestone
 function CTODashboardLoadingState() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      <Card className="max-w-md w-full bg-black/40 backdrop-blur-xl border border-primary/30 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+      <Card className="max-w-md w-full bg-black/40 backdrop-blur-xl border border-primary/30 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
         <CardContent className="pt-6 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
             <Brain className="h-8 w-8 text-primary" />
@@ -577,7 +577,7 @@ function CTODashboardInner() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Brain className="h-8 w-8 text-primary drop-shadow-[0_0_8px_rgba(186,255,57,0.6)]" />
+              <Brain className="h-8 w-8 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               CTO Command Center
             </h1>
             <p className="text-zinc-400 mt-1">
@@ -685,7 +685,7 @@ function CTODashboardInner() {
         <motion.div variants={metricsStagger} initial="hidden" animate="visible" className="space-y-6">
           {/* Live Revenue Engine - Top Banner */}
           <motion.div variants={metricsItem}>
-            <Card className="bg-black/40 backdrop-blur-xl border-2 border-primary/40 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+            <Card className="bg-black/40 backdrop-blur-xl border-2 border-primary/40 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-primary flex items-center gap-2 text-lg">
                   <Rocket className="h-5 w-5" />
@@ -705,7 +705,7 @@ function CTODashboardInner() {
                       Projected Annualised Revenue
                     </p>
                     <p 
-                      className={`text-3xl sm:text-5xl lg:text-6xl text-primary tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)] ${sensitiveClass}`}
+                      className={`text-3xl sm:text-5xl lg:text-6xl text-primary tracking-tighter drop-shadow-[0_0_20px_hsl(var(--primary)/0.4)] ${sensitiveClass}`}
                       style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
                     >
                       ${revenueMetrics.projectedARR.toLocaleString()}
@@ -857,12 +857,12 @@ function CTODashboardInner() {
                 </div>
 
                 {/* Projected ARR Display - Hero Metric */}
-                <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
+                <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_30px_hsl(var(--primary)/0.2)]">
                   <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
                     Projected ARR at {saturationLevel}% Saturation
                   </p>
                   <p 
-                    className={`text-4xl sm:text-6xl lg:text-7xl text-primary tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)] ${sensitiveClass}`}
+                    className={`text-4xl sm:text-6xl lg:text-7xl text-primary tracking-tighter drop-shadow-[0_0_30px_hsl(var(--primary)/0.5)] ${sensitiveClass}`}
                     style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
                   >
                     ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()}
@@ -1005,7 +1005,7 @@ function CTODashboardInner() {
                               <div className="max-w-xs flex items-start gap-2">
                                 {/* Shield icon for patched gaps - Hardened Knowledge Base indicator */}
                                 {isPatched && (
-                                  <Shield className="h-4 w-4 text-primary flex-shrink-0 mt-0.5 drop-shadow-[0_0_4px_rgba(186,255,57,0.5)]" />
+                                  <Shield className="h-4 w-4 text-primary flex-shrink-0 mt-0.5 drop-shadow-[0_0_4px_hsl(var(--primary)/0.5)]" />
                                 )}
                                 <div>
                                   <p className="truncate" title={gap.query}>
@@ -1259,14 +1259,14 @@ function CTODashboardInner() {
               <CardContent>
                 <div className="space-y-4">
                   {/* HIGH-VISIBILITY Advisory Pool - 10% */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_20px_rgba(186,255,57,0.15)]">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_20px_hsl(var(--primary)/0.15)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs uppercase tracking-widest text-primary font-bold">Advisory Pool</span>
                       <Badge className="bg-primary/30 text-primary border border-primary/50 text-xs animate-pulse">
                         Reserved
                       </Badge>
                     </div>
-                    <p className="text-4xl font-black text-primary drop-shadow-[0_0_15px_rgba(186,255,57,0.5)]">10%</p>
+                    <p className="text-4xl font-black text-primary drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)]">10%</p>
                     <p className="text-xs text-zinc-400 mt-1">
                       Equity reserved for strategic advisors
                     </p>
@@ -1309,7 +1309,7 @@ function CTODashboardInner() {
                         <ExternalLink className="h-4 w-4 text-zinc-500 group-hover:text-primary transition-colors" />
                       </button>
                     </DialogTrigger>
-                    <DialogContent className="bg-zinc-950/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_rgba(186,255,57,0.15)] max-w-3xl max-h-[85vh] overflow-hidden">
+                    <DialogContent className="bg-zinc-950/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_hsl(var(--primary)/0.15)] max-w-3xl max-h-[85vh] overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
                       <DialogHeader className="relative z-10">
                         <DialogTitle className="text-white flex items-center gap-3 text-xl">
@@ -1586,7 +1586,7 @@ function CTODashboardInner() {
                   Briefing Run-Sheet
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_60px_rgba(186,255,57,0.15)] max-w-4xl max-h-[85vh] overflow-hidden">
+              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-primary/30 shadow-[0_0_60px_hsl(var(--primary)/0.15)] max-w-4xl max-h-[85vh] overflow-hidden">
                 <DialogHeader>
                   <DialogTitle className="text-white flex items-center gap-3 text-xl">
                     <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">

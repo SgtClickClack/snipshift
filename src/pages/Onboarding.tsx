@@ -186,7 +186,7 @@ export default function Onboarding() {
                       !hasFirebaseUser
                     }
                     variant="accent"
-                    className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300"
+                    className="shadow-neon-realistic hover:shadow-[0_0_8px_hsl(var(--primary)),0_0_20px_hsl(var(--primary)/0.6),0_0_35px_hsl(var(--primary)/0.3)] transition-shadow duration-300"
                     data-testid="onboarding-complete"
                   >
                     {isSubmitting || isSavingStep ? (
@@ -212,7 +212,7 @@ export default function Onboarding() {
                       (machineContext.state !== 'ROLE_SELECTION' && !hasFirebaseUser)
                     }
                     variant="accent"
-                    className="shadow-neon-realistic hover:shadow-[0_0_8px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.6),0_0_35px_rgba(186,255,57,0.3)] transition-shadow duration-300"
+                    className="shadow-neon-realistic hover:shadow-[0_0_8px_hsl(var(--primary)),0_0_20px_hsl(var(--primary)/0.6),0_0_35px_hsl(var(--primary)/0.3)] transition-shadow duration-300"
                     data-testid="onboarding-next"
                   >
                     {isSavingStep || isSubmitting ? (

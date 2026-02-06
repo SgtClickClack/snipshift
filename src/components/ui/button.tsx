@@ -21,7 +21,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         accent:
-          "bg-brand-neon text-brand-dark font-bold shadow-neon-realistic hover:bg-brand-neon/90 hover:-translate-y-0.5 border border-brand-neon/40 hover:shadow-[0_0_5px_rgba(186,255,57,1),0_0_20px_rgba(186,255,57,0.7),0_0_40px_rgba(186,255,57,0.4)]",
+          "bg-brand-neon text-brand-dark font-bold shadow-neon-realistic hover:bg-brand-neon/90 hover:-translate-y-0.5 border border-brand-neon/40 hover:shadow-[0_0_5px_hsl(var(--primary)),0_0_20px_hsl(var(--primary)/0.7),0_0_40px_hsl(var(--primary)/0.4)]",
         // REFINED GLOW - Sophisticated/Premium Electric Lime style
         // Transparent bg, 1px primary border, subtle text-shadow
         // Hover: Scale 1.02x with soft outer glow (uses primary token)

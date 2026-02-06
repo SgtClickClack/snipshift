@@ -1314,7 +1314,7 @@ export default function LeadTracker() {
             <Button
               onClick={downloadGrowthReport}
               variant="outline"
-              className="border-primary/50 text-primary hover:bg-primary/10 hover:text-primary shadow-[0_0_10px_rgba(186,255,57,0.15)]"
+              className="border-primary/50 text-primary hover:bg-primary/10 hover:text-primary shadow-[0_0_10px_hsl(var(--primary)/0.15)]"
               title="Download Growth Report: Projected ARR, Suburban Loyalty scores, and pipeline data"
               data-testid="download-growth-report"
             >
@@ -1475,7 +1475,7 @@ export default function LeadTracker() {
               }
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-primary text-zinc-900 hover:bg-primary/90 font-semibold shadow-[0_0_20px_rgba(186,255,57,0.3)]">
+                <Button className="bg-primary text-zinc-900 hover:bg-primary/90 font-semibold shadow-[0_0_20px_hsl(var(--primary)/0.3)]">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Lead
                 </Button>
@@ -1601,7 +1601,7 @@ export default function LeadTracker() {
         </div>
 
         {/* Live Revenue Engine - Projected ARR Banner */}
-        <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_30px_rgba(186,255,57,0.15)]">
+        <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-2 border-primary/40 shadow-[0_0_30px_hsl(var(--primary)/0.15)]">
           <CardContent className="py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -1770,7 +1770,7 @@ export default function LeadTracker() {
                               </TooltipTrigger>
                               <TooltipContent 
                                 side="bottom" 
-                                className="max-w-[320px] bg-zinc-900 border-primary/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
+                                className="max-w-[320px] bg-zinc-900 border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.15)]"
                               >
                                 <div className="p-2">
                                   <p className="font-bold text-primary mb-2 flex items-center gap-1.5">
@@ -1860,7 +1860,7 @@ export default function LeadTracker() {
                               </TooltipTrigger>
                               <TooltipContent 
                                 side="right" 
-                                className="max-w-[340px] bg-zinc-900 border-primary/30 shadow-[0_0_15px_rgba(186,255,57,0.15)]"
+                                className="max-w-[340px] bg-zinc-900 border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.15)]"
                               >
                                 <div className="p-3 space-y-3">
                                   <div className="flex items-center gap-2">

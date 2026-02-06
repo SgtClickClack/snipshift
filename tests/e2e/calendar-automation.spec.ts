@@ -17,8 +17,7 @@ import { setupUserContext, TEST_PROFESSIONAL } from './seed_data';
 import { Client } from 'pg';
 import { getTestDatabaseConfig } from '../../scripts/test-db-config';
 
-/** Brand-accurate Electric Lime color for status indicators */
-const BRAND_ELECTRIC_LIME = '#BAFF39';
+/** Brand primary - uses theme token hsl(var(--primary)) */
 
 const TEST_DB_CONFIG = getTestDatabaseConfig();
 const E2E_AUTH_USER_ID = E2E_VENUE_OWNER.id;

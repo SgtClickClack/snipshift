@@ -4,16 +4,13 @@
  * Tests the premium investor-facing portal:
  * - Navigation and RSVP functionality
  * - Data Room document access
- * - Brand-accurate Electric Lime (#BAFF39) styling
+ * - Brand-accurate primary theme styling
  * - Authenticated Persistence (Neutral Zone behavior)
  */
 
 import { test, expect, E2E_VENUE_OWNER } from '../fixtures/hospogo-fixtures';
 import { Page, BrowserContext, Browser } from '@playwright/test';
 import { setupUserContext } from './seed_data';
-
-/** Brand-accurate Electric Lime color */
-const BRAND_ELECTRIC_LIME = '#BAFF39';
 
 test.describe('Investor Portal E2E Tests', () => {
   test.describe('Navigation and RSVP', () => {
@@ -222,23 +219,20 @@ test.describe('Investor Portal E2E Tests', () => {
 
   test.describe('Brand Styling', () => {
     // SKIPPED: CSS class names changed - test needs update
-    test.skip('Electric Lime (#BAFF39) is used for accent elements', async ({ page }) => {
+    test.skip('Primary theme is used for accent elements', async ({ page }) => {
       await page.goto('/investorportal', { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForLoadState('networkidle');
 
-      // Check for Electric Lime color in various elements - via classes or styles
-      const electricLimeElements = page.locator(`
-        [style*="BAFF39"],
-        [style*="baff39"],
-        [style*="rgb(186, 255, 57)"],
-        .text-\\[\\#BAFF39\\],
+      // Check for primary/brand-neon color in various elements - via classes or styles
+      const brandElements = page.locator(`
+        [style*="hsl(var(--primary)"],
         [class*="brand-neon"],
-        [class*="bg-\\[\\#BAFF39\\]"],
+        [class*="primary"],
         .bg-brand-neon
       `);
 
       // There should be multiple elements using the brand color
-      const count = await electricLimeElements.count();
+      const count = await brandElements.count();
       expect(count).toBeGreaterThan(0);
 
       // Verify the RSVP button exists and uses brand styling (via class or style)
@@ -248,8 +242,8 @@ test.describe('Investor Portal E2E Tests', () => {
       const buttonClass = await rsvpButton.getAttribute('class');
       const buttonStyle = await rsvpButton.getAttribute('style');
       const hasBrandColor = 
-        (buttonClass && buttonClass.includes('brand-neon')) ||
-        (buttonStyle && buttonStyle.toLowerCase().includes('baff39'));
+        (buttonClass && (buttonClass.includes('brand-neon') || buttonClass.includes('primary'))) ||
+        (buttonStyle && buttonStyle.toLowerCase().includes('hsl(var(--primary)'));
       expect(hasBrandColor).toBe(true);
 
       // Verify there are accent elements on the page

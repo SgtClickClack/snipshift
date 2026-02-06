@@ -157,7 +157,7 @@ export default function Navbar() {
               <img
                 src={logoUrl} 
                 alt="HospoGo Logo" 
-                className="h-10 xs:h-12 md:h-14 w-auto max-w-[140px] xs:max-w-[180px] sm:max-w-none object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)] transition-all duration-200 group-hover:drop-shadow-[0_0_20px_rgba(186,255,57,0.6)]"
+                className="h-10 xs:h-12 md:h-14 w-auto max-w-[140px] xs:max-w-[180px] sm:max-w-none object-contain block antialiased drop-shadow-[0_0_14px_rgba(50,205,50,0.45)] transition-all duration-200 group-hover:drop-shadow-[0_0_20px_hsl(var(--primary)/0.6)]"
                 loading="eager"
                 width={360}
                 height={56}
@@ -482,7 +482,7 @@ export default function Navbar() {
                   <Button variant="ghost" className="text-navbar-foreground hover:bg-white/10">Login</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button className="bg-brand-neon text-brand-dark hover:bg-brand-neon/90 shadow-[0_0_10px_rgba(186,255,57,0.35)] hover:shadow-[0_0_14px_rgba(186,255,57,0.45)]">
+                  <Button className="bg-brand-neon text-brand-dark hover:bg-brand-neon/90 shadow-[0_0_10px_hsl(var(--primary)/0.35)] hover:shadow-[0_0_14px_hsl(var(--primary)/0.45)]">
                     Sign Up
                   </Button>
                 </Link>

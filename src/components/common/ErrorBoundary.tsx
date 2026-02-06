@@ -81,7 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div 
             className="max-w-md w-full rounded-xl border-2 border-primary/50 bg-zinc-900/95 backdrop-blur-sm p-6 space-y-4"
             style={{
-              boxShadow: '0 0 30px rgba(186, 255, 57, 0.15), inset 0 0 20px rgba(186, 255, 57, 0.05)',
+              boxShadow: '0 0 30px hsl(var(--primary) / 0.15), inset 0 0 20px hsl(var(--primary) / 0.05)',
             }}
           >
             {/* Header with Icon */}

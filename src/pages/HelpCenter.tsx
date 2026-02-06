@@ -218,7 +218,7 @@ export default function HelpCenter() {
       {/* Hero Section with Search */}
       <div className="relative bg-gradient-to-b from-steel-900 via-steel-900/95 to-background border-b border-border overflow-hidden">
         {/* Background glow effect */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(186,255,57,0.08),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_50%)]" />
         
         <div className="relative max-w-4xl mx-auto px-4 py-16 sm:py-20">
           <div className="text-center mb-8">
@@ -407,7 +407,7 @@ export default function HelpCenter() {
                   <Card 
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`bg-card/50 ${category.borderColor} border hover:border-primary/50 hover:shadow-[0_0_20px_rgba(186,255,57,0.1)] transition-all cursor-pointer group`}
+                    className={`bg-card/50 ${category.borderColor} border hover:border-primary/50 hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)] transition-all cursor-pointer group`}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
@@ -459,7 +459,7 @@ export default function HelpCenter() {
                     </p>
                     <Button
                       onClick={() => window.dispatchEvent(new CustomEvent('open-support-chat'))}
-                      className="bg-primary text-black hover:bg-primary/90 shadow-[0_0_15px_rgba(186,255,57,0.3)] hover:shadow-[0_0_25px_rgba(186,255,57,0.5)] transition-all"
+                      className="bg-primary text-black hover:bg-primary/90 shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_25px_hsl(var(--primary)/0.5)] transition-all"
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Chat with AI Support

@@ -830,7 +830,7 @@ test.describe.skip('Dual-Context: Full Roster Lifecycle', () => {
       if (pillClasses) {
         const hasConfirmedStyling = pillClasses.includes('brand-neon') || 
                                     pillClasses.includes('confirmed') ||
-                                    pillClasses.includes('BAFF39');
+                                    pillClasses.includes('primary');
         expect.soft(hasConfirmedStyling || true).toBe(true);
       }
     }
