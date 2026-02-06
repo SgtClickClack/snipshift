@@ -10,37 +10,57 @@
   :root {
     font-family: 'Inter', sans-serif;
     /* color-scheme will be set dynamically by theme provider */
-    /* HospoGo surface: Deep Charcoal (#1A1A1A) */
-    --background: 0 0% 10%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 98%;
+    
+    /* ====== SURFACE HIERARCHY (4 elevation tiers) ====== */
+    --background:       220 15% 5%;     /* #0B0D10 - True dark, blue-shifted */
+    --surface-1:        220 13% 8%;     /* #111318 - Cards, panels */
+    --surface-2:        220 11% 11%;    /* #171A1F - Elevated cards, modals */
+    --surface-3:        220 9% 15%;     /* #222529 - Hover states, active selections */
+    
+    /* Map existing tokens to new hierarchy */
+    --card: var(--surface-1);
+    --card-foreground: 0 0% 95%;        /* #F2F2F2 - Primary text */
+    --popover: var(--surface-2);
+    --popover-foreground: 0 0% 95%;
+    --muted: var(--surface-3);
+    --muted-foreground: 220 5% 55%;     /* #878C94 - Secondary text */
+    
+    /* ====== FOREGROUND HIERARCHY ====== */
+    --foreground:       0 0% 95%;       /* #F2F2F2 - Primary text */
+    --foreground-muted: 220 5% 55%;     /* #878C94 - Secondary text */
+    --foreground-subtle:220 5% 35%;     /* #535962 - Tertiary/disabled */
+    
     /* HospoGo brand */
     /* Slightly blue-shifted charcoal to better match the baked-in background of /brand-wordmark.png */
     --navbar: 214 23% 10%; /* #141A20 */
     --navbar-foreground: 0 0% 100%; /* #FFFFFF */
-    /* HospoGo dark-first: popovers match card surfaces */
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 98%;
+    
     /* Primary: Brand Neon (#BAFF39) */
     --primary: 81 100% 61%;
     --primary-foreground: 210 21% 5%;
+    
     /* Secondary: Deep Charcoal surfaces */
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
-    /* HospoGo dark-first: muted surfaces are dark charcoal */
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    
     /* HospoGo dark-first: accent surfaces use dark charcoal */
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    /* HospoGo dark-first: borders and inputs use dark tones */
-    --border: 240 3.7% 15.9%;
+    
+    /* ====== BORDER HIERARCHY ====== */
+    --border:           220 10% 15%;    /* Subtle default */
+    --border-hover:     220 10% 22%;    /* Hover emphasis */
+    --border-active:    var(--primary); /* Active/focus */
     --input: 240 3.7% 15.9%;
     --ring: 81 100% 61%;
-    --radius: 0.5rem;
+    
+    /* ====== BORDER RADIUS (larger for premium feel) ====== */
+    --radius:    0.75rem;  /* 12px - up from 8px */
+    --radius-lg: 1rem;     /* 16px */
+    --radius-xl: 1.5rem;   /* 24px */
+    --radius-full: 9999px;
     --error: 0 75% 45%;
     --error-foreground: 0 0% 100%;
     --success: 120 61% 50%;
@@ -67,30 +87,43 @@
 
   .dark {
     color-scheme: dark;
-    /* Keep dark mode aligned to the HospoGo surface */
-    --background: 0 0% 10%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 98%;
+    /* Keep dark mode aligned to the HospoGo 4-tier surface hierarchy */
+    --background:       220 15% 5%;
+    --surface-1:        220 13% 8%;
+    --surface-2:        220 11% 11%;
+    --surface-3:        220 9% 15%;
+    
+    --card: var(--surface-1);
+    --card-foreground: 0 0% 95%;
+    --popover: var(--surface-2);
+    --popover-foreground: 0 0% 95%;
+    --muted: var(--surface-3);
+    --muted-foreground: 220 5% 55%;
+    
+    --foreground:       0 0% 95%;
+    --foreground-muted: 220 5% 55%;
+    --foreground-subtle:220 5% 35%;
+    
     /* HospoGo brand in dark mode */
-    /* Slightly blue-shifted charcoal to better match the baked-in background of /brand-wordmark.png */
     --navbar: 214 23% 10%; /* #141A20 */
     --navbar-foreground: 0 0% 100%; /* #FFFFFF */
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 98%;
+    
     /* Primary: Brand Neon (#BAFF39) */
     --primary: 81 100% 61%;
     --primary-foreground: 210 21% 5%;
+    
     /* Secondary: Deep Charcoal surfaces */
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
+    
+    --border:           220 10% 15%;
+    --border-hover:     220 10% 22%;
+    --border-active:    var(--primary);
     --input: 240 3.7% 15.9%;
     --ring: 81 100% 61%;
     --error: 0 75% 50%;
@@ -1295,9 +1328,9 @@ button:active, a:active, [role="button"]:active {
 .btn-refined-glow,
 button[data-variant="refined-glow"] {
   background: transparent !important;
-  border: 1px solid #CCFF00 !important;
-  color: #CCFF00 !important;
-  text-shadow: 0 0 8px rgba(204, 255, 0, 0.4);
+  border: 1px solid #BAFF39 !important;
+  color: #BAFF39 !important;
+  text-shadow: 0 0 8px rgba(186, 255, 57, 0.4);
   font-weight: 600;
   transition: all 0.2s ease;
 }
@@ -1351,8 +1384,8 @@ button[data-variant="refined-glow"]:hover {
 /* No solid background, Electric Lime outline, small pulsing dot */
 .btn-subtle-pulse {
   background: transparent !important;
-  border: 1px solid #CCFF00 !important;
-  color: #CCFF00 !important;
+  border: 1px solid #BAFF39 !important;
+  color: #BAFF39 !important;
   position: relative;
 }
 
@@ -1364,10 +1397,10 @@ button[data-variant="refined-glow"]:hover {
   transform: translateY(-50%);
   width: 6px;
   height: 6px;
-  background: #CCFF00;
+  background: #BAFF39;
   border-radius: 50%;
   animation: subtlePulse 2s ease-in-out infinite;
-  box-shadow: 0 0 8px rgba(204, 255, 0, 0.6);
+  box-shadow: 0 0 8px rgba(186, 255, 57, 0.6);
 }
 
 @keyframes subtlePulse {

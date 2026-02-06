@@ -43,7 +43,7 @@ function getStatusBadge(status: MyJob['status']) {
   switch (status) {
     case 'open':
       return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Badge className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30">
           Open
         </Badge>
       );
@@ -80,7 +80,7 @@ function getApplicationStatusBadge(status: JobApplication['status']) {
       );
     case 'accepted':
       return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Badge className="bg-success/20 text-success border-success/30">
           Approved
         </Badge>
       );
@@ -254,7 +254,7 @@ export default function ManageJobsPage() {
                         {job.payRate && (
                           <div className="flex items-center gap-2">
                             <DollarSign className="h-4 w-4 flex-shrink-0" />
-                            <span className="font-semibold text-emerald-600">{job.payRate}</span>
+                            <span className="font-semibold text-[#BAFF39]">{job.payRate}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">

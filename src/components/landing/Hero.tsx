@@ -108,7 +108,7 @@ export default function Hero() {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-stretch sm:items-center">
                 <Link to="/signup?role=hub" className="w-full sm:w-auto">
                   <Button
-                    className="w-full sm:w-auto bg-[#BAFF39] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
+                    className="w-full sm:w-auto bg-[#BAFF39] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-[#BAFF39]/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
                     data-testid="button-find-staff"
                   >
                     FIND STAFF
@@ -128,7 +128,7 @@ export default function Hero() {
             ) : hasUser ? (
               <Link to={getDashboardLink()} className="w-full sm:w-auto">
                 <Button
-                  className="w-full sm:w-auto bg-[#BAFF39] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-lime-500/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
+                  className="w-full sm:w-auto bg-[#BAFF39] text-black font-bold px-10 py-4 rounded-full shadow-lg shadow-[#BAFF39]/20 hover:bg-[#a6de00] transition-all min-h-[44px]"
                   data-testid="button-go-to-dashboard"
                 >
                   Go to Dashboard

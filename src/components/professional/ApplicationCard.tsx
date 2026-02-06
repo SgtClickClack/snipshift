@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { MapPin, Clock, DollarSign, Eye, X, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
-import { useWithdrawApplication } from '@/pages/professional-dashboard/useWithdrawApplication';
+import { useWithdrawApplication } from '@/hooks/useWithdrawApplication';
 import { ApplicationStatusModal } from './ApplicationStatusModal';
 import { StartConversationButton } from '@/components/messaging/start-conversation-button';
 

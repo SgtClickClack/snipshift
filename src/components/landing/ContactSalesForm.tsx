@@ -140,7 +140,7 @@ export default function ContactSalesForm() {
             <CheckCircle2 className="w-10 h-10 text-[#BAFF39]" />
           </div>
           <h3 className="text-3xl font-black text-white mb-4">Message Sent!</h3>
-          <div className="text-[#BAFF39] font-bold text-lg p-4 bg-lime-500/10 rounded-xl border border-lime-500/20 inline-block">
+          <div className="text-[#BAFF39] font-bold text-lg p-4 bg-[#BAFF39]/10 rounded-xl border border-[#BAFF39]/20 inline-block">
             Our hospitality partnerships manager will reach out within 24 hours.
           </div>
           <p className="text-zinc-500 text-sm mt-6">

@@ -96,7 +96,7 @@ export const WaitlistPage = () => {
                     onClick={() => setRole('venue')}
                     className={`flex-1 py-2.5 px-4 rounded-md font-semibold text-sm transition-all ${
                       role === 'venue'
-                        ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-lg shadow-blue-500/50'
+                        ? 'bg-gradient-to-r from-blue-500 to-[#BAFF39] text-white shadow-lg shadow-blue-500/50'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -107,7 +107,7 @@ export const WaitlistPage = () => {
                     onClick={() => setRole('staff')}
                     className={`flex-1 py-2.5 px-4 rounded-md font-semibold text-sm transition-all ${
                       role === 'staff'
-                        ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-lg shadow-blue-500/50'
+                        ? 'bg-gradient-to-r from-blue-500 to-[#BAFF39] text-white shadow-lg shadow-blue-500/50'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >

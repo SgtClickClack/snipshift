@@ -32,6 +32,7 @@ import { EarningsOverview } from "@/components/dashboard/EarningsOverview";
 import { ProVaultManager } from "@/components/professional/ProVaultManager";
 import { AvailabilityToggle } from "@/components/professional/AvailabilityToggle";
 import { DashboardStatsSkeleton } from "@/components/loading/skeleton-loaders";
+import { StaggerContainer } from "@/components/ui/stagger-entry";
 import { EmptyState } from "@/components/ui/empty-state";
 // Application type not needed - Booking is defined locally
 
@@ -396,11 +397,13 @@ export default function ProfessionalOverview({
       initial="hidden"
       animate="visible"
     >
-      {/* Dashboard Stats */}
+      {/* Dashboard Stats with Stagger Animation */}
       {isLoadingStats ? (
         <DashboardStatsSkeleton />
       ) : stats ? (
-        <DashboardStats role="professional" stats={stats} />
+        <StaggerContainer>
+          <DashboardStats role="professional" stats={stats} />
+        </StaggerContainer>
       ) : null}
 
       {/* Welcome Section */}

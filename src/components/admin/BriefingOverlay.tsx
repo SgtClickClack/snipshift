@@ -197,7 +197,7 @@ export default function BriefingOverlay({
         <div className="mx-auto flex h-full max-w-6xl flex-col">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Badge className="bg-[#CCFF00]/10 text-[#CCFF00] border border-[#CCFF00]/40">
+              <Badge className="bg-[#BAFF39]/10 text-[#BAFF39] border border-[#BAFF39]/40">
                 BOARDROOM BRIEFING
               </Badge>
               <span className="text-sm text-zinc-400">
@@ -271,9 +271,9 @@ export default function BriefingOverlay({
                             </div>
                           ))}
                         </div>
-                        <div className="rounded-2xl border border-[#CCFF00]/30 bg-gradient-to-br from-[#CCFF00]/15 via-transparent to-transparent p-5">
+                        <div className="rounded-2xl border border-[#BAFF39]/30 bg-gradient-to-br from-[#BAFF39]/15 via-transparent to-transparent p-5">
                           <div className="flex items-center gap-3">
-                            <Sparkles className="h-5 w-5 text-[#CCFF00]" />
+                            <Sparkles className="h-5 w-5 text-[#BAFF39]" />
                             <h3 className="text-white font-semibold">Boardroom Signal</h3>
                           </div>
                           <p className="mt-3 text-sm text-zinc-400">
@@ -281,7 +281,7 @@ export default function BriefingOverlay({
                             not a pitch deck mockup.
                           </p>
                           <div className="mt-4 flex items-center gap-3 text-xs text-zinc-500">
-                            <span className="rounded-full bg-[#CCFF00]/20 px-3 py-1 text-[#CCFF00]">
+                            <span className="rounded-full bg-[#BAFF39]/20 px-3 py-1 text-[#BAFF39]">
                               Electric Lime
                             </span>
                             <span className="rounded-full bg-zinc-800 px-3 py-1">Urbanist 900</span>
@@ -292,9 +292,9 @@ export default function BriefingOverlay({
 
                     {activeSlide.layout === 'engine' && (
                       <div className="grid gap-6 lg:grid-cols-2">
-                        <div className="rounded-2xl border border-[#CCFF00]/30 bg-zinc-900/60 p-5">
+                        <div className="rounded-2xl border border-[#BAFF39]/30 bg-zinc-900/60 p-5">
                           <div className="flex items-center gap-3">
-                            <Brain className="h-5 w-5 text-[#CCFF00]" />
+                            <Brain className="h-5 w-5 text-[#BAFF39]" />
                             <h3 className="text-white font-semibold">Suburban Loyalty Engine</h3>
                           </div>
                           <p className="mt-3 text-sm text-zinc-400">
@@ -302,7 +302,7 @@ export default function BriefingOverlay({
                             92–98 loyalty scores in our algorithmic index.
                           </p>
                           <div className="mt-4 flex gap-3">
-                            <Badge className="bg-[#CCFF00]/20 text-[#CCFF00] border border-[#CCFF00]/40">
+                            <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40">
                               92–98 Stability
                             </Badge>
                             <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/40">
@@ -321,11 +321,11 @@ export default function BriefingOverlay({
                           </p>
                           <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-zinc-400">
                             <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
-                              <p className="text-[#CCFF00] font-semibold">Mutex TTL</p>
+                              <p className="text-[#BAFF39] font-semibold">Mutex TTL</p>
                               <p className="mt-1">30 seconds</p>
                             </div>
                             <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
-                              <p className="text-[#CCFF00] font-semibold">SHA-256</p>
+                              <p className="text-[#BAFF39] font-semibold">SHA-256</p>
                               <p className="mt-1">Bidirectional Hash</p>
                             </div>
                           </div>
@@ -335,17 +335,17 @@ export default function BriefingOverlay({
 
                     {activeSlide.layout === 'financials' && (
                       <div className="grid gap-6 lg:grid-cols-2">
-                        <div className="rounded-2xl border border-[#CCFF00]/30 bg-gradient-to-br from-[#CCFF00]/15 via-transparent to-transparent p-6">
+                        <div className="rounded-2xl border border-[#BAFF39]/30 bg-gradient-to-br from-[#BAFF39]/15 via-transparent to-transparent p-6">
                           <p className="text-xs uppercase tracking-widest text-zinc-500">
                             Projected ARR
                           </p>
-                          <p className="mt-2 text-4xl font-black text-[#CCFF00]">$178,800</p>
+                          <p className="mt-2 text-4xl font-black text-[#BAFF39]">$178,800</p>
                           <p className="mt-3 text-sm text-zinc-400">
                             Brisbane 100 baseline with weighted pipeline.
                           </p>
                           <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-zinc-400">
                             <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
-                              <p className="text-[#CCFF00] font-semibold">Committed ARR</p>
+                              <p className="text-[#BAFF39] font-semibold">Committed ARR</p>
                               <p className="mt-1">$89,400</p>
                             </div>
                             <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
@@ -356,15 +356,15 @@ export default function BriefingOverlay({
                         </div>
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
                           <div className="flex items-center gap-3">
-                            <Crown className="h-5 w-5 text-[#CCFF00]" />
+                            <Crown className="h-5 w-5 text-[#BAFF39]" />
                             <h3 className="text-white font-semibold">Reliability Crown</h3>
                           </div>
                           <p className="mt-3 text-sm text-zinc-400">
                             Professionals with 0 strikes and 10+ shifts earn the crown — visible
                             signal of trust and a priority ranking boost.
                           </p>
-                          <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#CCFF00]/30 bg-[#CCFF00]/10 p-4">
-                            <ShieldCheck className="h-5 w-5 text-[#CCFF00]" />
+                          <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#BAFF39]/30 bg-[#BAFF39]/10 p-4">
+                            <ShieldCheck className="h-5 w-5 text-[#BAFF39]" />
                             <div>
                               <p className="text-sm text-white font-semibold">Elite Professional</p>
                               <p className="text-xs text-zinc-400">0 strikes • 10+ shifts</p>
@@ -384,30 +384,30 @@ export default function BriefingOverlay({
                             >
                               <div className="flex items-center justify-between text-xs text-zinc-500">
                                 <span>{label}</span>
-                                <span className="rounded-full bg-[#CCFF00]/10 px-2 py-0.5 text-[#CCFF00]">
+                                <span className="rounded-full bg-[#BAFF39]/10 px-2 py-0.5 text-[#BAFF39]">
                                   LIVE CAPTURE
                                 </span>
                               </div>
                               <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/80 p-4">
                                 <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                  <span className="h-2 w-2 rounded-full bg-[#CCFF00]" />
+                                  <span className="h-2 w-2 rounded-full bg-[#BAFF39]" />
                                   <span>Logistics Engine</span>
                                 </div>
                                 <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-zinc-300">
                                   <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
-                                    <p className="text-[#CCFF00] font-semibold">Smart Fill</p>
+                                    <p className="text-[#BAFF39] font-semibold">Smart Fill</p>
                                     <p className="mt-2 text-zinc-500">Realtime staffing loop</p>
                                   </div>
                                   <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
-                                    <p className="text-[#CCFF00] font-semibold">Compliance Vault</p>
+                                    <p className="text-[#BAFF39] font-semibold">Compliance Vault</p>
                                     <p className="mt-2 text-zinc-500">DVS + RSA verified</p>
                                   </div>
                                   <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
-                                    <p className="text-[#CCFF00] font-semibold">Xero Mutex</p>
+                                    <p className="text-[#BAFF39] font-semibold">Xero Mutex</p>
                                     <p className="mt-2 text-zinc-500">Atomic payroll sync</p>
                                   </div>
                                   <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
-                                    <p className="text-[#CCFF00] font-semibold">ARR Engine</p>
+                                    <p className="text-[#BAFF39] font-semibold">ARR Engine</p>
                                     <p className="mt-2 text-zinc-500">$178,800 baseline</p>
                                   </div>
                                 </div>
@@ -425,7 +425,7 @@ export default function BriefingOverlay({
 
           <div className="mt-6 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Target className="h-3 w-3 text-[#CCFF00]" />
+              <Target className="h-3 w-3 text-[#BAFF39]" />
               Use ← → arrows to navigate slides
             </div>
             <div className="flex items-center gap-2">

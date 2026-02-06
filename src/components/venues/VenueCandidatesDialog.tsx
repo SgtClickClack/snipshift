@@ -120,7 +120,7 @@ export function VenueCandidatesDialog({ shiftId, isOpen, onClose }: VenueCandida
         );
       case 'accepted':
         return (
-          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+          <Badge className="bg-success/20 text-success border-success/30">
             Accepted
           </Badge>
         );
@@ -208,7 +208,7 @@ export function VenueCandidatesDialog({ shiftId, isOpen, onClose }: VenueCandida
                         <Button
                           onClick={() => handleAccept(application.id)}
                           disabled={updateStatusMutation.isPending}
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          className="flex-1 bg-success hover:bg-success/90"
                           size="sm"
                         >
                           <CheckCircle2 className="h-4 w-4 mr-2" />

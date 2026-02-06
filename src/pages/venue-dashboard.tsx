@@ -29,6 +29,7 @@ import { CompleteSetupBanner } from "@/components/onboarding/CompleteSetupBanner
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import { StripeConnectBanner } from "@/components/payments/StripeConnectBanner";
 import { DashboardStatsSkeleton, ApplicantCardSkeleton, ShiftListSkeleton } from "@/components/loading/skeleton-loaders";
+import { StaggerContainer, StaggerItem } from "@/components/ui/stagger-entry";
 import { VenueStatusCard } from "@/components/venues/VenueStatusCard";
 import { VenueAnalyticsDashboard } from "@/components/venues/VenueAnalyticsDashboard";
 import { VenueCandidatesDialog } from "@/components/venues/VenueCandidatesDialog";
@@ -901,7 +902,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2 text-zinc-400 hover:text-[#CCFF00] hover:bg-white/5"
+                    className="h-8 px-2 text-zinc-400 hover:text-[#BAFF39] hover:bg-white/5"
                     onClick={() => navigate('/settings?category=integrations')}
                     data-testid="button-xero-quick-link"
                   >
@@ -1032,11 +1033,13 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         {/* Overview Tab */}
         {activeView === 'overview' && (
           <div className="space-y-6">
-            {/* Dashboard Stats */}
+            {/* Dashboard Stats with Stagger Animation */}
             {isLoadingStats ? (
               <DashboardStatsSkeleton />
             ) : (
-              <DashboardStats role="hub" stats={stats} onStatClick={handleStatClick} />
+              <StaggerContainer>
+                <DashboardStats role="hub" stats={stats} onStatClick={handleStatClick} />
+              </StaggerContainer>
             )}
             
             {/* Payroll Readiness Widget - High visibility for Lucas during investor demo */}
@@ -1120,7 +1123,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                               variant="outline" 
                               className={`text-xs ${
                                 log.status === 'success' 
-                                  ? 'bg-green-500/20 text-green-500 border-green-500/30' 
+                                  ? 'bg-success/20 text-success border-success/30' 
                                   : log.status === 'partial'
                                   ? 'bg-[#BAFF39]/20 text-[#BAFF39] border-[#BAFF39]/30'
                                   : 'bg-red-500/20 text-red-500 border-red-500/30'
@@ -1154,7 +1157,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                         </p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        job.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-steel-100 text-steel-800'
+                        job.status === 'open' ? 'bg-[#BAFF39]/20 text-[#BAFF39]' : 'bg-muted text-muted-foreground'
                       }`}>
                         {job.status}
                       </span>
@@ -1188,7 +1191,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                     variant={statusFilter === 'open' ? 'default' : 'outline'}
                     onClick={() => setStatusFilter('open')}
                     size="sm"
-                    className={statusFilter === 'open' ? 'bg-green-600 hover:bg-green-700' : ''}
+                    className={statusFilter === 'open' ? 'bg-[#BAFF39] text-black hover:bg-[#BAFF39]/90' : ''}
                   >
                     Open
                   </Button>
@@ -1576,10 +1579,10 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                               )}
                               {/* Backup Assigned Status */}
                               {isShift && isOwner && (job as any).backupWorkerId && (
-                                <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 border border-green-500/50 rounded-md">
+                                <div className="mt-3 p-3 bg-success/10 border border-success/50 rounded-md">
                                   <div className="flex items-center gap-2">
-                                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                    <p className="text-sm text-green-900 dark:text-green-100">
+                                    <CheckCircle className="h-4 w-4 text-success" />
+                                    <p className="text-sm text-success-foreground">
                                       Backup worker assigned - Original worker cancelled
                                     </p>
                                   </div>
@@ -1606,7 +1609,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                                           }
                                         }}
                                         disabled={completeShiftMutation.isPending}
-                                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                        className="w-full bg-success hover:bg-success/90 text-success-foreground"
                                       >
                                         {completeShiftMutation.isPending ? (
                                           <>
@@ -1694,8 +1697,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                                  app.status === 'accepted' ? 'bg-green-100 text-green-800' : 
-                                  app.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                                  app.status === 'accepted' ? 'bg-success/20 text-success' : 
+                                  app.status === 'rejected' ? 'bg-destructive/20 text-destructive' : 
                                   'bg-muted text-foreground'
                                 }`}>
                                    {app.status}
@@ -1950,7 +1953,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
                 }
               }}
               disabled={completeShiftMutation.isPending}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {completeShiftMutation.isPending ? (
                 <>
@@ -1975,8 +1978,8 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         <button
           onClick={() => navigate('/admin/cto-dashboard')}
           className="fixed z-[var(--z-floating)] flex items-center gap-3 px-4 py-2.5 rounded-lg 
-                     bg-transparent border border-[#CCFF00]/50
-                     hover:border-[#CCFF00] hover:shadow-[0_0_15px_rgba(204,255,0,0.2)]
+                     bg-transparent border border-[#BAFF39]/50
+                     hover:border-[#BAFF39] hover:shadow-[0_0_15px_rgba(186,255,57,0.2)]
                      transition-all duration-300 cursor-pointer group"
           style={{ 
             fontFamily: 'Urbanist, sans-serif', 
@@ -1988,11 +1991,11 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         >
           {/* Subtle Pulse Dot - Small pulsing indicator */}
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#CCFF00] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#CCFF00] shadow-[0_0_6px_rgba(204,255,0,0.8)]"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#BAFF39] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#BAFF39] shadow-[0_0_6px_rgba(186,255,57,0.8)]"></span>
           </span>
-          <Brain className="h-4 w-4 text-[#CCFF00]/80 group-hover:text-[#CCFF00] transition-colors" />
-          <span className="text-[#CCFF00]/80 text-xs tracking-wider uppercase group-hover:text-[#CCFF00] transition-colors">
+          <Brain className="h-4 w-4 text-[#BAFF39]/80 group-hover:text-[#BAFF39] transition-colors" />
+          <span className="text-[#BAFF39]/80 text-xs tracking-wider uppercase group-hover:text-[#BAFF39] transition-colors">
             ARCHITECT PORTAL
           </span>
         </button>

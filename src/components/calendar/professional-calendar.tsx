@@ -2638,7 +2638,7 @@ function ProfessionalCalendarContent({
                 {/* Legend - Traffic Light System */}
                 <div className="flex gap-4 mb-4 text-sm text-zinc-400 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <div className="w-3 h-3 rounded bg-success"></div>
                     <span>Confirmed</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -2864,7 +2864,7 @@ function ProfessionalCalendarContent({
                 <Badge
                   className={
                     selectedEvent.resource.status === "confirmed"
-                      ? "bg-green-600"
+                      ? "bg-success"
                       : selectedEvent.resource.status === "pending"
                       ? "bg-blue-600"
                       : "bg-gray-600"

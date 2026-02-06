@@ -12,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MapPin, Clock, DollarSign, Briefcase, MessageSquare, Eye, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
-import { useWithdrawApplication } from '@/pages/professional-dashboard/useWithdrawApplication';
+import { useWithdrawApplication } from '@/hooks/useWithdrawApplication';
 
 export type ApplicationStatus = 
   | 'pending' 

@@ -203,8 +203,8 @@ export function ShiftBlock({ event, onClick, isRecurring, className }: ShiftBloc
         className={cn(
           "shift-block shift-block-confirmed",
           "w-full h-full rounded-md",
-          "bg-emerald-600 dark:bg-emerald-700",
-          "cursor-pointer hover:bg-emerald-700 dark:hover:bg-emerald-800 transition-colors",
+          "bg-success",
+          "cursor-pointer hover:bg-success/90 transition-colors",
           "flex items-center gap-1.5 px-2 py-1 relative overflow-hidden",
           className
         )}

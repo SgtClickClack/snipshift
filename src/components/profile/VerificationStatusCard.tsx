@@ -134,7 +134,7 @@ export function VerificationStatusCard() {
           </div>
           
           <div className="rounded-lg border p-4 text-center">
-            <div className={`text-2xl font-bold ${status.noShowsLast30Days > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+            <div className={`text-2xl font-bold ${status.noShowsLast30Days > 0 ? 'text-destructive' : 'text-success'}`}>
               {status.noShowsLast30Days}
             </div>
             <div className="text-xs text-muted-foreground">No-Shows (30 days)</div>
@@ -188,7 +188,7 @@ export function VerificationStatusCard() {
               </div>
             </div>
             {status.canWorkAlcoholShifts ? (
-              <div className="flex items-center gap-1.5 text-emerald-600">
+              <div className="flex items-center gap-1.5 text-success">
                 <CheckCircle2 className="h-5 w-5" />
                 <span className="text-sm font-medium">Eligible</span>
               </div>

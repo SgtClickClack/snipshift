@@ -68,7 +68,7 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
                 <h3 className="font-bold text-neutral-900 text-lg">{shopName}</h3>
                 {shift.isEmergencyFill ? (
                   <span
-                    className="inline-flex items-center rounded-full bg-lime-400 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-black shadow-[0_0_12px_rgba(163,230,53,0.6)] ring-1 ring-lime-300 animate-pulse"
+                    className="inline-flex items-center rounded-full bg-[#BAFF39] px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-black shadow-[0_0_12px_rgba(186,255,57,0.6)] ring-1 ring-[#BAFF39]/50 animate-pulse"
                     aria-label="Emergency fill shift"
                   >
                     Emergency

@@ -33,7 +33,7 @@ export function JobCard({ job, isSelected, onClick, onViewDetails }: JobCardProp
       <CardContent className="p-5">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-bold text-lg text-steel-900 line-clamp-1">{job.title}</h3>
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 whitespace-nowrap ml-2">
+          <Badge variant="outline" className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30 whitespace-nowrap ml-2">
             {job.rate || job.payRate || 'Rate TBD'}
           </Badge>
         </div>

@@ -31,13 +31,13 @@ function formatDate(dateString: string): string {
 function getNotificationIcon(type: Notification['type']) {
   switch (type) {
     case 'application_received':
-      return <Briefcase className="h-5 w-5 text-emerald-600" />;
+      return <Briefcase className="h-5 w-5 text-[#BAFF39]" />;
     case 'application_status_change':
-      return <CheckCircle2 className="h-5 w-5 text-emerald-600" />;
+      return <CheckCircle2 className="h-5 w-5 text-[#BAFF39]" />;
     case 'SHIFT_INVITE':
       return <Briefcase className="h-5 w-5 text-blue-600" />;
     case 'SHIFT_CONFIRMED':
-      return <CheckCircle2 className="h-5 w-5 text-emerald-600" />;
+      return <CheckCircle2 className="h-5 w-5 text-success" />;
     case 'SHIFT_CANCELLED':
       return <Info className="h-5 w-5 text-red-600" />;
     case 'job_posted':
@@ -52,7 +52,7 @@ function getNotificationBadge(type: Notification['type']) {
   switch (type) {
     case 'application_received':
       return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Badge className="bg-[#BAFF39]/10 text-[#BAFF39] border-[#BAFF39]/30">
           New Application
         </Badge>
       );
@@ -70,7 +70,7 @@ function getNotificationBadge(type: Notification['type']) {
       );
     case 'SHIFT_CONFIRMED':
       return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Badge className="bg-success/20 text-success border-success/30">
           Confirmed
         </Badge>
       );
@@ -174,8 +174,8 @@ export default function NotificationsPage() {
               <Card
                 key={notification.id}
                 className={`card-chrome cursor-pointer transition-colors ${
-                  !notification.isRead ? 'border-l-4 border-l-emerald-500 bg-emerald-50/30' : ''
-                } hover:border-steel-400`}
+                  !notification.isRead ? 'border-l-4 border-l-[#BAFF39] bg-[#BAFF39]/5' : ''
+                } hover:border-white/20`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 <CardContent className="p-4">
@@ -196,7 +196,7 @@ export default function NotificationsPage() {
                           {formatDate(notification.createdAt)}
                         </span>
                         {!notification.isRead && (
-                          <span className="text-xs text-emerald-600 font-medium">New</span>
+                          <span className="text-xs text-[#BAFF39] font-medium">New</span>
                         )}
                       </div>
                     </div>

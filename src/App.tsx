@@ -719,8 +719,8 @@ function HydrationSplash() {
           className="text-5xl md:text-7xl font-black tracking-tight mb-4"
           style={{ 
             fontFamily: 'Urbanist, sans-serif',
-            color: '#CCFF00',
-            textShadow: '0 0 40px rgba(204, 255, 0, 0.6), 0 0 80px rgba(204, 255, 0, 0.3)',
+            color: '#BAFF39',
+            textShadow: '0 0 40px rgba(186, 255, 57, 0.6), 0 0 80px rgba(186, 255, 57, 0.3)',
             letterSpacing: '-0.02em',
           }}
         >
@@ -746,8 +746,8 @@ function HydrationSplash() {
           <div 
             className="absolute inset-4 rounded-full"
             style={{ 
-              backgroundColor: '#CCFF00',
-              boxShadow: '0 0 30px rgba(204, 255, 0, 0.8)',
+              backgroundColor: '#BAFF39',
+              boxShadow: '0 0 30px rgba(186, 255, 57, 0.8)',
             }}
           />
         </div>

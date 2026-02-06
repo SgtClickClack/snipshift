@@ -213,8 +213,8 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
           switch (variant) {
             case 'accent': // Brand Neon - Refined glow outline
               return {
-                icon: 'text-[#CCFF00]',
-                bg: 'bg-transparent border-[#CCFF00]/60 shadow-[0_0_10px_rgba(204,255,0,0.15)]'
+                icon: 'text-[#BAFF39]',
+                bg: 'bg-transparent border-[#BAFF39]/60 shadow-[0_0_10px_rgba(186,255,57,0.15)]'
               };
             case 'steel': // Charcoal/Steel Base - Glassmorphic
               return {
@@ -223,8 +223,8 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
               };
             case 'accent-secondary': // Brand Neon - Subtle neon
               return {
-                icon: 'text-[#CCFF00]/80',
-                bg: 'bg-[#CCFF00]/5 border-[#CCFF00]/30'
+                icon: 'text-[#BAFF39]/80',
+                bg: 'bg-[#BAFF39]/5 border-[#BAFF39]/30'
               };
             case 'chrome': // Metallic - Glassmorphic
             default:
@@ -244,13 +244,13 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
             <Card 
               className={`group relative overflow-hidden bg-[#1e293b] border border-white/10 shadow-sm transition-all duration-300 ${
                 isClickable 
-                  ? 'cursor-pointer hover:shadow-lg hover:border-[#CCFF00]/30 hover:-translate-y-0.5 active:scale-[0.98]' 
+                  ? 'cursor-pointer hover:shadow-lg hover:border-[#BAFF39]/30 hover:-translate-y-0.5 active:scale-[0.98]' 
                   : 'hover:shadow-md hover:border-white/20'
               }`} 
               data-testid={`stat-card-${index}`}
               onClick={() => isClickable && onStatClick(stat.action!)}
             >
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#CCFF00]/30 to-transparent opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#BAFF39]/30 to-transparent opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300" />
               {/* VISUAL FIDELITY: Reduced padding for compact cards */}
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-start justify-between gap-2">

@@ -14,7 +14,7 @@ export function VerificationBadge({ status, className }: VerificationBadgeProps)
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-500/30',
+            'inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success ring-1 ring-success/30',
             className
           )}
         >

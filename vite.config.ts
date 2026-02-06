@@ -224,59 +224,78 @@ export default defineConfig(({ mode }) => ({
         assetFileNames: 'assets/[name].[hash].[ext]',
         // Manual chunk splitting strategy
         manualChunks: (id) => {
-          // ===== APPLICATION-LEVEL SPLITTING (domain decoupling) =====
-          // Split venue, professional, and admin pages into separate chunks
-          // IMPORTANT: Onboarding pages/components must stay in shared chunk
-          // (used during venue setup before role assignment)
+          // 1. Vendor chunking - Order matters to avoid circular dependencies
+          if (id.includes('node_modules')) {
+            // Heavy visualization libraries first (most specific)
+            if (id.includes('recharts')) return 'vendor-recharts';
+            if (id.includes('mermaid')) return 'vendor-mermaid';
+            if (id.includes('katex')) return 'vendor-katex';
+            
+            // Maps + places autocomplete
+            if (
+              id.includes('@react-google-maps/api') ||
+              id.includes('@googlemaps/js-api-loader') ||
+              id.includes('use-places-autocomplete')
+            ) {
+              return 'vendor-maps';
+            }
+            
+            // Payments
+            if (id.includes('@stripe/') || id.includes('stripe')) {
+              return 'vendor-payments';
+            }
+            
+            // Core React ecosystem - must include all React-related packages
+            // to prevent "jsx undefined" errors
+            if (
+              id.includes('/react/') || 
+              id.includes('/react-dom/') || 
+              id.includes('/react-router') ||
+              id.includes('/@react-') ||  // Catch @react-aria, @react-types, etc.
+              id.includes('/scheduler/') // React internal dependency
+            ) {
+              return 'vendor-react';
+            }
+            
+            // Firebase and animation - separate from React to reduce core chunk size
+            if (id.includes('firebase')) return 'vendor-firebase';
+            if (id.includes('framer-motion')) return 'vendor-animation';
+            
+            // Everything else - let Rollup optimize
+            // Don't force into a single chunk to avoid circular deps
+            return undefined;
+          }
+
+          // 2. Application-level splitting (Domain Decoupling)
+          // Be very specific with paths to avoid cross-chunk dependencies
+          // IMPORTANT: Onboarding pages/components must stay in main chunk
+          const srcPath = id.split('/src/pages/')[1];
+          if (!srcPath) return undefined;
           
-          if (id.includes('/src/pages/venue-') || 
-              id.includes('/src/pages/shop/') || 
-              id.includes('/src/pages/salon-')) {
+          // Venue-specific pages
+          if (
+            srcPath.startsWith('venue-') || 
+            srcPath.startsWith('shop/') || 
+            srcPath.startsWith('salon-')
+          ) {
             return 'app-venue';
           }
           
-          if (id.includes('/src/pages/professional-') || 
-              id.includes('/src/pages/worker-') || 
-              id.includes('/src/pages/earnings')) {
+          // Professional-specific pages  
+          if (
+            srcPath.startsWith('professional-') || 
+            srcPath.startsWith('worker-') || 
+            srcPath.startsWith('earnings')
+          ) {
             return 'app-professional';
           }
           
-          if (id.includes('/src/pages/admin/')) {
+          // Admin-specific pages
+          if (srcPath.startsWith('admin/')) {
             return 'app-admin';
           }
-
-          // ===== VENDOR LIBRARY SPLITTING =====
-          if (!id.includes('node_modules')) return;
-
-          // Keep chunking conservative to avoid React runtime ordering issues.
-          // Only split a few known-heavy libraries; let Vite/Rollup decide the rest.
-
-          // Firebase is large; isolate it for better caching.
-          if (id.includes('node_modules/firebase')) return 'vendor-firebase';
-
-          // Maps + places autocomplete are heavy and not needed everywhere.
-          if (
-            id.includes('node_modules/@react-google-maps/api') ||
-            id.includes('node_modules/@googlemaps/js-api-loader') ||
-            id.includes('node_modules/use-places-autocomplete')
-          ) {
-            return 'vendor-maps';
-          }
-
-          // Payments.
-          if (id.includes('node_modules/@stripe/') || id.includes('node_modules/stripe')) {
-            return 'vendor-payments';
-          }
-
-          // Visualization libs - lazy-loaded by admin/earnings/venue pages.
-          if (id.includes('node_modules/recharts')) return 'vendor-recharts';
-          if (id.includes('node_modules/mermaid')) return 'vendor-mermaid';
-
-          // KaTeX (math rendering) - isolate if used by any transitive dep.
-          if (id.includes('node_modules/katex')) return 'vendor-katex';
-
-          // Otherwise, let Rollup determine optimal shared chunks.
-          return;
+          
+          return undefined;
         },
       },
       // Ensure external dependencies are properly resolved

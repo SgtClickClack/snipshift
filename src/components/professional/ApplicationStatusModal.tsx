@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/loading/loading-spinner';
-import { useApplicationStatusUpdates, StatusUpdateType } from '@/pages/professional-dashboard/useApplicationStatusUpdates';
+import { useApplicationStatusUpdates, StatusUpdateType } from '@/hooks/useApplicationStatusUpdates';
 import { format, isToday, isYesterday } from 'date-fns';
 import { CheckCircle2, Eye, FileText, AlertCircle, Clock, XCircle, CheckCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
