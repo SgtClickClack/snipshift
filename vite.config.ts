@@ -79,7 +79,9 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
+                // RED TEAM SECURITY: Reduced from 24h to 5min to prevent TOCTOU race condition amplification
+                // Stale shift data after 10s network timeout could show already-accepted shifts as available
+                maxAgeSeconds: 60 * 5, // 5 minutes
               },
               networkTimeoutSeconds: 10,
             },
@@ -91,7 +93,8 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
+                // RED TEAM SECURITY: Reduced from 24h to 5min to prevent stale shift data
+                maxAgeSeconds: 60 * 5, // 5 minutes
               },
               networkTimeoutSeconds: 10,
             },
@@ -226,10 +229,11 @@ export default defineConfig(({ mode }) => ({
         manualChunks: (id) => {
           // 1. Vendor chunking - Order matters to avoid circular dependencies
           if (id.includes('node_modules')) {
-            // Heavy visualization libraries first (most specific)
-            if (id.includes('recharts')) return 'vendor-recharts';
-            if (id.includes('mermaid')) return 'vendor-mermaid';
-            if (id.includes('katex')) return 'vendor-katex';
+            // Heavy visualization libraries - Let Vite auto-chunk these to avoid circular deps
+            // REVERTED: Manual chunking caused ReferenceError in app-admin chunk (Black Screen)
+            // if (id.includes('recharts')) return 'vendor-recharts';
+            // if (id.includes('mermaid')) return 'vendor-mermaid';
+            // if (id.includes('katex')) return 'vendor-katex';
             
             // Maps + places autocomplete
             if (

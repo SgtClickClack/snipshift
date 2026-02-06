@@ -131,11 +131,14 @@ router.post(
         },
       });
 
-      // Make file accessible (or use signed URLs for more security)
-      await firebaseFile.makePublic();
-      certificateUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+      // Generate signed URL (expires in 1 hour for security)
+      const [signedUrl] = await firebaseFile.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 3600000, // 1 hour expiry
+      });
+      certificateUrl = signedUrl;
 
-      console.log(`[APPEALS] Certificate uploaded for user ${userId}: ${certificateUrl}`);
+      console.log(`[APPEALS] Certificate uploaded for user ${userId} (signed URL generated)`);
     } catch (error: any) {
       console.error('[APPEALS] Failed to upload certificate:', error);
       res.status(500).json({ 
@@ -288,12 +291,13 @@ async function flagForAdminReview(
   const user = await usersRepo.getUserById(userId);
   if (!user) return;
 
+  // RED TEAM SECURITY: Redact PII from logs (certificate URLs, names, emails)
   console.log(`[APPEALS] Flagging appeal for admin review:`, {
     userId,
     shiftId,
-    certificateUrl,
+    certificateUrl: '[REDACTED]',
     reason,
-    additionalNotes,
+    additionalNotes: additionalNotes ? '[REDACTED]' : 'None',
   });
 
   // TODO: In a full implementation, create an appeals record in the database
@@ -303,13 +307,12 @@ async function flagForAdminReview(
   try {
     // Create a system notification/log for admin dashboard
     // This would typically go into an appeals/tickets table
+    // RED TEAM SECURITY: Redacted PII from logs
     console.log(`[APPEALS] Medical certificate appeal submitted:
-      User: ${user.name} (${user.email})
       User ID: ${userId}
       Shift ID: ${shiftId}
-      Certificate: ${certificateUrl}
+      Certificate: [REDACTED - stored securely]
       Reason for review: ${reason}
-      Additional notes: ${additionalNotes || 'None'}
       Submitted at: ${new Date().toISOString()}
     `);
 

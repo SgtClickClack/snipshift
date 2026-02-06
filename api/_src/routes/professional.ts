@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { authenticateUser, AuthenticatedRequest } from '../middleware/auth.js';
+import { authenticateUser, AuthenticatedRequest, requireProfessional } from '../middleware/auth.js';
 import * as jobsRepo from '../repositories/jobs.repository.js';
 import * as applicationsRepo from '../repositories/applications.repository.js';
 import { normalizeParam } from '../utils/request-params.js';
@@ -241,7 +241,8 @@ router.get('/jobs', asyncHandler(async (req, res) => {
  * 
  * Returns: Array of application objects with job details
  */
-router.get('/applications', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+// RED TEAM SECURITY: Added requireProfessional middleware to prevent Venue users from accessing Professional data
+router.get('/applications', authenticateUser, requireProfessional, asyncHandler(async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   if (!req.user || !userId) {
     res.status(401).json({ message: 'Unauthorized' });
@@ -415,7 +416,8 @@ router.get('/applications', authenticateUser, asyncHandler(async (req: Authentic
  * 
  * Returns: 200 on success with success message
  */
-router.post('/applications/:id/withdraw', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+// RED TEAM SECURITY: Added requireProfessional middleware
+router.post('/applications/:id/withdraw', authenticateUser, requireProfessional, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized' });
     return;
@@ -471,7 +473,8 @@ router.post('/applications/:id/withdraw', authenticateUser, asyncHandler(async (
  * 
  * Returns: Array of status update objects
  */
-router.get('/applications/:id/updates', authenticateUser, asyncHandler(async (req: AuthenticatedRequest, res) => {
+// RED TEAM SECURITY: Added requireProfessional middleware
+router.get('/applications/:id/updates', authenticateUser, requireProfessional, asyncHandler(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {
     res.status(401).json({ message: 'Unauthorized' });
     return;

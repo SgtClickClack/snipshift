@@ -504,6 +504,18 @@ export async function getOrCreateMockBusinessUser(): Promise<typeof users.$infer
  * (role, isOnboarded, Stripe IDs, etc.) is not possible from generic
  * "updates" objects.
  */
+/**
+ * RED TEAM SECURITY AUDIT: updateUser() is protected by buildSafeProfileUpdate()
+ * 
+ * This function only allows fields from ALLOWED_PROFILE_UPDATE_FIELDS whitelist.
+ * Sensitive fields are BLOCKED from general updates:
+ *  - stripeAccountId (prevents payout redirection)
+ *  - stripeCustomerId (prevents payment manipulation)
+ *  - role/roles (prevents privilege escalation)
+ *  - isOnboarded, isActive (prevents account hijacking)
+ * 
+ * Use internal_dangerouslyUpdateUser() for privileged operations only.
+ */
 export async function updateUser(
   id: string,
   userData: Partial<typeof users.$inferSelect>

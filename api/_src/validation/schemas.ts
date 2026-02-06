@@ -141,23 +141,25 @@ export const ShiftSchema = z.object({
   date: z.string().optional(), // Single datetime (frontend format)
   startTime: z.string().optional(), // ISO datetime string
   endTime: z.string().optional(), // ISO datetime string
+  // RED TEAM SECURITY: Hourly rate bounds prevent wage theft ($0) and money laundering (excessive rates)
   hourlyRate: z.union([
-    z.number().nonnegative('Hourly rate must be a non-negative number'),
+    z.number().min(15, 'Hourly rate must be at least $15.00 AUD (National Minimum Wage)').max(500, 'Hourly rate cannot exceed $500.00 AUD'),
     z.string().refine((val) => {
       const num = parseFloat(val);
-      return !isNaN(num) && num >= 0;
-    }, 'Hourly rate must be a non-negative number'),
+      return !isNaN(num) && num >= 15 && num <= 500;
+    }, 'Hourly rate must be between $15.00 and $500.00 AUD'),
   ]).optional(),
   uniformRequirements: z.string().optional(),
   rsaRequired: z.boolean().optional(),
   expectedPax: z.union([z.number().int().nonnegative(), z.string()]).optional(),
   capacity: z.union([z.number().int().min(1), z.string().refine((v) => { const n = parseInt(v, 10); return !isNaN(n) && n >= 1; })]).optional(),
-  pay: z.union([ // Alias for hourlyRate for frontend compatibility
-    z.number().positive('Pay rate must be a positive number'),
+  // RED TEAM SECURITY: Pay rate bounds (alias for hourlyRate)
+  pay: z.union([
+    z.number().min(15, 'Pay rate must be at least $15.00 AUD').max(500, 'Pay rate cannot exceed $500.00 AUD'),
     z.string().refine((val) => {
       const num = parseFloat(val);
-      return !isNaN(num) && num > 0;
-    }, 'Pay rate must be a positive number'),
+      return !isNaN(num) && num >= 15 && num <= 500;
+    }, 'Pay rate must be between $15.00 and $500.00 AUD'),
   ]).optional(),
   location: z.string().optional(),
   status: z.enum(['draft', 'pending', 'invited', 'open', 'filled', 'completed', 'confirmed', 'cancelled', 'pending_completion']).optional(),

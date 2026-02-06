@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,15 @@ export function MedicalCertificateUpload({
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'pending_review'>('idle');
+
+  // RED TEAM SECURITY: Revoke blob URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -124,9 +133,17 @@ export function MedicalCertificateUpload({
     
     // Create preview for images
     if (file.type.startsWith('image/')) {
+      // Revoke old URL before creating new one
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     } else {
+      // Revoke URL when switching to non-image file
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
       setPreviewUrl(null);
     }
   };

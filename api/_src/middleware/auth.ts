@@ -202,6 +202,57 @@ export function requireBusinessOwner(
 }
 
 /**
+ * Professional authorization middleware.
+ * RED TEAM SECURITY HARDENING: Explicit role gate for Professional-specific endpoints.
+ * Only allows 'professional' role to access Professional domain endpoints.
+ * MUST be used after authenticateUser middleware
+ * 
+ * @security Prevents privilege escalation where Venue users could access
+ *           Professional endpoints via token manipulation.
+ */
+export function requireProfessional(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized: Authentication required' });
+    return;
+  }
+  if (req.user.role !== 'professional') {
+    res.status(403).json({ message: 'Forbidden: Professional access required' });
+    return;
+  }
+  next();
+}
+
+/**
+ * Venue authorization middleware.
+ * RED TEAM SECURITY HARDENING: Explicit role gate for Venue-specific endpoints.
+ * Allows hub, business, venue, and admin roles (venue/business operators).
+ * MUST be used after authenticateUser middleware
+ * 
+ * @security Prevents privilege escalation where Professional users could access
+ *           Venue management endpoints.
+ */
+export function requireVenue(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized: Authentication required' });
+    return;
+  }
+  const allowed = ['hub', 'business', 'venue', 'admin'] as const;
+  if (!allowed.includes(req.user.role as typeof allowed[number])) {
+    res.status(403).json({ message: 'Forbidden: Venue owner access required' });
+    return;
+  }
+  next();
+}
+
+/**
  * Super Admin authorization middleware (alias for requireAdmin)
  * For platform owner access - ensures only admin role can access
  * MUST be used after authenticateUser middleware

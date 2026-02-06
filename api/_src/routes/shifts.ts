@@ -1807,8 +1807,12 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   const commissionAmount = Math.round(commissionAmountDollars * 100);
   const professionalAmount = shiftAmount - commissionAmount;
 
-  // ATOMIC TRANSACTION: Lock shift, verify availability, create payment, update shift
-  // If any step fails, rollback transaction and cancel PaymentIntent
+  // SECURITY HARDENING (Red Team Audit): Two-Phase Commit Pattern
+  // Phase 1: Lock shift + validate availability
+  // Phase 2: Create PaymentIntent OUTSIDE transaction
+  // Phase 3: Update shift in new transaction with PI ID
+  // This prevents orphaned PaymentIntents if DB transaction fails after Stripe succeeds
+  
   const db = getDb();
   if (!db) {
     res.status(500).json({ message: 'Database not available' });
@@ -1819,9 +1823,11 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
   let updatedShift: typeof shifts.$inferSelect | null = null;
 
   try {
-    // SECURITY AUDIT: Use REPEATABLE READ isolation for shift updates to prevent deadlocks
+    // === PHASE 1: Lock and validate shift availability ===
     const { withTransactionIsolation } = await import('../db/transactions.js');
-    updatedShift = await withTransactionIsolation(async (tx) => {
+    
+    // First transaction: ONLY lock + validate (no external API calls)
+    const validationResult = await withTransactionIsolation(async (tx) => {
       // Step 1: Lock the shift row with FOR UPDATE to prevent race conditions
       const lockedShiftResult = await (tx as any).execute(
         sql`SELECT * FROM shifts WHERE id = ${id} FOR UPDATE`
@@ -1836,7 +1842,7 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
         throw new Error('Shift not found');
       }
 
-      // Step 2: Verify shift is still available (double-check after lock)
+      // Step 2: Verify shift is still available (critical check after lock)
       if (lockedShift.assignee_id) {
         throw new Error('Shift has already been accepted by another professional');
       }
@@ -1845,37 +1851,63 @@ router.post('/:id/accept', authenticateUser, asyncHandler(async (req: Authentica
         throw new Error('Shift is not in a valid status for acceptance');
       }
 
-      // Step 3: Create PaymentIntent (external API call - must succeed before DB update)
-      // This is outside the transaction but we'll handle rollback if it fails
-      try {
-        paymentIntentId = await stripeConnectService.createAndConfirmPaymentIntent(
-          shiftAmount,
-          'aud', // Using AUD for Australian market
-          customerId,
-          paymentMethodId,
-          commissionAmount,
-          {
-            destination: professional?.stripeAccountId || '',
-          },
-          {
-            shiftId: shift.id,
-            professionalId: userId,
-            venueId: shift.employerId,
-            type: 'shift_payment',
-          }
-        );
-      } catch (stripeError: any) {
-        console.error('[SHIFT_ACCEPT] Error creating PaymentIntent:', stripeError);
-        // Throw to trigger transaction rollback
-        throw new Error(`Failed to create payment authorization: ${stripeError.message}`);
+      // Return locked shift data for Phase 2
+      return {
+        substitutionRequestedBy: lockedShift.substitution_requested_by,
+        shiftStillAvailable: true,
+      };
+    });
+
+    // === PHASE 2: Create PaymentIntent OUTSIDE transaction ===
+    // If Stripe fails here, no DB changes have been made (safe to return error)
+    try {
+      paymentIntentId = await stripeConnectService.createAndConfirmPaymentIntent(
+        shiftAmount,
+        'aud', // Using AUD for Australian market
+        customerId,
+        paymentMethodId,
+        commissionAmount,
+        {
+          destination: professional?.stripeAccountId || '',
+        },
+        {
+          shiftId: shift.id,
+          professionalId: userId,
+          venueId: shift.employerId,
+          type: 'shift_payment',
+        }
+      );
+    } catch (stripeError: any) {
+      console.error('[SHIFT_ACCEPT] Error creating PaymentIntent:', stripeError);
+      throw new Error(`Failed to create payment authorization: ${stripeError.message}`);
+    }
+
+    if (!paymentIntentId) {
+      throw new Error('Failed to create payment authorization');
+    }
+
+    // === PHASE 3: Update shift with PaymentIntent ID in new transaction ===
+    updatedShift = await withTransactionIsolation(async (tx) => {
+      // Re-lock shift for final update (double-check pattern)
+      const finalLockResult = await (tx as any).execute(
+        sql`SELECT * FROM shifts WHERE id = ${id} FOR UPDATE`
+      );
+      
+      const finalLockedShift = Array.isArray(finalLockResult) 
+        ? finalLockResult[0] 
+        : finalLockResult?.rows?.[0] || finalLockResult?.[0];
+
+      if (!finalLockedShift) {
+        throw new Error('Shift not found in final check');
       }
 
-      if (!paymentIntentId) {
-        throw new Error('Failed to create payment authorization');
+      // Final availability check (prevent race condition between Phase 1 and Phase 3)
+      if (finalLockedShift.assignee_id) {
+        throw new Error('Shift was accepted by another user during payment processing');
       }
 
       // Step 4: Check if this is a substitution request
-      const originalWorkerId = lockedShift.substitution_requested_by;
+      const originalWorkerId = validationResult.substitutionRequestedBy;
 
       // Step 5: Update shift with assignee and payment info (within transaction)
       // Clear substitutionRequestedBy if it was set (substitution completed)
