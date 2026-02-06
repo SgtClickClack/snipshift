@@ -786,8 +786,19 @@ function HydrationSplash() {
 function AuthGate({ children, splashHandled }: { children: React.ReactNode; splashHandled: boolean }) {
   const { isSystemReady, isLoading, user } = useAuth();
   const location = useLocation();
-  
-  // Public routes that NEVER need auth - bypass the auth gate entirely
+  const [timedOut, setTimedOut] = useState(false);
+
+  // FAIL-SAFE: If Firebase handshake takes > 3 seconds, force the app to load anyway.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isSystemReady) {
+        console.warn('[AuthGate] Firebase handshake timed out; bypassing splash screen.');
+        setTimedOut(true);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isSystemReady]);
+
   const isPublicRoute = 
     location.pathname === '/' || 
     location.pathname === '/status' || 
@@ -797,20 +808,14 @@ function AuthGate({ children, splashHandled }: { children: React.ReactNode; spla
     location.pathname === '/signup' ||
     location.pathname === '/forgot-password' ||
     location.pathname.startsWith('/onboarding');
-  
-  // AUTH GATE: Block ALL content until BOTH conditions are met:
-  // 1. isSystemReady === true (Firebase + profile hydration complete)
-  // 2. user !== undefined (user object resolved - could be null for logged out, or User for logged in)
-  // This prevents Stripe, Xero, Analytics, Chat widgets from firing 401 errors
-  // and stops Jobs/Calendar components from even mounting until auth is verified
-  const isAuthPending = !isSystemReady || user === undefined;
-  const isHandshakeInProgress = isAuthPending && isLoading;
-  
-  if ((isHandshakeInProgress || isAuthPending) && !isPublicRoute && splashHandled) {
+
+  // Logic: Proceed if auth is ready, if we are on a public route, OR if the 3s fail-safe triggered.
+  const shouldShowSplash = (!isSystemReady || user === undefined) && !isPublicRoute && !timedOut && splashHandled;
+
+  if (shouldShowSplash) {
     return <HydrationSplash />;
   }
-  
-  // Once auth is ready (or on public routes), render all children
+
   return <>{children}</>;
 }
 

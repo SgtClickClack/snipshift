@@ -349,6 +349,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // INVESTOR BRIEFING FIX: Navigation lock release guard
   // Ensures setIsNavigationLocked(false) is called exactly ONCE to prevent state machine jolts
   const navigationLockReleasedRef = useRef<boolean>(false);
+  const handshakeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   /** Safe navigation lock release - ensures it's only called once per auth cycle */
   const releaseNavigationLock = useCallback(() => {
@@ -358,6 +359,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // PROGRESSIVE UNLOCK: End high-precision timer when lock is released
       // Goal: Output should be < 500ms
       console.timeEnd('Handshake-to-Unlock');
+      // Clear the safety timeout if it exists
+      if (handshakeTimeoutRef.current) {
+        clearTimeout(handshakeTimeoutRef.current);
+        handshakeTimeoutRef.current = null;
+      }
     }
   }, []);
 
@@ -455,6 +461,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // PROGRESSIVE UNLOCK: High-precision timer to verify TTI < 500ms
     // Timer starts AFTER guard checks pass to avoid orphaned timers on deduplication
     console.time('Handshake-to-Unlock');
+    
+    // Safety timeout: Ensure timer ends after 3 seconds if Firebase fails to respond
+    handshakeTimeoutRef.current = setTimeout(() => {
+      console.timeEnd('Handshake-to-Unlock');
+      handshakeTimeoutRef.current = null;
+    }, 3000);
     
     // Mark hydration as started - this ref prevents the duplicate calls
     isHydratingRef.current = true;

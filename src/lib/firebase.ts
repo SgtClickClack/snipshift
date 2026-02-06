@@ -296,6 +296,11 @@ async function initInstallationsLayer(): Promise<string | null> {
     
     // Return null (mock token) instead of throwing
     return null;
+  } finally {
+    // Ensure boot sequence always continues, even on 400 error
+    if (typeof window !== 'undefined') {
+      window.__firebase_installations_failed = true;
+    }
   }
 }
 

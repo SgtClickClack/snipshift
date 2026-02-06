@@ -64,7 +64,7 @@
     --radius-xl: 1.5rem;   /* 24px */
     --radius-full: 9999px;
     --error: 0 75% 45%;
-    --error-foreground: 0 0% 100%;
+    --ring: 81 85% 58%;
     --success: 120 61% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 45 100% 50%;
@@ -133,7 +133,7 @@
     --error: 0 75% 50%;
     --error-foreground: 0 0% 100%;
     --success: 120 61% 50%;
-    --success-foreground: 0 0% 100%;
+    --ring: 81 85% 58%;
     --warning: 45 100% 60%;
     --warning-foreground: 0 0% 100%;
     --info: 210 100% 60%;
