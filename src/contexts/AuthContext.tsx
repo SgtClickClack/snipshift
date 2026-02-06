@@ -250,6 +250,9 @@ function cacheSession(user: User | null, venue?: unknown) {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  // PROGRESSIVE UNLOCK: Start timer at absolute mount to prevent "Handshake-to-Unlock does not exist" error
+  // when releaseNavigationLock/timeEnd runs before hydrateFromFirebaseUser (e.g. firebaseUser=null, pathname change)
+  console.time('Handshake-to-Unlock');
   // TAB RECOVERY: Initialize from cached session for instant mount
   const cachedSession = getCachedSession();
   const [user, setUser] = useState<User | null>(cachedSession.user);

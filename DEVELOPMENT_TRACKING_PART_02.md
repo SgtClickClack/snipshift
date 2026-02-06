@@ -1,6 +1,61 @@
 # Development Tracking Part 02
 <!-- markdownlint-disable-file -->
 
+#### 2026-02-07: Final Handshake Alignment v1.1.2
+
+**Core Components**
+- `src/lib/firebase.ts` (authDomain verification)
+- `src/contexts/AuthContext.tsx` (Handshake-to-Unlock timer at mount)
+- `package.json` (version bump to 1.1.2)
+
+**Key Features**
+- Verified authDomain is exactly `'hospogo.com'` (no https:// or www) — already correct
+- Added `console.time('Handshake-to-Unlock')` at absolute start of AuthProvider mount to prevent "does not exist" error when releaseNavigationLock/timeEnd runs before hydrateFromFirebaseUser (e.g. firebaseUser=null, pathname change)
+- Bumped version to 1.1.2 and deployed with `vercel --prod --force` to refresh Service Worker hash
+
+**Integration Points**
+- AuthProvider wraps all auth-dependent content; timer starts at mount before any path can call timeEnd
+- ReleaseNavigationLock, safety timeout, and pathname change effects all call timeEnd; mount timer ensures they never orphan
+
+**File Paths**
+- `src/lib/firebase.ts` (authDomain line 26)
+- `src/contexts/AuthContext.tsx` (AuthProvider top lines 252-256)
+- `package.json` (version 1.1.2)
+
+**Next Priority Task**
+- Per roadmap and tracking index
+
+---
+
+#### 2026-02-06: Locate and Restore Missing Audio Assets
+
+**Core Components**
+- `public/sounds/` (shift-ping.mp3, roster-ding.mp3, notification.mp3)
+- `src/contexts/NotificationContext.tsx` (references /sounds/*.mp3)
+- `vercel.json` (audio/mpeg headers for /sounds/)
+
+**Key Features**
+- Searched entire repo: no .mp3 files found (src/assets empty, _legacy_snipshift has none)
+- Created `public/sounds/` directory
+- Added minimal valid MP3 placeholders (24-byte LAME frames) so app does not 404
+- Verified vercel.json has Content-Type: audio/mpeg and Cache-Control for /sounds/(.*).mp3
+- Ran `vercel --prod --force` to deploy (build completed; deployment may have finished after timeout)
+
+**Integration Points**
+- NotificationContext preloads and plays sounds for shift_confirmed, roster_update, default notification types
+- Sounds served at /sounds/shift-ping.mp3, /sounds/roster-ding.mp3, /sounds/notification.mp3
+
+**File Paths**
+- `public/sounds/shift-ping.mp3`, `public/sounds/roster-ding.mp3`, `public/sounds/notification.mp3`
+- `scripts/create-sound-placeholders.cjs` (one-time script to regenerate placeholders)
+- `vercel.json` (unchanged; headers already correct)
+
+**Next Priority Task**
+- Replace placeholder MP3s with proper notification sounds (e.g. Pixabay, Freesound, directory.audio) for better UX
+- Verify deployment completed at Vercel dashboard if build output was truncated
+
+---
+
 #### 2026-02-06: Domain Decoupling & Bundle Code-Splitting (52% Main Bundle Reduction)
 
 **Core Components**
@@ -6101,6 +6156,86 @@ The following locations contain demo bypass logic flagged for removal once produ
 
 **Next Priority Task**
 - Verify Google OAuth popup routes through `/__/auth` in production after deploy.
+
+**Code Organization & Quality**
+- Config-only change; no runtime code paths altered.
+
+---
+
+#### 2026-02-06: Asset Integrity Lockdown + MP3 Headers (v1.1.1)
+
+**Core Components**
+- Vercel routing + headers: `vercel.json`
+- Package metadata: `package.json`
+
+**Key Features**
+- Moved `rewrites` to the top of `vercel.json` for priority clarity.
+- Added explicit MP3 response headers for `/sounds/*.mp3` (content-type + long-term cache).
+- Bumped app version to `1.1.1` for the asset routing fix.
+
+**Integration Points**
+- Vercel headers: `/sounds/(.*).mp3` → `Content-Type: audio/mpeg`
+- Vercel cache: `Cache-Control: public, max-age=31536000, immutable`
+
+**File Paths**
+- `vercel.json`
+- `package.json`
+
+**Next Priority Task**
+- Restore the missing `public/sounds/*.mp3` assets so the Service Worker can cache them.
+
+**Code Organization & Quality**
+- Config-only change; no runtime code paths altered.
+
+---
+
+#### 2026-02-06: v1.1.0 Production Redeploy + Auth Handler Check
+
+**Core Components**
+- Deployment pipeline: Vercel production deploy
+- Auth proxy validation: `/__/auth/handler` HEAD check
+
+**Key Features**
+- Forced a production redeploy to refresh Edge cache and routing priority.
+- Confirmed `/__/auth/handler` returns Firebase redirect shell (HTML with `handler.js`).
+- Verified `/__/auth/handler.js` serves JavaScript (`application/javascript`).
+
+**Integration Points**
+- `vercel --prod --force`
+- PowerShell checks: `Invoke-WebRequest -Method Head https://hospogo.com/__/auth/handler`
+- Body check: `Invoke-WebRequest https://hospogo.com/__/auth/handler`
+
+**File Paths**
+- No code changes (deploy only).
+
+**Next Priority Task**
+- Verify `/sounds/*` assets resolve with non-HTML content and confirm SW cache cleared on client.
+
+**Code Organization & Quality**
+- No code changes; validation-only step.
+
+---
+
+#### 2026-02-06: Auth Proxy Priority + Sounds Rewrite (v1.1.0)
+
+**Core Components**
+- Vercel routing config: `vercel.json`
+- Package metadata: `package.json`
+
+**Key Features**
+- Added `version: 2` and reinforced rewrite priority with `/__/auth` first.
+- Inserted explicit `/sounds/(.*)` rewrite before SPA fallback to avoid HTML responses for audio assets.
+- Bumped app version to `1.1.0` to mark the infrastructure reset.
+
+**Integration Points**
+- Vercel rewrites: `/__/auth/:path*` → Firebase, `/api/:path*` → API, `/sounds/*` → static, SPA fallback last.
+
+**File Paths**
+- `vercel.json`
+- `package.json`
+
+**Next Priority Task**
+- Run the production deploy and re-check `/__/auth/handler` `Content-Type` in incognito.
 
 **Code Organization & Quality**
 - Config-only change; no runtime code paths altered.

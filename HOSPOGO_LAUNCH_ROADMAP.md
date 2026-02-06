@@ -8,6 +8,62 @@
 
 ---
 
+### Update: 2026-02-06 - Auth Proxy Priority + Sounds Rewrite (v1.1.0)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Added `version: 2` and enforced `/__/auth` as the first rewrite rule in `vercel.json`.
+- Added an explicit `/sounds/*` rewrite before the SPA fallback to avoid HTML responses for audio assets.
+- Bumped app version to `1.1.0`.
+
+**Impact:**
+- Auth handler and static audio routes resolve before the SPA catch-all, reducing stale build behavior.
+
+---
+
+### Update: 2026-02-07 - Final Handshake Alignment (v1.1.2)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Verified `authDomain` in `src/lib/firebase.ts` is exactly `'hospogo.com'` (no https:// or www).
+- Added `console.time('Handshake-to-Unlock')` at absolute start of AuthProvider mount in `AuthContext.tsx` to prevent "Handshake-to-Unlock does not exist" error when `releaseNavigationLock`/`timeEnd` runs before `hydrateFromFirebaseUser` (e.g. firebaseUser=null, pathname change).
+- Bumped app version to `1.1.2` and deployed with `vercel --prod --force` to refresh Service Worker version hash.
+
+**Impact:**
+- Handshake timer no longer orphans; console.timeEnd always has a matching timer.
+- Service Worker cache invalidated; browsers fetch fresh build.
+
+---
+
+### Update: 2026-02-06 - Asset Integrity Lockdown + MP3 Headers (v1.1.1)
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Moved the `rewrites` block to the top of `vercel.json` for priority clarity.
+- Added explicit `audio/mpeg` headers + immutable caching for `/sounds/*.mp3`.
+- Bumped app version to `1.1.1`.
+
+**Impact:**
+- Static audio files are served with correct content-type and caching, preventing SPA HTML fallbacks.
+
+---
+
+### Update: 2026-02-06 - v1.1.0 Redeploy + Auth Handler Verification
+
+**Status:** ✅ **UPDATED**
+
+**Action Taken:**
+- Forced a Vercel production redeploy to refresh edge routing/caches.
+- Re-checked `/__/auth/handler` response headers via HEAD request.
+
+**Impact:**
+- `/__/auth/handler` returns the Firebase redirect shell (HTML with `handler.js`), and `/__/auth/handler.js` serves JavaScript.
+
+---
+
 ### Update: 2026-02-06 - Infrastructure Priority Lockdown (Proxy Loop Fix v1.0.8)
 
 **Status:** ✅ **UPDATED**
