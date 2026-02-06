@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-// NUCLEAR PWA CLEANUP: VitePWA plugin temporarily removed to clear MIME type errors and cache loops
-// import { VitePWA } from 'vite-plugin-pwa';
+import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path';
 
@@ -18,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       // Ensure React is properly transformed and available
       jsxRuntime: 'automatic',
     }),
-    // NUCLEAR PWA CLEANUP: VitePWA plugin temporarily disabled
-    /* VitePWA({
+    VitePWA({
+      selfDestroying: true, // Force all users' browsers to dump old cache
       registerType: 'autoUpdate',
       includeAssets: ['brand-logo.png', 'brand-wordmark.png', 'brand-icon.png', 'brand-logo-192.png', 'brand-logo-512.png', 'logo.png', 'logo-white.png', 'og-image.jpg'],
       manifest: {
@@ -129,7 +128,7 @@ export default defineConfig(({ mode }) => ({
       devOptions: {
         enabled: false, // Disable in dev to avoid service worker conflicts
       },
-    }), */
+    }),
     visualizer({ open: true, filename: 'bundle-stats.html' }),
   ],
   // VITE_* environment variables are automatically exposed via import.meta.env

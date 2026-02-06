@@ -2,6 +2,15 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+
+// Nuclear PWA cache flush: forcefully unregister existing service workers
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    for (let reg of regs) {
+      reg.unregister();
+    }
+  });
+}
 // Import react-big-calendar CSS globally to ensure it loads
 import "react-big-calendar/lib/css/react-big-calendar.css";
 // Pro Dashboard Kill-Switch: Critical fix for white-container glitch in dark mode demos

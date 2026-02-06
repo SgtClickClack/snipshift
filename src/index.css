@@ -56,7 +56,7 @@
     --border-hover:     220 10% 22%;    /* Hover emphasis */
     --border-active:    var(--primary); /* Active/focus */
     --input: 240 3.7% 15.9%;
-    --ring: 81 100% 61%;
+    --ring: 81 85% 58%;
     
     /* ====== BORDER RADIUS (larger for premium feel) ====== */
     --radius:    0.75rem;  /* 12px - up from 8px */
@@ -129,7 +129,7 @@
     --border-hover:     220 10% 22%;
     --border-active:    var(--primary);
     --input: 240 3.7% 15.9%;
-    --ring: 81 100% 61%;
+    --ring: 81 85% 58%;
     --error: 0 75% 50%;
     --error-foreground: 0 0% 100%;
     --success: 120 61% 50%;
