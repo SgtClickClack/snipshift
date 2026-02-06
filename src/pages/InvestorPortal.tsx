@@ -26,8 +26,8 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { logger } from '@/lib/logger';
 import { 
-  FileText, 
   Cpu, 
   ShieldCheck, 
   ArrowRight, 
@@ -37,8 +37,6 @@ import {
   Briefcase,
   LayoutGrid,
   Lock,
-  ExternalLink,
-  Sparkles,
   ArrowLeft,
   Menu,
   CheckCircle2,
@@ -343,7 +341,7 @@ export default function InvestorPortal() {
       });
       if (!res.ok) {
         // Even if API fails, show success for demo purposes
-        console.log('[InvestorPortal] RSVP API not available, showing success anyway');
+        logger.debug('InvestorPortal', 'RSVP API not available, showing success anyway');
       }
       return { success: true };
     },

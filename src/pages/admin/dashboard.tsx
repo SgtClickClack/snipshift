@@ -108,7 +108,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('stats');
 
   // Fetch admin stats (legacy)
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<AdminStats>({
+  const { refetch: refetchStats } = useQuery<AdminStats>({
     queryKey: ['admin', 'stats'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/stats');
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
   });
 
   // Fetch jobs
-  const { data: jobsData, isLoading: jobsLoading, refetch: refetchJobs } = useQuery<{
+  const { data: jobsData, isLoading: jobsLoading } = useQuery<{
     data: Job[];
     total: number;
     limit: number;

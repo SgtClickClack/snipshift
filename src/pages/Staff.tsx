@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Star, Loader2, Users, Search, Filter, ArrowLeft, Zap, Mail, Phone } from 'lucide-react';
+import { Star, Loader2, Users, Search, Filter, ArrowLeft, Zap, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEO } from '@/components/seo/SEO';
 import { isBusinessRole } from '@/lib/roles';

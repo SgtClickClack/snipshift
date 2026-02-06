@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown, HelpCircle, Cpu, Monitor } from "lucide-react";
+import { MessageCircle, LogOut, Shield, PlusCircle, Menu, User, Settings, AlertCircle, LayoutDashboard, Target, TrendingUp, DollarSign, Crown, HelpCircle, Cpu, Monitor, Eye } from "lucide-react";
 import NotificationBell from "@/components/notifications/notification-bell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -25,7 +25,7 @@ import {
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
-import { AppRole, isBusinessRole, isFounderEmail } from "@/lib/roles";
+import { AppRole, isFounderEmail } from "@/lib/roles";
 import { InstallButton } from "@/components/pwa/install-button";
 const logoUrl = '/hospogo-navbar-banner.png';
 
@@ -54,6 +54,13 @@ export default function Navbar() {
     }
     return false;
   });
+
+  const [isPresentationMode, setIsPresentationMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('hospogo_presentation_mode') === 'true';
+    }
+    return false;
+  });
   
   // Apply pitch mode class to body element
   useEffect(() => {
@@ -70,6 +77,20 @@ export default function Navbar() {
       document.body.classList.remove('pitch-mode-active');
     };
   }, [isPitchMode]);
+
+  useEffect(() => {
+    if (isPresentationMode) {
+      document.body.classList.add('presentation-mode-active');
+      sessionStorage.setItem('hospogo_presentation_mode', 'true');
+    } else {
+      document.body.classList.remove('presentation-mode-active');
+      sessionStorage.setItem('hospogo_presentation_mode', 'false');
+    }
+
+    return () => {
+      document.body.classList.remove('presentation-mode-active');
+    };
+  }, [isPresentationMode]);
   
   // Fetch unread message count
   // PERF FIX: Wait for isSystemReady (Firebase token + user profile) before API calls
@@ -125,7 +146,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[50] pt-safe overflow-x-hidden w-full">
+    <nav className="bg-navbar text-navbar-foreground border-b-2 border-border shadow-xl sticky top-0 z-[var(--z-sticky)] pt-safe overflow-x-hidden w-full" data-presentation-hide="true">
       <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-16 xs:h-20 min-w-0">
           <Link
@@ -301,6 +322,25 @@ export default function Navbar() {
                             }`} />
                             <span className={isPitchMode ? 'text-[#BAFF39]' : ''}>
                               Pitch Mode {isPitchMode ? '(ON)' : '(OFF)'}
+                            </span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setIsPresentationMode(!isPresentationMode);
+                            }}
+                            className={`focus:bg-steel-700 focus:text-white cursor-pointer ${
+                              isPresentationMode ? 'bg-[#10b981]/10' : ''
+                            }`}
+                            data-testid="presentation-mode-toggle"
+                          >
+                            <Eye className={`mr-2 h-4 w-4 ${
+                              isPresentationMode
+                                ? 'text-[#10b981] drop-shadow-[0_0_6px_rgba(16,185,129,0.7)]'
+                                : 'text-zinc-400'
+                            }`} />
+                            <span className={isPresentationMode ? 'text-[#10b981]' : ''}>
+                              Presentation Mode {isPresentationMode ? '(ON)' : '(OFF)'}
                             </span>
                           </DropdownMenuItem>
                         </>

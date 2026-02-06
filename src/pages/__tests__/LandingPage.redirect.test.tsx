@@ -2,7 +2,6 @@
  * Regression tests for LandingPage redirect logic.
  * Aligns with AuthGuard: redirect by user existence and isOnboarded (single source of truth).
  */
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';

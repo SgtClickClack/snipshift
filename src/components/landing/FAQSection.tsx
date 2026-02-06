@@ -36,6 +36,7 @@ interface FAQItemProps {
   isOpen: boolean;
   onClick: () => void;
   icon?: 'shield' | null;
+  id: string;
 }
 
 // Render markdown-style bold text (**text**) as <strong> elements
@@ -49,24 +50,36 @@ function renderAnswer(text: string) {
   });
 }
 
-function FAQItem({ question, answer, isOpen, onClick, icon }: FAQItemProps) {
+function FAQItem({ question, answer, isOpen, onClick, icon, id }: FAQItemProps) {
+  const buttonId = `${id}-button`;
+  const panelId = `${id}-panel`;
+  const buttonContent = (
+    <>
+      <span className={`text-lg font-bold flex items-center gap-2 ${isOpen ? 'text-[#BAFF39]' : 'text-white'} group-hover:text-[#BAFF39]`}>
+        {icon === 'shield' && <ShieldCheck className="w-5 h-5 text-[#BAFF39]" />}
+        {question}
+      </span>
+      <motion.div
+        animate={{ rotate: isOpen ? 180 : 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <ChevronDown className={`w-6 h-6 ${isOpen ? 'text-[#BAFF39]' : 'text-zinc-500'}`} />
+      </motion.div>
+    </>
+  );
+
   return (
     <div className={`border-b transition-colors ${isOpen ? 'border-[#BAFF39]' : 'border-zinc-800'}`}>
       <button
         onClick={onClick}
+        id={buttonId}
         className="w-full py-6 flex justify-between items-center text-left hover:text-[#BAFF39] transition-colors group"
         aria-expanded={isOpen}
+        aria-controls={panelId}
+        aria-label={question}
+        title={question}
       >
-        <span className={`text-lg font-bold flex items-center gap-2 ${isOpen ? 'text-[#BAFF39]' : 'text-white'} group-hover:text-[#BAFF39]`}>
-          {icon === 'shield' && <ShieldCheck className="w-5 h-5 text-[#BAFF39]" />}
-          {question}
-        </span>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <ChevronDown className={`w-6 h-6 ${isOpen ? 'text-[#BAFF39]' : 'text-zinc-500'}`} />
-        </motion.div>
+        {buttonContent}
       </button>
       <AnimatePresence>
         {isOpen && (
@@ -76,6 +89,9 @@ function FAQItem({ question, answer, isOpen, onClick, icon }: FAQItemProps) {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
+            id={panelId}
+            role="region"
+            aria-labelledby={buttonId}
           >
             <p className="pb-6 text-zinc-400 leading-relaxed max-w-2xl">
               {renderAnswer(answer)}
@@ -105,7 +121,8 @@ export default function FAQSection() {
               answer={faq.answer}
               isOpen={openIndex === index}
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              icon={faq.icon}
+              icon={faq.icon === 'shield' ? 'shield' : null}
+              id={`faq-${index}`}
             />
           ))}
         </div>

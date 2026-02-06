@@ -38,7 +38,9 @@ const SpendChart = lazy(() => import("recharts").then(module => ({
               border: '1px solid hsl(var(--border))',
               borderRadius: '8px',
             }}
-            formatter={(value: number) => formatCurrency(value)}
+            formatter={(value: number | string | undefined) =>
+              formatCurrency(typeof value === 'number' ? value : Number(value) || 0)
+            }
             labelFormatter={(label) => {
               const date = new Date(label);
               return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -167,6 +169,10 @@ export function VenueAnalyticsDashboard({ className }: VenueAnalyticsDashboardPr
         </Card>
       </div>
     );
+  }
+
+  if (!analytics) {
+    return null;
   }
 
   const { metrics, spendOverTime } = analytics;

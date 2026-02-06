@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldX, ArrowLeft, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDashboardRoute } from '@/lib/roles';
+import { getDashboardRoute, normalizeVenueToBusiness } from '@/lib/roles';
 
 /**
  * Unauthorized Page
@@ -21,7 +21,7 @@ export default function UnauthorizedPage() {
 
   const handleGoToDashboard = () => {
     if (user?.currentRole) {
-      const dashboardRoute = getDashboardRoute(user.currentRole);
+      const dashboardRoute = getDashboardRoute(normalizeVenueToBusiness(user.currentRole));
       navigate(dashboardRoute);
     } else {
       navigate('/');

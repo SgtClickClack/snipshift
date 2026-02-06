@@ -54,9 +54,7 @@ export function MedicalCertificateUpload({
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest('POST', '/api/appeals/upload-certificate', formData, {
-        isFormData: true,
-      });
+      const response = await apiRequest('POST', '/api/appeals/upload-certificate', formData);
       return response.json() as Promise<UploadResponse>;
     },
     onSuccess: (data) => {
@@ -258,11 +256,17 @@ export function MedicalCertificateUpload({
           onDrop={handleDrop}
           onDragOver={handleDragOver}
         >
+          <Label htmlFor="medical-certificate-upload" className="sr-only">
+            Medical certificate upload
+          </Label>
           <input
             ref={fileInputRef}
+            id="medical-certificate-upload"
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
             onChange={handleFileSelect}
+            title="Medical certificate upload"
+            aria-label="Medical certificate upload"
             className="hidden"
           />
           
@@ -292,8 +296,10 @@ export function MedicalCertificateUpload({
                   e.stopPropagation();
                   clearFile();
                 }}
+                aria-label="Remove selected file"
+                title="Remove selected file"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden />
               </Button>
             </div>
           ) : (

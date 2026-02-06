@@ -4,6 +4,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Shield, AlertTriangle, Ban, Trophy, Star, Clock, TrendingUp, FileCheck, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -54,6 +55,11 @@ const STRIKE_STATES = {
     icon: Ban,
   },
 } as const;
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
+};
 
 // Countdown timer for suspension
 function SuspensionCountdown({ suspendedUntil }: { suspendedUntil: string }) {
@@ -337,91 +343,93 @@ export function ProReliabilityTracker() {
   const Icon = state.icon;
 
   return (
-    <Card 
-      className={cn(
-        'overflow-hidden border-2 transition-all duration-300',
-        state.borderClass,
-        'bg-gradient-to-r',
-        state.bgClass
-      )}
-    >
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex items-start gap-4">
-          {/* Status Icon */}
-          <div 
-            className={cn(
-              'flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center',
-              strikes === 0 ? 'bg-[#BAFF39]/30' : strikes === 1 ? 'bg-amber-500/30' : 'bg-red-500/30'
-            )}
-          >
-            <Icon 
-              className="h-6 w-6 [color:var(--dynamic-color)]" 
-              style={{ '--dynamic-color': state.color } as React.CSSProperties}
-            />
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            {/* Header Row */}
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h3 
-                className="text-lg font-bold [color:var(--dynamic-color)]"
+    <motion.div variants={cardVariants} initial="hidden" animate="visible">
+      <Card 
+        className={cn(
+          'overflow-hidden border-2 transition-all duration-300',
+          state.borderClass,
+          'bg-gradient-to-r',
+          state.bgClass
+        )}
+      >
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex items-start gap-4">
+            {/* Status Icon */}
+            <div 
+              className={cn(
+                'flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center',
+                strikes === 0 ? 'bg-[#BAFF39]/30' : strikes === 1 ? 'bg-amber-500/30' : 'bg-red-500/30'
+              )}
+            >
+              <Icon 
+                className="h-6 w-6 [color:var(--dynamic-color)]" 
                 style={{ '--dynamic-color': state.color } as React.CSSProperties}
-              >
-                {state.label}
-              </h3>
-              {/* Glowing Electric Lime Crown for >95% reliability (0 strikes + 10+ shifts) */}
-              {strikes === 0 && completedShiftCount >= 10 && (
-                <div className="relative">
-                  <Crown 
-                    className="h-6 w-6 text-[#BAFF39] drop-shadow-[0_0_8px_rgba(186,255,57,0.8)] animate-pulse" 
-                    style={{ filter: 'drop-shadow(0 0 12px rgba(186,255,57,0.6))' }}
-                  />
-                </div>
-              )}
-              {strikes === 0 && (
-                <div className="flex items-center gap-1 text-[#84cc16]">
-                  <Star className="h-4 w-4 fill-current" />
-                  <Star className="h-4 w-4 fill-current" />
-                  <Star className="h-4 w-4 fill-current" />
-                </div>
-              )}
+              />
             </div>
 
-            {/* Subtext */}
-            <p className="text-sm text-muted-foreground">
-              {state.subtext}
-            </p>
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              {/* Header Row */}
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h3 
+                  className="text-lg font-bold [color:var(--dynamic-color)]"
+                  style={{ '--dynamic-color': state.color } as React.CSSProperties}
+                >
+                  {state.label}
+                </h3>
+                {/* Glowing Electric Lime Crown for >95% reliability (0 strikes + 10+ shifts) */}
+                {strikes === 0 && completedShiftCount >= 10 && (
+                  <div className="relative">
+                    <Crown 
+                      className="h-6 w-6 text-[#BAFF39] drop-shadow-[0_0_8px_rgba(186,255,57,0.8)] animate-pulse" 
+                      style={{ filter: 'drop-shadow(0 0 12px rgba(186,255,57,0.6))' }}
+                    />
+                  </div>
+                )}
+                {strikes === 0 && (
+                  <div className="flex items-center gap-1 text-[#84cc16]">
+                    <Star className="h-4 w-4 fill-current" />
+                    <Star className="h-4 w-4 fill-current" />
+                    <Star className="h-4 w-4 fill-current" />
+                  </div>
+                )}
+              </div>
 
-            {/* Stats Row */}
-            <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Shield className="h-3.5 w-3.5" />
-                {completedShiftCount} shifts completed
-              </span>
-              {strikes > 0 && (
-                <span className={cn('flex items-center gap-1', state.textClass)}>
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  {strikes} active strike{strikes > 1 ? 's' : ''}
+              {/* Subtext */}
+              <p className="text-sm text-muted-foreground">
+                {state.subtext}
+              </p>
+
+              {/* Stats Row */}
+              <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Shield className="h-3.5 w-3.5" />
+                  {completedShiftCount} shifts completed
                 </span>
-              )}
-              {priorityBoost?.hasActiveBoost && (
-                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
-                  <Zap className="h-3.5 w-3.5" />
-                  Priority Boost: +10% ({Math.round(priorityBoost.token?.hoursRemaining ?? 0)}h)
-                </span>
-              )}
+                {strikes > 0 && (
+                  <span className={cn('flex items-center gap-1', state.textClass)}>
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    {strikes} active strike{strikes > 1 ? 's' : ''}
+                  </span>
+                )}
+                {priorityBoost?.hasActiveBoost && (
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                    <Zap className="h-3.5 w-3.5" />
+                    Priority Boost: +10% ({Math.round(priorityBoost.token?.hoursRemaining ?? 0)}h)
+                  </span>
+                )}
+              </div>
+
+              {/* Strike Recovery Progress */}
+              <StrikeRecoveryProgress 
+                recoveryProgress={recoveryProgress}
+                strikes={strikes}
+              />
             </div>
-
-            {/* Strike Recovery Progress */}
-            <StrikeRecoveryProgress 
-              recoveryProgress={recoveryProgress}
-              strikes={strikes}
-            />
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 

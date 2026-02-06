@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,6 +22,12 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "social" | "jobs">("all");
+  const userAvatar =
+    typeof user?.avatarUrl === "string"
+      ? user.avatarUrl
+      : typeof user?.photoURL === "string"
+        ? user.photoURL
+        : undefined;
 
   // Fetch posts from API
   const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
@@ -75,7 +81,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
       });
       return response.json();
     },
-    onSuccess: (newPost) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/community/feed"] });
       toast({
         title: "Post created successfully!",
@@ -249,7 +255,7 @@ export default function CommunityFeed({ showCreatePost = true }: CommunityFeedPr
         <PostCreationForm
           userRole={user.currentRole as any}
           userName={user.displayName || user.email || "User"}
-          userAvatar={user.profileImage}
+          userAvatar={userAvatar}
           onSubmit={handleCreatePost}
           isSubmitting={createPostMutation.isPending}
         />

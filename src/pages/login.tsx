@@ -25,14 +25,12 @@ export default function LoginPage() {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [pendingRedirect, setPendingRedirect] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
 
     // Clear pending state immediately when valid user is detected
     if (user) {
-      setPendingRedirect(false);
       navigate(isVenueMissing ? '/onboarding/hub' : '/dashboard', { replace: true });
     }
   }, [authLoading, user, isVenueMissing, navigate]);
@@ -41,7 +39,6 @@ export default function LoginPage() {
     // Also check auth.currentUser directly for popup flow
     // This ensures we clear pending state even if context hasn't updated yet
     if (!authLoading && !user && auth.currentUser) {
-      setPendingRedirect(false);
       // Context will update via onAuthStateChanged, navigation will happen automatically
     }
   }, [authLoading, user]);
@@ -62,7 +59,6 @@ export default function LoginPage() {
         description: "Welcome back!",
       });
 
-      setPendingRedirect(true);
     } catch (error: unknown) {
       const code =
         typeof error === 'object' && error && 'code' in error

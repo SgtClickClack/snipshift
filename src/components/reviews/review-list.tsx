@@ -1,4 +1,3 @@
-import React from 'react';
 import { StarRating } from './star-rating';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';

@@ -29,7 +29,7 @@ export default function StartChatButton({
   const { user } = useAuth();
 
   const handleStartChat = async () => {
-    if (!user) return;
+    if (!user?.id) return;
     
     try {
       const newChatId = await messagingService.getOrCreateChat(

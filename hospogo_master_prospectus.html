@@ -41,6 +41,7 @@
       position: sticky;
       top: 0;
       background: rgba(10,10,10,0.95);
+      -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
       z-index: 100;
     }
@@ -68,11 +69,13 @@
       position: absolute;
       top: 50%;
       left: 50%;
+      -webkit-transform: translate(-50%, -50%);
       transform: translate(-50%, -50%);
       width: 600px;
       height: 600px;
       background: var(--brand-neon);
       border-radius: 50%;
+      -webkit-filter: blur(200px);
       filter: blur(200px);
       opacity: 0.08;
       pointer-events: none;
@@ -117,6 +120,7 @@
     }
     
     .stat-card:hover {
+      -webkit-transform: translateY(-4px);
       transform: translateY(-4px);
       border-color: var(--brand-neon);
     }
@@ -268,6 +272,7 @@
     
     .trinity-card:hover {
       border-color: var(--brand-neon);
+      -webkit-transform: translateY(-8px);
       transform: translateY(-8px);
     }
     
@@ -352,6 +357,17 @@
       color: var(--text-secondary);
       margin-bottom: 24px;
     }
+
+    .revenue-description {
+      color: var(--text-secondary);
+      max-width: 500px;
+    }
+
+    .roadmap-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
     
     /* Investment Section */
     .investment-section {
@@ -365,6 +381,14 @@
     .investment-section h2 {
       color: #000;
       font-size: 72px;
+    }
+
+    .raise-highlight {
+      background: #000;
+      color: #BAFF39;
+      padding: 0 16px;
+      border-radius: 24px;
+      display: inline-block;
     }
     
     .investment-section .section-subtitle {
@@ -451,6 +475,18 @@
       background: var(--brand-neon);
       border-radius: 4px;
     }
+
+    .bar-fill-60 {
+      width: 60%;
+    }
+
+    .bar-fill-30 {
+      width: 30%;
+    }
+
+    .bar-fill-10 {
+      width: 10%;
+    }
     
     /* Roadmap - Logistics Expansion */
     .roadmap-grid {
@@ -522,6 +558,10 @@
     footer p {
       color: var(--text-secondary);
       font-size: 12px;
+    }
+
+    .logo-footer {
+      margin-bottom: 16px;
     }
   </style>
 </head>
@@ -650,13 +690,13 @@
             <span class="period">/month per venue</span>
           </div>
           <div class="label">Logistics Platform Fee</div>
-          <p style="color: var(--text-secondary); max-width: 500px;">
+          <p class="revenue-description">
             Full Trinity Engine access. Unlimited staff. Xero integration. Marketplace posting. 
             85%+ gross margin with <$200 CAC target.
           </p>
         </div>
         
-        <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">Roadmap: Logistics Expansion</h3>
+        <h3 class="roadmap-title">Roadmap: Logistics Expansion</h3>
         <div class="roadmap-grid">
           <div class="roadmap-card active">
             <div class="quarter">Q1 2026</div>
@@ -689,7 +729,7 @@
     <!-- Investment Section -->
     <section class="investment-section" id="investment">
       <div class="container">
-        <h2>The <span style="background:#000;color:#BAFF39;padding:0 16px;border-radius:24px;">$1.0M</span> Raise</h2>
+        <h2>The <span class="raise-highlight">$1.0M</span> Raise</h2>
         <p class="section-subtitle">Funding the Logistics Expansion from Brisbane to national rollout.</p>
         
         <div class="investment-grid">
@@ -724,7 +764,7 @@
                 <span class="value">60%</span>
               </div>
               <div class="bar-track">
-                <div class="bar-fill" style="width: 60%;"></div>
+                <div class="bar-fill bar-fill-60"></div>
               </div>
             </div>
             <div class="allocation-bar">
@@ -733,7 +773,7 @@
                 <span class="value">30%</span>
               </div>
               <div class="bar-track">
-                <div class="bar-fill" style="width: 30%;"></div>
+                <div class="bar-fill bar-fill-30"></div>
               </div>
             </div>
             <div class="allocation-bar">
@@ -742,7 +782,7 @@
                 <span class="value">10%</span>
               </div>
               <div class="bar-track">
-                <div class="bar-fill" style="width: 10%;"></div>
+                <div class="bar-fill bar-fill-10"></div>
               </div>
             </div>
           </div>
@@ -753,7 +793,7 @@
 
   <footer>
     <div class="container">
-      <div class="logo" style="margin-bottom: 16px;">HOSPO<span>GO</span></div>
+      <div class="logo logo-footer">HOSPO<span>GO</span></div>
       <p>© 2026 HospoGo Pty Ltd. All rights reserved. This document is confidential and intended for authorized investors only.</p>
     </div>
   </footer>

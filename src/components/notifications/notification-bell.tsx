@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
@@ -146,7 +146,7 @@ export default function NotificationBell({
       {isOpen && typeof document !== 'undefined' && createPortal(
         <div 
           ref={dropdownRef} 
-          className="fixed z-[9999] left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0" 
+          className="fixed z-[var(--z-dropdown)] left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0" 
           style={{ 
             top: `${dropdownPosition.top}px`, 
             right: window.innerWidth >= 768 ? `${dropdownPosition.right}px` : 'auto',

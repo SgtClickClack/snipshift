@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDashboardRoute } from '@/lib/roles';
+import { getDashboardRoute, normalizeVenueToBusiness } from '@/lib/roles';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export default function DashboardRedirect() {
@@ -20,7 +20,7 @@ export default function DashboardRedirect() {
   }
 
   if (user.currentRole) {
-    return <Navigate to={getDashboardRoute(user.currentRole)} replace />;
+    return <Navigate to={getDashboardRoute(normalizeVenueToBusiness(user.currentRole))} replace />;
   }
 
   // INVESTOR BRIEFING FIX: Redirect to /onboarding instead of /role-selection

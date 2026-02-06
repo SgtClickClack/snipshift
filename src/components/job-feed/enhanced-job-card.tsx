@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { MapPin, Clock, DollarSign, Calendar } from 'lucide-react';
+import { MapPin, DollarSign, Calendar } from 'lucide-react';
 import { format, parseISO, differenceInHours } from 'date-fns';
 import { JobCardData } from './JobCard';
 
@@ -145,7 +145,10 @@ export function EnhancedJobCard({
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
           <MapPin className="h-4 w-4 shrink-0" />
           <span className="line-clamp-1 flex-1">
-            {job.location || job.locationCity || 'Location TBD'}
+            {!job.location ? (job.locationCity || 'Location TBD') : typeof job.location === 'string' ? job.location : (() => {
+              const o = job.location as { city?: string; state?: string };
+              return (o.city && o.state ? `${o.city}, ${o.state}` : o.city || o.state || '').trim() || 'Location TBD';
+            })()}
           </span>
           {formatDistance() && (
             <Badge variant="secondary" className="text-xs whitespace-nowrap">

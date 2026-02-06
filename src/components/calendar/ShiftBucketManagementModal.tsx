@@ -25,7 +25,6 @@ import {
   Search, 
   UserPlus, 
   Star, 
-  Sparkles, 
   Clock, 
   Users,
   Store,

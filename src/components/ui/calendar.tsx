@@ -1,6 +1,6 @@
-import * as React from "react"
 import { DayPicker, DayPickerProps } from "react-day-picker"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import type { ChevronProps } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -35,23 +35,22 @@ function Calendar({
 
   // Custom day component to show booked indicator
   const Day = (props: any) => {
-    const { date } = props
-    // Guard against undefined date
-    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-      return null
-    }
-    const booked = isBooked(date)
+    const { date, className, ...dayProps } = props
+    const safeDate =
+      date instanceof Date && !isNaN(date.getTime()) ? date : null
+    const booked = safeDate ? isBooked(safeDate) : false
     
     return (
       <button
-        {...props}
+        {...dayProps}
         className={cn(
           buttonVariants({ variant: "ghost" }),
           "h-8 w-8 md:h-9 md:w-9 p-0 font-normal aria-selected:opacity-100 text-xs md:text-sm rounded-md relative flex flex-col items-center justify-center",
-          props.className
+          className
         )}
+        disabled={!safeDate}
       >
-        <span>{date.getDate()}</span>
+        <span>{safeDate ? safeDate.getDate() : ""}</span>
         {booked && (
           <div className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-primary" />
         )}
@@ -96,14 +95,18 @@ function Calendar({
           ...classNames,
         }}
         components={{
-          IconLeft: () => <ChevronLeft className="h-5 w-5" />,
-          IconRight: () => <ChevronRight className="h-5 w-5" />,
+          Chevron: (props: ChevronProps) =>
+            props.orientation === "left" ? (
+              <ChevronLeft className="h-5 w-5" />
+            ) : (
+              <ChevronRight className="h-5 w-5" />
+            ),
           Day: Day,
         }}
         modifiers={{
           booked: bookedDays,
         }}
-        modifierClassNames={{
+        modifiersClassNames={{
           booked: "relative",
         }}
         {...props}

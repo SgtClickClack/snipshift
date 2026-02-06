@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { apiRequest } from '@/lib/queryClient';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApplicantCard } from '@/components/venues/ApplicantCard';
 import { ApplicationActions } from '@/components/venues/ApplicationActions';
-import { Inbox, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Inbox, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/seo/SEO';
 
@@ -55,17 +52,11 @@ export default function VenueApplicationsPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
-
   // Fetch applications
   const { data: applications = [], isLoading } = useQuery<ShiftApplication[]>({
-    queryKey: ['venue-applications', statusFilter],
+    queryKey: ['venue-applications'],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (statusFilter !== 'all') {
-        params.append('status', statusFilter);
-      }
-      const res = await apiRequest('GET', `/api/venues/me/applications?${params.toString()}`);
+      const res = await apiRequest('GET', '/api/venues/me/applications');
       if (!res.ok) {
         throw new Error('Failed to fetch applications');
       }

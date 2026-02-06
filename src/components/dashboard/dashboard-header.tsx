@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,6 @@ import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { apiRequest } from "@/lib/queryClient";
 // INVESTOR BRIEFING FIX: Removed updateUserProfile import - brand/trainer dashboards removed
 import { updateBusinessProfile } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -346,7 +346,7 @@ export default function DashboardHeader({
         // INVESTOR BRIEFING FIX: Always use updateBusinessProfile (brand/trainer dashboards removed)
         const responseData = await updateBusinessProfile({
           bannerUrl: downloadURL,
-        });
+        }) as { data?: { bannerUrl?: string }; bannerUrl?: string } | null;
 
         // Banner API upload response received
 
@@ -552,14 +552,14 @@ export default function DashboardHeader({
         // INVESTOR BRIEFING FIX: Always use updateBusinessProfile (brand/trainer dashboards removed)
         const responseData = await updateBusinessProfile({
           avatarUrl: downloadURL,
-        });
+        }) as { avatarUrl?: string } | null;
 
         // Logo API upload response received
 
         // Verify API response (optional - Firebase URL is already shown)
-        if (responseData.avatarUrl && typeof responseData.avatarUrl === 'string') {
+        if (responseData?.avatarUrl && typeof responseData.avatarUrl === 'string') {
           // API returned a URL - update with API response (may differ from Firebase URL)
-          const apiUrlWithCacheBust = `${responseData.avatarUrl}?t=${Date.now()}`;
+          const apiUrlWithCacheBust = `${responseData!.avatarUrl}?t=${Date.now()}`;
           setLocalLogoUrl(apiUrlWithCacheBust);
           onLogoUpload?.(apiUrlWithCacheBust);
           // Logo state updated with API response URL
@@ -614,7 +614,12 @@ export default function DashboardHeader({
   // Display banner URL is computed from state and props
 
   return (
-    <div className={cn("relative w-full max-w-full mb-16", className)}>
+    <motion.div
+      className={cn("relative w-full max-w-full mb-16", className)}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       {/* Banner Image or Gradient Fallback */}
       <div className="relative w-full max-w-full h-32 md:h-48 rounded-t-lg overflow-hidden">
         {displayBannerUrl ? (
@@ -671,6 +676,7 @@ export default function DashboardHeader({
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={handleBannerFileSelect}
+            aria-label="Upload banner image"
             className="hidden"
             disabled={isUploadingBanner || isCompressingBanner}
           />
@@ -725,12 +731,16 @@ export default function DashboardHeader({
 
       {/* Title and Subtitle (overlapping bottom-right) */}
       <div className="absolute -bottom-10 left-32 md:left-40 right-4 z-10 min-w-0">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground break-words line-clamp-2">{title}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground break-words line-clamp-2 max-[360px]:max-w-[calc(100vw-10rem)] max-[360px]:truncate">
+          {title}
+        </h1>
         {subtitle && (
-          <p className="text-sm md:text-base text-muted-foreground break-words line-clamp-1 mt-1">{subtitle}</p>
+          <p className="text-sm md:text-base text-muted-foreground break-words line-clamp-1 mt-1 max-[360px]:max-w-[calc(100vw-10rem)] max-[360px]:truncate">
+            {subtitle}
+          </p>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

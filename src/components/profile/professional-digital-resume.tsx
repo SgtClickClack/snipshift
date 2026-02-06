@@ -16,12 +16,10 @@ import {
   Award, 
   Star, 
   Clock, 
-  MapPin, 
   DollarSign,
   Plus,
   Calendar,
   Briefcase,
-  FileText,
   Image as ImageIcon,
   Loader2,
   Camera
@@ -35,7 +33,6 @@ import { storage, auth } from '@/lib/firebase';
 import { ImageCropper } from '@/components/ui/image-cropper';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useImageUpload } from '@/hooks/useImageUpload';
-import { compressImage } from '@/lib/image-compression';
 
 interface PortfolioItem {
   id: string;

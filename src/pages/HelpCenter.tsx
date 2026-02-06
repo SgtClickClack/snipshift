@@ -25,17 +25,8 @@ import {
   HelpCircle,
   MessageCircleQuestion,
   ExternalLink,
-  Calculator,
   TrendingUp,
-  BarChart3,
-  Database,
-  Lock,
   FileCode,
-  Target,
-  Rocket,
-  PieChart,
-  AlertTriangle,
-  Clock
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

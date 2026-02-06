@@ -2,7 +2,6 @@
  * Regression tests for AuthGuard redirection logic.
  * Verifies onboarding vs dashboard redirect based on isOnboarded (single source of truth).
  */
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';

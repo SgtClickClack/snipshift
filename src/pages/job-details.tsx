@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { fetchJobDetails, applyToJob, ApplicationData, fetchMyApplications } from '@/lib/api';
+import type { Job } from '@shared/firebase-schema';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -279,7 +280,8 @@ export default function JobDetailsPage() {
       return undefined;
     };
 
-    const salary = parseSalary(job.rate || job.payRate || job.hourlyRate);
+    const rateValue = job.rate ?? job.payRate ?? job.hourlyRate;
+    const salary = parseSalary(typeof rateValue === 'number' ? rateValue.toString() : rateValue);
     const jobLocation = parseLocation();
     const datePosted = formatDate(job.date || job.startTime);
     const validThrough = calculateValidThrough();
@@ -356,7 +358,15 @@ export default function JobDetailsPage() {
   }
 
   const requirements = Array.isArray(job.requirements) ? job.requirements : [];
-  const hasLocation = typeof job.lat === 'number' && typeof job.lng === 'number';
+  const latValue = typeof job.lat === 'string' ? Number.parseFloat(job.lat) : job.lat;
+  const lngValue = typeof job.lng === 'string' ? Number.parseFloat(job.lng) : job.lng;
+  const hasLocation = typeof latValue === 'number' && !Number.isNaN(latValue) && typeof lngValue === 'number' && !Number.isNaN(lngValue);
+  const jobLocationLabel = typeof job.location === 'string'
+    ? job.location
+    : job.location && typeof job.location === 'object'
+      ? [job.location.city, job.location.state].filter(Boolean).join(', ')
+      : '';
+  const mapJob = hasLocation ? ({ ...job, lat: latValue, lng: lngValue } as Job) : null;
 
   return (
     <ErrorBoundary>
@@ -424,10 +434,10 @@ export default function JobDetailsPage() {
 
               {/* Key Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
-                {job?.location && (
+                {jobLocationLabel && (
                   <div className="flex items-start gap-2 text-muted-foreground min-w-0">
                     <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <span className="break-words overflow-hidden">{job.location}</span>
+                    <span className="break-words overflow-hidden">{jobLocationLabel}</span>
                   </div>
                 )}
                 {(job?.date || job?.startTime || job?.endTime) && (
@@ -473,18 +483,18 @@ export default function JobDetailsPage() {
           )}
 
           {/* Map Section */}
-          {hasLocation && (
+          {hasLocation && mapJob && (
             <Card className="bg-card rounded-lg border border-border shadow-sm mb-6">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-foreground mb-4">Location</h2>
                 <div className="h-64 rounded-lg overflow-hidden border border-border">
                   <ErrorBoundary>
                     <GoogleMapView
-                      jobs={[job]}
+                      jobs={[mapJob]}
                       interactive={false}
-                      centerLocation={{ lat: job.lat!, lng: job.lng! }}
+                      centerLocation={{ lat: latValue!, lng: lngValue! }}
                       radius={50}
-                      searchLocation={job.location || ''}
+                      searchLocation={jobLocationLabel}
                     />
                   </ErrorBoundary>
                 </div>

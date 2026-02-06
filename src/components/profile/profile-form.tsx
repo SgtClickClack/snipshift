@@ -1,16 +1,15 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
-import { User } from '@shared/firebase-schema';
-import { Save, Plus, X, MapPin, Phone, Globe, Award, Star } from 'lucide-react';
+import { Save, Plus, X, MapPin, Star } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import ProfileHeader from './profile-header';
 
@@ -95,15 +94,15 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
         ...prev,
         displayName: user.displayName || user.name || prev.displayName,
         email: user.email || prev.email,
-        phone: user.phone || prev.phone,
-        bio: user.bio || prev.bio,
-        website: user.website || prev.website,
-        avatarUrl,
-        bannerUrl,
+        phone: typeof user.phone === 'string' ? user.phone : prev.phone,
+        bio: typeof user.bio === 'string' ? user.bio : prev.bio,
+        website: typeof user.website === 'string' ? user.website : prev.website,
+        avatarUrl: typeof avatarUrl === 'string' ? avatarUrl : prev.avatarUrl,
+        bannerUrl: typeof bannerUrl === 'string' ? bannerUrl : prev.bannerUrl,
         homeLocation,
-        skills: user.skills || prev.skills,
-        experience: user.experience || prev.experience,
-        isRoamingNomad: user.isRoamingNomad || prev.isRoamingNomad,
+        skills: Array.isArray(user.skills) ? user.skills : prev.skills,
+        experience: typeof user.experience === 'string' ? user.experience : prev.experience,
+        isRoamingNomad: user.isRoamingNomad === true || prev.isRoamingNomad,
       }));
     }
   }, [user]);
@@ -126,7 +125,7 @@ export default function ProfileForm({ onSave }: ProfileFormProps) {
     if (user) {
       const avatarUrl = user.avatarUrl || user.photoURL || user.profileImageURL || user.profileImage || '';
       if (avatarUrl && avatarUrl !== formData.avatarUrl) {
-        setFormData(prev => ({ ...prev, avatarUrl }));
+        setFormData(prev => ({ ...prev, avatarUrl: typeof avatarUrl === 'string' ? avatarUrl : prev.avatarUrl }));
       }
     }
   }, [user?.avatarUrl, user?.photoURL, user?.profileImageURL, user?.profileImage]);

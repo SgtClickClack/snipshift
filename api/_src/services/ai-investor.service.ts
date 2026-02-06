@@ -254,7 +254,7 @@ Respond naturally and professionally. You are speaking with sophisticated invest
  */
 function sanitizeInput(input: string): string {
   // Remove potential injection patterns
-  let sanitized = input
+  const sanitized = input
     // Remove system prompt override attempts
     .replace(/system\s*prompt/gi, '[filtered]')
     .replace(/ignore\s*(previous|above|all)\s*(instructions?)?/gi, '[filtered]')

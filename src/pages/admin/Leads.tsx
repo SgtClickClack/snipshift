@@ -58,7 +58,7 @@ export default function AdminLeadsPage() {
   });
 
   // Fetch launch readiness report
-  const { data: launchReadiness, isLoading: isLoadingReadiness } = useQuery({
+  const { data: launchReadiness } = useQuery({
     queryKey: ['admin', 'launch-readiness'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/reports/launch-readiness');

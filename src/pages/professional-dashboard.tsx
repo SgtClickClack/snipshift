@@ -1,17 +1,16 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Confetti from 'react-confetti';
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Job } from "@shared/firebase-schema";
 
-import { Filter, Heart, Calendar, DollarSign, MessageCircle, User, FileText, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2, Bell, ShieldCheck, AlertTriangle, Zap, ToggleLeft, ToggleRight } from "lucide-react";
+import { Filter, Calendar, DollarSign, MessageCircle, User, Search, MapPin, Clock, Map, List, LayoutDashboard, Briefcase, Users, Wallet, Loader2, Bell, AlertTriangle, Zap, Mail } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
@@ -21,20 +20,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { format, isToday, isTomorrow, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import StartChatButton from "@/components/messaging/start-chat-button";
-import DashboardStats from "@/components/dashboard/dashboard-stats";
-import QuickActions from "@/components/dashboard/quick-actions";
-import { DashboardStatsSkeleton, ShiftListSkeleton } from "@/components/loading/skeleton-loaders";
+import { ShiftListSkeleton } from "@/components/loading/skeleton-loaders";
 import MessagingModal from "@/components/messaging/messaging-modal";
 import AdvancedJobFilters, { JobFilterOptions } from "@/components/job-feed/advanced-job-filters";
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
 import { SEO } from "@/components/seo/SEO";
 import DashboardHeader from "@/components/dashboard/dashboard-header";
 import { fetchShifts } from "@/lib/api";
-import { Mail } from "lucide-react";
 import { QuickNav } from "@/components/navigation/QuickNav";
 import { VerificationPendingBanner } from "@/components/profile/VerificationPendingBanner";
 
@@ -230,10 +224,14 @@ function ProfessionalDashboardContent() {
       return newParams;
     });
   };
+  const handleQuickNavChange = (view: string) => {
+    if (view === 'overview' || view === 'jobs' || view === 'profile' || view === 'calendar') {
+      setActiveView(view);
+    }
+  };
 
   const [showFilters, setShowFilters] = useState(false);
   const [showMessaging, setShowMessaging] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -342,32 +340,6 @@ function ProfessionalDashboardContent() {
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
   const pendingInvitationsCount = pendingInvitationsData?.totalCount || 0;
-
-  // Extract booked dates from bookings for calendar indicators
-  const bookedDates = useMemo(() => {
-    if (!bookings || bookings.length === 0) return []
-    return bookings
-      .map((booking) => {
-        // Extract date from booking (job date, shift startTime, or appliedAt)
-        const dateStr = booking.job?.date || booking.shift?.startTime || booking.appliedAt
-        if (!dateStr) return null
-        
-        // Handle different date formats
-        const bookingDate = typeof dateStr === 'string' 
-          ? new Date(dateStr) 
-          : dateStr instanceof Date 
-          ? dateStr 
-          : null
-        
-        if (!bookingDate || isNaN(bookingDate.getTime())) return null
-        
-        // Normalize to start of day
-        const normalized = new Date(bookingDate)
-        normalized.setHours(0, 0, 0, 0)
-        return normalized
-      })
-      .filter((d): d is Date => d !== null)
-  }, [bookings]);
 
   // Get user's current location only when viewing jobs (map view may need it)
   // Deferred until actually needed to avoid blocking initial render
@@ -558,47 +530,6 @@ function ProfessionalDashboardContent() {
 
   const handleRemoveFavorite = (location: string) => {
     setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
-  };
-
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case 'browse-jobs':
-        setActiveView('jobs');
-        break;
-      case 'my-applications':
-        setActiveView('applications');
-        break;
-      case 'view-calendar':
-        setActiveView('calendar');
-        break;
-      case 'view-invitations':
-        setActiveView('invitations');
-        break;
-      case 'open-messages':
-        navigate('/professional-messages');
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleStatClick = (action: string) => {
-    switch (action) {
-      case 'applications':
-        setActiveView('applications');
-        break;
-      case 'bookings':
-        setActiveView('calendar');
-        break;
-      case 'messages':
-        navigate('/professional-messages');
-        break;
-      case 'reviews':
-        setActiveView('profile');
-        break;
-      default:
-        break;
-    }
   };
 
   // Crisis Communication: Send "I'm Running Late" notification to venue
@@ -953,7 +884,7 @@ function ProfessionalDashboardContent() {
             </Badge>
           )}
         </div>
-        <QuickNav onViewChange={setActiveView} />
+        <QuickNav onViewChange={handleQuickNavChange} />
       </div>
 
       {/* Verification Pending Banner for new signups */}
@@ -1090,7 +1021,7 @@ function ProfessionalDashboardContent() {
                         jobs={filteredJobs}
                         onJobSelect={setSelectedJob}
                         selectedJob={selectedJob}
-                        centerLocation={locationCoordinates}
+                        centerLocation={locationCoordinates!}
                         radius={searchRadius}
                         searchLocation={searchLocation}
                       />
@@ -1295,7 +1226,6 @@ function ProfessionalDashboardContent() {
               <ProfessionalCalendar
                 bookings={bookings}
                 isLoading={isLoadingBookings}
-                onDateSelect={setDate}
               />
             </Suspense>
 

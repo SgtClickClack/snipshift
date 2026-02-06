@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchShifts } from '@/lib/api';
@@ -7,24 +7,21 @@ import { Button } from '@/components/ui/button';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { EnhancedJobFilters } from '@/components/job-feed/enhanced-job-filters';
-import { EnhancedJobCard } from '@/components/job-feed/enhanced-job-card';
 import { JobCardData } from '@/components/job-feed/JobCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { List, Map, SearchX, ArrowUpDown, Loader2 } from 'lucide-react';
+import { List, Map, SearchX, ArrowUpDown } from 'lucide-react';
 import { parseISO, differenceInHours } from 'date-fns';
-import { useToast } from '@/hooks/useToast';
 import { calculateDistance, reverseGeocodeToCity } from '@/lib/google-maps';
 
 type SortOption = 'highest-rate' | 'closest' | 'soonest';
 
 export default function TravelPage() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedJob, setSelectedJob] = useState<JobCardData | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('soonest');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isLocating, setIsLocating] = useState(true);
+  const [, setIsLocating] = useState(true);
   
   // Dynamic location state (no more hardcoded defaults)
   // Default to Sydney, Australia as fallback when GPS is denied
@@ -134,7 +131,7 @@ export default function TravelPage() {
 
       // Calculate distance if we have coordinates
       let distance: number | undefined = undefined;
-      if (userLocation && shift.location) {
+      if (userLocation && typeof shift.location === 'string') {
         // Try to extract lat/lng from location or use default
         // This is a simplified version - in production, you'd geocode the address
         const lat = parseFloat(shift.location.split(',')[0]) || undefined;
@@ -252,16 +249,6 @@ export default function TravelPage() {
 
     return filtered;
   }, [jobList, sortBy, searchParams, userLocation]);
-
-  const handleQuickApply = (job: JobCardData) => {
-    // Navigate to application page or show modal
-    toast({
-      title: 'Application Started',
-      description: `Applying to ${job.title}`,
-    });
-    // Travel Mode is shift-based (feed comes from /api/shifts), so route to shift details.
-    navigate(`/shifts/${job.id}`);
-  };
 
   // Show loading state if query is loading or data is not yet available
   if (isLoading || shifts === undefined) {

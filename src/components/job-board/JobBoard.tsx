@@ -5,14 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/useToast';
 import { fetchShifts, applyToShift } from '@/lib/api';
 import { Shift } from '@/shared/types';
 import { format, parseISO, isToday, isTomorrow, differenceInHours } from 'date-fns';
 import { MapPin, Clock, DollarSign, Calendar, Filter, X, CheckCircle2, Loader2, Search, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { calculateDistance } from '@/lib/google-maps';
 import { EmptyState } from '@/components/ui/empty-state';
 
 interface JobBoardFilters {
@@ -86,7 +84,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
               {shift.location && (
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">{shift.location}</span>
+                  <span className="truncate">{typeof shift.location === 'string' ? shift.location : shift.location?.address ?? ''}</span>
                   {distance !== undefined && (
                     <span className="text-xs whitespace-nowrap">({distance.toFixed(1)} mi)</span>
                   )}
@@ -166,7 +164,7 @@ function OpportunityCard({ shift, onApply, isApplying, hasApplied, applicationSt
 }
 
 export default function JobBoard() {
-  const { user } = useAuth();
+  useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showFilters, setShowFilters] = useState(false);
@@ -252,7 +250,8 @@ export default function JobBoard() {
       if (filters.location.trim()) {
         filtered = filtered.filter((shift) => {
           if (!shift.location) return false;
-          return shift.location.toLowerCase().includes(filters.location!.toLowerCase());
+          const locStr = typeof shift.location === 'string' ? shift.location : shift.location?.address ?? '';
+          return locStr.toLowerCase().includes(filters.location!.toLowerCase());
         });
       }
     }

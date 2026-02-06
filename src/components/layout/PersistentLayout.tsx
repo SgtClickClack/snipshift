@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
  * The layout persists across route changes, only the page content changes
  */
 export function PersistentLayout() {
-  const { user } = useAuth();
+  useAuth();
   
   // This component will persist across route changes
   // The Outlet will render the current route's page component

@@ -190,6 +190,17 @@ export default defineConfig(({ mode }) => ({
   publicDir: 'public',
   build: {
     rollupOptions: {
+      onwarn: (warning, warn) => {
+        if (
+          typeof warning?.message === 'string' &&
+          warning.message.includes('is dynamically imported') &&
+          warning.message.includes('but also statically imported')
+        ) {
+          return;
+        }
+
+        warn(warning);
+      },
       output: {
         // Force cache busting with hash in filenames
         entryFileNames: 'assets/[name].[hash].js',

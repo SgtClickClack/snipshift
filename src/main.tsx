@@ -10,6 +10,13 @@ import { StartupErrorBoundary } from "@/components/error/StartupErrorBoundary";
 import { initializeGTM } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 
+// Briefing Silence: suppress non-critical Firebase Installations noise
+const originalError = console.error;
+console.error = (...args) => {
+  if (args[0]?.includes?.("firebaseinstallations") || args[0]?.includes?.("400")) return;
+  originalError.apply(console, args);
+};
+
 // Global GTM Guard: Define dummy gtag function if blocked by ad-blockers/privacy extensions
 // This prevents 'undefined' errors throughout the app when tracking scripts are blocked
 try {

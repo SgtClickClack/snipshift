@@ -14,10 +14,10 @@ export function PwaUpdateHandler() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh, _setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegistered(r) {
+    onRegistered(r: ServiceWorkerRegistration | undefined) {
       // Check for updates every 1 minute
       if (r) {
         intervalRef.current = setInterval(() => {
@@ -25,7 +25,7 @@ export function PwaUpdateHandler() {
         }, 60 * 1000);
       }
     },
-    onRegisterError(error) {
+    onRegisterError(error: Error) {
       console.error('SW registration error', error);
     },
   });

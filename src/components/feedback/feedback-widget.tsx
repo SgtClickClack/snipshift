@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, X, Send } from "lucide-react";
+import { X, Send } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -88,7 +88,7 @@ export function FeedbackWidget({ isOpen, onClose }: { isOpen: boolean; onClose: 
   return (
     <>
       {/* Feedback modal */}
-      <div className="fixed inset-0 z-overlay bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[var(--z-overlay)] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-card shadow-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 flex-wrap gap-2">
             <CardTitle className="text-lg">Send Feedback</CardTitle>

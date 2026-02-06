@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -136,7 +135,7 @@ export function ApplicationStatusModal({
                 
                 {/* Timeline items */}
                 <div className="space-y-6">
-                  {updates.map((update, index) => (
+                  {updates.map((update) => (
                     <div key={update.id} className="relative flex gap-4">
                       {/* Icon */}
                       <div className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-background ${getStatusColor(update.statusType)}`}>

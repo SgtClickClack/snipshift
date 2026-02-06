@@ -452,7 +452,7 @@ export default function CalendarSettingsModal({
     pattern: ShiftPattern,
     hours: OpeningHours,
     requiredStaff: number,
-    shiftLength?: number
+    _shiftLength?: number
   ): Array<{ dayOfWeek: number; startTime: string; endTime: string; requiredStaffCount: number; label: string }> => {
     const slots: Array<{ dayOfWeek: number; startTime: string; endTime: string; requiredStaffCount: number; label: string }> = [];
     

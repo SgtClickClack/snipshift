@@ -3,7 +3,7 @@ import Cropper from 'react-easy-crop';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Area } from 'react-easy-crop/types';
+import type { Area } from 'react-easy-crop';
 
 interface ImageCropperProps {
   imageSrc: string;
@@ -44,7 +44,7 @@ export function ImageCropper({
   }, []);
 
   const onCropCompleteCallback = useCallback(
-    (croppedArea: Area, croppedAreaPixels: Area) => {
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
       // Always update the cropped area pixels when the cropper reports a change
       setCroppedAreaPixels(croppedAreaPixels);
     },

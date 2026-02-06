@@ -223,7 +223,7 @@ export default function BriefingOverlay({
                   initial={{ opacity: 0, x: 80 * direction }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -80 * direction }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  transition={{ duration: 0.4, ease: 'easeOut' as const }}
                   className="flex h-full flex-col"
                 >
                   <div className="flex items-center justify-between">

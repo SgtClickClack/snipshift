@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import { Loader2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -103,7 +103,9 @@ function PlacesAutocompleteNew({
           input: query,
           sessionToken: getSessionToken(),
         };
-        const { suggestions: raw } = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+        const result =
+          await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+        const raw = result?.suggestions as google.maps.places.AutocompleteSuggestion[] | undefined;
         if (lastRequestRef.current !== query) return;
         const items: SuggestionItem[] = (raw || [])
           .filter((s): s is google.maps.places.AutocompleteSuggestion & { placePrediction: google.maps.places.PlacePrediction } => !!s.placePrediction)
@@ -155,8 +157,11 @@ function PlacesAutocompleteNew({
         resetSessionToken();
 
         const loc = place.location;
-        const lat = typeof loc?.lat === 'function' ? loc.lat() : (loc as { lat: number })?.lat ?? 0;
-        const lng = typeof loc?.lng === 'function' ? loc.lng() : loc?.lng ?? 0;
+        const locAny = loc as unknown as Record<string, unknown>;
+        const latVal = loc && locAny?.lat;
+        const lngVal = loc && locAny?.lng;
+        const lat = typeof latVal === 'function' ? (latVal as () => number)() : typeof latVal === 'number' ? latVal : 0;
+        const lng = typeof lngVal === 'function' ? (lngVal as () => number)() : typeof lngVal === 'number' ? lngVal : 0;
         const formattedAddress = (place as { formattedAddress?: string }).formattedAddress ?? address;
         const components = (place as { addressComponents?: Array<{ longText?: string; types: string[] }> }).addressComponents ?? [];
         let city: string | undefined;
@@ -263,7 +268,7 @@ const PlacesAutocompleteLegacy = ({
   });
 
   const [open, setOpen] = useState(false);
-  const isSuggestionsLoading = status === 'REQUEST' || (!ready && !!value);
+  const isSuggestionsLoading = (status as string) === 'REQUEST' || (!ready && !!value);
 
   useEffect(() => {
     if (value !== inputValue) setValue(value, false);

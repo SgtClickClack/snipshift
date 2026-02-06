@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,9 +57,9 @@ interface ApplicationCardProps {
 export function ApplicationCard({
   application,
   onViewDetails,
-  onViewStatusUpdate,
+  onViewStatusUpdate: _onViewStatusUpdate,
   onWithdraw,
-  onMessage,
+  onMessage: _onMessage,
 }: ApplicationCardProps) {
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);

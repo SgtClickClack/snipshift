@@ -1,19 +1,16 @@
-﻿import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePusher } from '@/contexts/PusherContext';
 import { useToast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
-import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, Mail, Briefcase, Flag } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { MessageSquare, Send, Briefcase, Flag } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { formatDistanceToNow } from 'date-fns';
 import { ReportButton } from '@/components/report/report-button';
 import { SEO } from '@/components/seo/SEO';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -86,11 +83,6 @@ async function fetchConversationDetail(id: string): Promise<ConversationDetail> 
   return res.json();
 }
 
-async function sendMessage(conversationId: string, content: string): Promise<Message> {
-  const res = await apiRequest('POST', '/api/messages', { conversationId, content });
-  return res.json();
-}
-
 async function markAsRead(conversationId: string): Promise<void> {
   await apiRequest('PATCH', `/api/conversations/${conversationId}/read`, {});
 }
@@ -117,7 +109,6 @@ function formatMessageTime(dateString: string): string {
 export default function MessagesPage() {
   const { user, isLoading: isAuthLoading, isAuthReady } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedConversationId = searchParams.get('conversation');
@@ -296,8 +287,6 @@ export default function MessagesPage() {
                   <div className="divide-y divide-border">
                     {(conversations || []).map((conv) => {
                       const isSelected = conv?.id === selectedConversationId;
-                      const unreadCount = 0; // Could be calculated from latestMessage
-
                       if (!conv?.id) return null;
 
                       return (

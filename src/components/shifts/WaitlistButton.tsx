@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -104,7 +104,7 @@ export function WaitlistButton({ shiftId, shiftStatus, className }: WaitlistButt
   };
 
   const handleJoin = () => {
-    if (waitlistStatus?.waitlistCount >= waitlistStatus?.maxWaitlistSize) {
+    if (isFull) {
       toast({
         title: 'Waitlist Full',
         description: 'The waitlist is full (5 workers maximum).',

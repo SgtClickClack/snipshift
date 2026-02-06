@@ -3,8 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import ChatList from './chat-list';
 import Conversation from './conversation';
-import { messagingService } from '@/lib/messaging';
-import { useAuth } from '@/contexts/AuthContext';
 import { X } from 'lucide-react';
 
 interface MessagingModalProps {
@@ -23,8 +21,6 @@ export default function MessagingModal({
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>(initialChatId);
   const [selectedOtherUser, setSelectedOtherUser] = useState<{ id: string, name: string, role: string } | undefined>(initialOtherUser);
   const [showMobileConversation, setShowMobileConversation] = useState(false);
-  const { user } = useAuth();
-
   const handleSelectChat = (chatId: string, otherUser: { id: string, name: string, role: string }) => {
     setSelectedChatId(chatId);
     setSelectedOtherUser(otherUser);
@@ -35,25 +31,6 @@ export default function MessagingModal({
     setShowMobileConversation(false);
     setSelectedChatId(undefined);
     setSelectedOtherUser(undefined);
-  };
-
-  const handleCreateChat = async (otherUserId: string, otherUserName: string, otherUserRole: string) => {
-    if (!user) return;
-    
-    try {
-      const chatId = await messagingService.getOrCreateChat(
-        user.id,
-        otherUserId,
-        user.displayName || user.email,
-        otherUserName,
-        user.currentRole || 'client',
-        otherUserRole
-      );
-      
-      handleSelectChat(chatId, { id: otherUserId, name: otherUserName, role: otherUserRole });
-    } catch (error) {
-      console.error('Failed to create chat:', error);
-    }
   };
 
   return (

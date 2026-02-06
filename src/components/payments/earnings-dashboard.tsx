@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,7 @@ const EarningsChart = lazy(() => import("recharts").then(module => ({
               border: '1px solid hsl(var(--border))',
               borderRadius: '8px',
             }}
-            formatter={(value: number) => formatCurrency(value)}
+            formatter={(value) => formatCurrency(typeof value === 'number' ? value : 0)}
             labelFormatter={(label) => `Month: ${label}`}
           />
           <Bar

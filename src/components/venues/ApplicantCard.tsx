@@ -1,9 +1,8 @@
-import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Star, User, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { OptimizedImage } from '@/components/ui/optimized-image';
 import { format } from 'date-fns';
 
 interface Worker {

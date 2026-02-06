@@ -64,7 +64,7 @@ export function OfflineNotification({ className }: OfflineNotificationProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-[45] animate-in slide-in-from-bottom-4 duration-300",
+        "fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-[var(--z-floating)] animate-in slide-in-from-bottom-4 duration-300",
         className
       )}
     >

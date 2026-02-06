@@ -1,5 +1,3 @@
-import { Shift } from "@/shared/types";
-
 export interface RecurringShiftConfig {
   frequency: 'weekly';
   endDate?: Date;

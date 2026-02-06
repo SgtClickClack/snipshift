@@ -79,7 +79,7 @@ function isHandshake401Log(args: LogArgs): boolean {
 export const logger = {
   debug(scope: string | undefined, ...args: LogArgs) {
     if (!debugEnabled) return;
-    console.log(getPrefix('DEBUG', scope), ...args);
+    console.debug(getPrefix('DEBUG', scope), ...args);
   },
   info(scope: string | undefined, ...args: LogArgs) {
     // Keep info logs dev-only by default to avoid production noise.

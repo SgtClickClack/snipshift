@@ -71,6 +71,12 @@ export function startBusinessTour() {
   driverObj.drive();
 }
 
-// INVESTOR BRIEFING FIX: startTrainerTour and startBrandTour removed
+// INVESTOR BRIEFING FIX: startTrainerTour and startBrandTour now delegate to startBusinessTour
 // System now only knows about 'Venue Owner' (Engine) and 'Professional' (Staff)
+export function startTrainerTour() {
+  startBusinessTour();
+}
+export function startBrandTour() {
+  startBusinessTour();
+}
 

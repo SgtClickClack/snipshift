@@ -15,7 +15,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification, type ActionCodeS
 import { auth } from "@/lib/firebase";
 import { trackSignup } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
-import { getDashboardRoute } from "@/lib/roles";
+import { getDashboardRoute, normalizeVenueToBusiness } from "@/lib/roles";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 
 export default function SignupPage() {
@@ -40,7 +40,7 @@ export default function SignupPage() {
 
   // REDIRECT: If user is authenticated, redirect them away from signup
   useEffect(() => {
-    console.log('[Signup] Auth state check', { 
+    console.debug('[Signup] Auth state check', { 
       isLoading, 
       hasUser, 
       hasFirebaseUser: !!auth.currentUser,
@@ -49,13 +49,13 @@ export default function SignupPage() {
     });
     
     if (isLoading) {
-      console.log('[Signup] Still loading, waiting...');
+      console.debug('[Signup] Still loading, waiting...');
       return;
     }
     
     // Case 1: User is fully authenticated with database record
     if (user) {
-      console.log('[Signup] User fully authenticated, checking role before redirect', {
+      console.debug('[Signup] User fully authenticated, checking role before redirect', {
         hasCompletedOnboarding: user.hasCompletedOnboarding,
         currentRole: user.currentRole,
         isOnboarded: user.isOnboarded,
@@ -63,37 +63,38 @@ export default function SignupPage() {
       
       // PRIORITY 1: If not onboarded (single source of truth: isOnboarded from API), go to onboarding
       if (user.isOnboarded !== true) {
-        console.log('[Signup] Navigation triggered to /onboarding (not onboarded)');
+        console.debug('[Signup] Navigation triggered to /onboarding (not onboarded)');
         navigate('/onboarding', { replace: true });
         return;
       }
       
       // PRIORITY 2: If has a valid role, go to role-specific dashboard (or hub if venue missing)
       if (user.currentRole && user.currentRole !== 'client') {
-        const dashboardRoute = isVenueMissing ? '/onboarding/hub' : getDashboardRoute(user.currentRole);
-        console.log('[Signup] Navigation triggered to', dashboardRoute, isVenueMissing ? '(venue missing)' : '(has role)');
+        const normalizedRole = normalizeVenueToBusiness(user.currentRole);
+        const dashboardRoute = isVenueMissing ? '/onboarding/hub' : getDashboardRoute(normalizedRole);
+        console.debug('[Signup] Navigation triggered to', dashboardRoute, isVenueMissing ? '(venue missing)' : '(has role)');
         navigate(dashboardRoute, { replace: true });
         return;
       }
       
       // PRIORITY 3: No role - go to role selection or onboarding
-      console.log('[Signup] Navigation triggered to /role-selection (no role)');
+      console.debug('[Signup] Navigation triggered to /role-selection (no role)');
       navigate('/role-selection', { replace: true });
       return;
     }
     
     // Case 2: Firebase user exists but no database record yet (just completed Google signup)
     if (auth.currentUser && !user) {
-      console.log('[Signup] Firebase user exists but no database record - NEW GOOGLE USER DETECTED', {
+      console.debug('[Signup] Firebase user exists but no database record - NEW GOOGLE USER DETECTED', {
         uid: auth.currentUser.uid,
         email: auth.currentUser.email,
       });
-      console.log('[Signup] Navigation triggered to /onboarding (new Google user)');
+      console.debug('[Signup] Navigation triggered to /onboarding (new Google user)');
       navigate('/onboarding', { replace: true });
       return;
     }
     
-    console.log('[Signup] No redirect needed - showing signup form');
+    console.debug('[Signup] No redirect needed - showing signup form');
   }, [isLoading, user, isVenueMissing, navigate]);
 
   // IMMEDIATE REDIRECT GUARD: Check for localStorage bridge on mount

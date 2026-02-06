@@ -7,6 +7,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import Pusher from 'pusher-js';
+import type { Channel } from 'pusher-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { logger } from '@/lib/logger';
@@ -58,8 +59,8 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const pusherRef = useRef<Pusher | null>(null);
-  const userChannelRef = useRef<Pusher.Channel | null>(null);
-  const channelsRef = useRef<Map<string, Pusher.Channel>>(new Map());
+  const userChannelRef = useRef<Channel | null>(null);
+  const channelsRef = useRef<Map<string, Channel>>(new Map());
   const messageCallbacksRef = useRef<Set<(message: Message) => void>>(new Set());
   const shiftStatusCallbacksRef = useRef<Set<(update: ShiftStatusUpdate) => void>>(new Set());
   const shiftInviteCallbacksRef = useRef<Set<(invite: ShiftInvite) => void>>(new Set());

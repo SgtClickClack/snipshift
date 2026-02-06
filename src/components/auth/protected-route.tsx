@@ -105,9 +105,9 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check role requirements
-  const userRole = user.currentRole || user.role || '';
-  const userRoles = user.roles || [userRole];
+  // Check role requirements (guard: user may be null when hasRecentAuth)
+  const userRole = String(user?.currentRole ?? (user as { role?: unknown })?.role ?? '');
+  const userRoles = (user?.roles ?? [userRole]).map(r => String(r ?? ''));
 
   if (requiredRole) {
     // INVESTOR BRIEFING FIX: Removed 'brand' from business-type role check
@@ -116,7 +116,7 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
       if (!isBusinessRole(userRole) && !userRoles.some(r => isBusinessRole(r))) {
         return <Navigate to="/unauthorized" replace />;
       }
-    } else if (userRole !== requiredRole && !userRoles.includes(requiredRole)) {
+    } else if (userRole !== requiredRole && !userRoles.includes(String(requiredRole))) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
@@ -125,7 +125,7 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
     // FOUNDER ACCESS OVERRIDE: Founders bypass all role checks for admin routes
     // This ensures Rick can access CTO Dashboard during investor demos
     // even if the 'admin' role isn't explicitly assigned in the database
-    const isFounder = isFounderEmail(user?.email);
+    const isFounder = isFounderEmail(user?.email ?? '');
     
     const hasAllowedRole = allowedRoles.some(role => {
       // INVESTOR BRIEFING FIX: Removed 'brand' from business-type role check
@@ -133,7 +133,7 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
       if (['hub', 'business', 'venue'].includes(role)) {
         return isBusinessRole(userRole) || userRoles.some(r => isBusinessRole(r));
       }
-      return userRole === role || userRoles.includes(role);
+      return userRole === role || userRoles.includes(String(role));
     });
 
     // Allow access if user is founder OR has required role

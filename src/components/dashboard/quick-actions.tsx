@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 import { 
   Plus, 
   Search, 
   MessageCircle, 
   Calendar, 
-  TrendingUp,
   Users,
   FileText,
   Settings
@@ -16,6 +16,23 @@ interface QuickActionsProps {
   role: 'hub' | 'professional' | 'brand' | 'trainer';
   onAction: (action: string) => void;
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: 'easeOut' as const },
+  },
+};
 
 export default function QuickActions({ role, onAction }: QuickActionsProps) {
   // Define routes for actions where available
@@ -146,57 +163,66 @@ export default function QuickActions({ role, onAction }: QuickActionsProps) {
   const actionsConfig = getActionsConfig();
 
   return (
-    <Card className="rounded-lg border shadow-sm">
-      <CardHeader className="border-b">
-        <CardTitle>Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10">
-          {(actionsConfig || []).map((action, index) => {
-            const route = getRouteForAction(action.action);
-            const content = (
-              <>
-                <div className="flex items-center gap-2 mb-1">
-                  <action.icon className="h-4 w-4" />
-                  <span className="font-medium text-sm">{action.title}</span>
-                </div>
-                <span className="text-xs opacity-80">{action.description}</span>
-              </>
-            );
-            
-            const buttonClasses = `h-auto p-4 flex flex-col items-start text-left shadow-md hover:shadow-lg transition-all duration-200 w-full block no-underline ${
-                action.variant === 'default' 
-                  ? 'bg-brand-neon text-brand-dark shadow-neon-realistic hover:bg-brand-neon/90'
-                  : 'bg-gradient-to-r from-steel-600 to-steel-700 hover:from-steel-700 hover:to-steel-800 text-white'
-              } ${action.className || ''}`;
-
-            if (route) {
-              return (
-                <Link
-                  key={action.action}
-                  to={route}
-                  className={buttonClasses}
-                  data-testid={`quick-action-link-${action.action}`}
-                  style={{ borderRadius: 'calc(var(--radius) - 2px)' }} // Match Button rounded style
-                >
-                  {content}
-                </Link>
+    <motion.div variants={itemVariants} initial="hidden" animate="visible">
+      <Card className="rounded-lg border shadow-sm bg-[#1e293b] border-white/10">
+        <CardHeader className="border-b border-white/10">
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {(actionsConfig || []).map((action) => {
+              const route = getRouteForAction(action.action);
+              const content = (
+                <>
+                  <div className="flex items-center gap-2 mb-1">
+                    <action.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
+                    <span className="font-medium text-sm">{action.title}</span>
+                  </div>
+                  <span className="text-xs opacity-80">{action.description}</span>
+                </>
               );
-            }
+              
+              const buttonClasses = `group h-auto p-4 flex flex-col items-start text-left shadow-md hover:shadow-lg transition-all duration-200 w-full block no-underline ${
+                  action.variant === 'default' 
+                    ? 'bg-brand-neon text-brand-dark shadow-neon-realistic hover:bg-brand-neon/90'
+                    : 'bg-gradient-to-r from-steel-600 to-steel-700 hover:from-steel-700 hover:to-steel-800 text-white'
+                } ${action.className || ''}`;
 
-            return (
-              <Button
-                key={action.action}
-                className={buttonClasses}
-                onClick={() => onAction(action.action)}
-                data-testid={`quick-action-${action.action}`}
-              >
-                {content}
-              </Button>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+              if (route) {
+                return (
+                  <motion.div key={action.action} variants={itemVariants}>
+                    <Link
+                      to={route}
+                      className={buttonClasses}
+                      data-testid={`quick-action-link-${action.action}`}
+                      style={{ borderRadius: 'calc(var(--radius) - 2px)' }} // Match Button rounded style
+                    >
+                      {content}
+                    </Link>
+                  </motion.div>
+                );
+              }
+
+              return (
+                <motion.div key={action.action} variants={itemVariants}>
+                  <Button
+                    className={buttonClasses}
+                    onClick={() => onAction(action.action)}
+                    data-testid={`quick-action-${action.action}`}
+                  >
+                    {content}
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

@@ -81,7 +81,7 @@ export async function signInWithGoogleLocalDevPopup() {
   await maybeResetFirebaseSession();
   const { auth } = await import('./firebase');
   const googleProvider = await getGoogleProvider();
-  const { signInWithPopup, signInWithRedirect, setPersistence, browserLocalPersistence } = await import('firebase/auth');
+  const { signInWithPopup, setPersistence, browserLocalPersistence } = await import('firebase/auth');
 
   try {
     await setPersistence(auth, browserLocalPersistence);
@@ -172,7 +172,7 @@ export async function signInWithGoogleDevAware() {
     // and the calling components (e.g. GoogleAuthButton). Avoid hard reloads here
     // to prevent redirect loops and preserve SPA state.
     if (user && typeof window !== 'undefined') {
-      console.log('[Auth] Popup auth complete, navigation handled by GoogleAuthButton → /onboarding');
+      console.debug('[Auth] Popup auth complete, navigation handled by GoogleAuthButton → /onboarding');
       // Intentionally no hard redirect here; navigation is handled upstream.
     }
     

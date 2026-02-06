@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/useToast";
 import { HOSPITALITY_ROLES } from "@/utils/hospitality";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
 import { StaffRequiredField } from "./ShiftSettings";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
@@ -51,6 +52,7 @@ export default function CreateShiftModal({
   isLoading = false,
   existingShifts = [],
 }: CreateShiftModalProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     role: "" as string,
@@ -361,6 +363,7 @@ export default function CreateShiftModal({
           : Number.parseInt(String(formData.expectedPax), 10),
       capacity: Math.max(1, formData.staffRequired ?? 1),
       status: 'open' as const,
+      employerId: user?.id ?? '',
     };
 
     // If recurring, generate multiple shifts

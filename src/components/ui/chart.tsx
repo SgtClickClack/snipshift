@@ -112,6 +112,7 @@ const ChartTooltipContent = React.forwardRef<
       nameKey?: string
       labelKey?: string
       payload?: any[]
+      label?: React.ReactNode
     }
 >(
   (
@@ -262,7 +263,15 @@ const ChartLegend = RechartsPrimitive.Legend
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+    {
+      payload?: Array<{
+        value?: string
+        dataKey?: string
+        color?: string
+        payload?: unknown
+      }>
+      verticalAlign?: "top" | "bottom" | "middle"
+    } & {
       hideIcon?: boolean
       nameKey?: string
     }

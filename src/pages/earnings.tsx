@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -129,7 +129,7 @@ export default function EarningsPage() {
     }
   };
 
-  const handleDownloadInvoice = (invoiceUrl: string, transactionId: string) => {
+  const handleDownloadInvoice = (_invoiceUrl: string, transactionId: string) => {
     // TODO: Implement actual invoice download
     toast({
       title: 'Downloading Invoice',
@@ -390,7 +390,9 @@ export default function EarningsPage() {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
                     }}
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value) =>
+                      formatCurrency(typeof value === "number" ? value : Number(value) || 0)
+                    }
                     labelFormatter={(label) => `Month: ${label}`}
                   />
                   <Bar 

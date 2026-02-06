@@ -55,7 +55,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "@/contexts/NotificationContext";
 import StartChatButton from "@/components/messaging/start-chat-button";
 import { ShiftBlock } from "./shift-block";
-import { ShiftBucketPill, type ShiftBucket } from "./ShiftBucketPill";
+import { ShiftBucketPill } from "./ShiftBucketPill";
 import { ShiftBucketManagementModal, type BucketManagementData } from "./ShiftBucketManagementModal";
 import { AssignStaffModal, Professional } from "./assign-staff-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -235,7 +235,7 @@ function CurrentTimeIndicator({
 }
 
 export default function ProfessionalCalendar(props: ProfessionalCalendarProps) {
-  const { user, isRoleLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const hasValidRole = props.mode === 'business'
     ? isBusinessRole(user?.currentRole)
     : user?.currentRole === 'professional';
@@ -247,7 +247,7 @@ export default function ProfessionalCalendar(props: ProfessionalCalendarProps) {
   return (
     <ProfessionalCalendarContent 
       {...props} 
-      _isRoleLoading={isRoleLoading}
+      _isRoleLoading={isLoading}
       _hasValidRole={hasValidRole}
     />
   );
@@ -305,7 +305,7 @@ function ProfessionalCalendarContent({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, isSystemReady, isLoading: isAuthLoading, hasFirebaseUser } = useAuth();
-  const { addNotification } = useNotification();
+  useNotification();
   const [currentDate, setCurrentDate] = useState<Date>(() => {
     const date = new Date();
     // Ensure date is valid
@@ -349,7 +349,7 @@ function ProfessionalCalendarContent({
   const [showBucketManagementModal, setShowBucketManagementModal] = useState(false);
   const [selectedBucketForManagement, setSelectedBucketForManagement] = useState<BucketManagementData | null>(null);
   const [showSmartFillModal, setShowSmartFillModal] = useState(false);
-  const [showFindProfessionalMode, setShowFindProfessionalMode] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_showFindProfessionalMode, setShowFindProfessionalMode] = useState(false);
   const [showRecurringDialog, setShowRecurringDialog] = useState(false);
   const [showCalendarSettings, setShowCalendarSettings] = useState(false);
   const [showAutoSlotAssignment, setShowAutoSlotAssignment] = useState(false);
@@ -696,12 +696,12 @@ function ProfessionalCalendarContent({
   
   // Favorites management - stored in database
   const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
-    return user?.favoriteProfessionals || [];
+    return Array.isArray(user?.favoriteProfessionals) ? user.favoriteProfessionals : [];
   });
   
   // Load favorites from user data when user changes
   useEffect(() => {
-    if (user?.favoriteProfessionals) {
+    if (Array.isArray(user?.favoriteProfessionals)) {
       setFavoriteIds(user.favoriteProfessionals);
     } else {
       setFavoriteIds([]);
@@ -710,7 +710,7 @@ function ProfessionalCalendarContent({
   
   // Save favorites to database whenever they change
   useEffect(() => {
-    if (!user?.id || favoriteIds.length === 0 && (!user?.favoriteProfessionals || user.favoriteProfessionals.length === 0)) {
+    if (!user?.id || favoriteIds.length === 0 && (!Array.isArray(user?.favoriteProfessionals) || user.favoriteProfessionals.length === 0)) {
       // Don't save if no user or if both are empty (initial state)
       return;
     }
@@ -1090,7 +1090,7 @@ function ProfessionalCalendarContent({
       const { bucketEvents, ungroupedEvents } = groupEventsIntoBuckets(
         events as BucketEvent[],
         shiftTemplates,
-        { view, currentDate }
+        { view: view as 'month' | 'week' | 'day', currentDate }
       );
       
       // Merge bucket events with ungrouped events
@@ -1129,7 +1129,7 @@ function ProfessionalCalendarContent({
   // Event style getter - Minimal styling, let ShiftBlock component handle visual presentation
   // This provides a clean, transparent wrapper for month view readability
   const eventStyleGetter = useCallback(
-    (event: CalendarEvent) => {
+    (_event: CalendarEvent) => {
       // Return transparent/minimal styling - ShiftBlock handles the actual appearance
       // This prevents double-styling and keeps the calendar clean
       return {
@@ -1484,7 +1484,7 @@ function ProfessionalCalendarContent({
     setIsCalculatingMatches(true);
     try {
       // Get favorite professional IDs from user preferences
-      const favoriteIds: string[] = user?.favoriteProfessionals || [];
+      const favoriteIds: string[] = Array.isArray(user?.favoriteProfessionals) ? user.favoriteProfessionals : [];
 
       // Call the smart-fill endpoint
       const response = await apiRequest("POST", "/api/shifts/smart-fill", {
@@ -1544,7 +1544,7 @@ function ProfessionalCalendarContent({
 
     // PRE-FLIGHT CHECK: Verify user has favorites configured
     // This prevents a 400 error and provides helpful guidance instead
-    const currentFavorites = user?.favoriteProfessionals || favoriteIds || [];
+    const currentFavorites: string[] = Array.isArray(user?.favoriteProfessionals) ? user.favoriteProfessionals : (Array.isArray(favoriteIds) ? favoriteIds : []);
     if (currentFavorites.length === 0) {
       // Show helpful modal instead of hitting API with empty favorites
       setShowEmptyFavoritesDialog(true);
@@ -1571,7 +1571,7 @@ function ProfessionalCalendarContent({
         // Refresh calendar data to show Amber (#F59E0B) status on buckets
         queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
         queryClient.invalidateQueries({ queryKey: ['my-jobs'] });
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.VENUE_SHIFTS] });
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHOP_SHIFTS] });
       } else {
         toast({
           title: "Could not invite A-Team",
@@ -1670,58 +1670,12 @@ function ProfessionalCalendarContent({
     }
   }, [user?.id, mode, currentDate, shiftFormData, queryClient, toast]);
 
-  const handleSendInvites = useCallback(async () => {
-    const matchesToSend = smartMatches.filter((m) => m.suggestedCandidate !== null);
-    
-    if (matchesToSend.length === 0) {
-      return;
-    }
-
-    try {
-      // Update each shift status from DRAFT to INVITED
-      for (const match of matchesToSend) {
-        try {
-          await apiRequest('PATCH', `/api/shifts/${match.shiftId}`, { 
-            status: 'invited'
-          });
-          
-          // TODO: Trigger notification to the professional
-          // This would typically be done via a separate endpoint or notification service
-        } catch (error) {
-          console.error(`Failed to update shift ${match.shiftId}:`, error);
-        }
-      }
-
-      // Invalidate queries to refresh the calendar using standardized keys
-      getShiftInvalidationKeys().forEach(key => 
-        queryClient.invalidateQueries({ queryKey: [key] })
-      );
-
-      toast({
-        title: "Invites Sent",
-        description: `Successfully sent ${matchesToSend.length} invite${matchesToSend.length !== 1 ? 's' : ''}.`,
-      });
-
-      // Add notification
-      addNotification('success', `Invites sent successfully to ${matchesToSend.length} candidate${matchesToSend.length !== 1 ? 's' : ''}`);
-
-      setShowSmartFillModal(false);
-    } catch (error) {
-      console.error("Error sending invites:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send some invites. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [smartMatches, queryClient, toast, addNotification]);
-
   // Custom toolbar component (returns null to hide default toolbar)
   const customToolbar = useCallback(() => null, []);
   
   // Custom header component - Clean and minimal design
   const customHeader = useCallback(
-    ({ date, localizer, label }: { date: Date; localizer: any; label: string }) => {
+    ({ date }: { date: Date; localizer?: any; label?: string }) => {
       const isCurrentDay = isSameDay(date, new Date());
       const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -1993,7 +1947,7 @@ function ProfessionalCalendarContent({
       });
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIFTS] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.APPLICATIONS] });
       const count = variables.professionals.length;
@@ -2539,11 +2493,9 @@ function ProfessionalCalendarContent({
     // Use form data if available, otherwise fall back to selectedSlot
     let startTime: Date;
     let endTime: Date;
-    let dateStr: string;
 
     if (shiftFormData.date && shiftFormData.startTime && shiftFormData.endTime) {
       // Use form data
-      dateStr = shiftFormData.date;
       startTime = new Date(`${shiftFormData.date}T${shiftFormData.startTime}`);
       endTime = new Date(`${shiftFormData.date}T${shiftFormData.endTime}`);
     } else if (selectedSlot) {
@@ -2558,14 +2510,12 @@ function ProfessionalCalendarContent({
       }
       startTime = selectedSlot.start;
       endTime = selectedSlot.end;
-      dateStr = format(selectedSlot.start, "yyyy-MM-dd");
     } else if (selectedDate) {
       // Fallback: use selectedDate if no slot selected
       startTime = new Date(selectedDate);
       startTime.setHours(9, 0, 0, 0);
       endTime = new Date(selectedDate);
       endTime.setHours(17, 0, 0, 0);
-      dateStr = format(selectedDate, "yyyy-MM-dd");
     } else {
       toast({
         title: "Missing information",
@@ -2827,7 +2777,7 @@ function ProfessionalCalendarContent({
                               return `${event.title} - ${format(event.start, 'h:mm a')} - ${statusText}${workerName ? ` (${workerName})` : ''}`;
                             }}
                             formats={{
-                              dayFormat: (date: Date, culture?: string, localizer?: any) => {
+                              dayFormat: (date: Date) => {
                                 try {
                                   // Use date-fns format for week/day view headers: "Mon 12/10"
                                   return format(date, "EEE d/M", { locale: enUS });
@@ -2836,7 +2786,7 @@ function ProfessionalCalendarContent({
                                   return format(date, "EEE M/d", { locale: enUS });
                                 }
                               },
-                              weekdayFormat: (date: Date, culture?: string, localizer?: any) => {
+                              weekdayFormat: (date: Date) => {
                                 try {
                                   // Format for month view weekday headers: "Mon"
                                   return format(date, "EEE", { locale: enUS });
@@ -2845,7 +2795,7 @@ function ProfessionalCalendarContent({
                                   return format(date, "EEE", { locale: enUS });
                                 }
                               },
-                              dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
+                              dayHeaderFormat: (date: Date) => {
                                 try {
                                   // Week view day headers: "Mon 12/10"
                                   return format(date, "EEE d/M", { locale: enUS });
@@ -3625,7 +3575,7 @@ function ProfessionalCalendarContent({
           bucket={selectedBucketForManagement}
           favoriteProfessionals={favoriteProfessionals}
           allProfessionals={allProfessionals}
-          onInviteATeam={async (bucket) => {
+          onInviteATeam={async (_bucket) => {
             // Trigger A-Team invitation for this bucket's time range
             await handleInviteATeamClick();
           }}

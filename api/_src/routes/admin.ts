@@ -42,9 +42,9 @@ const BRISBANE_100_SEED_DATA: Array<Omit<BrisbaneLead, 'id' | 'createdAt' | 'upd
     contactPerson: 'Amanda Reynolds',
     contactEmail: 'amanda@westendcoffee.com.au',
     contactPhone: '0412 111 222',
-    status: 'active',
+    status: 'onboarding',
     lastContacted: '2026-02-03T10:30:00Z',
-    notes: '[LGA: West End] Owner interested in Xero Mutex sync. Currently losing 4 hours/week on payroll. First venue to complete onboarding.',
+    notes: '[LGA: West End] Step 2 onboarding in progress. Owner interested in Xero Mutex sync. Currently losing 4 hours/week on payroll.',
   },
   {
     venueName: 'Paddington Social',
@@ -87,9 +87,9 @@ const BRISBANE_100_SEED_DATA: Array<Omit<BrisbaneLead, 'id' | 'createdAt' | 'upd
     contactPerson: 'Michael Brooks',
     contactEmail: 'michael@tenerifftavern.com.au',
     contactPhone: '0417 666 777',
-    status: 'onboarding',
+    status: 'active',
     lastContacted: '2026-02-02T12:00:00Z',
-    notes: '[LGA: Teneriffe] Xero connection pending finance team approval. Expected live next week.',
+    notes: '[LGA: Teneriffe] Activated after pilot onboarding. Xero connection live with finance team oversight.',
   },
   {
     venueName: 'Highgate Hill Espresso',
@@ -291,12 +291,17 @@ let brisbaneLeadStore: BrisbaneLead[] = BRISBANE_100_SEED_DATA.map((lead, index)
   return buildLeadRecord({ ...lead, createdAt });
 });
 
+const resetBrisbaneLeadStore = () => {
+  brisbaneLeadStore = BRISBANE_100_SEED_DATA.map((lead, index) => {
+    const createdAt = new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString();
+    return buildLeadRecord({ ...lead, createdAt });
+  });
+  return brisbaneLeadStore;
+};
+
 const ensureBrisbaneLeadStore = () => {
   if (brisbaneLeadStore.length === 0) {
-    brisbaneLeadStore = BRISBANE_100_SEED_DATA.map((lead, index) => {
-      const createdAt = new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString();
-      return buildLeadRecord({ ...lead, createdAt });
-    });
+    resetBrisbaneLeadStore();
   }
   return brisbaneLeadStore;
 };
@@ -1531,10 +1536,9 @@ router.post('/reset-demo', asyncHandler(async (req: AuthenticatedRequest, res) =
 
     // 5. Reset LeadTracker statuses to baseline (5 Active, 15 Onboarding)
     if (clearEntities.includes('leads')) {
-      // Note: Leads are stored in client-side state for demo purposes
-      // This is a no-op at the database level but signals the frontend to reset
-      leadsReset = 20; // 5 Active + 15 Onboarding baseline
-      console.log('[ADMIN] Lead statuses marked for reset to baseline');
+      resetBrisbaneLeadStore();
+      leadsReset = brisbaneLeadStore.length;
+      console.log('[ADMIN] Lead statuses reset to Brisbane 100 baseline');
     }
 
     // 5. Re-seed admin's professional profile with 10 completed shifts for Reliability Crown
@@ -1548,10 +1552,21 @@ router.post('/reset-demo', asyncHandler(async (req: AuthenticatedRequest, res) =
         SET 
           completed_shifts = 10,
           reliability_score = 100,
+          reliability_strikes = 0,
           no_show_count = 0,
           cancellation_count = 0,
           updated_at = NOW()
         WHERE user_id = ${adminUser.id}
+      `);
+
+      await db.execute(sql`
+        UPDATE users
+        SET
+          completed_shift_count = 10,
+          no_show_count = 0,
+          reliability_score = 100,
+          updated_at = NOW()
+        WHERE id = ${adminUser.id}
       `);
       console.log('[ADMIN] Admin profile re-seeded with 10 completed shifts for Reliability Crown');
 

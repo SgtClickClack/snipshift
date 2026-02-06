@@ -14,12 +14,10 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   CheckCircle2, 
-  XCircle, 
   Loader2, 
   Calendar, 
   Clock, 
@@ -31,7 +29,6 @@ import {
   BadgeCheck,
   Wallet
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { format, isToday, isTomorrow } from 'date-fns';
 
 /**
@@ -250,7 +247,7 @@ export default function InvitationDashboard() {
     onMutate: ({ shiftId }) => {
       setRespondingIds(prev => new Set(prev).add(shiftId));
     },
-    onSuccess: (_, { shiftId, accept }) => {
+    onSuccess: (_, { accept }) => {
       // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ['my-invitations'] });
       queryClient.invalidateQueries({ queryKey: ['calendar-bookings'] });
@@ -295,7 +292,7 @@ export default function InvitationDashboard() {
     onMutate: () => {
       setIsAcceptingAll(true);
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       // Calculate earnings from accepted shifts
       const earnings = pendingInvitations.reduce((sum, inv) => {
         return sum + calculateEstimatedPay(inv.shift.hourlyRate, inv.shift.startTime, inv.shift.endTime);

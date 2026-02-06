@@ -2,13 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Store, UserCheck, Award, GraduationCap, FastForward } from "lucide-react";
 import { authService } from "@/lib/auth";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const user = authService.getCurrentUser();
 
@@ -23,13 +22,11 @@ export default function HomePage() {
   }, [user, navigate]);
 
   const handleRoleSelection = async (role: "hub" | "professional" | "brand" | "trainer") => {
-    setIsLoading(true);
-    
     try {
       // Update user role via API (this adds the role to their account)
       await apiRequest("POST", "/api/onboarding/complete", {
         role,
-        displayName: user?.name ?? user?.email ?? "User",
+        displayName: user?.displayName ?? user?.email ?? "User",
         phone: (user as { phone?: string })?.phone ?? "",
         location: (user as { location?: string })?.location ?? "",
       });
@@ -59,8 +56,6 @@ export default function HomePage() {
         description: "Failed to add role. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 

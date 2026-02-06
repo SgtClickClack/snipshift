@@ -18,7 +18,6 @@ import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'react-router-dom';
 import { 
   MessageCircle, 
-  X, 
   Send, 
   Sparkles,
   Bot,
@@ -166,18 +165,18 @@ export default function InvestorChatWidget() {
       {/* Chat Widget Container - Primary floating CTA for investor queries */}
       {/* 
         POSITIONING: right-24 (96px) - offset from SupportChatWidget (right-8)
-        Z-INDEX HIERARCHY (coordinated with SupportChatWidget & Navbar):
-        - Base UI: z-0
-        - Chat Bubbles: z-40 (this widget + SupportChatWidget)
-        - Navbar: z-50
-        - Modals/Data Room: z-100+
+        Z-INDEX HIERARCHY (standardized scale):
+        - Base UI: --z-base
+        - Chat Bubbles: --z-floating (this widget + SupportChatWidget)
+        - Navbar: --z-sticky
+        - Modals/Data Room: --z-overlay / --z-modal
         
         Note: SupportChatWidget uses right-8 to avoid overlap when both render on InvestorPortal.
         Feedback button relocated to Footer.tsx - no longer a floating FAB.
       */}
       <div 
-        className={`fixed bottom-20 sm:bottom-6 right-4 sm:right-24 z-40 transition-all duration-500 ${
-          isOpen ? 'w-[calc(100vw-32px)] sm:w-[400px] sm:max-w-[calc(100vw-48px)]' : 'w-auto'
+        className={`fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-24 z-[var(--z-floating)] transition-all duration-500 ${
+          isOpen ? 'w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] sm:w-[400px] sm:max-w-[calc(100vw-2rem)]' : 'w-auto'
         }`}
       >
         {/* Expanded Chat Panel */}
@@ -198,7 +197,7 @@ export default function InvestorChatWidget() {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-white font-bold text-sm">Foundry Executive Agent</h3>
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#BAFF39]" title="Grounded in audited data" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#BAFF39]" aria-label="Grounded in audited data" />
                   </div>
                   <p className="text-gray-500 text-xs">AI Investor Liaison • Audited Intelligence</p>
                 </div>
@@ -242,7 +241,7 @@ export default function InvestorChatWidget() {
                         : 'bg-white/5 text-gray-200 rounded-tl-sm border border-white/5'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {message.content}
                     </p>
                     {message.questionType && message.role === 'assistant' && (
@@ -304,7 +303,7 @@ export default function InvestorChatWidget() {
             )}
             
             {/* Input Area */}
-            <div className="p-4 border-t border-white/10 bg-black/50">
+            <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-white/10 bg-black/50">
               <div className="flex gap-2">
                 <input
                   ref={inputRef}

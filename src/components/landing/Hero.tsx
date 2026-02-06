@@ -134,7 +134,7 @@ export default function Hero() {
                   Go to Dashboard
                 </Button>
               </Link>
-            )}
+            ) : null}
           </div>
         </div>
 

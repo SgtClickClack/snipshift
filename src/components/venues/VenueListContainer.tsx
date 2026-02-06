@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -44,15 +43,15 @@ export function VenueListContainer() {
   const {
     data,
     isLoading,
-    isFetching,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery<VenueListResponse>({
     queryKey: ['marketplace-venues', verifiedOnly],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async (context) => {
+      const pageParam = (context.pageParam ?? 1) as number;
       const params = new URLSearchParams({
-        page: pageParam.toString(),
+        page: String(pageParam ?? 1),
         limit: '20',
         verified: verifiedOnly.toString(),
       });

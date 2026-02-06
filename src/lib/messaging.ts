@@ -1,16 +1,11 @@
-import { Chat, Message, InsertMessage } from '@shared/firebase-schema';
+import { Chat, Message } from '@shared/firebase-schema';
 import { apiRequest } from '@/lib/queryClient';
 
 export class MessagingService {
   private pollingIntervals: Map<string, NodeJS.Timeout> = new Map();
 
-  // Generate chat ID from two user IDs (consistent ordering)
-  private generateChatId(userId1: string, userId2: string): string {
-    return [userId1, userId2].sort().join('_');
-  }
-
   // Get or create a conversation between two users
-  async getOrCreateChat(currentUserId: string, otherUserId: string, currentUserName: string, otherUserName: string, currentUserRole: string, otherUserRole: string, jobId?: string): Promise<string> {
+  async getOrCreateChat(_currentUserId: string, otherUserId: string, _currentUserName: string, _otherUserName: string, _currentUserRole: string, _otherUserRole: string, jobId?: string): Promise<string> {
     try {
       // Create or get existing conversation
       const response = await apiRequest('POST', '/api/conversations', {
@@ -26,7 +21,7 @@ export class MessagingService {
   }
 
   // Send a message
-  async sendMessage(conversationId: string, senderId: string, receiverId: string, content: string): Promise<Message> {
+  async sendMessage(conversationId: string, _senderId: string, _receiverId: string, content: string): Promise<Message> {
     try {
       const response = await apiRequest('POST', '/api/messages', {
         conversationId,
@@ -122,7 +117,7 @@ export class MessagingService {
   }
 
   // Mark messages as read
-  async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
+  async markMessagesAsRead(conversationId: string, _userId: string): Promise<void> {
     try {
       await apiRequest('PATCH', `/api/conversations/${conversationId}/read`, {});
     } catch (error) {

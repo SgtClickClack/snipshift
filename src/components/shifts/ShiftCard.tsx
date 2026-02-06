@@ -3,7 +3,7 @@ import { Shift } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Clock, DollarSign, MapPin, Building2 } from "lucide-react";
+import { Calendar, DollarSign, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import JobApplicationModal from "@/components/job-feed/job-application-modal";
 
@@ -45,6 +45,10 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
     .toUpperCase()
     .slice(0, 2);
 
+  const shiftDateLabel = shift.date
+    ? format(new Date(shift.date), "EEE, MMM d - h:mm a")
+    : "Date TBD";
+
   return (
     <>
       <Card className="hover:shadow-md transition-shadow">
@@ -78,7 +82,7 @@ export default function ShiftCard({ shift, onApply, showApplyButton = false }: S
           <div className="grid md:grid-cols-2 gap-4 mb-4 text-sm">
             <div className="flex items-center text-neutral-600">
               <Calendar className="mr-2 h-4 w-4 text-primary" />
-              <span>{format(new Date(shift.date), "EEE, MMM d - h:mm a")}</span>
+              <span>{shiftDateLabel}</span>
             </div>
             <div className="flex items-center text-neutral-600">
               <DollarSign className="mr-2 h-4 w-4 text-primary" />

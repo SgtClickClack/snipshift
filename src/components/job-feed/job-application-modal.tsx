@@ -178,7 +178,12 @@ export default function JobApplicationModal({ isOpen, onClose, onSuccess, job }:
   // Helper to normalize display data
   const displayPay = job.payRate || job.pay || job.hourlyRate;
   const displayPayType = job.payType || (job.hourlyRate || job.pay ? "hour" : "");
-  const displayLocation = typeof job.location === 'object' ? `${job.location.city}, ${job.location.state}` : job.location;
+  const loc = job.location;
+  const displayLocation = !loc ? '' : typeof loc === 'string' ? loc : (() => {
+    const o = loc as { city?: string; state?: string; address?: string };
+    if (o.city && o.state) return `${o.city}, ${o.state}`;
+    return o.address ?? '';
+  })();
   const displayDesc = job.description || job.requirements;
 
   // Helper to safe format date

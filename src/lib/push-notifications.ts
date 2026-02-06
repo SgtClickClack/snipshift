@@ -83,9 +83,9 @@ async function safeGetMessagingAsync(): Promise<Messaging | null> {
 /**
  * Synchronous getter - only returns if already initialized
  * Use safeGetMessagingAsync() for first-time initialization
+ * Exported for potential use by sync callers; prefer safeGetMessagingAsync.
  */
-function safeGetMessagingSync(): Messaging | null {
-  // Only return if we've already checked support and initialized
+export function getMessagingSync(): Messaging | null {
   if (messagingSupportedCache === false) {
     return null;
   }
@@ -231,7 +231,7 @@ export async function getFCMToken(): Promise<string | null> {
 /**
  * Register push token with the backend
  */
-export async function registerPushToken(token: string, userId: string): Promise<boolean> {
+export async function registerPushToken(token: string, _userId: string): Promise<boolean> {
   try {
     const response = await fetch('/api/push-tokens', {
       method: 'POST',

@@ -19,7 +19,6 @@ import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   LifeBuoy, 
-  X, 
   Send, 
   Sparkles,
   Bot,
@@ -207,17 +206,17 @@ export default function SupportChatWidget() {
       {/* Chat Widget Container */}
       {/* 
         POSITIONING: right-8 for main support bubble
-        Z-INDEX HIERARCHY (coordinated with InvestorChatWidget & Navbar):
-        - Base UI: z-0
-        - Chat Bubbles: z-40 (this widget + InvestorChatWidget)
-        - Navbar: z-50
-        - Modals/Overlays: z-100+
+        Z-INDEX HIERARCHY (standardized scale):
+        - Base UI: --z-base
+        - Chat Bubbles: --z-floating (this widget + InvestorChatWidget)
+        - Navbar: --z-sticky
+        - Modals/Overlays: --z-overlay / --z-modal
         
         Note: InvestorChatWidget uses right-24 to avoid overlap when both render on InvestorPortal.
         Feedback button relocated to Footer.tsx - no longer a floating FAB.
       */}
       <div 
-        className={`fixed bottom-20 sm:bottom-6 right-4 sm:right-8 z-40 transition-all duration-500 ${
+        className={`fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-8 z-[var(--z-floating)] transition-all duration-500 ${
           isOpen ? 'w-[calc(100vw-32px)] sm:w-[380px] sm:max-w-[calc(100vw-48px)]' : 'w-auto'
         }`}
       >
@@ -293,7 +292,7 @@ export default function SupportChatWidget() {
                         : 'bg-white/5 text-gray-200 rounded-tl-sm border border-white/5'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {message.content}
                     </p>
                   </div>

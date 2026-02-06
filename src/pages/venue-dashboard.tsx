@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { isBusinessRole } from "@/lib/roles";
 import { useXeroStatus, useXeroSyncLogs } from "@/hooks/useXeroStatus";
-import { Plus, Calendar, DollarSign, Users, MessageSquare, MoreVertical, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, Image as ImageIcon, AlertCircle, AlertTriangle, ArrowRight, ShieldCheck, Settings, Brain } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, MessageSquare, Loader2, Trash2, LayoutDashboard, Briefcase, User, CheckCircle2, XCircle, Star, CheckCircle, BarChart3, AlertCircle, AlertTriangle, ArrowRight, ShieldCheck, Brain } from "lucide-react";
 import ProfessionalCalendar from "@/components/calendar/professional-calendar";
 import CreateShiftModal from "@/components/calendar/create-shift-modal";
 import { TutorialTrigger } from "@/components/onboarding/tutorial-overlay";
@@ -37,9 +37,9 @@ import DashboardHeader from "@/components/dashboard/dashboard-header";
 import ProfileHeader from "@/components/profile/profile-header";
 import { format } from "date-fns";
 import { formatDateSafe, toISOStringSafe, toDateSafe } from "@/utils/date-formatter";
-import { createShift, fetchShopShifts, updateShiftStatus, decideApplication, getShiftApplications, updateApplicationStatus, ShiftApplication, requestBackupFromWaitlist } from "@/lib/api";
+import { createShift, fetchShopShifts, updateShiftStatus, updateJobStatus, getShiftApplications, updateApplicationStatus, ShiftApplication, requestBackupFromWaitlist } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
-import { ApplicationCard, Application } from "@/components/applications/ApplicationCard";
+import { Application } from "@/components/applications/ApplicationCard";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import {
   DropdownMenu,
@@ -89,7 +89,7 @@ const VenueDashboardSkeleton = () => (
 );
 
 export default function VenueDashboard() {
-  const { user, isLoading: isAuthLoading, isSystemReady, isVenueMissing, hasFirebaseUser } = useAuth();
+  const { user, isLoading: isAuthLoading, isSystemReady, isVenueMissing } = useAuth();
   const navigate = useNavigate();
   // CRITICAL: Strictly check for business-related roles only - prevent professional users from accessing
   // isBusinessRole returns true for 'business', 'venue', 'hub', 'brand' and false for 'professional'
@@ -143,7 +143,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   const { toast } = useToast();
   
   // Xero integration status
-  const { isConnected: isXeroConnected, tenantName: xeroTenantName, payrollReadiness } = useXeroStatus();
+  const { isConnected: isXeroConnected, payrollReadiness } = useXeroStatus();
   const { logs: recentXeroSyncLogs } = useXeroSyncLogs(3);
   
   // DEMO MODE: Use demo user data when real user is not available
@@ -276,7 +276,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       await refreshUser();
       setIsEditingProfile(false);
     },
-    onError: (error) => {
+    onError: (_error) => {
       // console.error("Failed to update profile:", error);
       toast({
         title: "Update Failed",
@@ -328,7 +328,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   });
   const isStripeComplete = stripeAccountStatus?.onboardingComplete && stripeAccountStatus?.chargesEnabled;
 
-  const { data: applications = [], isLoading: isLoadingApplications, refetch: refetchApplications } = useQuery({
+  const { data: applications = [], isLoading: isLoadingApplications, refetch: _refetchApplications } = useQuery({
     queryKey: ['/api/applications'],
     queryFn: async () => {
       // DEMO MODE: Return demo applications immediately
@@ -346,46 +346,6 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   const pendingApplications = useMemo(() => {
     return (applications || []).filter((app: Application) => app.status === 'pending');
   }, [applications]);
-
-  // Application decision mutation
-  const [processingApplicationId, setProcessingApplicationId] = useState<string | null>(null);
-  const decideMutation = useMutation({
-    mutationFn: ({ applicationId, decision }: { applicationId: string; decision: 'APPROVED' | 'DECLINED' }) =>
-      decideApplication(applicationId, decision),
-    onMutate: async ({ applicationId }) => {
-      setProcessingApplicationId(applicationId);
-    },
-    onSuccess: (data, variables) => {
-      toast({
-        title: variables.decision === 'APPROVED' ? 'Application Approved' : 'Application Declined',
-        description: data.message,
-      });
-      // Refetch applications to update the list
-      refetchApplications();
-      // Also invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error?.message || 'Failed to process application',
-        variant: 'destructive',
-      });
-    },
-    onSettled: () => {
-      setProcessingApplicationId(null);
-    },
-  });
-
-  const handleApprove = (applicationId: string) => {
-    decideMutation.mutate({ applicationId, decision: 'APPROVED' });
-  };
-
-  const handleDecline = (applicationId: string) => {
-    decideMutation.mutate({ applicationId, decision: 'DECLINED' });
-  };
 
   const { data: jobs = [], isLoading } = useQuery<any[]>({
     queryKey: ['shop-shifts', user?.id],
@@ -485,7 +445,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         startTime: startTimeISO,
         endTime: endTimeISO,
         location: [jobData.location.address, jobData.location.city, jobData.location.state].filter(Boolean).join(', '),
-        status: 'open',
+        status: 'open' as const,
         // Legacy/Additional fields if needed by backend wrapper, 
         // but createShift in api.ts handles the raw request
       };
@@ -516,7 +476,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       });
       setShowForm(false);
     },
-    onError: (error) => {
+    onError: (_error) => {
       // console.error("Failed to post shift:", error);
       toast({
         title: "Error", 
@@ -593,7 +553,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       setShowCreateShiftModal(false);
       setSelectedDateForShift(undefined);
     },
-    onError: (error) => {
+    onError: (_error) => {
       toast({
         title: "Error",
         description: "Something went wrong. Give it another shot or reach out to us at info@hospogo.com.",
@@ -647,10 +607,11 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
     },
-    onError: (error: any) => {
+    onError: (_error: unknown) => {
+      const message = _error instanceof Error ? _error.message : "Failed to complete shift.";
       toast({
         title: "Error",
-        description: error.message || "Failed to complete shift.",
+        description: message,
         variant: "destructive"
       });
     }
@@ -665,10 +626,11 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       });
       queryClient.invalidateQueries({ queryKey: ['shop-shifts', user?.id] });
     },
-    onError: (error: any) => {
+    onError: (_error: unknown) => {
+      const message = _error instanceof Error ? _error.message : 'Failed to request backup';
       toast({
         title: 'Request Failed',
-        description: error?.message || 'Failed to request backup',
+        description: message,
         variant: 'destructive',
       });
     },
@@ -698,7 +660,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
         description: "The item has been removed and all applications have been cancelled.",
       });
     },
-    onError: (error) => {
+    onError: (_error) => {
       toast({
         title: "Delete Failed",
         description: "Could not delete item. Please try again.",
@@ -785,7 +747,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
 
   // Fetch shift message unread count (only when venue exists — avoids 500 for new venues)
   const venueId = venueMe && typeof venueMe === 'object' && 'id' in venueMe ? (venueMe as { id: string }).id : undefined;
-  const { data: shiftMessageUnreadData } = useQuery({
+  const { data: shiftMessageUnreadData } = useQuery<{ unreadCount: number }>({
     queryKey: ['shift-messages-unread-count', venueId],
     queryFn: async () => {
       // DEMO MODE: Return demo unread count immediately
@@ -805,7 +767,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
     refetchInterval: 5000,
     staleTime: demoMode ? Infinity : undefined,
     retry: false,
-    fallbackData: { unreadCount: 0 },
+    placeholderData: { unreadCount: 0 },
     throwOnError: false,
   });
 
@@ -863,7 +825,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden" data-testid="venue-dashboard-loaded">
+    <div className="min-h-screen bg-background overflow-x-hidden max-w-[100vw]" data-testid="venue-dashboard-loaded">
       {/* PERFORMANCE: Route signal for E2E - confirms dashboard-specific content is ready */}
       <div data-testid="route-loaded-signal" aria-hidden="true" style={{ display: 'none' }} />
       <SEO title="Business Dashboard" />
@@ -882,7 +844,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       )}
       
       {/* Banner/Profile Header - MOBILE FIX: Reduced padding on mobile */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <DashboardHeader
           bannerImage={user?.bannerUrl || user?.bannerImage}
           profileImage={user?.avatarUrl || user?.photoURL || user?.profileImageURL || user?.profileImage}
@@ -908,7 +870,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
 
       {/* Dashboard Header - MOBILE FIX: Reduced padding on mobile */}
       <div className="bg-card/95 backdrop-blur-sm shadow-lg border-b-2 border-border/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center gap-3">
@@ -1053,7 +1015,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       </div>
 
       {/* MOBILE FIX: Reduced vertical padding on mobile */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 scroll-pt-20">
+      <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-4 sm:py-8 scroll-pt-20">
         {/* Subscription and Stripe banners: vertical stack with gap so they don't overlap on small screens */}
         <div className="flex flex-col gap-4">
           {/* Onboarding Incomplete Banner - Shows when hub user has no active subscription */}
@@ -2010,7 +1972,7 @@ function VenueDashboardContent({ demoMode = false }: { demoMode?: boolean }) {
       {user?.email?.toLowerCase() === 'julian.g.roberts@gmail.com' && (
         <button
           onClick={() => navigate('/admin/cto-dashboard')}
-          className="fixed z-40 flex items-center gap-3 px-4 py-2.5 rounded-lg 
+          className="fixed z-[var(--z-floating)] flex items-center gap-3 px-4 py-2.5 rounded-lg 
                      bg-transparent border border-[#CCFF00]/50
                      hover:border-[#CCFF00] hover:shadow-[0_0_15px_rgba(204,255,0,0.2)]
                      transition-all duration-300 cursor-pointer group"
@@ -2052,7 +2014,7 @@ function CandidatesDialog({
   const navigate = useNavigate();
   const demoMode = isDemoMode();
 
-  const { data: applications, isLoading } = useQuery({
+  const { data: applications, isLoading } = useQuery<ShiftApplication[]>({
     queryKey: ['shift-applications', shiftId],
     queryFn: () => {
       // DEMO MODE: Return demo shift applications
@@ -2079,10 +2041,11 @@ function CandidatesDialog({
       queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
       queryClient.invalidateQueries({ queryKey: ['my-applications'] });
     },
-    onError: (error: any) => {
+    onError: (_error: unknown) => {
+      const message = _error instanceof Error ? _error.message : 'Please try again.';
       toast({
         title: 'Failed to update status',
-        description: error.message || 'Please try again.',
+        description: message,
         variant: 'destructive',
       });
     },

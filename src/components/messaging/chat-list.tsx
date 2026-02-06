@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { messagingService } from '@/lib/messaging';
 import { useAuth } from '@/contexts/AuthContext';
 import { Chat } from '@shared/firebase-schema';
-import { MessageCircle, Search, User } from 'lucide-react';
+import { MessageCircle, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -23,7 +22,7 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     const unsubscribe = messagingService.onChatsChange(user.id, (updatedChats) => {
       setChats(updatedChats);
@@ -34,7 +33,7 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
   }, [user]);
 
   const filteredChats = chats.filter(chat => {
-    const otherParticipant = messagingService.getOtherParticipant(chat, user?.id || '');
+    const otherParticipant = messagingService.getOtherParticipant(chat, user?.id ?? '');
     return otherParticipant?.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -57,9 +56,11 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
     return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  if (!user) {
+  if (!user?.id) {
     return <div>Please log in to view messages</div>;
   }
+
+  const userId = user.id;
 
   return (
     <Card className="h-full">
@@ -96,10 +97,12 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
           ) : (
             <div className="space-y-2 md:space-y-1">
               {filteredChats.map((chat) => {
-                const otherParticipant = messagingService.getOtherParticipant(chat, user.id);
+                const otherParticipant = messagingService.getOtherParticipant(chat, userId);
                 if (!otherParticipant) return null;
 
-                const unreadCount = chat.unreadCount?.[user.id] || 0;
+                const unreadCount = (typeof chat.unreadCount === 'object' && chat.unreadCount !== null
+                  ? (chat.unreadCount as Record<string, number>)[userId]
+                  : typeof chat.unreadCount === 'number' ? chat.unreadCount : 0) ?? 0;
                 const isSelected = selectedChatId === chat.id;
 
                 return (
@@ -140,11 +143,11 @@ export default function ChatList({ onSelectChat, selectedChatId }: ChatListProps
                       </div>
                       
                       <div className="flex items-center text-sm text-muted-foreground">
-                        {chat.lastMessageSender === user.id && (
+                        {chat.lastMessageSender === userId && (
                           <span className="mr-1">You:</span>
                         )}
                         <span className="truncate" data-testid={`last-message-${chat.id}`}>
-                          {chat.lastMessage || 'No messages yet'}
+                          {typeof chat.lastMessage === 'string' ? chat.lastMessage : (chat.lastMessage && typeof chat.lastMessage === 'object' && 'content' in chat.lastMessage ? (chat.lastMessage as { content: string }).content : 'No messages yet')}
                         </span>
                       </div>
                     </div>

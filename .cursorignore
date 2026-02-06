@@ -4,8 +4,7 @@ node_modules/
 .yarn/
 
 # Build outputs (Massive generated files)
-dist/
-build/
+dist/build/
 .next/
 out/
 
@@ -37,9 +36,11 @@ pnpm-lock.yaml
 
 # Logs and local config
 *.log
-.env
-.env.*
+# TEMPORARILY DISABLED TO SYNC FOUNDER IDENTITY
+# .env
+#.env.*
 !.env
+!.env.production
 !.env.example
 .DS_Store
 
@@ -48,9 +49,7 @@ tests/*.png
 e2e-results/
 playwright-report/
 
-# Documentation tracking files (large markdown files)
-# NOTE: We keep these *included* so we can append required dev log entries after each task.
-# (They’re markdown, not generated artifacts.)
+# Documentation tracking files
 # DEVELOPMENT_TRACKING_PART_*.md
 
 # Tree/structure dumps
@@ -75,7 +74,7 @@ api/drizzle/*.sql
 *_output.txt
 test_output.txt
 
-# Recursive/Backup folders (CRITICAL - contains nested copies causing performance issues)
+# Recursive/Backup folders
 snipshift/
 
 # Coverage reports

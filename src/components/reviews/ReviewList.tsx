@@ -1,5 +1,4 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { StarRating } from '@/components/reviews/star-rating';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';

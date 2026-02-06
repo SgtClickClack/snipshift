@@ -43,7 +43,7 @@ const jobPostSchema = z.object({
   jobTitle: z.enum(['Bartender', 'Waitstaff', 'Barista', 'Barback', 'Kitchen Hand', 'Duty Manager'], {
     required_error: 'Job title is required',
   }),
-  jobTypes: z.array(z.enum(['Coverage', 'Busy', 'Sick'])).default([]),
+  jobTypes: z.array(z.enum(['Coverage', 'Busy', 'Sick'])),
   date: z.date({
     required_error: 'Date is required',
   }),
@@ -56,7 +56,7 @@ const jobPostSchema = z.object({
     },
     { message: 'Hourly rate must be a positive number' }
   ),
-  requirements: z.array(z.string()).default([]),
+  requirements: z.array(z.string()),
   notes: z.string().optional(),
 }).refine(
   (data) => {
@@ -175,19 +175,21 @@ export default function SalonCreateJobPage() {
         ? `${dateStr}T${watchedValues.endTime}:00`
         : undefined;
 
+    const userLocation = typeof user?.location === 'string' ? user.location : '';
+
     return {
       id: 'preview',
       title: watchedValues.jobTitle || 'Job Title',
       rate: watchedValues.hourlyRate || undefined,
       payRate: watchedValues.hourlyRate || undefined,
-      date: dateStr,
+      date: dateStr || '',
       startTime: startTimeStr,
       endTime: endTimeStr,
       hours: totalHours > 0 ? totalHours : undefined,
       estimatedTotalPay: estimatedTotalPay > 0 ? estimatedTotalPay : undefined,
       description: watchedValues.notes || undefined,
-      location: user?.location || 'Location',
-      locationCity: user?.location?.split(',')[0] || undefined,
+      location: userLocation || 'Location',
+      locationCity: userLocation ? userLocation.split(',')[0] : undefined,
       status: 'open' as const,
       salonName: user?.displayName || user?.name || 'Your Venue',
       shopName: user?.displayName || user?.name || 'Your Venue',
@@ -217,7 +219,7 @@ export default function SalonCreateJobPage() {
       totalHours: totalHours,
       estimatedTotalPay: estimatedTotalPay,
       status: 'open' as const,
-      location: user?.location,
+      location: typeof user?.location === 'string' ? user.location : undefined,
     };
 
     try {
@@ -367,7 +369,10 @@ export default function SalonCreateJobPage() {
                             <Calendar
                               mode="single"
                               selected={watchedValues.date}
-                              onSelect={(date) => setValue('date', date, { shouldValidate: true })}
+                              onSelect={(date) => {
+                                if (!date) return;
+                                setValue('date', date, { shouldValidate: true });
+                              }}
                               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                               initialFocus
                             />

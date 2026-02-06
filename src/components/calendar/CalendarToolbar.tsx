@@ -197,7 +197,7 @@ export function CalendarToolbar({
           >
             Schedule
           </CardTitle>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-2 min-w-0">
             {/* Create Availability Button - Only show in professional mode */}
             {mode === 'professional' && onCreateAvailability && (
               <Button
@@ -205,10 +205,11 @@ export function CalendarToolbar({
                 size="sm"
                 onClick={onCreateAvailability}
                 data-testid="button-create-availability"
-                className="bg-primary hover:bg-primary/90"
+                className="min-w-0 bg-primary hover:bg-primary/90"
+                aria-label="Create Availability"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Availability
+                <span className="max-[360px]:sr-only">Create Availability</span>
               </Button>
             )}
             
@@ -222,7 +223,7 @@ export function CalendarToolbar({
                     <button
                       className={cn(
                         "flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#BAFF39]/10 dark:bg-[#BAFF39]/20 text-[#BAFF39] dark:text-[#BAFF39] text-sm font-medium",
-                        "min-w-[180px]", // Reserved width to prevent CLS
+                        "min-w-[180px] max-w-full", // Reserved width to prevent CLS
                         "hover:bg-[#BAFF39]/20 hover:shadow-[0_0_10px_rgba(186,255,57,0.2)] transition-all cursor-pointer",
                         !isSyncedToXero && rosterTotals && "animate-pulse"
                       )}
@@ -239,7 +240,7 @@ export function CalendarToolbar({
                   <PopoverContent 
                     side="bottom" 
                     align="end"
-                    className="w-[320px] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_20px_rgba(186,255,57,0.15)] p-0"
+                    className="w-[min(320px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] bg-zinc-900 border-[#BAFF39]/30 shadow-[0_0_20px_rgba(186,255,57,0.15)] p-0"
                   >
                     <div className="p-4 space-y-4">
                       {/* Header */}
@@ -309,7 +310,7 @@ export function CalendarToolbar({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button 
-                      className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                      className="min-h-[44px] min-w-[44px] p-1 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center"
                       title="Learn about estimated wage cost"
                       aria-label="Help: Estimated wage cost explanation"
                     >
@@ -332,9 +333,9 @@ export function CalendarToolbar({
                     size="sm"
                     title="Roster Tools"
                     data-testid="roster-tools-dropdown"
-                    className="flex items-center gap-2"
+                    className="min-w-0 flex items-center gap-2"
                   >
-                    <span>Roster Tools</span>
+                    <span className="max-[360px]:sr-only">Roster Tools</span>
                     <ChevronDown className="h-4 w-4 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -385,18 +386,20 @@ export function CalendarToolbar({
                 size="sm"
                 onClick={onSettingsClick}
                 title="Calendar Settings"
+                className="min-h-[44px] min-w-[44px] p-0 flex items-center justify-center"
               >
                 <Settings className="h-4 w-4" />
               </Button>
             )}
             
             {/* View Switcher */}
-            <div className="shrink-0 flex gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
+            <div className="min-w-0 flex flex-wrap gap-1 border rounded-md p-1 bg-background/50 backdrop-blur-sm">
               <Button
                 variant={view === "month" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onViewChange("month")}
                 data-testid="button-view-month"
+                className="shrink min-h-[44px] min-w-[44px] px-3 max-[360px]:px-2 max-[360px]:text-[11px] justify-center"
               >
                 Month
               </Button>
@@ -405,6 +408,7 @@ export function CalendarToolbar({
                 size="sm"
                 onClick={() => onViewChange("week")}
                 data-testid="button-view-week"
+                className="shrink min-h-[44px] min-w-[44px] px-3 max-[360px]:px-2 max-[360px]:text-[11px] justify-center"
               >
                 Week
               </Button>
@@ -413,6 +417,7 @@ export function CalendarToolbar({
                 size="sm"
                 onClick={() => onViewChange("day")}
                 data-testid="button-view-day"
+                className="shrink min-h-[44px] min-w-[44px] px-3 max-[360px]:px-2 max-[360px]:text-[11px] justify-center"
               >
                 Day
               </Button>

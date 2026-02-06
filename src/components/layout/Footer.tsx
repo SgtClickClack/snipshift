@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, MessageSquare, HelpCircle, Activity } from 'lucide-react';
+import { ShieldCheck, MessageSquare, HelpCircle } from 'lucide-react';
 import { PartnerTrustBar } from '@/components/landing/PartnerTrustBar';
 import { Button } from '@/components/ui/button';
 import { FeedbackWidget } from '@/components/feedback/feedback-widget';

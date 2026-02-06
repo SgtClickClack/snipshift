@@ -118,7 +118,7 @@ function AppRoutes({ splashHandled }: { splashHandled: boolean }) {
     } else {
       if (lockStartRef.current !== null) {
         const elapsed = Date.now() - lockStartRef.current;
-        console.log('[App] isNavigationLocked changed to false', { elapsedMs: elapsed });
+        console.debug('[App] isNavigationLocked changed to false', { elapsedMs: elapsed });
         if (elapsed > 2000) {
           console.warn('[App] isNavigationLocked took >2s to unlock — consider optimizing GET /api/venues/me');
         }
@@ -844,7 +844,7 @@ function App() {
             <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
               <TooltipProvider>
-                <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <Router>
                   <AuthProvider>
                     {/* HOSPOGO_CORE_SYSTEM_RECOVERY: Top-level auth gate */}
                     {/* This wraps ALL content and shows Electric Lime splash until isSystemReady && user !== undefined */}

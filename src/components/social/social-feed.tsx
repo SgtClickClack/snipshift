@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { OptimizedImage } from "@/components/ui/optimized-image";
-import { Heart, MessageCircle, Share, Tag, ExternalLink, Calendar, MapPin, Filter } from "lucide-react";
+import { Heart, MessageCircle, Share, Tag, ExternalLink, Calendar, MapPin } from "lucide-react";
 import { format } from "date-fns";
 
 interface SocialPost {

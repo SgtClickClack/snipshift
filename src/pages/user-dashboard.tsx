@@ -13,7 +13,7 @@ export default function UserDashboard() {
 
   const { data: reviews, isLoading: isLoadingReviews } = useQuery({
     queryKey: ['user-reviews', user?.id],
-    queryFn: () => fetchUserReviews(user!.id),
+    queryFn: () => (user?.id ? fetchUserReviews(user.id) : Promise.resolve([])),
     enabled: !!user?.id,
   });
 

@@ -42,7 +42,10 @@ export function JobCard({ job, isSelected, onClick, onViewDetails }: JobCardProp
           {job.location && (
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 shrink-0 text-steel-400" />
-              <span className="line-clamp-1">{job.location}</span>
+              <span className="line-clamp-1">{!job.location ? '' : typeof job.location === 'string' ? job.location : (() => {
+                const o = job.location as { city?: string; state?: string; address?: string };
+                return (o.city && o.state ? `${o.city}, ${o.state}` : o.address ?? '').trim();
+              })()}</span>
             </div>
           )}
           {job.date && (

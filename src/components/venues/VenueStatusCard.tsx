@@ -88,7 +88,7 @@ export function VenueStatusCard() {
     enabled: demoMode || (canFetchVenue && !!user?.roles?.includes('venue_owner') && (user.currentRole === 'hub' || user.currentRole === 'business')),
     staleTime: demoMode ? Infinity : 2 * 60 * 1000, // Demo mode: never refetch
     refetchInterval: demoMode ? false : 30 * 1000, // Demo mode: no refetch
-    retry: (failureCount, error) => {
+    retry: (_failureCount, error) => {
       // Don't retry in demo mode or on 404 errors
       if (demoMode) return false;
       if (error instanceof Error && error.message.includes('404:')) {

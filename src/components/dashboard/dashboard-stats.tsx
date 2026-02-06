@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 import { 
   Briefcase, 
   Users,
@@ -31,6 +32,23 @@ interface StatItem {
   suffix?: string;
   action?: string;
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: 'easeOut' as const },
+  },
+};
 
 export default function DashboardStats({ role, stats, onStatClick }: DashboardStatsProps) {
   const getStatsConfig = (): StatItem[] => {
@@ -182,7 +200,12 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
 
   return (
     // VISUAL FIDELITY OVERHAUL: Reduced gap for tighter layout
-    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <motion.div
+      className="grid max-[480px]:grid-cols-1 grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {(statsConfig || []).map((stat, index) => {
         // Map variants to distinct brand-aligned styles
         // VISUAL FIDELITY: Updated to use subtler, more refined styling
@@ -216,56 +239,57 @@ export default function DashboardStats({ role, stats, onStatClick }: DashboardSt
         const isClickable = !!onStatClick && !!stat.action;
 
         return (
-          // VISUAL FIDELITY: Glassmorphic card with refined hierarchy
-          <Card 
-            key={stat.title} 
-            className={`group relative overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 shadow-sm transition-all duration-300 ${
-              isClickable 
-                ? 'cursor-pointer hover:shadow-lg hover:border-[#CCFF00]/30 hover:-translate-y-0.5 active:scale-[0.98]' 
-                : 'hover:shadow-md hover:border-white/20'
-            }`} 
-            data-testid={`stat-card-${index}`}
-            onClick={() => isClickable && onStatClick(stat.action!)}
-          >
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#CCFF00]/30 to-transparent opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300" />
-            {/* VISUAL FIDELITY: Reduced padding for compact cards */}
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  {/* TYPOGRAPHY REFINEMENT: Urbanist 500 for labels, smaller size */}
-                  <p 
-                    className="text-[10px] sm:text-xs font-medium text-zinc-400 tracking-wide uppercase truncate"
-                    style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 500 }}
-                  >
-                    {stat.title}
-                  </p>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    {/* TYPOGRAPHY REFINEMENT: Urbanist 900 for metrics only */}
-                    <span 
-                      className="text-xl sm:text-2xl text-foreground tracking-tight" 
-                      style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}
-                      data-testid={`stat-value-${index}`}
+          <motion.div key={stat.title} variants={itemVariants}>
+            {/* VISUAL FIDELITY: Glassmorphic card with refined hierarchy */}
+            <Card 
+              className={`group relative overflow-hidden bg-[#1e293b] border border-white/10 shadow-sm transition-all duration-300 ${
+                isClickable 
+                  ? 'cursor-pointer hover:shadow-lg hover:border-[#CCFF00]/30 hover:-translate-y-0.5 active:scale-[0.98]' 
+                  : 'hover:shadow-md hover:border-white/20'
+              }`} 
+              data-testid={`stat-card-${index}`}
+              onClick={() => isClickable && onStatClick(stat.action!)}
+            >
+              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#CCFF00]/30 to-transparent opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300" />
+              {/* VISUAL FIDELITY: Reduced padding for compact cards */}
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    {/* TYPOGRAPHY REFINEMENT: Urbanist 500 for labels, smaller size */}
+                    <p 
+                      className="text-[10px] sm:text-xs font-medium text-zinc-400 tracking-wide uppercase truncate"
+                      style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 500 }}
                     >
-                      {stat.title === 'Rating' && (stat.value === 0 || !stat.value) ? 'New' : `${stat.value.toLocaleString()}${stat.suffix || ''}`}
-                    </span>
+                      {stat.title}
+                    </p>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      {/* TYPOGRAPHY REFINEMENT: Urbanist 900 for metrics only */}
+                      <span 
+                        className="text-xl sm:text-2xl text-foreground tracking-tight" 
+                        style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900 }}
+                        data-testid={`stat-value-${index}`}
+                      >
+                        {stat.title === 'Rating' && (stat.value === 0 || !stat.value) ? 'New' : `${stat.value.toLocaleString()}${stat.suffix || ''}`}
+                      </span>
+                    </div>
+                    {/* VISUAL FIDELITY: Smaller, subtler description */}
+                    <p 
+                      className="text-[9px] sm:text-[10px] text-zinc-500 mt-0.5 font-medium truncate"
+                      style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 500 }}
+                    >
+                      {stat.description}
+                    </p>
                   </div>
-                  {/* VISUAL FIDELITY: Smaller, subtler description */}
-                  <p 
-                    className="text-[9px] sm:text-[10px] text-zinc-500 mt-0.5 font-medium truncate"
-                    style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 500 }}
-                  >
-                    {stat.description}
-                  </p>
+                  {/* VISUAL FIDELITY: Smaller icon container */}
+                  <div className={`rounded-lg p-2 border transition-colors duration-300 flex-shrink-0 ${styles.bg}`}>
+                    <stat.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-all duration-300 group-hover:scale-105 ${styles.icon}`} />
+                  </div>
                 </div>
-                {/* VISUAL FIDELITY: Smaller icon container */}
-                <div className={`rounded-lg p-2 border transition-colors duration-300 flex-shrink-0 ${styles.bg}`}>
-                  <stat.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-colors duration-300 ${styles.icon}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

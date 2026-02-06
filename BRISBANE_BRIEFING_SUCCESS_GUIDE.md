@@ -1,6 +1,7 @@
 # Brisbane Investor Briefing Success Guide
 
 **Version:** 2.0.0  
+**Release:** v2.7.0  
 **Date:** 2026-02-05  
 **Status:** **FINAL APPROVAL - BRISBANE CONFERENCE ROOM READY**
 
@@ -21,6 +22,13 @@ This guide certifies the readiness of all HospoGo systems for the Brisbane inves
 | Rick CEO Profile | **VERIFIED** | `rick@hospogo.com` → Admin role → Brisbane Foundry venue |
 | CEO Insights Dropdown | **VERIFIED** | Lead Tracker, CTO Dashboard visible in Navbar |
 | Session Persistence | **VERIFIED** | Tab refresh maintains session instantly |
+
+### ✅ Handshake & Entry
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Entry (0.200ms) | **VERIFIED** | Handshake-to-Unlock captured via blackout E2E |
+| Installations Blackout | **VERIFIED** | No `firebaseinstallations` requests in first 5s |
 
 ### ✅ Lead-to-Revenue Demonstration
 

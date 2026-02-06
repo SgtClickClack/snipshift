@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
@@ -25,6 +25,17 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
+};
+
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+};
 
 // Confetti celebration component - GPU-accelerated for smooth mobile performance
 function ConfettiCelebration({ show, earnings }: { show: boolean; earnings: number }) {
@@ -409,7 +420,8 @@ export function BulkInvitationReview() {
     );
 
     return (
-      <Card>
+      <motion.div variants={cardVariants}>
+        <Card className="bg-[#1e293b] border-white/10">
         <CardHeader 
           className="cursor-pointer hover:bg-muted/50 transition-colors"
           onClick={() => toggleGroupExpand(group.shopId)}
@@ -449,7 +461,8 @@ export function BulkInvitationReview() {
             ))}
           </CardContent>
         )}
-      </Card>
+        </Card>
+      </motion.div>
     );
   };
 
@@ -465,7 +478,8 @@ export function BulkInvitationReview() {
     );
 
     return (
-      <Card>
+      <motion.div variants={cardVariants}>
+        <Card className="bg-[#1e293b] border-white/10">
         <CardHeader 
           className="cursor-pointer hover:bg-muted/50 transition-colors"
           onClick={() => toggleGroupExpand(weekKey)}
@@ -504,43 +518,10 @@ export function BulkInvitationReview() {
             ))}
           </CardContent>
         )}
-      </Card>
+        </Card>
+      </motion.div>
     );
   };
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-          <h3 className="font-semibold text-lg">Failed to load invitations</h3>
-          <p className="text-muted-foreground">Please refresh the page to try again.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!data || data.totalCount === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <CheckCircle2 className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="font-semibold text-lg">All caught up!</h3>
-          <p className="text-muted-foreground">You have no pending shift invitations.</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   // Calculate potential earnings for selected shifts
   const selectedEarnings = useMemo(() => calculateSelectedEarnings(), [calculateSelectedEarnings]);
@@ -552,13 +533,54 @@ export function BulkInvitationReview() {
     }, 0);
   }, [data?.invitations]);
 
+  if (isLoading) {
+    return (
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className="bg-[#1e293b] border-white/10">
+          <CardContent className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  if (error) {
+    return (
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className="bg-[#1e293b] border-white/10">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+            <h3 className="font-semibold text-lg">Failed to load invitations</h3>
+            <p className="text-muted-foreground">Please refresh the page to try again.</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  if (!data || data.totalCount === 0) {
+    return (
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className="bg-[#1e293b] border-white/10">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <CheckCircle2 className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="font-semibold text-lg">All caught up!</h3>
+            <p className="text-muted-foreground">You have no pending shift invitations.</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <motion.div className="space-y-4" variants={listVariants} initial="hidden" animate="visible">
       {/* Confetti Celebration Overlay */}
       <ConfettiCelebration show={showConfetti} earnings={celebrationEarnings} />
       
       {/* Header with actions */}
-      <Card>
+      <motion.div variants={cardVariants}>
+        <Card className="bg-[#1e293b] border-white/10">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -604,7 +626,8 @@ export function BulkInvitationReview() {
             </div>
           </div>
         </CardHeader>
-      </Card>
+        </Card>
+      </motion.div>
 
       {/* View toggle */}
       <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'shop' | 'week')}>
@@ -631,7 +654,7 @@ export function BulkInvitationReview() {
           ))}
         </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }
 

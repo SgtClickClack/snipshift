@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
@@ -182,7 +182,7 @@ export default function IntegratedProfileSystem({ userId }: IntegratedProfileSys
     updateProfileMutation.mutate(updatedProfile);
   };
 
-  if (isLoading) {
+  if (isLoading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

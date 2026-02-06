@@ -689,9 +689,7 @@ export async function appealNoShow(
       formData.append('additionalNotes', additionalNotes);
     }
 
-    const res = await apiRequest('POST', '/api/appeals/upload-certificate', formData, {
-      skipContentType: true,
-    });
+    const res = await apiRequest('POST', '/api/appeals/upload-certificate', formData);
     return await res.json();
   } catch (error) {
     throw toApiError(error, 'appealNoShow');
@@ -1076,6 +1074,8 @@ export interface ShiftDetails {
   assigneeId?: string | null;
   shopName?: string | null;
   shopAvatarUrl?: string | null;
+  assigneeName?: string | null;
+  waitlistCount?: number | null;
   requirements?: string[];
   actualStartTime?: string | null;
   createdAt: string;

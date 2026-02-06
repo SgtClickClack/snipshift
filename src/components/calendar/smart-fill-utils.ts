@@ -1,5 +1,4 @@
 import { format, getDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { apiRequest } from "@/lib/queryClient";
 
 export interface SmartMatch {
   shiftId: string;
@@ -86,11 +85,11 @@ function extractShiftPattern(shift: DraftShift): {
  * TODO: Replace with actual database query
  */
 async function findHistoricalShift(
-  employerId: string,
-  dayOfWeek: number,
-  startTime: string,
-  endTime: string,
-  role?: string
+  _employerId: string,
+  _dayOfWeek: number,
+  _startTime: string,
+  _endTime: string,
+  _role?: string
 ): Promise<HistoricalShift | null> {
   // MOCK: Return some test data for now
   // In production, this would query the database for:
@@ -136,14 +135,12 @@ export async function calculateSmartMatches(
   
   // Filter shifts that are within the current view date range
   const shiftsInView = draftShifts.filter((shift) => {
-    const shiftDate = new Date(shift.startTime);
-    return isWithinInterval(shiftDate, viewDateRange);
+    return isWithinInterval(new Date(shift.startTime), viewDateRange);
   });
   
   // Process each draft shift
   for (const shift of shiftsInView) {
     const pattern = extractShiftPattern(shift);
-    const shiftDate = new Date(shift.startTime);
     
     // Find historical shift
     const historicalShift = await findHistoricalShift(

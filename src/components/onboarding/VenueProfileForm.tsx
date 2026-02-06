@@ -10,7 +10,6 @@
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LocationInput } from '@/components/ui/location-input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Brain, Sparkles } from 'lucide-react';
 import {

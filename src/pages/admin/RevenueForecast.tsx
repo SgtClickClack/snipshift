@@ -21,7 +21,6 @@ import {
   Target,
   Calendar,
   Zap,
-  Building2,
   ArrowUpRight,
   Loader2,
   Star

@@ -14,15 +14,16 @@ import { SEO } from '@/components/seo/SEO';
 import { User } from 'lucide-react';
 
 export default function ProfessionalOnboardingPage() {
-  const { user, refreshUser, login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const getUserString = (value: unknown) => (typeof value === 'string' ? value : '');
   const [formData, setFormData] = useState({
-    displayName: user?.displayName || '',
-    location: user?.location || '',
+    displayName: getUserString(user?.displayName),
+    location: getUserString(user?.location),
     profession: 'Staff', // Default profession
-    bio: user?.bio || '',
+    bio: getUserString(user?.bio),
     city: '',
     state: '',
   });
@@ -95,7 +96,7 @@ export default function ProfessionalOnboardingPage() {
       // The API should return currentRole, but we'll set it explicitly to be safe
       const userWithRole = {
         ...updatedUser,
-        currentRole: (updatedUser.currentRole || updatedUser.role || 'professional') as const,
+        currentRole: updatedUser.currentRole || updatedUser.role || 'professional',
         isOnboarded: updatedUser.isOnboarded ?? true, // Ensure isOnboarded is set to true
         roles: updatedUser.roles || ['professional'], // Ensure roles array is set
         createdAt: updatedUser.createdAt ? new Date(updatedUser.createdAt) : new Date(),

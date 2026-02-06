@@ -22,11 +22,11 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark",
-  storageKey = "vite-ui-theme",
+  defaultTheme: _defaultTheme = "dark",
+  storageKey: _storageKey = "vite-ui-theme",
 }: ThemeProviderProps) {
   // Force dark mode - theme state is kept for compatibility but always returns "dark"
-  const [theme] = useState<Theme>("dark")
+  const [_theme] = useState<Theme>("dark")
 
   useEffect(() => {
     const root = window.document.documentElement

@@ -1,16 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, TrendingDown, Eye, Users, Heart, MessageSquare } from "lucide-react";
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
 interface AnalyticsDashboardProps {
   userRole: string;
 }
 
-export function AnalyticsDashboard({ userRole }: AnalyticsDashboardProps) {
+export function AnalyticsDashboard(_props: AnalyticsDashboardProps) {
   // TODO: Replace with actual API call when analytics API is implemented
   // For now, return empty state
   return (

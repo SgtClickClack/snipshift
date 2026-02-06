@@ -49,7 +49,9 @@ export default function MapView({
       "Hobart": { lat: -42.8821, lng: 147.3272 }
     };
     
-    const cityName = job.location.city;
+    const cityName = job.location && typeof job.location === 'object' && 'city' in job.location
+      ? (job.location as { city?: string }).city ?? 'Sydney'
+      : (typeof job.location === 'string' ? job.location.split(',')[0]?.trim() ?? 'Sydney' : 'Sydney');
     const baseCoords = locations[cityName] || locations["Sydney"];
     
     // Add some random offset for variety within the city
@@ -257,7 +259,7 @@ export default function MapView({
                     <div className="space-y-2 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center">
                         <MapPin className="mr-2 h-4 w-4" />
-                        <span>{selectedJob.location.city}, {selectedJob.location.state}</span>
+                        <span>{selectedJob.location && typeof selectedJob.location === 'object' ? `${(selectedJob.location as { city?: string }).city ?? ''}, ${(selectedJob.location as { state?: string }).state ?? ''}`.trim() : String(selectedJob.location ?? '')}</span>
                       </div>
                       <div className="flex items-center">
                         <DollarSign className="mr-2 h-4 w-4" />

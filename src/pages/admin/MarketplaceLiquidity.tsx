@@ -9,7 +9,6 @@
  * Access: CEO/Admin only (Rick's "North Star" metrics)
  */
 
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';

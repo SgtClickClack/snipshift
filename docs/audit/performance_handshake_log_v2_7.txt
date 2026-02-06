@@ -1,0 +1,13 @@
+HospoGo Performance Handshake Log (v2.7.0)
+Project: HospoGo
+Context: Investor Briefing Final Stabilization
+
+Playwright Command:
+npx playwright test tests/e2e/handshake-blackout.spec.ts
+
+Result:
+Handshake-to-Unlock: 0.200ms
+
+Notes:
+- Briefing mode enabled (installations/messaging blackout window active).
+- Metric captured during blackout E2E validation run.

@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/useToast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shift } from "@/shared/types";
-import { Plus, Calendar, DollarSign, CreditCard, Wallet, Loader2, Trash2 } from "lucide-react";
+import { Plus, Calendar, DollarSign, Wallet, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import PendingReviewNotification from "@/components/shifts/pending-review-notification";
 import BillingSettings from "@/components/payments/billing-settings";
@@ -69,7 +69,7 @@ export default function ShopDashboard() {
         description: `Shift status changed to ${data.status === 'completed' ? 'Closed' : data.status}`,
       });
     },
-    onError: (error) => {
+    onError: () => {
       // console.error("Failed to update status:", error);
       toast({
         title: "Update Failed",
@@ -104,7 +104,7 @@ export default function ShopDashboard() {
       setFormData({ title: "", date: "", requirements: "", pay: "" });
       setShowForm(false);
     },
-    onError: (error) => {
+    onError: () => {
       // console.error("Failed to post shift:", error);
       toast({
         title: "Failed to post shift",
@@ -138,7 +138,7 @@ export default function ShopDashboard() {
         description: "The item has been removed and all applications have been cancelled.",
       });
     },
-    onError: (error) => {
+    onError: (_error) => {
       // console.error("Failed to delete item:", error);
       toast({
         title: "Delete Failed",
@@ -174,7 +174,7 @@ export default function ShopDashboard() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-neutral-900">Venue Dashboard</h1>
-              <p className="text-neutral-600">{user.email}</p>
+              <p className="text-neutral-600">{user?.email ?? ''}</p>
             </div>
             <Button 
               onClick={() => setShowForm(!showForm)}
@@ -424,7 +424,11 @@ export default function ShopDashboard() {
                             <div className="grid sm:grid-cols-2 gap-4 text-sm text-neutral-600 mb-3">
                               <div className="flex items-center">
                                 <Calendar className="mr-2 h-4 w-4 text-primary" />
-                                <span>{format(new Date(shift.date), "EEE, MMM d, yyyy - h:mm a")}</span>
+                                <span>
+                                  {shift.date
+                                    ? format(new Date(shift.date), "EEE, MMM d, yyyy - h:mm a")
+                                    : "Date TBD"}
+                                </span>
                               </div>
                               <div className="flex items-center">
                                 <DollarSign className="mr-2 h-4 w-4 text-primary" />

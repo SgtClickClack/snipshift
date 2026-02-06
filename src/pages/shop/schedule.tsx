@@ -38,8 +38,6 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
-const DnDCalendar = withDragAndDrop(Calendar);
-
 type ShiftStatus = ShiftDetails['status'];
 type ManagedShiftStatus = Extract<ShiftStatus, 'draft' | 'open' | 'invited' | 'confirmed'>;
 
@@ -50,6 +48,8 @@ type CalendarEvent = {
   end: Date;
   resource: ShiftDetails;
 };
+
+const DnDCalendar = withDragAndDrop<CalendarEvent, object>(Calendar);
 
 const MANAGED_SHIFT_STATUSES: readonly ManagedShiftStatus[] = ['draft', 'open', 'invited', 'confirmed'] as const;
 
@@ -173,7 +173,7 @@ export default function ShopSchedulePage() {
 
   // Handle browser back button to close modal
   useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
+    const handlePopState = () => {
       if (detailsModalOpen) {
         setDetailsModalOpen(false);
         setSelectedConfirmedShift(null);
@@ -324,7 +324,7 @@ export default function ShopSchedulePage() {
       queryClient.invalidateQueries({ queryKey: ['shop-shifts'] });
       toast({ title: 'Draft created', description: 'Shift saved as DRAFT. Publish when ready.' });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: 'Create failed',
         description: 'Something went wrong. Give it another shot or reach out to us at info@hospogo.com.',
@@ -685,8 +685,8 @@ export default function ShopSchedulePage() {
                 <DnDCalendar
                   localizer={localizer}
                   events={events}
-                  startAccessor={(e: CalendarEvent) => e.start}
-                  endAccessor={(e: CalendarEvent) => e.end}
+                  startAccessor="start"
+                  endAccessor="end"
                   view={view}
                   date={currentDate}
                   onNavigate={handleNavigate}
@@ -972,7 +972,7 @@ export default function ShopSchedulePage() {
                     shiftId={selectedConfirmedShift.id}
                     shiftStatus={selectedConfirmedShift.status}
                     shiftStartTime={selectedConfirmedShift.startTime}
-                    assigneeName={selectedConfirmedShift.assigneeName}
+                    assigneeName={selectedConfirmedShift.assigneeName || undefined}
                     onSuccess={() => {
                       setDetailsModalOpen(false);
                       setSelectedConfirmedShift(null);

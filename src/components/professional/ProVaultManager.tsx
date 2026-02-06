@@ -859,9 +859,9 @@ export function ProVaultManager({ className }: ProVaultManagerProps) {
       
       <CardContent className="space-y-3">
         {DOCUMENT_CONFIGS.map((config) => {
-          const docUrl = 
-            config.id === 'rsa' ? user?.rsaCertificateUrl :
-            config.id === 'government_id' ? user?.profile?.id_document_url :
+          const docUrl: string | undefined = 
+            config.id === 'rsa' ? (user?.rsaCertificateUrl ?? undefined) :
+            config.id === 'government_id' ? (typeof user?.profile?.id_document_url === 'string' ? user.profile.id_document_url : undefined) :
             undefined;
           const docStatus = getDocumentStatus(config.id);
           
@@ -870,11 +870,11 @@ export function ProVaultManager({ className }: ProVaultManagerProps) {
           const getExpiryDate = (docId: string): string | undefined => {
             // RSA certificates in Australia typically valid for 1-5 years depending on state
             if (docId === 'rsa' && docStatus === 'verified') {
-              return user?.rsaCertificateExpiry || user?.profile?.rsa_expiry;
+              return (typeof user?.rsaCertificateExpiry === 'string' ? user.rsaCertificateExpiry : undefined) || (typeof user?.profile?.rsa_expiry === 'string' ? user.profile.rsa_expiry : undefined);
             }
             // Government IDs (drivers license, passport) have expiry dates
             if (docId === 'government_id' && docStatus === 'verified') {
-              return user?.governmentIdExpiry || user?.profile?.id_expiry;
+              return (typeof user?.governmentIdExpiry === 'string' ? user.governmentIdExpiry : undefined) || (typeof user?.profile?.id_expiry === 'string' ? user.profile.id_expiry : undefined);
             }
             return undefined;
           };
@@ -884,8 +884,8 @@ export function ProVaultManager({ className }: ProVaultManagerProps) {
               key={config.id}
               config={config}
               status={docStatus}
-              documentUrl={docUrl}
-              expiryDate={getExpiryDate(config.id)}
+              documentUrl={docUrl ?? undefined}
+              expiryDate={getExpiryDate(config.id) ?? undefined}
               onUpload={handleUpload}
               isUploading={uploadMutation.isPending}
               uploadingDocId={uploadingDocId}

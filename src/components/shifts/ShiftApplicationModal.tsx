@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle2, User, Phone, FileText, Clock } from 'lucide-react';
-import { apiRequest, fetchShiftDetails } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -42,38 +42,27 @@ export function ShiftApplicationModal({
     conflictingShift: { id: string; title: string; startTime: string; endTime: string } | null;
   } | null>(null);
 
-  // Check for conflicts when modal opens
+  // Clear conflicts when modal opens
   useEffect(() => {
     if (isOpen && shiftId && user) {
-      checkForConflicts();
+      setConflictWarning(null);
     }
   }, [isOpen, shiftId, user]);
-
-  const checkForConflicts = async () => {
-    try {
-      // Fetch shift details to get start/end times
-      const shiftDetails = await fetchShiftDetails(shiftId);
-      
-      // Check for conflicts by attempting to apply (this will return conflict info)
-      // We'll use a separate endpoint or check before applying
-      // For now, we'll check in the apply mutation error handler
-      setConflictWarning(null);
-    } catch (error) {
-      // Silently fail - we'll catch conflicts during application
-    }
-  };
 
   // Check profile completeness when modal opens
   useEffect(() => {
     if (isOpen && user) {
       const errors: string[] = [];
-      if (!user.name || user.name.trim().length === 0) {
+      const userName = typeof user.name === 'string' ? user.name.trim() : '';
+      const userPhone = typeof user.phone === 'string' ? user.phone.trim() : '';
+      const userBio = typeof user.bio === 'string' ? user.bio.trim() : '';
+      if (!userName) {
         errors.push('name');
       }
-      if (!user.phone || user.phone.trim().length === 0) {
+      if (!userPhone) {
         errors.push('phone');
       }
-      if (!user.bio || user.bio.trim().length === 0) {
+      if (!userBio) {
         errors.push('bio');
       }
       setProfileErrors(errors);

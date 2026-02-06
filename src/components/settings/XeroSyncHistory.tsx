@@ -439,7 +439,7 @@ export default function XeroSyncHistory() {
                         // Highlight sourceHash and xeroAckHash keys
                         .replace(
                           /"(sourceHash|xeroAckHash)":/g,
-                          (match, key) => `<span style="color: #BAFF39; font-weight: 500;">"${key}"</span>:`
+                          (_match, key) => `<span style="color: #BAFF39; font-weight: 500;">"${key}"</span>:`
                         )
                         // Highlight bidirectionalMatch: true
                         .replace(

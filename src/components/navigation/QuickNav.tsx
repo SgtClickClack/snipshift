@@ -3,10 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, Briefcase, ShieldCheck, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface QuickNavProps {
-  onViewChange?: (view: string) => void;
-}
-
 // Mobile bottom navigation links for professionals
 const NAV_ITEMS = [
   { 
@@ -35,6 +31,12 @@ const NAV_ITEMS = [
     icon: Calendar,
   },
 ];
+
+type QuickNavView = typeof NAV_ITEMS[number]['view'];
+
+interface QuickNavProps {
+  onViewChange?: (view: QuickNavView) => void;
+}
 
 export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
   const navigate = useNavigate();
@@ -65,7 +67,7 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
   return (
     <>
       {/* Desktop: Hidden on mobile */}
-      <nav className="hidden md:flex flex-col gap-4 p-4 bg-card rounded-lg border" data-testid="quick-navigation">
+      <nav className="hidden md:flex flex-col gap-4 p-4 bg-card rounded-lg border" data-testid="quick-navigation" data-presentation-hide="true">
         <h2 className="text-sm font-semibold text-muted-foreground" data-testid="quick-navigation-title">Quick Navigation</h2>
         <div className="flex gap-4">
           {NAV_ITEMS.map(item => {
@@ -77,13 +79,13 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
                 onClick={() => handleClick(item)}
                 data-testid={item.testId}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all",
+                  "group flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all",
                   isActive 
                     ? "bg-[#BAFF39]/10 text-[#BAFF39]" 
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
                 {item.label}
               </button>
             );
@@ -93,8 +95,9 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
 
       {/* Mobile Bottom Navigation - Fixed to bottom */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border safe-area-inset-bottom"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-fixed)] bg-card/95 backdrop-blur-lg border-t border-border pb-safe"
         data-testid="mobile-bottom-nav"
+        data-presentation-hide="true"
       >
         <div className="flex justify-around items-center h-16 px-2">
           {NAV_ITEMS.map(item => {
@@ -106,7 +109,7 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
                 onClick={() => handleClick(item)}
                 data-testid={`mobile-${item.testId}`}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 min-w-[60px] py-2 px-3 rounded-lg transition-all",
+                  "group relative flex flex-col items-center justify-center gap-0.5 min-h-[44px] min-w-[60px] py-2 px-3 rounded-lg transition-all",
                   isActive 
                     ? "text-[#BAFF39]" 
                     : "text-muted-foreground"
@@ -114,7 +117,7 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
               >
                 <Icon 
                   className={cn(
-                    "h-5 w-5 transition-all",
+                    "h-5 w-5 transition-all group-hover:scale-105",
                     isActive && "drop-shadow-[0_0_8px_rgba(186,255,57,0.8)]"
                   )} 
                 />
@@ -135,7 +138,7 @@ export const QuickNav: React.FC<QuickNavProps> = ({ onViewChange }) => {
       </nav>
 
       {/* Spacer for mobile to prevent content from being hidden behind fixed nav */}
-      <div className="md:hidden h-16" aria-hidden="true" />
+      <div className="md:hidden h-16 pb-safe" aria-hidden="true" data-presentation-hide="true" />
     </>
   );
 };

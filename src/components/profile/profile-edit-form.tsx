@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,10 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OptimizedImage } from "@/components/ui/optimized-image";
-import { Upload, X, Plus, Save, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage, auth } from "@/lib/firebase";
-import { useAuth } from "@/contexts/AuthContext";
+import { X, Plus, Save } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import ProfileHeader from "./profile-header";
 
@@ -68,7 +65,6 @@ const PORTFOLIO_CATEGORIES = {
 };
 
 export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = false }: ProfileEditFormProps) {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [newSkill, setNewSkill] = useState("");
@@ -197,12 +193,13 @@ export default function ProfileEditForm({ profile, onSave, onCancel, isSaving = 
   };
 
   const updateOperatingHours = (day: string, field: 'open' | 'close', value: string) => {
+    const existing = formData.operatingHours?.[day];
     updateFormData({
       operatingHours: {
         ...formData.operatingHours,
         [day]: {
-          ...formData.operatingHours?.[day],
-          [field]: value
+          open: field === 'open' ? value : (existing?.open ?? ''),
+          close: field === 'close' ? value : (existing?.close ?? ''),
         }
       }
     });

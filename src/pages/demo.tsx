@@ -1,17 +1,17 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDashboardRoute } from "@/lib/roles";
+import { getDashboardRoute, type AppRole } from "@/lib/roles";
 import { useNavigate } from "react-router-dom";
-import { Scissors, Store, UserCheck, Award, Globe, Users, Video, Share2, Shield, Play, DollarSign, Star } from "lucide-react";
+import { Scissors, Store, UserCheck, Award, Globe, Users, Video, Share2, Shield } from "lucide-react";
 
 export default function DemoPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const quickLogin = (role: "hub" | "professional" | "trainer" | "brand") => {
+    const roleForRoute: AppRole = role === 'trainer' || role === 'brand' ? 'professional' : role;
     const demoUsers = {
       hub: {
         id: "demo_hub_1",
@@ -91,7 +91,7 @@ export default function DemoPage() {
 
     const user = demoUsers[role];
     login(user as any);
-    navigate(getDashboardRoute(role));
+    navigate(getDashboardRoute(roleForRoute));
   };
 
   const features = [

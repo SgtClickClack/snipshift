@@ -49,6 +49,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/useToast';
 import { formatDateSafe } from '@/utils/date-formatter';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { 
   Users, 
   Plus, 
@@ -67,7 +68,6 @@ import {
   AlertCircle,
   Rocket,
   PartyPopper,
-  Download,
   BarChart3,
   Eye,
   EyeOff,
@@ -467,9 +467,13 @@ function saveToOfflineBuffer(data: { type: 'add' | 'edit' | 'bulk'; payload: any
 }
 
 // Helper to get and clear offline buffer
-function getAndClearOfflineBuffer(): Array<{ type: string; payload: any; timestamp: number }> {
+function getAndClearOfflineBuffer(): Array<{ type: 'add' | 'edit' | 'bulk'; payload: any; timestamp: number }> {
   try {
-    const data = JSON.parse(localStorage.getItem(OFFLINE_BUFFER_KEY) || '[]');
+    const data = JSON.parse(localStorage.getItem(OFFLINE_BUFFER_KEY) || '[]') as Array<{
+      type: 'add' | 'edit' | 'bulk';
+      payload: any;
+      timestamp: number;
+    }>;
     localStorage.removeItem(OFFLINE_BUFFER_KEY);
     return data;
   } catch {
@@ -528,7 +532,7 @@ export default function LeadTracker() {
           await apiRequest('POST', '/api/admin/leads/brisbane-100/bulk', { leads: item.payload });
         }
       } catch (error) {
-        console.error('[LeadTracker] Failed to sync offline item:', error);
+        logger.warn('LeadTracker', 'Failed to sync offline item', error);
         // Re-buffer failed item
         saveToOfflineBuffer(item);
       }
@@ -839,7 +843,7 @@ export default function LeadTracker() {
       
       if (!venueRes.ok) {
         // For demo purposes, simulate success even if API isn't ready
-        console.log('[LeadTracker] Auto-onboard API not available, simulating success');
+        logger.debug('LeadTracker', 'Auto-onboard API not available, simulating success');
       }
       
       // Update lead status to 'active'
@@ -867,7 +871,7 @@ export default function LeadTracker() {
       });
       setAutoOnboardingLead(null);
     },
-    onError: (error: any) => {
+    onError: (_error: any) => {
       // Show success anyway for demo purposes
       queryClient.invalidateQueries({ queryKey: ['lead-tracker'] });
       setShowConfetti(true);
@@ -919,7 +923,7 @@ export default function LeadTracker() {
         await res.json();
       } catch {
         // For demo: directly update React Query cache with seed data
-        console.log('[LeadTracker] API unavailable, injecting seed data locally for demo');
+        logger.debug('LeadTracker', 'API unavailable, injecting seed data locally for demo');
         queryClient.setQueryData(['lead-tracker'], (old: Lead[] | undefined) => {
           const existingIds = new Set((old || []).map(l => l.venueName));
           const newLeads = seededLeads.filter(l => !existingIds.has(l.venueName));
@@ -1149,7 +1153,7 @@ export default function LeadTracker() {
     ];
 
     // Generate CSV rows
-    const rows = leads.map((lead: Lead) => {
+    const rows: Array<Array<string | number>> = leads.map((lead: Lead) => {
       const isPaying = lead.status === 'active' || lead.status === 'onboarding';
       const monthlyFee = isPaying ? MONTHLY_PLATFORM_FEE : 0;
       const annualRevenue = monthlyFee * 12;
@@ -1196,8 +1200,8 @@ export default function LeadTracker() {
     // Combine all data
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.join(',')),
-      ...summaryRows.map(row => row.join(','))
+      ...rows.map((row) => row.join(',')),
+      ...summaryRows.map((row) => row.join(','))
     ].join('\n');
 
     // Create and download file

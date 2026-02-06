@@ -55,6 +55,9 @@ export default function ShiftChat({ shiftId, shiftTitle, otherUser, onClose }: S
       return result;
     },
     onMutate: async (content: string) => {
+      const senderId = user?.id;
+      if (!senderId) return { previousMessages: [] as ShiftMessage[], tempId: '' };
+
       // Cancel outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey });
 
@@ -66,7 +69,7 @@ export default function ShiftChat({ shiftId, shiftTitle, otherUser, onClose }: S
       const optimisticMessage: OptimisticShiftMessage = {
         id: tempId,
         shiftId,
-        senderId: user!.id,
+        senderId,
         recipientId: otherUser.id,
         content: content.trim(),
         readAt: null,
@@ -80,7 +83,7 @@ export default function ShiftChat({ shiftId, shiftTitle, otherUser, onClose }: S
       // Return context with snapshot and tempId for rollback
       return { previousMessages, tempId };
     },
-    onError: (error: any, content: string, context) => {
+    onError: (error: any, _content: string, context) => {
       // Mark the optimistic message as errored (keep it visible for retry)
       queryClient.setQueryData<OptimisticShiftMessage[]>(queryKey, (old = []) =>
         old.map((msg) =>
@@ -97,7 +100,7 @@ export default function ShiftChat({ shiftId, shiftTitle, otherUser, onClose }: S
         variant: 'destructive',
       });
     },
-    onSuccess: (data: ShiftMessage | null, content: string, context) => {
+    onSuccess: (data: ShiftMessage | null, _content: string, context) => {
       if (!data) return;
 
       // Replace optimistic message with server response
@@ -276,7 +279,7 @@ export default function ShiftChat({ shiftId, shiftTitle, otherUser, onClose }: S
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0 hover:bg-destructive/20"
-                            onClick={() => handleRetryFailedMessage(optimisticMsg.tempId)}
+                            onClick={() => optimisticMsg.tempId && handleRetryFailedMessage(optimisticMsg.tempId)}
                             title="Retry sending"
                           >
                             <AlertCircle className="h-3 w-3 text-destructive" />

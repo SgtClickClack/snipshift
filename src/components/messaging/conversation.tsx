@@ -46,7 +46,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
   useEffect(() => {
     let isMounted = true;
     
-    if (chatId && user && messages.length > 0) {
+    if (chatId && user?.id && messages.length > 0) {
       messagingService.markMessagesAsRead(chatId, user.id).catch((error) => {
         if (isMounted) {
           console.error('Failed to mark messages as read:', error);
@@ -62,7 +62,8 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
   // Mutation for sending messages with optimistic updates
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      const newMessage = await messagingService.sendMessage(chatId, user!.id, otherUser.id, content);
+      if (!user?.id) throw new Error('User not logged in');
+      const newMessage = await messagingService.sendMessage(chatId, user.id, otherUser.id, content);
       return newMessage;
     },
     onMutate: async (content: string) => {
@@ -78,7 +79,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
       const optimisticMessage: OptimisticMessage = {
         id: tempId,
         chatId,
-        senderId: user!.id,
+        senderId: user?.id ?? '',
         content: content.trim(),
         timestamp: timestamp as any, // Firebase timestamp or Date
         read: false,
@@ -91,7 +92,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
       // Return context with snapshot and tempId for rollback
       return { previousMessages, tempId };
     },
-    onError: (error: any, content: string, context) => {
+    onError: (error: any, _content: string, context) => {
       // Mark the optimistic message as errored (keep it visible for retry)
       queryClient.setQueryData<OptimisticMessage[]>(queryKey, (old = []) =>
         old.map((msg) =>
@@ -108,7 +109,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
         variant: 'destructive',
       });
     },
-    onSuccess: (data: Message, content: string, context) => {
+    onSuccess: (data: Message, _content: string, context) => {
       // Replace optimistic message with server response
       queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
         const filtered = old.filter((msg) => (msg as OptimisticMessage).tempId !== context?.tempId);
@@ -168,8 +169,10 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
   const shouldShowDateSeparator = (currentMessage: Message, previousMessage?: Message) => {
     if (!previousMessage) return true;
     
-    const currentDate = currentMessage.timestamp?.toDate ? currentMessage.timestamp.toDate() : new Date(currentMessage.timestamp);
-    const previousDate = previousMessage.timestamp?.toDate ? previousMessage.timestamp.toDate() : new Date(previousMessage.timestamp);
+    const ts = currentMessage.timestamp as string | { toDate?: () => Date };
+    const currentDate = typeof ts === 'object' && ts !== null && typeof (ts as { toDate?: () => Date }).toDate === 'function' ? (ts as { toDate: () => Date }).toDate() : new Date(ts as string);
+    const pts = previousMessage.timestamp as string | { toDate?: () => Date };
+    const previousDate = typeof pts === 'object' && pts !== null && typeof (pts as { toDate?: () => Date }).toDate === 'function' ? (pts as { toDate: () => Date }).toDate() : new Date(pts as string);
     
     return currentDate.toDateString() !== previousDate.toDateString();
   };
@@ -270,7 +273,7 @@ export default function Conversation({ chatId, otherUser, onBack }: Conversation
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0 hover:bg-destructive/20"
-                            onClick={() => handleRetryFailedMessage(optimisticMsg.tempId)}
+                            onClick={() => optimisticMsg.tempId && handleRetryFailedMessage(optimisticMsg.tempId)}
                             title="Retry sending"
                           >
                             <AlertCircle className="h-3 w-3 text-destructive" />

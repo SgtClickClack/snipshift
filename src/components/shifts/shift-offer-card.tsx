@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, DollarSign, Building2 } from "lucide-react";
+import { MapPin, Clock, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ShiftOffer } from "@/lib/api";
 import { OptimizedImage } from "@/components/ui/optimized-image";

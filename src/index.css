@@ -53,6 +53,16 @@
     /* Investor Portal specific */
     --investor-bg: #0A0A0B;
     --brand-neon: #BAFF39;
+
+    /* Standardized z-index scale */
+    --z-base: 0;
+    --z-sticky: 70;
+    --z-fixed: 80;
+    --z-floating: 85;
+    --z-dropdown: 88;
+    --z-overlay: 90;
+    --z-modal: 100;
+    --z-toast: 110;
   }
 
   .dark {
@@ -93,8 +103,11 @@
     --info-foreground: 0 0% 100%;
   }
 
-  * {
+  *,
+  *::before,
+  *::after {
     @apply border-border;
+    box-sizing: border-box;
   }
 
   /* The Nuclear Option for Mobile Browsers - Force off-white in light mode */
@@ -137,6 +150,22 @@
     width: 100%;
     position: relative;
   }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
   
   /* forced-color-adjust for body: Safari doesn't support, wrap in @supports */
   @supports (forced-color-adjust: none) {
@@ -165,6 +194,8 @@
   #root {
     width: 100%;
     overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
   }
 
   /* Prevent horizontal overflow from common elements */
@@ -220,6 +251,11 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  .break-words {
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
   
   /* Subtle pulse animation for vacant shift buckets - alerts owner of staffing risks */
@@ -277,13 +313,16 @@
     opacity: 0.85;
     box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
   }
-  .neon-glow {
-    text-shadow: 0 0 5px rgba(191, 255, 0, 0.8), 0 0 10px rgba(191, 255, 0, 0.5);
-  }
-  .logo-sharp {
-    /* Deprecated: avoid image filters on logos (can look blurry on some displays). */
-    image-rendering: auto;
-  }
+}
+
+.neon-glow {
+  text-shadow: 0 0 5px rgba(186, 255, 57, 0.8), 0 0 12px rgba(186, 255, 57, 0.4);
+  will-change: filter;
+}
+
+.logo-sharp {
+  /* Deprecated: avoid image filters on logos (can look blurry on some displays). */
+  image-rendering: auto;
 }
 
 /* Immediate Touch Feedback */
@@ -1085,6 +1124,45 @@ button:active, a:active, [role="button"]:active {
    EXECUTIVE PITCH MODE
    High-visibility readability for boardroom projectors
    ================================================ */
+
+/* ================================================
+   PRESENTATION MODE
+   Clean screen-share view (hide nav + sidebars)
+   ================================================ */
+
+.presentation-mode-active nav[data-presentation-hide="true"],
+.presentation-mode-active [data-presentation-hide="true"] {
+  display: none !important;
+}
+
+.presentation-mode-active [data-sidebar="sidebar"],
+.presentation-mode-active [data-sidebar="rail"],
+.presentation-mode-active [data-sidebar="trigger"] {
+  display: none !important;
+}
+
+/* Boardroom framing for 4K presentation mode */
+.presentation-mode-active main {
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 3rem;
+  border: 1px solid rgba(186, 255, 57, 0.2);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.35);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition: all 0.25s ease;
+}
+
+.presentation-mode-active .tech-health-diagram svg text {
+  font-size: 14px;
+  fill: #e2e8f0;
+}
+
+.presentation-mode-active .earnings-annotation {
+  color: #e2e8f0;
+}
 
 /* Pitch Mode Active - Global Enhancements */
 .pitch-mode-active {

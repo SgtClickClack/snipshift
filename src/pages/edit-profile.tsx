@@ -16,6 +16,7 @@ export default function EditProfilePage() {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const getUserString = (value: unknown) => (typeof value === 'string' ? value : '');
   
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,12 +30,17 @@ export default function EditProfilePage() {
   // Pre-fill form with user data
   useEffect(() => {
     if (user) {
+      const displayName = getUserString(user.displayName ?? user.name);
+      const bio = getUserString(user.bio);
+      const phone = getUserString(user.phone);
+      const location = getUserString(user.location);
+      const avatarUrl = getUserString(user.avatarUrl ?? user.photoURL);
       setFormData({
-        displayName: user.displayName || user.name || '',
-        bio: user.bio || '',
-        phone: user.phone || '',
-        location: user.location || '',
-        avatarUrl: user.avatarUrl || user.photoURL || '',
+        displayName,
+        bio,
+        phone,
+        location,
+        avatarUrl,
       });
     }
   }, [user]);
@@ -93,7 +99,7 @@ export default function EditProfilePage() {
               {/* Avatar Upload */}
               <div className="space-y-2">
                 <Label className="text-steel-700">Profile Picture</Label>
-                {user && (
+                {user?.id && (
                   <ImageUpload
                     currentImageUrl={formData.avatarUrl}
                     onUploadComplete={(url) => {

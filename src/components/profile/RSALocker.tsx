@@ -24,15 +24,15 @@ export function RSALocker() {
     rsaExpiry: string;
     rsaStateOfIssue: '' | AuState;
   }>({
-    rsaNumber: user?.rsaNumber || '',
-    rsaExpiry: user?.rsaExpiry || '',
+    rsaNumber: String(user?.rsaNumber ?? ''),
+    rsaExpiry: user?.rsaExpiry instanceof Date ? user.rsaExpiry.toISOString().slice(0, 10) : String(user?.rsaExpiry ?? ''),
     rsaStateOfIssue: (user?.rsaStateOfIssue as AuState | undefined) || '',
   });
 
   useEffect(() => {
     setForm({
-      rsaNumber: user?.rsaNumber || '',
-      rsaExpiry: user?.rsaExpiry || '',
+      rsaNumber: String(user?.rsaNumber ?? ''),
+      rsaExpiry: user?.rsaExpiry instanceof Date ? user.rsaExpiry.toISOString().slice(0, 10) : String(user?.rsaExpiry ?? ''),
       rsaStateOfIssue: (user?.rsaStateOfIssue as AuState | undefined) || '',
     });
   }, [user?.rsaNumber, user?.rsaExpiry, user?.rsaStateOfIssue]);
@@ -49,11 +49,13 @@ export function RSALocker() {
       return { rsaExpired: false, rsaExpiryValid: true };
     }
 
-    // Prefer local date parsing for YYYY-MM-DD
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+    const rawStr = typeof raw === 'string' ? raw : raw instanceof Date ? raw.toISOString().slice(0, 10) : '';
+    if (!rawStr) return { rsaExpired: false, rsaExpiryValid: true };
+
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(rawStr);
     const expiry = match
       ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-      : new Date(raw);
+      : new Date(rawStr);
 
     const valid = !Number.isNaN(expiry.getTime());
     const expired = valid ? todayStart.getTime() >= expiry.getTime() : false;

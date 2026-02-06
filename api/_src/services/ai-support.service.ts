@@ -757,9 +757,6 @@ export async function getIntelligenceGaps(options?: {
     }
     const { eq, isNull, desc, count } = await import('drizzle-orm');
     
-    // Build query conditions
-    let query = db.select().from(supportIntelligenceGaps);
-    
     // Add filters
     const conditions: any[] = [];
     if (!includeReviewed) {

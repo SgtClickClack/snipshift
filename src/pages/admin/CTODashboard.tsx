@@ -14,9 +14,11 @@
  * the next 100 venues."
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { logger } from '@/lib/logger';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,9 +53,9 @@ import { useToast, TOAST_DURATION } from '@/hooks/useToast';
 import { formatDateSafe } from '@/utils/date-formatter';
 import OmniChat from '@/components/admin/OmniChat';
 import BriefingOverlay from '@/components/admin/BriefingOverlay';
+import { TechHealthDiagram } from '@/components/dashboard/TechHealthDiagram';
 import {
   Brain,
-  Cpu,
   Activity,
   Rocket,
   Terminal,
@@ -63,7 +65,6 @@ import {
   Shield,
   Handshake,
   TrendingUp,
-  DollarSign,
   RefreshCw,
   Loader2,
   ExternalLink,
@@ -71,12 +72,10 @@ import {
   Zap,
   Target,
   FileText,
-  Users,
   Wrench,
   User,
   Eye,
   Sparkles,
-  X,
   RotateCcw,
   BookOpen,
   Smartphone,
@@ -228,6 +227,36 @@ function CTODashboardInner() {
   const [isBriefingGuideOpen, setIsBriefingGuideOpen] = useState(false);
   const [isMobileHandshakeOpen, setIsMobileHandshakeOpen] = useState(false);
   const [isBoardroomModeOpen, setIsBoardroomModeOpen] = useState(false);
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const updatePresentationMode = () =>
+      setIsPresentationMode(document.body.classList.contains('presentation-mode-active'));
+
+    updatePresentationMode();
+    const observer = new MutationObserver(updatePresentationMode);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const sensitiveClass = isPresentationMode
+    ? 'blur-sm hover:blur-none transition-all'
+    : '';
+
+  const metricsStagger = {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const metricsItem = {
+    hidden: { opacity: 0, y: 18 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' as const } },
+  };
   
   // MARKET SATURATION FORECASTER - Brisbane Pilot projection slider
   // Shows Rick how easily the $10M valuation is justified by capturing a fraction of the market
@@ -254,7 +283,7 @@ function CTODashboardInner() {
       });
       if (!res.ok) {
         // Simulate success for demo even if API not ready
-        console.log('[CTODashboard] Reset Demo API not available, simulating success');
+        logger.debug('CTODashboard', 'Reset Demo API not available, simulating success');
         return { success: true, simulatedReset: true };
       }
       return res.json();
@@ -652,253 +681,257 @@ function CTODashboardInner() {
           </div>
         </div>
 
-        {/* Live Revenue Engine - Top Banner */}
-        <Card className="bg-black/40 backdrop-blur-xl border-2 border-[#BAFF39]/40 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[#BAFF39] flex items-center gap-2 text-lg">
-              <Rocket className="h-5 w-5" />
-              Live Revenue Engine — Brisbane 100 Pipeline
-            </CardTitle>
-            <CardDescription className="text-zinc-500">
-              Real-time ARR calculation: Total Leads × $149/mo Platform Fee × 12
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* MOBILE FIX: Stack metrics vertically on mobile, 2x2 on tablet, 4-col on desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Projected Annualised Revenue - Hero Metric */}
-              {/* TYPOGRAPHY: Urbanist 900 italic for investor impact */}
-              <div className="sm:col-span-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border border-[#BAFF39]/30">
-                <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-1">
-                  Projected Annualised Revenue
-                </p>
-                <p 
-                  className="text-3xl sm:text-5xl lg:text-6xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)]"
-                  style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
-                >
-                  ${revenueMetrics.projectedARR.toLocaleString()}
-                </p>
-                <p className="text-sm text-zinc-400 mt-2">
-                  Committed + Pipeline ({Math.round(revenueMetrics.conversionWeight * 100)}% weighted)
-                </p>
-              </div>
+        <motion.div variants={metricsStagger} initial="hidden" animate="visible" className="space-y-6">
+          {/* Live Revenue Engine - Top Banner */}
+          <motion.div variants={metricsItem}>
+            <Card className="bg-black/40 backdrop-blur-xl border-2 border-[#BAFF39]/40 shadow-[0_0_40px_rgba(186,255,57,0.15)]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-[#BAFF39] flex items-center gap-2 text-lg">
+                  <Rocket className="h-5 w-5" />
+                  Live Revenue Engine — Brisbane 100 Pipeline
+                </CardTitle>
+                <CardDescription className="text-zinc-500">
+                  Real-time ARR calculation: Total Leads × $149/mo Platform Fee × 12
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* MOBILE FIX: Stack metrics vertically on mobile, 2x2 on tablet, 4-col on desktop */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Projected Annualised Revenue - Hero Metric */}
+                  {/* TYPOGRAPHY: Urbanist 900 italic for investor impact */}
+                  <div className="sm:col-span-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border border-[#BAFF39]/30">
+                    <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-1">
+                      Projected Annualised Revenue
+                    </p>
+                    <p 
+                      className={`text-3xl sm:text-5xl lg:text-6xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_20px_rgba(186,255,57,0.4)] ${sensitiveClass}`}
+                      style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
+                    >
+                      ${revenueMetrics.projectedARR.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-zinc-400 mt-2">
+                      Committed + Pipeline ({Math.round(revenueMetrics.conversionWeight * 100)}% weighted)
+                    </p>
+                  </div>
 
-              {/* Committed ARR - Active + Onboarding (100% certainty) */}
-              <div className="p-4 rounded-xl bg-zinc-800/50 border border-[#BAFF39]/30">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="h-4 w-4 text-[#BAFF39]" />
-                  <span className="text-xs uppercase tracking-wider text-zinc-500">Committed ARR</span>
-                </div>
-                <p className="text-2xl font-bold text-[#BAFF39]">
-                  ${revenueMetrics.committedARR.toLocaleString()}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  {revenueMetrics.active} Active + {revenueMetrics.onboarding} Onboarding
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-0.5">
-                  × $149/mo × 12
-                </p>
-              </div>
+                  {/* Committed ARR - Active + Onboarding (100% certainty) */}
+                  <div className="p-4 rounded-xl bg-zinc-800/50 border border-[#BAFF39]/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="h-4 w-4 text-[#BAFF39]" />
+                      <span className="text-xs uppercase tracking-wider text-zinc-500">Committed ARR</span>
+                    </div>
+                    <p className={`text-2xl font-bold text-[#BAFF39] ${sensitiveClass}`}>
+                      ${revenueMetrics.committedARR.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {revenueMetrics.active} Active + {revenueMetrics.onboarding} Onboarding
+                    </p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">
+                      × $149/mo × 12
+                    </p>
+                  </div>
 
-              {/* Pipeline ARR - Leads (20% weighted) */}
-              <div className="p-4 rounded-xl bg-zinc-800/50 border border-amber-500/30">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4 text-amber-400" />
-                  <span className="text-xs uppercase tracking-wider text-zinc-500">Pipeline ARR</span>
+                  {/* Pipeline ARR - Leads (20% weighted) */}
+                  <div className="p-4 rounded-xl bg-zinc-800/50 border border-amber-500/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4 text-amber-400" />
+                      <span className="text-xs uppercase tracking-wider text-zinc-500">Pipeline ARR</span>
+                    </div>
+                    <p className={`text-2xl font-bold text-amber-400 ${sensitiveClass}`}>
+                      ${revenueMetrics.pipelineARR.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {revenueMetrics.lead} Leads × 20% conversion
+                    </p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">
+                      Conservative estimate
+                    </p>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-amber-400">
-                  ${revenueMetrics.pipelineARR.toLocaleString()}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  {revenueMetrics.lead} Leads × 20% conversion
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-0.5">
-                  Conservative estimate
-                </p>
-              </div>
-            </div>
 
-            {/* Pipeline Mix Breakdown - Below hero metrics */}
-            <div className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs uppercase tracking-wider text-zinc-500 font-bold">Pipeline Mix</span>
-                <span className="text-xs text-zinc-600">
-                  Full Potential: ${revenueMetrics.fullPotentialARR.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex gap-4 items-center">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[#BAFF39]" />
-                  <span className="text-sm text-zinc-400">Active</span>
-                  <span className="text-sm text-white font-bold">{revenueMetrics.active}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span className="text-sm text-zinc-400">Onboarding</span>
-                  <span className="text-sm text-white font-bold">{revenueMetrics.onboarding}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-amber-500" />
-                  <span className="text-sm text-zinc-400">Leads</span>
-                  <span className="text-sm text-white font-bold">{revenueMetrics.lead}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Projected Pilot Revenue Progress Bar - $1.5M ARR Milestone */}
-            <div className="mt-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#BAFF39] animate-pulse" />
-                  <span className="text-sm font-semibold text-white">Pilot Momentum → $1.5M ARR</span>
-                </div>
-                <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-xs">
-                  {revenueMetrics.total} Brisbane 100 Leads
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <Progress 
-                  value={Math.min((revenueMetrics.projectedARR / ARR_MILESTONE_TARGET) * 100, 100)} 
-                  className="h-3 bg-zinc-800"
-                />
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#BAFF39] font-bold">
-                    ${revenueMetrics.projectedARR.toLocaleString()} Projected ARR
-                  </span>
-                  <span className="text-zinc-500">
-                    {((revenueMetrics.projectedARR / ARR_MILESTONE_TARGET) * 100).toFixed(1)}% of milestone
-                  </span>
-                  <span className="text-zinc-400">
-                    $1,500,000
-                  </span>
-                </div>
-                {revenueMetrics.projectedARR < ARR_MILESTONE_TARGET && (
-                  <p className="text-xs text-zinc-500 mt-2">
-                    <span className="text-amber-400 font-medium">
-                      {Math.ceil((ARR_MILESTONE_TARGET - revenueMetrics.projectedARR) / (149 * 12 * 0.2))} more leads
+                {/* Pipeline Mix Breakdown - Below hero metrics */}
+                <div className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-bold">Pipeline Mix</span>
+                    <span className={`text-xs text-zinc-600 ${sensitiveClass}`}>
+                      Full Potential: ${revenueMetrics.fullPotentialARR.toLocaleString()}
                     </span>
-                    {' '}needed to reach $1.5M ARR milestone (at 20% conversion) — Brisbane 100 pilot demonstrates traction
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-[#BAFF39]" />
+                      <span className="text-sm text-zinc-400">Active</span>
+                      <span className="text-sm text-white font-bold">{revenueMetrics.active}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-blue-500" />
+                      <span className="text-sm text-zinc-400">Onboarding</span>
+                      <span className="text-sm text-white font-bold">{revenueMetrics.onboarding}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-amber-500" />
+                      <span className="text-sm text-zinc-400">Leads</span>
+                      <span className="text-sm text-white font-bold">{revenueMetrics.lead}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Projected Pilot Revenue Progress Bar - $1.5M ARR Milestone */}
+                <div className="mt-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#BAFF39] animate-pulse" />
+                      <span className="text-sm font-semibold text-white">Pilot Momentum → $1.5M ARR</span>
+                    </div>
+                    <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-xs">
+                      {revenueMetrics.total} Brisbane 100 Leads
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Progress 
+                      value={Math.min((revenueMetrics.projectedARR / ARR_MILESTONE_TARGET) * 100, 100)} 
+                      className="h-3 bg-zinc-800"
+                    />
+                    <div className="flex justify-between text-xs">
+                      <span className={`text-[#BAFF39] font-bold ${sensitiveClass}`}>
+                        ${revenueMetrics.projectedARR.toLocaleString()} Projected ARR
+                      </span>
+                      <span className="text-zinc-500">
+                        {((revenueMetrics.projectedARR / ARR_MILESTONE_TARGET) * 100).toFixed(1)}% of milestone
+                      </span>
+                      <span className={`text-zinc-400 ${sensitiveClass}`}>
+                        $1,500,000
+                      </span>
+                    </div>
+                    {revenueMetrics.projectedARR < ARR_MILESTONE_TARGET && (
+                      <p className="text-xs text-zinc-500 mt-2">
+                        <span className="text-amber-400 font-medium">
+                          {Math.ceil((ARR_MILESTONE_TARGET - revenueMetrics.projectedARR) / (149 * 12 * 0.2))} more leads
+                        </span>
+                        {' '}needed to reach $1.5M ARR milestone (at 20% conversion) — Brisbane 100 pilot demonstrates traction
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* MARKET SATURATION FORECASTER - Brisbane Pilot Projection */}
+          {/* Purpose: Show Rick how easily the $10M valuation is justified by capturing just a fraction of the local market */}
+          <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-white flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-[#BAFF39]" />
+                Market Saturation Forecaster — Brisbane Pilot
+              </CardTitle>
+              <CardDescription className="text-zinc-500">
+                Slide to project ARR at different market capture rates. Brisbane 100 = 100 venues × $149/mo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Saturation Slider */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-400">Brisbane Pilot Saturation</span>
+                    <Badge className={`bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-lg px-4 py-1 font-bold ${sensitiveClass}`}>
+                      {saturationLevel}%
+                    </Badge>
+                  </div>
+                  <Slider
+                    value={[saturationLevel]}
+                    onValueChange={(value) => setSaturationLevel(value[0])}
+                    min={10}
+                    max={100}
+                    step={5}
+                    className="py-4"
+                  />
+                  <div className="flex justify-between text-xs text-zinc-600">
+                    <span>10% (10 venues)</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>100% (100 venues)</span>
+                  </div>
+                </div>
+
+                {/* Projected ARR Display - Hero Metric */}
+                <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
+                  <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
+                    Projected ARR at {saturationLevel}% Saturation
                   </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                  <p 
+                    className={`text-4xl sm:text-6xl lg:text-7xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)] ${sensitiveClass}`}
+                    style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
+                  >
+                    ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-zinc-400 mt-3">
+                    {Math.round(saturationLevel)} venues × $149/mo × 12 months
+                  </p>
+                </div>
 
-        {/* MARKET SATURATION FORECASTER - Brisbane Pilot Projection */}
-        {/* Purpose: Show Rick how easily the $10M valuation is justified by capturing just a fraction of the local market */}
-        <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-white flex items-center gap-2 text-lg">
-              <Target className="h-5 w-5 text-[#BAFF39]" />
-              Market Saturation Forecaster — Brisbane Pilot
-            </CardTitle>
-            <CardDescription className="text-zinc-500">
-              Slide to project ARR at different market capture rates. Brisbane 100 = 100 venues × $149/mo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Saturation Slider */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-zinc-400">Brisbane Pilot Saturation</span>
-                  <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-lg px-4 py-1 font-bold">
-                    {saturationLevel}%
-                  </Badge>
+                {/* Valuation Context - MOBILE FIX: Stack on mobile, 3-col on tablet+ */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div 
+                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                      saturationLevel === 10 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                    }`}
+                    onClick={() => setSaturationLevel(10)}
+                  >
+                    <p className="text-xs text-zinc-500 mb-1">Conservative (10%)</p>
+                    <p className={`text-lg font-bold text-white ${sensitiveClass}`}>${(10 * 149 * 12).toLocaleString()}</p>
+                    <p className="text-[10px] text-zinc-600 mt-1">10 venues</p>
+                  </div>
+                  <div 
+                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                      saturationLevel === 25 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                    }`}
+                    onClick={() => setSaturationLevel(25)}
+                  >
+                    <p className="text-xs text-zinc-500 mb-1">Realistic (25%)</p>
+                    <p className={`text-lg font-bold text-[#BAFF39] ${sensitiveClass}`}>${(25 * 149 * 12).toLocaleString()}</p>
+                    <p className="text-[10px] text-zinc-600 mt-1">25 venues</p>
+                  </div>
+                  <div 
+                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                      saturationLevel === 50 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
+                    }`}
+                    onClick={() => setSaturationLevel(50)}
+                  >
+                    <p className="text-xs text-zinc-500 mb-1">Ambitious (50%)</p>
+                    <p className={`text-lg font-bold text-white ${sensitiveClass}`}>${(50 * 149 * 12).toLocaleString()}</p>
+                    <p className="text-[10px] text-zinc-600 mt-1">50 venues</p>
+                  </div>
                 </div>
-                <Slider
-                  value={[saturationLevel]}
-                  onValueChange={(value) => setSaturationLevel(value[0])}
-                  min={10}
-                  max={100}
-                  step={5}
-                  className="py-4"
-                />
-                <div className="flex justify-between text-xs text-zinc-600">
-                  <span>10% (10 venues)</span>
-                  <span>25%</span>
-                  <span>50%</span>
-                  <span>100% (100 venues)</span>
-                </div>
-              </div>
 
-              {/* Projected ARR Display - Hero Metric */}
-              <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#BAFF39]/20 via-[#BAFF39]/10 to-transparent border-2 border-[#BAFF39]/40 shadow-[0_0_30px_rgba(186,255,57,0.2)]">
-                <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">
-                  Projected ARR at {saturationLevel}% Saturation
-                </p>
-                <p 
-                  className="text-4xl sm:text-6xl lg:text-7xl text-[#BAFF39] tracking-tighter drop-shadow-[0_0_30px_rgba(186,255,57,0.5)]"
-                  style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 900, fontStyle: 'italic' }}
-                >
-                  ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()}
-                </p>
-                <p className="text-sm text-zinc-400 mt-3">
-                  {Math.round(saturationLevel)} venues × $149/mo × 12 months
-                </p>
-              </div>
-
-              {/* Valuation Context - MOBILE FIX: Stack on mobile, 3-col on tablet+ */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                <div 
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    saturationLevel === 10 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
-                  }`}
-                  onClick={() => setSaturationLevel(10)}
-                >
-                  <p className="text-xs text-zinc-500 mb-1">Conservative (10%)</p>
-                  <p className="text-lg font-bold text-white">${(10 * 149 * 12).toLocaleString()}</p>
-                  <p className="text-[10px] text-zinc-600 mt-1">10 venues</p>
-                </div>
-                <div 
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    saturationLevel === 25 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
-                  }`}
-                  onClick={() => setSaturationLevel(25)}
-                >
-                  <p className="text-xs text-zinc-500 mb-1">Realistic (25%)</p>
-                  <p className="text-lg font-bold text-[#BAFF39]">${(25 * 149 * 12).toLocaleString()}</p>
-                  <p className="text-[10px] text-zinc-600 mt-1">25 venues</p>
-                </div>
-                <div 
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    saturationLevel === 50 ? 'bg-[#BAFF39]/10 border-[#BAFF39]/50' : 'bg-zinc-800/30 border-zinc-700 hover:border-zinc-600'
-                  }`}
-                  onClick={() => setSaturationLevel(50)}
-                >
-                  <p className="text-xs text-zinc-500 mb-1">Ambitious (50%)</p>
-                  <p className="text-lg font-bold text-white">${(50 * 149 * 12).toLocaleString()}</p>
-                  <p className="text-[10px] text-zinc-600 mt-1">50 venues</p>
+                {/* Valuation Justification */}
+                <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
+                    <span className="text-sm font-semibold text-white">$10M Valuation Justification</span>
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    At {saturationLevel}% Brisbane 100 capture, we achieve{' '}
+                    <span className={`text-[#BAFF39] font-bold ${sensitiveClass}`}>
+                      ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()} ARR
+                    </span>{' '}
+                    from a single pilot market. National expansion to 5,000 venues represents{' '}
+                    <span className={`text-white font-bold ${sensitiveClass}`}>${(5000 * 149 * 12).toLocaleString()} ARR potential</span>.
+                    Current valuation implies {((10_000_000 / ((saturationLevel / 100) * 100 * 149 * 12))).toFixed(1)}x revenue multiple—
+                    conservative for high-growth SaaS.
+                  </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Valuation Justification */}
-              <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-[#BAFF39]" />
-                  <span className="text-sm font-semibold text-white">$10M Valuation Justification</span>
-                </div>
-                <p className="text-xs text-zinc-400">
-                  At {saturationLevel}% Brisbane 100 capture, we achieve{' '}
-                  <span className="text-[#BAFF39] font-bold">
-                    ${((saturationLevel / 100) * 100 * 149 * 12).toLocaleString()} ARR
-                  </span>{' '}
-                  from a single pilot market. National expansion to 5,000 venues represents{' '}
-                  <span className="text-white font-bold">${(5000 * 149 * 12).toLocaleString()} ARR potential</span>.
-                  Current valuation implies {((10_000_000 / ((saturationLevel / 100) * 100 * 149 * 12))).toFixed(1)}x revenue multiple—
-                  conservative for high-growth SaaS.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Main Grid - Brain Monitor & System Status */}
-        {/* RESPONSIVE FIX: Single column on md (13" laptops), 3 cols on lg+ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-x-hidden">
-          {/* Brain Monitor (AI Gaps) - Takes 2 columns on large screens */}
-          <Card className="lg:col-span-2 bg-black/40 backdrop-blur-xl border-zinc-800 overflow-hidden">
+          {/* Main Grid - Brain Monitor & System Status */}
+          {/* RESPONSIVE FIX: Single column on md (13" laptops), 3 cols on lg+ */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-x-hidden">
+            {/* Brain Monitor (AI Gaps) - Takes 2 columns on large screens */}
+            <motion.div variants={metricsItem} className="lg:col-span-2">
+              <Card className="bg-black/40 backdrop-blur-xl border-zinc-800 overflow-hidden">
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -1044,10 +1077,32 @@ function CTODashboardInner() {
                 </ScrollArea>
               )}
             </CardContent>
-          </Card>
+              </Card>
+            </motion.div>
 
-          {/* Right Column - System Status & Partnership */}
-          <div className="space-y-6">
+            {/* Right Column - System Status & Partnership */}
+            <div className="space-y-6">
+              {/* Tech Health - System Architecture */}
+              <motion.div variants={metricsItem}>
+                <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white flex items-center gap-2 text-base">
+                      <ShieldCheck className="h-4 w-4 text-[#10b981]" />
+                      Tech Health
+                    </CardTitle>
+                    <CardDescription className="text-zinc-500 text-xs">
+                      Live system architecture — core dependencies & integrity flow
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <TechHealthDiagram />
+                    <p className="text-[10px] text-zinc-500">
+                      Mermaid-rendered topology stays in sync with the live platform stack.
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
             {/* System Integrity Feed */}
             <Card className="bg-black/40 backdrop-blur-xl border-zinc-800">
               <CardHeader className="pb-3">
@@ -1221,7 +1276,7 @@ function CTODashboardInner() {
                         <User className="h-4 w-4 text-blue-400" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-white">Lucas Helmke</p>
+                        <p className={`text-sm font-semibold text-white ${sensitiveClass}`}>Lucas Helmke</p>
                         <p className="text-xs text-zinc-400">CFO Advisory Partner</p>
                       </div>
                       <Badge className="bg-[#BAFF39]/20 text-[#BAFF39] border border-[#BAFF39]/40 text-xs gap-1 animate-pulse">
@@ -1325,19 +1380,19 @@ function CTODashboardInner() {
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between p-2 rounded bg-zinc-800/30">
                                 <span className="text-zinc-400">Brisbane 100 (Q1 2026)</span>
-                                <span className="text-[#BAFF39] font-bold">$178,800</span>
+                                <span className={`text-[#BAFF39] font-bold ${sensitiveClass}`}>$178,800</span>
                               </div>
                               <div className="flex justify-between p-2 rounded bg-zinc-800/30">
                                 <span className="text-zinc-400">Brisbane 500 (Q4 2026)</span>
-                                <span className="text-white font-bold">$894,000</span>
+                                <span className={`text-white font-bold ${sensitiveClass}`}>$894,000</span>
                               </div>
                               <div className="flex justify-between p-2 rounded bg-zinc-800/30">
                                 <span className="text-zinc-400">National 1,000 (Q2 2027)</span>
-                                <span className="text-white font-bold">$1.788M</span>
+                                <span className={`text-white font-bold ${sensitiveClass}`}>$1.788M</span>
                               </div>
                               <div className="flex justify-between p-2 rounded bg-[#BAFF39]/10 border border-[#BAFF39]/30">
                                 <span className="text-[#BAFF39]">National 5,000 (Q4 2028)</span>
-                                <span className="text-[#BAFF39] font-black">$8.94M</span>
+                                <span className={`text-[#BAFF39] font-black ${sensitiveClass}`}>$8.94M</span>
                               </div>
                             </div>
                           </div>
@@ -1381,6 +1436,7 @@ function CTODashboardInner() {
             </Card>
           </div>
         </div>
+        </motion.div>
 
         {/* Briefing Run-Sheet & Mobile Handshake Buttons - Rick's Cheat Sheet */}
         {(isCEO || isAdmin) && (
@@ -1397,7 +1453,7 @@ function CTODashboardInner() {
                   Mobile Handshake
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-blue-500/30 shadow-[0_0_40px_rgba(59,130,246,0.15)] max-w-sm">
+              <DialogContent className="bg-zinc-950/95 backdrop-blur-xl border border-blue-500/30 shadow-[0_0_40px_rgba(59,130,246,0.15)] max-w-sm z-[120]">
                 <DialogHeader>
                   <DialogTitle className="text-white flex items-center gap-3 text-xl">
                     <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
@@ -1422,84 +1478,84 @@ function CTODashboardInner() {
                     >
                       {/* QR Code pattern for demo - simplified visual representation */}
                       {/* Position detection patterns (corners) */}
-                      <rect x="0" y="0" width="7" height="7" fill="#000"/>
+                      <rect x="0" y="0" width="7" height="7" fill="#BAFF39"/>
                       <rect x="1" y="1" width="5" height="5" fill="#fff"/>
-                      <rect x="2" y="2" width="3" height="3" fill="#000"/>
+                      <rect x="2" y="2" width="3" height="3" fill="#BAFF39"/>
                       
-                      <rect x="30" y="0" width="7" height="7" fill="#000"/>
+                      <rect x="30" y="0" width="7" height="7" fill="#BAFF39"/>
                       <rect x="31" y="1" width="5" height="5" fill="#fff"/>
-                      <rect x="32" y="2" width="3" height="3" fill="#000"/>
+                      <rect x="32" y="2" width="3" height="3" fill="#BAFF39"/>
                       
-                      <rect x="0" y="30" width="7" height="7" fill="#000"/>
+                      <rect x="0" y="30" width="7" height="7" fill="#BAFF39"/>
                       <rect x="1" y="31" width="5" height="5" fill="#fff"/>
-                      <rect x="2" y="32" width="3" height="3" fill="#000"/>
+                      <rect x="2" y="32" width="3" height="3" fill="#BAFF39"/>
                       
                       {/* Timing patterns */}
-                      <rect x="8" y="6" width="1" height="1" fill="#000"/>
-                      <rect x="10" y="6" width="1" height="1" fill="#000"/>
-                      <rect x="12" y="6" width="1" height="1" fill="#000"/>
-                      <rect x="14" y="6" width="1" height="1" fill="#000"/>
-                      <rect x="16" y="6" width="1" height="1" fill="#000"/>
-                      <rect x="18" y="6" width="1" height="1" fill="#000"/>
-                      <rect x="20" y="6" width="1" height="1" fill="#000"/>
-                      <rect x="22" y="6" width="1" height="1" fill="#000"/>
+                      <rect x="8" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="10" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="12" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="14" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="16" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="18" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="20" y="6" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="22" y="6" width="1" height="1" fill="#BAFF39"/>
                       
-                      <rect x="6" y="8" width="1" height="1" fill="#000"/>
-                      <rect x="6" y="10" width="1" height="1" fill="#000"/>
-                      <rect x="6" y="12" width="1" height="1" fill="#000"/>
-                      <rect x="6" y="14" width="1" height="1" fill="#000"/>
-                      <rect x="6" y="16" width="1" height="1" fill="#000"/>
-                      <rect x="6" y="18" width="1" height="1" fill="#000"/>
-                      <rect x="6" y="20" width="1" height="1" fill="#000"/>
-                      <rect x="6" y="22" width="1" height="1" fill="#000"/>
+                      <rect x="6" y="8" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="10" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="12" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="14" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="16" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="18" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="20" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="6" y="22" width="1" height="1" fill="#BAFF39"/>
                       
                       {/* Data modules - HOSPOGO pattern */}
-                      <rect x="8" y="8" width="1" height="1" fill="#000"/>
-                      <rect x="9" y="9" width="1" height="1" fill="#000"/>
-                      <rect x="10" y="8" width="1" height="1" fill="#000"/>
-                      <rect x="11" y="10" width="1" height="1" fill="#000"/>
-                      <rect x="12" y="9" width="1" height="1" fill="#000"/>
-                      <rect x="13" y="8" width="1" height="1" fill="#000"/>
-                      <rect x="14" y="11" width="1" height="1" fill="#000"/>
-                      <rect x="15" y="10" width="1" height="1" fill="#000"/>
-                      <rect x="16" y="9" width="1" height="1" fill="#000"/>
-                      <rect x="17" y="8" width="1" height="1" fill="#000"/>
-                      <rect x="18" y="12" width="1" height="1" fill="#000"/>
-                      <rect x="19" y="11" width="1" height="1" fill="#000"/>
-                      <rect x="20" y="10" width="1" height="1" fill="#000"/>
-                      <rect x="21" y="9" width="1" height="1" fill="#000"/>
-                      <rect x="22" y="8" width="1" height="1" fill="#000"/>
+                      <rect x="8" y="8" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="9" y="9" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="10" y="8" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="11" y="10" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="12" y="9" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="13" y="8" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="14" y="11" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="15" y="10" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="16" y="9" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="17" y="8" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="18" y="12" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="19" y="11" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="20" y="10" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="21" y="9" width="1" height="1" fill="#BAFF39"/>
+                      <rect x="22" y="8" width="1" height="1" fill="#BAFF39"/>
                       
                       {/* More data modules */}
-                      <rect x="8" y="14" width="2" height="2" fill="#000"/>
-                      <rect x="11" y="13" width="2" height="2" fill="#000"/>
-                      <rect x="14" y="14" width="2" height="2" fill="#000"/>
-                      <rect x="17" y="15" width="2" height="2" fill="#000"/>
-                      <rect x="20" y="14" width="2" height="2" fill="#000"/>
-                      <rect x="23" y="13" width="2" height="2" fill="#000"/>
+                      <rect x="8" y="14" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="11" y="13" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="14" y="14" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="17" y="15" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="20" y="14" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="23" y="13" width="2" height="2" fill="#BAFF39"/>
                       
-                      <rect x="8" y="18" width="2" height="2" fill="#000"/>
-                      <rect x="12" y="19" width="2" height="2" fill="#000"/>
-                      <rect x="16" y="18" width="2" height="2" fill="#000"/>
-                      <rect x="20" y="19" width="2" height="2" fill="#000"/>
-                      <rect x="24" y="18" width="2" height="2" fill="#000"/>
+                      <rect x="8" y="18" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="12" y="19" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="16" y="18" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="20" y="19" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="24" y="18" width="2" height="2" fill="#BAFF39"/>
                       
-                      <rect x="10" y="22" width="2" height="2" fill="#000"/>
-                      <rect x="14" y="23" width="2" height="2" fill="#000"/>
-                      <rect x="18" y="22" width="2" height="2" fill="#000"/>
-                      <rect x="22" y="23" width="2" height="2" fill="#000"/>
-                      <rect x="26" y="22" width="2" height="2" fill="#000"/>
+                      <rect x="10" y="22" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="14" y="23" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="18" y="22" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="22" y="23" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="26" y="22" width="2" height="2" fill="#BAFF39"/>
                       
-                      <rect x="8" y="26" width="2" height="2" fill="#000"/>
-                      <rect x="12" y="27" width="2" height="2" fill="#000"/>
-                      <rect x="16" y="26" width="2" height="2" fill="#000"/>
-                      <rect x="20" y="27" width="2" height="2" fill="#000"/>
-                      <rect x="24" y="26" width="2" height="2" fill="#000"/>
+                      <rect x="8" y="26" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="12" y="27" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="16" y="26" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="20" y="27" width="2" height="2" fill="#BAFF39"/>
+                      <rect x="24" y="26" width="2" height="2" fill="#BAFF39"/>
                       
                       {/* Alignment pattern */}
-                      <rect x="28" y="28" width="5" height="5" fill="#000"/>
+                      <rect x="28" y="28" width="5" height="5" fill="#BAFF39"/>
                       <rect x="29" y="29" width="3" height="3" fill="#fff"/>
-                      <rect x="30" y="30" width="1" height="1" fill="#000"/>
+                      <rect x="30" y="30" width="1" height="1" fill="#BAFF39"/>
                     </svg>
                   </div>
                   <div className="mt-4 text-center">

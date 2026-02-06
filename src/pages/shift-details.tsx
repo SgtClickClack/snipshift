@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { fetchShiftDetails, createApplication, fetchMyApplications, ShiftDetails, checkInShift, requestSubstitute, clockOutShift, joinWaitlist, leaveWaitlist, getWaitlistStatus, reportLateArrival, acceptBackupShift } from '@/lib/api';
+import { fetchShiftDetails, createApplication, fetchMyApplications, checkInShift, requestSubstitute, clockOutShift, getWaitlistStatus, reportLateArrival, acceptBackupShift } from '@/lib/api';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,7 +42,6 @@ export default function ShiftDetailsPage() {
   const [checkInError, setCheckInError] = useState<string | null>(null);
   const [showSubstituteDialog, setShowSubstituteDialog] = useState(false);
   const [showClockOutCamera, setShowClockOutCamera] = useState(false);
-  const [isClockOut, setIsClockOut] = useState(false);
   const [showLateArrivalDialog, setShowLateArrivalDialog] = useState(false);
 
   // TODO: Saved shifts feature - Currently using local state only
@@ -114,7 +113,6 @@ export default function ShiftDetailsPage() {
       clockOutShift(shiftId, proofImage),
     onSuccess: (data) => {
       setShowClockOutCamera(false);
-      setIsClockOut(false);
       toast({
         title: 'Clocked Out Successfully',
         description: data.message || 'Your shift is pending venue owner review.',
@@ -288,7 +286,7 @@ export default function ShiftDetailsPage() {
           longitude: userLng,
         });
       },
-      (error) => {
+      () => {
         setIsCheckingIn(false);
         setCheckInError('Failed to get your location. Please enable location services and try again.');
         toast({
@@ -1047,7 +1045,7 @@ export default function ShiftDetailsPage() {
                       shiftStatus={shift.status}
                       className="w-full text-lg py-6"
                     />
-                    {shift?.waitlistCount !== undefined && shift.waitlistCount > 0 && (
+                    {shift?.waitlistCount != null && shift.waitlistCount > 0 && (
                       <p className="text-sm text-center text-muted-foreground">
                         {shift.waitlistCount} {shift.waitlistCount === 1 ? 'person' : 'people'} on waitlist
                       </p>

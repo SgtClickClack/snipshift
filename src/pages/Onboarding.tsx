@@ -24,7 +24,7 @@ import { VenueProfileForm } from '@/components/onboarding/VenueProfileForm';
 import { ConfettiAnimation } from '@/components/onboarding/ConfettiAnimation';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { logger } from '@/lib/logger';
-import { safeGetItem, safeSetItem, safeRemoveItem, isLocalStorageAvailable, getStorageBlockedWarning } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem, safeRemoveItem, getStorageBlockedWarning } from '@/lib/safe-storage';
 
 const TOTAL_STEPS = 5;
 
@@ -377,13 +377,15 @@ const clearStorage = () => {
   safeRemoveItem(STORAGE_KEY);
 };
 
+const getUserString = (value: unknown): string => (typeof value === 'string' ? value : '');
+
 export default function Onboarding() {
   const { user, refreshUser, hasUser, hasFirebaseUser, isLoading, token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   // Disable polling on onboarding page to prevent 401/404 loop
   // The user is new and we'll create the profile via form submission
-  const { isSynced, isPolling, isNewUser } = useUserSync({ enabled: false });
+  const { isPolling } = useUserSync({ enabled: false });
   const userId = user?.id ?? null;
   const userCurrentRole = user?.currentRole ?? null;
   const userRolesKey = Array.isArray(user?.roles) ? user.roles.join('|') : '';
@@ -414,13 +416,13 @@ export default function Onboarding() {
   }, []);
 
   const [formData, setFormData] = useState<StaffOnboardingData>(() => ({
-    displayName: user?.displayName || user?.name || '',
-    phone: user?.phone || '',
-    location: user?.location || '',
-    avatarUrl: user?.avatarUrl || user?.profileImage || '',
+    displayName: getUserString(user?.displayName ?? user?.name),
+    phone: getUserString(user?.phone),
+    location: getUserString(user?.location),
+    avatarUrl: getUserString(user?.avatarUrl ?? user?.profileImage),
     hospitalityRole: (user?.hospitalityRole as HospitalityRole | '' | undefined) || '',
     hourlyRatePreference: user?.hourlyRatePreference != null ? String(user.hourlyRatePreference) : '',
-    bio: user?.bio || '',
+    bio: getUserString(user?.bio),
   }));
 
   // Venue onboarding data (for venue flow)
@@ -465,8 +467,8 @@ export default function Onboarding() {
     // The DB profile will be created when the user submits the form
     // CRITICAL: Do NOT call fetchUser or refreshUser here to prevent 401/404 loops
     if (hasFirebaseUser) {
-      console.log('[Onboarding] Firebase auth confirmed, allowing onboarding - DB profile will be created on form submit');
-      console.log('[Onboarding] Onboarding mode active - form is now interactive');
+      console.debug('[Onboarding] Firebase auth confirmed, allowing onboarding - DB profile will be created on form submit');
+      console.debug('[Onboarding] Onboarding mode active - form is now interactive');
       setIsVerifyingUser(false);
       return;
     }
@@ -476,7 +478,7 @@ export default function Onboarding() {
       try {
         const userData = JSON.parse(testUser);
         if (userData.id && userData.isOnboarded === false) {
-          console.log('[Onboarding] E2E mode test user detected, allowing onboarding', { userId: userData.id });
+          console.debug('[Onboarding] E2E mode test user detected, allowing onboarding', { userId: userData.id });
           setIsVerifyingUser(false);
           return;
         }
@@ -664,15 +666,20 @@ export default function Onboarding() {
     if (!user) return;
     if (hasInitializedFromUser.current) return;
     hasInitializedFromUser.current = true;
+    const displayName = getUserString(user.displayName ?? user.name);
+    const phone = getUserString(user.phone);
+    const location = getUserString(user.location);
+    const avatarUrl = getUserString(user.avatarUrl ?? user.profileImage);
+    const bio = getUserString(user.bio);
     setFormData((prev) => ({
       ...prev,
-      displayName: user.displayName || user.name || prev.displayName,
-      phone: user.phone || prev.phone,
-      location: user.location || prev.location,
-      avatarUrl: user.avatarUrl || user.profileImage || prev.avatarUrl,
+      displayName: displayName || prev.displayName,
+      phone: phone || prev.phone,
+      location: location || prev.location,
+      avatarUrl: avatarUrl || prev.avatarUrl,
       hospitalityRole: (user.hospitalityRole as HospitalityRole | '' | undefined) || prev.hospitalityRole,
       hourlyRatePreference: user.hourlyRatePreference != null ? String(user.hourlyRatePreference) : prev.hourlyRatePreference,
-      bio: user.bio || prev.bio,
+      bio: bio || prev.bio,
     }));
   }, [userId]);
 
@@ -684,8 +691,14 @@ export default function Onboarding() {
     }
   }, [userId, isPolling]);
 
-  const rsaUploaded = Boolean(user?.profile?.rsa_cert_url || user?.rsaCertificateUrl);
-  const idUploaded = Boolean(user?.profile?.id_document_url);
+  const profile = (user?.profile ?? {}) as {
+    rsa_cert_url?: string;
+    rsa_expiry?: string;
+    rsaExpiry?: string;
+    id_document_url?: string;
+  };
+  const rsaUploaded = Boolean(profile.rsa_cert_url || profile.rsaExpiry || profile.rsa_expiry || user?.rsaCertificateUrl);
+  const idUploaded = Boolean(profile.id_document_url);
 
   // Check if there's a Firebase session (user might have signed in but profile not yet created)
   // This is used to enable form interaction once Firebase auth is confirmed
@@ -699,7 +712,7 @@ export default function Onboarding() {
       const isAuth = hasUser;
       const buttonsShouldBeEnabled = hasFirebaseUser || machineContext.isWaitlistOnly;
       
-      console.log('[Onboarding] Role selection buttons status:', {
+      console.debug('[Onboarding] Role selection buttons status:', {
         hasFirebaseUser,
         authCurrentUser: firebaseUserExists,
         authCurrentUserUid: auth.currentUser?.uid,
@@ -779,7 +792,7 @@ export default function Onboarding() {
     
     try {
       if (machineContext.state === 'PERSONAL_DETAILS') {
-        console.log(`[Onboarding] Submitting profile for Firebase UID: ${firebaseUid}`);
+        console.debug(`[Onboarding] Submitting profile for Firebase UID: ${firebaseUid}`);
 
         // Create/update user profile with explicit Firebase UID
         const response = await apiRequest('POST', '/api/users', { 
@@ -1161,7 +1174,7 @@ export default function Onboarding() {
               <div className="space-y-2"><Label htmlFor="displayName" className="text-gray-300">Full Name *</Label><Input id="displayName" value={formData.displayName} onChange={(e) => updateFormData({ displayName: e.target.value })} placeholder="Enter your full name" data-testid="onboarding-display-name" /></div>
               <div className="space-y-2"><Label htmlFor="phone" className="text-gray-300">Phone Number *</Label><Input id="phone" type="tel" value={formData.phone} onChange={(e) => updateFormData({ phone: e.target.value })} placeholder="Enter your phone number" data-testid="onboarding-phone" /></div>
               <div className="space-y-2"><Label htmlFor="location" className="text-gray-300">Location *</Label><LocationInput value={formData.location} onChange={(val) => updateFormData({ location: val })} placeholder="City/Suburb" data-testid="onboarding-location" /></div>
-              {user && (<div className="space-y-2"><Label className="text-gray-300">Profile Photo</Label><ImageUpload currentImageUrl={formData.avatarUrl} onUploadComplete={(url) => updateFormData({ avatarUrl: url })} onUploadError={(error) => toast({ title: 'Upload failed', description: error.message || 'Failed to upload image.', variant: 'destructive' })} pathPrefix="users" entityId={user.id} fileName="avatar" shape="circle" maxSize={5 * 1024 * 1024} /></div>)}
+              {user?.id && (<div className="space-y-2"><Label className="text-gray-300">Profile Photo</Label><ImageUpload currentImageUrl={formData.avatarUrl} onUploadComplete={(url) => updateFormData({ avatarUrl: url })} onUploadError={(error) => toast({ title: 'Upload failed', description: error.message || 'Failed to upload image.', variant: 'destructive' })} pathPrefix="users" entityId={user.id} fileName="avatar" shape="circle" maxSize={5 * 1024 * 1024} /></div>)}
             </div>
           </div>
         );

@@ -22,7 +22,7 @@ if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
 // Executive profile data
 const ADMIN_PROFILE = {
   email: 'julian.g.roberts@gmail.com',
-  name: 'Julian Roberts (Admin)',
+  name: 'Julian Roberts (CEO)',
   role: 'admin',
   currentRole: 'admin',
   firebaseUid: 'admin-demo-uid', // Placeholder - will be overwritten on first Firebase auth

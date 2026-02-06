@@ -5,6 +5,7 @@ import { getStorage, type FirebaseStorage } from 'firebase/storage';
 // This module triggers network requests that can cause 400 errors
 // By lazy-loading it, we prevent the error from firing on initial page load
 type InstallationsModule = typeof import('firebase/installations');
+type MessagingModule = typeof import('firebase/messaging');
 
 const getEnv = (key: keyof ImportMetaEnv) => {
   const value = import.meta.env[key];
@@ -177,6 +178,9 @@ initializeFirebase();
 declare global {
   interface Window {
     __firebase_installations_failed?: boolean;
+    __firebase_installations_attempted?: boolean;
+    __firebase_messaging_attempted?: boolean;
+    __is_briefing_mode?: boolean;
   }
 }
 
@@ -194,6 +198,12 @@ declare global {
  */
 let installationsModule: InstallationsModule | null = null;
 let installationsLoadPromise: Promise<InstallationsModule | null> | null = null;
+let messagingModule: MessagingModule | null = null;
+let messagingLoadPromise: Promise<MessagingModule | null> | null = null;
+
+function shouldRunBackgroundFirebaseWork(): boolean {
+  return typeof window !== 'undefined' && !window.__is_briefing_mode;
+}
 
 async function loadInstallationsModule(): Promise<InstallationsModule | null> {
   if (installationsModule) return installationsModule;
@@ -205,14 +215,35 @@ async function loadInstallationsModule(): Promise<InstallationsModule | null> {
       return mod;
     })
     .catch(() => {
-      console.log('[firebase] System: Installations module load deferred (non-critical).');
+      console.debug('[firebase] System: Installations module load deferred (non-critical).');
       return null;
     });
   
   return installationsLoadPromise;
 }
 
+async function loadMessagingModule(): Promise<MessagingModule | null> {
+  if (messagingModule) return messagingModule;
+  if (messagingLoadPromise) return messagingLoadPromise;
+  
+  messagingLoadPromise = import('firebase/messaging')
+    .then((mod) => {
+      messagingModule = mod;
+      return mod;
+    })
+    .catch(() => {
+      console.debug('[firebase] System: Messaging module load deferred (non-critical).');
+      return null;
+    });
+  
+  return messagingLoadPromise;
+}
+
 async function initInstallationsLayer(): Promise<string | null> {
+  if (!shouldRunBackgroundFirebaseWork()) return null;
+  if (typeof window !== 'undefined') {
+    window.__firebase_installations_attempted = true;
+  }
   // PROGRESSIVE UNLOCK: Load module lazily
   const mod = await loadInstallationsModule();
   if (!mod) {
@@ -233,8 +264,8 @@ async function initInstallationsLayer(): Promise<string | null> {
     if (typeof window !== 'undefined') {
       window.__firebase_installations_failed = true;
     }
-    // Use console.log to avoid triggering E2E console error listeners
-    console.log('[firebase] System: Installations initialization deferred (non-critical).');
+    // Use console.debug to avoid triggering E2E console error listeners
+    console.debug('[firebase] System: Installations initialization deferred (non-critical).');
     return null;
   }
   
@@ -255,11 +286,11 @@ async function initInstallationsLayer(): Promise<string | null> {
     }
     
     if (errorStatus === 400 || errorCode?.includes('400') || errorMessage.includes('400')) {
-      // Use console.log instead of console.error to avoid E2E failure triggers
-      console.log('[firebase] System: Installations Layer Backgrounded (400 response - expected in some network conditions).');
+      // Use console.debug instead of console.error to avoid E2E failure triggers
+      console.debug('[firebase] System: Installations Layer Backgrounded (400 response - expected in some network conditions).');
     } else {
       // Log other errors at info level - still non-blocking, avoid console.warn/error
-      console.log('[firebase] Installations layer initialization deferred:', 
+      console.debug('[firebase] Installations layer initialization deferred:', 
         errorCode || errorStatus || 'unknown error');
     }
     
@@ -268,21 +299,50 @@ async function initInstallationsLayer(): Promise<string | null> {
   }
 }
 
-// PROGRESSIVE UNLOCK: Kick off installations layer after a delay
-// This ensures the critical auth path (< 500ms) is not affected by 400 errors
-// The installations layer is truly background work - defer it until the app is stable
-initializeFirebase().then(() => {
-  // Delay installations init by 3 seconds to ensure it doesn't fire during TTI window
-  // This is non-critical background work for analytics/crash reporting
-  const delayMs = 3000;
-  
-  if (typeof requestIdleCallback !== 'undefined') {
-    // Use requestIdleCallback for better scheduling
-    requestIdleCallback(() => {
-      setTimeout(() => initInstallationsLayer(), delayMs);
-    }, { timeout: 5000 });
-  } else {
-    // Fallback: just use setTimeout
-    setTimeout(() => initInstallationsLayer(), delayMs);
+async function initMessagingLayer(): Promise<void> {
+  if (!shouldRunBackgroundFirebaseWork()) return;
+  if (typeof window !== 'undefined') {
+    window.__firebase_messaging_attempted = true;
   }
+  const mod = await loadMessagingModule();
+  if (!mod) return;
+  try {
+    const firebaseApp = getApp();
+    mod.getMessaging(firebaseApp);
+  } catch {
+    // Messaging is non-critical during briefing; defer silently.
+  }
+}
+
+function scheduleBackgroundFirebaseWork() {
+  if (!shouldRunBackgroundFirebaseWork()) return;
+  let started = false;
+  const start = () => {
+    if (started || !shouldRunBackgroundFirebaseWork()) return;
+    started = true;
+    void initInstallationsLayer();
+    void initMessagingLayer();
+  };
+
+  const delayMs = 5000;
+  const timeoutId = setTimeout(start, delayMs);
+
+  if (typeof window === 'undefined') return;
+  if (document.readyState === 'complete') {
+    clearTimeout(timeoutId);
+    start();
+    return;
+  }
+
+  const onLoad = () => {
+    clearTimeout(timeoutId);
+    start();
+  };
+  window.addEventListener('load', onLoad, { once: true });
+}
+
+// PROGRESSIVE UNLOCK: Kick off installations/messaging after load or 5s delay
+// This ensures the critical auth path (< 1.1s) is not affected by 400 errors
+initializeFirebase().then(() => {
+  scheduleBackgroundFirebaseWork();
 });

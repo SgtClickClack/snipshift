@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchShifts } from '@/lib/api';
 import { Shift, Job } from '@shared/firebase-schema';
 import { Button } from '@/components/ui/button';
-import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { JobCardSkeleton } from '@/components/loading/skeleton-loaders';
 import GoogleMapView from '@/components/job-feed/google-map-view';
 import { EnhancedJobFilters } from '@/components/job-feed/enhanced-job-filters';
@@ -13,7 +12,7 @@ import { JobCardData } from '@/components/job-feed/JobCard';
 import { LocationInput } from '@/components/ui/location-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { List, Map, SearchX, ArrowUpDown, Loader2, MapPin, Navigation, SlidersHorizontal, Search } from 'lucide-react';
+import { List, Map, ArrowUpDown, Loader2, MapPin, Navigation, SlidersHorizontal, Search } from 'lucide-react';
 import { parseISO, differenceInHours } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import { calculateDistance, reverseGeocodeToCity, geocodeAddress } from '@/lib/google-maps';
@@ -413,10 +412,12 @@ export default function JobFeedPage() {
     return filtered;
   }, [jobList, sortBy, searchParams, userLocation]);
 
+  const userProfile = (user?.profile ?? {}) as { rsa_expiry?: string; rsaExpiry?: string };
+
   // Check if RSA is expired
   const isRsaExpired = useMemo(() => {
     if (!user) return false;
-    const rsaExpiryRaw = user.rsaExpiry || user.profile?.rsa_expiry || user.profile?.rsaExpiry || null;
+    const rsaExpiryRaw = user.rsaExpiry || userProfile.rsa_expiry || userProfile.rsaExpiry || null;
     if (!rsaExpiryRaw) return false;
     
     try {

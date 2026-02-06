@@ -8,7 +8,8 @@
  * - Quick link to full earnings dashboard
  */
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
 import { DollarSign, TrendingUp, ArrowRight, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
+import { cn } from '@/lib/utils';
 
 interface EarningsData {
   totalEarnedCents: number;
@@ -150,11 +152,16 @@ interface EarningsOverviewProps {
   onViewAll?: () => void;
 }
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
+};
+
 export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps) {
   const { user } = useAuth();
 
   // Fetch earnings data from worker earnings endpoint
-  const { data: earningsData, isLoading, error } = useQuery<EarningsData>({
+  const { data: earningsData, isLoading } = useQuery<EarningsData>({
     queryKey: ['worker-earnings', user?.id],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/worker/earnings?period=last_3_months');
@@ -218,48 +225,51 @@ export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <DollarSign className="h-5 w-5 text-[#BAFF39]" />
-            Earnings Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className={cn('group bg-[#1e293b]/80 border-[#0f172a]', className)}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <DollarSign className="h-5 w-5 text-[#10b981]" />
+              Earnings Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <DollarSign className="h-5 w-5 text-[#BAFF39]" />
-              Earnings Overview
-            </CardTitle>
-            <CardDescription>Last 3 months</CardDescription>
+    <motion.div variants={cardVariants} initial="hidden" animate="visible">
+      <Card className={cn('group bg-[#1e293b]/80 border-[#0f172a]', className)}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <DollarSign className="h-5 w-5 text-[#10b981] transition-transform duration-200 group-hover:scale-105" />
+                Earnings Overview
+              </CardTitle>
+              <CardDescription>Last 3 months</CardDescription>
+            </div>
+            {onViewAll && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onViewAll}
+                className="text-sm"
+              >
+                View All
+                <ArrowRight className="h-4 w-4 ml-1 transition-transform duration-200 group-hover:scale-105" />
+              </Button>
+            )}
           </div>
-          {onViewAll && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onViewAll}
-              className="text-sm"
-            >
-              View All
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4">
           {/* Total Earnings */}
@@ -267,7 +277,7 @@ export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps
             <p className="text-xs text-muted-foreground uppercase tracking-wide">
               Total Earned
             </p>
-            <p className="text-2xl font-bold text-[#BAFF39]">
+            <p className="text-2xl font-bold text-[#10b981]">
               {formatCurrency(totalEarnings)}
             </p>
           </div>
@@ -282,12 +292,16 @@ export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps
                 {formatCurrency(recentEarnings)}
               </p>
               {trendPercentage !== 0 && (
-                <span className={`flex items-center text-xs font-medium ${
-                  trendPercentage > 0 ? 'text-[#BAFF39]' : 'text-red-500'
-                }`}>
-                  <TrendingUp className={`h-3 w-3 mr-0.5 ${
-                    trendPercentage < 0 ? 'rotate-180' : ''
-                  }`} />
+                <span
+                  className={`flex items-center text-xs font-medium ${
+                    trendPercentage > 0 ? 'text-[#10b981]' : 'text-red-500'
+                  }`}
+                >
+                  <TrendingUp
+                    className={`h-3 w-3 mr-0.5 transition-transform duration-200 ${
+                      trendPercentage < 0 ? 'rotate-180' : ''
+                    }`}
+                  />
                   {Math.abs(trendPercentage)}%
                 </span>
               )}
@@ -296,13 +310,18 @@ export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps
         </div>
         
         {/* Chart */}
-        <div className="pt-2">
+        <div className="pt-2 relative">
           <SparklineChart 
             data={chartData} 
             width={280} 
             height={80} 
-            color="#BAFF39"
+            color="#10b981"
           />
+          <div className="pointer-events-none absolute left-[55%] top-1 flex items-center gap-2 text-[10px] text-zinc-400 earnings-annotation">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#10b981]" />
+            Pivot: SnipShift → HospoGo
+          </div>
+          <div className="pointer-events-none absolute left-[55%] top-5 h-12 w-px bg-[#10b981]/60" />
         </div>
         
         {/* Recent payouts count */}
@@ -320,8 +339,9 @@ export function EarningsOverview({ className, onViewAll }: EarningsOverviewProps
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 

@@ -26,7 +26,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, addDays, startOfDay, isSameDay, isToday, isTomorrow } from 'date-fns';
+import { format, addDays, startOfDay, isToday, isTomorrow } from 'date-fns';
 
 // Time slot definitions
 type TimeSlot = 'morning' | 'lunch' | 'dinner';

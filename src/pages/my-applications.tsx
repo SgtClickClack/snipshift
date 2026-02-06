@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyApplications, createConversation } from '@/lib/api';
+import { fetchMyApplications, createConversation, type Application as ApiApplication } from '@/lib/api';
 import { PageLoadingFallback } from '@/components/loading/loading-spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { useWithdrawApplication } from '@/pages/professional-dashboard/useWithdr
 
 export type ApplicationStatus = 
   | 'pending' 
+  | 'accepted'
   | 'shortlisted' 
   | 'interviewing' 
   | 'rejected' 
@@ -40,6 +41,41 @@ export interface Application {
   respondedDate?: string | null;
   businessId?: string;
 }
+
+const mapApiApplication = (app: ApiApplication): Application => {
+  const jobLocation =
+    typeof app.job?.location === 'string'
+      ? app.job.location
+      : app.job?.location && typeof app.job.location === 'object'
+        ? [app.job.location.city, app.job.location.state].filter(Boolean).join(', ')
+        : undefined;
+  const shiftLocation =
+    typeof (app.shift as { location?: unknown } | undefined)?.location === 'string'
+      ? (app.shift as { location?: string }).location
+      : undefined;
+  const payRate = app.job?.payRate ?? (app.shift as { payRate?: string | number } | undefined)?.payRate;
+  const jobId = app.jobId || app.shiftId || app.id;
+
+  return {
+    id: app.id,
+    jobId,
+    jobTitle: app.job?.title || (app.shift as { title?: string } | undefined)?.title || 'Shift',
+    shopName: app.job?.shopName || (app.shift as { shopName?: string } | undefined)?.shopName || 'Venue',
+    shopAvatar: (app.job as { shopAvatar?: string } | undefined)?.shopAvatar,
+    jobPayRate: payRate != null ? String(payRate) : '',
+    jobLocation: jobLocation || shiftLocation,
+    jobDescription: app.job?.description || (app.shift as { description?: string } | undefined)?.description,
+    jobDate: app.job?.date || (app.shift as { date?: string } | undefined)?.date,
+    jobStartTime: app.job?.startTime || (app.shift as { startTime?: string } | undefined)?.startTime,
+    jobEndTime: app.job?.endTime || (app.shift as { endTime?: string } | undefined)?.endTime,
+    jobHours: (app.shift as { hours?: number } | undefined)?.hours,
+    jobStatus: (app.job as { status?: 'open' | 'filled' | 'closed' | 'completed' } | undefined)?.status,
+    status: app.status,
+    appliedDate: app.appliedAt,
+    respondedDate: null,
+    businessId: (app.job as { businessId?: string } | undefined)?.businessId,
+  };
+};
 
 function getStatusBadge(status: ApplicationStatus) {
   switch (status) {
@@ -128,7 +164,7 @@ export default function MyApplicationsPage() {
   const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
   const withdrawMutation = useWithdrawApplication();
 
-  const { data: applications, isLoading, error } = useQuery({
+  const { data: applications, isLoading, error } = useQuery<ApiApplication[]>({
     queryKey: ['my-applications'],
     queryFn: fetchMyApplications,
   });
@@ -141,22 +177,23 @@ export default function MyApplicationsPage() {
     const past: Application[] = [];
 
     applications.forEach((app) => {
-      if (app.status === 'pending' || app.status === 'shortlisted' || app.status === 'interviewing') {
-        active.push(app as Application);
+      const mapped = mapApiApplication(app);
+      if (mapped.status === 'pending' || mapped.status === 'shortlisted' || mapped.status === 'interviewing' || mapped.status === 'accepted') {
+        active.push(mapped);
       } else {
-        past.push(app as Application);
+        past.push(mapped);
       }
     });
 
     return { activeApplications: active, pastApplications: past };
   }, [applications]);
 
-  const handleWithdraw = async (applicationId: string, e: React.MouseEvent) => {
+  const handleWithdraw = async (applicationId: string, e: MouseEvent) => {
     e.stopPropagation();
     withdrawMutation.mutate(applicationId);
   };
 
-  const handleMessageSalon = async (application: Application, e: React.MouseEvent) => {
+  const handleMessageSalon = async (application: Application, e: MouseEvent) => {
     e.stopPropagation();
     if (!application.businessId) {
       toast({
@@ -183,7 +220,7 @@ export default function MyApplicationsPage() {
     }
   };
 
-  const handleViewDetails = (jobId: string, e: React.MouseEvent) => {
+  const handleViewDetails = (jobId: string, e: MouseEvent) => {
     e.stopPropagation();
     navigate(`/jobs/${jobId}`);
   };
@@ -207,8 +244,6 @@ export default function MyApplicationsPage() {
       </div>
     );
   }
-
-  const currentApplications = activeTab === 'active' ? activeApplications : pastApplications;
 
   return (
     <div className="min-h-screen bg-background">
@@ -299,13 +334,12 @@ export default function MyApplicationsPage() {
 
 interface ApplicationCardProps {
   application: Application;
-  onViewDetails: (jobId: string, e: React.MouseEvent) => void;
-  onMessageSalon: (application: Application, e: React.MouseEvent) => void;
-  onWithdraw: (applicationId: string, e: React.MouseEvent) => void;
+  onViewDetails: (jobId: string, e: MouseEvent) => void;
+  onMessageSalon: (application: Application, e: MouseEvent) => void;
+  onWithdraw: (applicationId: string, e: MouseEvent) => void;
 }
 
 function ApplicationCard({ application, onViewDetails, onMessageSalon, onWithdraw }: ApplicationCardProps) {
-  const isActive = application.status === 'pending' || application.status === 'shortlisted' || application.status === 'interviewing';
   const canWithdraw = application.status === 'pending';
   const canMessage = application.status === 'shortlisted' || application.status === 'interviewing';
 

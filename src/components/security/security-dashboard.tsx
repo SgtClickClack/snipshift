@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Lock, AlertTriangle, CheckCircle, Eye, Globe } from "lucide-react";
+import { Shield, Lock, CheckCircle, Eye, Globe } from "lucide-react";
 
 export function SecurityDashboard() {
   const securityFeatures = [

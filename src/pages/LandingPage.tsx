@@ -18,7 +18,7 @@ import FAQSection from "@/components/landing/FAQSection";
 import { PartnerTrustBar } from "@/components/landing/PartnerTrustBar";
 import { SEO } from "@/components/seo/SEO";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDashboardRoute } from "@/lib/roles";
+import { getDashboardRoute, normalizeVenueToBusiness } from "@/lib/roles";
 import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
@@ -132,7 +132,7 @@ export default function LandingPage() {
               )}
 
               {hasUser && user && (
-                <Link to={user.isOnboarded === true ? getDashboardRoute(user.currentRole) : '/onboarding'}>
+                <Link to={user.isOnboarded === true ? getDashboardRoute(normalizeVenueToBusiness(user.currentRole)) : '/onboarding'}>
                   <Button
                     variant="ghost"
                     className="border-2 border-white text-white px-8 py-3 rounded-full font-bold backdrop-blur-sm hover:bg-white/5 transition-all"
@@ -215,7 +215,7 @@ export default function LandingPage() {
                   <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 mt-10 items-stretch sm:items-center">
                     {/* ONBOARDING-AWARE CTA: Show "Complete Setup" if user hasn't completed onboarding */}
                     <Link 
-                      to={user.isOnboarded === true ? getDashboardRoute(user.currentRole) : '/onboarding'} 
+                      to={user.isOnboarded === true ? getDashboardRoute(normalizeVenueToBusiness(user.currentRole)) : '/onboarding'} 
                       className="w-full sm:w-auto"
                     >
                       <Button

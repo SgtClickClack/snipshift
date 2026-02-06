@@ -51,7 +51,6 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
 
   useEffect(() => {
     return () => stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -113,7 +112,6 @@ export function useUserSync(options: UseUserSyncOptions = {}): UseUserSyncResult
     pollOnce();
 
     return () => stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, isLoading, token, user?.id, refreshUser, maxAttempts, pollInterval]);
 
   return {

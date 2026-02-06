@@ -5,7 +5,7 @@ import { auth } from '@/lib/firebase';
 import { browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, setPersistence, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { logger } from '@/lib/logger';
 import { cleanupPushNotifications } from '@/lib/push-notifications';
-import { prefetchAuthData, queryClient, reset401Backoff, startAuthHandshake, completeAuthHandshake } from '@/lib/queryClient';
+import { queryClient, reset401Backoff, startAuthHandshake, completeAuthHandshake } from '@/lib/queryClient';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { safeGetItem, safeSetItem, safeRemoveItem, isLocalStorageAvailable } from '@/lib/safe-storage';
 import { isFounderEmail } from '@/lib/roles';
@@ -15,6 +15,24 @@ export interface User {
   email: string;
   uid?: string;
   firebaseUid?: string;
+  displayName?: string;
+  name?: string;
+  photoURL?: string;
+  avatarUrl?: string;
+  bannerUrl?: string;
+  bannerImage?: string;
+  location?: string | null;
+  notificationPreferences?: Record<string, boolean>;
+  averageRating?: number | null;
+  reviewCount?: number | null;
+  rsaExpiry?: string | Date | null;
+  rsaNumber?: string | null;
+  rsaStateOfIssue?: string | null;
+  rsaVerified?: boolean | null;
+  rsaCertificateUrl?: string | null;
+  profile?: { rsa_cert_url?: string; id_document_url?: string; id_verified_status?: string; rsa_expiry?: string; id_expiry?: string };
+  hospitalityRole?: string | null;
+  hourlyRatePreference?: number | string | null;
   roles?: string[];
   currentRole?: string | null;
   isOnboarded?: boolean;
@@ -85,7 +103,8 @@ type AppUserResponse = {
 async function fetchAppUser(
   idToken: string, 
   isOnboardingMode: boolean = false,
-  firebaseUser?: FirebaseUser | null
+  firebaseUser?: FirebaseUser | null,
+  onMeResponse?: () => void
 ): Promise<AppUserResponse | null> {
   // Allow fetching user even in onboarding mode to resolve dependency deadlock
   // We need user.id for onboarding API calls (e.g. payout setup, venue profile creation)
@@ -99,6 +118,9 @@ async function fetchAppUser(
           'Content-Type': 'application/json',
         },
         cache: 'no-store',
+      }).then((response) => {
+        onMeResponse?.();
+        return response;
       });
 
       if (res.ok) {
@@ -106,10 +128,15 @@ async function fetchAppUser(
           | (User & { profile?: unknown; needsOnboarding?: boolean; isNewUser?: boolean })
           | { user: User | null; firebaseUser?: User | null; needsOnboarding?: boolean };
         if ('user' in data) {
+          const wrapped = data as {
+            user: User | null;
+            firebaseUser?: User | null;
+            needsOnboarding?: boolean;
+          };
           return {
-            user: data.user,
-            firebaseUser: data.firebaseUser ?? null,
-            needsOnboarding: data.needsOnboarding,
+            user: wrapped.user,
+            firebaseUser: wrapped.firebaseUser ?? null,
+            needsOnboarding: wrapped.needsOnboarding,
           };
         }
         if (data.profile === null || data.isNewUser === true || data.needsOnboarding === true) {
@@ -239,8 +266,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   // PERFORMANCE: isSystemReady = Firebase ready + user profile resolved + venue check done
   // TAB RECOVERY: If cached, start ready immediately
-  const [isSystemReadyRaw, setIsSystemReadyRaw] = useState(!!cachedSession.user);
-  
   // ============================================================================
   // DEBOUNCE AUTH STATE: 200ms debounce on isSystemReady transitions
   // Purpose: Prevent brief "flickers" in Firebase connection status from triggering
@@ -255,8 +280,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // - Debounces setting to `true` by 200ms (wait for stability before unlocking)
   // - Also signals API interceptor stall state via queryClient
   const setIsSystemReady = useCallback((value: boolean) => {
-    setIsSystemReadyRaw(value);
-    
     // Clear any pending debounce
     if (systemReadyDebounceRef.current) {
       clearTimeout(systemReadyDebounceRef.current);
@@ -307,8 +330,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isOnboardingModeRef = useRef<boolean>(false);
   // Sync with isVenueMissing state so redirect logic can read it in the same tick
   const isVenueMissingRef = useRef<boolean>(false);
-  /** 5-minute session cache for GET /api/venues/me: if we got 200 recently for this user, skip the blocking fetch so Dashboard mounts instantly. */
-  const VENUE_CACHE_TTL_MS = 5 * 60 * 1000;
   const venueCacheRef = useRef<{ userId: string; cachedAt: number; hasVenue: boolean } | null>(null);
   
   // PERFORMANCE: Deduplication ref to prevent multiple concurrent hydration calls
@@ -338,6 +359,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Goal: Output should be < 500ms
       console.timeEnd('Handshake-to-Unlock');
     }
+  }, []);
+
+  const unlockNavigationOnMe = useCallback(() => {
+    setIsNavigationLocked(false);
   }, []);
 
   // Clear redirecting flag after pathname has settled (prevents flash of wrong route).
@@ -493,7 +518,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Fallback: Use legacy parallel fetch if bootstrap fails
       logger.warn('AuthContext', 'Bootstrap failed, falling back to parallel fetch', bootstrapErr);
       
-      const userFetchPromise = fetchAppUser(idToken, effectivelyOnboarding, firebaseUser);
+      const userFetchPromise = fetchAppUser(idToken, effectivelyOnboarding, firebaseUser, unlockNavigationOnMe);
       const venueFetchPromise = fetch(`${getApiBase()}/api/venues/me`, {
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -511,17 +536,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       apiResponse = userResult.status === 'fulfilled' ? userResult.value : null;
       venueData = venueResult.status === 'fulfilled' ? venueResult.value : null;
     }
-
-    // Determine if we need venue data based on user's role
-    const userRole = apiResponse?.user?.currentRole || apiResponse?.user?.role || '';
-    const userRoles = apiResponse?.user?.roles || [];
-    const isProfessionalRole = userRole.toLowerCase() === 'professional' || 
-      userRoles.some((r: string) => (r || '').toLowerCase() === 'professional');
-    const isVenueRole = ['business', 'venue', 'hub', 'owner'].includes(userRole.toLowerCase()) ||
-      userRoles.some((r: string) => ['business', 'venue', 'hub', 'owner'].includes((r || '').toLowerCase()));
-    
-    // Create a resolved promise for backward compatibility with existing venue processing code
-    let venuePromise: Promise<any> = Promise.resolve(venueData);
 
     // Warm React Query cache with user data immediately
     if (apiResponse?.user) {
@@ -602,7 +616,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       reset401Backoff();
 
       // Determine role and venue requirements
-      const role = (apiUser.currentRole || apiUser.role || '').toLowerCase();
+      const roleRaw =
+        typeof apiUser.currentRole === 'string'
+          ? apiUser.currentRole
+          : typeof (apiUser as { role?: unknown }).role === 'string'
+            ? (apiUser as { role?: unknown }).role
+            : '';
+      const role = (roleRaw as string).toLowerCase();
       const isVenueRole = role === 'business' || role === 'venue' || role === 'hub' ||
         (apiUser.roles || []).some((r: string) => ['business', 'venue', 'hub'].includes((r || '').toLowerCase()));
       const shouldCheckVenue = isVenueRole && role !== 'pending_onboarding';
@@ -724,7 +744,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // DEDUPLICATION: Mark hydration as complete
     lastHydratedUidRef.current = firebaseUser.uid;
     isHydratingRef.current = false;
-  }, [navigate, location.pathname, user?.uid, releaseNavigationLock]);
+  }, [navigate, location.pathname, user?.uid, releaseNavigationLock, unlockNavigationOnMe]);
 
   const refreshUser = useCallback(async (): Promise<{ venueReady: boolean }> => {
     const firebaseUser = firebaseUserRef.current;
@@ -814,11 +834,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
               e2eUser.isOnboarded = true;
             }
             
+            console.time('Handshake-to-Unlock');
             setUser(e2eUser);
             setToken('mock-e2e-token'); // So pages that check token (e.g. role-selection) don't stay on loader
             setIsRegistered(true);
             setIsLoading(false);
-            setIsNavigationLocked(false);
+            releaseNavigationLock();
             return; // Skip Firebase listener in E2E mode if test user is forced
           } catch (e) {
             console.error('[AuthContext] Failed to parse E2E test user', e);
@@ -973,8 +994,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     if (isLoading || !user) return;
 
-    if (currentPath !== '/login' && currentPath !== '/signup') return;
-    if (currentPath === '/signup') return;
+    const isAuthPath = currentPath === '/login' || currentPath === '/signup';
+    if (!isAuthPath || currentPath === '/signup') return;
 
       // Clear any remaining auth-related URL parameters (failsafe)
       if (typeof window !== 'undefined') {
@@ -988,19 +1009,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
 
+      const routePath = window.location.pathname;
       const isOnboarded = user.isOnboarded === true;
       const venueMissing = isVenueMissingRef.current;
 
       if (isOnboarded) {
         if (venueMissing) {
-          if (currentPath !== '/onboarding/hub') {
+          if (routePath !== '/onboarding/hub') {
             setRedirecting(true);
             navigate('/onboarding/hub', { replace: true });
           } else {
             setRedirecting(false);
           }
         } else {
-          if (currentPath === '/dashboard') {
+          if (routePath === '/dashboard') {
             setRedirecting(false);
           } else {
             setRedirecting(true);
@@ -1010,9 +1032,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else {
         // Only send to onboarding when isOnboarded is explicitly false (or unset)
         // NEUTRAL ZONE: Skip redirect if on investor portal (allow viewing without onboarding)
-        if (isNeutralRoute(currentPath)) {
+        if (isNeutralRoute(routePath)) {
           setRedirecting(false);
-        } else if (!isOnboardingRoute(currentPath)) {
+        } else if (!isOnboardingRoute(routePath)) {
           setRedirecting(true);
           navigate('/onboarding', { replace: true });
         } else {

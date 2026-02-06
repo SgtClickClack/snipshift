@@ -1,5 +1,5 @@
 import { CalendarSettings, ShiftPattern, OpeningHours } from "@/components/calendar/calendar-settings-modal";
-import { format, startOfDay, addDays, isSameDay, isPast, isToday } from "date-fns";
+import { format, startOfDay } from "date-fns";
 
 export interface GeneratedShiftSlot {
   id: string; // Virtual ID for auto-generated slots
